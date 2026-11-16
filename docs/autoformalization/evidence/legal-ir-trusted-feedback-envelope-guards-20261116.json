@@ -1,0 +1,170 @@
+{
+  "artifacts": {
+    "JUnit": {
+      "bytes": 13723,
+      "path": "/tmp/pytest-of-barberb/legal-ir-trusted-feedback-envelope-GREEN67-9e03ca9355fc41d2bb41fe01121a9452/attempt/exports/structural-factory.xml",
+      "sha256": "81da2c17b9e6905a802328f29f7fc0a01ee23db50fc1f983b335bc8f0b09d9f8"
+    },
+    "Root_genuine_witness": {
+      "bytes": 4200,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/trusted-feedback-envelope-revocation-private-v01/Green67prepare-private-v01/GREEN67-canonical-existing-frontier255-original16MiB-v01/Root-genuine-final7b493c-canonical-GREEN67-and-independent-full-closure-witness-v01.json",
+      "sha256": "173355a3121d80d67571c87a69fea7207ff9bcb370796763260e1f6a0f507e40"
+    },
+    "full_independent_actual_review": {
+      "bytes": 13725,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/trusted-feedback-envelope-revocation-private-v01/Green67prepare-private-v01/GREEN67-canonical-existing-frontier255-original16MiB-v01/independent-actual56806-canonical-GREEN67-Source255-Git8-full-closure-durable16MiB-review-v01.json",
+      "sha256": "7afdd016844be7abfaa357d739e83d9528ea969096018ed83cdf314f1b68bb51"
+    },
+    "parent_closeout": {
+      "bytes": 9821,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/trusted-feedback-envelope-revocation-private-v01/Green67prepare-private-v01/GREEN67-canonical-existing-frontier255-original16MiB-v01/parent-closeout.json",
+      "sha256": "17dfc2baa5354a72248cb4b1268b2b0340399bf0529069c7f601f89ae520765f"
+    },
+    "prepared_profile": {
+      "bytes": 434703,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/trusted-feedback-envelope-revocation-private-v01/Green67prepare-private-v01/GREEN67-canonical-existing-frontier255-original16MiB-v01/prepared-GREEN67-canonical-Source255-Git8-ordinary-V5-static-v01.json",
+      "sha256": "b4c6b9f4d7dbc37ab5d16d2318aaa5730288e69899bc3366d3dd7ee4d350945d"
+    },
+    "references_only_no_raw_log_archive_or_model_asset_copy": true,
+    "request": {
+      "bytes": 50827,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/trusted-feedback-envelope-revocation-private-v01/Green67prepare-private-v01/GREEN67-canonical-existing-frontier255-original16MiB-v01/request.json",
+      "sha256": "0d20f3cf56d05cfba5d7b11220bfdafa003a081663cac56fc7d6dff871bb4467"
+    },
+    "result": {
+      "bytes": 614,
+      "path": "/tmp/pytest-of-barberb/legal-ir-trusted-feedback-envelope-GREEN67-9e03ca9355fc41d2bb41fe01121a9452/attempt/logs/result.json",
+      "sha256": "de685641cc222304576359bc763a0849e739c9cb856dac724fd7823954c9a6fe"
+    },
+    "self_contained_portable_raw_evidence_claimed": false
+  },
+  "canonical_files": [
+    {
+      "bytes": 39519,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/trusted_feedback_trainer.py",
+      "sha256": "14ce5de524d741db70e1b948864d6cab4c8cca687fca1774a66b72b8fffaabf3"
+    },
+    {
+      "bytes": 35120,
+      "path": "tests/unit/logic/integration/test_trusted_feedback_weight_updates.py",
+      "sha256": "1f069ecee9bf1ebb343e436d1a0f5123c536bc5ef88d47bb82a04b128d64960f"
+    }
+  ],
+  "changes": {
+    "guard_reconciliation": "Existing source-copy checks inspect both guard snapshots; any explicit HOLDOUT alias wins; typed-record view and fingerprint claims in both layers must match the record.",
+    "negative_fixed_point": "Applicable tested rejections leave the complete serialized in-memory state unchanged. An outer true cannot promote a rejected/unverified child; explicit false in either guard layer vetoes.",
+    "no_retroactive_repair": "Historical feedback, earlier weights, receipts, source identities and failed attempts are not retracted, rewritten or relabeled.",
+    "positive_payload_isolation": "Updates use the existing normalized inner learning payload, including unchanged identity inheritance and typed-record defaults; no outer guard metadata is injected into the feature bus. Added spies delegate to the original real updater and verify exact fully populated inner payloads on their positive cases.",
+    "supported_scope": "Atomic guidance/feedback outer envelopes and selected inner payload, with separate guard snapshots; collection-wide merge/sample/dedup ambiguity remains separate.",
+    "unchanged_numerical_semantics": "Real bounded reusable-head updates execute on tiny authored in-memory states. Update rule, configured learning-rate/batch bounds, ablation checks, counters, sample lookup, update/ID state semantics and report schema legal-ir-trusted-feedback-weight-updates-v1 remain; no fitting campaign or convergence result is inferred."
+  },
+  "compatibility": "Existing trainer/report schema and numerical update path remain. Outer acceptance is a veto/promotion boundary, not authentication of proof/reviewer metadata. All earlier receipt/source/checkpoint identities and task states remain.",
+  "historical_attempts": {
+    "RED6": {
+      "JUnit_seconds": 1.59,
+      "cases": 6,
+      "errors": 0,
+      "failed_storage_claim": "1eafc327e7da4d54a03be1cb91f12b8c",
+      "intended_rejection_failures": 4,
+      "reference": {
+        "bytes": 23183,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/trusted-feedback-envelope-revocation-private-v01/RED6-existing-structural-child-current256-original16MiB-v01/independent-actual16163-RED6-four-intended-failures-two-passes-Source-Native-retained16MiB-KeyError-review-v01.json",
+        "sha256": "57e0afab11a79f1dd93bb78c649afcf308dcb7ee9b35b9b731bb55623996e68c"
+      },
+      "reserved_bytes": 16777216,
+      "separate_wrapper_error": "Original b849 waiter used oldR OWNER with an R2 request and raised KeyError; original error and missing lifecycle flag stay preserved. Separate custody audit/native fallback does not supply clean-controller qualification.",
+      "skipped": 0,
+      "status": "retained_nondurable",
+      "valid_nested_positive_passes": 2
+    },
+    "no_pooled_RED6_or_prior135_or45_qualification": true,
+    "old_capsules_unchanged": [
+      {
+        "bytes": 13989,
+        "path": "/tmp/datasets-reviewed-source-use-main-20261115/docs/autoformalization/evidence/legal-ir-proof-feedback-trust-flags-qualification-20261109.json",
+        "sha256": "6153df9dfaaddacca557f75c140f3c2c863173843cc74a0d02ffce958e5d7b72"
+      },
+      {
+        "bytes": 6735,
+        "path": "/tmp/datasets-reviewed-source-use-main-20261115/docs/autoformalization/evidence/legal-ir-proof-feedback-replay-boolean-epoch-20261115.json",
+        "sha256": "58d222b63cee5c457b053e079facb2f5de34a29f91b83b82788fb14cf4e3b471"
+      }
+    ]
+  },
+  "installation": {
+    "Source2_WRITE": {
+      "bytes": 3030,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/trusted-feedback-envelope-revocation-private-v01/Source2-adoption-private-v01/actual-trainer-Source2-WRITE-v01.json",
+      "sha256": "4470dcc5b325431c673f1faec6c75524ff38cdccc638e6ca4e578c1c868567d6"
+    },
+    "exact_original_canonical_test_filename_preserved": true,
+    "independent_readback": {
+      "bytes": 5250,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/trusted-feedback-envelope-revocation-private-v01/Source2-adoption-private-v01/independent-actual-trainer-Source2-WRITE4470-separateREAD1b34-two-postimage-review-v01.json",
+      "sha256": "d5b83bf1541cebb53e1e409a7b029e013c9f7899166ed9d6adc77304e07deb59"
+    },
+    "normal_main_publication": null,
+    "separate_Source2_READ": {
+      "bytes": 2757,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/retained-capacity-watchdog-v01/census-lock-followthrough-v01/completed-body-finalization-recovery-v01/current-V5-producer-SDK-tuple-private-v02/trusted-feedback-envelope-revocation-private-v01/Source2-adoption-private-v01/actual-trainer-Source2-separate-READ-v01.json",
+      "sha256": "1b34bd06818d8b049b447037d7174d7b79b50fbf57a37a0c224a8ab3d9ce4e29"
+    },
+    "source_adoption_separate_from_GREEN_qualification": true
+  },
+  "limits": [
+    "No retained/pretrained-model fitting campaign, measured model quality or convergence is established by these real authored in-memory head-update controls.",
+    "No independently authenticated solver/checker/reviewer, statutory meaning/gold, legal-source applicability, Native Lean proof, graph/corpus admission or full mission completion is supplied.",
+    "Normal v05 success closure is exact-run only; main/JOBS/noChild/general UNKNOWN remain distinct.",
+    "Historical failed RED6 and retained claim remain failed; no pooled totals with earlier135/45 scopes.",
+    "Source255/Git8 is the declared captured run boundary, not whole-runtime/binary/dependency or whole-commit qualification.",
+    "Only each successful original own16MiB reservation was released;16847 artifact bytes were verified and preserved.",
+    "Hosted CI, runtime rollout and normal-main publication of these two trainer/test postimages remain separate."
+  ],
+  "qualification": {
+    "Git_metadata_pins_separate": 8,
+    "JUnit_seconds": 1.941,
+    "Native_released_cancelled_and_absent_two_snapshots": true,
+    "SDK_returncode": 0,
+    "Source_Native_sampled_process_genuine_wait_closed": true,
+    "Source_seconds": 160.9850764973089,
+    "all_source_and_Git_SHA_bytes_full9_verified": true,
+    "all_three_original_PID_birth_identities_gone_two_views": true,
+    "arbitrary_descendant_containment": false,
+    "case_decomposition": {
+      "RED6_controls": 6,
+      "expanded_guard_controls": 46,
+      "nonpromotion_payload_controls": 10,
+      "original": 5
+    },
+    "cases": 67,
+    "current_parent_v05_scope": "Exact normal-success original wait/classify/lifecycle path only. No helper main/JOBS, noChild or general UNKNOWN cleanup qualification.",
+    "dispatch": "2a8548",
+    "errors": 0,
+    "external_charged_bytes": 0,
+    "failed": 0,
+    "functions": 15,
+    "genuine_final": "7b493c",
+    "original_Native_lease": "638938ec7e5f40eca05a4ceed936518a",
+    "original_parent_deadline": "started before Source admission +420",
+    "original_parent_seconds": 420,
+    "original_session": 56806,
+    "outer_returncode": 0,
+    "own_artifact_bytes_verified_preserved": 16847,
+    "own_artifact_files_verified": 6,
+    "parent_errors": [],
+    "passed": 67,
+    "reserved_bytes": 16777216,
+    "seal_members_verified": 5,
+    "skipped": 0,
+    "source_drift": [],
+    "source_pins": 255,
+    "storage_claim": "dfb0fd7a779d4ba4bf4697a8587d659b",
+    "storage_status": "released_durably"
+  },
+  "recorded_utc": "2026-11-16T04:07:47.502311+00:00",
+  "schema": "legal-ir-proof-feedback-trust-flags-qualification/v1",
+  "status": "canonical_whole67_source_scoped_software_qualified_normal_publication_pending",
+  "tasks": [
+    "LIR-22"
+  ]
+}

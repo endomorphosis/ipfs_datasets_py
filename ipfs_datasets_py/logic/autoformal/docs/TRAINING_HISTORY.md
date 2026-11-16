@@ -1,5 +1,13 @@
 # Training and experiment history
 
+## Trusted-feedback envelopes: 67 real authored bounded-update controls — 2026-11-16
+
+One genuine canonical whole-module run passed **67/67 across15 functions**, zero failures/errors/skips, in1.941s on trainer14ce/test1f0: original5, RED6controls6, expanded46 and nonpromotion/payload10, without pooling earlier originals. Exact Source255/Git8 and original Source/Native/sampled-process/wait custody closed in160.985076s within the original420. Independent audit checked all6 files/16,847 preserved artifact bytes and5 sealed members; only its own16MiB reservation dfb0 was durably released. Exact Source2 adoption and separate readback remain distinct source-only operations.
+
+Tests perform real bounded reusable-head updates on tiny authored in-memory states; payload spies delegate to the original updater. Applicable rejected envelopes preserve the complete serialized state; outer positive flags never promote a rejected child. The existing normalized inner learning payload retains unchanged identity inheritance and typed-record defaults. No outer guard metadata is injected into the feature bus; exact payload equality is verified on the fully populated positive spy cases. The numerical update rule, bounded configuration, ablation and ID/state semantics remain. No retained/pretrained-model fitting campaign, convergence or corpus-quality result is measured.
+
+The earlier RED6 has four intended rejection failures and two positive passes in1.590s; failed claim1eaf remains retained/nondurable, and its separate oldR waiter KeyError is not relabeled as clean-controller qualification. The current v05 normal-success path does not qualify noChild/general UNKNOWN/main/JOBS. Historical135/45 results, legal/gold review, proof and corpus authority remain separate; all24 task states are unchanged. [Measured evidence and preserved failure history](../../../../docs/autoformalization/evidence/legal-ir-trusted-feedback-envelope-guards-20261116.json).
+
 ## Original-HTML origin map: two separate 178-case software qualifications — 2026-11-15
 
 The missing-API RED1 measured one intended failure after healthy V2 extraction; its Source/Native/process/wait custody closed and failed16MiB claim `d9be` remains retained and nondurable. A separate stdlib UTF7 observation corrected one existing test's expected three-character decoder envelope, including the following `<`, without changing product bodies or the positive RED helpers. RootR Source4 adoption5860 and separate readbackb20f are preserved.

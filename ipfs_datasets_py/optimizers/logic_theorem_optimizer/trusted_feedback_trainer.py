@@ -274,7 +274,7 @@ class TrustedFeedbackTrainer:
                 if index >= int(self.config.max_updates_per_batch):
                     block("limit_skipped_count", "batch_update_limit_exceeded")
                     continue
-                item, proof_record = _normalize_feedback(envelope)
+                item, proof_record, guard_layers = _normalize_feedback(envelope)
                 if not item:
                     block("invalid_count", "invalid_feedback")
                     continue
@@ -282,7 +282,9 @@ class TrustedFeedbackTrainer:
                 if feedback_id in state_ids:
                     block("duplicate_count", "duplicate_feedback")
                     continue
-                candidate_version = _candidate_version_fingerprint(item, proof_record)
+                candidate_version = _candidate_version_fingerprint(
+                    item, proof_record, guard_layers=guard_layers
+                )
                 if (
                     not self.expected_version_fingerprint
                     or not candidate_version
@@ -290,14 +292,14 @@ class TrustedFeedbackTrainer:
                 ):
                     block("stale_count", "version_missing_or_mismatched")
                     continue
-                if not _feedback_is_trusted(item, proof_record):
+                if not _feedback_is_trusted(item, proof_record, guard_layers=guard_layers):
                     block("untrusted_count", "untrusted_or_unverified_feedback")
                     continue
                 sample_id = _sample_id(item, proof_record)
                 if not sample_id or sample_id not in samples_by_id:
                     block("missing_sample_count", "referenced_sample_missing")
                     continue
-                partition = _partition(item, proof_record)
+                partition = _partition(item, proof_record, guard_layers=guard_layers)
                 if partition == ProofFeedbackPartition.HOLDOUT.value or sample_id in holdout_ids:
                     counts["holdout_count"] += 1
                     block("guardrail_blocked_count", "holdout_feedback_isolation")
@@ -311,10 +313,14 @@ class TrustedFeedbackTrainer:
                 ):
                     block("guardrail_blocked_count", "train_partition_not_attested")
                     continue
-                copy_reason = _source_copy_block_reason(
-                    item,
-                    maximum_penalty=self.config.maximum_source_copy_penalty,
-                )
+                copy_reason = ""
+                for layer in (item, *guard_layers):
+                    copy_reason = _source_copy_block_reason(
+                        layer,
+                        maximum_penalty=self.config.maximum_source_copy_penalty,
+                    )
+                    if copy_reason:
+                        break
                 if copy_reason:
                     block("guardrail_blocked_count", copy_reason)
                     continue
@@ -542,16 +548,19 @@ def _version_fingerprint(value: Any) -> str:
 def _candidate_version_fingerprint(
     item: Mapping[str, Any],
     record: Optional[LegalIRProofFeedbackRecord],
+    *,
+    guard_layers: Iterable[Mapping[str, Any]] = (),
 ) -> str:
     if record is not None:
-        for key in (
-            "proof_feedback_version_fingerprint",
-            "version_fingerprint",
-            "model_version_fingerprint",
-        ):
-            claimed = str(item.get(key) or "").strip()
-            if claimed and claimed != record.version_fingerprint:
-                return "conflicting-record-version"
+        for layer in (item, *guard_layers):
+            for key in (
+                "proof_feedback_version_fingerprint",
+                "version_fingerprint",
+                "model_version_fingerprint",
+            ):
+                claimed = str(layer.get(key) or "").strip()
+                if claimed and claimed != record.version_fingerprint:
+                    return "conflicting-record-version"
         return record.version_fingerprint
     for key in (
         "proof_feedback_version_fingerprint",
@@ -600,8 +609,11 @@ def _feedback_items(value: Any) -> list[Any]:
 
 def _normalize_feedback(
     value: Any,
-) -> tuple[dict[str, Any], Optional[LegalIRProofFeedbackRecord]]:
+) -> tuple[
+    dict[str, Any], Optional[LegalIRProofFeedbackRecord], tuple[dict[str, Any], ...]
+]:
     record: Optional[LegalIRProofFeedbackRecord] = None
+    guard_layers: tuple[dict[str, Any], ...] = ()
     if isinstance(value, LegalIRProofFeedbackRecord):
         record = value
         item: dict[str, Any] = {}
@@ -614,28 +626,38 @@ def _normalize_feedback(
             try:
                 record = LegalIRProofFeedbackRecord.from_dict(raw_record)
             except (TypeError, ValueError):
-                return {}, None
+                return {}, None, ()
         nested = item.get("guidance") or item.get("feedback")
         if isinstance(nested, Mapping):
             envelope = item
             item = {str(key): child for key, child in nested.items()}
+            # Keep outer restrictions separate from the learning payload. In
+            # particular, an outer approval cannot promote an unverified child.
+            guard_layers = (
+                {
+                    key: child
+                    for key, child in envelope.items()
+                    if key not in {"guidance", "feedback", "proof_feedback_record"}
+                },
+            )
             for key in ("sample_id", "partition", "version_fingerprint"):
                 if key in envelope and key not in item:
                     item[key] = envelope[key]
     else:
         to_dict = getattr(value, "to_dict", None)
         if not callable(to_dict):
-            return {}, None
+            return {}, None, ()
         try:
             converted = to_dict()
         except (TypeError, ValueError):
-            return {}, None
+            return {}, None, ()
         return _normalize_feedback(converted)
     if record is not None:
-        for key in ("legal_ir_view", "target_component", "target_view"):
-            claimed_view = str(item.get(key) or "").strip()
-            if claimed_view and claimed_view != record.legal_ir_view:
-                return {}, None
+        for layer in (item, *guard_layers):
+            for key in ("legal_ir_view", "target_component", "target_view"):
+                claimed_view = str(layer.get(key) or "").strip()
+                if claimed_view and claimed_view != record.legal_ir_view:
+                    return {}, None, ()
         item.setdefault("guidance_id", record.record_id)
         item.setdefault("sample_id", record.obligation_id)
         item.setdefault("legal_ir_view", record.legal_ir_view)
@@ -646,7 +668,7 @@ def _normalize_feedback(
         item.setdefault("trusted", record.eligible_for_training)
         item.setdefault("source", "legal_ir_proof_feedback")
         item.setdefault("schema_version", LEGAL_IR_PROOF_FEEDBACK_SCHEMA_VERSION)
-    return item, record
+    return item, record, guard_layers
 
 
 def _feedback_id(
@@ -751,16 +773,26 @@ def _safe_structural_feature_key(value: Any) -> bool:
 def _partition(
     item: Mapping[str, Any],
     record: Optional[LegalIRProofFeedbackRecord],
+    *,
+    guard_layers: Iterable[Mapping[str, Any]] = (),
 ) -> str:
+    layers = (item, *guard_layers)
+    claims = [
+        layer[key]
+        for layer in layers
+        for key in ("partition", "feedback_partition")
+        if key in layer
+    ]
+    claimed_partitions = [
+        str(getattr(claimed, "value", claimed) or "").strip().lower()
+        for claimed in claims
+    ]
+    if ProofFeedbackPartition.HOLDOUT.value in claimed_partitions:
+        return ProofFeedbackPartition.HOLDOUT.value
     if record is not None:
-        claimed = item.get("partition") or item.get("feedback_partition")
-        claimed_text = str(getattr(claimed, "value", claimed) or "").strip().lower()
-        if claimed_text and claimed_text != record.partition.value:
-            if ProofFeedbackPartition.HOLDOUT.value in {
-                claimed_text,
-                record.partition.value,
-            }:
-                return ProofFeedbackPartition.HOLDOUT.value
+        if record.partition.value == ProofFeedbackPartition.HOLDOUT.value:
+            return ProofFeedbackPartition.HOLDOUT.value
+        if any(claim and claim != record.partition.value for claim in claimed_partitions):
             return "mismatch"
         return record.partition.value
     value = item.get("partition") or item.get("feedback_partition")
@@ -770,21 +802,26 @@ def _partition(
 def _feedback_is_trusted(
     item: Mapping[str, Any],
     record: Optional[LegalIRProofFeedbackRecord],
+    *,
+    guard_layers: Iterable[Mapping[str, Any]] = (),
 ) -> bool:
+    if any(
+        _truth(layer[key]) is False
+        for layer in (item, *guard_layers)
+        for key in ("accepted", "trusted")
+        if key in layer
+    ):
+        return False
     if record is not None:
         # A trusted receipt cannot override an explicit rejection on the
         # guidance envelope to which it is bound.
-        if any(_truth(item.get(key)) is False for key in ("accepted", "trusted") if key in item):
-            return False
         return (
             record.trust_status == ProofFeedbackTrustStatus.TRUSTED
             and record.eligible_for_training
             and record.positive
         )
     trusted = any(_truth(item.get(key)) is True for key in ("accepted", "trusted"))
-    if not trusted or any(
-        _truth(item.get(key)) is False for key in ("accepted", "trusted") if key in item
-    ):
+    if not trusted:
         return False
     source = str(item.get("source") or "").lower()
     schema = str(item.get("schema_version") or "").lower()

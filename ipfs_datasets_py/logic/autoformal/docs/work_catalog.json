@@ -9758,6 +9758,28 @@
       "path": "ipfs_datasets_py/logic/autoformal/legal_official_document_views.py",
       "required": true,
       "status": "focused_tests_qualified"
+    },
+    {
+      "apis": [
+        "TrustedFeedbackTrainer",
+        "TrustedFeedbackTrainerConfig",
+        "TrustedFeedbackUpdateReport",
+        "apply_trusted_feedback_weight_updates"
+      ],
+      "compatibility_dependency": false,
+      "evidence_ids": [
+        "trusted-feedback-atomic-envelope-guards-20261116"
+      ],
+      "id": "trusted-feedback-weight-updates",
+      "notes": "Indexes one existing previously omitted owner. Exact canonical14ce/1f0 whole67/15 software qualification preserves rejected-state fixed point and existing normalized inner learning payload semantics (including unchanged identity inheritance and typed-record defaults), with outer guard metadata excluded from the feature bus and exact positive-spy-case payloads verified. Real tiny authored in-memory updates are measured, not retained/pretrained fitting/convergence. Historical RED6/KeyError and135/45 scopes remain distinct; no general UNKNOWN/helper main/JOBS/legal/proof/corpus admission. The unchanged train_trusted_feedback direct alias remains available in the product; it is described here rather than claimed as a declared API recognized by the existing catalog checker.",
+      "owner_module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.trusted_feedback_trainer",
+      "ownership_role": "existing_single_owner",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/trusted_feedback_trainer.py",
+      "required": true,
+      "status": "focused_tests_qualified",
+      "task_ids": [
+        "LIR-22"
+      ]
     }
   ],
   "entry_point": "ipfs_datasets_py/logic/autoformal/README.md",
@@ -15585,6 +15607,16 @@
       "root": "datasets_repository",
       "scope": "Two separately admitted current245-source whole3-module178/65 software originals,28 new+150 retained in each; not pooled356 or transferred qualification. Exact RootR and R2 Source4 ports/readbacks, retained missing-API RED1 and stdlib UTF7 fixture correction preserved. Later Physical4 outside245 is source context only. No WholeNorm/whole-commit/legal/historical-producer/review/model/training/graph/Lean/corpus authority.",
       "status": "separate_captured_RootR_and_R2_software178_qualified"
+    },
+    {
+      "id": "trusted-feedback-atomic-envelope-guards-20261116",
+      "observed_bytes": 12495,
+      "observed_sha256": "09d188d42ea3c4a5d6ed68b14ab721c1749bbc34e36baa27f27b46cb9033de4a",
+      "path": "docs/autoformalization/evidence/legal-ir-trusted-feedback-envelope-guards-20261116.json",
+      "required_for_catalog_check": true,
+      "root": "datasets_repository",
+      "scope": "One genuine canonical14ce/1f0 whole owning67/15 run, Source255/Git8 exact and full original closure/own16MiB durable release. Real tiny authored bounded updates only. Preserves RED6four failures/two positives/retained claim and wrapper KeyError separately. No pooled135/45, general controller/noChild/UNKNOWN, retained/pretrained fitting, legal/Lean/corpus authority.",
+      "status": "canonical_whole67_source_scoped_software_qualified_normal_publication_pending"
     }
   ]
 }

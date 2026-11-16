@@ -321,3 +321,526 @@ def test_content_addressed_proof_feedback_updates_primary_and_auxiliary_heads(sa
     assert autoencoder.state.applied_leanstral_guidance_ids == [record.record_id]
     assert autoencoder.state.applied_proof_feedback_ids == [record.record_id]
     assert autoencoder.state.proof_auxiliary_head_logits
+
+
+@pytest.mark.parametrize(
+    ("nested_key", "rejection_field"),
+    (
+        ("guidance", "accepted"),
+        ("guidance", "trusted"),
+        ("feedback", "accepted"),
+        ("feedback", "trusted"),
+    ),
+    ids=(
+        "guidance-outer-accepted-false",
+        "guidance-outer-trusted-false",
+        "feedback-outer-accepted-false",
+        "feedback-outer-trusted-false",
+    ),
+)
+def test_nested_feedback_outer_rejection_prevents_weight_updates(
+    samples, nested_key, rejection_field
+) -> None:
+    train, holdout = samples
+    versions = _versions()
+    autoencoder = AdaptiveModalAutoencoder()
+    before = json.dumps(
+        autoencoder.state.to_dict(), sort_keys=True, separators=(",", ":"), allow_nan=False
+    )
+    trainer = TrustedFeedbackTrainer(
+        autoencoder,
+        expected_versions=versions,
+        config=TrustedFeedbackTrainerConfig(production_weight_writes_enabled=True),
+    )
+    inner = _hammer(
+        train.sample_id,
+        f"feedback-{nested_key}-outer-{rejection_field}-false",
+        versions,
+    )
+
+    report = trainer.train(
+        [{rejection_field: False, nested_key: inner}],
+        {train.sample_id: train, holdout.sample_id: holdout},
+        ablation_evidence=_ablation(train.sample_id, holdout.sample_id),
+    )
+
+    assert report.applied_count == 0
+    assert report.untrusted_count == 1
+    assert report.candidate_count == report.accounted_count == 1
+    assert report.block_reasons == {"untrusted_or_unverified_feedback": 1}
+    assert report.write_to_autoencoder_weights is False
+    assert report.trainable_legal_ir_head_norms["nonzero_update"] is False
+    assert json.dumps(
+        autoencoder.state.to_dict(), sort_keys=True, separators=(",", ":"), allow_nan=False
+    ) == before
+
+
+@pytest.mark.parametrize(
+    "nested_key", ("guidance", "feedback"), ids=("guidance-valid", "feedback-valid")
+)
+def test_nested_feedback_valid_envelope_preserves_weight_updates(samples, nested_key) -> None:
+    train, holdout = samples
+    versions = _versions()
+    autoencoder = AdaptiveModalAutoencoder()
+    before = json.dumps(
+        autoencoder.state.to_dict(), sort_keys=True, separators=(",", ":"), allow_nan=False
+    )
+    trainer = TrustedFeedbackTrainer(
+        autoencoder,
+        expected_versions=versions,
+        config=TrustedFeedbackTrainerConfig(production_weight_writes_enabled=True),
+    )
+    feedback_id = f"feedback-{nested_key}-valid-nested-envelope"
+    inner = _hammer(train.sample_id, feedback_id, versions)
+
+    report = trainer.train(
+        [{"accepted": True, "trusted": True, nested_key: inner}],
+        {train.sample_id: train, holdout.sample_id: holdout},
+        ablation_evidence=_ablation(train.sample_id, holdout.sample_id),
+    )
+
+    assert report.applied_count == 1
+    assert report.untrusted_count == 0
+    assert report.candidate_count == report.accounted_count == 1
+    assert report.block_reasons == {}
+    assert report.write_to_autoencoder_weights is True
+    assert report.trainable_legal_ir_head_norms["finite"] is True
+    assert report.trainable_legal_ir_head_norms["nonzero_update"] is True
+    assert report.update_norms_by_head["legal_ir_view_logits"] > 0.0
+    assert report.update_norms_by_head["feature_legal_ir_view_logits"] > 0.0
+    assert autoencoder.state.applied_leanstral_guidance_ids == [feedback_id]
+    assert json.dumps(
+        autoencoder.state.to_dict(), sort_keys=True, separators=(",", ":"), allow_nan=False
+    ) != before
+
+
+def _trusted_feedback_record_for_nested_envelope(train, versions):
+    return LegalIRProofFeedbackRecord.create(
+        obligation_id=train.sample_id,
+        obligation_type="exception_scope",
+        legal_ir_view="deontic.ir",
+        semantic_family="conditional_normative",
+        semantic_slots={"exception": "present"},
+        selected_premise_families=("theorem_template",),
+        route_availability={"deterministic_contract": True},
+        route_statuses={"deterministic_contract": "passed"},
+        backend_outcomes={"z3": "proved"},
+        deterministic_trusted=True,
+        evidence_ids=("proof-feedback-evidence",),
+        receipt_ids=("proof-feedback-receipt",),
+        partition_key=train.sample_id,
+        partition_policy=ProofFeedbackPartitionPolicy(holdout_fraction=0.0),
+        versions=versions,
+    )
+
+
+@pytest.mark.parametrize("nested_key", ("guidance", "feedback"))
+@pytest.mark.parametrize(
+    ("outer_fields", "expected_reason"),
+    (
+        ({'source_copy_rejected': True}, 'source_copy_rejected'),
+        ({'copy_source_span_rejected': True}, 'source_copy_rejected'),
+        ({'copied_source_span_rejected': True}, 'source_copy_rejected'),
+        ({'source_copy_guard_passed': False}, 'source_copy_guard_failed'),
+        ({'source_copy_passed': False}, 'source_copy_guard_failed'),
+        ({'source_copy_penalty': 0.5}, 'source_copy_penalty_exceeded'),
+        ({'source_copy_reward_hack_penalty': 0.5}, 'source_copy_penalty_exceeded'),
+        ({'source_span_copy_ratio': 0.5}, 'source_copy_penalty_exceeded'),
+        ({'source_copy_penalty': 'invalid'}, 'source_copy_metric_invalid'),
+        ({'source_copy_penalty': 'NaN'}, 'source_copy_penalty_exceeded'),
+        ({'rejection_reason': 'source_copy'}, 'source_copy_rejected'),
+        ({'rejection_reasons': ['drafted_logic_candidate_copies_source']}, 'source_copy_rejected'),
+    ),
+    ids=('copy-rejected', 'copy-span-rejected', 'copied-span-rejected', 'copy-guard-failed', 'copy-passed-false', 'penalty-exceeded', 'reward-penalty-exceeded', 'span-ratio-exceeded', 'penalty-invalid', 'penalty-nonfinite', 'copy-reason', 'copy-reasons'),
+)
+def test_nested_feedback_outer_source_copy_guards_prevent_weight_updates(
+    samples, nested_key, outer_fields, expected_reason
+) -> None:
+    train, holdout = samples
+    versions = _versions()
+    autoencoder = AdaptiveModalAutoencoder()
+    before = json.dumps(
+        autoencoder.state.to_dict(), sort_keys=True, separators=(",", ":"), allow_nan=False
+    )
+    trainer = TrustedFeedbackTrainer(
+        autoencoder,
+        expected_versions=versions,
+        config=TrustedFeedbackTrainerConfig(production_weight_writes_enabled=True),
+    )
+    inner = _hammer(train.sample_id, "feedback-outer-copy-guard", versions)
+    envelope = dict(outer_fields)
+    envelope[nested_key] = inner
+
+    report = trainer.train(
+        [envelope],
+        {train.sample_id: train, holdout.sample_id: holdout},
+        ablation_evidence=_ablation(train.sample_id, holdout.sample_id),
+    )
+
+    assert report.guardrail_blocked_count == 1
+    assert report.untrusted_count == report.stale_count == report.invalid_count == 0
+    assert report.block_reasons == {expected_reason: 1}
+    assert report.applied_count == 0
+    assert report.candidate_count == report.accounted_count == 1
+    assert report.write_to_autoencoder_weights is False
+    assert report.trainable_legal_ir_head_norms["nonzero_update"] is False
+    assert report.update_norms_by_head == {}
+    assert report.gradient_norms_by_head == {}
+    assert autoencoder.state.applied_leanstral_guidance_ids == []
+    assert autoencoder.state.applied_proof_feedback_ids == []
+    assert json.dumps(
+        autoencoder.state.to_dict(), sort_keys=True, separators=(",", ":"), allow_nan=False
+    ) == before
+
+
+@pytest.mark.parametrize("nested_key", ("guidance", "feedback"))
+@pytest.mark.parametrize("partition_field", ("partition", "feedback_partition"))
+def test_nested_feedback_outer_holdout_prevents_weight_updates(
+    samples, nested_key, partition_field
+) -> None:
+    train, holdout = samples
+    versions = _versions()
+    autoencoder = AdaptiveModalAutoencoder()
+    before = json.dumps(
+        autoencoder.state.to_dict(), sort_keys=True, separators=(",", ":"), allow_nan=False
+    )
+    trainer = TrustedFeedbackTrainer(
+        autoencoder,
+        expected_versions=versions,
+        config=TrustedFeedbackTrainerConfig(production_weight_writes_enabled=True),
+    )
+    inner = _hammer(train.sample_id, "feedback-outer-holdout", versions)
+
+    report = trainer.train(
+        [{partition_field: "holdout", nested_key: inner}],
+        {train.sample_id: train, holdout.sample_id: holdout},
+        ablation_evidence=_ablation(train.sample_id, holdout.sample_id),
+    )
+
+    assert report.holdout_count == 1
+    assert report.guardrail_blocked_count == 1
+    assert report.untrusted_count == report.stale_count == report.invalid_count == 0
+    assert report.block_reasons == {"holdout_feedback_isolation": 1}
+    assert report.applied_count == 0
+    assert report.candidate_count == report.accounted_count == 1
+    assert report.write_to_autoencoder_weights is False
+    assert report.trainable_legal_ir_head_norms["nonzero_update"] is False
+    assert report.update_norms_by_head == {}
+    assert report.gradient_norms_by_head == {}
+    assert autoencoder.state.applied_leanstral_guidance_ids == []
+    assert autoencoder.state.applied_proof_feedback_ids == []
+    assert json.dumps(
+        autoencoder.state.to_dict(), sort_keys=True, separators=(",", ":"), allow_nan=False
+    ) == before
+
+
+@pytest.mark.parametrize("nested_key", ("guidance", "feedback"))
+@pytest.mark.parametrize("rejection_field", ("accepted", "trusted"))
+def test_typed_nested_feedback_outer_rejection_prevents_weight_updates(
+    samples, nested_key, rejection_field
+) -> None:
+    train, holdout = samples
+    versions = _versions()
+    autoencoder = AdaptiveModalAutoencoder()
+    before = json.dumps(
+        autoencoder.state.to_dict(), sort_keys=True, separators=(",", ":"), allow_nan=False
+    )
+    trainer = TrustedFeedbackTrainer(
+        autoencoder,
+        expected_versions=versions,
+        config=TrustedFeedbackTrainerConfig(production_weight_writes_enabled=True),
+    )
+    record = _trusted_feedback_record_for_nested_envelope(train, versions)
+    inner = _hammer(train.sample_id, "feedback-typed-outer-rejection", versions)
+
+    report = trainer.train(
+        [{"proof_feedback_record": record, rejection_field: False, nested_key: inner}],
+        {train.sample_id: train, holdout.sample_id: holdout},
+        ablation_evidence=_ablation(train.sample_id, holdout.sample_id),
+    )
+
+    assert report.untrusted_count == 1
+    assert report.guardrail_blocked_count == report.stale_count == report.invalid_count == 0
+    assert report.block_reasons == {"untrusted_or_unverified_feedback": 1}
+    assert report.applied_count == 0
+    assert report.candidate_count == report.accounted_count == 1
+    assert report.write_to_autoencoder_weights is False
+    assert report.trainable_legal_ir_head_norms["nonzero_update"] is False
+    assert report.update_norms_by_head == {}
+    assert report.gradient_norms_by_head == {}
+    assert autoencoder.state.applied_leanstral_guidance_ids == []
+    assert autoencoder.state.applied_proof_feedback_ids == []
+    assert json.dumps(
+        autoencoder.state.to_dict(), sort_keys=True, separators=(",", ":"), allow_nan=False
+    ) == before
+
+
+@pytest.mark.parametrize("nested_key", ("guidance", "feedback"))
+@pytest.mark.parametrize("view_field", ("legal_ir_view", "target_component", "target_view"))
+def test_typed_nested_feedback_outer_view_conflict_prevents_weight_updates(
+    samples, nested_key, view_field
+) -> None:
+    train, holdout = samples
+    versions = _versions()
+    autoencoder = AdaptiveModalAutoencoder()
+    before = json.dumps(
+        autoencoder.state.to_dict(), sort_keys=True, separators=(",", ":"), allow_nan=False
+    )
+    trainer = TrustedFeedbackTrainer(
+        autoencoder,
+        expected_versions=versions,
+        config=TrustedFeedbackTrainerConfig(production_weight_writes_enabled=True),
+    )
+    record = _trusted_feedback_record_for_nested_envelope(train, versions)
+    inner = _hammer(train.sample_id, "feedback-typed-outer-view-conflict", versions)
+
+    report = trainer.train(
+        [{"proof_feedback_record": record, view_field: "temporal.ir", nested_key: inner}],
+        {train.sample_id: train, holdout.sample_id: holdout},
+        ablation_evidence=_ablation(train.sample_id, holdout.sample_id),
+    )
+
+    assert report.invalid_count == 1
+    assert report.untrusted_count == report.stale_count == report.guardrail_blocked_count == 0
+    assert report.block_reasons == {"invalid_feedback": 1}
+    assert report.applied_count == 0
+    assert report.candidate_count == report.accounted_count == 1
+    assert report.write_to_autoencoder_weights is False
+    assert report.trainable_legal_ir_head_norms["nonzero_update"] is False
+    assert report.update_norms_by_head == {}
+    assert report.gradient_norms_by_head == {}
+    assert autoencoder.state.applied_leanstral_guidance_ids == []
+    assert autoencoder.state.applied_proof_feedback_ids == []
+    assert json.dumps(
+        autoencoder.state.to_dict(), sort_keys=True, separators=(",", ":"), allow_nan=False
+    ) == before
+
+
+@pytest.mark.parametrize("nested_key", ("guidance", "feedback"))
+@pytest.mark.parametrize(
+    "version_field",
+    ("proof_feedback_version_fingerprint", "version_fingerprint", "model_version_fingerprint"),
+)
+def test_typed_nested_feedback_outer_version_conflict_prevents_weight_updates(
+    samples, nested_key, version_field
+) -> None:
+    train, holdout = samples
+    versions = _versions()
+    autoencoder = AdaptiveModalAutoencoder()
+    before = json.dumps(
+        autoencoder.state.to_dict(), sort_keys=True, separators=(",", ":"), allow_nan=False
+    )
+    trainer = TrustedFeedbackTrainer(
+        autoencoder,
+        expected_versions=versions,
+        config=TrustedFeedbackTrainerConfig(production_weight_writes_enabled=True),
+    )
+    record = _trusted_feedback_record_for_nested_envelope(train, versions)
+    stale_versions = _versions("trusted-feedback-stale-outer-envelope")
+    inner = _hammer(train.sample_id, "feedback-typed-outer-version-conflict", versions)
+
+    report = trainer.train(
+        [{
+            "proof_feedback_record": record,
+            version_field: stale_versions.fingerprint,
+            nested_key: inner,
+        }],
+        {train.sample_id: train, holdout.sample_id: holdout},
+        ablation_evidence=_ablation(train.sample_id, holdout.sample_id),
+    )
+
+    assert report.stale_count == 1
+    assert report.untrusted_count == report.invalid_count == report.guardrail_blocked_count == 0
+    assert report.block_reasons == {"version_missing_or_mismatched": 1}
+    assert report.applied_count == 0
+    assert report.candidate_count == report.accounted_count == 1
+    assert report.write_to_autoencoder_weights is False
+    assert report.trainable_legal_ir_head_norms["nonzero_update"] is False
+    assert report.update_norms_by_head == {}
+    assert report.gradient_norms_by_head == {}
+    assert autoencoder.state.applied_leanstral_guidance_ids == []
+    assert autoencoder.state.applied_proof_feedback_ids == []
+    assert json.dumps(
+        autoencoder.state.to_dict(), sort_keys=True, separators=(",", ":"), allow_nan=False
+    ) == before
+
+
+@pytest.mark.parametrize("nested_key", ("guidance", "feedback"))
+def test_typed_nested_feedback_matching_envelope_preserves_weight_updates(
+    samples, nested_key
+) -> None:
+    train, holdout = samples
+    versions = _versions()
+    autoencoder = AdaptiveModalAutoencoder()
+    before = json.dumps(
+        autoencoder.state.to_dict(), sort_keys=True, separators=(",", ":"), allow_nan=False
+    )
+    trainer = TrustedFeedbackTrainer(
+        autoencoder,
+        expected_versions=versions,
+        config=TrustedFeedbackTrainerConfig(production_weight_writes_enabled=True),
+    )
+    record = _trusted_feedback_record_for_nested_envelope(train, versions)
+    inner = _hammer(train.sample_id, "feedback-typed-matching-envelope", versions)
+    envelope = {
+        "proof_feedback_record": record,
+        "accepted": True,
+        "trusted": True,
+        "partition": "train",
+        "feedback_partition": "train",
+        "legal_ir_view": record.legal_ir_view,
+        "target_component": record.legal_ir_view,
+        "target_view": record.legal_ir_view,
+        "proof_feedback_version_fingerprint": record.version_fingerprint,
+        "version_fingerprint": record.version_fingerprint,
+        "model_version_fingerprint": record.version_fingerprint,
+        nested_key: inner,
+    }
+
+    report = trainer.train(
+        [envelope],
+        {train.sample_id: train, holdout.sample_id: holdout},
+        ablation_evidence=_ablation(train.sample_id, holdout.sample_id),
+    )
+
+    assert report.applied_count == 1
+    assert report.candidate_count == report.accounted_count == 1
+    assert report.untrusted_count == report.stale_count == report.invalid_count == 0
+    assert report.guardrail_blocked_count == 0
+    assert report.block_reasons == {}
+    assert report.write_to_autoencoder_weights is True
+    assert report.applied_feedback_ids == (record.record_id,)
+    assert report.trainable_legal_ir_head_norms["finite"] is True
+    assert report.trainable_legal_ir_head_norms["nonzero_update"] is True
+    assert report.update_norms_by_head["legal_ir_view_logits"] > 0.0
+    assert report.update_norms_by_head["feature_legal_ir_view_logits"] > 0.0
+    assert report.update_norms_by_head["proof_auxiliary_head_logits"] > 0.0
+    assert autoencoder.state.applied_leanstral_guidance_ids == [record.record_id]
+    assert autoencoder.state.applied_proof_feedback_ids == [record.record_id]
+    assert autoencoder.state.feature_legal_ir_view_logits
+    assert autoencoder.state.proof_auxiliary_head_logits
+    assert train.text not in json.dumps(autoencoder.state.feature_legal_ir_view_logits)
+    assert json.dumps(
+        autoencoder.state.to_dict(), sort_keys=True, separators=(",", ":"), allow_nan=False
+    ) != before
+
+
+@pytest.mark.parametrize("nested_key", ("guidance", "feedback"))
+@pytest.mark.parametrize(
+    "child_case", ("accepted-false", "trusted-false", "missing-trust", "unverified")
+)
+def test_nested_feedback_outer_approval_cannot_promote_untrusted_child(
+    samples, nested_key, child_case
+) -> None:
+    train, holdout = samples
+    versions = _versions()
+    autoencoder = AdaptiveModalAutoencoder()
+    before = json.dumps(
+        autoencoder.state.to_dict(), sort_keys=True, separators=(",", ":"), allow_nan=False
+    )
+    trainer = TrustedFeedbackTrainer(
+        autoencoder,
+        expected_versions=versions,
+        config=TrustedFeedbackTrainerConfig(production_weight_writes_enabled=True),
+    )
+    inner = _hammer(train.sample_id, f"feedback-{nested_key}-{child_case}", versions)
+    if child_case == "accepted-false":
+        inner["accepted"] = False
+    elif child_case == "trusted-false":
+        inner["trusted"] = False
+    elif child_case == "missing-trust":
+        inner.pop("accepted")
+        inner.pop("trusted")
+    else:
+        assert child_case == "unverified"
+        for key in ("leanstral_verified", "verifier_confirmed", "verified", "proof_checked"):
+            inner.pop(key, None)
+        inner["proved"] = False
+        inner["reconstruction_status"] = "unverified"
+
+    report = trainer.train(
+        [{"accepted": True, "trusted": True, nested_key: inner}],
+        {train.sample_id: train, holdout.sample_id: holdout},
+        ablation_evidence=_ablation(train.sample_id, holdout.sample_id),
+    )
+
+    assert report.applied_count == 0
+    assert report.untrusted_count == 1
+    assert report.candidate_count == report.accounted_count == 1
+    assert report.stale_count == report.invalid_count == report.guardrail_blocked_count == 0
+    assert report.block_reasons == {"untrusted_or_unverified_feedback": 1}
+    assert report.write_to_autoencoder_weights is False
+    assert report.trainable_legal_ir_head_norms["nonzero_update"] is False
+    assert report.update_norms_by_head == {}
+    assert report.gradient_norms_by_head == {}
+    assert autoencoder.state.applied_leanstral_guidance_ids == []
+    assert autoencoder.state.applied_proof_feedback_ids == []
+    assert json.dumps(
+        autoencoder.state.to_dict(), sort_keys=True, separators=(",", ":"), allow_nan=False
+    ) == before
+
+
+@pytest.mark.parametrize("nested_key", ("guidance", "feedback"))
+def test_nested_feedback_guard_metadata_never_enters_real_update_payload(
+    samples, nested_key, monkeypatch
+) -> None:
+    train, holdout = samples
+    versions = _versions()
+    autoencoder = AdaptiveModalAutoencoder()
+    before = json.dumps(
+        autoencoder.state.to_dict(), sort_keys=True, separators=(",", ":"), allow_nan=False
+    )
+    trainer = TrustedFeedbackTrainer(
+        autoencoder,
+        expected_versions=versions,
+        config=TrustedFeedbackTrainerConfig(production_weight_writes_enabled=True),
+    )
+    feedback_id = f"feedback-{nested_key}-real-payload-spy"
+    inner = _hammer(train.sample_id, feedback_id, versions)
+    expected_payload = json.loads(json.dumps(inner))
+    namespace = TrustedFeedbackTrainer.train.__globals__
+    original_update = namespace["_apply_bounded_sample_update"]
+    observed_payloads = []
+
+    def recording_update(autoencoder_arg, item, sample, *, feedback_id, learning_rate):
+        observed_payloads.append(json.loads(json.dumps(item)))
+        assert item == expected_payload
+        assert "outer_metadata_sentinel" not in item
+        return original_update(
+            autoencoder_arg,
+            item,
+            sample,
+            feedback_id=feedback_id,
+            learning_rate=learning_rate,
+        )
+
+    monkeypatch.setitem(namespace, "_apply_bounded_sample_update", recording_update)
+    report = trainer.train(
+        [{
+            "accepted": True,
+            "trusted": True,
+            "outer_metadata_sentinel": {"scope": "guard_only", "token": "outer-sentinel-v1"},
+            nested_key: inner,
+        }],
+        {train.sample_id: train, holdout.sample_id: holdout},
+        ablation_evidence=_ablation(train.sample_id, holdout.sample_id),
+    )
+
+    assert observed_payloads == [expected_payload]
+    assert inner == expected_payload
+    assert report.applied_count == 1
+    assert report.untrusted_count == report.stale_count == report.invalid_count == 0
+    assert report.guardrail_blocked_count == 0
+    assert report.candidate_count == report.accounted_count == 1
+    assert report.block_reasons == {}
+    assert report.write_to_autoencoder_weights is True
+    assert report.applied_feedback_ids == (feedback_id,)
+    assert report.trainable_legal_ir_head_norms["finite"] is True
+    assert report.trainable_legal_ir_head_norms["nonzero_update"] is True
+    assert report.update_norms_by_head["legal_ir_view_logits"] > 0.0
+    assert report.update_norms_by_head["feature_legal_ir_view_logits"] > 0.0
+    assert autoencoder.state.applied_leanstral_guidance_ids == [feedback_id]
+    assert train.text not in json.dumps(autoencoder.state.feature_legal_ir_view_logits)
+    assert json.dumps(
+        autoencoder.state.to_dict(), sort_keys=True, separators=(",", ":"), allow_nan=False
+    ) != before
