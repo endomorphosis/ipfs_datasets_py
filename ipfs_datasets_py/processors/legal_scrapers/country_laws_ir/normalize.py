@@ -763,6 +763,7 @@ def build_corpus(
     *,
     cid_only: bool = False,
     cid_workers: int | None = None,
+    defer_dedupe: bool = False,
 ) -> tuple[pd.DataFrame, dict[str, Any]]:
     source_dataset = source_meta["source_dataset"]
     source_revision = source_meta["source_revision"]
@@ -1148,6 +1149,21 @@ def build_corpus(
                             },
                         )
                     )
+
+    if defer_dedupe:
+        # A later global sort keeps the same first-wins rule. The caller must
+        # not treat this frame as a finished corpus.
+        report["deferred_dedupe"] = True
+        report["n_before_dedupe"] = len(entries)
+        report["n_out"] = len(entries)
+        report["n_dropped_total"] = (
+            report["drops"]["empty_body"]
+            + report["drops"]["missing_instrument"]
+            + report["drops"]["duplicate_cid"]
+        )
+        frame = pd.DataFrame(entries)
+        frame.attrs["normalization_report"] = report
+        return frame, report
 
     if cid_only:
         # The set comparison only needs entry_cid. Bodies stay in the source

@@ -1168,6 +1168,13 @@ def strip_chrome_lines(text: str) -> str:
         ):
             continue
         if len(stripped) > 400 and _CHROME_INLINE_RE.search(stripped[:200]):
+            # A one-line statute often starts with a site banner. Drop the
+            # banner phrase and keep the rest. Discarding the line deletes
+            # the instrument (American Samoa laws.parquet is one line each).
+            cleaned = _CHROME_INLINE_RE.sub(" ", stripped)
+            cleaned = re.sub(r"[ \t]{2,}", " ", cleaned).strip()
+            if len(cleaned) >= 40:
+                kept.append(cleaned)
             continue
         if learned is not None and len(stripped) <= 400 and learned.match(stripped):
             continue

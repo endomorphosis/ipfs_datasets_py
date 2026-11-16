@@ -14,7 +14,7 @@ import pandas as pd
 from . import LAYOUT_FAMILY, MAX_ROWS_PER_FILE, SCHEMA_VERSION, __version__
 from .catalog import target_repo
 from .cidutil import file_descriptor
-from .parquet_io import write_parquet, write_sharded
+from .parquet_io import write_corpus_shards, write_parquet, write_sharded
 
 ADJ_POINTERS_PER_ROW = 4096
 ADJ_POINTERS_PER_SHARD = 8192
@@ -24,9 +24,44 @@ def _index_df(rows: list[dict[str, Any]]) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def _annotate_vector_descriptors(vec_idx: list[dict[str, Any]], chunk_meta: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    meta_by_cluster = {m["cluster_id"]: m for m in chunk_meta}
+    for row in vec_idx:
+        meta = meta_by_cluster.get(row.get("shard_id"), {})
+        row["centroid"] = meta.get("centroid", [])
+        row["shard_centroid"] = meta.get("shard_centroid", [])
+        row["centroid_min_score"] = meta.get("centroid_min_score", 0.0)
+        row["centroid_shard_count"] = meta.get("centroid_shard_count", 1)
+        row["chunk_in_cluster"] = meta.get("chunk_in_cluster", 0)
+        row["cluster_id"] = meta.get("cluster_id", row.get("shard_id"))
+        row["dimension"] = 384
+        row["model_name"] = "thenlper/gte-small"
+        if meta.get("stub"):
+            row["stub"] = True
+            row["stub_reason"] = meta.get("stub_reason", "")
+    return vec_idx
+
+
+def _install_prewritten_vectors(out: Path, vectors: dict[str, Any]) -> list[dict[str, Any]]:
+    """Copy cache-dir vector shards into the release. The release dir is wiped earlier."""
+    source = Path(vectors["prewritten_dir"])
+    dest = out / "data" / "vectors"
+    if dest.exists():
+        shutil.rmtree(dest)
+    dest.mkdir(parents=True, exist_ok=True)
+    installed: list[dict[str, Any]] = []
+    for row in vectors["vector_index_rows"]:
+        name = Path(row["relative_path"]).name
+        shutil.copy2(source / name, dest / name)
+        copied = dict(row)
+        copied["relative_path"] = f"data/vectors/{name}"
+        installed.append(copied)
+    return _annotate_vector_descriptors(installed, vectors["chunk_meta"])
+
+
 def package_release(
     out: Path,
-    corpus: pd.DataFrame,
+    corpus: pd.DataFrame | Path,
     bm25: dict[str, Any],
     graph: dict[str, Any],
     vectors: dict[str, Any],
@@ -37,6 +72,7 @@ def package_release(
     extra_manifest: dict[str, Any] | None = None,
     wipe: bool = True,
     skip_bm25_graph: bool = False,
+    hub_id: str | None = None,
 ) -> dict[str, Any]:
     if wipe and out.exists():
         shutil.rmtree(out)
@@ -44,14 +80,27 @@ def package_release(
     indexes_dir = out / "indexes"
     indexes_dir.mkdir(parents=True, exist_ok=True)
 
-    corpus_idx = write_sharded(
-        corpus,
-        out / "data" / "corpus",
-        "data/corpus",
-        kind="corpus",
-        key_col="entry_cid",
-        index_col="document_index",
-    )
+    if isinstance(corpus, Path):
+        corpus_idx, corpus_stats = write_corpus_shards(
+            corpus,
+            out / "data" / "corpus",
+            "data/corpus",
+        )
+        n_laws = int(corpus_stats["n_laws"])
+        n_articles = int(corpus_stats["n_articles"])
+        n_rows = int(corpus_stats["n_rows"])
+    else:
+        corpus_idx = write_sharded(
+            corpus,
+            out / "data" / "corpus",
+            "data/corpus",
+            kind="corpus",
+            key_col="entry_cid",
+            index_col="document_index",
+        )
+        n_laws = int((corpus["record_type"] == "law").sum()) if "record_type" in corpus else 0
+        n_articles = int((corpus["record_type"] == "article").sum()) if "record_type" in corpus else 0
+        n_rows = int(len(corpus))
     write_parquet(indexes_dir / "corpus_chunks.parquet", _index_df(corpus_idx))
 
     if skip_bm25_graph:
@@ -144,35 +193,27 @@ def package_release(
         write_parquet(indexes_dir / "graph_incoming_adjacency.parquet", _index_df(in_idx))
         write_parquet(indexes_dir / "graph_outgoing_adjacency.parquet", _index_df(out_idx))
 
-    vectors_df = vectors["vectors"]
-    # Drop null embeddings for stub releases so parquet stays typed; keep rows when present.
-    if "embedding" in vectors_df.columns and vectors_df["embedding"].isna().all():
-        vectors_write = vectors_df.drop(columns=["embedding"])
-        vectors_write["embedding_status"] = "stub_missing"
+    if vectors.get("prewritten_dir"):
+        vec_idx = _install_prewritten_vectors(out, vectors)
+        n_vector_rows = int(vectors["stats"]["n_vectors"])
     else:
-        vectors_write = vectors_df
-    vec_idx = write_sharded(
-        vectors_write,
-        out / "data" / "vectors",
-        "data/vectors",
-        kind="vectors",
-        key_col="entry_cid",
-        index_col="document_index",
-    )
-    meta_by_cluster = {m["cluster_id"]: m for m in vectors["chunk_meta"]}
-    for r in vec_idx:
-        m = meta_by_cluster.get(r["shard_id"], {})
-        r["centroid"] = m.get("centroid", [])
-        r["shard_centroid"] = m.get("shard_centroid", [])
-        r["centroid_min_score"] = m.get("centroid_min_score", 0.0)
-        r["centroid_shard_count"] = m.get("centroid_shard_count", 1)
-        r["chunk_in_cluster"] = m.get("chunk_in_cluster", 0)
-        r["cluster_id"] = m.get("cluster_id", r["shard_id"])
-        r["dimension"] = 384
-        r["model_name"] = "thenlper/gte-small"
-        if m.get("stub"):
-            r["stub"] = True
-            r["stub_reason"] = m.get("stub_reason", "")
+        vectors_df = vectors["vectors"]
+        # Drop null embeddings for stub releases so parquet stays typed; keep rows when present.
+        if "embedding" in vectors_df.columns and vectors_df["embedding"].isna().all():
+            vectors_write = vectors_df.drop(columns=["embedding"])
+            vectors_write["embedding_status"] = "stub_missing"
+        else:
+            vectors_write = vectors_df
+        vec_idx = write_sharded(
+            vectors_write,
+            out / "data" / "vectors",
+            "data/vectors",
+            kind="vectors",
+            key_col="entry_cid",
+            index_col="document_index",
+        )
+        _annotate_vector_descriptors(vec_idx, vectors["chunk_meta"])
+        n_vector_rows = int(len(vectors_df))
     write_parquet(indexes_dir / "vector_chunks.parquet", _index_df(vec_idx))
 
     # Bundle package + scripts into the release
@@ -199,7 +240,8 @@ def package_release(
     shutil.copy2(pkg_src / "normalize.py", out / "normalize.py")
     shutil.copy2(pkg_src / "query.py", out / "query.py")
     shutil.copy2(pkg_src / "build.py", out / "build.py")
-    _write_skill(out, country, hub_id=target_repo(country["slug"]))
+    resolved_hub = hub_id or target_repo(country["slug"])
+    _write_skill(out, country, hub_id=resolved_hub)
 
     reports_dir = out / "reports"
     reports_dir.mkdir(exist_ok=True)
@@ -208,8 +250,6 @@ def package_release(
         (out / "normalization_report.json").write_text(payload, encoding="utf-8")
         (reports_dir / "normalization.json").write_text(payload, encoding="utf-8")
 
-    n_laws = int((corpus["record_type"] == "law").sum()) if "record_type" in corpus else 0
-    n_articles = int((corpus["record_type"] == "article").sum()) if "record_type" in corpus else 0
     counts = {
         "bm25_document_chunks": len(bm25_doc_idx),
         "bm25_documents": int(len(bm25["documents"])),
@@ -218,7 +258,7 @@ def package_release(
         "bm25_postings": int((bm25.get("stats") or {}).get("n_postings") or 0),
         "bm25_terms": int((bm25.get("stats") or {}).get("n_terms") or 0),
         "corpus_chunks": len(corpus_idx),
-        "corpus_rows": int(len(corpus)),
+        "corpus_rows": n_rows,
         "graph_edge_chunks": len(edge_idx),
         "graph_edges": int(len(graph["edges"])),
         "graph_incoming_adjacency_edges": int(len(graph["edges"])),
@@ -230,7 +270,7 @@ def package_release(
         "graph_outgoing_adjacency_rows": int(len(outgoing)) if outgoing is not None else 0,
         "graph_outgoing_adjacency_shards": len(out_idx),
         "vector_chunks": len(vec_idx),
-        "vector_rows": int(len(vectors_df)),
+        "vector_rows": int(n_vector_rows),
         "n_laws": n_laws,
         "n_articles": n_articles,
     }
@@ -252,7 +292,7 @@ def package_release(
             return {"relative_path": f"indexes/{name}", "present": False}
         return file_descriptor(path, f"indexes/{name}")
 
-    hub_id = target_repo(country["slug"])
+    hub_id = resolved_hub
     bm25_stats = bm25.get("stats") if isinstance(bm25.get("stats"), dict) else {}
     graph_stats = graph.get("stats") if isinstance(graph.get("stats"), dict) else {}
     edge_types = graph_stats.get("edge_types") or [
@@ -447,9 +487,14 @@ def _card_languages(normalization_report: dict[str, Any] | None) -> list[str]:
         )
     )
     for raw in ordered:
-        lang = str(raw).strip().lower().replace("_", "-").split("-")[0]
-        if lang and lang not in seen and lang not in {"und", "none", "null"}:
-            seen.append(lang)
+        for part in str(raw).replace(";", ",").split(","):
+            lang = part.strip().lower().replace("_", "-").split("-")[0]
+            if not lang or len(lang) > 3 or lang in {"und", "none", "null"}:
+                continue
+            if lang not in seen:
+                seen.append(lang)
+            if len(seen) >= 8:
+                break
         if len(seen) >= 8:
             break
     return seen

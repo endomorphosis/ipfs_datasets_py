@@ -1,9 +1,10 @@
 """Observational DuckDB catalog for country-IR legal search.
 
-Stores release pins, shard locators, and BM25 term ranges. Document bodies
-and embedding floats are not columns. Quack is not attached: production
-catalog mutation stays behind the DuckLake promotion hold. The file must
-not be the authoritative ``control.duckdb``.
+Stores release pins, shard locators, BM25 term ranges, and the schema of
+every published legal dataset. Document bodies and embedding floats are
+not columns. Quack is not attached: production catalog mutation stays
+behind the DuckLake promotion hold. The file must not be the authoritative
+``control.duckdb``.
 """
 
 from __future__ import annotations
@@ -97,6 +98,41 @@ def assert_legal_search_path(path: str | Path) -> Path:
             "legal search catalog must not use control.duckdb"
         )
     return candidate
+
+
+def ensure_legal_dataset_tables(connection) -> None:
+    """Create the dataset schema tables. They store no document bodies."""
+
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS legal_dataset (
+            hf_repo VARCHAR PRIMARY KEY,
+            corpus_id VARCHAR NOT NULL,
+            layout_profile VARCHAR NOT NULL,
+            coverage VARCHAR NOT NULL,
+            primary_key_field VARCHAR NOT NULL,
+            instrument_kind VARCHAR NOT NULL,
+            selected BOOLEAN NOT NULL,
+            searchable BOOLEAN NOT NULL,
+            text_corpus BOOLEAN NOT NULL,
+            research_only BOOLEAN NOT NULL,
+            authoritative BOOLEAN NOT NULL,
+            ducklake_authoritative BOOLEAN NOT NULL
+        )
+        """
+    )
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS legal_dataset_field (
+            layout_profile VARCHAR NOT NULL,
+            family VARCHAR NOT NULL,
+            field_name VARCHAR NOT NULL,
+            logical_type VARCHAR NOT NULL,
+            field_role VARCHAR NOT NULL,
+            PRIMARY KEY (layout_profile, family, field_name)
+        )
+        """
+    )
 
 
 def open_legal_search_catalog(path: str | Path):
@@ -209,6 +245,7 @@ def open_legal_search_catalog(path: str | Path):
         )
         """
     )
+    ensure_legal_dataset_tables(connection)
     return connection
 
 

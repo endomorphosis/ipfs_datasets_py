@@ -18,7 +18,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from .sparse import export_sparse_graphrag
+from .sparse import export_sparse_graphrag, export_sparse_graphrag_large
 from .mem import MemAbort, checkpoint, log_mem
 from .spill import spill_dir_for, spill_pickle
 from .package import package_from_spill, package_release
@@ -34,15 +34,19 @@ from .incremental import (
     save_embedding_cache,
 )
 from .normalize import build_corpus, load_source
+from .stream_corpus import load_corpus_frame, oversized_local_laws, source_meta_from_pack, stream_laws_corpus
 from .auth import configure_hf
 from .vectors import (
     DIMENSION,
     MODEL_NAME,
+    STREAM_LAYOUT_MIN_ROWS,
     assemble_embeddings,
     embeddings_by_cid,
     layout_stub_vectors,
     layout_vectors,
+    layout_vectors_streaming,
     select_device,
+    try_load_streamed_layout,
 )
 
 ROOT = Path(os.environ.get("COUNTRY_LAWS_IR_ROOT", str(Path.home() / ".ipfs_datasets" / "country-laws-ir")))
@@ -113,6 +117,26 @@ def _encode_vectors(
         return vectors, "skip_vectors", {"status": "stub", "reason": "skip_vectors"}
 
     cid_cache_path = CACHE / "embeddings" / f"{country_slug}_by_cid.parquet"
+    shard_dir = CACHE / "embeddings" / f"{country_slug}_vector_shards"
+    stream_layout = len(corpus) >= STREAM_LAYOUT_MIN_ROWS
+    if stream_layout:
+        reused = try_load_streamed_layout(corpus, shard_dir)
+        if reused is not None:
+            n_docs = len(corpus)
+            reused["stats"]["n_encoded"] = n_docs
+            _log(
+                f"reused vector shards {shard_dir} n={reused['stats']['n_vectors']} "
+                f"shards={reused['stats']['shard_count']}"
+            )
+            return reused, None, {
+                "n_docs": n_docs,
+                "n_reused": 0,
+                "n_encoded": n_docs,
+                "n_missing": 0,
+                "status": "checkpoint",
+                "model_name": MODEL_NAME,
+                "dimension": DIMENSION,
+            }
     prior_by_cid = {}
     if plan.reuse_embeddings:
         prior_by_cid = merge_embedding_maps(
@@ -137,9 +161,14 @@ def _encode_vectors(
             and not int(vector_report.get("n_reused") or 0)
         ):
             vector_blocker = vector_report.get("reason") or vector_report.get("status")
+            if stream_layout:
+                raise RuntimeError(f"vector embedding incomplete: {vector_blocker}")
             vectors = layout_stub_vectors(corpus, reason=str(vector_blocker))
             return vectors, vector_blocker, vector_report
-        vectors = layout_vectors(corpus, embeddings)
+        if stream_layout:
+            vectors = layout_vectors_streaming(corpus, embeddings, shard_dir, log=_log)
+        else:
+            vectors = layout_vectors(corpus, embeddings)
         n_reused = int(vector_report.get("n_reused") or 0)
         n_encoded = int(vector_report.get("n_encoded") or 0)
         n_missing = int(vector_report.get("n_missing") or 0)
@@ -152,24 +181,73 @@ def _encode_vectors(
         if not complete:
             vectors["stats"]["status"] = "partial"
             vectors["stats"]["n_missing"] = n_missing
-        save_embedding_cache(
-            cid_cache_path,
-            merge_embedding_maps(prior_by_cid, embeddings_by_cid(corpus, embeddings)),
-            model_name=MODEL_NAME,
-            dimension=DIMENSION,
-        )
+        # The CID cache stores every vector as a Python float list. That is a
+        # second copy of the matrix and is what killed the 3.3M Poland layout.
+        if not stream_layout:
+            save_embedding_cache(
+                cid_cache_path,
+                merge_embedding_maps(prior_by_cid, embeddings_by_cid(corpus, embeddings)),
+                model_name=MODEL_NAME,
+                dimension=DIMENSION,
+            )
         del embeddings
         gc.collect()
         _log(
             f"vectors n={vectors['stats']['n_vectors']} shards={vectors['stats']['shard_count']} "
-            f"reused={vector_report.get('n_reused')} encoded={vector_report.get('n_encoded')}"
+            f"reused={vector_report.get('n_reused')} encoded={vector_report.get('n_encoded')} "
+            f"status={vector_report.get('status')}"
         )
         return vectors, None, vector_report
+    except (MemoryError, MemAbort):
+        raise
     except Exception as exc:
+        if stream_layout:
+            raise
         vector_blocker = f"embedding_failed: {exc}"
         _log(f"vector embedding failed; writing stub ({exc})")
         vectors = layout_stub_vectors(corpus, reason=vector_blocker)
         return vectors, vector_blocker, {"status": "failed", "reason": str(exc)}
+
+
+def _graph_release_ready(out: Path) -> bool:
+    """True when a previous run already installed BM25 and the streamed graph."""
+    required = (
+        out / "data" / "bm25" / "documents",
+        out / "data" / "bm25" / "postings",
+        out / "data" / "graph" / "nodes",
+        out / "data" / "graph" / "edges",
+        out / "data" / "graph" / "adjacency" / "in",
+        out / "data" / "graph" / "adjacency" / "out",
+    )
+    return all(path.is_dir() and any(path.glob("part-*.parquet")) for path in required)
+
+
+def _parquet_rows(directory: Path) -> int:
+    import pyarrow.parquet as pq
+
+    total = 0
+    for path in directory.glob("part-*.parquet"):
+        total += pq.ParquetFile(path).metadata.num_rows
+    return total
+
+
+def _sparse_report_from_release(out: Path, slug: str) -> dict[str, Any]:
+    done_path = CACHE / "bm25_layout" / slug / "DONE.json"
+    fragment = json.loads(done_path.read_text(encoding="utf-8"))["fragment"]
+    return {
+        "engine": "hf_graphrag",
+        "schema_version": "country-laws-ir-graphrag/v1",
+        "bm25": fragment,
+        "graph": {
+            "node_count": _parquet_rows(out / "data" / "graph" / "nodes"),
+            "edge_count": _parquet_rows(out / "data" / "graph" / "edges"),
+            "streaming": True,
+            "adjacency": "data/graph/adjacency/{out,in}/*.parquet",
+        },
+        "sqlite": False,
+        "query_engine": "duckdb",
+        "reused_release": True,
+    }
 
 
 def build_country(
@@ -184,6 +262,7 @@ def build_country(
     prior_dir: Path | None = None,
     fetch_hub_prior_ir: bool = True,
     renormalize: bool = False,
+    hub_repo: str | None = None,
 ) -> dict[str, Any]:
     from .normalize import preflight_local_shard_source
 
@@ -191,6 +270,9 @@ def build_country(
     country = get_country(source)
     if not country.get("indexable", True):
         raise RuntimeError(f"{country['repo']} is excluded: {country.get('skip_reason')}")
+    from .upload import resolve_publish_repo
+
+    publish_repo = resolve_publish_repo(hub_repo) if hub_repo else target_repo(country["slug"])
     repo = country["repo"]
     out = Path(out) if out else RELEASES / f"ipfs_{country['slug']}_laws_ir"
     local_dir = country.get("local_source_dir") or (
@@ -203,7 +285,12 @@ def build_country(
     configure_hf()
     CACHE.mkdir(parents=True, exist_ok=True)
     REPORTS.mkdir(parents=True, exist_ok=True)
-    laws, articles, source_meta = load_source(local_dir or repo, CACHE)
+    large_laws = oversized_local_laws(local_dir)
+    if large_laws is not None:
+        source_meta = source_meta_from_pack(Path(local_dir), large_laws)
+        laws = articles = None
+    else:
+        laws, articles, source_meta = load_source(local_dir or repo, CACHE)
     _log(
         f"source loaded laws={source_meta['n_laws_source']} "
         f"articles={source_meta['n_articles_source']} rev={source_meta['source_revision']}"
@@ -230,7 +317,7 @@ def build_country(
             "source": repo,
             "source_revision": source_meta["source_revision"],
             "out": str(out),
-            "target_hub_id": target_repo(country["slug"]),
+            "target_hub_id": publish_repo,
             "skipped": True,
             "incremental": plan.to_dict(),
             "normalization": {"n_out": plan.delta.current_count if plan.delta else 0},
@@ -241,16 +328,60 @@ def build_country(
         record_progress({"event": "skipped_unchanged", **{k: v for k, v in result.items() if k != "normalization"}})
         return result
 
-    corpus, norm_report = build_corpus(laws, articles, source_meta)
+    reuse_slugs = {
+        part.strip()
+        for part in os.environ.get("IR_REUSE_CORPUS", "").split(",")
+        if part.strip()
+    }
+    corpus_ckpt = CACHE / f"{country['slug']}_corpus.parquet"
     report_path = REPORTS / f"{country['slug']}_normalization.json"
-    report_path.write_text(json.dumps(norm_report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    (REPORTS / "normalization.json").write_text(
-        json.dumps(norm_report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    reused_corpus = (
+        country["slug"] in reuse_slugs
+        and corpus_ckpt.is_file()
+        and report_path.is_file()
     )
-    _log(
-        f"normalized docs={len(corpus)} unit={norm_report['unit']} "
-        f"dropped={norm_report['n_dropped_total']} report={report_path}"
-    )
+    streamed_corpus = False
+    if reused_corpus:
+        import gc
+
+        del laws, articles
+        gc.collect()
+        corpus = load_corpus_frame(corpus_ckpt)
+        norm_report = json.loads(report_path.read_text(encoding="utf-8"))
+        _log(
+            f"reused normalized corpus {corpus_ckpt} docs={len(corpus)} "
+            f"columns={','.join(map(str, corpus.columns))}"
+        )
+    elif large_laws is not None:
+        import gc
+
+        _log(f"streaming normalize {large_laws} rows={source_meta['n_laws_source']}")
+        corpus, norm_report = stream_laws_corpus(large_laws, source_meta, corpus_ckpt, log=_log)
+        streamed_corpus = True
+        del laws, articles
+        gc.collect()
+        report_path.write_text(json.dumps(norm_report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        (REPORTS / "normalization.json").write_text(
+            json.dumps(norm_report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+        )
+        _log(
+            f"normalized docs={norm_report['n_out']} unit={norm_report['unit']} "
+            f"dropped={norm_report['n_dropped_total']} report={report_path}"
+        )
+    else:
+        corpus, norm_report = build_corpus(laws, articles, source_meta)
+        import gc
+
+        del laws, articles
+        gc.collect()
+        report_path.write_text(json.dumps(norm_report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        (REPORTS / "normalization.json").write_text(
+            json.dumps(norm_report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+        )
+        _log(
+            f"normalized docs={len(corpus)} unit={norm_report['unit']} "
+            f"dropped={norm_report['n_dropped_total']} report={report_path}"
+        )
     if corpus.empty:
         raise RuntimeError("Normalized corpus is empty; refusing to package")
     verdict = (norm_report or {}).get("verification") or {}
@@ -290,7 +421,7 @@ def build_country(
             "source": repo,
             "source_revision": source_meta["source_revision"],
             "out": str(out),
-            "target_hub_id": target_repo(country["slug"]),
+            "target_hub_id": publish_repo,
             "skipped": True,
             "incremental": plan.to_dict(),
             "normalization": {
@@ -311,8 +442,18 @@ def build_country(
     n_docs = len(corpus)
     spill = spill_dir_for(country["slug"], CACHE)
     spill.mkdir(parents=True, exist_ok=True)
-    corpus_ckpt = CACHE / f"{country['slug']}_corpus.parquet"
-    corpus.to_parquet(corpus_ckpt, index=False)
+    if not reused_corpus and not streamed_corpus:
+        from .parquet_io import write_dataframe_chunked
+
+        write_dataframe_chunked(corpus, corpus_ckpt)
+    shard_dir = CACHE / "embeddings" / f"{country['slug']}_vector_shards"
+    if "body" in corpus.columns:
+        from .vectors import try_load_streamed_layout
+
+        if try_load_streamed_layout(corpus, shard_dir) is not None:
+            corpus.drop(columns=["body"], inplace=True)
+            gc.collect()
+            _log("dropped in-memory body column; vector shards match this corpus")
     checkpoint("after_normalize", log=_log)
 
     vectors, vector_blocker, vector_report = _encode_vectors(
@@ -330,14 +471,35 @@ def build_country(
     extra_manifest = {"incremental": {**plan.to_dict(), "vectors": vector_report}}
 
     neighbor_via = "hf_graphrag"
-    if out.exists():
-        import shutil as _shutil
+    if n_docs >= STREAM_LAYOUT_MIN_ROWS and _graph_release_ready(out):
+        _log(f"reusing streamed graph already in {out}")
+        sparse_report = _sparse_report_from_release(out, country["slug"])
+    else:
+        if out.exists():
+            import shutil as _shutil
 
-        _shutil.rmtree(out)
-    out.mkdir(parents=True, exist_ok=True)
-    _log(f"sparse GraphRAG via hf_graphrag.bm25/graph parquet builders n={n_docs}")
-    sparse_report = export_sparse_graphrag(corpus, out)
+            _shutil.rmtree(out)
+        out.mkdir(parents=True, exist_ok=True)
+        if n_docs >= STREAM_LAYOUT_MIN_ROWS:
+            _log(f"sparse GraphRAG large-corpus path n={n_docs}")
+            sparse_report, _packaged = export_sparse_graphrag_large(
+                corpus,
+                out,
+                cache_dir=CACHE / "bm25_layout" / country["slug"],
+                corpus_parquet=corpus_ckpt,
+                log=_log,
+            )
+            del _packaged
+        else:
+            _log(f"sparse GraphRAG via hf_graphrag.bm25/graph parquet builders n={n_docs}")
+            sparse_report = export_sparse_graphrag(corpus, out)
     extra_manifest["sparse"] = sparse_report
+    if n_docs >= STREAM_LAYOUT_MIN_ROWS:
+        del corpus
+        gc.collect()
+        package_corpus: pd.DataFrame | Path = corpus_ckpt
+    else:
+        package_corpus = corpus
     with open(spill / "vectors.pkl", "rb") as _vf:
         import pickle as _pickle
 
@@ -358,7 +520,7 @@ def build_country(
     code_root = Path(__file__).resolve().parent.parent
     manifest = package_release(
         out,
-        corpus,
+        package_corpus,
         dummy_bm25,
         dummy_graph,
         vectors,
@@ -369,8 +531,11 @@ def build_country(
         extra_manifest=extra_manifest,
         wipe=False,
         skip_bm25_graph=True,
+        hub_id=publish_repo,
     )
-    del corpus, vectors
+    del vectors
+    if not isinstance(package_corpus, Path):
+        del package_corpus
     gc.collect()
     _log(f"packaged {out}")
     result = {
@@ -378,7 +543,7 @@ def build_country(
         "source": repo,
         "source_revision": source_meta["source_revision"],
         "out": str(out),
-        "target_hub_id": target_repo(country["slug"]),
+        "target_hub_id": publish_repo,
         "counts": manifest["counts"],
         "normalization": norm_report,
         "vector_blocker": vector_blocker,
@@ -388,9 +553,11 @@ def build_country(
         "incremental": extra_manifest["incremental"],
     }
     if upload:
-        from .upload import upload_release
+        from .upload import refuse_incomplete_index, upload_release
 
-        hub = upload_release(out, target_repo(country["slug"]))
+        repo_id = publish_repo
+        refuse_incomplete_index(repo_id, vector_blocker)
+        hub = upload_release(out, repo_id)
         result["hub"] = hub
         _log(f"uploaded {hub['url']} rev={hub['revision']}")
         record_progress({"event": "uploaded", **result})

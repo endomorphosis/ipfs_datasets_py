@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from pathlib import Path
 from typing import Any
 
 import pandas as pd
@@ -348,3 +349,235 @@ def _adjacency(edges: pd.DataFrame, node_type: dict[str, str]) -> tuple[pd.DataF
         return pd.DataFrame(rows).sort_values(["node_cid", "page_index"]).reset_index(drop=True)
 
     return pages(in_map, "incoming"), pages(out_map, "outgoing")
+
+
+_STREAM_FIELDS = (
+    "entry_cid",
+    "record_type",
+    "instrument_id",
+    "instrument_title",
+    "law_cid",
+    "article_number",
+    "title",
+    "source_id",
+    "jurisdiction",
+    "language",
+    "source_type",
+    "law_status",
+    "eli",
+    "official_identifier",
+    "identifier",
+)
+
+
+def _cell(row: dict[str, Any], key: str) -> str:
+    value = row.get(key, "")
+    if value is None:
+        return ""
+    if isinstance(value, float) and value != value:
+        return ""
+    return str(value)
+
+
+def iter_corpus_rows(path: Path):
+    """Yield one corpus row at a time from a parquet file."""
+    import pyarrow.parquet as pq
+
+    parquet = pq.ParquetFile(path)
+    names = set(parquet.schema_arrow.names)
+    columns = [name for name in _STREAM_FIELDS if name in names]
+    for batch in parquet.iter_batches(batch_size=2048, columns=columns):
+        payload = batch.to_pydict()
+        width = batch.num_rows
+        for index in range(width):
+            yield {name: payload[name][index] for name in columns}
+
+
+def _law_node(row: dict[str, Any]) -> dict[str, Any] | None:
+    law_cid = _cell(row, "law_cid")
+    if not law_cid:
+        return None
+    instrument_id = _cell(row, "instrument_id")
+    instrument_title = _cell(row, "instrument_title")
+    return {
+        "node_cid": law_cid,
+        "node_type": "law",
+        "label": _graph_label(instrument_title or instrument_id, instrument_id or law_cid),
+        "entry_cid": None,
+    }
+
+
+def _entry_node(row: dict[str, Any]) -> dict[str, Any] | None:
+    entry_cid = _cell(row, "entry_cid")
+    if not entry_cid:
+        return None
+    record_type = _cell(row, "record_type")
+    if record_type == "law":
+        node_type = "law_entry"
+    elif record_type == "notice":
+        node_type = "notice"
+    else:
+        node_type = "article"
+    title = _cell(row, "title") or _cell(row, "instrument_title") or _cell(row, "source_id")
+    source_id = _cell(row, "source_id")
+    return {
+        "node_cid": entry_cid,
+        "node_type": node_type,
+        "label": _graph_label(title or source_id, source_id or entry_cid),
+        "entry_cid": entry_cid,
+    }
+
+
+def _facet_nodes(row: dict[str, Any]) -> list[tuple[str, str, str, str, dict[str, Any]]]:
+    """Return (node_cid, edge_type, method, value, props) for facets on one row."""
+    found: list[tuple[str, str, str, str, dict[str, Any]]] = []
+    for kind, edge_type, column in FACET_FIELDS:
+        value = _cell(row, column).strip()
+        if not value:
+            continue
+        found.append(
+            (
+                _facet_cid(kind, value),
+                edge_type,
+                "facet",
+                value,
+                {"facet": kind, "value": value},
+            )
+        )
+    eli = _cell(row, "eli").strip()
+    if eli:
+        found.append(
+            (
+                _facet_cid("eli", eli),
+                "IDENTIFIED_BY_ELI",
+                "identifier",
+                eli,
+                {"eli": eli},
+            )
+        )
+    ident = (_cell(row, "official_identifier") or _cell(row, "identifier")).strip()
+    if ident and ident != eli:
+        found.append(
+            (
+                _facet_cid("identifier", ident),
+                "IDENTIFIED_BY",
+                "identifier",
+                ident,
+                {"identifier": ident},
+            )
+        )
+    return found
+
+
+def iter_structural_nodes(path: Path):
+    """Yield the same nodes ``build_graph`` keeps, without holding the graph.
+
+    Law identity nodes are emitted first, matching ``drop_duplicates`` on the
+    in-memory path. A later entry or facet with the same cid is skipped.
+    """
+    emitted: set[str] = set()
+    for row in iter_corpus_rows(path):
+        node = _law_node(row)
+        if node is None or node["node_cid"] in emitted:
+            continue
+        emitted.add(node["node_cid"])
+        yield node
+    for row in iter_corpus_rows(path):
+        node = _entry_node(row)
+        if node is not None and node["node_cid"] not in emitted:
+            emitted.add(node["node_cid"])
+            yield node
+        for node_cid, _edge_type, _method, value, props in _facet_nodes(row):
+            if node_cid in emitted:
+                continue
+            emitted.add(node_cid)
+            kind = str(props.get("facet") or props.get("kind") or "facet")
+            if "facet" in props:
+                label = _graph_label(f"{kind}:{value}", kind)
+                node_type = f"facet_{kind}"
+            elif "eli" in props:
+                label = _graph_label(f"eli:{value}", "eli")
+                node_type = "facet_eli"
+            else:
+                label = _graph_label(f"identifier:{value}", "identifier")
+                node_type = "facet_identifier"
+            yield {
+                "node_cid": node_cid,
+                "node_type": node_type,
+                "label": label,
+                "entry_cid": None,
+            }
+
+
+def _entry_by_instrument(path: Path) -> dict[str, str]:
+    found: dict[str, str] = {}
+    for row in iter_corpus_rows(path):
+        if _cell(row, "record_type") != "law":
+            continue
+        instrument_id = _cell(row, "instrument_id")
+        entry_cid = _cell(row, "entry_cid")
+        if instrument_id and entry_cid:
+            found.setdefault(instrument_id, entry_cid)
+    return found
+
+
+def iter_structural_edges(path: Path):
+    """Yield structural edges. Neighbor edges stay empty, as in the IR export."""
+    parents = _entry_by_instrument(path)
+    seen: set[str] = set()
+    for row in iter_corpus_rows(path):
+        source = _cell(row, "entry_cid")
+        if not source:
+            continue
+        record_type = _cell(row, "record_type")
+        law_cid = _cell(row, "law_cid")
+        instrument_id = _cell(row, "instrument_id")
+        for node_cid, edge_type, method, _value, props in _facet_nodes(row):
+            edge = _edge(source, edge_type, node_cid, method, 1.0, props)
+            cid = str(edge["edge_cid"])
+            if cid in seen:
+                continue
+            seen.add(cid)
+            yield _published_edge(edge)
+        if record_type in {"article", "section"}:
+            parent = parents.get(instrument_id) or law_cid
+            if parent and parent != source:
+                edge = _edge(
+                    source,
+                    "ARTICLE_OF",
+                    parent,
+                    "structural",
+                    1.0,
+                    {
+                        "instrument_id": instrument_id,
+                        "article_number": _cell(row, "article_number") or None,
+                    },
+                )
+                cid = str(edge["edge_cid"])
+                if cid not in seen:
+                    seen.add(cid)
+                    yield _published_edge(edge)
+        elif law_cid and source != law_cid:
+            edge = _edge(
+                source,
+                "HAS_INSTRUMENT",
+                law_cid,
+                "structural",
+                1.0,
+                {"instrument_id": instrument_id},
+            )
+            cid = str(edge["edge_cid"])
+            if cid not in seen:
+                seen.add(cid)
+                yield _published_edge(edge)
+
+
+def _published_edge(edge: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "edge_cid": edge["edge_cid"],
+        "edge_type": edge["edge_type"],
+        "source_node_cid": edge["source_cid"],
+        "target_node_cid": edge["target_cid"],
+        "retrieval_method": edge["retrieval_method"],
+        "score": edge["score"],
+    }

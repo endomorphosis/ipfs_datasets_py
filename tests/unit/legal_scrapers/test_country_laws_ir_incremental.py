@@ -3985,6 +3985,22 @@ def test_strip_chrome_lines_stays_fast_on_many_short_lines() -> None:
     assert "Article 1 The court applies this Act throughout the territory." in cleaned
 
 
+def test_strip_chrome_lines_keeps_a_long_statute_that_starts_with_a_banner() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.country_laws_ir.structure import (
+        strip_chrome_lines,
+    )
+
+    statute = (
+        "All rights reserved. Click here. "
+        + ("Section 1. The territory adopts this code for public use. " * 30)
+    )
+    cleaned = strip_chrome_lines(statute)
+    assert "All rights reserved" not in cleaned
+    assert "Click here" not in cleaned
+    assert "Section 1. The territory adopts this code for public use." in cleaned
+    assert len(cleaned) >= 40
+
+
 def test_lexicon_article_tokens_round_trip_split() -> None:
     from ipfs_datasets_py.processors.legal_scrapers.country_laws_ir.profiles import HEADING_LEXICON
     from ipfs_datasets_py.processors.legal_scrapers.country_laws_ir.structure import (
@@ -4842,6 +4858,32 @@ def test_upload_rejects_protected_justicedao_repos(tmp_path: Path) -> None:
     (tmp_path / "manifest.json").write_text("{}", encoding="utf-8")
     with pytest.raises(UploadError, match="protected"):
         upload_release(tmp_path, "justicedao/ipfs_state_laws")
+
+
+def test_resolve_publish_repo_stays_on_justicedao() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.country_laws_ir.upload import (
+        UploadError,
+        resolve_publish_repo,
+    )
+
+    assert resolve_publish_repo("justicedao/ipfs_us_cfr_ir") == "justicedao/ipfs_us_cfr_ir"
+    with pytest.raises(UploadError):
+        resolve_publish_repo("endomorphosis/ipfs_us_cfr_ir")
+    with pytest.raises(UploadError):
+        resolve_publish_repo("justicedao/ipfs_state_laws")
+    with pytest.raises(UploadError):
+        resolve_publish_repo("justicedao/ipfs_federal_register")
+
+
+def test_upload_refuses_a_stub_vector_pack() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.country_laws_ir.upload import (
+        UploadError,
+        refuse_incomplete_index,
+    )
+
+    with pytest.raises(UploadError, match="complete index"):
+        refuse_incomplete_index("justicedao/ipfs_tokelau_laws_ir", "skip_vectors")
+    refuse_incomplete_index("justicedao/ipfs_tokelau_laws_ir", None)
 
 
 def test_upload_rejects_non_justicedao_repo(tmp_path: Path) -> None:

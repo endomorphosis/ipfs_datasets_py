@@ -24,7 +24,9 @@ def main(argv: list[str] | None = None) -> int:
     p_build.add_argument("--neighbor-k", type=int, default=8)
     p_build.add_argument("--skip-vectors", action="store_true")
     p_build.add_argument("--upload", action="store_true",
-                         help="Publish the packaged release to justicedao/ipfs_<slug>_laws_ir (requires HF_TOKEN)")
+                         help="Publish the packaged release to justicedao (requires HF_TOKEN)")
+    p_build.add_argument("--hub-repo", default=None,
+                         help="justicedao dataset id to publish. Default is justicedao/ipfs_<slug>_laws_ir")
     p_build.add_argument("--mode", default="auto", choices=["auto", "full", "delta"],
                          help="auto skips unchanged Hub revisions and reuses embeddings by entry_cid")
     p_build.add_argument("--force", action="store_true", help="Ignore source fingerprint skip and reuse caches")
@@ -134,6 +136,7 @@ def main(argv: list[str] | None = None) -> int:
             mode=args.mode,
             force=args.force,
             prior_dir=Path(args.prior_dir) if args.prior_dir else None,
+            hub_repo=args.hub_repo,
         )
         print(json.dumps({k: result[k] for k in result if k != "normalization"}, indent=2, default=str))
         print(json.dumps({"normalization": result["normalization"]}, indent=2, default=str))

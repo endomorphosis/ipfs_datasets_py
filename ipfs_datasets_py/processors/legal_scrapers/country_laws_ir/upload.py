@@ -47,6 +47,36 @@ class UploadError(RuntimeError):
     """Raised when a JusticeDAO upload cannot proceed."""
 
 
+_PROTECTED_REPOS = frozenset({
+    "justicedao/ipfs_state_laws",
+    "justicedao/ipfs_federal_register",
+})
+
+
+def resolve_publish_repo(repo_id: str) -> str:
+    """Accept only a justicedao dataset id, and never a protected source repo."""
+
+    repo = str(repo_id or "").strip().strip("/")
+    if not repo.startswith(f"{TARGET_ORG}/") or repo.endswith("/") or repo.count("/") != 1:
+        raise UploadError(
+            f"country-laws-ir publishes only to {TARGET_ORG}/*; got {repo_id!r}"
+        )
+    if repo in _PROTECTED_REPOS:
+        raise UploadError(
+            f"{repo} is a protected JusticeDAO repository; publish the index as a different repo"
+        )
+    return repo
+
+
+def refuse_incomplete_index(repo_id: str, vector_blocker: str | None) -> None:
+    """Do not publish a stub vector pack as a finished index."""
+
+    if vector_blocker:
+        raise UploadError(
+            f"refusing to publish {repo_id}: vectors are not a complete index ({vector_blocker})"
+        )
+
+
 def ensure_dataset_card(local_dir: Path) -> Path:
     """Write a YAML dataset card if README.md is missing or is a Hub stub."""
     from .package import _write_readme
