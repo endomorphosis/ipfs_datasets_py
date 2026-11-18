@@ -4,7 +4,93 @@
     "historical_metadata_home": "history/pre-consolidation.zip",
     "original_root_properties_preserved_in_archive": 244,
     "original_statuses_and_dependencies_preserved": true,
-    "whole_ordered_tasks_preserved": true
+    "whole_ordered_tasks_preserved": true,
+    "historical_source_variant_20261118": {
+      "classification": "historical_Source_variant_software_qualification",
+      "scope": "Captured Source variants only. These observations do not qualify the merged publication tree or current-main runtime; cohorts remain separate and their case counts are not added.",
+      "Source_heads_at_capture": {
+        "A": "81b5e11f3c6063486a7cadc6c3d4c6ea50e85bb2",
+        "R": "3f1691d59cc0a310750c0b441b51d3528b17eb85"
+      },
+      "snapshot_manifest": {
+        "name": "manifest-v2.json",
+        "bytes": 5749886,
+        "sha256": "b11530c43794ddf8a24b97e9a723f9f99045c2a00bfb910db0ba903a5015db26",
+        "Root_verification_locator_prefix": "5e860b"
+      },
+      "captured_guide_sha256": {
+        "BACKLOG.json": "49f61ad74b78195f2b00ee14b4974acd6b6dbe873b9fe904d10ea88238cad78e",
+        "HANDOFF.md": "9ea752a889fdd66e1265af3f74cae16af5ee3037d8505921139c216e4e9d0033",
+        "TRAINING_HISTORY.md": "92456ffdbd8170c854b521e2d672d9370071f0569e3822e9c8359b82aaf21b99",
+        "work_catalog.json": "48e78a13890bece85b2529dabdac90471c224364bc1e1301f7e9d8f364fb9224"
+      },
+      "cohorts": {
+        "V19": {
+          "scope": "selected fictional-fixture Source software cohort",
+          "passes": 25,
+          "failures": 0,
+          "errors": 0,
+          "skips": 0,
+          "consumer_sha256": "90ebf16f585c20e90fedbfd8c2356e770b779708093a58d1753afce557e5f1bf",
+          "owning_test_sha256": "2e7ec15354ec601df3f3adeb570ba377fd9fd689c2fd8200dc8c3a9f81c87424"
+        },
+        "R158": {
+          "scope": "captured complete release owning-file Source software cohort",
+          "passes": 158,
+          "failures": 0,
+          "errors": 0,
+          "skips": 0,
+          "functions": 58,
+          "stable_Source_identities": 53,
+          "Root_receipt_prefix": "04f05c",
+          "coordinator_sha256_prefix": "09e2fe80",
+          "contracts_sha256_prefix": "0279ad9f",
+          "test_sha256_prefix": "f0243064"
+        },
+        "pre_repair_A6": {
+          "scope": "historical pre-authentication callback counterexamples",
+          "passes": 2,
+          "failures": 4,
+          "Root_receipt_prefix": "e860c5"
+        },
+        "first_A70": {
+          "scope": "historical fixture-cleanup failure epoch",
+          "passes": 67,
+          "failures": 3,
+          "errors": 0,
+          "skips": 0,
+          "Root_receipt_prefix": "1c2d8a"
+        },
+        "corrected_A70": {
+          "scope": "captured focused Source software cohort after test-only LIFO cleanup correction",
+          "passes": 70,
+          "cases": 70,
+          "functions": 7,
+          "stable_Source_and_evidence_identities": 147,
+          "Root_receipt_prefix": "69ca2b",
+          "test_sha256_prefix": "40807119",
+          "product_code_changed_by_test_correction": false
+        },
+        "A420": {
+          "scope": "captured complete owning Source software cohort",
+          "passes": 420,
+          "failures": 0,
+          "errors": 0,
+          "skips": 0,
+          "functions": 89,
+          "stable_Source_and_evidence_identities": 147,
+          "Root_receipt_prefix": "49083c",
+          "owner_sha256_prefix": "34247582",
+          "worker_sha256_prefix": "61255904",
+          "hook_sha256_prefix": "7bdd783b",
+          "test_sha256_prefix": "40807119"
+        }
+      },
+      "receipt_navigation": "HANDOFF.md: Historical Source variant software evidence, 2026-11-18; original immutable receipt locators are retained there.",
+      "merged_main_or_runtime_qualification": false,
+      "actual_Native_model_convergence_statutory_Hub_legal_corpus_release_authority": false,
+      "existing_Main_task_status_frontier_acceptance_and_catalog_records_changed": false
+    }
   },
   "programme_goal_hierarchy": {
     "canonical_plan": "ipfs_datasets_py/logic/autoformal/docs/HANDOFF.md#whole-us-code-goal-and-supervised-delivery",

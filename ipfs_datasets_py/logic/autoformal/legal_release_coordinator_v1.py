@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import sys as _sys
+import types as _types
 from pathlib import Path
 
 
@@ -164,7 +166,16 @@ _CLOSURE_REPOSITORIES = (
 )
 
 
-def _validate_uscode_release_byte_closure(request_raw: bytes, *, expected_request_sha256: str, reviewed_version: int) -> dict:
+# Explicit direct-packet domain; the established chunk-index V3 domain is unchanged.
+CLOSURE_PROFILE_V3_DIRECT = "reviewed-norm-v3-physical-three-cache-direct-packet-replay/v1"
+_BYTE_PROFILE_V3_DIRECT = "reviewed-norm-v3-local-direct-byte-replay/v1"
+MAX_CLOSURE_REQUEST_BYTES_V3 = 64 * 1024**2
+MAX_CLOSURE_NATIVE_PACKET_BYTES_V3 = 48 * 1024**2
+MAX_CLOSURE_ARTIFACT_TOTAL_BYTES_V3 = 48 * 1024**2
+
+
+def _validate_uscode_release_byte_closure(request_raw: bytes, *, expected_request_sha256: str, reviewed_version: int, _captured_native_context=None,
+        _native_transport="chunk-index/v1") -> dict:
     """Replay exact local package, source/IR/graph/dependency/Lean-text custody.
 
     The request uses the existing bounded plain-value replay codec, including
@@ -180,10 +191,17 @@ def _validate_uscode_release_byte_closure(request_raw: bytes, *, expected_reques
     from . import legal_corpus_shared_lake as shared
     from . import legal_graph_dependencies as dependencies
     _need(type(reviewed_version) is int and reviewed_version in (1, 3), "closed reviewed byte version required")
+    _need(type(_native_transport) is str and _native_transport in ("chunk-index/v1", "direct-packet/v1"),
+          "explicit supported native transport required")
+    direct = _native_transport == "direct-packet/v1"
+    _need(not direct or reviewed_version == 3, "direct packet requires its explicit V3 domain")
+    if direct:
+        _release_direct_v3_policy()
     if reviewed_version == 3:
         _release_v3_policy()
         from . import legal_reviewed_norm_admission_v3 as admissions
-        request_schema, report_schema, profile = _BYTE_REQUEST_SCHEMA_V3, _BYTE_SCHEMA_V3, _BYTE_PROFILE_V3
+        request_schema, report_schema = _BYTE_REQUEST_SCHEMA_V3, _BYTE_SCHEMA_V3
+        profile = _BYTE_PROFILE_V3_DIRECT if direct else _BYTE_PROFILE_V3
         admission_validator = admissions.validate_reviewed_norm_admission_v3
         graph_validator = graphs.validate_reviewed_norm_graph_v3
         preparation_validator = native.validate_reviewed_norm_preservation_native_v3
@@ -200,6 +218,8 @@ def _validate_uscode_release_byte_closure(request_raw: bytes, *, expected_reques
     def version_fence():
         if reviewed_version == 3:
             _release_v3_policy()
+            if direct:
+                _release_direct_v3_policy()
             current = (admissions.validate_reviewed_norm_admission_v3, graphs.validate_reviewed_norm_graph_v3,
                 native.validate_reviewed_norm_preservation_native_v3, native.validate_reviewed_norm_preservation_native_receipt_v3)
             _release_callback_fence_v3(current, callback_states)
@@ -208,8 +228,10 @@ def _validate_uscode_release_byte_closure(request_raw: bytes, *, expected_reques
     from ...processors.legal_data.uscode_release_schema import require_immutable_revision
 
     contracts.require_sha256(expected_request_sha256, "closure request SHA256")
+    request_limit = MAX_CLOSURE_REQUEST_BYTES_V3 if direct else MAX_CLOSURE_REQUEST_BYTES
+    artifact_total_limit = MAX_CLOSURE_ARTIFACT_TOTAL_BYTES_V3 if direct else MAX_CLOSURE_REQUEST_BYTES
     request = wire.decode_parent_replay_value_v1(request_raw,
-        expected_payload_sha256=expected_request_sha256, max_bytes=MAX_CLOSURE_REQUEST_BYTES)
+        expected_payload_sha256=expected_request_sha256, max_bytes=request_limit)
     keys = {"schema", "profile", "datasets", "expected_artifact_ids", "artifacts",
             "expected_unit_ids", "component", "pins", "native"}
     _need(type(request) is dict and set(request) == keys, "closed closure request required")
@@ -232,13 +254,15 @@ def _validate_uscode_release_byte_closure(request_raw: bytes, *, expected_reques
         name, raw = row["artifact_id"], row["payload"]
         _need(type(name) is str and 0 < len(name.encode("utf-8")) <= 512 and name not in materials,
               "unique bounded artifact identity required")
+        artifact_limit = (MAX_CLOSURE_NATIVE_PACKET_BYTES_V3
+            if direct and row["family"] == "native_packet" else _MAX_ARTIFACT_BYTES)
         _need(type(row["family"]) is str and type(raw) is bytes
-              and 0 < len(raw) <= _MAX_ARTIFACT_BYTES and type(row["bytes"]) is int
+              and 0 < len(raw) <= artifact_limit and type(row["bytes"]) is int
               and row["bytes"] == len(raw), "bounded exact artifact bytes required")
         contracts.require_sha256(row["sha256"], "artifact SHA256")
         _need(hashlib.sha256(raw).hexdigest() == row["sha256"], "artifact byte identity differs")
         total += len(raw)
-        _need(total <= MAX_CLOSURE_REQUEST_BYTES, "complete artifact population exceeds byte bound")
+        _need(total <= artifact_total_limit, "complete artifact population exceeds byte bound")
         materials[name] = row
         descriptors.append({key: row[key] for key in ("artifact_id", "family", "sha256", "bytes")})
     _need(list(materials) == expected, "artifact population order or membership differs")
@@ -359,7 +383,7 @@ def _validate_uscode_release_byte_closure(request_raw: bytes, *, expected_reques
     native_report = None
     transport_report = None
     selection = request["native"]
-    if selection is not None and reviewed_version == 1:
+    if selection is not None and (reviewed_version == 1 or direct):
         _need(type(selection) is dict and set(selection) == {"receipt", "packet", "expected_packet_sha256", "expected_binary_sha256"},
               "closed exact retained native evidence required")
         _need(selection["receipt"] not in required and selection["packet"] not in required
@@ -368,8 +392,11 @@ def _validate_uscode_release_byte_closure(request_raw: bytes, *, expected_reques
         receipt_raw = payload(selection["receipt"], "native_receipt")
         packet_raw = payload(selection["packet"], "native_packet")
         packet = wire.decode_parent_replay_value_v1(packet_raw,
-            expected_payload_sha256=hashlib.sha256(packet_raw).hexdigest(), max_bytes=MAX_CLOSURE_REQUEST_BYTES)
-        native_report = native.validate_reviewed_norm_preservation_native_receipt_v2(receipt_raw,
+            expected_payload_sha256=hashlib.sha256(packet_raw).hexdigest(), max_bytes=request_limit)
+        if direct:
+            version_fence()
+        selected_receipt_validator = receipt_validator if direct else native.validate_reviewed_norm_preservation_native_receipt_v2
+        native_report = selected_receipt_validator(receipt_raw,
             preparation, graph, admission, *args, packet_files=packet,
             expected_receipt_sha256=hashlib.sha256(receipt_raw).hexdigest(),
             expected_packet_sha256=selection["expected_packet_sha256"],
@@ -391,6 +418,17 @@ def _validate_uscode_release_byte_closure(request_raw: bytes, *, expected_reques
             expected_admission_sha256=pins["admission"], toolchain=replay["toolchain"],
             observation_profile=selection["observation_profile"], **kwargs)
     _need(set(materials) == required, "unreferenced or omitted artifact population")
+    if _captured_native_context is not None:
+        _need(reviewed_version == 3 and type(_captured_native_context) is list
+              and not _captured_native_context, "one internal complete V3 replay context required")
+        _captured_native_context.append({
+            "reviewed_version": 3, "core_request_sha256": expected_request_sha256,
+            "preparation": preparation, "graph": graph, "admission": admission,
+            "args": tuple(args), "kwargs": kwargs, "pins": dict(pins), "toolchain": replay["toolchain"],
+            "native": None if selection is None else {
+                "packet_files": packet, "receipt_raw": receipt_raw,
+                "expected_packet_sha256": selection["expected_packet_sha256"],
+                "expected_binary_sha256": dict(selection["expected_binary_sha256"])}})
     blockers = ["independent_law_span_entity_to_reviewed_source_crosswalk_missing",
                 "original_admitted_native_parent_custody_not_established",
                 "immutable_remote_Hub_readback_not_established"]
@@ -444,7 +482,8 @@ REVIEWED_PHYSICAL_CROSSWALK_SCHEMA = "legal-reviewed-physical-source-crosswalk/v
 REVIEWED_PHYSICAL_CROSSWALK_PROFILE = "identity-text-complete-reviewed-graph/v1"
 
 
-def _validate_uscode_release_physical_closure(request_raw: bytes, *, expected_request_sha256: str, reviewed_version: int) -> dict:
+def _validate_uscode_release_physical_closure(request_raw: bytes, *, expected_request_sha256: str,
+        reviewed_version: int, _observe_checked_context=None, _native_transport="chunk-index/v1") -> dict:
     """Replay a reviewed, exact physical law/span/entity-to-IR component.
 
     Crosswalk bytes are versioned cross-reference dependencies of every reviewed
@@ -464,19 +503,51 @@ def _validate_uscode_release_physical_closure(request_raw: bytes, *, expected_re
     from ...optimizers.logic_theorem_optimizer import uscode_dataset as law_owner
     from ...processors.legal_data import uscode_hf_release as hf
 
-    _need(type(reviewed_version) is int and reviewed_version in (2, 3), "closed reviewed physical version required")
+    _need(type(reviewed_version) is int and reviewed_version in (2, 3),
+          "explicit supported physical reviewed closure version required")
+    _need(type(_native_transport) is str and _native_transport in ("chunk-index/v1", "direct-packet/v1"),
+          "explicit supported physical native transport required")
+    direct = _native_transport == "direct-packet/v1"
+    _need(not direct or reviewed_version == 3, "direct packet requires its explicit V3 domain")
     if reviewed_version == 3:
         _release_v3_policy()
-        request_schema, report_schema, profile = CLOSURE_REQUEST_SCHEMA_V3, CLOSURE_SCHEMA_V3, CLOSURE_PROFILE_V3
-        core_schema, core_profile = _BYTE_REQUEST_SCHEMA_V3, _BYTE_PROFILE_V3
-        core_validator = _validate_uscode_release_byte_closure_v3
+        if direct:
+            _release_direct_v3_policy()
+    if _observe_checked_context is not None:
+        _need(reviewed_version == 3 and type(_observe_checked_context) is _types.FunctionType,
+              "one finite internal V3 context observer required")
+        _joined_release_guard()
+    joined_guard = _joined_release_guard
+    joined_guard_code = joined_guard.__code__
+    joined_guard_defaults = joined_guard.__defaults__
+    joined_guard_kwdefaults = joined_guard.__kwdefaults__
+
+    def observer_owner_fence():
+        _need(_joined_release_guard is joined_guard
+              and joined_guard.__code__ is joined_guard_code
+              and joined_guard.__defaults__ is joined_guard_defaults
+              and joined_guard.__kwdefaults__ is joined_guard_kwdefaults,
+              "joined guard changed during physical observation")
+        joined_guard()
+
+    if reviewed_version == 2:
+        request_schema, report_schema, profile = (
+            CLOSURE_REQUEST_SCHEMA_V2, CLOSURE_SCHEMA_V2, CLOSURE_PROFILE_V2)
+        core_request_schema, core_profile = CLOSURE_REQUEST_SCHEMA, CLOSURE_PROFILE
     else:
-        request_schema, report_schema, profile = CLOSURE_REQUEST_SCHEMA_V2, CLOSURE_SCHEMA_V2, CLOSURE_PROFILE_V2
-        core_schema, core_profile = CLOSURE_REQUEST_SCHEMA, CLOSURE_PROFILE
-        core_validator = validate_uscode_release_closure_v1
+        request_schema, report_schema, profile = (
+            CLOSURE_REQUEST_SCHEMA_V3, CLOSURE_SCHEMA_V3,
+            CLOSURE_PROFILE_V3_DIRECT if direct else CLOSURE_PROFILE_V3)
+        core_request_schema, core_profile = _BYTE_REQUEST_SCHEMA_V3, (_BYTE_PROFILE_V3_DIRECT if direct else _BYTE_PROFILE_V3)
+
+    def selected_core():
+        return (validate_uscode_release_closure_v1 if reviewed_version == 2
+                else _validate_uscode_release_byte_closure_v3)
+
+    core_validator = selected_core()
 
     # These are the added physical delegates, not a complete execution/library
-    # attestation. Existing v1 owners retain their own opening/closing pins.
+    # attestation. Selected reviewed owners retain their own opening/closing pins.
     def physical_owner_snapshot():
         result = {}
         for source_path in (Path(__file__), Path(law_owner.__file__),
@@ -498,14 +569,14 @@ def _validate_uscode_release_physical_closure(request_raw: bytes, *, expected_re
     physical_generation = physical_owner_snapshot()
     physical_callbacks = (law_owner.capture_uscode_source_documents_from_parquet,
         coordinates.validate_uscode_source_coordinates, entity_owner.iter_observed_rows,
-        core_validator)
+        core_validator, _validate_uscode_release_byte_closure)
     physical_callback_states = (_release_callback_states_v3(physical_callbacks) if reviewed_version == 3 else None)
     def physical_owner_fence():
         _need(physical_owner_snapshot() == physical_generation,
               "physical delegate source generation changed during complete replay")
         current = (law_owner.capture_uscode_source_documents_from_parquet,
             coordinates.validate_uscode_source_coordinates, entity_owner.iter_observed_rows,
-            _validate_uscode_release_byte_closure_v3 if reviewed_version == 3 else validate_uscode_release_closure_v1)
+            selected_core(), _validate_uscode_release_byte_closure)
         if reviewed_version == 3:
             _release_v3_policy()
         _need(all(left is right for left, right in zip(current, physical_callbacks, strict=True)),
@@ -529,8 +600,12 @@ def _validate_uscode_release_physical_closure(request_raw: bytes, *, expected_re
               "bounded exact text required: " + label)
         return value
 
+    request_limit = (MAX_CLOSURE_REQUEST_BYTES_V3 if direct
+                     else MAX_CLOSURE_REQUEST_BYTES)
+    artifact_total_limit = (MAX_CLOSURE_ARTIFACT_TOTAL_BYTES_V3 if direct
+                            else MAX_CLOSURE_REQUEST_BYTES)
     request = wire.decode_parent_replay_value_v1(request_raw,
-        expected_payload_sha256=expected_request_sha256, max_bytes=MAX_CLOSURE_REQUEST_BYTES)
+        expected_payload_sha256=expected_request_sha256, max_bytes=request_limit)
     keys(request, {"schema", "profile", "datasets", "expected_artifact_ids", "artifacts",
         "expected_unit_ids", "component", "pins", "native", "physical_inputs"}, "physical closure request")
     _need(request["schema"] == request_schema and request["profile"] == profile,
@@ -555,14 +630,17 @@ def _validate_uscode_release_physical_closure(request_raw: bytes, *, expected_re
         identity = text(row["artifact_id"], "artifact identity")
         _need(len(identity.encode("utf-8")) <= 512, "existing bounded artifact identity required")
         raw = row["payload"]
+        artifact_limit = (MAX_CLOSURE_NATIVE_PACKET_BYTES_V3
+                          if direct and row["family"] == "native_packet"
+                          else _MAX_ARTIFACT_BYTES)
         _need(identity not in materials and type(row["family"]) is str and type(raw) is bytes
-              and 0 < len(raw) <= _MAX_ARTIFACT_BYTES, "unique bounded physical artifact required")
-        integer(row["bytes"], 1, _MAX_ARTIFACT_BYTES, "artifact bytes")
+              and 0 < len(raw) <= artifact_limit, "unique bounded physical artifact required")
+        integer(row["bytes"], 1, artifact_limit, "artifact bytes")
         contracts.require_sha256(row["sha256"], "physical artifact SHA256")
         _need(row["bytes"] == len(raw) and hashlib.sha256(raw).hexdigest() == row["sha256"],
               "physical artifact bytes differ")
         total += len(raw)
-        _need(total <= MAX_CLOSURE_REQUEST_BYTES, "physical artifact population exceeds existing byte ceiling")
+        _need(total <= artifact_total_limit, "physical artifact population exceeds existing byte ceiling")
         materials[identity] = row
     _need(type(request["expected_artifact_ids"]) is list
           and same(list(materials), request["expected_artifact_ids"]), "physical artifact order or membership differs")
@@ -602,16 +680,22 @@ def _validate_uscode_release_physical_closure(request_raw: bytes, *, expected_re
           "reviewed entity artifact identity differs")
 
     # Delegate all established source/IR/review/graph/dependency/Lean-text logic.
-    # Removing only the two new roles retains v1's exact complete artifact check.
+    # Removing only the two new roles retains the core's exact complete artifact check.
     excluded = {component[role] for role in extra_roles}
     core = {key: value for key, value in request.items() if key != "physical_inputs"}
-    core.update(schema=core_schema, profile=core_profile,
+    core.update(schema=core_request_schema, profile=core_profile,
         component={key: component[key] for key in base_roles},
         pins={key: pins[key] for key in ("admission", "graph", "preservation")},
         artifacts=[row for row in rows if row["artifact_id"] not in excluded],
         expected_artifact_ids=[identity for identity in request["expected_artifact_ids"] if identity not in excluded])
-    core_raw = wire.encode_parent_replay_value_v1(core, max_bytes=MAX_CLOSURE_REQUEST_BYTES)
+    core_raw = wire.encode_parent_replay_value_v1(core, max_bytes=request_limit)
     core_sha = hashlib.sha256(core_raw).hexdigest()
+
+    def core_replay(capture=None):
+        if reviewed_version == 3:
+            return core_validator(core_raw, expected_request_sha256=core_sha,
+                _captured_native_context=capture, _native_transport=_native_transport)
+        return core_validator(core_raw, expected_request_sha256=core_sha)
 
     def decoded(role, family):
         raw = artifact(role, family)
@@ -656,272 +740,359 @@ def _validate_uscode_release_physical_closure(request_raw: bytes, *, expected_re
         path = Path(spelling)
         _need(path.is_absolute() and path.resolve(strict=True) == path, "literal unaliased retained physical path required")
         fd = os.open(path, os.O_RDONLY | os.O_NONBLOCK | os.O_NOFOLLOW | os.O_CLOEXEC)
-        primary = None
-        identity_keys = ("st_dev", "st_ino", "st_mode", "st_nlink", "st_uid", "st_gid", "st_size", "st_mtime_ns", "st_ctime_ns")
-        def identity(value):
-            return tuple(getattr(value, key) for key in identity_keys)
-        before = os.fstat(fd)
-        def check():
-            _need(stat.S_ISREG(before.st_mode) and before.st_nlink == 1 and before.st_size == len(expected),
-                  "exact bounded single-link retained physical file required")
-            _need(identity(before) == identity(os.fstat(fd)) == identity(path.lstat())
-                  and path.resolve(strict=True) == path, "retained physical file generation changed")
-            os.lseek(fd, 0, os.SEEK_SET)
-            raw = bytearray()
-            while len(raw) <= len(expected):
-                chunk = os.read(fd, min(1024 * 1024, len(expected) + 1 - len(raw)))
-                if not chunk:
-                    break
-                raw.extend(chunk)
-            _need(bytes(raw) == expected, "retained physical file differs from exact reviewed artifact bytes")
-            _need(identity(before) == identity(os.fstat(fd)) == identity(path.lstat()),
-                  "retained physical file changed during byte verification")
+        post_open_error = None
         try:
-            check()
-            yield path, check
-        except BaseException as error:
-            primary = error
-            raise
-        finally:
+            # Every operation after acquisition, including the initial fstat,
+            # is inside the unconditional descriptor-close scope.
+            primary = None
+            identity_keys = ("st_dev", "st_ino", "st_mode", "st_nlink", "st_uid", "st_gid", "st_size", "st_mtime_ns", "st_ctime_ns")
+            def identity(value):
+                return tuple(getattr(value, key) for key in identity_keys)
+            before = os.fstat(fd)
+            def check():
+                _need(stat.S_ISREG(before.st_mode) and before.st_nlink == 1 and before.st_size == len(expected),
+                      "exact bounded single-link retained physical file required")
+                _need(identity(before) == identity(os.fstat(fd)) == identity(path.lstat())
+                      and path.resolve(strict=True) == path, "retained physical file generation changed")
+                os.lseek(fd, 0, os.SEEK_SET)
+                raw = bytearray()
+                while len(raw) <= len(expected):
+                    chunk = os.read(fd, min(1024 * 1024, len(expected) + 1 - len(raw)))
+                    if not chunk:
+                        break
+                    raw.extend(chunk)
+                _need(bytes(raw) == expected, "retained physical file differs from exact reviewed artifact bytes")
+                _need(identity(before) == identity(os.fstat(fd)) == identity(path.lstat()),
+                      "retained physical file changed during byte verification")
             try:
                 check()
+                yield path, check
             except BaseException as error:
-                if primary is None:
-                    raise
-                primary.add_note("secondary physical custody failure: " + type(error).__name__ + ": " + str(error))
+                primary = error
+                if error is not observer_error and not closing_failures:
+                    closing_failures.append(error)
+                raise
             finally:
-                os.close(fd)
+                _physical_complete_checks_v1(
+                    (("retained physical final descriptor fence", check),),
+                    primary=primary, _closing_failures=closing_failures)
+        except BaseException as error:
+            post_open_error = error
+            if error is not observer_error and not closing_failures:
+                closing_failures.append(error)
+            raise
+        finally:
+            _physical_complete_checks_v1(
+                (("retained physical descriptor close", lambda: os.close(fd)),),
+                primary=post_open_error, _closing_failures=closing_failures)
 
-    with ExitStack() as stack:
-        law_path, law_fence = stack.enter_context(held_file(physical_inputs["law_path"], law_artifact.content))
-        entity_path, entity_fence = stack.enter_context(held_file(physical_inputs["entity_path"], entity_raw))
-        if reviewed_version == 3:
-            physical_owner_fence()
-        opened = core_validator(core_raw, expected_request_sha256=core_sha)
-        join = ordinary("source_span_entity_join", "source_span_entity_join")
-        graph = ordinary("graph", "graph")
-        _need(join["source_repository"] == {key: request["datasets"][0][key] for key in ("repository_id", "revision")}
-              and same(join["entity_metadata"]["declared_rows"], entity_selection["rows"]),
-              "actual law/entity selection differs from selected namespace metadata")
-        bundles = join["paired_bundles"]
-        _need(type(bundles) is list and len(bundles) == 1, "one complete existing coordinate bundle required")
-        carrier = bundles[0]["payload_intake"]["source_coordinates"]
-        coordinate_report = contracts.load_json_bytes(carrier["report_raw_utf8"].encode("utf-8"),
-            expected_sha256=carrier["report_artifact_sha256"])
-        _need(carrier["report_sha256"] == law_selection["coordinate_report_sha256"],
-              "joined complete coordinate report differs from reviewed crosswalk")
-        capture_args = dict(source_revision=request["datasets"][0]["revision"],
-            source_path_in_repo=law_artifact.relative_path, expected_sha256=law_artifact.sha256,
-            expected_bytes=len(law_artifact.content), offset=law_selection["row_offset"],
-            limit=law_selection["rows"], release_id=law_selection["release_id"])
-        captured = law_owner.capture_uscode_source_documents_from_parquet(law_path, **capture_args)
-        def coordinate_replay():
-            coordinates.validate_uscode_source_coordinates(coordinate_report, captured["documents"],
-                expected_report_sha256=law_selection["coordinate_report_sha256"],
-                query=coordinate_report["query"], release_id=law_selection["release_id"],
-                limits=coordinate_report["limits"])
-        coordinate_replay()
-        unit_maps = crosswalk["units"]
-        _need(type(unit_maps) is list and len(unit_maps) == len(unit_ids), "complete ordered reviewed unit crosswalk required")
-        unit_inputs = kwargs["preparation_inputs"]["source_inputs"]
-        document_use = set()
-        unit_lookup, unit_bindings = {}, []
-        for unit, selected in zip(declaration["units"], unit_maps, strict=True):
-            keys(selected, {"unit_id", "source_version_cid", "source_occurrence_cid", "document_revision",
-                "input_document_ordinal", "law_row_ordinal"}, "reviewed physical unit binding")
-            ordinal = integer(selected["input_document_ordinal"], 0, len(captured["documents"]) - 1, "law document ordinal")
-            document = captured["documents"][ordinal]
-            integer(selected["law_row_ordinal"], 0, 10_000_000, "physical law row ordinal")
-            _need(same({key: selected[key] for key in ("unit_id", "document_revision")},
-                      {key: unit[key] for key in ("unit_id", "document_revision")})
-                  and selected["source_version_cid"] == unit["source_version"]["record_cid"]
-                  and selected["source_occurrence_cid"] == unit["occurrence"]["record_cid"]
-                  and selected["law_row_ordinal"] == document["source_witness"]["physical_row_ordinal"],
-                  "reviewed unit source/version/occurrence/revision or physical row differs")
-            source_input = unit_inputs[unit["unit_id"]]
-            view = unit["source_version"]["extracted_view"]
-            _need(view["extraction_profile"] == view["normalization_profile"] == "identity/v1"
-                  and source_input["raw_bytes"] == document["text"].encode("utf-8")
-                  and source_input["extracted_text"] == document["text"],
-                  "supported identity raw/view source must exactly match the complete captured law text")
-            # Existing reviewed admission already validated both UTF8 and character
-            # selectors. Keep the full occurrence, including delimiter whitespace.
-            occurrence = unit["occurrence"]
-            unit_lookup[unit["unit_id"]] = (ordinal, occurrence)
-            document_use.add(ordinal)
-            unit_bindings.append({**selected, "legal_id": document["legal_id"],
-                "source_witness": document["source_witness"], "start_char": occurrence["start_char"],
-                "end_char": occurrence["end_char"], "start_utf8": occurrence["start_utf8"],
-                "end_utf8": occurrence["end_utf8"]})
-        _need(document_use == set(range(len(captured["documents"]))),
-              "selected physical law row omitted from complete reviewed unit population")
-        selected_spans, span_bindings = set(), []
-        span_maps = crosswalk["span_rows"]
-        physical_rows = join["physical_rows"]
-        _need(type(span_maps) is list and len(span_maps) == len(physical_rows), "complete ordered paired-cache physical crosswalk required")
-        by_identity = {}
-        for ref in join["row_references"]:
-            identity = ref["physical_identity_sha256"]
-            if identity in by_identity:
-                _need(same(by_identity[identity], ref), "conflicting duplicate physical cache reference")
-            by_identity[identity] = ref
-        for physical, selected in zip(physical_rows, span_maps, strict=True):
-            keys(selected, {"physical_identity_sha256", "row_sha256", "source_coordinate_span_index", "unit_ids"},
-                 "reviewed cache-span binding")
-            identity = physical["physical_identity_sha256"]
-            _need(selected["physical_identity_sha256"] == identity and selected["row_sha256"] == physical["row_sha256"],
-                  "reviewed paired-cache physical identity or row bytes differ")
-            ref = by_identity[identity]
-            index = integer(selected["source_coordinate_span_index"], 0, len(coordinate_report["spans"]) - 1,
-                "original source-coordinate span index")
-            _need(index == ref["source_coordinate_span_index"], "paired-cache original coordinate occurrence differs")
-            span = coordinate_report["spans"][index]
-            expected_units = [unit_id for unit_id in unit_ids
-                if unit_lookup[unit_id][0] == span["input_document_ordinal"]
-                and max(unit_lookup[unit_id][1]["start_char"], span["source_char_start"])
-                    < min(unit_lookup[unit_id][1]["end_char"], span["source_char_end"])]
-            _need(expected_units and same(selected["unit_ids"], expected_units),
-                  "paired-cache row must bind every exact overlapping reviewed occurrence")
-            selected_spans.add(index)
-            span_bindings.append({**selected, "source_span_id": span["source_span_id"],
-                "physical_identity": physical["physical_identity"]})
-        for binding in unit_bindings:
-            ordinal, occurrence = unit_lookup[binding["unit_id"]]
-            expected = [index for index, span in enumerate(coordinate_report["spans"])
-                if span["input_document_ordinal"] == ordinal
-                and max(occurrence["start_char"], span["source_char_start"])
-                    < min(occurrence["end_char"], span["source_char_end"])]
-            _need(expected and set(expected) <= selected_spans, "reviewed source occurrence has an uncached span or omitted clause")
-            text_body = captured["documents"][ordinal]["text"]
-            frontier = occurrence["start_char"]
-            gaps = []
-            for index in expected:
-                span = coordinate_report["spans"][index]
-                start, end = max(occurrence["start_char"], span["source_char_start"]), min(occurrence["end_char"], span["source_char_end"])
-                if start > frontier:
-                    gap = text_body[frontier:start]
-                    _need(gap.isspace(), "nonwhitespace reviewed source clause is not covered by cache spans")
-                    gaps.append({"start_char": frontier, "end_char": start, "utf8_bytes": len(gap.encode("utf-8"))})
-                frontier = max(frontier, end)
-            if frontier < occurrence["end_char"]:
-                gap = text_body[frontier:occurrence["end_char"]]
-                _need(gap.isspace(), "nonwhitespace reviewed source suffix is not covered by cache spans")
-                gaps.append({"start_char": frontier, "end_char": occurrence["end_char"], "utf8_bytes": len(gap.encode("utf-8"))})
-            binding.update(source_coordinate_span_indices=expected, exact_unspanned_whitespace=gaps)
-
-        entity_maps = crosswalk["entity_rows"]
-        _need(type(entity_maps) is list and len(entity_maps) == entity_selection["rows"],
-              "complete materialized entity-row mapping required")
-        # Retain only canonical raw rows, not the repeated full per-file footer
-        # metadata carried by every original observation.
-        observed = [{"ordinal": observation["ordinal"], "raw_row_sha256": observation["raw_row_sha256"],
-                     "raw_row": observation["raw_row"]}
-            for observation in entity_owner.iter_observed_rows(entity_path,
-                expected_file_sha256=entity_selection["file_sha256"], expected_rows=entity_selection["rows"],
-                max_rows=12_288, batch_size=128, revision=request["datasets"][2]["revision"],
-                max_file_bytes=_MAX_ARTIFACT_BYTES, max_decoded_bytes=MAX_CLOSURE_REQUEST_BYTES,
-                max_row_group_bytes=MAX_CLOSURE_REQUEST_BYTES, max_batch_bytes=_MAX_ARTIFACT_BYTES)]
-        _need(len(observed) == len(entity_maps), "complete entity traversal differs")
-        graph_nodes, graph_edges = graph["graph"]["nodes"], graph["graph"]["edges"]
-        by_node_id, node_cids, edge_cids, entity_bindings = {}, set(), set(), []
-        def node_selection(selector):
-            keys(selector, {"kind", "node_type", "stable_id"}, "stable reviewed graph node selector")
-            _need(selector["kind"] == "node", "node selector kind differs")
-            kind, stable = text(selector["node_type"], "graph node type"), selector["stable_id"]
-            if stable is None:
-                _need(kind == "scope", "only the explicit scope singleton may omit its admission-dependent stable ID")
-                matches = [node for node in graph_nodes if node["node_type"] == kind]
+    pending_error = None
+    observer_error = None
+    closing_failures = []
+    try:
+        with ExitStack() as stack:
+            law_path, law_fence = stack.enter_context(held_file(physical_inputs["law_path"], law_artifact.content))
+            entity_path, entity_fence = stack.enter_context(held_file(physical_inputs["entity_path"], entity_raw))
+            captured_context = []
+            if _observe_checked_context is None:
+                opened = core_replay()
             else:
-                text(stable, "stable graph address")
-                matches = [node for node in graph_nodes if node["node_type"] == kind and node["stable_id"] == stable]
-            _need(len(matches) == 1, "stable reviewed graph selector is absent or ambiguous")
-            return matches[0]
-        # Resolve nodes first; physical row order need not place every node before edges.
-        for observation, selected in zip(observed, entity_maps, strict=True):
-            keys(selected, {"row_ordinal", "row_sha256", "selector"}, "reviewed entity physical row")
-            integer(selected["row_ordinal"], 0, len(observed) - 1, "entity physical row ordinal")
-            _need(selected["row_ordinal"] == observation["ordinal"]
-                  and selected["row_sha256"] == observation["raw_row_sha256"], "reviewed entity row identity differs")
-            selector, row = selected["selector"], observation["raw_row"]
-            _need(type(selector) is dict and selector.get("kind") in ("node", "edge"), "supported explicit entity graph selector required")
-            if selector["kind"] == "node":
-                node = node_selection(selector)
-                identity = text(row["node_id"], "physical entity node ID")
-                _need(row["record_kind"] == "node" and row["graph_kind"] == node["node_type"]
-                      and row["src"] == row["dst"] == "" and identity not in by_node_id
-                      and node["record_cid"] not in node_cids, "entity node projection is duplicated or structurally inconsistent")
-                by_node_id[identity] = node
-                node_cids.add(node["record_cid"])
-        for observation, selected in zip(observed, entity_maps, strict=True):
-            selector, row = selected["selector"], observation["raw_row"]
-            if selector["kind"] == "node":
-                node = by_node_id[row["node_id"]]
-                entity_bindings.append({**selected, "physical_node_id": row["node_id"],
-                    "graph_record_cid": node["record_cid"], "semantic_companion_record_cid": node["content_cid"]})
-                continue
-            keys(selector, {"kind", "src_node_id", "dst_node_id", "relation", "ordinal"}, "stable reviewed graph edge selector")
-            left, right = selector["src_node_id"], selector["dst_node_id"]
-            _need(type(left) is str and type(right) is str and left in by_node_id and right in by_node_id,
-                  "reviewed entity edge endpoint omitted from physical node population")
-            text(selector["relation"], "reviewed graph relation")
-            ordinal = selector["ordinal"]
-            _need(ordinal is None or type(ordinal) is int and 0 <= ordinal <= 8192,
-                  "nonboolean reviewed graph edge ordinal required")
-            _need(row["record_kind"] == "edge" and row["node_id"] == ""
-                  and row["src"] == left and row["dst"] == right and row["graph_kind"] == selector["relation"],
-                  "entity edge projection fields differ from exact reviewed selectors")
-            matches = [edge for edge in graph_edges if edge["src_cid"] == by_node_id[left]["record_cid"]
-                and edge["dst_cid"] == by_node_id[right]["record_cid"] and edge["relation"] == selector["relation"]
-                and same(edge["ordinal"], ordinal)]
-            _need(len(matches) == 1 and matches[0]["record_cid"] not in edge_cids,
-                  "reviewed graph edge is missing ambiguous or duplicated")
-            edge = matches[0]
-            edge_cids.add(edge["record_cid"])
-            entity_bindings.append({**selected, "graph_record_cid": edge["record_cid"],
-                "semantic_companion_record_cids": edge["evidence_cids"]})
-        _need(node_cids == {node["record_cid"] for node in graph_nodes}
-              and edge_cids == {edge["record_cid"] for edge in graph_edges},
-              "materialized entity mapping must exhaust the complete reviewed graph node and edge populations")
-        # Close the original generation, not a freshly repinned replacement.
-        if reviewed_version == 3:
+                opened = core_replay(captured_context)
+                _need(len(captured_context) == 1, "one complete checked physical replay context required")
+            join = ordinary("source_span_entity_join", "source_span_entity_join")
+            graph = ordinary("graph", "graph")
+            _need(join["source_repository"] == {key: request["datasets"][0][key] for key in ("repository_id", "revision")}
+                  and same(join["entity_metadata"]["declared_rows"], entity_selection["rows"]),
+                  "actual law/entity selection differs from selected namespace metadata")
+            bundles = join["paired_bundles"]
+            _need(type(bundles) is list and len(bundles) == 1, "one complete existing coordinate bundle required")
+            carrier = bundles[0]["payload_intake"]["source_coordinates"]
+            coordinate_report = contracts.load_json_bytes(carrier["report_raw_utf8"].encode("utf-8"),
+                expected_sha256=carrier["report_artifact_sha256"])
+            _need(carrier["report_sha256"] == law_selection["coordinate_report_sha256"],
+                  "joined complete coordinate report differs from reviewed crosswalk")
+            capture_args = dict(source_revision=request["datasets"][0]["revision"],
+                source_path_in_repo=law_artifact.relative_path, expected_sha256=law_artifact.sha256,
+                expected_bytes=len(law_artifact.content), offset=law_selection["row_offset"],
+                limit=law_selection["rows"], release_id=law_selection["release_id"])
+            captured = law_owner.capture_uscode_source_documents_from_parquet(law_path, **capture_args)
+            def coordinate_replay():
+                coordinates.validate_uscode_source_coordinates(coordinate_report, captured["documents"],
+                    expected_report_sha256=law_selection["coordinate_report_sha256"],
+                    query=coordinate_report["query"], release_id=law_selection["release_id"],
+                    limits=coordinate_report["limits"])
+            coordinate_replay()
+            unit_maps = crosswalk["units"]
+            _need(type(unit_maps) is list and len(unit_maps) == len(unit_ids), "complete ordered reviewed unit crosswalk required")
+            unit_inputs = kwargs["preparation_inputs"]["source_inputs"]
+            document_use = set()
+            unit_lookup, unit_bindings = {}, []
+            for unit, selected in zip(declaration["units"], unit_maps, strict=True):
+                keys(selected, {"unit_id", "source_version_cid", "source_occurrence_cid", "document_revision",
+                    "input_document_ordinal", "law_row_ordinal"}, "reviewed physical unit binding")
+                ordinal = integer(selected["input_document_ordinal"], 0, len(captured["documents"]) - 1, "law document ordinal")
+                document = captured["documents"][ordinal]
+                integer(selected["law_row_ordinal"], 0, 10_000_000, "physical law row ordinal")
+                _need(same({key: selected[key] for key in ("unit_id", "document_revision")},
+                          {key: unit[key] for key in ("unit_id", "document_revision")})
+                      and selected["source_version_cid"] == unit["source_version"]["record_cid"]
+                      and selected["source_occurrence_cid"] == unit["occurrence"]["record_cid"]
+                      and selected["law_row_ordinal"] == document["source_witness"]["physical_row_ordinal"],
+                      "reviewed unit source/version/occurrence/revision or physical row differs")
+                source_input = unit_inputs[unit["unit_id"]]
+                view = unit["source_version"]["extracted_view"]
+                _need(view["extraction_profile"] == view["normalization_profile"] == "identity/v1"
+                      and source_input["raw_bytes"] == document["text"].encode("utf-8")
+                      and source_input["extracted_text"] == document["text"],
+                      "supported identity raw/view source must exactly match the complete captured law text")
+                # Existing reviewed admission already validated both UTF8 and character
+                # selectors. Keep the full occurrence, including delimiter whitespace.
+                occurrence = unit["occurrence"]
+                unit_lookup[unit["unit_id"]] = (ordinal, occurrence)
+                document_use.add(ordinal)
+                unit_bindings.append({**selected, "legal_id": document["legal_id"],
+                    "source_witness": document["source_witness"], "start_char": occurrence["start_char"],
+                    "end_char": occurrence["end_char"], "start_utf8": occurrence["start_utf8"],
+                    "end_utf8": occurrence["end_utf8"]})
+            _need(document_use == set(range(len(captured["documents"]))),
+                  "selected physical law row omitted from complete reviewed unit population")
+            selected_spans, span_bindings = set(), []
+            span_maps = crosswalk["span_rows"]
+            physical_rows = join["physical_rows"]
+            _need(type(span_maps) is list and len(span_maps) == len(physical_rows), "complete ordered paired-cache physical crosswalk required")
+            by_identity = {}
+            for ref in join["row_references"]:
+                identity = ref["physical_identity_sha256"]
+                if identity in by_identity:
+                    _need(same(by_identity[identity], ref), "conflicting duplicate physical cache reference")
+                by_identity[identity] = ref
+            for physical, selected in zip(physical_rows, span_maps, strict=True):
+                keys(selected, {"physical_identity_sha256", "row_sha256", "source_coordinate_span_index", "unit_ids"},
+                     "reviewed cache-span binding")
+                identity = physical["physical_identity_sha256"]
+                _need(selected["physical_identity_sha256"] == identity and selected["row_sha256"] == physical["row_sha256"],
+                      "reviewed paired-cache physical identity or row bytes differ")
+                ref = by_identity[identity]
+                index = integer(selected["source_coordinate_span_index"], 0, len(coordinate_report["spans"]) - 1,
+                    "original source-coordinate span index")
+                _need(index == ref["source_coordinate_span_index"], "paired-cache original coordinate occurrence differs")
+                span = coordinate_report["spans"][index]
+                expected_units = [unit_id for unit_id in unit_ids
+                    if unit_lookup[unit_id][0] == span["input_document_ordinal"]
+                    and max(unit_lookup[unit_id][1]["start_char"], span["source_char_start"])
+                        < min(unit_lookup[unit_id][1]["end_char"], span["source_char_end"])]
+                _need(expected_units and same(selected["unit_ids"], expected_units),
+                      "paired-cache row must bind every exact overlapping reviewed occurrence")
+                selected_spans.add(index)
+                span_bindings.append({**selected, "source_span_id": span["source_span_id"],
+                    "physical_identity": physical["physical_identity"]})
+            for binding in unit_bindings:
+                ordinal, occurrence = unit_lookup[binding["unit_id"]]
+                expected = [index for index, span in enumerate(coordinate_report["spans"])
+                    if span["input_document_ordinal"] == ordinal
+                    and max(occurrence["start_char"], span["source_char_start"])
+                        < min(occurrence["end_char"], span["source_char_end"])]
+                _need(expected and set(expected) <= selected_spans, "reviewed source occurrence has an uncached span or omitted clause")
+                text_body = captured["documents"][ordinal]["text"]
+                frontier = occurrence["start_char"]
+                gaps = []
+                for index in expected:
+                    span = coordinate_report["spans"][index]
+                    start, end = max(occurrence["start_char"], span["source_char_start"]), min(occurrence["end_char"], span["source_char_end"])
+                    if start > frontier:
+                        gap = text_body[frontier:start]
+                        _need(gap.isspace(), "nonwhitespace reviewed source clause is not covered by cache spans")
+                        gaps.append({"start_char": frontier, "end_char": start, "utf8_bytes": len(gap.encode("utf-8"))})
+                    frontier = max(frontier, end)
+                if frontier < occurrence["end_char"]:
+                    gap = text_body[frontier:occurrence["end_char"]]
+                    _need(gap.isspace(), "nonwhitespace reviewed source suffix is not covered by cache spans")
+                    gaps.append({"start_char": frontier, "end_char": occurrence["end_char"], "utf8_bytes": len(gap.encode("utf-8"))})
+                binding.update(source_coordinate_span_indices=expected, exact_unspanned_whitespace=gaps)
+
+            entity_maps = crosswalk["entity_rows"]
+            _need(type(entity_maps) is list and len(entity_maps) == entity_selection["rows"],
+                  "complete materialized entity-row mapping required")
+            # Retain only canonical raw rows, not the repeated full per-file footer
+            # metadata carried by every original observation.
+            observed = [{"ordinal": observation["ordinal"], "raw_row_sha256": observation["raw_row_sha256"],
+                         "raw_row": observation["raw_row"]}
+                for observation in entity_owner.iter_observed_rows(entity_path,
+                    expected_file_sha256=entity_selection["file_sha256"], expected_rows=entity_selection["rows"],
+                    max_rows=12_288, batch_size=128, revision=request["datasets"][2]["revision"],
+                    max_file_bytes=_MAX_ARTIFACT_BYTES, max_decoded_bytes=MAX_CLOSURE_REQUEST_BYTES,
+                    max_row_group_bytes=MAX_CLOSURE_REQUEST_BYTES, max_batch_bytes=_MAX_ARTIFACT_BYTES)]
+            _need(len(observed) == len(entity_maps), "complete entity traversal differs")
+            graph_nodes, graph_edges = graph["graph"]["nodes"], graph["graph"]["edges"]
+            by_node_id, node_cids, edge_cids, entity_bindings = {}, set(), set(), []
+            def node_selection(selector):
+                keys(selector, {"kind", "node_type", "stable_id"}, "stable reviewed graph node selector")
+                _need(selector["kind"] == "node", "node selector kind differs")
+                kind, stable = text(selector["node_type"], "graph node type"), selector["stable_id"]
+                if stable is None:
+                    _need(kind == "scope", "only the explicit scope singleton may omit its admission-dependent stable ID")
+                    matches = [node for node in graph_nodes if node["node_type"] == kind]
+                else:
+                    text(stable, "stable graph address")
+                    matches = [node for node in graph_nodes if node["node_type"] == kind and node["stable_id"] == stable]
+                _need(len(matches) == 1, "stable reviewed graph selector is absent or ambiguous")
+                return matches[0]
+            # Resolve nodes first; physical row order need not place every node before edges.
+            for observation, selected in zip(observed, entity_maps, strict=True):
+                keys(selected, {"row_ordinal", "row_sha256", "selector"}, "reviewed entity physical row")
+                integer(selected["row_ordinal"], 0, len(observed) - 1, "entity physical row ordinal")
+                _need(selected["row_ordinal"] == observation["ordinal"]
+                      and selected["row_sha256"] == observation["raw_row_sha256"], "reviewed entity row identity differs")
+                selector, row = selected["selector"], observation["raw_row"]
+                _need(type(selector) is dict and selector.get("kind") in ("node", "edge"), "supported explicit entity graph selector required")
+                if selector["kind"] == "node":
+                    node = node_selection(selector)
+                    identity = text(row["node_id"], "physical entity node ID")
+                    _need(row["record_kind"] == "node" and row["graph_kind"] == node["node_type"]
+                          and row["src"] == row["dst"] == "" and identity not in by_node_id
+                          and node["record_cid"] not in node_cids, "entity node projection is duplicated or structurally inconsistent")
+                    by_node_id[identity] = node
+                    node_cids.add(node["record_cid"])
+            for observation, selected in zip(observed, entity_maps, strict=True):
+                selector, row = selected["selector"], observation["raw_row"]
+                if selector["kind"] == "node":
+                    node = by_node_id[row["node_id"]]
+                    entity_bindings.append({**selected, "physical_node_id": row["node_id"],
+                        "graph_record_cid": node["record_cid"], "semantic_companion_record_cid": node["content_cid"]})
+                    continue
+                keys(selector, {"kind", "src_node_id", "dst_node_id", "relation", "ordinal"}, "stable reviewed graph edge selector")
+                left, right = selector["src_node_id"], selector["dst_node_id"]
+                _need(type(left) is str and type(right) is str and left in by_node_id and right in by_node_id,
+                      "reviewed entity edge endpoint omitted from physical node population")
+                text(selector["relation"], "reviewed graph relation")
+                ordinal = selector["ordinal"]
+                _need(ordinal is None or type(ordinal) is int and 0 <= ordinal <= 8192,
+                      "nonboolean reviewed graph edge ordinal required")
+                _need(row["record_kind"] == "edge" and row["node_id"] == ""
+                      and row["src"] == left and row["dst"] == right and row["graph_kind"] == selector["relation"],
+                      "entity edge projection fields differ from exact reviewed selectors")
+                matches = [edge for edge in graph_edges if edge["src_cid"] == by_node_id[left]["record_cid"]
+                    and edge["dst_cid"] == by_node_id[right]["record_cid"] and edge["relation"] == selector["relation"]
+                    and same(edge["ordinal"], ordinal)]
+                _need(len(matches) == 1 and matches[0]["record_cid"] not in edge_cids,
+                      "reviewed graph edge is missing ambiguous or duplicated")
+                edge = matches[0]
+                edge_cids.add(edge["record_cid"])
+                entity_bindings.append({**selected, "graph_record_cid": edge["record_cid"],
+                    "semantic_companion_record_cids": edge["evidence_cids"]})
+            _need(node_cids == {node["record_cid"] for node in graph_nodes}
+                  and edge_cids == {edge["record_cid"] for edge in graph_edges},
+                  "materialized entity mapping must exhaust the complete reviewed graph node and edge populations")
+            if _observe_checked_context is None:
+                # Close the original generation, not a freshly repinned replacement.
+                if reviewed_version == 3:
+                    physical_owner_fence()
+                _need(same(captured, law_owner.capture_uscode_source_documents_from_parquet(law_path, **capture_args)),
+                      "physical law capture changed during complete crosswalk traversal")
+                coordinate_replay()
+                law_fence()
+                entity_fence()
+                if reviewed_version == 3:
+                    physical_owner_fence()
+                closed = core_replay()
+                _need(same(opened, closed), "complete source/IR/cache/graph/review generation changed during physical replay")
+            else:
+                context = captured_context[0]
+                context["physical_request_sha256"] = expected_request_sha256
+                identity_keys = ("st_dev", "st_ino", "st_mode", "st_nlink", "st_uid", "st_gid",
+                                 "st_size", "st_mtime_ns", "st_ctime_ns")
+                law_fence()
+                entity_fence()
+                context["physical_files"] = (
+                    (str(law_path), tuple(getattr(law_path.lstat(), key) for key in identity_keys),
+                     law_artifact.content),
+                    (str(entity_path), tuple(getattr(entity_path.lstat(), key) for key in identity_keys),
+                     entity_raw))
+                context_snapshot = _physical_replay_context_snapshot(context)
+                closed_state = {}
+
+                def close_law():
+                    observer_owner_fence()
+                    _need(same(captured, law_owner.capture_uscode_source_documents_from_parquet(law_path, **capture_args)),
+                          "physical law capture changed during complete crosswalk traversal")
+
+                def close_coordinates():
+                    observer_owner_fence()
+                    coordinate_replay()
+
+                def close_core():
+                    observer_owner_fence()
+                    current = core_replay()
+                    _need(same(opened, current),
+                          "complete source/IR/cache/graph/review generation changed during physical replay")
+                    closed_state["report"] = current
+
+                def close_context():
+                    observer_owner_fence()
+                    _need(_physical_replay_context_snapshot(context) == context_snapshot,
+                          "complete current replay inputs changed during physical observation")
+
+                observer_error = None
+                try:
+                    # The return is deliberately ignored; observation grants no authority.
+                    _observe_checked_context(context)
+                except BaseException as error:
+                    observer_error = error
+                finally:
+                    # A failed check does not skip independent closing custody checks.
+                    _physical_complete_checks_v1((
+                        ("law recapture", close_law),
+                        ("source coordinates", close_coordinates),
+                        ("law descriptor", law_fence),
+                        ("entity descriptor", entity_fence),
+                        ("complete core replay", close_core),
+                        ("physical Source generation", physical_owner_fence),
+                        ("complete observer inputs", close_context),
+                        ("loaded owners", observer_owner_fence)),
+                        primary=observer_error, _closing_failures=closing_failures)
+                if observer_error is not None:
+                    raise observer_error
+                closed = closed_state["report"]
+            report = dict(closed)
+            report.update(schema=report_schema, profile=profile,
+                request_sha256=expected_request_sha256,
+                artifacts=[{key: row[key] for key in ("artifact_id", "family", "sha256", "bytes")} for row in rows],
+                blockers=[blocker for blocker in closed["blockers"]
+                    if blocker != "independent_law_span_entity_to_reviewed_source_crosswalk_missing"],
+                local_source_cache_entity_bindings_verified=True,
+                independent_reviewed_crosswalk_verified=True,
+                physical_owner_pins={path: row["sha256"] for path, row in physical_generation.items()},
+                physical_owner_pin_scope="four_named_physical_delegate_sources_only_not_complete_execution_attestation",
+                reviewed_crosswalk_sha256=pins["reviewed_crosswalk"],
+                physical_crosswalk={"profile": REVIEWED_PHYSICAL_CROSSWALK_PROFILE,
+                    "scope": "complete_declared_reviewed_component_and_selected_physical_cache_population",
+                    "law": law_selection, "entity": entity_selection, "unit_bindings": unit_bindings,
+                    "span_bindings": span_bindings, "entity_bindings": entity_bindings,
+                    "counts": {"law_rows": len(captured["documents"]), "reviewed_units": len(unit_bindings),
+                        "paired_cache_rows": len(span_bindings), "entity_rows": len(observed),
+                        "graph_nodes": len(node_cids), "graph_edges": len(edge_cids)},
+                    "candidate_formal_outputs_semantically_reviewed": False,
+                    "surface_labels_used_as_semantic_identity": False,
+                    "legacy_boolean_flags_used_as_admission": False,
+                    "remote_revision_authenticated": False},
+                release_ready=False, closure_complete=False, admitted=False, formalized=False, proof_verified=False)
+            wire.encode_parent_replay_value_v1(report, max_bytes=MAX_CLOSURE_REQUEST_BYTES)
             physical_owner_fence()
-        _need(same(captured, law_owner.capture_uscode_source_documents_from_parquet(law_path, **capture_args)),
-              "physical law capture changed during complete crosswalk traversal")
-        coordinate_replay()
-        law_fence()
-        entity_fence()
-        if reviewed_version == 3:
-            physical_owner_fence()
-        closed = core_validator(core_raw, expected_request_sha256=core_sha)
-        _need(same(opened, closed), "complete source/IR/cache/graph/review generation changed during physical replay")
-        report = dict(closed)
-        report.update(schema=report_schema, profile=profile,
-            request_sha256=expected_request_sha256,
-            artifacts=[{key: row[key] for key in ("artifact_id", "family", "sha256", "bytes")} for row in rows],
-            blockers=[blocker for blocker in closed["blockers"]
-                if blocker != "independent_law_span_entity_to_reviewed_source_crosswalk_missing"],
-            local_source_cache_entity_bindings_verified=True,
-            independent_reviewed_crosswalk_verified=True,
-            physical_owner_pins={path: row["sha256"] for path, row in physical_generation.items()},
-            physical_owner_pin_scope="four_named_physical_delegate_sources_only_not_complete_execution_attestation",
-            reviewed_crosswalk_sha256=pins["reviewed_crosswalk"],
-            physical_crosswalk={"profile": REVIEWED_PHYSICAL_CROSSWALK_PROFILE,
-                "scope": "complete_declared_reviewed_component_and_selected_physical_cache_population",
-                "law": law_selection, "entity": entity_selection, "unit_bindings": unit_bindings,
-                "span_bindings": span_bindings, "entity_bindings": entity_bindings,
-                "counts": {"law_rows": len(captured["documents"]), "reviewed_units": len(unit_bindings),
-                    "paired_cache_rows": len(span_bindings), "entity_rows": len(observed),
-                    "graph_nodes": len(node_cids), "graph_edges": len(edge_cids)},
-                "candidate_formal_outputs_semantically_reviewed": False,
-                "surface_labels_used_as_semantic_identity": False,
-                "legacy_boolean_flags_used_as_admission": False,
-                "remote_revision_authenticated": False},
-            release_ready=False, closure_complete=False, admitted=False, formalized=False, proof_verified=False)
-        wire.encode_parent_replay_value_v1(report, max_bytes=MAX_CLOSURE_REQUEST_BYTES)
-        physical_owner_fence()
+    except BaseException as error:
+        pending_error = error
+        if error is not observer_error and not closing_failures:
+            closing_failures.append(error)
+        raise
+    finally:
+        if _observe_checked_context is not None:
+            _physical_complete_checks_v1((
+                ("post-close physical Source generation", physical_owner_fence),
+                ("post-close loaded owners", observer_owner_fence)),
+                primary=pending_error, _closing_failures=closing_failures)
     # Both original physical file scopes have completed their final byte/stat
     # checks and closed. Do the final source-generation check after that custody.
-    physical_owner_fence()
+    if _observe_checked_context is None:
+        physical_owner_fence()
     return report
 
 
@@ -1111,8 +1282,10 @@ def _release_native_packet_v3(selection, materials, required, contracts, wire):
         complete_packet_file_count=len(packet) if type(packet) in (list, tuple) else None, parent_or_release_authority=False)
 
 
-def _validate_uscode_release_byte_closure_v3(request_raw: bytes, *, expected_request_sha256: str) -> dict:
-    return _validate_uscode_release_byte_closure(request_raw, expected_request_sha256=expected_request_sha256, reviewed_version=3)
+def _validate_uscode_release_byte_closure_v3(request_raw: bytes, *, expected_request_sha256: str,
+        _captured_native_context=None, _native_transport="chunk-index/v1") -> dict:
+    return _validate_uscode_release_byte_closure(request_raw, expected_request_sha256=expected_request_sha256, reviewed_version=3,
+        _captured_native_context=_captured_native_context, _native_transport=_native_transport)
 
 
 def validate_uscode_release_closure_v3(request_raw: bytes, *, expected_request_sha256: str) -> dict:
@@ -1213,3 +1386,200 @@ def validate_reviewed_physical_realization_context_v1(request_raw: bytes, *,
     _need(_canonical(detached) == raw, "detached physical context bytes changed")
     fence()
     return detached
+
+def _release_direct_v3_policy():
+    """Check only the explicit direct domain; preserve the chunk/default policy."""
+    _release_v3_policy()
+    _need(CLOSURE_PROFILE_V3_DIRECT == "reviewed-norm-v3-physical-three-cache-direct-packet-replay/v1"
+          and _BYTE_PROFILE_V3_DIRECT == "reviewed-norm-v3-local-direct-byte-replay/v1"
+          and type(MAX_CLOSURE_REQUEST_BYTES_V3) is int and MAX_CLOSURE_REQUEST_BYTES_V3 == 64 * 1024**2
+          and type(MAX_CLOSURE_NATIVE_PACKET_BYTES_V3) is int and MAX_CLOSURE_NATIVE_PACKET_BYTES_V3 == 48 * 1024**2
+          and type(MAX_CLOSURE_ARTIFACT_TOTAL_BYTES_V3) is int and MAX_CLOSURE_ARTIFACT_TOTAL_BYTES_V3 == 48 * 1024**2,
+          "closed explicit direct-packet V3 bounds/profile required")
+
+
+def validate_uscode_release_closure_direct_v3(request_raw: bytes, *, expected_request_sha256: str) -> dict:
+    """Replay only the explicit direct-packet V3 domain, without parent grants."""
+    _release_direct_v3_policy()
+    return _validate_uscode_release_physical_closure(request_raw,
+        expected_request_sha256=expected_request_sha256, reviewed_version=3,
+        _native_transport="direct-packet/v1")
+
+
+def _physical_closing_note_v1(error, message):
+    # Native exception dictionary access avoids arbitrary __str__/attribute hooks.
+    try:
+        namespace = BaseException.__dict__["__dict__"].__get__(error, BaseException)
+        previous = dict.get(namespace, "__notes__")
+        notes = (list(previous) if type(previous) is list
+                 and len(previous) <= 32 and all(type(note) is str for note in previous) else [])
+        notes.append(message)
+        dict.__setitem__(namespace, "__notes__", notes)
+    except BaseException:
+        # Diagnostic decoration must never interrupt remaining closing checks.
+        pass
+
+
+def _joined_release_guard():
+    """Check the fixed selected loaded owners; no caller checker is accepted."""
+    contracts = _JOIN_RELEASE_OWNER_MODULES_V1[1]
+    _need(_JOIN_RELEASE_BINDING_HELPER_V1 is vars(contracts).get("_loaded_owner_guard_binding_v1")
+          and _JOIN_RELEASE_REGISTRY_HELPER_V1 is vars(contracts).get("_loaded_owner_registry_binding_v1"),
+          "original joined binding helpers changed")
+    own = _JOIN_RELEASE_BINDING_HELPER_V1(globals(), _JOIN_LOADED_OWNER_GUARD_V1)
+    _need(type(own) is tuple and len(own) == 2, "original coordinator registration required")
+    _JOIN_LOADED_OWNER_GUARD_V1()
+    registry = _JOIN_RELEASE_REGISTRY_HELPER_V1()
+    _need(registry[0] == _JOIN_RELEASE_REGISTRY_ANCHOR_V1[0],
+          "original private registration anchor changed")
+    for module, verifier, expected in _JOIN_RELEASE_EXTERNAL_BINDINGS_V1:
+        namespace = vars(module)
+        _need(_sys.modules.get(namespace["__name__"]) is module,
+              "joined external module identity changed")
+        current = _JOIN_RELEASE_BINDING_HELPER_V1(namespace, verifier)
+        _need(current[0] == expected[0], "original joined external registration changed")
+        verifier()
+
+
+def _physical_complete_checks_v1(checks, *, primary=None, _closing_failures=None):
+    """Run every finite closing check; a security failure prevents a result.
+
+    When all checks pass, a pending observer exception keeps its identity.
+    Otherwise the first closing refusal takes precedence; earlier observer and
+    later closing errors remain attached as context or notes.
+    """
+    failures = [] if _closing_failures is None else _closing_failures
+    _need(type(failures) is list and len(failures) <= 32,
+          "bounded private closing failure state required")
+    for label, check in checks:
+        try:
+            check()
+        except BaseException as error:
+            if failures:
+                _physical_closing_note_v1(failures[0], "additional closing failure in " + label)
+            if len(failures) < 32:
+                failures.append(error)
+    if failures:
+        failure = failures[0]
+        if primary is not None and primary is not failure:
+            _physical_closing_note_v1(failure, "prior observer/replay failure retained as cause")
+            raise failure from primary
+        raise failure
+
+
+def _physical_replay_context_snapshot(context):
+    """Fingerprint a complete internal observation; confer no live authority."""
+    from . import legal_corpus_definition_use_native_v2 as native
+    _joined_release_guard()
+    native._live_success_guard(native._owners(), reviewed_version=3)
+    fields = {"reviewed_version", "core_request_sha256", "physical_request_sha256",
+        "preparation", "graph", "admission", "args", "kwargs", "pins", "toolchain", "native", "physical_files"}
+    _need(type(context) is dict and set(context) == fields and context["reviewed_version"] == 3,
+          "closed complete physical V3 runtime context required")
+    current = native._live_original_inputs(context["preparation"], context["graph"],
+        context["admission"], context["args"], context["kwargs"])
+    selected = context["native"]
+    native_binding = None
+    if selected is not None:
+        _need(type(selected) is dict and set(selected) == {
+            "packet_files", "receipt_raw", "expected_packet_sha256", "expected_binary_sha256"},
+            "closed retained runtime Native selection required")
+        contents, inventory = native._reviewed_retained_packet(selected["packet_files"])
+        _need(type(selected["receipt_raw"]) is bytes
+              and contents["build-receipt.json"] == selected["receipt_raw"],
+              "runtime receipt and complete packet bytes differ")
+        native_binding = (native._wire(inventory, native.MAX_RECORD_BYTES),
+            hashlib.sha256(selected["receipt_raw"]).hexdigest(),
+            _canonical(selected["expected_binary_sha256"]), selected["expected_packet_sha256"])
+    physical = context["physical_files"]
+    _need(type(physical) is tuple and len(physical) == 2, "same two physical input bindings required")
+    physical_binding = []
+    for row in physical:
+        _need(type(row) is tuple and len(row) == 3 and type(row[0]) is str
+              and type(row[1]) is tuple and len(row[1]) == 9
+              and all(type(value) is int for value in row[1])
+              and type(row[2]) is bytes and 0 < len(row[2]) <= _MAX_ARTIFACT_BYTES,
+              "closed bounded physical input binding required")
+        physical_binding.append((row[0], row[1], hashlib.sha256(row[2]).hexdigest()))
+    return (current, _canonical(context["pins"]), context["toolchain"],
+        context["core_request_sha256"], context["physical_request_sha256"], native_binding,
+        tuple(physical_binding))
+
+
+def _physical_postclose_fence_v1(context):
+    """Check the exact generation from this traversal; establish no authority.
+
+    This is byte/full9 custody only. It neither rebuilds the graph nor replays
+    the physical corpus a second time, and no caller baseline is admitted.
+    """
+    import os
+    import stat
+    _physical_replay_context_snapshot(context)
+    keys = ("st_dev", "st_ino", "st_mode", "st_nlink", "st_uid", "st_gid",
+            "st_size", "st_mtime_ns", "st_ctime_ns")
+    for spelling, expected_identity, expected in context["physical_files"]:
+        path = Path(spelling)
+        _need(path.is_absolute() and path.resolve(strict=True) == path,
+              "same unaliased physical input path required")
+        fd = os.open(path, os.O_RDONLY | os.O_NONBLOCK | os.O_NOFOLLOW | os.O_CLOEXEC)
+        try:
+            before = os.fstat(fd)
+            _need(stat.S_ISREG(before.st_mode) and before.st_nlink == 1
+                  and tuple(getattr(before, key) for key in keys) == expected_identity
+                  and tuple(getattr(path.lstat(), key) for key in keys) == expected_identity,
+                  "same closed physical file generation required")
+            raw = bytearray()
+            while len(raw) <= len(expected):
+                chunk = os.read(fd, min(1024 * 1024, len(expected) + 1 - len(raw)))
+                if not chunk:
+                    break
+                raw.extend(chunk)
+            _need(bytes(raw) == expected
+                  and tuple(getattr(os.fstat(fd), key) for key in keys) == expected_identity
+                  and tuple(getattr(path.lstat(), key) for key in keys) == expected_identity,
+                  "closed physical bytes or generation changed")
+        finally:
+            os.close(fd)
+    _joined_release_guard()
+
+
+
+# Cold, fixed same-repository implementation bindings for the private join.
+# The public wire entry points remain retained-only and confer no parent custody.
+from . import corpus_contracts as _joined_owner_contracts_v1
+from ...optimizers.logic_theorem_optimizer import uscode_dataset as _joined_law_owner_v1
+from . import uscode_ingest as _joined_coordinate_owner_v1
+from . import legal_entity_index_intake as _joined_entity_owner_v1
+from . import constitution_inventory as _joined_sentence_owner_v1
+from . import legal_parent_text_views as _joined_byte_owner_v1
+from . import meta_ontology as _joined_meta_owner_v1
+
+_JOIN_RELEASE_OWNER_MODULES_V1 = (
+    _sys.modules[__name__], _joined_owner_contracts_v1, _joined_law_owner_v1,
+    _joined_coordinate_owner_v1, _joined_entity_owner_v1, _joined_sentence_owner_v1,
+    _joined_byte_owner_v1, _joined_meta_owner_v1)
+_JOIN_RELEASE_BINDING_HELPER_V1 = _joined_owner_contracts_v1._loaded_owner_guard_binding_v1
+_JOIN_RELEASE_REGISTRY_HELPER_V1 = _joined_owner_contracts_v1._loaded_owner_registry_binding_v1
+_JOIN_RELEASE_REGISTRY_ANCHOR_V1 = _JOIN_RELEASE_REGISTRY_HELPER_V1()
+_JOIN_RELEASE_EXTERNAL_BINDINGS_V1 = tuple(
+    (module, vars(module)["_JOIN_LOADED_OWNER_GUARD_V1"],
+     _JOIN_RELEASE_BINDING_HELPER_V1(vars(module), vars(module)["_JOIN_LOADED_OWNER_GUARD_V1"]))
+    for module in _JOIN_RELEASE_OWNER_MODULES_V1[1:])
+
+_JOIN_LOADED_OWNER_GUARD_V1 = _joined_owner_contracts_v1._capture_loaded_owner_guard_v1(
+    globals(),
+    class_names=("ReleaseCoordinatorError",),
+    value_names=("SCHEMA", "RECEIPT_NAME", "STATUSES", "_COMMIT_KEYS", "_MAX_ARTIFACT_BYTES",
+        "CLOSURE_REQUEST_SCHEMA", "CLOSURE_SCHEMA", "CLOSURE_PROFILE", "MAX_CLOSURE_REQUEST_BYTES",
+        "MAX_CLOSURE_REQUEST_BYTES_V3", "MAX_CLOSURE_NATIVE_PACKET_BYTES_V3",
+        "MAX_CLOSURE_ARTIFACT_TOTAL_BYTES_V3", "_CLOSURE_ROLES", "_CLOSURE_REPOSITORIES",
+        "CLOSURE_REQUEST_SCHEMA_V2", "CLOSURE_SCHEMA_V2", "CLOSURE_PROFILE_V2",
+        "CLOSURE_REQUEST_SCHEMA_V3", "CLOSURE_SCHEMA_V3", "CLOSURE_PROFILE_V3",
+        "REVIEWED_PHYSICAL_CROSSWALK_SCHEMA",
+        "REVIEWED_PHYSICAL_CROSSWALK_PROFILE", "CLOSURE_PROFILE_V3_DIRECT", "_BYTE_PROFILE_V3_DIRECT", "_BYTE_REQUEST_SCHEMA_V3", "_BYTE_SCHEMA_V3", "_BYTE_PROFILE_V3", "NATIVE_PACKET_INDEX_SCHEMA_V3", "NATIVE_PACKET_INDEX_PROFILE_V3", "NATIVE_PACKET_CODEC_V3"),
+    alias_names=("hashlib", "json", "Path", "_sys", "_types", "__builtins__", "__loader__", "__spec__",
+        "_joined_owner_contracts_v1", "_joined_law_owner_v1", "_joined_coordinate_owner_v1",
+        "_joined_entity_owner_v1", "_joined_sentence_owner_v1", "_joined_byte_owner_v1",
+        "_joined_meta_owner_v1", "_JOIN_RELEASE_OWNER_MODULES_V1",
+        "_JOIN_RELEASE_BINDING_HELPER_V1", "_JOIN_RELEASE_REGISTRY_HELPER_V1",
+        "_JOIN_RELEASE_REGISTRY_ANCHOR_V1", "_JOIN_RELEASE_EXTERNAL_BINDINGS_V1"))

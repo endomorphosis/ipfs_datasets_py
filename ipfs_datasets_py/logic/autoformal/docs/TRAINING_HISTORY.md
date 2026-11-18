@@ -1,5 +1,19 @@
 # Training and experiment history
 
+## Historical Source variant cohorts, 2026-11-18
+
+This entry preserves software evidence from the captured Source variants. It does not qualify the merged publication tree or current-main runtime. The recorded cohorts retain their separate populations, pins, failures and custody epochs; their case counts are not added. Existing Main histories, catalog records and all 24 programme task IDs, statuses, frontiers and acceptance criteria remain unchanged.
+
+Captured Source heads: R `3f1691d59cc0a310750c0b441b51d3528b17eb85`; A `81b5e11f3c6063486a7cadc6c3d4c6ea50e85bb2`. The closed private snapshot is `manifest-v2.json`, 5,749,886 bytes, SHA256 `b11530c43794ddf8a24b97e9a723f9f99045c2a00bfb910db0ba903a5015db26` (Root verification locator prefix `5e860b`).
+
+- V19: 25 selected fictional-fixture passes, 0 failures/errors/skips, for consumer `90ebf16f` and test `2e7ec153`; this records the captured callback-exit software cohort.
+- R158: 158 passes, 0 failures/errors/skips across 58 functions (`04f05c`), with all 53 Source identities stable across three snapshots and closed Source/SDK custody. Captured pins are coordinator `09e2fe80`, contracts `0279ad9f` and test `f0243064`.
+- Pre-repair A6: 2 genuine V2/V3 passes and 4 intended pre-authentication callback failures (`e860c5`); the failed epoch remains preserved.
+- First A70: 67 passes, 3 fixture-cleanup failures, 0 errors/skips (`1c2d8a`). The test-only LIFO correction (`8763a5`, test `40807119`) left product code unchanged. Corrected focused A70 recorded 70/70 cases across seven functions (`69ca2b`), with all 147 Source/evidence identities stable and custody closed.
+- A420: 420 passes, 0 failures/errors/skips across 89 functions (`49083c`), with all 147 Source/evidence identities stable across three epochs and Source/SDK custody closed. Captured owner/worker/hook/test pins are `34247582` / `61255904` / `7bdd783b` / `40807119`.
+
+These captured software observations grant no actual Native issuance or same-target live parent-to-release join, model training/convergence, statutory meaning/review, immutable Hub readback, legal or corpus-release authority. They do not replace any current Main qualification or programme frontier. The original immutable receipt locators are recorded in the [historical Source-variant entry](HANDOFF.md).
+
 ## Verifier v2: separate RED, Source4 and 140-case software epochs — 2026-11-16
 
 The old-source RED9 original measured 6FAIL/3PASS/0E/0S in 0.673 s; audit `be285302` confirms the six source-policy counterexamples and three inert controls. Its `693c`16 MiB remains retained/nondurable. Earlier `77bf` stopped at a missing spec-origin pin with no JUnit, and `9424` collected nine cases but produced nine package-setup errors; neither is feature-test credit. Their claims and static reports remain unchanged. The later Source4 adoption separately installed kernel `260a6abe`, cache `fc7b97d6`, integration `e1a0f690` and cache-test `efdd956b`; WRITE `2273231d`, separate bound READ `50d7b926` and audit `c16363a2` are source-delivery evidence. The pre-input `00d726` typo made no Source operation and did not repeat WRITE.

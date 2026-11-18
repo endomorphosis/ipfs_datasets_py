@@ -731,6 +731,7 @@ def _physical_source_material(directory, *, source_texts=None, shared_normative_
 
 
 def _physical_closure_request(material, *, map_damage=None, reviewed_version=2, return_control=False,
+        native_transport="chunk-index/v1",
         foreign_dependency_version="fictional-external-legal-dependency/v1"):
     from copy import deepcopy
     from dataclasses import fields
@@ -796,6 +797,8 @@ def _physical_closure_request(material, *, map_damage=None, reviewed_version=2, 
         source_texts=material["texts"], source_bindings=material.get("source_bindings"),
         cross_references=references, dependency_artifacts=dependency_artifacts)
     assert type(reviewed_version) is int and reviewed_version in (2, 3)
+    assert type(native_transport) is str and native_transport in ("chunk-index/v1", "direct-packet/v1")
+    assert native_transport == "chunk-index/v1" or reviewed_version == 3
     if reviewed_version == 2:
         control = shared_fixture.reviewed_preservation_graph_fixture_v2(fixture, admission, case)
         control["preparation"] = shared_fixture.reviewed_preservation_prepare_fixture_v2(control)
@@ -924,7 +927,9 @@ def _physical_closure_request(material, *, map_damage=None, reviewed_version=2, 
         physical_inputs=dict(law_path=str(material["law_path"]), entity_path=str(material["entity_path"])))
     if reviewed_version == 3:
         request.update(schema="legal-uscode-release-closure-request/v3",
-            profile="reviewed-norm-v3-physical-three-cache-replay/v1")
+            profile=("reviewed-norm-v3-physical-three-cache-direct-packet-replay/v1"
+                     if native_transport == "direct-packet/v1"
+                     else "reviewed-norm-v3-physical-three-cache-replay/v1"))
     return (request, control) if return_control else request
 
 
@@ -1991,3 +1996,866 @@ def test_physical_realization_refuses_mutated_opening_context_alias(
             expected_graph_sha256=control["graph_sha"], expected_admission_sha256=control["admission_sha"],
             toolchain=fixture.TOOLCHAIN, **control["kwargs"])
     assert len(contexts) == 2, "both complete physical context replays must precede alias rejection"
+
+
+# Explicit direct-packet compatibility controls; Main chunk/default tests remain above.
+
+def _direct_physical_source_material(directory, *, reviewed_version=2):
+    """Construct before freeze using Main's current physical fixture semantics."""
+    assert type(reviewed_version) is int and reviewed_version in (2, 3)
+    if reviewed_version == 2:
+        return _physical_source_material(directory)
+    return _physical_source_material(directory, source_texts=[
+        "For this fictional Act, a covered officer means an officer appointed by the Board. Café.",
+        "Every covered officer must file a report unless the Board expressly excuses that officer.",
+        "For every officer, supervisor, event, and time, if both people are covered officers, that officer may inspect the register under that supervisor at that event and time.",
+    ])
+
+
+def _direct_physical_closure_request(material, *, map_damage=None, reviewed_version=2):
+    """Choose the direct profile as part of initial fixture construction."""
+    return _physical_closure_request(material, map_damage=map_damage,
+        reviewed_version=reviewed_version,
+        native_transport="direct-packet/v1" if reviewed_version == 3 else "chunk-index/v1")
+
+
+@pytest.fixture(scope="module")
+def direct_physical_closure_material_v3(physical_closure_material_v3):
+    """Reuse the current Main mixed physical material under an explicit direct request."""
+    return physical_closure_material_v3
+
+
+def replay_direct_physical_closure_v3(request):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as transport
+    validator = getattr(release, 'validate_uscode_release_closure_v3', None)
+    assert callable(validator), 'complete reviewed mixed-sort V3 artifacts have no physical release-closure consumer'
+    raw = transport.encode_parent_replay_value_v1(request)
+    return validator(raw, expected_request_sha256=hashlib.sha256(raw).hexdigest())
+
+
+@pytest.fixture(scope='module')
+def physical_closure_component_v3(direct_physical_closure_material_v3):
+    return _direct_physical_closure_request(direct_physical_closure_material_v3, reviewed_version=3)
+
+
+def test_physical_closure_v3_replays_complete_mixed_component_without_release_authority(physical_closure_component_v3, direct_physical_closure_material_v3):
+    request = physical_closure_component_v3
+    report = replay_direct_physical_closure_v3(request)
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as transport
+    rows = {row['artifact_id']: row for row in request['artifacts']}
+    component = request['component']
+    replay_row = rows[component['replay']]
+    replay = transport.decode_parent_replay_value_v1(replay_row['payload'], expected_payload_sha256=replay_row['sha256'])
+    admission = json.loads(rows[component['admission']]['payload'])
+    graph = json.loads(rows[component['graph']]['payload'])
+    assert graph['counts']['units'] == 3 and graph['counts']['norms'] == 2
+    assert graph['counts']['definitions'] == 1 and graph['counts']['definition_uses'] == 2
+    declaration = replay['admission_kwargs']['preparation_inputs']['declaration']
+    for unit, admitted, ast_record in zip(declaration['units'], admission['units'], graph['ast_records'], strict=True):
+        complete = admitted['canonical_ir']
+        assert set(complete) == {'profile', 'typed_expression', 'argument_roles', 'assumptions', 'governing_context', 'interpretation_id', 'source_binding', 'definition_uses', 'cross_references'}
+        assert canonical_dag_json_bytes(json.loads(ast_record['ast_json'])) == canonical_dag_json_bytes(complete)
+        assert complete['source_binding']['source_version_cid'] == unit['source_version']['record_cid']
+        assert complete['source_binding']['occurrence_cid'] == unit['occurrence']['record_cid']
+    mixed = admission['units'][2]['canonical_ir']
+    assert {item['name'] for item in mixed['typed_expression']['signature']['sorts']} >= {'Object', 'EventFrame', 'TimeFrame'}
+    assert len(mixed['definition_uses'][0]['target_typed_paths']) == 2
+    assert report['schema'] == 'legal-uscode-release-closure-report/v3'
+    assert report['profile'] == 'reviewed-norm-v3-physical-three-cache-replay/v1'
+    assert report['local_replay_complete'] is True
+    assert report['local_source_cache_entity_bindings_verified'] is True
+    assert report['independent_reviewed_crosswalk_verified'] is True
+    assert report['fixture_only'] is True and report['provenance_kind'] == 'fictional_fixture'
+    assert report['physical_crosswalk']['counts'] == dict(law_rows=3, reviewed_units=3, paired_cache_rows=4, entity_rows=len(direct_physical_closure_material_v3['entity_rows']), graph_nodes=len(graph['graph']['nodes']), graph_edges=len(graph['graph']['edges']))
+    assert 'independent_law_span_entity_to_reviewed_source_crosswalk_missing' not in report['blockers']
+    assert 'original_admitted_native_parent_custody_not_established' in report['blockers']
+    assert 'immutable_remote_Hub_readback_not_established' in report['blockers']
+    assert 'retained_native_receipt_and_packet_not_provided' in report['blockers']
+    assert all((report[key] is False for key in ('release_ready', 'closure_complete', 'admitted', 'formalized', 'proof_verified', 'source_semantics_verified', 'source_authenticity_verified', 'original_native_parent_custody_verified', 'remote_readback_verified', 'native_receipt_replayed', 'model_or_compiler_execution_performed')))
+
+
+def test_reviewed_v3_json_depth_is_explicit_bounded_and_preserves_legacy_envelopes():
+    from ipfs_datasets_py.logic.autoformal import corpus_contracts as contracts
+    assert (contracts.MAX_RECORD_BYTES, contracts.MAX_JSON_NODES, contracts.MAX_JSON_DEPTH, contracts.MAX_INTEGER) == (1024 * 1024, 25000, 20, (1 << 63) - 1)
+    value = {'profile': 'fixture:bounded-deep-json'}
+    for _ in range(22):
+        value = [value]
+    raw = _physical_wire(value)
+    digest = hashlib.sha256(raw).hexdigest()
+    with pytest.raises(ValueError, match='node/depth'):
+        contracts.load_json_bytes(raw, expected_sha256=digest)
+    assert contracts.load_json_bytes(raw, expected_sha256=digest, max_depth=96) == value
+    with pytest.raises(ValueError, match='node/depth'):
+        contracts.load_record_bytes(raw, expected_sha256=digest)
+    deeper = None
+    for _ in range(97):
+        deeper = [deeper]
+    beyond = _physical_wire(deeper)
+    with pytest.raises(ValueError, match='node/depth'):
+        contracts.load_json_bytes(beyond, expected_sha256=hashlib.sha256(beyond).hexdigest(), max_depth=96)
+    for invalid in (True, -1, 97):
+        with pytest.raises(ValueError):
+            contracts.load_json_bytes(b'null', expected_sha256=hashlib.sha256(b'null').hexdigest(), max_depth=invalid)
+
+
+@pytest.mark.parametrize('damage', ['source_bytes', 'ir_link', 'graph_generation', 'dependency_observation', 'toolchain', 'review_revoked', 'source_version_link', 'unit_population', 'unsupported_profile', 'wrong_schema', 'unrecognized_authority_flag'])
+def test_physical_closure_v3_rejects_changed_component_with_resealed_outer_hash(physical_closure_component_v3, damage):
+    from copy import deepcopy
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as transport
+    from ipfs_datasets_py.logic.autoformal import corpus_norm_definition_adapter as graphs
+    from ipfs_datasets_py.logic.autoformal import legal_graph_review as authority
+    request = deepcopy(physical_closure_component_v3)
+    rows = {row['artifact_id']: row for row in request['artifacts']}
+    component = request['component']
+
+    def replace(row, body):
+        row.update(payload=body, bytes=len(body), sha256=hashlib.sha256(body).hexdigest())
+    if damage in {'source_bytes', 'dependency_observation', 'toolchain', 'review_revoked'}:
+        row = rows[component['replay']]
+        replay = transport.decode_parent_replay_value_v1(row['payload'], expected_payload_sha256=row['sha256'])
+        kwargs = replay['admission_kwargs']
+        if damage == 'source_bytes':
+            inputs = kwargs['preparation_inputs']['source_inputs']
+            inputs[next(iter(inputs))]['raw_bytes'] += b'changed'
+        elif damage == 'dependency_observation':
+            observed = kwargs['observed_artifact_sha256s']
+            observed[next(iter(observed))] = '0' * 64
+        elif damage == 'toolchain':
+            replay['toolchain'] = 'leanprover/lean4:v4.99.0'
+        else:
+            registry = replay['admission_args'][1]
+            registry['keys'][0]['revoked_at_utc'] = kwargs['at_time_utc']
+            kwargs['expected_registry_sha256'] = authority.digest(registry)
+        replace(row, transport.encode_parent_replay_value_v1(replay))
+    elif damage == 'ir_link':
+        ir = [row for row in request['artifacts'] if row['family'] == 'ir']
+        assert ir[0]['payload'] != ir[1]['payload']
+        replace(ir[0], ir[1]['payload'])
+    elif damage == 'graph_generation':
+        row = rows[component['graph']]
+        graph = json.loads(row['payload'])
+        graph['counts']['nodes'] += 1
+        graph = seal_record({key: value for key, value in graph.items() if key not in ('record_cid', 'cid_scope')})
+        replace(row, canonical_dag_json_bytes(graph))
+        request['pins']['graph'] = graphs.norm_definition_graph_sha256(graph)
+    elif damage == 'source_version_link':
+        versions = [row for row in request['artifacts'] if row['family'] == 'source_version']
+        assert versions[0]['payload'] != versions[1]['payload']
+        replace(versions[0], versions[1]['payload'])
+    elif damage == 'unit_population':
+        request['expected_unit_ids'].pop()
+    elif damage == 'unsupported_profile':
+        request['profile'] = 'reviewed-norm-v3-physical-three-cache-replay/v999'
+    elif damage == 'wrong_schema':
+        request['schema'] = 'legal-uscode-release-closure-request/v2'
+    else:
+        request['verified'] = True
+    with pytest.raises(ValueError):
+        replay_direct_physical_closure_v3(request)
+
+
+@pytest.mark.parametrize('field', ['profile', 'typed_expression', 'argument_roles', 'assumptions', 'governing_context', 'interpretation_id', 'source_binding', 'definition_uses', 'cross_references'])
+def test_physical_closure_v3_rejects_omitted_complete_canonical_target_field(physical_closure_component_v3, field):
+    from copy import deepcopy
+    from ipfs_datasets_py.logic.autoformal import legal_reviewed_norm_admission_v3 as admission
+    request = deepcopy(physical_closure_component_v3)
+    row = next((row for row in request['artifacts'] if row['artifact_id'] == request['component']['admission']))
+    offered = json.loads(row['payload'])
+    del offered['units'][2]['canonical_ir'][field]
+    body = _physical_wire(offered)
+    row.update(payload=body, bytes=len(body), sha256=hashlib.sha256(body).hexdigest())
+    request['pins']['admission'] = admission.norm_content_adjudication_sha256(offered)
+    with pytest.raises(ValueError):
+        replay_direct_physical_closure_v3(request)
+
+
+@pytest.mark.parametrize('damage', ['span_wrong_overlap', 'entity_endpoint'])
+def test_physical_closure_v3_checks_signed_crosswalk_against_actual_complete_population(direct_physical_closure_material_v3, damage):
+    request = _direct_physical_closure_request(direct_physical_closure_material_v3, reviewed_version=3, map_damage=damage)
+    with pytest.raises(ValueError):
+        replay_direct_physical_closure_v3(request)
+
+
+@pytest.mark.parametrize('legacy_name', ['validate_uscode_release_closure_v1', 'validate_uscode_release_closure_v2'])
+def test_physical_closure_v3_cannot_be_consumed_by_legacy_domains(physical_closure_component_v3, legacy_name):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as transport
+    raw = transport.encode_parent_replay_value_v1(physical_closure_component_v3)
+    with pytest.raises(ValueError):
+        getattr(release, legacy_name)(raw, expected_request_sha256=hashlib.sha256(raw).hexdigest())
+
+
+def test_physical_closure_v3_requires_its_own_domain_for_v2_component(physical_closure_component):
+    with pytest.raises(ValueError):
+        replay_direct_physical_closure_v3(physical_closure_component)
+
+
+@pytest.mark.parametrize('direct', [False, True])
+def test_physical_closure_v3_actual_explicit_cli_keeps_authority_false(physical_closure_component_v3, tmp_path, direct):
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as transport
+    raw = transport.encode_parent_replay_value_v1(physical_closure_component_v3)
+    path = tmp_path / 'physical-closure-v3.request'
+    path.write_bytes(raw)
+    result, receipt = run_cli(['validate-closure', '--profile', 'reviewed-norm-v3-direct', '--request', str(path), '--request-sha256', hashlib.sha256(raw).hexdigest()], cwd=tmp_path, direct=direct)
+    assert result.returncode == 0 and receipt['status'] == 'success'
+    assert receipt['closure']['independent_reviewed_crosswalk_verified'] is True
+    assert receipt['closure']['original_native_parent_custody_verified'] is False
+    assert receipt['closure']['remote_readback_verified'] is False
+    assert receipt['admitted'] is receipt['formalized'] is receipt['proof_verified'] is False
+    assert receipt['closure']['release_ready'] is receipt['closure']['closure_complete'] is False
+    rejected, error = run_cli(['validate-closure', '--request', str(path), '--request-sha256', hashlib.sha256(raw).hexdigest()], cwd=tmp_path, direct=direct)
+    assert rejected.returncode != 0 and error['status'] == 'error'
+
+
+@pytest.mark.parametrize('role', ['graph', 'preservation'])
+def test_physical_closure_v3_refuses_complete_valid_v2_graph_or_preparation(physical_closure_component_v3, physical_closure_component, role):
+    from copy import deepcopy
+    assert replay_physical_closure(physical_closure_component)['local_replay_complete'] is True
+    request = deepcopy(physical_closure_component_v3)
+    other = physical_closure_component
+    original = next((row for row in other['artifacts'] if row['artifact_id'] == other['component'][role]))
+    selected = next((row for row in request['artifacts'] if row['artifact_id'] == request['component'][role]))
+    selected.update(payload=original['payload'], bytes=original['bytes'], sha256=original['sha256'])
+    request['pins'][role] = other['pins'][role]
+    with pytest.raises(ValueError):
+        replay_direct_physical_closure_v3(request)
+
+
+def _untrusted_large_native_closure(request, *, padding_files=1):
+    from copy import deepcopy
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as transport
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_native_v2 as native
+    request = deepcopy(request)
+    receipt = b'{}'
+    packet = tuple(sorted([('build-receipt.json', receipt)] + [('untrusted-padding-' + str(i) + '.bin', b'x' * 1000001) for i in range(padding_files)]))
+    packet_raw = transport.encode_parent_replay_value_v1([[name, raw] for name, raw in packet], max_bytes=64 * 1024 ** 2)
+    receipt_id, packet_id = ('fixture:untrusted-large-receipt', 'fixture:untrusted-large-packet')
+    for identity, family, raw in ((receipt_id, 'native_receipt', receipt), (packet_id, 'native_packet', packet_raw)):
+        request['artifacts'].append(dict(artifact_id=identity, family=family, payload=raw, bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest()))
+        request['expected_artifact_ids'].append(identity)
+    request['native'] = dict(receipt=receipt_id, packet=packet_id, expected_packet_sha256=native.reviewed_norm_preservation_packet_sha256_v3(packet), expected_binary_sha256={})
+    return (request, packet_raw)
+
+
+@pytest.mark.parametrize('padding_files', [1, 9])
+def test_physical_closure_v3_large_native_transport_reaches_real_authentication(physical_closure_component_v3, padding_files):
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as transport
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    request, packet_raw = _untrusted_large_native_closure(physical_closure_component_v3, padding_files=padding_files)
+    assert len(packet_raw) > 1000000
+    raw = transport.encode_parent_replay_value_v1(request, max_bytes=64 * 1024 ** 2)
+    if padding_files == 9:
+        assert len(packet_raw) > 8 * 1024 ** 2 and len(raw) > 8 * 1024 ** 2
+    with pytest.raises(ValueError, match='closed complete mixed aggregate receipt required'):
+        release.validate_uscode_release_closure_direct_v3(raw, expected_request_sha256=hashlib.sha256(raw).hexdigest())
+
+
+@pytest.mark.parametrize('direct', [False, True])
+def test_physical_closure_v3_large_native_cli_transport_grants_no_authenticity(physical_closure_component_v3, tmp_path, direct):
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as transport
+    request, _ = _untrusted_large_native_closure(physical_closure_component_v3, padding_files=9)
+    raw = transport.encode_parent_replay_value_v1(request, max_bytes=64 * 1024 ** 2)
+    assert 8 * 1024 ** 2 < len(raw) < 12 * 1024 ** 2
+    path = tmp_path / 'large-untrusted-native.request'
+    try:
+        path.write_bytes(raw)
+        result, receipt = run_cli(['validate-closure', '--profile', 'reviewed-norm-v3-direct', '--request', str(path), '--request-sha256', hashlib.sha256(raw).hexdigest()], cwd=tmp_path, direct=direct)
+        assert result.returncode != 0 and receipt['status'] == 'error'
+        assert receipt['error_type'] == 'ValueError'
+        assert receipt['error'] == 'closed complete mixed aggregate receipt required'
+        assert all((receipt[key] is False for key in ('admitted', 'formalized', 'source_semantics_verified', 'source_authenticity_verified', 'proof_verified')))
+    finally:
+        path.unlink(missing_ok=True)
+
+
+@pytest.mark.parametrize('legacy_name', ['validate_uscode_release_closure_v1', 'validate_uscode_release_closure_v2'])
+def test_large_native_transport_does_not_widen_legacy_artifact_limits(closure_component, physical_closure_component, legacy_name):
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as transport
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    base = closure_component if legacy_name.endswith('_v1') else physical_closure_component
+    request, _ = _untrusted_large_native_closure(base)
+    raw = transport.encode_parent_replay_value_v1(request)
+    with pytest.raises(ValueError, match='bounded.*artifact'):
+        getattr(release, legacy_name)(raw, expected_request_sha256=hashlib.sha256(raw).hexdigest())
+
+
+@pytest.mark.parametrize('family', ['native_receipt', 'replay', 'graph', 'admission'])
+def test_v3_large_native_allowance_does_not_widen_other_artifact_families(physical_closure_component_v3, family):
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as transport
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    request, _ = _untrusted_large_native_closure(physical_closure_component_v3)
+    row = next((row for row in request['artifacts'] if row['artifact_id'] == request['native']['packet']))
+    row['family'] = family
+    raw = transport.encode_parent_replay_value_v1(request)
+    with pytest.raises(ValueError, match='unique bounded physical artifact'):
+        release.validate_uscode_release_closure_direct_v3(raw, expected_request_sha256=hashlib.sha256(raw).hexdigest())
+
+
+@pytest.mark.parametrize('profile', [None, 'reviewed-norm-v2-local-replay/v1', 'reviewed-norm-v2-physical-three-cache-replay/v1'])
+def test_legacy_closure_cli_request_file_limit_remains_eight_mib(tmp_path, capsys, profile):
+    from scripts.ops.legal_ir import validate_uscode_corpus_release as cli
+    raw = b' ' * (8 * 1024 ** 2 + 1)
+    path = tmp_path / 'oversized-legacy.request'
+    arguments = ['validate-closure', '--request', str(path), '--request-sha256', hashlib.sha256(raw).hexdigest()]
+    if profile is not None:
+        arguments += ['--profile', profile]
+    try:
+        path.write_bytes(raw)
+        assert cli.main(arguments) == 1
+        lines = capsys.readouterr().out.splitlines()
+        assert len(lines) == 1
+        receipt = json.loads(lines[0])
+        assert receipt['error_type'] == 'CLIError'
+        assert receipt['error'] == 'snapshot must be a bounded regular file'
+    finally:
+        path.unlink(missing_ok=True)
+
+
+def test_v3_large_wire_retains_existing_expanded_input_budget_per_occurrence():
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as transport
+    payload = b'x' * 1000000
+    rows = [dict(artifact_id='fixture:budget:' + str(i), family='native_packet', payload=payload, bytes=len(payload), sha256=hashlib.sha256(payload).hexdigest()) for i in range(64)]
+    with pytest.raises(ValueError, match='complete parent Lake input budget exceeded'):
+        transport.encode_parent_replay_value_v1({'artifacts': rows}, max_bytes=64 * 1024 ** 2)
+
+
+def _replay_physical_with_runtime_observer_v3(request, observer):
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as transport
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    raw = transport.encode_parent_replay_value_v1(request, max_bytes=64 * 1024 ** 2)
+    return release._validate_uscode_release_physical_closure(raw, expected_request_sha256=hashlib.sha256(raw).hexdigest(), reviewed_version=3, _observe_checked_context=observer, _native_transport='direct-packet/v1')
+
+
+def test_physical_v3_runtime_observer_is_once_non_authoritative_and_keeps_wire_blocker(physical_closure_component_v3):
+    observed = []
+
+    def observer(context):
+        observed.append(context)
+        assert context['reviewed_version'] == 3 and context['native'] is None
+        assert context['pins'] == {name: physical_closure_component_v3['pins'][name] for name in ('graph', 'admission', 'preservation')}
+        return {'original_native_parent_custody_verified': True, 'original_success_authenticated': True, 'admitted': True}
+    report = _replay_physical_with_runtime_observer_v3(physical_closure_component_v3, observer)
+    assert len(observed) == 1
+    assert report['local_replay_complete'] is True
+    assert report['original_native_parent_custody_verified'] is False
+    assert 'original_admitted_native_parent_custody_not_established' in report['blockers']
+    assert all((report[name] is False for name in ('release_ready', 'closure_complete', 'admitted', 'formalized', 'proof_verified', 'source_semantics_verified', 'source_authenticity_verified')))
+
+
+@pytest.mark.parametrize('raises', [False, True])
+def test_physical_v3_runtime_observer_refuses_current_source_only_mutation_on_each_exit(physical_closure_component_v3, raises):
+
+    def observer(context):
+        before = (context['pins']['graph'], context['pins']['admission'], context['pins']['preservation'])
+        observations = context['kwargs']['observed_artifact_sha256s']
+        key = next(iter(observations))
+        observations[key] = '0' * 64 if observations[key] != '0' * 64 else '1' * 64
+        assert before == (context['pins']['graph'], context['pins']['admission'], context['pins']['preservation'])
+        if raises:
+            raise RuntimeError('observer exception after current observation mutation')
+    with pytest.raises(ValueError, match='complete current replay inputs changed'):
+        _replay_physical_with_runtime_observer_v3(physical_closure_component_v3, observer)
+
+
+def test_physical_v3_runtime_observer_preserves_unchanged_original_exception(physical_closure_component_v3):
+    sentinel = RuntimeError('unchanged observer exception')
+    observed = []
+
+    def observer(context):
+        observed.append(context)
+        raise sentinel
+    with pytest.raises(RuntimeError) as caught:
+        _replay_physical_with_runtime_observer_v3(physical_closure_component_v3, observer)
+    assert caught.value is sentinel and len(observed) == 1
+
+
+@pytest.fixture
+def joined_loaded_owner_guard_case(tmp_path):
+    import importlib.util
+    import sys
+    name = 'fictional_joined_owner_' + tmp_path.name.replace('-', '_')
+    path = tmp_path / 'joined_guard_fixture.py'
+    path.write_text('import json\nfrom pathlib import Path\nfrom contextlib import contextmanager\nfrom dataclasses import dataclass\nfrom ipfs_datasets_py.logic.autoformal import corpus_contracts as contracts\n\nLIMITS = {"rows": [3]}\ndef entry(value=None, *, enabled=True):\n    return value\nentry.__defaults__ = ([],)\n\n@contextmanager\ndef wrapped():\n    yield 3\n\ndef closure_factory():\n    def leaf(value=3):\n        return value\n    def wrapper():\n        return leaf()\n    return wrapper, leaf\nclosure, _leaf = closure_factory()\n\ndef external(value=3):\n    return value\n\n@dataclass(frozen=True)\nclass Row:\n    value: int = 3\n    @classmethod\n    def from_row(cls, value):\n        return cls(value)\n\n_JOIN_LOADED_OWNER_GUARD_V1 = contracts._capture_loaded_owner_guard_v1(\n    globals(), value_names=("LIMITS",), class_names=("Row",),\n    imported_function_names=("external",), alias_names=("Path", "json"))\n', encoding='utf-8')
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    try:
+        spec.loader.exec_module(module)
+        guard = module._JOIN_LOADED_OWNER_GUARD_V1
+        assert guard() is None
+        yield (module.contracts, vars(module), guard, module._leaf)
+    finally:
+        sys.modules.pop(name, None)
+
+
+@pytest.mark.parametrize('mutation', ['code', 'defaults', 'nested_default', 'kwdefaults', 'nested_literal', 'class_method_code', 'generated_init_code', 'field_metadata', 'wrapped_generator', 'closure_function', 'imported_binding', 'new_global_shadow', 'path_alias', 'module_alias', 'checker_binding'])
+def test_join_loaded_owner_guard_refuses_current_binding_mutations(mutation, joined_loaded_owner_guard_case):
+    contracts, namespace, guard, leaf = joined_loaded_owner_guard_case
+
+    def replacement(value=None, *, enabled=True):
+        return None
+    if mutation == 'code':
+        namespace['entry'].__code__ = replacement.__code__
+    elif mutation == 'defaults':
+        namespace['entry'].__defaults__ = (None,)
+    elif mutation == 'nested_default':
+        namespace['entry'].__defaults__[0].append('changed')
+    elif mutation == 'kwdefaults':
+        namespace['entry'].__kwdefaults__['enabled'] = False
+    elif mutation == 'nested_literal':
+        namespace['LIMITS']['rows'].append(4)
+    elif mutation == 'class_method_code':
+        namespace['Row'].__dict__['from_row'].__func__.__code__ = replacement.__code__
+    elif mutation == 'generated_init_code':
+        original = namespace['Row'].__init__.__code__
+        namespace['Row'].__init__.__code__ = original.replace(co_filename=original.co_filename + ':authored-code-change')
+    elif mutation == 'field_metadata':
+        namespace['Row'].__dataclass_fields__['value'].default = 4
+    elif mutation == 'wrapped_generator':
+        namespace['wrapped'].__wrapped__.__code__ = replacement.__code__
+    elif mutation == 'closure_function':
+        leaf.__code__ = replacement.__code__
+    elif mutation == 'imported_binding':
+        namespace['external'] = replacement
+    elif mutation == 'new_global_shadow':
+        namespace['type'] = object
+    elif mutation == 'path_alias':
+        from pathlib import PurePosixPath
+        namespace['Path'] = PurePosixPath
+    elif mutation == 'module_alias':
+        import math
+        namespace['json'] = math
+    else:
+        namespace['_JOIN_LOADED_OWNER_GUARD_V1'] = replacement
+    with pytest.raises(contracts.CorpusContractError, match='loaded-owner'):
+        guard()
+
+
+def test_join_loaded_owner_guard_cold_checker_identity_detects_baseline_replacement(joined_loaded_owner_guard_case):
+    contracts, _namespace, guard, _leaf = joined_loaded_owner_guard_case
+    initial = contracts._loaded_owner_guard_identity_v1(guard)
+    cells = dict(zip(guard.__code__.co_freevars, guard.__closure__))
+    original = cells['expected'].cell_contents
+    cells['expected'].cell_contents = ('forged',)
+    assert contracts._loaded_owner_guard_identity_v1(guard) != initial
+    cells['expected'].cell_contents = original
+    assert contracts._loaded_owner_guard_identity_v1(guard) == initial
+    assert guard() is None
+
+
+def _import_joined_guard_control(tmp_path, body):
+    import importlib.util
+    import sys
+    name = 'fictional_join_control_' + tmp_path.name.replace('-', '_')
+    path = tmp_path / 'joined_guard_control.py'
+    path.write_text(body, encoding='utf-8')
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    try:
+        spec.loader.exec_module(module)
+        return module
+    finally:
+        sys.modules.pop(name, None)
+
+
+def test_join_loaded_owner_guard_tracks_literal_cycles_without_properties(tmp_path):
+    module = _import_joined_guard_control(tmp_path, 'from ipfs_datasets_py.logic.autoformal import corpus_contracts as contracts\ncalls = []\nclass Trap:\n    @property\n    def danger(self):\n        calls.append("property executed")\n        raise AssertionError("guard must not invoke properties")\nSTATE = []\nSTATE.append(STATE)\n_JOIN_LOADED_OWNER_GUARD_V1 = contracts._capture_loaded_owner_guard_v1(\n    globals(), value_names=("STATE",), class_names=("Trap",))\n')
+    guard = module._JOIN_LOADED_OWNER_GUARD_V1
+    assert guard() is None and module.calls == []
+    module.STATE.append(None)
+    with pytest.raises(module.contracts.CorpusContractError, match='loaded-owner'):
+        guard()
+    assert module.calls == []
+
+
+@pytest.mark.parametrize('damage', ['depth', 'nodes', 'literal_bytes'])
+def test_join_loaded_owner_guard_bounds_snapshot_population(damage, tmp_path):
+    from ipfs_datasets_py.logic.autoformal import corpus_contracts as contracts
+    declarations = {'depth': 'STATE = None\nfor _index in range(60):\n    STATE = [STATE]\n', 'nodes': 'STATE = [None] * (contracts._LOADED_OWNER_MAX_NODES_V1 + 1)\n', 'literal_bytes': "STATE = b'x' * (contracts._LOADED_OWNER_MAX_LITERAL_BYTES_V1 + 1)\n"}
+    body = 'from ipfs_datasets_py.logic.autoformal import corpus_contracts as contracts\n' + declarations[damage] + "_JOIN_LOADED_OWNER_GUARD_V1 = contracts._capture_loaded_owner_guard_v1(globals(), value_names=('STATE',))\n"
+    with pytest.raises(contracts.CorpusContractError, match='bound'):
+        _import_joined_guard_control(tmp_path, body)
+
+
+def test_join_loaded_owner_guard_refuses_unknown_objects_without_repr_or_properties(tmp_path):
+    from ipfs_datasets_py.logic.autoformal import corpus_contracts as contracts
+    with pytest.raises(contracts.CorpusContractError, match='unsupported'):
+        _import_joined_guard_control(tmp_path, 'from ipfs_datasets_py.logic.autoformal import corpus_contracts as contracts\nclass Unknown:\n    def __repr__(self):\n        raise AssertionError("guard must not invoke repr")\n    @property\n    def danger(self):\n        raise AssertionError("guard must not invoke properties")\nSTATE = Unknown()\n_JOIN_LOADED_OWNER_GUARD_V1 = contracts._capture_loaded_owner_guard_v1(\n    globals(), value_names=("STATE",))\n')
+
+
+def test_join_loaded_owner_guard_refuses_callback_reregistration(joined_loaded_owner_guard_case):
+    contracts, namespace, guard, _leaf = joined_loaded_owner_guard_case
+    del namespace['_JOIN_LOADED_OWNER_GUARD_V1']
+    try:
+        with pytest.raises(contracts.CorpusContractError, match='genuine module import'):
+            contracts._capture_loaded_owner_guard_v1(namespace, value_names=('LIMITS',), class_names=('Row',), imported_function_names=('external',))
+    finally:
+        namespace['_JOIN_LOADED_OWNER_GUARD_V1'] = guard
+    assert guard() is None
+
+
+def test_join_loaded_owner_guard_refuses_same_filename_exec_reseed(joined_loaded_owner_guard_case):
+    contracts, namespace, guard, _leaf = joined_loaded_owner_guard_case
+    original_code = namespace['entry'].__code__
+
+    def replacement(value=None, *, enabled=True):
+        return 'changed without Source edits'
+    namespace['entry'].__code__ = replacement.__code__
+    del namespace['_JOIN_LOADED_OWNER_GUARD_V1']
+    registration = "_JOIN_LOADED_OWNER_GUARD_V1 = contracts._capture_loaded_owner_guard_v1(globals(), value_names=('LIMITS',), class_names=('Row',),imported_function_names=('external',), alias_names=('Path','json'))"
+    try:
+        with pytest.raises(contracts.CorpusContractError, match='already registered'):
+            exec(compile(registration, namespace['__file__'], 'exec'), namespace)
+        namespace['_JOIN_LOADED_OWNER_GUARD_V1'] = guard
+        with pytest.raises(contracts.CorpusContractError, match='binding differs'):
+            guard()
+    finally:
+        namespace['entry'].__code__ = original_code
+        namespace['_JOIN_LOADED_OWNER_GUARD_V1'] = guard
+    assert guard() is None
+
+
+@pytest.mark.parametrize('location', ['selected_value', 'dataclass_metadata'])
+def test_join_loaded_owner_verifier_refuses_mapping_proxy_without_callbacks(location, joined_loaded_owner_guard_case):
+    from collections.abc import Mapping
+    from types import MappingProxyType
+    contracts, namespace, guard, _leaf = joined_loaded_owner_guard_case
+    calls = []
+
+    class TrapMapping(Mapping):
+
+        def __len__(self):
+            calls.append('__len__')
+            raise AssertionError('mapping proxy delegated __len__')
+
+        def __iter__(self):
+            calls.append('__iter__')
+            raise AssertionError('mapping proxy delegated __iter__')
+
+        def __getitem__(self, key):
+            calls.append('__getitem__')
+            raise AssertionError('mapping proxy delegated __getitem__')
+
+        def items(self):
+            calls.append('items')
+            raise AssertionError('mapping proxy delegated items')
+    proxy = MappingProxyType(TrapMapping())
+    assert calls == []
+    field = namespace['Row'].__dataclass_fields__['value']
+    original = namespace['LIMITS'] if location == 'selected_value' else field.metadata
+    try:
+        if location == 'selected_value':
+            namespace['LIMITS'] = proxy
+        else:
+            field.metadata = proxy
+        with pytest.raises(contracts.CorpusContractError, match='mapping proxy'):
+            guard()
+        assert calls == []
+    finally:
+        if location == 'selected_value':
+            namespace['LIMITS'] = original
+        else:
+            field.metadata = original
+    assert guard() is None and calls == []
+
+
+def test_join_loaded_owner_shape_refuses_untrusted_even_plain_mapping_proxy():
+    from types import MappingProxyType
+    from ipfs_datasets_py.logic.autoformal import corpus_contracts as contracts
+    with pytest.raises(contracts.CorpusContractError, match='mapping proxy'):
+        contracts._loaded_owner_shape_v1((('value', 'untrusted_proxy', MappingProxyType({})),))
+
+
+@pytest.mark.parametrize('primary_present', [False, True])
+@pytest.mark.parametrize('failures', [(0, 2), (1,), (2,)])
+def test_physical_closing_checks_attempt_every_fence_and_keep_error_context(primary_present, failures):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    seen = []
+    errors = [ValueError('closing refusal ' + str(index)) for index in range(3)]
+    primary = RuntimeError('original observer') if primary_present else None
+
+    def check(index):
+        seen.append(index)
+        if index in failures:
+            raise errors[index]
+    with pytest.raises(ValueError) as caught:
+        release._physical_complete_checks_v1(tuple(((str(index), lambda index=index: check(index)) for index in range(3))), primary=primary)
+    assert seen == [0, 1, 2]
+    assert caught.value is errors[failures[0]]
+    if primary is not None:
+        assert caught.value.__cause__ is primary
+    if len(failures) > 1:
+        assert any(('additional closing failure' in note for note in caught.value.__notes__))
+
+
+def test_physical_closing_checks_do_not_replace_a_pending_unchanged_error():
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    sentinel = RuntimeError('unchanged pending observer')
+    seen = []
+    assert release._physical_complete_checks_v1((('first', lambda: seen.append('first')), ('second', lambda: seen.append('second'))), primary=sentinel) is None
+    assert seen == ['first', 'second'] and sentinel.__cause__ is None
+
+
+@pytest.mark.parametrize('raises', [False, True])
+def test_physical_observer_replaced_law_delegate_is_refused_before_invocation(physical_closure_component_v3, monkeypatch, raises):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import uscode_dataset as law
+    called = []
+
+    def replacement(*args, **kwargs):
+        called.append((args, kwargs))
+        raise AssertionError('replaced law delegate must never run')
+
+    def observe(context):
+        monkeypatch.setattr(law, 'capture_uscode_source_documents_from_parquet', replacement)
+        if raises:
+            raise RuntimeError('observer changed a loaded delegate')
+    with pytest.raises(ValueError, match='binding|callback changed'):
+        _replay_physical_with_runtime_observer_v3(physical_closure_component_v3, observe)
+    assert called == []
+
+
+def test_physical_observer_replaced_join_guard_is_refused_before_invocation(physical_closure_component_v3, monkeypatch):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    called = []
+
+    def replacement():
+        called.append(True)
+
+    def observe(context):
+        monkeypatch.setattr(release, '_joined_release_guard', replacement)
+    with pytest.raises(ValueError, match='joined guard changed'):
+        _replay_physical_with_runtime_observer_v3(physical_closure_component_v3, observe)
+    assert called == []
+
+
+@pytest.mark.parametrize('change', ['bytes', 'full9_only'])
+def test_physical_postclose_byte_fence_refuses_changed_private_file(physical_closure_component_v3, tmp_path, change):
+    import os
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    observed = []
+    _replay_physical_with_runtime_observer_v3(physical_closure_component_v3, lambda context: observed.append(context))
+    context = dict(observed[0])
+    path = tmp_path / 'private-physical-generation.bin'
+    raw = b'same bounded private bytes'
+    path.write_bytes(raw)
+    keys = ('st_dev', 'st_ino', 'st_mode', 'st_nlink', 'st_uid', 'st_gid', 'st_size', 'st_mtime_ns', 'st_ctime_ns')
+    original = path.stat()
+    row = (str(path), tuple((getattr(original, key) for key in keys)), raw)
+    context['physical_files'] = (row, row)
+    release._physical_postclose_fence_v1(context)
+    if change == 'bytes':
+        path.write_bytes(b'different private bytes')
+    else:
+        os.utime(path, ns=(original.st_atime_ns, original.st_mtime_ns + 1000000))
+        assert path.read_bytes() == raw
+    with pytest.raises(ValueError, match='physical file generation|physical bytes or generation'):
+        release._physical_postclose_fence_v1(context)
+
+
+@pytest.mark.parametrize('primary_present', [False, True])
+def test_physical_inner_and_postclose_batches_keep_first_refusal_without_rendering_errors(primary_present):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    seen = []
+
+    class HostileError(ValueError):
+
+        def __str__(self):
+            raise AssertionError('closing custody rendered an arbitrary exception')
+    first, second, later = (HostileError(), HostileError(), HostileError())
+    observer = HostileError() if primary_present else None
+    failures = []
+
+    def check(label, error=None):
+        seen.append(label)
+        if error is not None:
+            raise error
+    with pytest.raises(HostileError) as inner:
+        release._physical_complete_checks_v1((('inner-first', lambda: check('inner-first', first)), ('inner-second', lambda: check('inner-second', second)), ('inner-last', lambda: check('inner-last'))), primary=observer, _closing_failures=failures)
+    assert inner.value is first
+    with pytest.raises(HostileError) as final:
+        release._physical_complete_checks_v1((('postclose-first', lambda: check('postclose-first', later)), ('postclose-last', lambda: check('postclose-last'))), primary=inner.value, _closing_failures=failures)
+    assert final.value is first
+    assert seen == ['inner-first', 'inner-second', 'inner-last', 'postclose-first', 'postclose-last']
+    if observer is not None:
+        assert final.value.__cause__ is observer
+    assert any(('postclose-first' in note for note in final.value.__notes__))
+
+
+def test_joined_release_error_class_replacement_is_refused_before_invocation(monkeypatch):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    called = []
+
+    def replacement(*args, **kwargs):
+        called.append(True)
+        return ValueError('caller supplied error constructor')
+    monkeypatch.setattr(release, 'ReleaseCoordinatorError', replacement)
+    with pytest.raises(ValueError, match='ordinary selected class|implementation binding'):
+        release._joined_release_guard()
+    assert called == []
+
+
+def test_physical_descriptor_closes_when_initial_fstat_fails(physical_closure_component_v3, monkeypatch):
+    import os
+    import sys
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    original_open, original_fstat, original_close = (os.open, os.fstat, os.close)
+    live, opened, closed = (set(), [], [])
+    failure = OSError('injected first physical descriptor stat failure')
+    injected = []
+
+    def opened_fd(path, *args, **kwargs):
+        fd = original_open(path, *args, **kwargs)
+        caller = sys._getframe(1)
+        if caller.f_code.co_name == 'held_file' and caller.f_code.co_filename == release.__file__:
+            live.add(fd)
+            opened.append(fd)
+        return fd
+
+    def stat_fd(fd):
+        if fd in live and (not injected):
+            injected.append(fd)
+            raise failure
+        return original_fstat(fd)
+
+    def closed_fd(fd):
+        if fd in live:
+            live.remove(fd)
+            closed.append(fd)
+        return original_close(fd)
+    monkeypatch.setattr(os, 'open', opened_fd)
+    monkeypatch.setattr(os, 'fstat', stat_fd)
+    monkeypatch.setattr(os, 'close', closed_fd)
+    with pytest.raises(OSError) as caught:
+        _replay_physical_with_runtime_observer_v3(physical_closure_component_v3, lambda context: None)
+    assert caught.value is failure and len(injected) == len(opened) == 1
+    assert closed == opened and (not live)
+    with pytest.raises(OSError):
+        original_fstat(opened[0])
+
+
+def test_physical_final_descriptor_failure_wins_over_observer_without_exception_hooks(physical_closure_component_v3, monkeypatch):
+    import os
+    import sys
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    original_open, original_fstat, original_close = (os.open, os.fstat, os.close)
+    live, opened, closed = ({}, [], [])
+    hooks = []
+
+    class ObserverError(RuntimeError):
+
+        def __str__(self):
+            hooks.append('str')
+            raise AssertionError('closing custody rendered observer')
+
+        def add_note(self, note):
+            hooks.append('add_note')
+            raise AssertionError('closing custody delegated an observer hook')
+    observer = ObserverError()
+    failure = OSError('injected final physical descriptor stat failure')
+    injected = []
+    law_path = physical_closure_component_v3['physical_inputs']['law_path']
+
+    def opened_fd(path, *args, **kwargs):
+        fd = original_open(path, *args, **kwargs)
+        caller = sys._getframe(1)
+        if caller.f_code.co_name == 'held_file' and caller.f_code.co_filename == release.__file__:
+            live[fd] = str(path)
+            opened.append(fd)
+        return fd
+
+    def stat_fd(fd):
+        caller = sys._getframe(1)
+        parent = caller.f_back
+        generator = None if parent is None else parent.f_back
+        if live.get(fd) == law_path and (not injected) and (caller.f_code.co_name == 'check') and (generator is not None) and (generator.f_code.co_name == 'held_file') and (generator.f_locals.get('primary') is observer):
+            injected.append(fd)
+            raise failure
+        return original_fstat(fd)
+
+    def closed_fd(fd):
+        if fd in live:
+            del live[fd]
+            closed.append(fd)
+        return original_close(fd)
+
+    def observe(context):
+        raise observer
+    monkeypatch.setattr(os, 'open', opened_fd)
+    monkeypatch.setattr(os, 'fstat', stat_fd)
+    monkeypatch.setattr(os, 'close', closed_fd)
+    with pytest.raises(OSError) as caught:
+        _replay_physical_with_runtime_observer_v3(physical_closure_component_v3, observe)
+    assert caught.value is failure and failure.__cause__ is observer
+    assert len(injected) == 1 and len(opened) == len(closed) == 2 and (not live)
+    assert set(opened) == set(closed) and hooks == []
+    for fd in opened:
+        with pytest.raises(OSError):
+            original_fstat(fd)
+
+
+def test_registry_factory_closure_has_source_origin_real_native_guard_and_no_reset(monkeypatch):
+    import types
+    from ipfs_datasets_py.logic.autoformal import corpus_contracts as contracts
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_native_v2 as native
+    namespace = vars(contracts)
+    guard = contracts._JOIN_LOADED_OWNER_GUARD_V1
+    before = contracts._loaded_owner_guard_binding_v1(namespace, guard)
+    guard()
+    native._live_success_guard(native._owners(), reviewed_version=3)
+    source_path = Path(contracts.__file__)
+    compiled = compile(source_path.read_bytes(), str(source_path), 'exec', dont_inherit=True, optimize=sys.flags.optimize)
+    pending, codes = ([compiled], {})
+    while pending:
+        code = pending.pop()
+        codes[code.co_qualname] = code
+        pending.extend((value for value in code.co_consts if type(value) is types.CodeType))
+    prefix = '_new_loaded_owner_registry_v1.<locals>.'
+    for name in ('_capture_loaded_owner_guard_v1', '_loaded_owner_guard_binding_v1', '_loaded_owner_registry_binding_v1'):
+        function = namespace[name]
+        assert function.__globals__ is namespace
+        assert function.__code__ == codes[prefix + name]
+    assert guard.__code__ == codes[prefix + '_capture_loaded_owner_guard_v1.<locals>.verifier']
+    assert '_new_loaded_owner_registry_v1' not in namespace
+    with monkeypatch.context() as local:
+        local.delitem(namespace, '_JOIN_LOADED_OWNER_GUARD_V1')
+        with pytest.raises(ValueError, match='already registered'):
+            exec(compile('_capture_loaded_owner_guard_v1(globals())', str(source_path), 'exec'), namespace)
+    assert contracts._loaded_owner_guard_binding_v1(namespace, guard)[0] == before[0]
+    guard()
+
+    def changed_factory_body():
+        registrations = None
+
+        def changed(*args, **kwargs):
+            _ = registrations
+            raise AssertionError('changed returned closure must not be invoked')
+        return changed
+    replacement = changed_factory_body()
+    current = contracts._capture_loaded_owner_guard_v1
+    assert current.__code__.co_freevars == replacement.__code__.co_freevars
+    with monkeypatch.context() as local:
+        local.setattr(current, '__code__', replacement.__code__)
+        with pytest.raises(ValueError, match='implementation binding'):
+            guard()
+    guard()
+    native._live_success_guard(native._owners(), reviewed_version=3)
+
+
+@pytest.mark.parametrize("target", ["chunk-default", "direct-opt-in"])
+def test_explicit_direct_and_chunk_domains_refuse_each_others_original_request(
+        physical_closure_material_v3, target):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as wire
+    direct = target == "chunk-default"
+    request = _physical_closure_request(physical_closure_material_v3, reviewed_version=3,
+        native_transport="direct-packet/v1" if direct else "chunk-index/v1")
+    before = _physical_wire(request["pins"])
+    raw = wire.encode_parent_replay_value_v1(request,
+        max_bytes=release.MAX_CLOSURE_REQUEST_BYTES_V3 if direct else release.MAX_CLOSURE_REQUEST_BYTES)
+    validator = release.validate_uscode_release_closure_v3 if direct else release.validate_uscode_release_closure_direct_v3
+    with pytest.raises(ValueError, match="schema/profile"):
+        validator(raw, expected_request_sha256=hashlib.sha256(raw).hexdigest())
+    assert _physical_wire(request["pins"]) == before
+    assert request["native"] is None

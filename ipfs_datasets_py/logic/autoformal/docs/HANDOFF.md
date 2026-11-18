@@ -1,5 +1,23 @@
 # Current handoff
 
+## Historical Source variant software evidence, 2026-11-18
+
+This entry preserves software evidence from the captured Source variants. It does not qualify the merged publication tree or current-main runtime. The recorded cohorts retain their separate populations, pins, failures and custody epochs; their case counts are not added. Existing Main histories, catalog records and all 24 programme task IDs, statuses, frontiers and acceptance criteria remain unchanged.
+
+Captured Source heads: R `3f1691d59cc0a310750c0b441b51d3528b17eb85`; A `81b5e11f3c6063486a7cadc6c3d4c6ea50e85bb2`. The closed private snapshot is `manifest-v2.json`, 5,749,886 bytes, SHA256 `b11530c43794ddf8a24b97e9a723f9f99045c2a00bfb910db0ba903a5015db26` (Root verification locator prefix `5e860b`).
+
+- V19: 25 selected fictional-fixture passes, 0 failures/errors/skips, for consumer `90ebf16f` and test `2e7ec153`; this records the captured callback-exit software cohort.
+- R158: 158 passes, 0 failures/errors/skips across 58 functions (`04f05c`), with all 53 Source identities stable across three snapshots and closed Source/SDK custody. Captured pins are coordinator `09e2fe80`, contracts `0279ad9f` and test `f0243064`.
+- Pre-repair A6: 2 genuine V2/V3 passes and 4 intended pre-authentication callback failures (`e860c5`); the failed epoch remains preserved.
+- First A70: 67 passes, 3 fixture-cleanup failures, 0 errors/skips (`1c2d8a`). The test-only LIFO correction (`8763a5`, test `40807119`) left product code unchanged. Corrected focused A70 recorded 70/70 cases across seven functions (`69ca2b`), with all 147 Source/evidence identities stable and custody closed.
+- A420: 420 passes, 0 failures/errors/skips across 89 functions (`49083c`), with all 147 Source/evidence identities stable across three epochs and Source/SDK custody closed. Captured owner/worker/hook/test pins are `34247582` / `61255904` / `7bdd783b` / `40807119`.
+
+These captured software observations grant no actual Native issuance or same-target live parent-to-release join, model training/convergence, statutory meaning/review, immutable Hub readback, legal or corpus-release authority. They do not replace any current Main qualification or programme frontier.
+
+Immutable V19 cache: thread 01a1ed56-e938-7fb2-9df0-ca83f4e5daaf / turn 01a1ed93-61be-7fd1-8534-2d20311a8366 / item exec-d777b556-5df7-432e-9e7d-ebbfffc21fe3; stdout SHA256 15d1de113c0bad7279d8184134da90aa93d664a091d5ecfb5e2d49d3b057bfab (decoded full receipt 61576 bytes / aae53c6b9fc00e6bf7494d72a0c6b0fa0dba925c827780fd79dfa95f4cb92095).
+
+Immutable receipts: R158 reader thread 01a1ed56-e938-7fb2-9df0-ca83f4e5daaf / turn 01a1ef24-53b4-7d71-a812-05c0666e6769 / item exec-af1014ca-0f92-4daf-a1c0-fea25cae8b47 (44875 bytes / SHA256 91622daa2eb619d22c5113f6d2de9830e674a9e8c04d6ad91c1734b27bbb343a). In the same thread/turn, A6 is exec-d5138443-7053-4127-bbe4-39d4a70a8f51 (56403 / d600b2d927d808218196cbc94b92795f499ecb05cc35e676eb45cd3dc4bef79d); A70's three-part receipt decodes to 289993 bytes / 46778173d3af85d5782cf65c650127ad5a1160a009afeac13fcd78a61b710245. Corrected A70's two-part receipt decodes to 261441 bytes / d137d9f9a90fb726bb1b74b58e4d102d9fea29e9a9fe2a680b0f517879a16c63 (Root 69ca2b; JUnit 13288 / 7e5c07e457bf6893fd7b898f5c5db7f57a3b0ef8820525a45d40c5cb3bed5968). Full A420's four-part receipt decodes to 643216 bytes / 0acc3baf1e9e90d5cc7936c0724799d02349562ea4ed5cda059d1613f5e9cf29 (Root 49083c; JUnit 78489 / 7c513372a984f7b6cc1e8e10c6f2b967fa3f0937937e4796ef2c4bc07946c7d6).
+
 ## Kernel source screening and current verifier v2 — 2026-11-16
 
 Existing LFV-G049/LFV-022 owners now screen active `run_elab`, `run_meta` and `by_elab` and bind both kernel and cache to `lean-kernel-verification/v2`. Receipt v3/backend@1 and other source, axiom, native-identity and resource policies remain. Old-v1 current acceptance/reuse is refused; archived receipts, source identities and historical Native qualifications are not rewritten or promoted.

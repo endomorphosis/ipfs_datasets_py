@@ -47,6 +47,7 @@ def _parser():
         "reviewed-norm-v2-local-replay/v1",
         "reviewed-norm-v2-physical-three-cache-replay/v1",
         "reviewed-norm-v3-physical-three-cache-replay/v1",
+        "reviewed-norm-v3-direct",
     ), default="reviewed-norm-v2-local-replay/v1")
     return parser
 
@@ -136,6 +137,7 @@ def main(argv=None):
                     "reviewed-norm-v2-local-replay/v1",
                     "reviewed-norm-v2-physical-three-cache-replay/v1",
                     "reviewed-norm-v3-physical-three-cache-replay/v1",
+                    "reviewed-norm-v3-direct",
                 ]
                 result["default_profile"] = "reviewed-norm-v2-local-replay/v1"
         else:
@@ -147,7 +149,13 @@ def main(argv=None):
                 from ipfs_datasets_py.logic.autoformal.legal_release_coordinator_v1 import (
                     MAX_CLOSURE_REQUEST_BYTES, validate_uscode_release_closure_v1,
                 )
-                raw = _read_regular_file(args.request, maximum_bytes=MAX_CLOSURE_REQUEST_BYTES)
+                request_limit = MAX_CLOSURE_REQUEST_BYTES
+                if args.profile == "reviewed-norm-v3-direct":
+                    from ipfs_datasets_py.logic.autoformal.legal_release_coordinator_v1 import (
+                        MAX_CLOSURE_REQUEST_BYTES_V3,
+                    )
+                    request_limit = MAX_CLOSURE_REQUEST_BYTES_V3
+                raw = _read_regular_file(args.request, maximum_bytes=request_limit)
                 validator = validate_uscode_release_closure_v1
                 if args.profile == "reviewed-norm-v2-physical-three-cache-replay/v1":
                     from ipfs_datasets_py.logic.autoformal.legal_release_coordinator_v1 import (
@@ -159,6 +167,11 @@ def main(argv=None):
                         validate_uscode_release_closure_v3,
                     )
                     validator = validate_uscode_release_closure_v3
+                elif args.profile == "reviewed-norm-v3-direct":
+                    from ipfs_datasets_py.logic.autoformal.legal_release_coordinator_v1 import (
+                        validate_uscode_release_closure_direct_v3,
+                    )
+                    validator = validate_uscode_release_closure_direct_v3
                 closure = validator(raw, expected_request_sha256=args.request_sha256)
                 result = _receipt(status="success", command=command,
                     validation_scope="selected-component-local-replay-not-release-admission",
