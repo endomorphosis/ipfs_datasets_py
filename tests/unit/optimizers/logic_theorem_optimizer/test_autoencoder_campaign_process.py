@@ -404,9 +404,26 @@ def test_dependency_directories_reject_nonordinary_components(tmp_path, monkeypa
     child = _bootstrap()
     path = tmp_path / "dependency"
     if kind == "symlink":
+        import stat
         path.symlink_to(tmp_path, target_is_directory=True)
-    else:
-        path.write_text("not a directory")
+        owned = path.lstat()
+        assert stat.S_ISLNK(owned.st_mode) and owned.st_nlink == 1
+        identity = lambda value: (value.st_dev, value.st_ino, value.st_mode, value.st_nlink,
+            value.st_size, value.st_mtime_ns, value.st_ctime_ns)
+        try:
+            monkeypatch.setattr(site, "getusersitepackages", lambda: str(path / "nested"))
+            monkeypatch.setattr(site, "getsitepackages", lambda: [])
+            with pytest.raises(RuntimeError, match="unsafe component"):
+                child._configure_dependency_paths()
+        finally:
+            # Remove only the exact symlink created by THIS test invocation.
+            # A replaced or changed entry remains evidence and fails the test.
+            current = path.lstat()
+            assert stat.S_ISLNK(current.st_mode) and identity(current) == identity(owned)
+            assert os.readlink(path) == str(tmp_path)
+            path.unlink()
+        return
+    path.write_text("not a directory")
     monkeypatch.setattr(site, "getusersitepackages", lambda: str(path / "nested"))
     monkeypatch.setattr(site, "getsitepackages", lambda: [])
     with pytest.raises(RuntimeError, match="unsafe component"):
@@ -472,3 +489,577 @@ def test_bootstrap_top_level_has_no_project_imports_and_pin_precedes_worker_call
              if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)]
     assert next(line for name, line in calls if name == "require_workspace_logic_tree") < next(
         line for name, line in calls if name == "_execute_training_job")
+
+
+def test_reviewed_parent_callback_source_denial_preserves_original_error_and_sends_no_ack(monkeypatch):
+    """Synthetic guard/FD ordering only; no grant or genuine process is claimed."""
+    import socket
+    parent_identity = {"pid": os.getpid(), "birth": "11001"}
+    child_identity = {"pid": 22002, "birth": "33003"}
+    observed = {parent_identity["pid"]: {**parent_identity, "parent_pid": 1,
+        "group_pid": parent_identity["pid"], "rss_bytes": 0},
+        child_identity["pid"]: {**child_identity, "parent_pid": parent_identity["pid"],
+        "group_pid": child_identity["pid"], "rss_bytes": 0}}
+    monkeypatch.setattr(module, "_process", lambda pid: observed.get(pid))
+    monkeypatch.setattr(module, "_group_usage", lambda identity: {
+        "available": True, "rss_bytes": 0, "live_processes": 1})
+    owner = object.__new__(module.DaemonResourceReservation)
+    owner._owner_pid = parent_identity["pid"]
+    owner._entered = True
+    owner._record = {"owner_pid": parent_identity["pid"], "status": "active", "child": dict(child_identity)}
+    owner._child = dict(child_identity)
+    owner._lease = SimpleNamespace(cancelled=False)
+    owner.reservation_id = "fixture:synthetic-original-reservation"
+    owner.cpu_slots, owner.memory_mb, owner.child_process_slots = 1, 64, 2
+    owner.storage_bytes = 4 * 1024**2
+    lane, workload = owner._scheduler_identity()
+    owner._record.update(reservation_id=owner.reservation_id, scheduler_lane=lane.value,
+        workload=workload, storage_bytes=owner.storage_bytes, cpu_slots=1, memory_mb=64, child_process_slots=2)
+    owner._lease = SimpleNamespace(cancelled=False, lease_id="b" * 32, lane=lane.value,
+        owner_pid=parent_identity["pid"], parent_lease_id=None, requires_gpu=False,
+        _released=False, cpu_slots=1, memory_mb=64, child_process_slots=2)
+    owner._verify_owner_roots = lambda: None
+    owner.heartbeat = lambda: True
+    owner.release = lambda **kwargs: pytest.fail("callback channel released storage/native custody")
+    class OriginalSourceDenied(RuntimeError):
+        pass
+    denied = OriginalSourceDenied("original parent source guard denied")
+    def source_guard():
+        raise denied
+    parent, peer = socket.socketpair()
+    descriptor = parent.detach()
+    server = None
+    try:
+        server = module._ReviewedParentCallbackServer(descriptor, owner=owner,
+            child_identity=child_identity, owner_identity=parent_identity,
+            request_sha256="a" * 64, deadline=module.time.monotonic() + 5,
+            source_guard=source_guard,
+            asset_policy_guard=lambda policy: pytest.fail("source denial reached asset policy"),
+            current_admission_provider=lambda: pytest.fail("source denial reached current admission"))
+        frame = {"schema": "reviewed-parent-callback-request/v1", "request_sha256": "a" * 64,
+            "sequence": 1, "operation": "GUARD", "owner_identity": parent_identity,
+            "child_identity": child_identity, "payload": None}
+        os.write(peer.fileno(), module.canonical(frame) + b"\n")
+        with pytest.raises(OriginalSourceDenied) as captured:
+            server.poll()
+        assert captured.value is denied
+        observation = server.observation()
+        assert observation["acknowledged_requests"] == 0
+        assert observation["last_error"]["type"] == "OriginalSourceDenied"
+        assert observation["closed"] is True
+        os.set_blocking(peer.fileno(), False)
+        assert os.read(peer.fileno(), 1024) == b""
+    finally:
+        if server is not None:
+            server.close()
+        else:
+            os.close(descriptor)
+        peer.close()
+
+
+@pytest.fixture
+def reviewed_callback_channel(monkeypatch):
+    """Synthetic live-owner observations plus real private FDs; no native grant."""
+    import socket
+    clock = [100.0]
+    monkeypatch.setattr(module, "time", SimpleNamespace(monotonic=lambda: clock[0]))
+    parent = {"pid": os.getpid(), "birth": "11001"}
+    child = {"pid": 22002, "birth": "33003"}
+    processes = {parent["pid"]: {**parent, "parent_pid": 1, "group_pid": parent["pid"], "rss_bytes": 0, "state": "S"},
+        child["pid"]: {**child, "parent_pid": parent["pid"], "group_pid": child["pid"], "rss_bytes": 0, "state": "S"}}
+    group = {"available": True, "rss_bytes": 0, "live_processes": 1}
+    monkeypatch.setattr(module, "_process", lambda pid: processes.get(pid))
+    monkeypatch.setattr(module, "_group_usage", lambda identity: dict(group))
+    owner = object.__new__(module.DaemonResourceReservation)
+    owner._owner_pid, owner._entered = parent["pid"], True
+    owner._record = {"owner_pid": parent["pid"], "status": "active", "child": dict(child)}
+    owner._child, owner._lease = dict(child), SimpleNamespace(cancelled=False)
+    owner.reservation_id = "fixture:synthetic-original-reservation"
+    owner.cpu_slots, owner.memory_mb, owner.child_process_slots = 1, 64, 2
+    owner.storage_bytes = 4 * 1024**2
+    lane, workload = owner._scheduler_identity()
+    owner._record.update(reservation_id=owner.reservation_id, scheduler_lane=lane.value,
+        workload=workload, storage_bytes=owner.storage_bytes, cpu_slots=1, memory_mb=64, child_process_slots=2)
+    owner._lease = SimpleNamespace(cancelled=False, lease_id="b" * 32, lane=lane.value,
+        owner_pid=parent["pid"], parent_lease_id=None, requires_gpu=False,
+        _released=False, cpu_slots=1, memory_mb=64, child_process_slots=2)
+    owner._verify_owner_roots = lambda: None
+    events = []
+    owner.heartbeat = lambda: events.append("heartbeat") or True
+    owner.release = lambda **kwargs: pytest.fail("callback relay released original custody")
+    source = [lambda: events.append("source")]
+    asset = [lambda policy: events.append(("asset", policy))]
+    admission = [{"review_bytes": b"synthetic-private-review-not-for-transport", "generation": 0}]
+    left, peer = socket.socketpair()
+    descriptor = left.detach()
+    server = None
+    try:
+        server = module._ReviewedParentCallbackServer(descriptor, owner=owner,
+            child_identity=child, owner_identity=parent, request_sha256="a" * 64,
+            deadline=110.0, source_guard=lambda: source[0](),
+            asset_policy_guard=lambda policy: asset[0](policy), current_admission_provider=lambda: admission[0])
+        yield SimpleNamespace(server=server, peer=peer, owner=owner, parent=parent, child=child,
+            processes=processes, group=group, source=source, asset=asset,
+            admission=admission, clock=clock, events=events)
+    finally:
+        if server is None:
+            os.close(descriptor)
+        else:
+            server.close()
+        peer.close()
+
+
+def _reviewed_callback_frame(channel, operation="GUARD", payload=None, sequence=None):
+    return {"schema": "reviewed-parent-callback-request/v1", "request_sha256": "a" * 64,
+        "sequence": channel.server.observation()["last_sequence"] + 1 if sequence is None else sequence,
+        "operation": operation, "owner_identity": dict(channel.parent),
+        "child_identity": dict(channel.child), "payload": payload}
+
+
+def _reviewed_callback_roundtrip(channel, operation="GUARD", payload=None):
+    os.write(channel.peer.fileno(), module.canonical(_reviewed_callback_frame(channel, operation, payload)) + b"\n")
+    assert channel.server.poll() is True
+    raw = os.read(channel.peer.fileno(), 1024)
+    assert len(raw) <= 1024
+    return json.loads(raw), raw
+
+
+def test_reviewed_parent_callback_checks_all_operations_and_finish_without_releasing_owner(reviewed_callback_channel):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_consumer_binding import reviewed_admission_inputs_sha256
+    channel = reviewed_callback_channel
+    reply, _ = _reviewed_callback_roundtrip(channel)
+    assert reply["sequence"] == 1 and reply["operation"] == "GUARD" and reply["admission_sha256"] is None
+    policy = {"schema": "fixture:ordinary-policy", "training_requested": False}
+    _reviewed_callback_roundtrip(channel, "ASSET", policy)
+    assert ("asset", policy) in channel.events
+    expected = reviewed_admission_inputs_sha256(channel.admission[0])
+    reply, raw = _reviewed_callback_roundtrip(channel, "ADMISSION", {"expected_sha256": expected})
+    assert reply["admission_sha256"] == expected and b"synthetic-private-review" not in raw
+    reply, _ = _reviewed_callback_roundtrip(channel, "FINISH")
+    assert reply["sequence"] == 4 and reply["operation"] == "FINISH"
+    observation = channel.server.observation()
+    assert channel.server.finished is True and observation["closed"] is observation["finished"] is True
+    assert observation["acknowledged_requests"] == 4 and observation["last_error"] is None
+    assert observation["operations"] == {"GUARD": 1, "ASSET": 1, "ADMISSION": 1, "FINISH": 1}
+    assert observation["storage_release_authorized"] is observation["resource_authority_granted"] is False
+    assert channel.owner._entered is True and channel.owner._record["status"] == "active"
+    assert os.read(channel.peer.fileno(), 1024) == b""
+    with pytest.raises(RuntimeError):
+        channel.server.poll()
+    assert channel.server.observation()["acknowledged_requests"] == 4
+
+
+def test_reviewed_parent_callback_checks_cancel_every_request_while_heartbeat_is_throttled(reviewed_callback_channel):
+    channel = reviewed_callback_channel
+    _reviewed_callback_roundtrip(channel)
+    _reviewed_callback_roundtrip(channel)
+    assert channel.events.count("heartbeat") == 1
+    channel.owner._lease.cancelled = True
+    os.write(channel.peer.fileno(), module.canonical(_reviewed_callback_frame(channel)) + b"\n")
+    with pytest.raises(RuntimeError, match="cancelled"):
+        channel.server.poll()
+    assert channel.server.observation()["acknowledged_requests"] == 2
+
+
+def test_reviewed_parent_callback_sdk_guard_and_local_check_never_request_global_census(reviewed_callback_channel, monkeypatch):
+    channel = reviewed_callback_channel
+    observed = []
+    channel.owner.guard = lambda: observed.append("sdk_guard")
+    channel.owner.check_limits = lambda *, full: observed.append(("local", full))
+    monkeypatch.setattr(module, "_group_usage", lambda identity: pytest.fail("SDK callback used legacy group observer"))
+    _reviewed_callback_roundtrip(channel)
+    assert "sdk_guard" in observed and ("local", False) in observed
+    assert all(item != ("local", True) for item in observed)
+
+
+@pytest.mark.parametrize("operation", ["ASSET", "ADMISSION"])
+def test_reviewed_parent_callback_original_policy_error_never_becomes_an_ack(reviewed_callback_channel, operation):
+    channel = reviewed_callback_channel
+    denied = PermissionError("original trusted parent policy denied")
+    def reject(*args):
+        raise denied
+    if operation == "ASSET":
+        channel.asset[0] = reject
+        payload = {"fixture": "policy"}
+    else:
+        channel.admission[0] = None
+        channel.server._admission_provider = reject
+        payload = {"expected_sha256": "b" * 64}
+    os.write(channel.peer.fileno(), module.canonical(_reviewed_callback_frame(channel, operation, payload)) + b"\n")
+    with pytest.raises(PermissionError) as captured:
+        channel.server.poll()
+    assert captured.value is denied and channel.server.observation()["acknowledged_requests"] == 0
+    assert channel.server.observation()["last_error"]["type"] == "PermissionError"
+
+
+@pytest.mark.parametrize("fault", ["request", "owner_birth", "child_birth", "owner_float_pid", "sequence", "sequence_bool",
+    "extra", "operation", "guard_payload", "admission_payload", "admission_digest"])
+def test_reviewed_parent_callback_refuses_malformed_or_foreign_requests_before_ack(reviewed_callback_channel, fault):
+    channel = reviewed_callback_channel
+    frame = _reviewed_callback_frame(channel)
+    if fault == "request": frame["request_sha256"] = "b" * 64
+    elif fault == "owner_birth": frame["owner_identity"]["birth"] = "99"
+    elif fault == "child_birth": frame["child_identity"]["birth"] = "99"
+    elif fault == "owner_float_pid": frame["owner_identity"]["pid"] = float(channel.parent["pid"])
+    elif fault == "sequence": frame["sequence"] = 2
+    elif fault == "sequence_bool": frame["sequence"] = True
+    elif fault == "extra": frame["extra"] = "unbound"
+    elif fault == "operation": frame["operation"] = "ALLOCATE"
+    elif fault == "guard_payload": frame["payload"] = {"authority": True}
+    elif fault == "admission_payload": frame.update(operation="ADMISSION", payload={"expected_sha256": "b" * 64, "review": {}})
+    else: frame.update(operation="ADMISSION", payload={"expected_sha256": "B" * 64})
+    os.write(channel.peer.fileno(), module.canonical(frame) + b"\n")
+    with pytest.raises(RuntimeError):
+        channel.server.poll()
+    observation = channel.server.observation()
+    assert observation["acknowledged_requests"] == 0 and observation["closed"] is True
+
+
+@pytest.mark.parametrize("raw", [b'{"schema":1,"schema":2}\n', b'{}\n{}\n', b'not-json\n', b'{' + b' ' * (32 * 1024)])
+def test_reviewed_parent_callback_refuses_ambiguous_or_oversize_framing(reviewed_callback_channel, raw):
+    channel = reviewed_callback_channel
+    os.write(channel.peer.fileno(), raw)
+    with pytest.raises((RuntimeError, ValueError)):
+        channel.server.poll()
+    assert channel.server.observation()["closed"] is True
+    assert channel.server.observation()["acknowledged_requests"] == 0
+
+
+@pytest.mark.parametrize("fault", ["parent_birth", "child_birth", "child_parent", "recorded_child", "lease", "deadline", "heartbeat", "rss", "slots"])
+def test_reviewed_parent_callback_requires_fresh_original_custody_for_each_ack(reviewed_callback_channel, fault):
+    channel = reviewed_callback_channel
+    if fault == "parent_birth": channel.processes[channel.parent["pid"]]["birth"] = "99"
+    elif fault == "child_birth": channel.processes[channel.child["pid"]]["birth"] = "99"
+    elif fault == "child_parent": channel.processes[channel.child["pid"]]["parent_pid"] += 1
+    elif fault == "recorded_child": channel.owner._record["child"] = {**channel.child, "birth": "99"}
+    elif fault == "lease": channel.owner._lease = SimpleNamespace(cancelled=False)
+    elif fault == "deadline": channel.clock[0] = 111.0
+    elif fault == "heartbeat": channel.owner.heartbeat = lambda: False
+    elif fault == "rss": channel.group["rss_bytes"] = 65 * 1024**2
+    else: channel.group["live_processes"] = 3
+    os.write(channel.peer.fileno(), module.canonical(_reviewed_callback_frame(channel)) + b"\n")
+    with pytest.raises(RuntimeError):
+        channel.server.poll()
+    assert channel.server.observation()["acknowledged_requests"] == 0
+
+
+def test_reviewed_parent_callback_rechecks_child_and_admission_after_trusted_callback(reviewed_callback_channel):
+    channel = reviewed_callback_channel
+    def revoke(policy):
+        channel.processes[channel.child["pid"]]["birth"] = "99"
+    channel.asset[0] = revoke
+    os.write(channel.peer.fileno(), module.canonical(_reviewed_callback_frame(channel, "ASSET", {"fixture": "policy"})) + b"\n")
+    with pytest.raises(RuntimeError, match="child identity"):
+        channel.server.poll()
+    assert channel.server.observation()["acknowledged_requests"] == 0
+
+
+def test_reviewed_parent_callback_current_admission_mismatch_sends_no_review_body(reviewed_callback_channel):
+    channel = reviewed_callback_channel
+    os.write(channel.peer.fileno(), module.canonical(_reviewed_callback_frame(channel, "ADMISSION", {"expected_sha256": "b" * 64})) + b"\n")
+    with pytest.raises(RuntimeError, match="admission digest"):
+        channel.server.poll()
+    assert channel.server.observation()["acknowledged_requests"] == 0
+    assert os.read(channel.peer.fileno(), 1024) == b""
+
+
+def test_reviewed_parent_callback_partial_frame_is_nonblocking_and_replay_is_refused(reviewed_callback_channel):
+    channel = reviewed_callback_channel
+    raw = module.canonical(_reviewed_callback_frame(channel)) + b"\n"
+    os.write(channel.peer.fileno(), raw[:10])
+    assert channel.server.poll() is False and channel.server.observation()["acknowledged_requests"] == 0
+    os.write(channel.peer.fileno(), raw[10:])
+    assert channel.server.poll() is True
+    assert json.loads(os.read(channel.peer.fileno(), 1024))["sequence"] == 1
+    os.write(channel.peer.fileno(), raw)
+    with pytest.raises(RuntimeError, match="sequence"):
+        channel.server.poll()
+    assert channel.server.observation()["acknowledged_requests"] == 1
+
+
+@pytest.mark.parametrize("after_guard", [False, True])
+def test_reviewed_parent_callback_eof_without_finish_is_failure(reviewed_callback_channel, after_guard):
+    channel = reviewed_callback_channel
+    if after_guard:
+        _reviewed_callback_roundtrip(channel)
+    channel.peer.close()
+    with pytest.raises(EOFError):
+        channel.server.poll()
+    assert channel.server.finished is False and channel.server.observation()["closed"] is True
+
+
+def test_reviewed_parent_callback_parent_guard_remains_live_after_finish_and_reap(reviewed_callback_channel):
+    channel = reviewed_callback_channel
+    _reviewed_callback_roundtrip(channel, "FINISH")
+    del channel.processes[channel.child["pid"]]
+    channel.group["live_processes"] = 0
+    channel.server._guard_parent()
+    channel.owner._lease.cancelled = True
+    with pytest.raises(RuntimeError, match="cancelled"):
+        channel.server._guard_parent()
+    assert channel.server.finished is True and channel.owner._record["status"] == "active"
+
+
+def test_reviewed_parent_callback_changed_rpc_descriptor_refuses_without_closing_foreign_fd(reviewed_callback_channel):
+    channel = reviewed_callback_channel
+    descriptor = channel.server._fd
+    os.close(descriptor)
+    reader, writer = os.pipe()
+    try:
+        assert reader == descriptor
+        with pytest.raises(RuntimeError, match="descriptor changed"):
+            channel.server.poll()
+        assert os.fstat(reader)
+        observation = channel.server.observation()
+        assert observation["rpc_descriptor_identity_changed"] is True
+        assert observation["acknowledged_requests"] == 0
+    finally:
+        os.close(reader)
+        os.close(writer)
+
+
+def _reviewed_callback_client_fixture(monkeypatch):
+    import socket
+    import time
+    child = _bootstrap()
+    identities = {"owner": {"pid": os.getppid(), "birth": "11001"}, "child": {"pid": os.getpid(), "birth": "22002"}}
+    processes = {identities["owner"]["pid"]: {**identities["owner"], "parent_pid": 1, "group_pid": identities["owner"]["pid"]},
+        identities["child"]["pid"]: {**identities["child"], "parent_pid": identities["owner"]["pid"], "group_pid": identities["child"]["pid"]}}
+    monkeypatch.setattr(child, "_reviewed_callback_process", lambda pid: processes.get(pid))
+    left, peer = socket.socketpair()
+    descriptor = left.detach()
+    client = child._ReviewedParentCallbackClient(descriptor, owner_identity=identities["owner"],
+        child_identity=identities["child"], request_sha256="a" * 64, deadline=time.monotonic() + 2)
+    return SimpleNamespace(child=child, client=client, peer=peer, identities=identities, processes=processes)
+
+
+def _reviewed_callback_respond(fixture, operations, mutate=None):
+    import select
+    import threading
+    import time
+    errors = []
+    def run():
+        try:
+            for operation in operations:
+                raw = b""
+                deadline = time.monotonic() + 2
+                while b"\n" not in raw:
+                    remaining = deadline - time.monotonic()
+                    assert remaining > 0 and select.select([fixture.peer.fileno()], [], [], remaining)[0]
+                    part = os.read(fixture.peer.fileno(), 32769 - len(raw))
+                    assert part
+                    raw += part
+                frame = json.loads(raw)
+                assert frame["operation"] == operation
+                reply = {"schema": "reviewed-parent-callback-reply/v1", "request_sha256": frame["request_sha256"],
+                    "sequence": frame["sequence"], "operation": operation, "owner_identity": frame["owner_identity"],
+                    "child_identity": frame["child_identity"],
+                    "admission_sha256": frame["payload"]["expected_sha256"] if operation == "ADMISSION" else None}
+                if mutate is not None:
+                    mutate(reply)
+                os.write(fixture.peer.fileno(), module.canonical(reply) + b"\n")
+        except BaseException as error:
+            errors.append(error)
+    thread = threading.Thread(target=run, daemon=True)
+    thread.start()
+    return thread, errors
+
+
+def test_reviewed_parent_callback_client_binds_each_exchange_and_finish_without_grant(monkeypatch):
+    fixture = _reviewed_callback_client_fixture(monkeypatch)
+    thread, errors = _reviewed_callback_respond(fixture, ["GUARD", "ASSET", "ADMISSION", "FINISH"])
+    try:
+        fixture.client.execution_guard()
+        fixture.client.asset_policy_guard({"fixture": "ordinary policy"})
+        assert fixture.client.current_admission_digest("b" * 64) == "b" * 64
+        fixture.client.finish()
+        observation = fixture.client.observation()
+        assert observation["completed_requests"] == 4 and observation["finished"] is observation["closed"] is True
+        assert observation["storage_release_authorized"] is observation["resource_authority_granted"] is False
+        with pytest.raises(RuntimeError):
+            fixture.client.execution_guard()
+        assert fixture.client.observation()["completed_requests"] == 4
+    finally:
+        fixture.client.close()
+        fixture.peer.close()
+        thread.join(timeout=1)
+    assert not thread.is_alive() and errors == []
+
+
+@pytest.mark.parametrize("fault", ["sequence", "operation", "request", "owner", "float_pid", "extra", "digest"])
+def test_reviewed_parent_callback_client_rejects_foreign_or_malformed_ack(monkeypatch, fault):
+    fixture = _reviewed_callback_client_fixture(monkeypatch)
+    def mutate(reply):
+        if fault == "sequence": reply["sequence"] += 1
+        elif fault == "operation": reply["operation"] = "ASSET"
+        elif fault == "request": reply["request_sha256"] = "b" * 64
+        elif fault == "owner": reply["owner_identity"]["birth"] = "99"
+        elif fault == "float_pid": reply["owner_identity"]["pid"] = float(reply["owner_identity"]["pid"])
+        elif fault == "extra": reply["review_body"] = "must not be transported"
+        else: reply["admission_sha256"] = "b" * 64
+    thread, errors = _reviewed_callback_respond(fixture, ["GUARD"], mutate)
+    try:
+        with pytest.raises(RuntimeError):
+            fixture.client.execution_guard()
+        assert fixture.client.observation()["closed"] is True
+        assert fixture.client.observation()["completed_requests"] == 0
+    finally:
+        fixture.client.close()
+        fixture.peer.close()
+        thread.join(timeout=1)
+    assert not thread.is_alive() and errors == []
+
+
+def test_reviewed_parent_callback_client_rechecks_original_parent_after_ack(monkeypatch):
+    fixture = _reviewed_callback_client_fixture(monkeypatch)
+    def change_parent(reply):
+        fixture.processes[fixture.identities["owner"]["pid"]]["birth"] = "99"
+    thread, errors = _reviewed_callback_respond(fixture, ["GUARD"], change_parent)
+    try:
+        with pytest.raises(RuntimeError, match="binding changed"):
+            fixture.client.execution_guard()
+        assert fixture.client.observation()["completed_requests"] == 0
+    finally:
+        fixture.client.close()
+        fixture.peer.close()
+        thread.join(timeout=1)
+    assert not thread.is_alive() and errors == []
+
+
+def test_reviewed_parent_callback_client_early_eof_and_original_deadline_refuse(monkeypatch):
+    fixture = _reviewed_callback_client_fixture(monkeypatch)
+    fixture.peer.close()
+    try:
+        with pytest.raises((RuntimeError, BrokenPipeError)):
+            fixture.client.execution_guard()
+        assert fixture.client.observation()["completed_requests"] == 0
+    finally:
+        fixture.client.close()
+    fixture = _reviewed_callback_client_fixture(monkeypatch)
+    fixture.client._deadline = -1.0
+    try:
+        with pytest.raises(RuntimeError, match="deadline"):
+            fixture.client.execution_guard()
+        assert fixture.client.observation()["completed_requests"] == 0
+    finally:
+        fixture.client.close()
+        fixture.peer.close()
+
+
+
+def test_reviewed_dependency_prefix_uses_only_parent_environment_and_preserves_legacy_discovery(tmp_path, monkeypatch):
+    """Pure path discovery; no site hooks, model imports or subprocesses."""
+    import site
+    real_getsitepackages = site.getsitepackages
+    child = _bootstrap()
+    prefix = tmp_path / "original-parent-venv"
+    (prefix / "bin").mkdir(parents=True)
+    packages = prefix / "lib" / "python3.12" / "site-packages"
+    packages.mkdir(parents=True)
+    user = tmp_path / "unrelated-user-site"
+    user.mkdir()
+    base = tmp_path / "original-base-prefix"
+    system = base / "lib" / "python3.12" / "site-packages"
+    system.mkdir(parents=True)
+    (packages / "unexecuted.pth").write_text("import forbidden_startup_hook\n")
+    monkeypatch.setattr(child, "sys", SimpleNamespace(path=["/stdlib"],
+        executable=str(prefix / "bin" / "python"), base_prefix=str(base), base_exec_prefix=str(base)))
+    def forbidden(*args, **kwargs):
+        pytest.fail("explicit original prefix consulted user site or executed startup hooks")
+    monkeypatch.setattr(site, "getusersitepackages", forbidden)
+    monkeypatch.setattr(site, "main", forbidden)
+    monkeypatch.setattr(site, "addsitedir", forbidden)
+    calls = []
+    def explicit_sites(*, prefixes):
+        calls.append(prefixes)
+        assert prefixes == [str(prefix)]
+        return [str(packages)]
+    monkeypatch.setattr(site, "getsitepackages", explicit_sites)
+    assert child._configure_dependency_paths(parent_prefix=str(prefix)) == (str(packages),)
+    assert calls == [[str(prefix)]]
+    assert child.sys.path == [str(child.ROOT), "/stdlib", str(packages)]
+    with pytest.raises(RuntimeError, match="dependency prefix"):
+        child._configure_dependency_paths(parent_prefix=str(tmp_path))
+    assert calls == [[str(prefix)]]  # Refusal precedes any alternate discovery.
+    # Only fallback directories active in the original parent's known site
+    # roots are transferred; their order follows the interpreter site first.
+    monkeypatch.setattr(site, "getusersitepackages", lambda: str(user))
+    def known_sites(*, prefixes):
+        if prefixes == [str(prefix)]:
+            return [str(packages)]
+        assert prefixes == [str(base), str(base)]
+        return [str(system)]
+    monkeypatch.setattr(site, "getsitepackages", known_sites)
+    child.sys.path[:] = [str(child.ROOT), "/stdlib", str(packages), str(user), str(system)]
+    child.sys.prefix = child.sys.exec_prefix = str(base)
+    original = child._reviewed_dependency_paths(str(prefix))
+    assert child.sys.prefix == child.sys.exec_prefix == str(base)  # Parent capture is PURE.
+    assert original == (str(packages), str(user), str(system))
+    child.sys.path[:] = ["/stdlib"]
+    assert child._configure_dependency_paths(parent_prefix=str(prefix), parent_paths=list(original)) == original
+    assert child.sys.path == [str(child.ROOT), "/stdlib", *original]
+    assert child.sys.prefix == child.sys.exec_prefix == str(prefix)  # Explicit CHILD setup restores.
+    with pytest.raises(RuntimeError, match="interpreter site directories first"):
+        child._configure_dependency_paths(parent_prefix=str(prefix), parent_paths=[str(user), str(packages)])
+    with pytest.raises(RuntimeError, match="unknown or repeated"):
+        child._configure_dependency_paths(parent_prefix=str(prefix), parent_paths=[str(packages), str(tmp_path)])
+    # The original no-argument/default v8 branch still asks for user then
+    # ordinary global site directories, in exactly its previous order.
+    legacy = []
+    child.sys.path[:] = ["/stdlib"]
+    monkeypatch.setattr(site, "getusersitepackages", lambda: legacy.append("user") or str(user))
+    def legacy_sites():
+        legacy.append("site")
+        return [str(packages)]
+    monkeypatch.setattr(site, "getsitepackages", legacy_sites)
+    assert child._configure_dependency_paths() == (str(user), str(packages))
+    assert legacy == ["user", "site"]
+    assert child.sys.path == [str(child.ROOT), "/stdlib", str(user), str(packages)]
+    # Exercise the ACTUAL stdlib algorithm with detached interpreter metadata,
+    # rather than a path-returning mock. This reproduces -I -S losing the venv
+    # metadata on Debian while leaving the pytest interpreter itself untouched.
+    import sys
+    import types
+    actual_prefixes = (sys.prefix, sys.exec_prefix, sys.base_prefix, sys.base_exec_prefix)
+    isolated = SimpleNamespace(path=["/stdlib"], executable=str(prefix / "bin" / "python"),
+        prefix=str(base), exec_prefix=str(base), base_prefix=str(base), base_exec_prefix=str(base),
+        version_info=sys.version_info, platlibdir=getattr(sys, "platlibdir", "lib"))
+    namespace = dict(real_getsitepackages.__globals__, sys=isolated)
+    real_site_algorithm = types.FunctionType(real_getsitepackages.__code__, namespace,
+        real_getsitepackages.__name__, real_getsitepackages.__defaults__, real_getsitepackages.__closure__)
+    monkeypatch.setattr(child, "sys", isolated)
+    monkeypatch.setattr(site, "getsitepackages", real_site_algorithm)
+    monkeypatch.setattr(site, "getusersitepackages", forbidden)
+    discovered = child._configure_dependency_paths(parent_prefix=str(prefix))
+    assert str(packages) in discovered
+    assert isolated.prefix == isolated.exec_prefix == str(prefix)
+    assert isolated.base_prefix == isolated.base_exec_prefix == str(base)
+    assert (sys.prefix, sys.exec_prefix, sys.base_prefix, sys.base_exec_prefix) == actual_prefixes
+
+
+
+def test_reviewed_network_fixed_soname_skips_external_library_resolver(monkeypatch):
+    """Observe the real lookup branch before any irreversible filter is loaded."""
+    child = _bootstrap()
+    spec = importlib.util.spec_from_file_location("_test_reviewed_fixed_network_lookup", child.NETWORK_SCRIPT)
+    network = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(network)
+    observed = []
+    stopped = RuntimeError("observed fixed seccomp load before filter")
+    def forbidden(*args, **kwargs):
+        pytest.fail("reviewed network lookup used subprocess-capable resolver")
+    def direct_library(name, *, use_errno):
+        observed.append(name)
+        assert name == "libseccomp.so.2" and use_errno is True
+        raise stopped
+    monkeypatch.setattr(network.ctypes.util, "find_library", forbidden)
+    monkeypatch.setattr(network.ctypes, "CDLL", direct_library)
+    with pytest.raises(RuntimeError) as captured:
+        network._deny_network(fixed_seccomp=True)
+    assert captured.value is stopped and observed == ["libseccomp.so.2"]
+    # The unchanged default still uses the original resolver and refusal.
+    requested = []
+    monkeypatch.setattr(network.ctypes.util, "find_library", lambda name: requested.append(name))
+    with pytest.raises(RuntimeError, match="requires libseccomp"):
+        network._deny_network()
+    assert requested == ["seccomp"] and observed == ["libseccomp.so.2"]

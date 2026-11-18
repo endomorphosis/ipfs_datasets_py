@@ -29,7 +29,7 @@ def _require(condition, message):
         raise RuntimeError(message)
 
 
-def _network_denial(expected_sha256):
+def _network_denial(expected_sha256, *, fixed_seccomp=False):
     # Direct-file import avoids running ipfs_datasets_py package ancestors.
     def read_source():
         fd = os.open(NETWORK_SCRIPT, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
@@ -46,7 +46,7 @@ def _network_denial(expected_sha256):
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     _require(read_source() == raw, "network bootstrap changed during import")
-    return module._deny_network()
+    return module._deny_network(fixed_seccomp=True) if fixed_seccomp else module._deny_network()
 
 
 def _identity():
@@ -96,11 +96,70 @@ def _watch_owner(fd, *, owner_pid, group_pid):
             os._exit(124)
 
 
-def _configure_dependency_paths():
+def _reviewed_dependency_prefix(parent_prefix, *, restore=False):
+    """Bind dependency discovery to this executable's original lexical prefix."""
+    _require(type(restore) is bool, "explicit dependency prefix restoration mode required")
+    _require(type(parent_prefix) is str, "explicit original Python dependency prefix required")
+    prefix = Path(parent_prefix)
+    _require(prefix.is_absolute() and str(prefix) == parent_prefix and ".." not in prefix.parts
+             and prefix == Path(sys.executable).parent.parent,
+             "original Python dependency prefix differs from this executable")
+    for component in reversed((prefix, *prefix.parents)):
+        info = component.lstat()
+        _require(stat.S_ISDIR(info.st_mode) and info.st_uid in {0, os.getuid()},
+                 "original Python dependency prefix has an unsafe component")
+    # Debian site.py distinguishes venv site-packages from dist-packages via
+    # this metadata even when explicit prefixes are supplied under -I -S.
+    # Restore only the validated original prefix; never run site.main/.pth.
+    if restore:
+        sys.prefix = parent_prefix
+        sys.exec_prefix = parent_prefix
+    return parent_prefix
+
+
+def _reviewed_dependency_paths(parent_prefix, parent_paths=None):
+    """Capture/validate only active known site roots; never execute site hooks."""
+    import site
+    prefix = _reviewed_dependency_prefix(parent_prefix)
+    primary = site.getsitepackages(prefixes=[prefix])
+    known = [*primary, site.getusersitepackages(),
+        *site.getsitepackages(prefixes=[sys.base_prefix, sys.base_exec_prefix])]
+    if parent_paths is None:
+        paths = list(dict.fromkeys(value for value in sys.path if type(value) is str and value in known))
+    else:
+        _require(type(parent_paths) is list, "bounded original dependency directory list required")
+        paths = list(parent_paths)
+    _require(1 <= len(paths) <= 8 and all(type(value) is str and value in known for value in paths)
+             and len(paths) == len(set(paths)), "unknown or repeated original dependency directory")
+    raw = json.dumps(paths, ensure_ascii=True, separators=(",", ":")).encode("ascii")
+    _require(len(raw) <= 4096, "original dependency directory profile exceeds bound")
+    interpreter_paths = [value for value in paths if value in primary]
+    _require(interpreter_paths and paths[:len(interpreter_paths)] == interpreter_paths,
+             "original dependency order must put interpreter site directories first")
+    for value in paths:
+        path = Path(value)
+        _require(path.is_absolute() and str(path) == value and ".." not in path.parts,
+                 "original dependency directory is not canonical")
+        for component in reversed((path, *path.parents)):
+            info = component.lstat()
+            _require(stat.S_ISDIR(info.st_mode) and info.st_uid in {0, os.getuid()},
+                     "original dependency directory has an unsafe component")
+    return tuple(paths)
+
+
+def _configure_dependency_paths(*, parent_prefix=None, parent_paths=None):
     # Importing stdlib site under -S is inert. Discover directories without
     # executing .pth files, editable finders, sitecustomize or usercustomize.
     import site
-    candidates = [site.getusersitepackages(), *site.getsitepackages()]
+    if parent_prefix is None:
+        _require(parent_paths is None, "dependency directory profile requires its original prefix")
+        candidates = [site.getusersitepackages(), *site.getsitepackages()]
+    elif parent_paths is None:
+        prefix = _reviewed_dependency_prefix(parent_prefix, restore=True)
+        candidates = site.getsitepackages(prefixes=[prefix])
+    else:
+        prefix = _reviewed_dependency_prefix(parent_prefix, restore=True)
+        candidates = _reviewed_dependency_paths(prefix, parent_paths)
     paths = []
     for value in candidates:
         path = Path(value)
@@ -176,5 +235,333 @@ def main(argv=None):
         return 1
 
 
+
+
+_REVIEWED_CALLBACK_REQUEST = "reviewed-parent-callback-request/v1"
+_REVIEWED_CALLBACK_REPLY = "reviewed-parent-callback-reply/v1"
+_REVIEWED_CALLBACK_READY = "reviewed-source-evaluation-ready/v1"
+_REVIEWED_CALLBACK_MAX_REQUEST = 32 * 1024
+_REVIEWED_CALLBACK_MAX_REPLY = 1024
+
+
+def _reviewed_callback_identity(value):
+    _require(type(value) is dict and set(value) == {"pid", "birth"}
+             and type(value["pid"]) is int and value["pid"] > 0
+             and type(value["birth"]) is str and 0 < len(value["birth"]) <= 32
+             and value["birth"].isascii() and value["birth"].isdigit() and int(value["birth"]) > 0,
+             "exact reviewed callback process identity required")
+    return dict(value)
+
+
+def _reviewed_callback_digest(value):
+    _require(type(value) is str and len(value) == 64
+             and all(character in "0123456789abcdef" for character in value),
+             "exact reviewed callback SHA256 required")
+    return value
+
+
+def _reviewed_callback_encode(value, maximum):
+    count = 0
+    def visit(item, depth=0):
+        nonlocal count
+        count += 1
+        _require(count <= 4096 and depth <= 32, "reviewed callback JSON structure exceeds bound")
+        if type(item) is dict:
+            _require(all(type(key) is str for key in item), "ordinary callback JSON keys required")
+            for child in item.values():
+                visit(child, depth + 1)
+        elif type(item) is list:
+            for child in item:
+                visit(child, depth + 1)
+        else:
+            _require(item is None or type(item) in (str, int, bool)
+                     or type(item) is float and math.isfinite(item), "ordinary finite callback JSON required")
+    visit(value)
+    raw = json.dumps(value, sort_keys=True, ensure_ascii=True, allow_nan=False,
+                     separators=(",", ":")).encode("utf-8") + b"\n"
+    _require(len(raw) <= maximum, "reviewed callback frame exceeds bound")
+    return raw
+
+
+def _reviewed_callback_decode(raw, maximum):
+    _require(type(raw) is bytes and 0 < len(raw) <= maximum
+             and raw.endswith(b"\n") and raw.count(b"\n") == 1,
+             "one bounded reviewed callback frame required")
+    def pairs(values):
+        result = {}
+        for key, value in values:
+            _require(key not in result, "duplicate reviewed callback JSON member")
+            result[key] = value
+        return result
+    def nonfinite(value):
+        raise RuntimeError("nonfinite reviewed callback JSON")
+    value = json.loads(raw, object_pairs_hook=pairs, parse_constant=nonfinite)
+    _reviewed_callback_encode(value, maximum)
+    return value
+
+
+def _reviewed_callback_process(pid):
+    try:
+        raw = Path("/proc", str(pid), "stat").read_text()
+    except FileNotFoundError:
+        return None
+    fields = raw[raw.rfind(")") + 2:].split()
+    _require(len(fields) >= 22, "reviewed callback process observation is malformed")
+    if fields[0] in ("Z", "X", "x"):
+        return None
+    return {"pid": pid, "birth": fields[19], "parent_pid": int(fields[1]),
+            "group_pid": int(fields[2])}
+
+
+def _reviewed_callback_await_run(fd, *, owner_identity, deadline):
+    token = b""
+    while len(token) < 4:
+        parent = _reviewed_callback_process(owner_identity["pid"])
+        _require(os.getppid() == owner_identity["pid"] and parent is not None
+                 and {key: parent[key] for key in owner_identity} == owner_identity,
+                 "original reviewed parent disappeared before RUN")
+        remaining = deadline - time.monotonic()
+        _require(remaining > 0, "original reviewed RUN deadline expired")
+        if select.select([fd], [], [], min(remaining, .2))[0]:
+            part = os.read(fd, 4 - len(token))
+            _require(bool(part), "original reviewed parent closed RUN before release")
+            token += part
+    _require(token == b"RUN\n", "invalid original reviewed RUN token")
+
+
+class _ReviewedParentCallbackClient:
+    """An inherited private channel, never a serialized grant or a new owner.
+
+    The original parent owns native/storage/Source custody. Every successful
+    exchange observes its live checks for this one child and sequence only.
+    The caller transfers ownership of this RPC descriptor on construction;
+    close never touches the separate retained RUN/revocation descriptor.
+    """
+
+    def __init__(self, fd, *, owner_identity, child_identity, request_sha256, deadline):
+        _require(type(fd) is int and fd >= 3, "inherited reviewed callback descriptor required")
+        info = os.fstat(fd)
+        _require(stat.S_ISSOCK(info.st_mode), "reviewed callback requires an inherited socket endpoint")
+        self._owner = _reviewed_callback_identity(owner_identity)
+        self._child = _reviewed_callback_identity(child_identity)
+        self._request = _reviewed_callback_digest(request_sha256)
+        _require(type(deadline) in (int, float) and math.isfinite(deadline)
+                 and 0 < deadline - time.monotonic() <= 86400,
+                 "original absolute reviewed callback deadline required")
+        self._deadline = deadline
+        self._fd = fd
+        self._fd_identity = (info.st_dev, info.st_ino, info.st_mode)
+        self._sequence = 0
+        self._closed = False
+        self._finished = False
+        self._lock = threading.Lock()
+        self._record = {"schema": "reviewed-parent-callback-client-observation/v1",
+            "completed_requests": 0, "operations": {"GUARD": 0, "ASSET": 0, "ADMISSION": 0, "FINISH": 0},
+            "last_error": None, "resource_authority_granted": False, "storage_release_authorized": False}
+        os.set_blocking(fd, False)
+        os.set_inheritable(fd, False)
+
+    def _current(self):
+        _require(not self._closed and time.monotonic() < self._deadline,
+                 "original reviewed callback deadline expired or channel closed")
+        info = os.fstat(self._fd)
+        _require((info.st_dev, info.st_ino, info.st_mode) == self._fd_identity,
+                 "reviewed callback descriptor identity changed")
+        parent = _reviewed_callback_process(self._owner["pid"])
+        child = _reviewed_callback_process(self._child["pid"])
+        _require(os.getpid() == self._child["pid"] and os.getppid() == self._owner["pid"]
+                 and parent is not None and child is not None
+                 and {key: parent[key] for key in self._owner} == self._owner
+                 and {key: child[key] for key in self._child} == self._child
+                 and child["parent_pid"] == self._owner["pid"]
+                 and child["group_pid"] == child["pid"],
+                 "original reviewed callback parent/child process binding changed")
+
+    def _wait(self, *, write=False):
+        self._current()
+        remaining = self._deadline - time.monotonic()
+        readable, writable, _ = select.select([] if write else [self._fd],
+            [self._fd] if write else [], [], min(remaining, .2))
+        self._current()
+        return bool(writable if write else readable)
+
+    def _exchange(self, operation, payload):
+        acquired = False
+        try:
+            remaining = self._deadline - time.monotonic()
+            acquired = remaining > 0 and self._lock.acquire(timeout=remaining)
+            _require(acquired, "original reviewed callback deadline expired waiting for its one exchange")
+            self._current()
+            _require(operation in ("GUARD", "ASSET", "ADMISSION", "TRAIN_ADMISSION", "CONTEXT", "FINISH"),
+                     "unsupported reviewed callback operation")
+            if operation in ("GUARD", "FINISH"):
+                _require(payload is None, "GUARD/FINISH callback accepts no payload")
+            elif operation in ("ASSET", "CONTEXT"):
+                _require(type(payload) is dict, "ordinary " + operation + " policy callback payload required")
+            else:
+                _require(type(payload) is dict and set(payload) == {"expected_sha256"},
+                         operation + " callback accepts only its expected digest")
+                _reviewed_callback_digest(payload["expected_sha256"])
+            sequence = self._sequence + 1
+            _require(sequence <= 2**31 - 1, "reviewed callback sequence exhausted")
+            frame = {"schema": _REVIEWED_CALLBACK_REQUEST, "request_sha256": self._request,
+                "sequence": sequence, "operation": operation, "owner_identity": self._owner,
+                "child_identity": self._child, "payload": payload}
+            raw = _reviewed_callback_encode(frame, _REVIEWED_CALLBACK_MAX_REQUEST)
+            offset = 0
+            while offset < len(raw):
+                if not self._wait(write=True):
+                    continue
+                try:
+                    written = os.write(self._fd, raw[offset:])
+                except BlockingIOError:
+                    continue
+                _require(written > 0, "original parent callback write closed")
+                offset += written
+            reply = b""
+            while b"\n" not in reply:
+                if not self._wait():
+                    continue
+                try:
+                    chunk = os.read(self._fd, _REVIEWED_CALLBACK_MAX_REPLY + 1 - len(reply))
+                except BlockingIOError:
+                    continue
+                _require(bool(chunk), "original parent callback closed without acknowledgement")
+                reply += chunk
+                _require(len(reply) <= _REVIEWED_CALLBACK_MAX_REPLY, "reviewed callback reply exceeds bound")
+            value = _reviewed_callback_decode(reply, _REVIEWED_CALLBACK_MAX_REPLY)
+            _require(type(value) is dict and set(value) == {"schema", "request_sha256", "sequence",
+                "operation", "owner_identity", "child_identity", "admission_sha256"}
+                and value["schema"] == _REVIEWED_CALLBACK_REPLY
+                and value["request_sha256"] == self._request and type(value["sequence"]) is int
+                and value["sequence"] == sequence and value["operation"] == operation
+                and _reviewed_callback_identity(value["owner_identity"]) == self._owner
+                and _reviewed_callback_identity(value["child_identity"]) == self._child,
+                "original parent callback acknowledgement binding differs")
+            if operation in ("ADMISSION", "TRAIN_ADMISSION"):
+                _require(_reviewed_callback_digest(value["admission_sha256"]) == payload["expected_sha256"],
+                         "parent current admission digest differs")
+            else:
+                _require(value["admission_sha256"] is None, "unexpected admission data in callback acknowledgement")
+            self._current()
+            self._sequence = sequence
+            self._record["completed_requests"] += 1
+            operations = self._record["operations"]
+            operations[operation] = operations.get(operation, 0) + 1
+            if operation == "FINISH":
+                self._finished = True
+                self.close()
+            return value["admission_sha256"]
+        except BaseException as error:
+            self._record["last_error"] = {"type": type(error).__name__, "message": str(error)[:512]}
+            self.close()
+            raise
+        finally:
+            if acquired:
+                self._lock.release()
+
+    def execution_guard(self):
+        self._exchange("GUARD", None)
+
+    def asset_policy_guard(self, policy):
+        self._exchange("ASSET", policy)
+
+    def current_admission_digest(self, expected_sha256):
+        return self._exchange("ADMISSION", {"expected_sha256": expected_sha256})
+
+    def current_training_admission_digest(self, expected_sha256):
+        return self._exchange("TRAIN_ADMISSION", {"expected_sha256": expected_sha256})
+
+    def context_policy_guard(self, policy):
+        self._exchange("CONTEXT", policy)
+
+    def finish(self):
+        self._exchange("FINISH", None)
+
+    def close(self):
+        if not self._closed:
+            self._closed = True
+            try:
+                info = os.fstat(self._fd)
+            except OSError:
+                self._record["rpc_descriptor_closed_elsewhere"] = True
+                return
+            if (info.st_dev, info.st_ino, info.st_mode) != self._fd_identity:
+                self._record["rpc_descriptor_identity_changed"] = True
+                return
+            os.close(self._fd)
+
+    def observation(self):
+        return json.loads(json.dumps({**self._record, "closed": self._closed,
+            "finished": self._finished,
+            "request_sha256": self._request, "last_sequence": self._sequence,
+            "owner_identity": self._owner, "child_identity": self._child,
+            "original_deadline_monotonic": self._deadline}, sort_keys=True, allow_nan=False))
+
+
+def _reviewed_evaluation_main(argv):
+    """Fixed offline evaluation bootstrap; the original v8 main is unchanged."""
+    _require(len(argv) == 12, "reviewed evaluation bootstrap requires twelve fixed arguments")
+    path, digest, byte_count, ready_fd, release_fd, callback_fd, owner_pid, owner_birth, deadline, network_sha, parent_prefix, parent_paths_raw = argv
+    byte_count, ready_fd, release_fd, callback_fd, owner_pid = map(int,
+        (byte_count, ready_fd, release_fd, callback_fd, owner_pid))
+    deadline = float(deadline)
+    _require(sys.flags.isolated and sys.flags.no_site and sys.dont_write_bytecode
+             and 0 < byte_count <= 1024**2 and len({ready_fd, release_fd, callback_fd}) == 3
+             and min(ready_fd, release_fd, callback_fd) >= 3,
+             "isolated reviewed evaluation descriptors/byte bound required")
+    parent_prefix = _reviewed_dependency_prefix(parent_prefix, restore=True)
+    _require(type(parent_paths_raw) is str and len(parent_paths_raw.encode("utf-8")) <= 4096,
+             "bounded original dependency directory DATA required")
+    parent_paths = _reviewed_dependency_paths(parent_prefix, json.loads(parent_paths_raw))
+    owner_identity = _reviewed_callback_identity({"pid": owner_pid, "birth": owner_birth})
+    _reviewed_callback_digest(digest)
+    _require(type(path) is str and Path(path).is_absolute() and math.isfinite(deadline)
+             and 0 < deadline - time.monotonic() <= 86400,
+             "original reviewed evaluation path/deadline required")
+    _require(not any(name == "ipfs_datasets_py" or name.startswith("ipfs_datasets_py.")
+                     for name in sys.modules), "reviewed evaluation package imported before offline bootstrap")
+    sys.path.insert(0, str(ROOT))
+    network_guard = _network_denial(network_sha, fixed_seccomp=True)
+    identity = _identity()
+    parent = _reviewed_callback_process(owner_pid)
+    _require(identity["pid"] == identity["group_pid"] and os.getppid() == owner_pid
+             and parent is not None and {key: parent[key] for key in owner_identity} == owner_identity,
+             "reviewed evaluation original parent/isolated child differs")
+    _send_ready(ready_fd, {"schema": _REVIEWED_CALLBACK_READY, "identity": identity,
+        "owner_pid": owner_pid, "owner_birth": owner_birth, "request_sha256": digest,
+        "canonical_root": str(ROOT), "network_guard": network_guard,
+        "python_dependency_prefix": parent_prefix, "python_dependency_paths": list(parent_paths)})
+    os.close(ready_fd)
+    _reviewed_callback_await_run(release_fd, owner_identity=owner_identity, deadline=deadline)
+    watcher = threading.Thread(target=_watch_owner,
+        kwargs={"fd": release_fd, "owner_pid": owner_pid, "group_pid": identity["group_pid"]}, daemon=True)
+    watcher.start()
+    client = _ReviewedParentCallbackClient(callback_fd, owner_identity=owner_identity,
+        child_identity={key: identity[key] for key in ("pid", "birth")},
+        request_sha256=digest, deadline=deadline)
+    try:
+        client.execution_guard()
+        _configure_dependency_paths(parent_prefix=parent_prefix, parent_paths=list(parent_paths))
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_inference import _execute_reviewed_evaluation_request
+        _execute_reviewed_evaluation_request({"path": path, "sha256": digest, "bytes": byte_count}, parent_client=client)
+        client.finish()
+        return 0
+    finally:
+        client.close()
+
+
 if __name__ == "__main__":
+    if sys.argv[1:2] == ["--reviewed-source-evaluation"]:
+        try:
+            reviewed_exit = _reviewed_evaluation_main(sys.argv[2:])
+        except BaseException as error:
+            print("reviewed evaluation worker failed: " + type(error).__name__ + ": " + str(error)[:2048], file=sys.stderr)
+            import traceback
+            rendered = "".join(traceback.TracebackException.from_exception(
+                error, limit=12, capture_locals=False).format(chain=False))
+            bounded = rendered.encode("utf-8", errors="replace")[:8192].decode("utf-8", errors="ignore")
+            print(bounded, end="", file=sys.stderr)
+            reviewed_exit = 1
+        raise SystemExit(reviewed_exit)
     raise SystemExit(main())

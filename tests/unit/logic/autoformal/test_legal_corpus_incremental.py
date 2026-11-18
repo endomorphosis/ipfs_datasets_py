@@ -1663,3 +1663,504 @@ def test_parent_incremental_installed_lean_warm_refusals_preserve_cold_native_ev
     assert arguments == before_inputs
     assert (preparation.manifest_json, preparation.files) == before_preparation
     assert all(path.read_bytes() == raw for path, raw in physical.items())
+
+
+# Reviewed V3 integration uses the existing complete fictional source/review/
+# graph fixture and unchanged child witnesses. Only compiler process observations
+# below are authored. No test calls a real Lean executable or model.
+@pytest.fixture(scope="module")
+def reviewed_incremental_component_v3(tmp_path_factory):
+    control = _FIXTURE_MODULE.reviewed_preservation_graph_fixture_v3(tmp_path_factory)
+    control["preparation"] = _FIXTURE_MODULE.reviewed_preservation_prepare_fixture_v3(control)
+    return control
+
+
+def test_reviewed_incremental_v3_requires_explicit_consumer_after_complete_mixed_project(
+        reviewed_incremental_component_v3):
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_incremental as incremental
+    control = reviewed_incremental_component_v3
+    control["mixed_helper"].assert_signatures_valid(control["case"])
+    assert control["admission"]["fixture_only"] is True
+    assert control["admission"]["semantic_use_eligible"] is True
+    assert control["graph"]["schema"] == "legal-corpus-reviewed-norm-candidate-graph/v3"
+    assert len(control["preparation"].to_dict()["units"]) == 3
+    assert len(control["preparation"].to_dict()["preservation_obligations"]) == 15
+    assert _FIXTURE_MODULE.reviewed_preservation_validate_fixture_v3(control) == control["preparation"]
+    assert callable(getattr(incremental, "build_incremental_reviewed_preservation_corpus_v3", None)), (
+        "reviewed mixed aggregate has no explicit incremental compiler consumer")
+
+
+@pytest.fixture
+def reviewed_incremental_runtime_v3(monkeypatch, tmp_path):
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_incremental as incremental
+    compiler = AuthoredParentIncrementalCompiler(tmp_path)
+    monkeypatch.setattr(native.shared, "_installed_toolchain", compiler.installed)
+    monkeypatch.setattr(incremental, "_toolchain_closure", compiler.closure)
+    monkeypatch.setattr(native.process.BoundedToolRunner, "run",
+        lambda runner, request, **kwargs: compiler.run(runner, request, **kwargs))
+    return {"incremental": incremental, "compiler": compiler, "directory": tmp_path}
+
+
+def build_reviewed_incremental_v3(runtime, control, name, *, previous=None, **overrides):
+    arguments = dict(expected_preservation_sha256=shared.reviewed_preservation_corpus_sha256(control["preparation"]),
+        expected_graph_sha256=control["graph_sha"], expected_admission_sha256=control["admission_sha"],
+        toolchain=TOOLCHAIN, lake_executable=str(runtime["compiler"].lake),
+        output_directory=runtime["directory"] / name,
+        **control["kwargs"])
+    if previous is not None:
+        raw = (previous[1] / "cache.json").read_bytes()
+        arguments.update(previous_cache_raw=raw, expected_previous_cache_sha256=sha(raw),
+            previous_artifacts=artifacts(previous))
+    arguments.update(overrides)
+    receipt = runtime["incremental"].build_incremental_reviewed_preservation_corpus_v3(
+        control["preparation"], control["graph"], control["admission"], *control["args"], **arguments)
+    return receipt, runtime["directory"] / name
+
+
+def reviewed_incremental_nodes_v3(node):
+    yield node
+    for child in node["arguments"]:
+        yield from reviewed_incremental_nodes_v3(child)
+    if node.get("extension") is not None:
+        for child in node["extension"]["children"]:
+            yield from reviewed_incremental_nodes_v3(child)
+
+
+def reviewed_incremental_refresh_request_v3(control, case, ordinal, request):
+    from ipfs_datasets_py.logic.autoformal import legal_relational_norm_v1 as relational
+    from ipfs_datasets_py.logic.syntax_core import ast
+    helper = control["mixed_helper"]
+    unit = case["declaration"]["units"][ordinal]
+    request["expression"] = ast.TypedExpression.from_dict(dict(request["expression"], content_digest="")).to_dict()
+    raw = helper.fixture.wire(request)
+    mixed = unit["relational_profile"] == relational.MIXED_PROFILE
+    report = (relational.prepare_mixed_relational_norm_v1 if mixed else relational.prepare_relational_norm_v1)(
+        raw, expected_request_sha256=sha(raw))
+    unit["relational_request_sha256"] = sha(raw)
+    occurrence = unit["occurrence"]
+    unit["coverage"] = [{"typed_path": row["typed_path"], **{key: occurrence[key] for key in (
+        "start_char", "end_char", "start_utf8", "end_utf8")}} for row in report["structural_mapping"]]
+    pin = (relational.mixed_relational_norm_report_sha256 if mixed else relational.relational_norm_report_sha256)(report)
+    case["relational_inputs"][unit["unit_id"]] = {"request_raw": raw, "report": report, "expected_report_sha256": pin}
+    for use in case["declaration"]["definition_uses"]:
+        if use["use_unit_id"] != unit["unit_id"]:
+            continue
+        paths = []
+        for mapping in report["structural_mapping"]:
+            node = report["typed_expression"]
+            for token in mapping["typed_path"].split("/")[1:]:
+                node = node[int(token)] if type(node) is list else node[token]
+            if type(node) is dict and node.get("kind") == "predicate" and node.get("symbol") == use["defined_predicate"]:
+                paths.append(mapping["typed_path"])
+        assert paths, "The complete governing-definition use must survive a mutation."
+        use["target_typed_paths"] = paths
+
+
+def reviewed_incremental_changed_component_v3(control, facet):
+    """Explicit fictional correction; retain every complete source and re-review it.
+
+    Re-signing happens only with the fixture's declared invented principals.
+    These controls test invalidation, not legal acceptability of the correction.
+    """
+    from ipfs_datasets_py.logic.syntax_core import ast
+    helper, owner = control["mixed_helper"], control["owner"]
+    case = helper.cloned(control["case"])
+    ordinal = 0 if facet == "definition" else 1 if facet == "exception" else 2
+    unit = case["declaration"]["units"][ordinal]
+    request = json.loads(case["relational_inputs"][unit["unit_id"]]["request_raw"])
+    root = request["expression"]["root"]
+    if facet == "definition":
+        equivalence = next(node for node in reviewed_incremental_nodes_v3(root) if node["kind"] == "iff")
+        # A corrected definition still states a universally bound equivalence.
+        # Negate only its complete fictional RHS; keep every original subtree.
+        fresh_id = "fixture:incremental-definition-rhs-negation"
+        assert fresh_id not in {node["node_id"] for node in reviewed_incremental_nodes_v3(root)}
+        equivalence["arguments"][1] = ast.mk_not(
+            fresh_id, ast.LogicNode.from_dict(equivalence["arguments"][1])).to_dict()
+    elif facet == "role":
+        row = next(row for row in request["argument_roles"] if row["symbol"] == "InspectsRegisterAt")
+        row["roles"][0] = "reviewing_officer"
+    elif facet == "scope":
+        assert root["kind"] == "forall"
+        root["kind"] = "exists"
+    elif facet == "exception":
+        guarded = next(node for node in reviewed_incremental_nodes_v3(root)
+            if node["kind"] == "implies" and node["arguments"][0]["kind"] == "not")
+        replacement = deepcopy(guarded["arguments"][1])
+        guarded.clear(); guarded.update(replacement)
+    elif facet == "sort":
+        # Change the event carrier while keeping the governing officer Object.
+        # The original three sort declarations and every source clause survive.
+        def alter(value):
+            if type(value) is dict:
+                if value.get("name") == "EventFrame" and "kind" in value:
+                    value["name"] = "TimeFrame"
+                else:
+                    for item in value.values(): alter(item)
+            elif type(value) is list:
+                for item in value: alter(item)
+        alter(root)
+        alter(request["expression"]["signature"]["symbols"])
+    else:
+        assert facet in ("cardinality-three", "cardinality-two")
+        from ipfs_datasets_py.logic.syntax_core import signatures
+        bound = 3 if facet == "cardinality-three" else 2
+        obj = signatures.LogicSort("Object")
+        serial = iter(range(10000))
+        def nid(): return "fixture:incremental-count:" + str(next(serial))
+        variables = ["counted_officer_" + str(i) for i in range(bound + 1)]
+        def variable(name): return ast.mk_variable(nid(), name, obj)
+        members = [ast.mk_predicate(nid(), "CoveredOfficer", [variable(name)]) for name in variables]
+        equalities = [ast.mk_equality(nid(), variable(left), variable(right))
+            for i, left in enumerate(variables) for right in variables[i + 1:]]
+        cap = ast.mk_implies(nid(), ast.mk_and(nid(), *members), ast.mk_or(nid(), *equalities))
+        for name in reversed(variables): cap = ast.mk_forall(nid(), [ast.Binder(name, obj)], cap)
+        request["expression"]["root"] = ast.mk_and(nid(), ast.LogicNode.from_dict(root), cap).to_dict()
+    reviewed_incremental_refresh_request_v3(control, case, ordinal, request)
+    case["preparation"] = helper.prepare(owner, case)
+    helper.refresh_signed_reviews(case, owner)
+    helper.assert_signatures_valid(case)
+    args, kwargs = helper.fixture.reviewed_assessment_arguments_v2(owner, case)
+    admission = owner.assess_reviewed_norm_admission_v3(*args, **kwargs)
+    assert admission["semantic_use_eligible"] is True and admission["fixture_only"] is True
+    admission_sha = owner.norm_content_adjudication_sha256(admission)
+    graph = control["helper"].owner.build_reviewed_norm_graph_v3(admission, *args,
+        expected_admission_sha256=admission_sha, **kwargs)
+    changed = dict(control, case=case, args=args, kwargs=kwargs, admission=admission, graph=graph,
+        admission_sha=admission_sha, graph_sha=control["helper"].owner.norm_definition_graph_sha256(graph))
+    changed["preparation"] = _FIXTURE_MODULE.reviewed_preservation_prepare_fixture_v3(changed)
+    assert [row["source_version"] for row in case["declaration"]["units"]] == [
+        row["source_version"] for row in control["case"]["declaration"]["units"]]
+    return changed
+
+
+def test_reviewed_incremental_v3_cold_warm_zero_compile_keep_complete_current_review(
+        reviewed_incremental_runtime_v3, reviewed_incremental_component_v3):
+    runtime, control = reviewed_incremental_runtime_v3, reviewed_incremental_component_v3
+    cold = build_reviewed_incremental_v3(runtime, control, "reviewed-cold")
+    calls = len(runtime["compiler"].calls)
+    warm = build_reviewed_incremental_v3(runtime, control, "reviewed-warm", previous=cold)
+    assert cold[0]["build_passed"] is warm[0]["build_passed"] is True
+    assert len(cold[0]["compiled_modules"]) == calls == 8
+    assert len(cold[0]["fresh_theorems"]) == 15
+    assert warm[0]["compiled_modules"] == warm[0]["fresh_theorems"] == []
+    assert len(warm[0]["reused_modules"]) == 8 and len(warm[0]["reused_theorems"]) == 15
+    assert len(runtime["compiler"].calls) == calls
+    assert artifacts(cold) == artifacts(warm)
+    assert warm[0]["units"] == control["preparation"].to_dict()["units"]
+    assert warm[0]["definition_use_record_cids"] == control["preparation"].to_dict()["definition_use_record_cids"]
+    assert warm[0]["reviewed_graph_sha256"] == control["graph_sha"]
+    assert warm[0]["reviewed_admission_sha256"] == control["admission_sha"]
+    assert warm[0]["fresh_proof_for_reused_modules"] is False
+    assert warm[0]["composition_obligations_checked"] is False
+    assert warm[0]["statutory_meaning_proved"] is warm[0]["release_ready"] is False
+    assert not any(warm[0]["authority"].values())
+    assert warm[0]["training_mask"] == warm[0]["evaluation_gold_mask"] == 0
+    assert cache(warm)["schema"] == runtime["incremental"].REVIEWED_CACHE_SCHEMA
+    assert all(raw.startswith(b"authored-fake-olean-no-native-proof\0") for raw in artifacts(warm).values())
+
+
+@pytest.mark.parametrize("facet", ["definition", "role", "scope", "exception", "sort", "cardinality-two"])
+def test_reviewed_incremental_v3_corrected_complete_meaning_invalidates_and_matches_clean(
+        reviewed_incremental_runtime_v3, reviewed_incremental_component_v3, facet):
+    runtime, control = reviewed_incremental_runtime_v3, reviewed_incremental_component_v3
+    if facet == "cardinality-two":
+        control = reviewed_incremental_changed_component_v3(control, "cardinality-three")
+    changed = reviewed_incremental_changed_component_v3(reviewed_incremental_component_v3, facet)
+    cold = build_reviewed_incremental_v3(runtime, control, "semantic-cold")
+    updated = build_reviewed_incremental_v3(runtime, changed, "semantic-updated", previous=cold)
+    clean = build_reviewed_incremental_v3(runtime, changed, "semantic-clean")
+    assert updated[0]["build_passed"] is clean[0]["build_passed"] is True
+    assert updated[0]["compiled_modules"], "No semantic correction can retain the entire old artifact set."
+    assert artifacts(updated) == artifacts(clean)
+    assert updated[0]["artifact_root_cid"] == clean[0]["artifact_root_cid"]
+    old_units = control["preparation"].to_dict()["units"]
+    new_units = changed["preparation"].to_dict()["units"]
+    old_instances = {row["unit_id"]: row["instance_module"] for row in old_units}
+    assert set(updated[0]["reused_modules"]) <= {module for module in cold[0]["expected_modules"]
+        if module in clean[0]["expected_modules"]}
+    assert not (set(cold[0]["expected_modules"]) - set(clean[0]["expected_modules"])) & set(artifacts(updated))
+    assert updated[0]["units"] == new_units
+    if facet == "definition":
+        # Every declared governing use retains its donor in the native recipe,
+        # even though independent preservation witnesses import only semantics.
+        saved = cache(updated)
+        for row in saved["module_facts"]:
+            provenance = row["recipe"]["reviewed_provenance"]
+            if provenance["role"] == "instance" and provenance["contributors"][0]["kind"] == "norm":
+                assert old_units[0]["unit_id"] in {unit["unit_id"] for unit in provenance["dependency_units"]}
+                assert row["module"] in updated[0]["compiled_modules"]
+        assert old_instances[old_units[0]["unit_id"]] not in artifacts(updated)
+    if facet == "role":
+        assert old_units[2]["relational_request_sha256"] != new_units[2]["relational_request_sha256"]
+        assert old_units[2]["instance_module"] != new_units[2]["instance_module"]
+    assert len(updated[0]["fresh_theorems"]) + len(updated[0]["reused_theorems"]) == 15
+
+
+@pytest.mark.parametrize("changed", ["compiler", "library"])
+def test_reviewed_incremental_v3_toolchain_contract_change_rebuilds_every_module(
+        reviewed_incremental_runtime_v3, reviewed_incremental_component_v3, changed):
+    runtime, control = reviewed_incremental_runtime_v3, reviewed_incremental_component_v3
+    cold = build_reviewed_incremental_v3(runtime, control, "toolchain-cold")
+    if changed == "compiler": runtime["compiler"].lean.write_bytes(b"authored-fresh-compiler-v2")
+    else: runtime["compiler"].library_salt = "authored-fresh-library-v2"
+    updated = build_reviewed_incremental_v3(runtime, control, "toolchain-updated", previous=cold)
+    assert updated[0]["build_passed"] is True
+    assert updated[0]["reused_modules"] == []
+    assert set(updated[0]["compiled_modules"]) == set(control["preparation"].to_dict()["expected_modules"])
+
+
+@pytest.mark.parametrize("when", ["opening", "closing"])
+def test_reviewed_incremental_v3_warm_rechecks_genuine_resigned_revocation(
+        reviewed_incremental_runtime_v3, reviewed_incremental_component_v3, monkeypatch, when):
+    runtime, original = reviewed_incremental_runtime_v3, reviewed_incremental_component_v3
+    cold = build_reviewed_incremental_v3(runtime, original, "revocation-cold")
+    helper = original["mixed_helper"]
+    case = helper.cloned(original["case"])
+    args, kwargs = helper.fixture.reviewed_assessment_arguments_v2(original["owner"], case)
+    control = dict(original, case=case, args=args, kwargs=kwargs)
+    # Preserve genuine detached signatures and change only the currently trusted
+    # registry generation. A warm cache is never current review authorization.
+    def revoke():
+        case["registry"]["revocation_generation"] += 1
+        case["registry"]["keys"][0]["revoked_at_utc"] = helper.fixture.EVALUATED
+        helper.fixture.reviewed_resign_v2(case)
+        helper.assert_signatures_valid(case)
+        control["args"], control["kwargs"] = helper.fixture.reviewed_assessment_arguments_v2(original["owner"], case)
+    before = len(runtime["compiler"].calls)
+    if when == "opening":
+        revoke()
+        with pytest.raises(ValueError): build_reviewed_incremental_v3(runtime, control, "revoked-opening", previous=cold)
+        assert not (runtime["directory"] / "revoked-opening").exists()
+    else:
+        original_replay = runtime["incremental"]._reviewed_replay
+        count = []
+        def replay(preparation, inputs, pin, toolchain):
+            count.append(True)
+            if len(count) == 2:
+                revoke()
+                inputs["args"], inputs["kwargs"] = control["args"], control["kwargs"]
+            return original_replay(preparation, inputs, pin, toolchain)
+        monkeypatch.setattr(runtime["incremental"], "_reviewed_replay", replay)
+        result = build_reviewed_incremental_v3(runtime, control, "revoked-closing", previous=cold)
+        assert result[0]["build_passed"] is False
+        assert result[0]["post_run_validation_error"] is not None
+        assert cache(result)["qualified"] is False
+        assert (result[1] / "project").is_dir()
+        assert artifacts(result) == artifacts(cold)
+    assert len(runtime["compiler"].calls) == before
+
+
+@pytest.mark.parametrize("damage", ["profile", "artifact", "provenance", "axiom-report", "population"])
+def test_reviewed_incremental_v3_prior_cache_never_substitutes_changed_proof_or_population(
+        reviewed_incremental_runtime_v3, reviewed_incremental_component_v3, damage):
+    runtime, control = reviewed_incremental_runtime_v3, reviewed_incremental_component_v3
+    cold = build_reviewed_incremental_v3(runtime, control, "prior-cold")
+    saved, raw_artifacts = cache(cold), artifacts(cold)
+    if damage == "profile": saved["profile"] = runtime["incremental"].PARENT_PROFILE
+    elif damage == "artifact": raw_artifacts[next(iter(raw_artifacts))] += b" changed"
+    elif damage == "provenance": saved["module_facts"][-2]["recipe"]["reviewed_provenance"]["contributors"][0]["complete_ir_sha256"] = "f" * 64
+    elif damage == "axiom-report":
+        row = next(row for row in saved["module_facts"] if row["output"]["theorem_axiom_dependencies"])
+        row["output"]["execution_evidence"]["stdout"] += row["output"]["execution_evidence"]["stdout"].splitlines()[0] + "\n"
+    else: saved["module_facts"].pop()
+    raw = canonical_dag_json_bytes(reseal(saved))
+    before = len(runtime["compiler"].calls)
+    with pytest.raises(ValueError):
+        build_reviewed_incremental_v3(runtime, control, "prior-refused", previous_cache_raw=raw,
+            expected_previous_cache_sha256=sha(raw), previous_artifacts=raw_artifacts)
+    assert len(runtime["compiler"].calls) == before
+    assert not (runtime["directory"] / "prior-refused").exists()
+
+
+@pytest.mark.parametrize("damage", ["duplicate", "stderr_claim"])
+def test_reviewed_incremental_v3_each_five_theorem_report_is_exact_not_an_unrelated_success(
+        reviewed_incremental_runtime_v3, reviewed_incremental_component_v3, damage):
+    runtime = reviewed_incremental_runtime_v3
+    runtime["compiler"].axiom_damage = damage
+    result = build_reviewed_incremental_v3(runtime, reviewed_incremental_component_v3, "axioms-refused")
+    assert result[0]["build_passed"] is False
+    assert cache(result)["qualified"] is False
+    assert result[0]["framework_successful"] is False
+
+
+@pytest.mark.parametrize("pin", ["expected_preservation_sha256", "expected_graph_sha256", "expected_admission_sha256"])
+def test_reviewed_incremental_v3_independent_current_pins_refuse_before_compiler(
+        reviewed_incremental_runtime_v3, reviewed_incremental_component_v3, pin):
+    runtime = reviewed_incremental_runtime_v3
+    with pytest.raises(ValueError):
+        build_reviewed_incremental_v3(runtime, reviewed_incremental_component_v3, "pins-refused", **{pin: "f" * 64})
+    assert runtime["compiler"].calls == []
+    assert not (runtime["directory"] / "pins-refused").exists()
+
+
+@pytest.mark.parametrize("namespaces,total_units,supported", [(2, 6, True), (2, 7, False), (2, 8, False), (1, 8, True)])
+def test_reviewed_incremental_v3_uses_exact_upstream_module_boundary_without_dropping_units(
+        reviewed_incremental_runtime_v3, reviewed_incremental_component_v3, namespaces, total_units, supported):
+    from ipfs_datasets_py.logic.autoformal import legal_relational_norm_v1 as relational
+    original = reviewed_incremental_component_v3
+    control = _FIXTURE_MODULE.reviewed_preservation_capacity_control_v3(original, total_units)
+    if namespaces == 1:
+        helper, owner, case = control["mixed_helper"], control["owner"], control["case"]
+        unit = case["declaration"]["units"][2]
+        source_unit = case["declaration"]["units"][1]
+        request = json.loads(case["relational_inputs"][source_unit["unit_id"]]["request_raw"])
+        request["expression"]["expression_id"] += ":independent-object-use"
+        unit["relational_profile"] = relational.PROFILE
+        reviewed_incremental_refresh_request_v3(control, case, 2, request)
+        case["preparation"] = helper.prepare(owner, case)
+        helper.refresh_signed_reviews(case, owner)
+        helper.assert_signatures_valid(case)
+        args, kwargs = helper.fixture.reviewed_assessment_arguments_v2(owner, case)
+        admission = owner.assess_reviewed_norm_admission_v3(*args, **kwargs)
+        assert admission["semantic_use_eligible"] is True
+        admission_sha = owner.norm_content_adjudication_sha256(admission)
+        graph = control["helper"].owner.build_reviewed_norm_graph_v3(admission, *args,
+            expected_admission_sha256=admission_sha, **kwargs)
+        control.update(args=args, kwargs=kwargs, admission=admission, admission_sha=admission_sha,
+            graph=graph, graph_sha=control["helper"].owner.norm_definition_graph_sha256(graph))
+    assert len(control["case"]["declaration"]["units"]) == total_units
+    snapshot = control["owner"].norm._snapshot({"args": list(control["args"]), "kwargs": control["kwargs"]})[1]
+    expected_modules = 2 * namespaces + total_units + 1
+    assert supported == (expected_modules <= shared.MAX_REVIEWED_PRESERVATION_MODULES)
+    if not supported:
+        with pytest.raises(ValueError, match="capacity"):
+            _FIXTURE_MODULE.reviewed_preservation_prepare_fixture_v3(control)
+        assert reviewed_incremental_runtime_v3["compiler"].calls == []
+    else:
+        control["preparation"] = _FIXTURE_MODULE.reviewed_preservation_prepare_fixture_v3(control)
+        assert len(control["preparation"].to_dict()["expected_modules"]) == expected_modules == 11
+        result = build_reviewed_incremental_v3(reviewed_incremental_runtime_v3, control, "exact-boundary")
+        assert result[0]["build_passed"] is True
+        assert len(result[0]["compiled_modules"]) == expected_modules
+        assert len(result[0]["units"]) == total_units
+        assert len(result[0]["fresh_theorems"]) == 5 * total_units
+    assert snapshot == control["owner"].norm._snapshot({"args": list(control["args"]), "kwargs": control["kwargs"]})[1]
+
+
+@pytest.mark.parametrize("where,damage", [
+    ("contributors", "extra"), ("contributors", "ordinal-alias"), ("contributors", "header-extra"),
+    ("contributors", "companion-extra"), ("contributors", "missing-companion"),
+    ("dependency_units", "extra"), ("dependency_units", "parent-type"), ("dependency_units", "obligations")])
+def test_reviewed_incremental_v3_complete_unit_contract_survives_self_resealed_cache_metadata(
+        reviewed_incremental_runtime_v3, reviewed_incremental_component_v3, where, damage):
+    from ipfs_datasets_py.utils.cid_utils import cid_for_dag_json
+    runtime = reviewed_incremental_runtime_v3
+    control = reviewed_incremental_component_v3
+    cold = build_reviewed_incremental_v3(runtime, control, "contract-cold")
+    saved = cache(cold)
+    fact = next(row for row in saved["module_facts"]
+        if row["recipe"]["reviewed_provenance"]["role"] == "instance"
+        and row["recipe"]["reviewed_provenance"][where])
+    row = fact["recipe"]["reviewed_provenance"][where][0]
+    if damage == "extra": row["ignored-unreviewed-field"] = "must be rejected"
+    elif damage == "ordinal-alias": row["ordinal"] = bool(row["ordinal"])
+    elif damage == "header-extra": row["signature_header"]["unreviewed-carrier"] = "Invented"
+    elif damage == "companion-extra": row["original_child_files"][0]["unreviewed"] = True
+    elif damage == "missing-companion": row["original_child_files"].pop()
+    elif damage == "parent-type": row["parent_unit_ids"] = "not a list"
+    else: row["preservation_obligations"].pop()
+    # Updating the native recipe CID and outer record does not approve extra or
+    # malformed unit metadata. Original byte artifacts and reports remain exact.
+    fact["output"]["recipe_cid"] = cid_for_dag_json(fact["recipe"])
+    raw = canonical_dag_json_bytes(reseal(saved))
+    before = len(runtime["compiler"].calls)
+    with pytest.raises(ValueError):
+        build_reviewed_incremental_v3(runtime, control, "contract-refused", previous_cache_raw=raw,
+            expected_previous_cache_sha256=sha(raw), previous_artifacts=artifacts(cold))
+    assert len(runtime["compiler"].calls) == before
+    assert not (runtime["directory"] / "contract-refused").exists()
+
+
+def test_reviewed_incremental_v4_receipt_keeps_opening_pinned_assumptions_after_late_caller_mutation(
+        reviewed_incremental_runtime_v3, reviewed_incremental_component_v3, monkeypatch):
+    runtime, control = reviewed_incremental_runtime_v3, reviewed_incremental_component_v3
+    cold = build_reviewed_incremental_v3(runtime, control, "assumptions-snapshot-cold")
+    incremental = runtime["incremental"]
+    original_admission = deepcopy(control["admission"])
+    assumptions = deepcopy(original_admission["formal_assumptions"])
+    original_pins = incremental._owner_pins
+    calls = []
+    def mutate_after_closing_replay(*args, **kwargs):
+        pins = original_pins(*args, **kwargs)
+        if kwargs.get("reviewed"):
+            calls.append(True)
+            if len(calls) == 2:
+                control["admission"]["formal_assumptions"] = [*assumptions, "Unreviewed post-replay caller mutation."]
+        return pins
+    monkeypatch.setattr(incremental, "_owner_pins", mutate_after_closing_replay)
+    try:
+        warm = build_reviewed_incremental_v3(runtime, control, "assumptions-snapshot-warm", previous=cold)
+        assert len(calls) == 2
+        assert control["owner"].norm_content_adjudication_sha256(control["admission"]) != control["admission_sha"]
+        assert warm[0]["build_passed"] is cache(warm)["qualified"] is True
+        assert warm[0]["reviewed_admission_sha256"] == control["admission_sha"]
+        assert warm[0]["formal_assumptions"] == assumptions
+        assert warm[0]["formal_assumptions"] != control["admission"]["formal_assumptions"]
+        assert warm[0]["compiled_modules"] == [] and artifacts(warm) == artifacts(cold)
+        assert warm[0]["fresh_proof_for_reused_modules"] is False
+    finally:
+        control["admission"].clear(); control["admission"].update(original_admission)
+
+
+def test_reviewed_incremental_v4_recipes_keep_the_validated_graph_during_temporary_caller_mutation(
+        reviewed_incremental_runtime_v3, reviewed_incremental_component_v3, monkeypatch):
+    runtime, control = reviewed_incremental_runtime_v3, reviewed_incremental_component_v3
+    cold = build_reviewed_incremental_v3(runtime, control, "graph-snapshot-cold")
+    incremental = runtime["incremental"]
+    graph = control["graph"]; original_graph = deepcopy(graph)
+    edge = graph["definition_use_records"][0]
+    alternative = next(row["unit_id"] for row in control["preparation"].to_dict()["units"]
+        if row["unit_id"] not in (edge["definition_unit_id"], edge["use_unit_id"]))
+    original_pins, original_replay = incremental._owner_pins, incremental._reviewed_replay
+    pins_seen, replays_seen, mutation_seen = [], [], []
+    def mutate_after_opening_snapshot(*args, **kwargs):
+        pins = original_pins(*args, **kwargs)
+        if kwargs.get("reviewed"):
+            pins_seen.append(True)
+            if len(pins_seen) == 1:
+                edge["definition_unit_id"] = alternative
+                mutation_seen.append(control["helper"].owner.norm_definition_graph_sha256(graph))
+        return pins
+    def restore_before_fresh_closing_review(*args, **kwargs):
+        replays_seen.append(True)
+        if len(replays_seen) == 2:
+            graph.clear(); graph.update(deepcopy(original_graph))
+        return original_replay(*args, **kwargs)
+    monkeypatch.setattr(incremental, "_owner_pins", mutate_after_opening_snapshot)
+    monkeypatch.setattr(incremental, "_reviewed_replay", restore_before_fresh_closing_review)
+    try:
+        warm = build_reviewed_incremental_v3(runtime, control, "graph-snapshot-warm", previous=cold)
+        assert len(pins_seen) == len(replays_seen) == 2
+        assert len(mutation_seen) == 1 and mutation_seen[0] != control["graph_sha"]
+        assert graph == original_graph
+        assert warm[0]["build_passed"] is cache(warm)["qualified"] is True
+        assert warm[0]["reviewed_graph_sha256"] == control["graph_sha"]
+        assert warm[0]["compiled_modules"] == [] and artifacts(warm) == artifacts(cold)
+        assert {row["module"]: row["recipe"] for row in cache(warm)["module_facts"]} == {
+            row["module"]: row["recipe"] for row in cache(cold)["module_facts"]}
+    finally:
+        graph.clear(); graph.update(original_graph)
+
+
+@pytest.mark.parametrize("subject", ["graph", "admission"])
+def test_reviewed_incremental_v4_detached_snapshot_must_match_independent_current_pins(
+        reviewed_incremental_runtime_v3, reviewed_incremental_component_v3, monkeypatch, subject):
+    runtime, control = reviewed_incremental_runtime_v3, reviewed_incremental_component_v3
+    incremental = runtime["incremental"]
+    original = deepcopy(control[subject]); original_replay = incremental._reviewed_replay; calls = []
+    def mutate_after_validated_opening(*args, **kwargs):
+        prepared = original_replay(*args, **kwargs)
+        calls.append(True)
+        if len(calls) == 1:
+            if subject == "graph": control["graph"]["definition_use_records"][0]["definition_unit_id"] += ":changed"
+            else: control["admission"]["formal_assumptions"].append("Unreviewed opening mutation.")
+        return prepared
+    monkeypatch.setattr(incremental, "_reviewed_replay", mutate_after_validated_opening)
+    try:
+        with pytest.raises(ValueError, match="opening reviewed execution snapshot differs"):
+            build_reviewed_incremental_v3(runtime, control, "opening-snapshot-refused")
+        assert calls == [True] and runtime["compiler"].calls == []
+        assert not (runtime["directory"] / "opening-snapshot-refused").exists()
+    finally:
+        control[subject].clear(); control[subject].update(original)

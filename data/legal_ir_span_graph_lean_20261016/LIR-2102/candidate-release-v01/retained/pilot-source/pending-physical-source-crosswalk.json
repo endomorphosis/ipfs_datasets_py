@@ -1,0 +1,1045 @@
+{
+  "authority": {
+    "Lean_admitted": false,
+    "definition_applicability_verified": false,
+    "evaluation_gold_qualified": false,
+    "governing_definition_selected": false,
+    "governing_edition_selected": false,
+    "historical_HF_mapping_verified": false,
+    "meaning_review_completed": false,
+    "semantic_graph_admitted": false,
+    "source_authority_authenticated": false,
+    "source_region_roles_verified": false,
+    "training_gold_qualified": false
+  },
+  "cohort_id": "retained-official-2024-title10-three-source/v1",
+  "coordinate_source_span_count": 1649,
+  "distinct_overlapping_source_span_count": 3,
+  "evaluation_gold_mask": 0,
+  "governing_definition_selection": null,
+  "legacy_HF_physical_join": null,
+  "limits": [
+    "Four explicit original sampled units; unselected source artifact units remain out of scope, not absent.",
+    "All literal candidates are retained and only original char/UTF8 geometry selects the corresponding fresh physical field interval.",
+    "Unit intervals lie inside sentence spans. Shared/overlapping spans are retained without one-to-one identity or semantic/entity assertions.",
+    "Original source record CIDs remain distinct from new physical selectors; no alias registration or legacy-HF producer join.",
+    "This records fresh known producer/view/physical-field custody, not encoded HTML/Parquet byte character maps or legal source authentication.",
+    "Existing definition/use/norm alternatives, context gaps, questions, legal-as-of/trust, substantive review and graph/Lean admission remain pending."
+  ],
+  "meaning_review": null,
+  "new_source_versions_or_CIDs_created": 0,
+  "old_source_versions_units_occurrences_contexts_and_guides_unchanged": true,
+  "original_semantic_candidates_or_interpretation_alternatives_rewritten": false,
+  "parent_descriptor": {
+    "bytes": 80951,
+    "local_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/cohort/source-documents.parquet",
+    "path_in_repo": "source-documents.parquet",
+    "profile": "legacy_laws_parquet/v1",
+    "repository": "local-git:/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/cohort",
+    "revision": "79f6f5538747095de6512dcc071e92b025570017",
+    "row_count": 3,
+    "sha256": "79e93611a65c2593353df5a4bdaddf6363c2f2ffc6e9817ef6f90abb4e5be315"
+  },
+  "parent_descriptor_sha256": "03193ab96c495cf7e5d0f3211d6c6fbc63665fdbf66d090bc38ce95974622b8c",
+  "parent_preflight_report": {
+    "bytes": 23564,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data2-v01/exports/parent-page-preflight.json",
+    "sha256": "03ac15e10a003c1810acfbdcd5f2c6e9f1fce16f302f807c08fcb5c090c6dc75"
+  },
+  "parent_selected_rows_report": {
+    "bytes": 94295,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data2-v01/exports/parent-selected-rows.json",
+    "sha256": "b37fc2444d34ba20ddd718d8ef5d58b70a6010ccd714e800ef30b85e33c13044"
+  },
+  "parent_text_views_full_sha256": "caee6bc9a670de4e0703eae38ec5a735dfea9995f8c39d86c91c80164fdddffe",
+  "parent_text_views_report": {
+    "bytes": 222905,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data2-v01/exports/parent-text-views.json",
+    "sha256": "ab01d3cee838a0124832e3db6b8d8c0aaeb06be76ac77d1be5c2c0c0e6748c8e"
+  },
+  "physical_row_count": 3,
+  "query": "retained-official-pilot:2024:10:101,7213,7214:v1",
+  "release_id": "retained-official-pilot/2024-title10/v1",
+  "schema": "legal-ir-retained-pilot-pending-physical-source-crosswalk/v1",
+  "source_coordinates_full_sha256": "5b3fc636a5ebe717e5cc9da047359ecd1e18b7b1aa2615b9f612c58f9fa4513b",
+  "source_coordinates_report": {
+    "bytes": 1526931,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data2-v01/exports/source-coordinates-reread.json",
+    "sha256": "af6d07501c6c262147053c31a2ae404eebdf982e23f008eb1291c27af77d7c48"
+  },
+  "source_population": [
+    {
+      "crosswalk_selected_indices": [
+        0,
+        1
+      ],
+      "official_full_report_sha256": "26ac99daae8452bfa43f799da7f455b6f4f228b3636712dbde203f6705b94192",
+      "official_view_report_pin": {
+        "bytes": 599801,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/inputs/101/view-report.json",
+        "sha256": "26ac99daae8452bfa43f799da7f455b6f4f228b3636712dbde203f6705b94192"
+      },
+      "original_selected_artifact_unit_count": 4,
+      "original_selected_evidence": {
+        "bytes": 59083,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-pilot-crosswalk-v01/inputs/selected-evidence-101.json",
+        "sha256": "c8be609111dd142a15b2181138d7fda5880960686c0bb33c3e0a06f59761bd5d"
+      },
+      "original_selected_indices_outside_declared_crosswalk": [
+        2,
+        3
+      ],
+      "original_source_version_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+      "raw_HTML_pin": {
+        "bytes": 98879,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/inputs/101/source.html",
+        "sha256": "4e8d017794220f192668d5313fc537fbb7140652ac4a00faaf93a6c921c2c08b"
+      },
+      "section": "101",
+      "whole_normalized_text_sha256": "e16ca14e06034a08bc1e732cdb790c9ec5bbb96d3ba38ac3bee23367c8481851"
+    },
+    {
+      "crosswalk_selected_indices": [
+        0
+      ],
+      "official_full_report_sha256": "e3359aec9b6d637b1d73e3d7b589640d6878e067424a46ff5d1011030d363c98",
+      "official_view_report_pin": {
+        "bytes": 31140,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/inputs/7213/view-report.json",
+        "sha256": "e3359aec9b6d637b1d73e3d7b589640d6878e067424a46ff5d1011030d363c98"
+      },
+      "original_selected_artifact_unit_count": 1,
+      "original_selected_evidence": {
+        "bytes": 18215,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-pilot-crosswalk-v01/inputs/selected-evidence-7213.json",
+        "sha256": "f7ed1753af645c19cf76fae3a940a1ccd488cae18c6cc268a4307c7c7aa71b05"
+      },
+      "original_selected_indices_outside_declared_crosswalk": [],
+      "original_source_version_cid": "baguqeera3y2krszyd5mqfdh6jfieircvqtzxcib45qamwrs4klhmhwkql5ca",
+      "raw_HTML_pin": {
+        "bytes": 4049,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/inputs/7213/source.html",
+        "sha256": "671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef"
+      },
+      "section": "7213",
+      "whole_normalized_text_sha256": "6b0c306698da9e5e44262e74e1f14dac151e0f7e84f466b44285bd544cd52963"
+    },
+    {
+      "crosswalk_selected_indices": [
+        0
+      ],
+      "official_full_report_sha256": "59c6d6abd3b93dda95f92b44f8ecbfc30974bd1b85109f328b004cecc7fe290a",
+      "official_view_report_pin": {
+        "bytes": 48483,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/inputs/7214/view-report.json",
+        "sha256": "59c6d6abd3b93dda95f92b44f8ecbfc30974bd1b85109f328b004cecc7fe290a"
+      },
+      "original_selected_artifact_unit_count": 1,
+      "original_selected_evidence": {
+        "bytes": 18225,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-pilot-crosswalk-v01/inputs/selected-evidence-7214.json",
+        "sha256": "2f7b039e2b19384d0210057580e4da61b120a64b723726825d64311840ae6e25"
+      },
+      "original_selected_indices_outside_declared_crosswalk": [],
+      "original_source_version_cid": "baguqeerazs3yvjdtyapov3z5dbwfgpc7sks2lttcphq624tbw3ozrsp3pgba",
+      "raw_HTML_pin": {
+        "bytes": 7017,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/inputs/7214/source.html",
+        "sha256": "9c33986e216e85dbae33e58a3201bf3c02d3c4ff887d48e5ec524f8813c5842e"
+      },
+      "section": "7214",
+      "whole_normalized_text_sha256": "58e446ec84d0d3cf42d4b322f0da06a16620c2621cfa29fab0f0c5ddbe834b64"
+    }
+  ],
+  "source_sampler_or_review_template_regenerated": false,
+  "status": "physical_literal_and_coordinate_crosswalk_semantics_pending",
+  "training_mask": 0,
+  "unit_count": 4,
+  "unit_selections": {
+    "bytes": 1376,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-pilot-crosswalk-v01/inputs/unit-selections-v01.json",
+    "sha256": "c980a13b9bb833befad429c4f8d306f6a9abc83240ab31a47c53340508525ecf"
+  },
+  "units": [
+    {
+      "all_containing_coordinate_span_ids": [
+        "uscode-span-6055b931eda152c9e98b7c5044b7da2b29463127f22f5c1f6001282628a761c2"
+      ],
+      "all_literal_occurrence_candidates": [
+        {
+          "authority": {
+            "Lean_kernel_admission": false,
+            "accepted_graph_view_enabled": false,
+            "admitted": false,
+            "authenticated_review_verified": false,
+            "context_closure_verified": false,
+            "formalization_eligible": false,
+            "formalized": false,
+            "governing_body_selected": false,
+            "historical_job_lineage_verified": false,
+            "model_invocation_verified": false,
+            "official_edition_correspondence_verified": false,
+            "original_character_occurrence_attested": false,
+            "proof_authority": false,
+            "source_authority_authenticated": false,
+            "source_region_roles_verified": false,
+            "source_semantics_verified": false,
+            "source_text_html_bound": false,
+            "training_gold_qualified": false,
+            "training_qualified": false
+          },
+          "char_end": 6527,
+          "char_start": 6425,
+          "coordinate_origin": {
+            "bytes": "UTF8 encoding of exact decoded original Parquet field; half-open",
+            "characters": "Unicode code points in exact decoded original Parquet field; half-open",
+            "field": "text",
+            "normalization": "none",
+            "parquet_file_byte_mapping_verified": false,
+            "raw_html_byte_mapping_verified": false
+          },
+          "row_ordinal": 0,
+          "schema": "legal-parent-literal-field-occurrence/v1",
+          "selector_sha256": "390a75d538e6999da106e6811c41974d517542f5418383a32fffaa55cb3a82dc",
+          "source_identity": {
+            "field": "text",
+            "file_bytes": 80951,
+            "file_row_count": 3,
+            "file_sha256": "79e93611a65c2593353df5a4bdaddf6363c2f2ffc6e9817ef6f90abb4e5be315",
+            "path_in_repo": "source-documents.parquet",
+            "raw_row_sha256": "a7fe4b3971e3074a9af106ded561ab02dd03430c5120274decf6493e8e90793d",
+            "repository": "local-git:/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/cohort",
+            "revision": "79f6f5538747095de6512dcc071e92b025570017",
+            "row_group": 0,
+            "row_group_ordinal": 0,
+            "row_ordinal": 0
+          },
+          "text": "(b) Personnel Generally.\u2014The following definitions relating to military personnel apply in this title:",
+          "text_sha256": "431d51cf606490903708cc3ca2e88de11e200b5581f459843169341180cd4fc4",
+          "utf8byte_end": 6551,
+          "utf8byte_start": 6447,
+          "view_sha256": "50819f2689ba526025496a38a17824292cd4d5b33b38a8e788fbcc39580fffb3"
+        }
+      ],
+      "all_overlapping_coordinate_spans": [
+        {
+          "intersection_UTF8_end": 6551,
+          "intersection_UTF8_start": 6447,
+          "intersection_char_end": 6527,
+          "intersection_char_start": 6425,
+          "selected_unit_equals_entire_source_span": false,
+          "semantic_or_entity_binding": null,
+          "source_document_sha256": "e16ca14e06034a08bc1e732cdb790c9ec5bbb96d3ba38ac3bee23367c8481851",
+          "source_span_id": "uscode-span-6055b931eda152c9e98b7c5044b7da2b29463127f22f5c1f6001282628a761c2",
+          "span_contains_whole_selected_unit": true,
+          "span_source_UTF8_end": 6615,
+          "span_source_UTF8_start": 6447,
+          "span_source_char_end": 6591,
+          "span_source_char_start": 6425
+        }
+      ],
+      "authority": {
+        "Lean_admitted": false,
+        "definition_applicability_verified": false,
+        "evaluation_gold_qualified": false,
+        "governing_definition_selected": false,
+        "governing_edition_selected": false,
+        "historical_HF_mapping_verified": false,
+        "meaning_review_completed": false,
+        "semantic_graph_admitted": false,
+        "source_authority_authenticated": false,
+        "source_region_roles_verified": false,
+        "training_gold_qualified": false
+      },
+      "evaluation_gold_mask": 0,
+      "governing_definition_selection": null,
+      "legacy_HF_physical_join": null,
+      "literal_candidate_count": 1,
+      "meaning_review": null,
+      "old_blank_guide_ref": {
+        "record_cid": "baguqeeraiyje5ydrrvg6fe3h7r6zxlsf2hy76b5vy6vifcczhmylepwesljq",
+        "schema": "legal-source-sampling-review-blank-guide/v1",
+        "sha256": "bd5c44d5d06496ca5e9f31062d5e9aa6b6a1229e2f402856b8f3363b7d262acd"
+      },
+      "old_context_availability": "required_unavailable",
+      "old_context_missing_requirements": [
+        "definition",
+        "authority",
+        "antecedent",
+        "shared_qualifier",
+        "temporal_origin",
+        "referenced_provision"
+      ],
+      "old_context_ref": {
+        "record_cid": "baguqeeralpcglyrjsh555a64ri2zkv7mkr4zsuyx3sjbsgtzcj6mywwhr2dq",
+        "schema": "legal-corpus-context-declaration/v1",
+        "sha256": "e9321b8117f556e23526404f8133ab600acd52dd22132fc51e88a9820325589d"
+      },
+      "old_selected_evidence": {
+        "bytes": 59083,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-pilot-crosswalk-v01/inputs/selected-evidence-101.json",
+        "sha256": "c8be609111dd142a15b2181138d7fda5880960686c0bb33c3e0a06f59761bd5d"
+      },
+      "old_selected_json_pointer": "/selected/0",
+      "old_source_occurrence": {
+        "cid_scope": "payload_without_record_cid/v1",
+        "coordinate_system": "extracted-unicode-codepoints-and-utf8-half-open/v1",
+        "end_char": 6527,
+        "end_utf8": 6551,
+        "historical_aliases": [],
+        "record_cid": "baguqeera2cmwvh2ny35xyhcok4zd7v6lvhdswp3ca3uj4tnoo6lcodlzsl2a",
+        "schema": "legal-corpus-source-occurrence/v1",
+        "source_version_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+        "span_cid": "bafkreicddvi46ydescidocgmhsrordpbdyqawvmb6rmyimljgqiybtkpyq",
+        "span_sha256": "431d51cf606490903708cc3ca2e88de11e200b5581f459843169341180cd4fc4",
+        "span_text": "(b) Personnel Generally.\u2014The following definitions relating to military personnel apply in this title:",
+        "start_char": 6425,
+        "start_utf8": 6447
+      },
+      "old_source_unit_ref": {
+        "record_cid": "baguqeerahdfpg6hzil7fbc45vksgjzsqdq7uh4dmch4bwt3oo3cybch7btpa",
+        "schema": "legal-source-structured-sample-unit/v1",
+        "sha256": "8cf40c47c26e77e5721b7bd124740b21c0a81f10239963b7ba5c195de04e7706"
+      },
+      "old_source_version_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+      "old_unanswered_question_ids": [
+        "source_role",
+        "authority_edition",
+        "scope_applicability",
+        "complete_meaning_unit",
+        "dependency_inventory",
+        "reference_targets",
+        "notes_construction",
+        "definition_operator",
+        "term_and_sense",
+        "body_structure",
+        "legal_sort_arity",
+        "definition_use",
+        "formal_profile_fit",
+        "meaning_statement",
+        "meaning_arguments_qualifiers"
+      ],
+      "physical_row_ordinal": 0,
+      "role": "title_scope",
+      "same_source_occurrence_ID_or_registered_alias_claimed": false,
+      "section": "101",
+      "selected_candidate_index": 0,
+      "selected_physical_selector": {
+        "authority": {
+          "Lean_kernel_admission": false,
+          "accepted_graph_view_enabled": false,
+          "admitted": false,
+          "authenticated_review_verified": false,
+          "context_closure_verified": false,
+          "formalization_eligible": false,
+          "formalized": false,
+          "governing_body_selected": false,
+          "historical_job_lineage_verified": false,
+          "model_invocation_verified": false,
+          "official_edition_correspondence_verified": false,
+          "original_character_occurrence_attested": false,
+          "proof_authority": false,
+          "source_authority_authenticated": false,
+          "source_region_roles_verified": false,
+          "source_semantics_verified": false,
+          "source_text_html_bound": false,
+          "training_gold_qualified": false,
+          "training_qualified": false
+        },
+        "char_end": 6527,
+        "char_start": 6425,
+        "coordinate_origin": {
+          "bytes": "UTF8 encoding of exact decoded original Parquet field; half-open",
+          "characters": "Unicode code points in exact decoded original Parquet field; half-open",
+          "field": "text",
+          "normalization": "none",
+          "parquet_file_byte_mapping_verified": false,
+          "raw_html_byte_mapping_verified": false
+        },
+        "row_ordinal": 0,
+        "schema": "legal-parent-literal-field-occurrence/v1",
+        "selector_sha256": "390a75d538e6999da106e6811c41974d517542f5418383a32fffaa55cb3a82dc",
+        "source_identity": {
+          "field": "text",
+          "file_bytes": 80951,
+          "file_row_count": 3,
+          "file_sha256": "79e93611a65c2593353df5a4bdaddf6363c2f2ffc6e9817ef6f90abb4e5be315",
+          "path_in_repo": "source-documents.parquet",
+          "raw_row_sha256": "a7fe4b3971e3074a9af106ded561ab02dd03430c5120274decf6493e8e90793d",
+          "repository": "local-git:/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/cohort",
+          "revision": "79f6f5538747095de6512dcc071e92b025570017",
+          "row_group": 0,
+          "row_group_ordinal": 0,
+          "row_ordinal": 0
+        },
+        "text": "(b) Personnel Generally.\u2014The following definitions relating to military personnel apply in this title:",
+        "text_sha256": "431d51cf606490903708cc3ca2e88de11e200b5581f459843169341180cd4fc4",
+        "utf8byte_end": 6551,
+        "utf8byte_start": 6447,
+        "view_sha256": "50819f2689ba526025496a38a17824292cd4d5b33b38a8e788fbcc39580fffb3"
+      },
+      "selection_recipe": "all literal occurrences retained; select only exact old char and UTF8 geometry",
+      "training_mask": 0
+    },
+    {
+      "all_containing_coordinate_span_ids": [
+        "uscode-span-6055b931eda152c9e98b7c5044b7da2b29463127f22f5c1f6001282628a761c2"
+      ],
+      "all_literal_occurrence_candidates": [
+        {
+          "authority": {
+            "Lean_kernel_admission": false,
+            "accepted_graph_view_enabled": false,
+            "admitted": false,
+            "authenticated_review_verified": false,
+            "context_closure_verified": false,
+            "formalization_eligible": false,
+            "formalized": false,
+            "governing_body_selected": false,
+            "historical_job_lineage_verified": false,
+            "model_invocation_verified": false,
+            "official_edition_correspondence_verified": false,
+            "original_character_occurrence_attested": false,
+            "proof_authority": false,
+            "source_authority_authenticated": false,
+            "source_region_roles_verified": false,
+            "source_semantics_verified": false,
+            "source_text_html_bound": false,
+            "training_gold_qualified": false,
+            "training_qualified": false
+          },
+          "char_end": 6591,
+          "char_start": 6528,
+          "coordinate_origin": {
+            "bytes": "UTF8 encoding of exact decoded original Parquet field; half-open",
+            "characters": "Unicode code points in exact decoded original Parquet field; half-open",
+            "field": "text",
+            "normalization": "none",
+            "parquet_file_byte_mapping_verified": false,
+            "raw_html_byte_mapping_verified": false
+          },
+          "row_ordinal": 0,
+          "schema": "legal-parent-literal-field-occurrence/v1",
+          "selector_sha256": "d3105f69ef22ef4e270e41152b533e50cac707401f7a853d2f7e9d432e21ada3",
+          "source_identity": {
+            "field": "text",
+            "file_bytes": 80951,
+            "file_row_count": 3,
+            "file_sha256": "79e93611a65c2593353df5a4bdaddf6363c2f2ffc6e9817ef6f90abb4e5be315",
+            "path_in_repo": "source-documents.parquet",
+            "raw_row_sha256": "a7fe4b3971e3074a9af106ded561ab02dd03430c5120274decf6493e8e90793d",
+            "repository": "local-git:/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/cohort",
+            "revision": "79f6f5538747095de6512dcc071e92b025570017",
+            "row_group": 0,
+            "row_group_ordinal": 0,
+            "row_ordinal": 0
+          },
+          "text": "(1) The term \"officer\" means a commissioned or warrant officer.",
+          "text_sha256": "7a846b7108358ef569a6c0606b1d1705f79ee94d8f3d3ee9da32386c1faea7e7",
+          "utf8byte_end": 6615,
+          "utf8byte_start": 6552,
+          "view_sha256": "50819f2689ba526025496a38a17824292cd4d5b33b38a8e788fbcc39580fffb3"
+        }
+      ],
+      "all_overlapping_coordinate_spans": [
+        {
+          "intersection_UTF8_end": 6615,
+          "intersection_UTF8_start": 6552,
+          "intersection_char_end": 6591,
+          "intersection_char_start": 6528,
+          "selected_unit_equals_entire_source_span": false,
+          "semantic_or_entity_binding": null,
+          "source_document_sha256": "e16ca14e06034a08bc1e732cdb790c9ec5bbb96d3ba38ac3bee23367c8481851",
+          "source_span_id": "uscode-span-6055b931eda152c9e98b7c5044b7da2b29463127f22f5c1f6001282628a761c2",
+          "span_contains_whole_selected_unit": true,
+          "span_source_UTF8_end": 6615,
+          "span_source_UTF8_start": 6447,
+          "span_source_char_end": 6591,
+          "span_source_char_start": 6425
+        }
+      ],
+      "authority": {
+        "Lean_admitted": false,
+        "definition_applicability_verified": false,
+        "evaluation_gold_qualified": false,
+        "governing_definition_selected": false,
+        "governing_edition_selected": false,
+        "historical_HF_mapping_verified": false,
+        "meaning_review_completed": false,
+        "semantic_graph_admitted": false,
+        "source_authority_authenticated": false,
+        "source_region_roles_verified": false,
+        "training_gold_qualified": false
+      },
+      "evaluation_gold_mask": 0,
+      "governing_definition_selection": null,
+      "legacy_HF_physical_join": null,
+      "literal_candidate_count": 1,
+      "meaning_review": null,
+      "old_blank_guide_ref": {
+        "record_cid": "baguqeeranhckaqx2ajyfzlgwd2r32y3qngxaocghgtnonigixbj7ae4bshwa",
+        "schema": "legal-source-sampling-review-blank-guide/v1",
+        "sha256": "2fef48930e492447989e6eff29515c0852d4ab6201eb5ae4a2c89ae49155f1cc"
+      },
+      "old_context_availability": "required_unavailable",
+      "old_context_missing_requirements": [
+        "definition",
+        "authority",
+        "antecedent",
+        "shared_qualifier",
+        "temporal_origin",
+        "referenced_provision"
+      ],
+      "old_context_ref": {
+        "record_cid": "baguqeeraxfs35w7bh6ljxu4jw54gk7xysss4frxgm6dzfd6oyz53fmv5nd7a",
+        "schema": "legal-corpus-context-declaration/v1",
+        "sha256": "dfefdabee16e8e3643ea37bc5dbe54e62a35ae091ce391d4d788472f78c7cb08"
+      },
+      "old_selected_evidence": {
+        "bytes": 59083,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-pilot-crosswalk-v01/inputs/selected-evidence-101.json",
+        "sha256": "c8be609111dd142a15b2181138d7fda5880960686c0bb33c3e0a06f59761bd5d"
+      },
+      "old_selected_json_pointer": "/selected/1",
+      "old_source_occurrence": {
+        "cid_scope": "payload_without_record_cid/v1",
+        "coordinate_system": "extracted-unicode-codepoints-and-utf8-half-open/v1",
+        "end_char": 6591,
+        "end_utf8": 6615,
+        "historical_aliases": [],
+        "record_cid": "baguqeeracyfied5gomuscg5pdep44znimi2zdlqjbs4n2jwq4yf6dekbgera",
+        "schema": "legal-corpus-source-occurrence/v1",
+        "source_version_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+        "span_cid": "bafkreid2qrvxccbvr32wtjwambvr2fyf66postmphu7otwrshbwb7lvh44",
+        "span_sha256": "7a846b7108358ef569a6c0606b1d1705f79ee94d8f3d3ee9da32386c1faea7e7",
+        "span_text": "(1) The term \"officer\" means a commissioned or warrant officer.",
+        "start_char": 6528,
+        "start_utf8": 6552
+      },
+      "old_source_unit_ref": {
+        "record_cid": "baguqeeraaa3y5jwjaf2d2jkar6now7eq3vml7do7ytuy7jvkajfcrwzx2dgq",
+        "schema": "legal-source-structured-sample-unit/v1",
+        "sha256": "a15dca5d46ad7783a09b4f6ec69b97cdb45aa393df9a48caa5c328612a6a356a"
+      },
+      "old_source_version_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+      "old_unanswered_question_ids": [
+        "source_role",
+        "authority_edition",
+        "scope_applicability",
+        "complete_meaning_unit",
+        "dependency_inventory",
+        "reference_targets",
+        "notes_construction",
+        "definition_operator",
+        "term_and_sense",
+        "body_structure",
+        "legal_sort_arity",
+        "definition_use",
+        "formal_profile_fit",
+        "meaning_statement",
+        "meaning_arguments_qualifiers"
+      ],
+      "physical_row_ordinal": 0,
+      "role": "officer_definition",
+      "same_source_occurrence_ID_or_registered_alias_claimed": false,
+      "section": "101",
+      "selected_candidate_index": 0,
+      "selected_physical_selector": {
+        "authority": {
+          "Lean_kernel_admission": false,
+          "accepted_graph_view_enabled": false,
+          "admitted": false,
+          "authenticated_review_verified": false,
+          "context_closure_verified": false,
+          "formalization_eligible": false,
+          "formalized": false,
+          "governing_body_selected": false,
+          "historical_job_lineage_verified": false,
+          "model_invocation_verified": false,
+          "official_edition_correspondence_verified": false,
+          "original_character_occurrence_attested": false,
+          "proof_authority": false,
+          "source_authority_authenticated": false,
+          "source_region_roles_verified": false,
+          "source_semantics_verified": false,
+          "source_text_html_bound": false,
+          "training_gold_qualified": false,
+          "training_qualified": false
+        },
+        "char_end": 6591,
+        "char_start": 6528,
+        "coordinate_origin": {
+          "bytes": "UTF8 encoding of exact decoded original Parquet field; half-open",
+          "characters": "Unicode code points in exact decoded original Parquet field; half-open",
+          "field": "text",
+          "normalization": "none",
+          "parquet_file_byte_mapping_verified": false,
+          "raw_html_byte_mapping_verified": false
+        },
+        "row_ordinal": 0,
+        "schema": "legal-parent-literal-field-occurrence/v1",
+        "selector_sha256": "d3105f69ef22ef4e270e41152b533e50cac707401f7a853d2f7e9d432e21ada3",
+        "source_identity": {
+          "field": "text",
+          "file_bytes": 80951,
+          "file_row_count": 3,
+          "file_sha256": "79e93611a65c2593353df5a4bdaddf6363c2f2ffc6e9817ef6f90abb4e5be315",
+          "path_in_repo": "source-documents.parquet",
+          "raw_row_sha256": "a7fe4b3971e3074a9af106ded561ab02dd03430c5120274decf6493e8e90793d",
+          "repository": "local-git:/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/cohort",
+          "revision": "79f6f5538747095de6512dcc071e92b025570017",
+          "row_group": 0,
+          "row_group_ordinal": 0,
+          "row_ordinal": 0
+        },
+        "text": "(1) The term \"officer\" means a commissioned or warrant officer.",
+        "text_sha256": "7a846b7108358ef569a6c0606b1d1705f79ee94d8f3d3ee9da32386c1faea7e7",
+        "utf8byte_end": 6615,
+        "utf8byte_start": 6552,
+        "view_sha256": "50819f2689ba526025496a38a17824292cd4d5b33b38a8e788fbcc39580fffb3"
+      },
+      "selection_recipe": "all literal occurrences retained; select only exact old char and UTF8 geometry",
+      "training_mask": 0
+    },
+    {
+      "all_containing_coordinate_span_ids": [
+        "uscode-span-c39e2bd221405f5d8be36c333402d447903f4d33a9b34eb3f30c4d2ac5527fff"
+      ],
+      "all_literal_occurrence_candidates": [
+        {
+          "authority": {
+            "Lean_kernel_admission": false,
+            "accepted_graph_view_enabled": false,
+            "admitted": false,
+            "authenticated_review_verified": false,
+            "context_closure_verified": false,
+            "formalization_eligible": false,
+            "formalized": false,
+            "governing_body_selected": false,
+            "historical_job_lineage_verified": false,
+            "model_invocation_verified": false,
+            "official_edition_correspondence_verified": false,
+            "original_character_occurrence_attested": false,
+            "proof_authority": false,
+            "source_authority_authenticated": false,
+            "source_region_roles_verified": false,
+            "source_semantics_verified": false,
+            "source_text_html_bound": false,
+            "training_gold_qualified": false,
+            "training_qualified": false
+          },
+          "char_end": 624,
+          "char_start": 431,
+          "coordinate_origin": {
+            "bytes": "UTF8 encoding of exact decoded original Parquet field; half-open",
+            "characters": "Unicode code points in exact decoded original Parquet field; half-open",
+            "field": "text",
+            "normalization": "none",
+            "parquet_file_byte_mapping_verified": false,
+            "raw_html_byte_mapping_verified": false
+          },
+          "row_ordinal": 1,
+          "schema": "legal-parent-literal-field-occurrence/v1",
+          "selector_sha256": "b2c4e35da15642fa7000e140f1608b02c5c5c2f51d87165932b387f6a562224a",
+          "source_identity": {
+            "field": "text",
+            "file_bytes": 80951,
+            "file_row_count": 3,
+            "file_sha256": "79e93611a65c2593353df5a4bdaddf6363c2f2ffc6e9817ef6f90abb4e5be315",
+            "path_in_repo": "source-documents.parquet",
+            "raw_row_sha256": "ebc70566b71e5e258246d0067682cadfc8bc4949cf731c487655bb25e71c0002",
+            "repository": "local-git:/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/cohort",
+            "revision": "79f6f5538747095de6512dcc071e92b025570017",
+            "row_group": 0,
+            "row_group_ordinal": 1,
+            "row_ordinal": 1
+          },
+          "text": "Officers of the Corps of Engineers may be assigned or transferred to and from duties involving the civil functions of the Corps of Engineers only with the approval of the Secretary of the Army.",
+          "text_sha256": "1cffae41c1d05bc7813b2fd578e5b06f5870422221c99bc39a89803ca4644e52",
+          "utf8byte_end": 625,
+          "utf8byte_start": 432,
+          "view_sha256": "718ae3ecdc9d95c33e3e343992c6dc632ee6a9ad6429dfada463611b3ba7011a"
+        }
+      ],
+      "all_overlapping_coordinate_spans": [
+        {
+          "intersection_UTF8_end": 625,
+          "intersection_UTF8_start": 432,
+          "intersection_char_end": 624,
+          "intersection_char_start": 431,
+          "selected_unit_equals_entire_source_span": false,
+          "semantic_or_entity_binding": null,
+          "source_document_sha256": "6b0c306698da9e5e44262e74e1f14dac151e0f7e84f466b44285bd544cd52963",
+          "source_span_id": "uscode-span-c39e2bd221405f5d8be36c333402d447903f4d33a9b34eb3f30c4d2ac5527fff",
+          "span_contains_whole_selected_unit": true,
+          "span_source_UTF8_end": 625,
+          "span_source_UTF8_start": 341,
+          "span_source_char_end": 624,
+          "span_source_char_start": 340
+        }
+      ],
+      "authority": {
+        "Lean_admitted": false,
+        "definition_applicability_verified": false,
+        "evaluation_gold_qualified": false,
+        "governing_definition_selected": false,
+        "governing_edition_selected": false,
+        "historical_HF_mapping_verified": false,
+        "meaning_review_completed": false,
+        "semantic_graph_admitted": false,
+        "source_authority_authenticated": false,
+        "source_region_roles_verified": false,
+        "training_gold_qualified": false
+      },
+      "evaluation_gold_mask": 0,
+      "governing_definition_selection": null,
+      "legacy_HF_physical_join": null,
+      "literal_candidate_count": 1,
+      "meaning_review": null,
+      "old_blank_guide_ref": {
+        "record_cid": "baguqeeral7eoxauinqk5t5vesjs33nwcgydqvpzv75kwpm7rvidouvhwjfna",
+        "schema": "legal-source-sampling-review-blank-guide/v1",
+        "sha256": "b18b479107c1644d1d9ea54c283a25b4077f7006d4086094ab7813a676d14e0b"
+      },
+      "old_context_availability": "required_unavailable",
+      "old_context_missing_requirements": [
+        "definition",
+        "authority",
+        "antecedent",
+        "shared_qualifier",
+        "temporal_origin",
+        "referenced_provision"
+      ],
+      "old_context_ref": {
+        "record_cid": "baguqeerarwgueicrqclip7qv7vwvnt3gd7mpedlhdmpl2sgxlh4ojg3d76pq",
+        "schema": "legal-corpus-context-declaration/v1",
+        "sha256": "9b957a2c7496cca1ce9768ee764f52da501cb327cdf0d38ed6994c526bb9e51b"
+      },
+      "old_selected_evidence": {
+        "bytes": 18215,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-pilot-crosswalk-v01/inputs/selected-evidence-7213.json",
+        "sha256": "f7ed1753af645c19cf76fae3a940a1ccd488cae18c6cc268a4307c7c7aa71b05"
+      },
+      "old_selected_json_pointer": "/selected/0",
+      "old_source_occurrence": {
+        "cid_scope": "payload_without_record_cid/v1",
+        "coordinate_system": "extracted-unicode-codepoints-and-utf8-half-open/v1",
+        "end_char": 624,
+        "end_utf8": 625,
+        "historical_aliases": [],
+        "record_cid": "baguqeerarbvejvawh23hjqt5b7e7ii5x5zzibekdweepvmi36sqzywkchcda",
+        "schema": "legal-corpus-source-occurrence/v1",
+        "source_version_cid": "baguqeera3y2krszyd5mqfdh6jfieircvqtzxcib45qamwrs4klhmhwkql5ca",
+        "span_cid": "bafkreia476xedqoqlpdycozp2v4olmdplbyeeirbzgn4hgujqa6kizcoki",
+        "span_sha256": "1cffae41c1d05bc7813b2fd578e5b06f5870422221c99bc39a89803ca4644e52",
+        "span_text": "Officers of the Corps of Engineers may be assigned or transferred to and from duties involving the civil functions of the Corps of Engineers only with the approval of the Secretary of the Army.",
+        "start_char": 431,
+        "start_utf8": 432
+      },
+      "old_source_unit_ref": {
+        "record_cid": "baguqeerayiogyiuxpxy2cdjngs6vcu32575lsddffqtbdqjoklbilpe4dfvq",
+        "schema": "legal-source-structured-sample-unit/v1",
+        "sha256": "14510dd173adbb2100c99a76e4a7802e0bbb8f42ea01a0b8e6cf67621125af3e"
+      },
+      "old_source_version_cid": "baguqeera3y2krszyd5mqfdh6jfieircvqtzxcib45qamwrs4klhmhwkql5ca",
+      "old_unanswered_question_ids": [
+        "source_role",
+        "authority_edition",
+        "scope_applicability",
+        "complete_meaning_unit",
+        "dependency_inventory",
+        "reference_targets",
+        "notes_construction",
+        "definition_operator",
+        "term_and_sense",
+        "body_structure",
+        "legal_sort_arity",
+        "definition_use",
+        "formal_profile_fit",
+        "meaning_statement",
+        "meaning_arguments_qualifiers"
+      ],
+      "physical_row_ordinal": 1,
+      "role": "officer_use_7213",
+      "same_source_occurrence_ID_or_registered_alias_claimed": false,
+      "section": "7213",
+      "selected_candidate_index": 0,
+      "selected_physical_selector": {
+        "authority": {
+          "Lean_kernel_admission": false,
+          "accepted_graph_view_enabled": false,
+          "admitted": false,
+          "authenticated_review_verified": false,
+          "context_closure_verified": false,
+          "formalization_eligible": false,
+          "formalized": false,
+          "governing_body_selected": false,
+          "historical_job_lineage_verified": false,
+          "model_invocation_verified": false,
+          "official_edition_correspondence_verified": false,
+          "original_character_occurrence_attested": false,
+          "proof_authority": false,
+          "source_authority_authenticated": false,
+          "source_region_roles_verified": false,
+          "source_semantics_verified": false,
+          "source_text_html_bound": false,
+          "training_gold_qualified": false,
+          "training_qualified": false
+        },
+        "char_end": 624,
+        "char_start": 431,
+        "coordinate_origin": {
+          "bytes": "UTF8 encoding of exact decoded original Parquet field; half-open",
+          "characters": "Unicode code points in exact decoded original Parquet field; half-open",
+          "field": "text",
+          "normalization": "none",
+          "parquet_file_byte_mapping_verified": false,
+          "raw_html_byte_mapping_verified": false
+        },
+        "row_ordinal": 1,
+        "schema": "legal-parent-literal-field-occurrence/v1",
+        "selector_sha256": "b2c4e35da15642fa7000e140f1608b02c5c5c2f51d87165932b387f6a562224a",
+        "source_identity": {
+          "field": "text",
+          "file_bytes": 80951,
+          "file_row_count": 3,
+          "file_sha256": "79e93611a65c2593353df5a4bdaddf6363c2f2ffc6e9817ef6f90abb4e5be315",
+          "path_in_repo": "source-documents.parquet",
+          "raw_row_sha256": "ebc70566b71e5e258246d0067682cadfc8bc4949cf731c487655bb25e71c0002",
+          "repository": "local-git:/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/cohort",
+          "revision": "79f6f5538747095de6512dcc071e92b025570017",
+          "row_group": 0,
+          "row_group_ordinal": 1,
+          "row_ordinal": 1
+        },
+        "text": "Officers of the Corps of Engineers may be assigned or transferred to and from duties involving the civil functions of the Corps of Engineers only with the approval of the Secretary of the Army.",
+        "text_sha256": "1cffae41c1d05bc7813b2fd578e5b06f5870422221c99bc39a89803ca4644e52",
+        "utf8byte_end": 625,
+        "utf8byte_start": 432,
+        "view_sha256": "718ae3ecdc9d95c33e3e343992c6dc632ee6a9ad6429dfada463611b3ba7011a"
+      },
+      "selection_recipe": "all literal occurrences retained; select only exact old char and UTF8 geometry",
+      "training_mask": 0
+    },
+    {
+      "all_containing_coordinate_span_ids": [
+        "uscode-span-974c743f6e2e4dbcbbaabc310eeb62c432d79170c4aa13ab188e70b760f9e8c8"
+      ],
+      "all_literal_occurrence_candidates": [
+        {
+          "authority": {
+            "Lean_kernel_admission": false,
+            "accepted_graph_view_enabled": false,
+            "admitted": false,
+            "authenticated_review_verified": false,
+            "context_closure_verified": false,
+            "formalization_eligible": false,
+            "formalized": false,
+            "governing_body_selected": false,
+            "historical_job_lineage_verified": false,
+            "model_invocation_verified": false,
+            "official_edition_correspondence_verified": false,
+            "original_character_occurrence_attested": false,
+            "proof_authority": false,
+            "source_authority_authenticated": false,
+            "source_region_roles_verified": false,
+            "source_semantics_verified": false,
+            "source_text_html_bound": false,
+            "training_gold_qualified": false,
+            "training_qualified": false
+          },
+          "char_end": 570,
+          "char_start": 407,
+          "coordinate_origin": {
+            "bytes": "UTF8 encoding of exact decoded original Parquet field; half-open",
+            "characters": "Unicode code points in exact decoded original Parquet field; half-open",
+            "field": "text",
+            "normalization": "none",
+            "parquet_file_byte_mapping_verified": false,
+            "raw_html_byte_mapping_verified": false
+          },
+          "row_ordinal": 2,
+          "schema": "legal-parent-literal-field-occurrence/v1",
+          "selector_sha256": "cb810520db41bb4ed6ca8ffa1d033b6764fa3d2aec7cde17db4ed1dfffc33870",
+          "source_identity": {
+            "field": "text",
+            "file_bytes": 80951,
+            "file_row_count": 3,
+            "file_sha256": "79e93611a65c2593353df5a4bdaddf6363c2f2ffc6e9817ef6f90abb4e5be315",
+            "path_in_repo": "source-documents.parquet",
+            "raw_row_sha256": "7e53ea0aec792fdb168b3177b6552de1a3091aecef5137af43f7386c624fbc86",
+            "repository": "local-git:/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/cohort",
+            "revision": "79f6f5538747095de6512dcc071e92b025570017",
+            "row_group": 0,
+            "row_group_ordinal": 2,
+            "row_ordinal": 2
+          },
+          "text": "The President may detail not more than three officers assigned to the Corps of Engineers to assist the Mayor of the District of Columbia in discharging his duties.",
+          "text_sha256": "3c8264afde92003a962dc254b3bc0192858cdfa2b5f6f1ed82cd1e1a82c1313e",
+          "utf8byte_end": 571,
+          "utf8byte_start": 408,
+          "view_sha256": "c6d1bddd1be2daf019a26d4bf31202562d6b840f2466b41b3b2431ce8e2505dd"
+        }
+      ],
+      "all_overlapping_coordinate_spans": [
+        {
+          "intersection_UTF8_end": 571,
+          "intersection_UTF8_start": 408,
+          "intersection_char_end": 570,
+          "intersection_char_start": 407,
+          "selected_unit_equals_entire_source_span": false,
+          "semantic_or_entity_binding": null,
+          "source_document_sha256": "58e446ec84d0d3cf42d4b322f0da06a16620c2621cfa29fab0f0c5ddbe834b64",
+          "source_span_id": "uscode-span-974c743f6e2e4dbcbbaabc310eeb62c432d79170c4aa13ab188e70b760f9e8c8",
+          "span_contains_whole_selected_unit": true,
+          "span_source_UTF8_end": 571,
+          "span_source_UTF8_start": 329,
+          "span_source_char_end": 570,
+          "span_source_char_start": 328
+        }
+      ],
+      "authority": {
+        "Lean_admitted": false,
+        "definition_applicability_verified": false,
+        "evaluation_gold_qualified": false,
+        "governing_definition_selected": false,
+        "governing_edition_selected": false,
+        "historical_HF_mapping_verified": false,
+        "meaning_review_completed": false,
+        "semantic_graph_admitted": false,
+        "source_authority_authenticated": false,
+        "source_region_roles_verified": false,
+        "training_gold_qualified": false
+      },
+      "evaluation_gold_mask": 0,
+      "governing_definition_selection": null,
+      "legacy_HF_physical_join": null,
+      "literal_candidate_count": 1,
+      "meaning_review": null,
+      "old_blank_guide_ref": {
+        "record_cid": "baguqeerahgqe73alfb5ws6zquw534bkirj4gszw3lzdl476dev4limfzzk5a",
+        "schema": "legal-source-sampling-review-blank-guide/v1",
+        "sha256": "e1b2106493813bbcbb2cbabdaf0ba2dcf2e07504a9d66a9c6b43173f2079105c"
+      },
+      "old_context_availability": "required_unavailable",
+      "old_context_missing_requirements": [
+        "definition",
+        "authority",
+        "antecedent",
+        "shared_qualifier",
+        "temporal_origin",
+        "referenced_provision"
+      ],
+      "old_context_ref": {
+        "record_cid": "baguqeeravicuner7iijjt7uw3xgjpsgc7j6gzdxm6lfzhvcctvro6c6dmz7a",
+        "schema": "legal-corpus-context-declaration/v1",
+        "sha256": "ebea95a2297c01e2b0482c41d48c22f0f5e6372aaddd68d46f48087b48f17950"
+      },
+      "old_selected_evidence": {
+        "bytes": 18225,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-pilot-crosswalk-v01/inputs/selected-evidence-7214.json",
+        "sha256": "2f7b039e2b19384d0210057580e4da61b120a64b723726825d64311840ae6e25"
+      },
+      "old_selected_json_pointer": "/selected/0",
+      "old_source_occurrence": {
+        "cid_scope": "payload_without_record_cid/v1",
+        "coordinate_system": "extracted-unicode-codepoints-and-utf8-half-open/v1",
+        "end_char": 570,
+        "end_utf8": 571,
+        "historical_aliases": [],
+        "record_cid": "baguqeeracdglsquykktyomvkuyrq2xf4ljhzwbdn7kguvnhithregnhhpoja",
+        "schema": "legal-corpus-source-occurrence/v1",
+        "source_version_cid": "baguqeerazs3yvjdtyapov3z5dbwfgpc7sks2lttcphq624tbw3ozrsp3pgba",
+        "span_cid": "bafkreib4qjsk7xusaa5jmlocksz3yamsqwgn7ivv63y63awndynifqjrhy",
+        "span_sha256": "3c8264afde92003a962dc254b3bc0192858cdfa2b5f6f1ed82cd1e1a82c1313e",
+        "span_text": "The President may detail not more than three officers assigned to the Corps of Engineers to assist the Mayor of the District of Columbia in discharging his duties.",
+        "start_char": 407,
+        "start_utf8": 408
+      },
+      "old_source_unit_ref": {
+        "record_cid": "baguqeera632lzwmnhvsgkmnw6ydcqxmhepnxg7nssnnq2ayxcihfgevvlbrq",
+        "schema": "legal-source-structured-sample-unit/v1",
+        "sha256": "71d864e39fa5e175eb3af26eb78427418435fb89eb4868a2bb68bc2cc7a4a65c"
+      },
+      "old_source_version_cid": "baguqeerazs3yvjdtyapov3z5dbwfgpc7sks2lttcphq624tbw3ozrsp3pgba",
+      "old_unanswered_question_ids": [
+        "source_role",
+        "authority_edition",
+        "scope_applicability",
+        "complete_meaning_unit",
+        "dependency_inventory",
+        "reference_targets",
+        "notes_construction",
+        "definition_operator",
+        "term_and_sense",
+        "body_structure",
+        "legal_sort_arity",
+        "definition_use",
+        "formal_profile_fit",
+        "meaning_statement",
+        "meaning_arguments_qualifiers"
+      ],
+      "physical_row_ordinal": 2,
+      "role": "officer_use_7214",
+      "same_source_occurrence_ID_or_registered_alias_claimed": false,
+      "section": "7214",
+      "selected_candidate_index": 0,
+      "selected_physical_selector": {
+        "authority": {
+          "Lean_kernel_admission": false,
+          "accepted_graph_view_enabled": false,
+          "admitted": false,
+          "authenticated_review_verified": false,
+          "context_closure_verified": false,
+          "formalization_eligible": false,
+          "formalized": false,
+          "governing_body_selected": false,
+          "historical_job_lineage_verified": false,
+          "model_invocation_verified": false,
+          "official_edition_correspondence_verified": false,
+          "original_character_occurrence_attested": false,
+          "proof_authority": false,
+          "source_authority_authenticated": false,
+          "source_region_roles_verified": false,
+          "source_semantics_verified": false,
+          "source_text_html_bound": false,
+          "training_gold_qualified": false,
+          "training_qualified": false
+        },
+        "char_end": 570,
+        "char_start": 407,
+        "coordinate_origin": {
+          "bytes": "UTF8 encoding of exact decoded original Parquet field; half-open",
+          "characters": "Unicode code points in exact decoded original Parquet field; half-open",
+          "field": "text",
+          "normalization": "none",
+          "parquet_file_byte_mapping_verified": false,
+          "raw_html_byte_mapping_verified": false
+        },
+        "row_ordinal": 2,
+        "schema": "legal-parent-literal-field-occurrence/v1",
+        "selector_sha256": "cb810520db41bb4ed6ca8ffa1d033b6764fa3d2aec7cde17db4ed1dfffc33870",
+        "source_identity": {
+          "field": "text",
+          "file_bytes": 80951,
+          "file_row_count": 3,
+          "file_sha256": "79e93611a65c2593353df5a4bdaddf6363c2f2ffc6e9817ef6f90abb4e5be315",
+          "path_in_repo": "source-documents.parquet",
+          "raw_row_sha256": "7e53ea0aec792fdb168b3177b6552de1a3091aecef5137af43f7386c624fbc86",
+          "repository": "local-git:/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/cohort",
+          "revision": "79f6f5538747095de6512dcc071e92b025570017",
+          "row_group": 0,
+          "row_group_ordinal": 2,
+          "row_ordinal": 2
+        },
+        "text": "The President may detail not more than three officers assigned to the Corps of Engineers to assist the Mayor of the District of Columbia in discharging his duties.",
+        "text_sha256": "3c8264afde92003a962dc254b3bc0192858cdfa2b5f6f1ed82cd1e1a82c1313e",
+        "utf8byte_end": 571,
+        "utf8byte_start": 408,
+        "view_sha256": "c6d1bddd1be2daf019a26d4bf31202562d6b840f2466b41b3b2431ce8e2505dd"
+      },
+      "selection_recipe": "all literal occurrences retained; select only exact old char and UTF8 geometry",
+      "training_mask": 0
+    }
+  ]
+}

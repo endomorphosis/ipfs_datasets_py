@@ -1520,3 +1520,308 @@ __all__ = [
     "is_untrusted_proposal_provider",
     "sanitize_inert_text",
 ]
+
+
+# Explicit source-only token generation. Legacy text/advice contracts above stay
+# unchanged. Rich retrieval must use a separately versioned permission validator;
+# this initial profile deliberately has no caller-asserted context permission.
+SOURCE_CONDITIONED_TYPED_IR_PROFILE: Final = "source-only-typed-ir-proposal/v1"
+SOURCE_CONDITIONED_TYPED_IR_RESULT: Final = "source-only-typed-ir-proposal-result/v1"
+
+
+@runtime_checkable
+class SourceConditionedTokenModel(Protocol):
+    """Caller-owned token backend; this protocol loads no model or assets."""
+
+    def binding_metadata(self) -> Mapping[str, Any]: ...
+
+    def generate_token_ids(
+        self, input_ids: tuple[int, ...], *, decoder_prefix_ids: tuple[int, ...],
+        max_new_tokens: int,
+    ) -> Sequence[int] | None:
+        """Return the actual BOS-to-output history, or explicitly abstain."""
+
+
+@runtime_checkable
+class SourceConditionedTokenizer(Protocol):
+    """Lossless token transport for this explicit source-only profile."""
+
+    def binding_metadata(self) -> Mapping[str, Any]: ...
+
+    def encode(self, text: str) -> Sequence[int]: ...
+
+    def decode(self, token_ids: tuple[int, ...]) -> str: ...
+
+
+def _proposal_token_ids(value: Any, *, maximum: int) -> tuple[int, ...]:
+    if type(value) not in (list, tuple) or len(value) > maximum:
+        raise ProposalAdvisorValidationError("bounded ordinary token sequence required")
+    if any(type(item) is not int or not 0 <= item < 2**31 for item in value):
+        raise ProposalAdvisorValidationError("plain nonnegative integer token IDs required")
+    return tuple(value)
+
+
+def _require_no_discarded_fields(offered: Any, canonical: Any) -> None:
+    """Allow determined defaults/types, but never ignore supplied AST fields."""
+    if isinstance(offered, dict):
+        if not isinstance(canonical, dict) or not set(offered) <= set(canonical):
+            raise ProposalAdvisorValidationError("typed IR contains unsupported fields")
+        for name, item in offered.items():
+            if name == "content_digest" and item == "":
+                continue  # The canonical AST owner computes its derived digest.
+            _require_no_discarded_fields(item, canonical[name])
+    elif isinstance(offered, list):
+        if not isinstance(canonical, list) or len(offered) != len(canonical):
+            raise ProposalAdvisorValidationError("typed IR loses ordered structure")
+        for left, right in zip(offered, canonical):
+            _require_no_discarded_fields(left, right)
+    elif type(offered) is not type(canonical) or offered != canonical:
+        raise ProposalAdvisorValidationError("typed IR changes a supplied value")
+
+
+def propose_source_conditioned_typed_ir(
+    model: SourceConditionedTokenModel, tokenizer: SourceConditionedTokenizer, *,
+    request_id: str, source_text: str, source_ref_ids: tuple[str, ...],
+    source_revision: str, expected_source_sha256: str,
+    expected_model_binding_sha256: str, expected_tokenizer_binding_sha256: str,
+    expected_family: str, expected_profile: str,
+    max_input_tokens: int, max_new_tokens: int, max_output_bytes: int = 1_048_576,
+    context_profile: str = "none", rich_context: object = None,
+) -> dict[str, Any]:
+    """Generate one untrusted complete typed-AST proposal from original source.
+
+    The caller supplies an already constructed, authorized model and tokenizer.
+    Metadata commitments are checked before/after use; this does not authenticate
+    physical model assets, actual model execution, source authority, legal review,
+    or training eligibility. Completeness means typed-AST syntax only. Unexpected
+    callback failures are operational errors, not intentional abstentions. No reference
+    target, reference AST, supplied prefix, teacher labels, or rich context enters
+    this closed API. Actual output IDs must include the fixed BOS and one final
+    EOS. Budget exhaustion and abstention remain separate outcomes, never cropped
+    complete outputs. This profile requires lossless tokenization; a future
+    declared normalization or independently validated rich-context profile stays separate.
+    """
+    if context_profile != "none" or rich_context is not None:
+        raise ProposalAdvisorValidationError(
+            "unsupported context profile; versioned rich-context validation required"
+        )
+    request_id = _identifier(request_id, "request_id")
+    source_revision = _text(source_revision, "source_revision")
+    refs = _unique_identifiers(source_ref_ids, "source_ref_ids")
+    if not refs or len(refs) > _MAX_SOURCE_REFS:
+        raise ProposalAdvisorValidationError("bounded nonempty source references required")
+    if type(source_text) is not str or not source_text or "\x00" in source_text:
+        raise ProposalAdvisorValidationError("complete nonempty source text required")
+    try:
+        source_raw = source_text.encode("utf-8")
+    except UnicodeError as exc:
+        raise ProposalAdvisorValidationError("valid original UTF8 source required") from exc
+    if len(source_raw) > 1_048_576:
+        raise ProposalAdvisorValidationError("source exceeds explicit profile byte limit")
+    _digest(expected_source_sha256, "expected_source_sha256")
+    if "sha256:" + hashlib.sha256(source_raw).hexdigest() != expected_source_sha256:
+        raise ProposalAdvisorValidationError("original source byte binding differs")
+    expected_family = _text(expected_family, "expected_family")
+    expected_profile = _text(expected_profile, "expected_profile")
+    for value, label, cap in (
+        (max_input_tokens, "max_input_tokens", 65_536),
+        (max_new_tokens, "max_new_tokens", 32_768),
+        (max_output_bytes, "max_output_bytes", 1_048_576),
+    ):
+        _positive_int(value, label, maximum=cap)
+    for value, label in (
+        (expected_model_binding_sha256, "expected_model_binding_sha256"),
+        (expected_tokenizer_binding_sha256, "expected_tokenizer_binding_sha256"),
+    ):
+        _digest(value, label)
+
+    class CallbackFailure(RuntimeError):
+        pass
+
+    def bindings() -> tuple[dict[str, Any], dict[str, Any]]:
+        try:
+            model_metadata = model.binding_metadata()
+        except Exception:
+            raise CallbackFailure("model_metadata_callback_failed") from None
+        try:
+            tokenizer_metadata = tokenizer.binding_metadata()
+        except Exception:
+            raise CallbackFailure("tokenizer_metadata_callback_failed") from None
+        left = dict(_mapping(model_metadata, "model binding"))
+        right = dict(_mapping(tokenizer_metadata, "tokenizer binding"))
+        if set(left) != {"model_id", "checkpoint_sha256", "configuration_sha256"} or set(right) != {
+            "tokenizer_id", "vocabulary_sha256", "configuration_sha256", "bos_token_id", "eos_token_id"
+        }:
+            raise ProposalAdvisorValidationError("closed model/tokenizer binding required")
+        _identifier(left["model_id"], "model_id")
+        _identifier(right["tokenizer_id"], "tokenizer_id")
+        for value in (left["checkpoint_sha256"], left["configuration_sha256"],
+                      right["vocabulary_sha256"], right["configuration_sha256"]):
+            _digest(value, "bound artifact")
+        if any(type(right[name]) is not int or not 0 <= right[name] < 2**31
+               for name in ("bos_token_id", "eos_token_id")) or right["bos_token_id"] == right["eos_token_id"]:
+            raise ProposalAdvisorValidationError("distinct declared BOS/EOS required")
+        if _content_digest(left) != expected_model_binding_sha256 or _content_digest(right) != expected_tokenizer_binding_sha256:
+            raise ProposalAdvisorValidationError("model/tokenizer binding changed")
+        return json.loads(_canonical_json(left)), json.loads(_canonical_json(right))
+
+    prompt_record = {
+        "profile": SOURCE_CONDITIONED_TYPED_IR_PROFILE,
+        "authority": UNVERIFIED_AUTHORITY,
+        "instruction": "Return one complete canonical TypedExpression JSON; propose only.",
+        "request_id": request_id,
+        "source": {"text": source_text, "utf8_sha256": expected_source_sha256,
+                   "revision": source_revision, "source_ref_ids": list(refs)},
+        "output_family": expected_family, "output_profile": expected_profile,
+    }
+    prompt = _canonical_json(prompt_record)
+    result: dict[str, Any] = {
+        "schema": SOURCE_CONDITIONED_TYPED_IR_RESULT,
+        "profile": SOURCE_CONDITIONED_TYPED_IR_PROFILE,
+        "request_id": request_id, "input_identity": _content_digest(prompt_record),
+        "source_text": source_text, "source_utf8_sha256": expected_source_sha256,
+        "source_revision": source_revision, "source_ref_ids": list(refs),
+        "model_binding": None, "model_binding_sha256": expected_model_binding_sha256,
+        "tokenizer_binding": None, "tokenizer_binding_sha256": expected_tokenizer_binding_sha256,
+        "context_profile": "none", "rich_context": None,
+        "max_input_tokens": max_input_tokens, "max_new_tokens": max_new_tokens,
+        "max_output_bytes": max_output_bytes, "input_token_count": 0,
+        "model_call_count": 0, "generated_ids": [], "new_token_count": 0,
+        "typed_ir": None, "authority": UNVERIFIED_AUTHORITY,
+        "legal_review_verified": False, "proof_authority": False,
+        "training_gold_authority": False, "Lean_admitted": False,
+        "physical_model_assets_verified": False,
+        "source_authority_authenticated": False, "model_execution_authenticated": False,
+        "completeness_scope": "typed_AST_syntax_only",
+    }
+    result["inference_context_identity"] = _content_digest({
+        "profile": result["profile"], "input_identity": result["input_identity"],
+        "model_binding_sha256": expected_model_binding_sha256,
+        "tokenizer_binding_sha256": expected_tokenizer_binding_sha256,
+        "context_profile": "none", "max_input_tokens": max_input_tokens,
+        "max_new_tokens": max_new_tokens, "max_output_bytes": max_output_bytes,
+    })
+
+    def finish(status: str, reason: str, *, verify_bindings: bool = True) -> dict[str, Any]:
+        if verify_bindings:
+            try:
+                bindings()
+            except CallbackFailure as error:
+                status, reason = "error", str(error)
+                result["typed_ir"] = None
+        result.update(status=status, reason=reason,
+                      counts={name: int(status == name) for name in
+                              ("complete", "incomplete", "abstained", "unsupported", "invalid", "error")})
+        result["result_identity"] = _content_digest(result)
+        return json.loads(_canonical_json(result))
+
+    try:
+        model_binding, tokenizer_binding = bindings()
+    except CallbackFailure as error:
+        return finish("error", str(error), verify_bindings=False)
+    result.update(model_binding=model_binding, tokenizer_binding=tokenizer_binding)
+    try:
+        encoded = tokenizer.encode(prompt)
+    except Exception:
+        return finish("error", "tokenizer_encode_callback_failed")
+    if type(encoded) in (list, tuple):
+        result["input_token_count"] = len(encoded)
+        if len(encoded) > max_input_tokens:
+            return finish("unsupported", "complete_source_input_exceeds_token_budget")
+    try:
+        input_ids = _proposal_token_ids(encoded, maximum=1_048_576)
+    except ProposalAdvisorValidationError:
+        return finish("invalid", "tokenizer_did_not_encode_bounded_complete_prompt")
+    result["input_token_count"] = len(input_ids)
+    if len(input_ids) > max_input_tokens:
+        return finish("unsupported", "complete_source_input_exceeds_token_budget")
+    try:
+        restored_prompt = tokenizer.decode(input_ids)
+    except Exception:
+        return finish("error", "tokenizer_decode_callback_failed")
+    if restored_prompt != prompt:
+        return finish("unsupported", "tokenizer_does_not_preserve_complete_prompt")
+    try:
+        bindings()
+    except CallbackFailure as error:
+        return finish("error", str(error), verify_bindings=False)
+    result["model_call_count"] = 1
+    try:
+        generated = model.generate_token_ids(
+            input_ids, decoder_prefix_ids=(tokenizer_binding["bos_token_id"],),
+            max_new_tokens=max_new_tokens,
+        )
+    except Exception:
+        return finish("error", "model_generation_callback_failed")
+    try:
+        bindings()
+    except CallbackFailure as error:
+        return finish("error", str(error), verify_bindings=False)
+    if generated is None:
+        return finish("abstained", "explicit_model_abstention")
+    try:
+        ids = _proposal_token_ids(generated, maximum=32_769)
+    except ProposalAdvisorValidationError:
+        return finish("invalid", "invalid_or_oversized_actual_token_history")
+    result["generated_ids"] = list(ids)
+    if not ids or ids[0] != tokenizer_binding["bos_token_id"]:
+        return finish("invalid", "actual_history_missing_fixed_BOS")
+    result["new_token_count"] = len(ids) - 1
+    if result["new_token_count"] > max_new_tokens:
+        return finish("invalid", "model_exceeded_new_token_budget")
+    body_ids = ids[1:]
+    if not body_ids:
+        return finish("incomplete", "no_generated_tokens_or_EOS")
+    if tokenizer_binding["bos_token_id"] in body_ids:
+        return finish("invalid", "extra_BOS_in_generated_history")
+    eos = tokenizer_binding["eos_token_id"]
+    if eos not in body_ids:
+        return finish("incomplete", "EOS_not_generated")
+    if body_ids[-1] != eos or body_ids.count(eos) != 1:
+        return finish("invalid", "generation_after_or_duplicate_EOS")
+    try:
+        output = tokenizer.decode(body_ids[:-1])
+    except Exception:
+        return finish("error", "tokenizer_decode_callback_failed")
+    try:
+        if type(output) is not str:
+            raise ValueError("output must be text")
+        output_bytes = output.encode("utf-8")
+    except Exception:
+        return finish("invalid", "tokenizer_did_not_return_valid_UTF8_text")
+    if len(output_bytes) > max_output_bytes:
+        return finish("unsupported", "complete_output_exceeds_byte_budget")
+    result["raw_output_text"] = output
+    result["raw_output_utf8_sha256"] = "sha256:" + hashlib.sha256(output_bytes).hexdigest()
+    try:
+        def unique(pairs: Any) -> dict[str, Any]:
+            value: dict[str, Any] = {}
+            for key, item in pairs:
+                if key in value:
+                    raise ProposalAdvisorValidationError("duplicate typed IR JSON key")
+                value[key] = item
+            return value
+        offered = json.loads(output, object_pairs_hook=unique,
+                             parse_constant=lambda _: (_ for _ in ()).throw(ValueError("nonfinite JSON")))
+        _reject_authority_payload(offered)
+        if _json_shape(offered)[0] > 65_536:
+            raise ProposalAdvisorValidationError("typed IR exceeds node budget")
+        from ipfs_datasets_py.logic.syntax_core.ast import TypedExpression
+        expression = TypedExpression.from_dict(_mapping(offered, "complete typed IR"))
+        if not expression.is_formula:
+            raise ProposalAdvisorValidationError("typed IR must be a complete formula")
+        if expression.family.value != expected_family or expression.profile.value != expected_profile:
+            raise ProposalAdvisorValidationError("typed IR family/profile differs")
+        canonical = expression.to_dict()
+        _require_no_discarded_fields(offered, canonical)
+        result["typed_ir"] = canonical
+    except (ValueError, TypeError, KeyError, RecursionError):
+        return finish("invalid", "unsupported_or_invalid_complete_typed_IR")
+    return finish("complete", "unverified_complete_typed_IR_candidate")
+
+
+__all__ += [
+    "SOURCE_CONDITIONED_TYPED_IR_PROFILE", "SOURCE_CONDITIONED_TYPED_IR_RESULT",
+    "SourceConditionedTokenModel", "SourceConditionedTokenizer",
+    "propose_source_conditioned_typed_ir",
+]

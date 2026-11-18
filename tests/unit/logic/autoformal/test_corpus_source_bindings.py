@@ -1442,3 +1442,509 @@ def test_rejected_other_request_original_actor_in_a_later_epoch_still_blocks_key
     assert group["structured_source_binding_declared_under_selected_profile"] is False
     assert group["declared_binding_refs"] == []
     assert_narrow(owner, report)
+
+
+# LIR-02 explicit bound-source preparation seam. All sources, credentials and
+# interpretation choices below are authored fixtures, never statutory review.
+def _lir02_fixture_module(filename, *, consumer=False):
+    path = (Path(__file__).parents[2] / "optimizers" / "logic_theorem_optimizer" / filename
+            if consumer else Path(__file__).with_name(filename))
+    spec = importlib.util.spec_from_file_location("_lir02_" + path.stem, path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _lir02_commit(value):
+    from ipfs_datasets_py.logic.autoformal import legal_norm_interpretation_review_v1 as norm
+    return norm._snapshot(value)[1]
+
+
+def _lir02_repin(arguments):
+    """Refresh explicit fixture commitments, never source meaning or authority."""
+    from ipfs_datasets_py.logic.autoformal import legal_norm_content_adjudication_v1 as admission
+    norm_fixture = _lir02_fixture_module("test_legal_norm_content_adjudication_v1.py")
+    inputs = arguments["norm_preparation_inputs"]
+    temporary = {"declaration": inputs["declaration"],
+                 "manifest": inputs["dependency_manifest"],
+                 "observed_artifacts": {}}
+    norm_fixture.reviewed_refresh_manifest_v2(temporary)
+    inputs["dependency_manifest"] = temporary["manifest"]
+    inputs["expected_manifest_sha256"] = temporary["manifest"]["manifest_sha256"]
+    inputs["expected_declaration_sha256"] = admission.norm_content_adjudication_sha256(inputs["declaration"])
+    arguments["expected_unit_bindings_sha256"] = _lir02_commit(arguments["unit_bindings"])
+    arguments["expected_norm_preparation_inputs_sha256"] = _lir02_commit(inputs)
+    return arguments
+
+
+def _lir02_complete_case(tmp_path, owner):
+    from ipfs_datasets_py.logic.autoformal import corpus_source
+    from ipfs_datasets_py.logic.autoformal import legal_norm_content_adjudication_v1 as admission
+    application_fixture = helper().helper()
+    adjudication_fixture = application_fixture.helper()
+    typed_fixture = adjudication_fixture.helper()
+    source_fixture = typed_fixture.helper()
+    alignment_fixture = source_fixture.fixture_helper()
+    texts = [
+        "For this fictional Act, a covered officer means an officer appointed by the Café Board.",
+        "Every covered officer must file a report unless the Board expressly excuses that officer.",
+        "A covered officer may inspect the register.",
+    ]
+    document = alignment_fixture.redocument(alignment_fixture.document(1), (
+        '<html><head><meta charset="utf-8"><title>Fictional component</title></head><body>'
+        '<h3 class="section-head">§1. Fictional covered officers</h3><!-- field-start:statute -->'
+        + "".join("<p>" + text + "</p>" for text in texts)
+        + '<!-- field-end:statute --><h4 class="notes-head">Historical and Revision Notes</h4>'
+        '<p>Authored engineering fixture only.</p></body></html>').encode("utf-8"))
+    data = source_fixture.signed_case(
+        source_owner, tmp_path, trust_mode="external_pinned_trust", sign_all=True,
+        parent_texts=texts, docs=[document, alignment_fixture.document(2, "Unrelated fixture provision.")])
+    typed = typed_fixture.signed_typed_case(response_owner, data, trust_mode="external_pinned_trust")
+    typed_report = typed_fixture.assess(response_owner, typed)
+    data = adjudication_fixture.signed_case(
+        adjudication_owner, typed, typed_report, mode="external_pinned_trust")
+    for ordinal in range(1, len(data["preparation"]["requests"])):
+        declaration = adjudication_fixture.author(
+            adjudication_owner, data, adjudication_fixture.choices(data, ordinal, select=True), ordinal)
+        data["adjudication_groups"][ordinal] = adjudication_fixture.sign_group(
+            adjudication_owner, data, declaration, ordinal)
+    data["adjudication_report"] = adjudication_fixture.assess(adjudication_owner, data)
+    data = application_fixture.signed_case(genesis_owner, data)
+    for ordinal in range(1, len(data["preparation"]["requests"])):
+        data["application_groups"][ordinal] = application_fixture.sign_group(
+            genesis_owner, data, application_fixture.author(genesis_owner, data, ordinal), ordinal)
+    data["genesis_report"] = application_fixture.assess(genesis_owner, data)
+    # Genesis is retained history, never current activation. Reuse the actual
+    # revision owner/fixture with its selected current epoch and fresh claims.
+    revision_data = clone_case(data)
+    (revision_data["revision_registry"], revision_data["revision_policy"],
+     revision_data["revision_signers"]) = helper().authority(history_owner, revision_data)
+    step = helper().revision_step(history_owner, data)
+    assert step["revision_registry"] == revision_data["revision_registry"]
+    assert step["revision_policy"] == revision_data["revision_policy"]
+    for ordinal in range(len(data["preparation"]["requests"])):
+        declaration = helper().author(
+            history_owner, revision_data, ordinal, previous_report=data["genesis_report"],
+            descriptor=step["descriptor"], epoch_id=step["epoch_id"],
+            declared_at_utc=helper().DECLARED)
+        step["revision_groups"][ordinal] = helper().sign_group(
+            history_owner, revision_data, declaration, ordinal,
+            epoch_id=step["epoch_id"], issued=helper().ISSUED)
+    step["expected_revision_group_pins"] = helper().group_pins(step["revision_groups"])
+    steps = [step]
+    # The revision policy's existing actors must be distinct from the supplied
+    # original source-review cohort. This is fixture identity separation only,
+    # not an assertion of human competence or real statutory review.
+    principals, dids, public = history_owner._original_actors([helper().genesis_inputs(data), step])
+    assert all(key["principal_id"] not in principals and key["signer_did"] not in dids
+               and key["public_key_hex"] not in public for key in step["revision_registry"]["keys"])
+    history_report = helper().assess(history_owner, data, steps)
+    records = catalog(data)
+    assert len(data["preparation"]["requests"]) >= 3
+    first_choice = choice(data)
+    version_cid = first_choice["source_version_ref"]["record_cid"]
+    occurrences = []
+    for text in texts:
+        matches = [row for row in records.values()
+                   if row.get("source_version_cid") == version_cid and row.get("span_text") == text]
+        assert matches, "fixture must use an existing complete occurrence, never guessed geometry"
+        occurrences.append(matches[0])
+    assert len({row["record_cid"] for row in occurrences}) == 3
+    data = signed_case(owner, data, history_report)
+    # Select actual request/document memberships, not the first three ordinals:
+    # the complete request population can interleave different document views.
+    document_cid = first_choice["document_observation_ref"]["record_cid"]
+    ordinals = [ordinal for ordinal in range(len(data["preparation"]["requests"]))
+                if choice(data, ordinal)["document_observation_ref"]["record_cid"] == document_cid][:3]
+    assert len(ordinals) == 3
+    choices = []
+    for ordinal, occurrence in zip(ordinals, occurrences, strict=True):
+        current = current_group(history_report, ordinal)
+        assert current["current_candidate_refs_eligible_under_selected_history_profile"] is True
+        assert len(current["current_active_answer_variant_refs"]) == 9
+        selected = choice(data, ordinal, occurrence_cid=occurrence["record_cid"])
+        selected["applicability"].update(jurisdiction_id="fictional-jurisdiction",
+                                        instrument_id="fixture:lir02-handoff",
+                                        legal_as_of_civil_date="2026-10-15")
+        choices.append(selected)
+        declaration = author(owner, data, history_report, ordinal, selected=selected)
+        data["binding_groups"][ordinal] = sign_group(owner, data, declaration, ordinal)
+    binding_report = assess(owner, data, history_report, steps)
+    original = data["data"]["arguments"]["alignment_replay_inputs"]
+    alignment_report = json.loads(original["alignment_report_bytes"])
+    source_bindings = {}
+    for ordinal, selected in enumerate(choices):
+        document_record = records[selected["document_observation_ref"]["record_cid"]]
+        index = document_record["document_index"]
+        source_bindings["fixture:lir02-handoff/unit-" + str(ordinal + 1)] = {
+            "source_version": records[selected["source_version_ref"]["record_cid"]],
+            "occurrence": records[selected["source_occurrence_ref"]["record_cid"]],
+            "raw_bytes": original["document_inputs"][index]["raw_bytes"],
+            "extracted_text": alignment_report["official_documents"][index]["view_report"]["document"]["document_text"],
+        }
+    norm_fixture = _lir02_fixture_module("test_legal_norm_content_adjudication_v1.py")
+    case = norm_fixture.reviewed_norm_fixture_v2(
+        admission, fixture_namespace="lir02-handoff", source_texts=texts,
+        source_bindings=source_bindings)
+    # This edition is copied explicitly from the preserved fixture source record.
+    # Rebuild all existing preparation/dependency/review subjects after the edit.
+    case["declaration"]["governing_context"]["governing_edition"] = (
+        source_bindings["fixture:lir02-handoff/unit-1"]["source_version"]["edition"])
+    norm_fixture.reviewed_refresh_signed_preparation_v2(admission, case)
+    unit_bindings = []
+    for ordinal, unit in enumerate(case["declaration"]["units"]):
+        selected = choices[ordinal]
+        old_context = records[selected["context_ref"]["record_cid"]]
+        assert old_context["availability"] == "required_unavailable"
+        context = corpus_source.build_context_declaration(
+            unit["occurrence"], expected_occurrence_cid=unit["occurrence"]["record_cid"],
+            availability="declared_context", reason="Explicit fictional component context; declaration only.",
+            context_references=[
+                {"record_cid": other["occurrence"]["record_cid"],
+                 "record_kind": "source_occurrence", "purpose": requirement}
+                for requirement in old_context["missing_requirements"]
+                for other in case["declaration"]["units"]])
+        group = binding_report["records"][ordinals[ordinal]]
+        unit_bindings.append({
+            "unit_id": unit["unit_id"], "request_cid": group["request_cid"],
+            "binding_declaration_ref": deepcopy(group["declared_binding_refs"][0]),
+            "context_declaration": context,
+            "governing_context": deepcopy(case["declaration"]["governing_context"]),
+            "legal_as_of_civil_date": selected["applicability"]["legal_as_of_civil_date"],
+        })
+    replay = {"history_report": history_report, "history_replay_inputs": replay_inputs(data, steps),
+              "binding_registry": data["binding_registry"], "binding_policy": data["binding_policy"],
+              "binding_groups": data["binding_groups"], **assess_arguments(data, history_report)}
+    arguments = {
+        "binding_report": binding_report, "binding_replay_inputs": replay,
+        "expected_binding_manifest_sha256": sha(canonical_dag_json_bytes(binding_report["manifest"])),
+        "unit_bindings": unit_bindings,
+        "norm_preparation_inputs": {"declaration": case["declaration"],
+                                    **norm_fixture.reviewed_prepare_arguments_v2(case)},
+    }
+    _lir02_repin(arguments)
+    return {"arguments": arguments, "binding_data": data, "history_report": history_report,
+            "choices": choices, "case": case, "norm_fixture": norm_fixture}
+
+
+@pytest.fixture(scope="module")
+def lir02_complete_handoff_case(tmp_path_factory):
+    from ipfs_datasets_py.logic.autoformal import corpus_source_bindings
+    return _lir02_complete_case(tmp_path_factory.mktemp("lir02-complete-handoff"), corpus_source_bindings)
+
+
+def _lir02_arguments(case):
+    from ipfs_datasets_py.logic.autoformal import legal_norm_interpretation_review_v1 as norm
+    return norm._snapshot(case["arguments"])[0]
+
+
+def _lir02_prepare(owner, arguments):
+    api = getattr(owner, "prepare_bound_norm_component_v1", None)
+    assert callable(api), "explicit bound-source component preparation interface is missing"
+    return api(**arguments)
+
+
+def _lir02_consumer_inputs(case, arguments, report):
+    from ipfs_datasets_py.logic.autoformal import legal_norm_content_adjudication_v1 as admission
+    from ipfs_datasets_py.logic.autoformal import legal_norm_interpretation_review_v1 as norm
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_span_consumer_binding as consumer
+    consumer_fixture = _lir02_fixture_module("test_legal_span_consumer_binding.py", consumer=True)
+    rows = [{"id": "reviewed:" + unit["unit_id"], "unit_id": unit["unit_id"],
+             "source_text": unit["source_text"], "canonical_ir": deepcopy(unit["canonical_ir"])}
+            for unit in report["norm_preparation"]["units"]]
+    manifest = consumer_fixture.manifest_for(rows, "train")
+    exposure = [{"id": row["id"], "source_text_sha256": consumer_fixture.source_digest(row["source_text"]),
+                 "canonical_ir_sha256": consumer_fixture.digest(row["canonical_ir"]),
+                 "target_exposure": "declared_supervised_training",
+                 "provenance_ref": "fixture:lir02-explicit-independent-meaning-review"} for row in rows]
+    replay = consumer_fixture.reviewed_public_admission_inputs(case["norm_fixture"], admission, case["case"])
+    assert replay["preparation"] == report["norm_preparation"]
+    assert replay["expected_preparation_sha256"] == report["norm_preparation_sha256"]
+    assert _lir02_commit(replay["preparation_inputs"]) == report["norm_preparation_inputs_sha256"]
+    replay["preparation"] = deepcopy(report["norm_preparation"])
+    replay["preparation_inputs"] = deepcopy(arguments["norm_preparation_inputs"])
+    replay["expected_preparation_sha256"] = report["norm_preparation_sha256"]
+    bound_inputs = {"report": report, "expected_report_sha256": norm.norm_review_sha256(report),
+                    "preparation_inputs": arguments}
+    options = dict(expected_rows_sha256=consumer_fixture.digest(rows), split_manifest=manifest,
+                   expected_split_manifest_sha256=consumer_fixture.digest(manifest),
+                   admission_inputs=replay, expected_admission_inputs_sha256=consumer.reviewed_admission_inputs_sha256(replay),
+                   exposure_records=exposure, expected_exposure_sha256=consumer_fixture.digest(exposure),
+                   operation="training", allow_fictional_fixture=True, bound_component_inputs=bound_inputs)
+    return consumer, rows, manifest, replay, exposure, options, bound_inputs
+
+
+def test_bound_norm_component_fictional_positive_reaches_existing_consumer_without_adopting_source(
+        owner, lir02_complete_handoff_case):
+    from ipfs_datasets_py.logic.autoformal import legal_norm_content_adjudication_v1 as admission
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_span_consumer_binding as consumer
+    case = lir02_complete_handoff_case
+    arguments = _lir02_arguments(case)
+    report = _lir02_prepare(owner, arguments)
+    assert report["norm_preparation"] == case["case"]["preparation"]
+    assert report["semantic_use_eligible"] is False
+    assert report["training_mask"] == report["evaluation_gold_mask"] == 0
+    assert report["governing_source_adoption_applied"] is False
+    assert arguments["binding_report"] == case["arguments"]["binding_report"]
+    assert all(row["original_contexts_remain_required_unavailable"]
+               for row in arguments["binding_report"]["records"])
+    assert len({row["occurrence_cid"] for row in report["norm_preparation"]["units"]}) == 3
+    reviewed = case["norm_fixture"].assess_reviewed_fixture_v2(admission, case["case"])
+    assert reviewed["semantic_use_eligible"] is True and reviewed["fixture_only"] is True
+    assert reviewed["training_mask"] == reviewed["evaluation_gold_mask"] == 0
+    consumer, rows, manifest, replay, exposure, options, bound_inputs = _lir02_consumer_inputs(
+        case, arguments, report)
+    binding = consumer.prepare_reviewed_source_span_consumer_binding_v2(rows, **options)
+    received = []
+    consumer.consume_reviewed_source_span_binding_v2(
+        binding, rows, split_manifest=manifest, admission_inputs=replay,
+        exposure_records=exposure, bound_component_inputs=bound_inputs,
+        consumer=lambda batch: received.append(deepcopy(batch)))
+    assert received == [rows]
+    assert binding.receipt()["bound_component_identity"]["binding_manifest_sha256"] == report["binding_manifest_sha256"]
+    assert binding.receipt()["bound_component_identity"]["current_epoch_id"] == report["current_epoch_id"]
+    assert all(len(row["canonical_ir"]) == 9 for row in received[0])
+    assert binding.receipt()["training_mask"] == binding.receipt()["evaluation_gold_mask"] == 0
+
+
+@pytest.mark.parametrize("damage", [
+    "missing_context", "missing_context_source", "stale_history", "changed_occurrence",
+    "changed_view", "duplicate_use", "unknown_applicability", "wrong_edition",
+    "wrong_interpretation", "complete_IR_mismatch", "missing_definition_dependency",
+    "wrong_binding_reference",
+])
+def test_bound_norm_component_refuses_incomplete_or_mismatched_inputs(
+        owner, lir02_complete_handoff_case, damage):
+    from ipfs_datasets_py.logic.autoformal import corpus_source
+    case = lir02_complete_handoff_case
+    arguments = _lir02_arguments(case)
+    inputs = arguments["norm_preparation_inputs"]
+    units = inputs["declaration"]["units"]
+    if damage == "missing_context":
+        selected = case["choices"][0]
+        arguments["unit_bindings"][0]["context_declaration"] = deepcopy(
+            catalog(case["binding_data"])[selected["context_ref"]["record_cid"]])
+    elif damage == "missing_context_source":
+        context = arguments["unit_bindings"][0]["context_declaration"]
+        context["context_references"][0]["record_cid"] = case["arguments"]["binding_report"]["manifest"]["record_cid"]
+        arguments["unit_bindings"][0]["context_declaration"] = reseal(context)
+    elif damage == "stale_history":
+        arguments["binding_replay_inputs"]["history_replay_inputs"]["current_epoch_id"] = "fixture:absent-current-epoch"
+    elif damage == "changed_occurrence":
+        units[2]["occurrence"] = deepcopy(units[1]["occurrence"])
+    elif damage == "changed_view":
+        inputs["source_inputs"][units[0]["unit_id"]]["extracted_text"] += " changed"
+    elif damage == "duplicate_use":
+        arguments["unit_bindings"][2]["request_cid"] = arguments["unit_bindings"][1]["request_cid"]
+        arguments["unit_bindings"][2]["binding_declaration_ref"] = deepcopy(arguments["unit_bindings"][1]["binding_declaration_ref"])
+    elif damage == "unknown_applicability":
+        arguments["unit_bindings"][0]["legal_as_of_civil_date"] = None
+    elif damage == "wrong_edition":
+        wrong = inputs["declaration"]["governing_context"]["governing_edition"] + ":another-edition"
+        inputs["declaration"]["governing_context"]["governing_edition"] = wrong
+        for link in arguments["unit_bindings"]:
+            link["governing_context"]["governing_edition"] = wrong
+    elif damage == "wrong_interpretation":
+        inputs["declaration"]["definition_uses"][0]["interpretation_id"] += ":other"
+    elif damage == "complete_IR_mismatch":
+        ir = inputs["relational_inputs"][units[0]["unit_id"]]
+        ir["report"]["argument_roles"][0]["roles"] = ["different-role"]
+        from ipfs_datasets_py.logic.autoformal import legal_relational_norm_v1 as relational
+        ir["expected_report_sha256"] = relational.relational_norm_report_sha256(ir["report"])
+    elif damage == "missing_definition_dependency":
+        from ipfs_datasets_py.logic.autoformal import legal_graph_dependencies as dependencies
+        current = inputs["dependency_manifest"]
+        # A well-formed graph built by its existing owner can still omit the
+        # component's actual dependency edges; norm closure must reject it.
+        inputs["dependency_manifest"] = dependencies.build_dependency_manifest(
+            current["artifacts"], [], expected_artifact_ids=current["expected_artifact_ids"])
+        inputs["expected_manifest_sha256"] = inputs["dependency_manifest"]["manifest_sha256"]
+    else:
+        arguments["unit_bindings"][0]["binding_declaration_ref"] = deepcopy(
+            arguments["unit_bindings"][1]["binding_declaration_ref"])
+    if damage != "missing_definition_dependency":
+        _lir02_repin(arguments)
+    else:
+        arguments["expected_unit_bindings_sha256"] = _lir02_commit(arguments["unit_bindings"])
+        arguments["expected_norm_preparation_inputs_sha256"] = _lir02_commit(inputs)
+    with pytest.raises(ValueError):
+        _lir02_prepare(owner, arguments)
+
+
+def test_bound_norm_component_current_revocation_invalidates_old_ready_binding(
+        owner, lir02_complete_handoff_case):
+    arguments = _lir02_arguments(lir02_complete_handoff_case)
+    replay = arguments["binding_replay_inputs"]
+    replay["binding_registry"]["keys"][0]["revoked_at_utc"] = replay["history_replay_inputs"]["at_time_utc"]
+    replay["binding_registry"]["revocation_generation"] += 1
+    replay["binding_policy"]["registry_sha256"] = sha(canonical(replay["binding_registry"]))
+    replay["expected_binding_registry_sha256"] = sha(canonical(replay["binding_registry"]))
+    replay["expected_binding_policy_sha256"] = sha(canonical(replay["binding_policy"]))
+    # Independently pin the changed current trust. Old signed claims and the
+    # positive offered report must fail canonical current replay, not just a
+    # stale registry input digest check.
+    with pytest.raises(ValueError):
+        _lir02_prepare(owner, arguments)
+
+
+def test_bound_norm_component_resealed_target_tamper_requires_complete_current_regeneration(
+        owner, lir02_complete_handoff_case):
+    from ipfs_datasets_py.logic.autoformal import legal_norm_interpretation_review_v1 as norm
+    arguments = _lir02_arguments(lir02_complete_handoff_case)
+    report = _lir02_prepare(owner, arguments)
+    validator = getattr(owner, "validate_bound_norm_component_v1", None)
+    assert callable(validator), "complete bound component regeneration interface is missing"
+    assert validator(report, expected_report_sha256=norm.norm_review_sha256(report),
+                     **arguments) == report
+    forged = deepcopy(report)
+    forged["norm_preparation"]["units"][1]["canonical_ir"]["argument_roles"][0]["roles"] = ["forged-role"]
+    # Even a fresh whole-report commitment cannot replace current source,
+    # context and typed-IR regeneration.
+    with pytest.raises(ValueError):
+        validator(forged, expected_report_sha256=norm.norm_review_sha256(forged), **arguments)
+
+
+
+def test_bound_norm_component_consumer_current_source_revocation_blocks_old_binding(
+        owner, lir02_complete_handoff_case):
+    from ipfs_datasets_py.logic.autoformal import legal_norm_content_adjudication_v1 as admission
+    case = lir02_complete_handoff_case
+    arguments = _lir02_arguments(case)
+    report = _lir02_prepare(owner, arguments)
+    consumer, rows, manifest, replay, exposure, options, bound_inputs = _lir02_consumer_inputs(
+        case, arguments, report)
+    binding = consumer.prepare_reviewed_source_span_consumer_binding_v2(rows, **options)
+    assert binding.receipt()["status"] == "ready"
+    source_replay = bound_inputs["preparation_inputs"]["binding_replay_inputs"]
+    source_replay["binding_registry"]["keys"][0]["revoked_at_utc"] = source_replay["history_replay_inputs"]["at_time_utc"]
+    source_replay["binding_registry"]["revocation_generation"] += 1
+    source_replay["binding_policy"]["registry_sha256"] = sha(canonical(source_replay["binding_registry"]))
+    source_replay["expected_binding_registry_sha256"] = sha(canonical(source_replay["binding_registry"]))
+    source_replay["expected_binding_policy_sha256"] = sha(canonical(source_replay["binding_policy"]))
+    # Norm meaning review remains eligible. Only current source-binding trust changed.
+    reviewed = admission.assess_reviewed_norm_admission_v2(**replay)
+    assert reviewed["semantic_use_eligible"] is True and reviewed["fixture_only"] is True
+    assert reviewed["training_mask"] == reviewed["evaluation_gold_mask"] == 0
+    received = []
+    with pytest.raises(consumer.SourceSpanConsumerBindingError, match="bound component current replay failed"):
+        consumer.consume_reviewed_source_span_binding_v2(
+            binding, rows, split_manifest=manifest, admission_inputs=replay,
+            exposure_records=exposure, bound_component_inputs=bound_inputs,
+            consumer=lambda batch: received.append(deepcopy(batch)))
+    assert received == []
+
+
+@pytest.mark.parametrize("damage", ["preparation", "commitment", "admission_shape"])
+def test_bound_norm_component_consumer_rejects_different_admission_preparation(
+        owner, lir02_complete_handoff_case, damage):
+    from ipfs_datasets_py.logic.autoformal import legal_norm_content_adjudication_v1 as admission
+    case = lir02_complete_handoff_case
+    arguments = _lir02_arguments(case)
+    report = _lir02_prepare(owner, arguments)
+    consumer, rows, _, replay, _, options, _ = _lir02_consumer_inputs(case, arguments, report)
+    replay = deepcopy(replay)
+    if damage == "preparation":
+        replay["preparation"]["units"][1]["canonical_ir"]["argument_roles"][0]["roles"] = ["other-role"]
+        replay["expected_preparation_sha256"] = admission.norm_content_adjudication_sha256(replay["preparation"])
+        message = "bound component norm preparation differs from admission replay"
+    elif damage == "commitment":
+        replay["expected_preparation_sha256"] = sha(b"another independently selected preparation")
+        message = "bound component norm preparation commitment differs from admission replay"
+    else:
+        replay = []
+        message = "complete admission replay mapping required"
+    options = dict(options, admission_inputs=replay,
+                   expected_admission_inputs_sha256=consumer.reviewed_admission_inputs_sha256(replay))
+    with pytest.raises(consumer.SourceSpanConsumerBindingError, match=message):
+        consumer.prepare_reviewed_source_span_consumer_binding_v2(rows, **options)
+
+
+def test_bound_norm_component_consumer_cannot_drop_current_source_replay(
+        owner, lir02_complete_handoff_case):
+    case = lir02_complete_handoff_case
+    arguments = _lir02_arguments(case)
+    report = _lir02_prepare(owner, arguments)
+    consumer, rows, manifest, replay, exposure, options, _ = _lir02_consumer_inputs(case, arguments, report)
+    binding = consumer.prepare_reviewed_source_span_consumer_binding_v2(rows, **options)
+    received = []
+    with pytest.raises(consumer.SourceSpanConsumerBindingError, match="current bound component replay is required"):
+        consumer.consume_reviewed_source_span_binding_v2(
+            binding, rows, split_manifest=manifest, admission_inputs=replay,
+            exposure_records=exposure, consumer=lambda batch: received.append(deepcopy(batch)))
+    assert received == []
+
+
+@pytest.mark.parametrize(("damage", "callback_raises"), [
+    ("source_revocation", False),
+    ("source_revocation", True),
+    ("detached_ir", False),
+    ("detached_ir", True),
+    ("unchanged", True),
+])
+def test_bound_norm_component_consumer_revalidates_every_callback_exit(
+        owner, lir02_complete_handoff_case, damage, callback_raises):
+    from ipfs_datasets_py.logic.autoformal import legal_norm_content_adjudication_v1 as admission
+
+    case = lir02_complete_handoff_case
+    arguments = _lir02_arguments(case)
+    report = _lir02_prepare(owner, arguments)
+    consumer, rows, manifest, replay, exposure, options, bound_inputs = _lir02_consumer_inputs(
+        case, arguments, report)
+    binding = consumer.prepare_reviewed_source_span_consumer_binding_v2(rows, **options)
+    assert binding.receipt()["status"] == "ready"
+    original_rows = deepcopy(rows)
+    original_receipt = binding.receipt()
+    original_admission_sha = consumer.reviewed_admission_inputs_sha256(replay)
+    original_bound_sha = _lir02_commit(bound_inputs)
+    calls = []
+
+    class CallbackFailure(RuntimeError):
+        pass
+
+    callback_failure = CallbackFailure("fictional consumer callback failure")
+
+    def callback(batch):
+        calls.append(deepcopy(batch))
+        if damage == "source_revocation":
+            # Reuse the current-registry revocation recipe from the existing
+            # before-dispatch control; norm meaning and typed targets stay fixed.
+            source_replay = bound_inputs["preparation_inputs"]["binding_replay_inputs"]
+            registry = source_replay["binding_registry"]
+            registry["keys"][0]["revoked_at_utc"] = source_replay["history_replay_inputs"]["at_time_utc"]
+            registry["revocation_generation"] += 1
+            source_replay["binding_policy"]["registry_sha256"] = sha(canonical(registry))
+            source_replay["expected_binding_registry_sha256"] = sha(canonical(registry))
+            source_replay["expected_binding_policy_sha256"] = sha(canonical(source_replay["binding_policy"]))
+        elif damage == "detached_ir":
+            # This is the complete target's argument-role surface already used
+            # by the existing admission-preparation mismatch regression.
+            batch[1]["canonical_ir"]["argument_roles"][0]["roles"] = ["callback-mutated-role"]
+        if callback_raises:
+            raise callback_failure
+        return {"fixture_only": True, "callback_returned": True}
+
+    expected_error = CallbackFailure if damage == "unchanged" else consumer.SourceSpanConsumerBindingError
+    with pytest.raises(expected_error) as caught:
+        consumer.consume_reviewed_source_span_binding_v2(
+            binding, rows, split_manifest=manifest, admission_inputs=replay,
+            exposure_records=exposure, bound_component_inputs=bound_inputs, consumer=callback)
+
+    assert calls == [original_rows]
+    assert rows == original_rows
+    assert binding.receipt() == original_receipt
+    assert consumer.reviewed_admission_inputs_sha256(replay) == original_admission_sha
+    if damage == "source_revocation":
+        assert "bound component current replay failed" in str(caught.value)
+        assert _lir02_commit(bound_inputs) != original_bound_sha
+        # Rejection preserves the callback's source-trust side effect; it is not
+        # a rollback claim, and unchanged meaning review is not source validity.
+        reviewed = admission.assess_reviewed_norm_admission_v2(**replay)
+        assert reviewed["semantic_use_eligible"] is True and reviewed["fixture_only"] is True
+        assert reviewed["training_mask"] == reviewed["evaluation_gold_mask"] == 0
+    else:
+        assert _lir02_commit(bound_inputs) == original_bound_sha
+        if damage == "detached_ir":
+            assert "detached complete reviewed consumer rows" in str(caught.value)
+        else:
+            assert caught.value is callback_failure

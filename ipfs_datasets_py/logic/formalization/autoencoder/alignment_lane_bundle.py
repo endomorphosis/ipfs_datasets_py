@@ -20,7 +20,11 @@ MAX_DIMENSION = 8192
 MAX_JSON_NODES = 1200000
 MAX_JSON_DEPTH = 20
 RECIPES = {"exact_source_only/v1", "role_marked_source_frame/v1", "role_marked_declared_context/v1"}
-STAGES = {"historical_linguistic_features", "raw_embedding", "learned_latent", "learned_projection",
+COMPLETE_COMPOSITION_STAGE = "complete_chunk_composition"
+COMPLETE_COMPOSITION_SCHEMA = "native384-complete-chunk-composition/v1"
+COMPLETE_COMPOSITION_PROFILE = "thenlper/gte-small@17e1f347d17fe144873b1201da91788898c639cd:byte480-weighted-mean-f64-l2-f32/v1"
+COMPLETE_COMPOSITION_ENDPOINT = "complete_utf8_byte480_weighted_mean/v1"
+STAGES = {COMPLETE_COMPOSITION_STAGE, "historical_linguistic_features", "raw_embedding", "learned_latent", "learned_projection",
           "reconstruction", "decoder_condition", "final_hidden_embedding"}
 DERIVED = {"learned_latent", "learned_projection", "reconstruction", "decoder_condition"}
 ROW_BINDING_FIELDS = {"id", "input_sha256", "encoder_text_sha256", "status", "reason", "vector_sha256",
@@ -144,6 +148,15 @@ def _profile(profile):
                  and profile["precision"] == "float32" and norm["kind"] == "l2"
                  and pooling["method"] == {"native384": "mean", "native768": "cls"}[lane]
                  and producer["checkpoint_sha256"] is None, "raw native lane profile differs")
+    elif stage == COMPLETE_COMPOSITION_STAGE:
+        _require(lane == "native384" and profile["dimension"] == 384 and profile["precision"] == "float32"
+            and norm == {"kind":"l2","unit_tolerance":1e-5}
+            and pooling == {"method":"mean","endpoint":COMPLETE_COMPOSITION_ENDPOINT}
+            and producer["profile_id"] == COMPLETE_COMPOSITION_PROFILE
+            and producer["model_id"] + "@" + producer["model_revision"] + ":byte480-weighted-mean-f64-l2-f32/v1" == COMPLETE_COMPOSITION_PROFILE
+            and producer["checkpoint_sha256"] is None
+            and profile["inference_input_recipe"] == "exact_source_only/v1",
+            "explicit pinned complete chunk composition profile required")
     elif stage in DERIVED:
         _require(lane != "leanstral" and producer["checkpoint_sha256"] is not None
                  and pooling["method"] == "tensor_endpoint", "derived view requires its own checkpoint and endpoint")
@@ -240,7 +253,7 @@ def validate_lane_bundle(bundle, *, expected_bindings):
         _require(type(row["status"]) is str and row["status"] in {"available", "unavailable", "ablation_zero"}, "known vector outcome required")
         _sha(row["upstream_vector_sha256"], "upstream vector SHA", nullable=True)
         _sha(row["token_receipt_sha256"], "token receipt SHA", nullable=True)
-        if profile["stage"] in DERIVED and row["status"] != "unavailable":
+        if profile["stage"] in DERIVED | {COMPLETE_COMPOSITION_STAGE} and row["status"] != "unavailable":
             _require(row["upstream_vector_sha256"] is not None, "derived representation requires an upstream vector binding")
         elif profile["stage"] in {"raw_embedding", "historical_linguistic_features"}:
             _require(row["upstream_vector_sha256"] is None, "raw producer cannot impersonate a derived view")
@@ -294,3 +307,174 @@ def validate_lane_bundle(bundle, *, expected_bindings):
 
 
 __all__ = ["validate_lane_bundle"]
+
+
+
+def prepare_native384_receipt_lane_bundle(receipt, *, expected_receipt_sha256,
+        artifact_binding, requests, expected_requests_sha256):
+    """Bind complete native384 receipt DATA to the existing exact-source lane.
+
+    This pure adapter reparses the canonical producer contract and preserves
+    float32 values and token-receipt identities without normalization. File
+    bindings and native execution remain declarations; source rechecks, runtime
+    custody and legal-use admission belong to their existing independent owners.
+    Every producer input requires exactly one ordered request, including rows
+    without a vector. No subset, source remapping or context injection is used.
+    """
+    from ....optimizers.logic_theorem_optimizer import autoencoder_embedding_production as codec
+
+    _require(type(receipt) is codec.EmbeddingProductionReceipt,
+             "canonical native embedding receipt object required")
+    native_raw = receipt.to_bytes()
+    _sha(expected_receipt_sha256, "independently selected native receipt SHA")
+    _require(hashlib.sha256(native_raw).hexdigest() == expected_receipt_sha256,
+             "native receipt differs from independent commitment")
+    native = codec.EmbeddingProductionReceipt(native_raw).to_dict()
+    _require(native["execution"]["kind"] == "native",
+             "injected producer cannot enter the native384 receipt lane")
+    artifact_raw, request_raw = _raw(artifact_binding), _raw(requests)
+    artifact, offered = json.loads(artifact_raw), json.loads(request_raw)
+    _closed(artifact, {"path", "bytes", "sha256"}, "declared native artifact")
+    _require(artifact["sha256"] == expected_receipt_sha256
+             and type(artifact["bytes"]) is int and artifact["bytes"] == len(native_raw),
+             "declared artifact differs from exact native receipt bytes")
+    _sha(expected_requests_sha256, "independently selected request SHA")
+    _require(hashlib.sha256(request_raw).hexdigest() == expected_requests_sha256,
+             "native lane requests differ from independent commitment")
+    _require(type(offered) is list and 1 <= len(offered) == len(native["inputs"]) <= MAX_ROWS,
+             "complete bounded ordered native input population required")
+
+    def sealed(value):
+        return {**value, "content_sha256": _digest(value)}
+
+    profile = sealed({"schema": PROFILE_SCHEMA, "lane_id": "native384",
+        "stage": "raw_embedding", "dimension": codec.DIMENSION,
+        "producer": {"profile_id": "pinned-native384-production-receipt/v1",
+            "model_id": codec.MODEL_ID, "model_revision": codec.MODEL_REVISION,
+            "code_sha256": native["producer"]["code_sha256"],
+            "model_assets_sha256": _digest(native["model_assets"]), "checkpoint_sha256": None},
+        "pooling": {"method": "mean", "endpoint": "sentence_embedding"},
+        "normalization": {"kind": "l2", "unit_tolerance": 1e-5}, "precision": "float32",
+        "fit_input_recipe": "exact_source_only/v1", "inference_input_recipe": "exact_source_only/v1"})
+    rows, ids = [], set()
+    for request, source, result in zip(offered, native["inputs"], native["results"], strict=True):
+        _closed(request, {"id", "input_id", "input"}, "native lane request")
+        _text(request["id"], "native request ID", maximum=512)
+        _require(request["id"] not in ids, "duplicate native request ID")
+        ids.add(request["id"])
+        _input(request["input"])
+        _require(request["input_id"] == source["input_id"] == result["input_id"]
+                 and request["input"]["source_text"] == source["text"]
+                 and request["input"]["context"]["role"] == "none_required",
+                 "exact ordered native input/source identity and empty context required")
+        available = result["status"] == "embedded"
+        vector = list(codec._decode_vector(result["vector"])) if available else None
+        binding = {"id": request["id"], "input_sha256": _digest(request["input"]),
+            "encoder_text_sha256": hashlib.sha256(source["text"].encode("utf-8")).hexdigest(),
+            "status": "available" if available else "unavailable",
+            "reason": None if available else "native_receipt:" + result["status"],
+            "vector_sha256": _digest(vector) if available else None,
+            "upstream_vector_sha256": None,
+            "token_receipt_sha256": _digest({key: result[key] for key in ("input_id", "status", "tokens")})}
+        rows.append({**binding, "input": request["input"], "encoder_text": source["text"],
+                     "vector": vector, "producer_row_sha256": _digest(binding)})
+    producer = sealed({"schema": PRODUCER_SCHEMA, "profile_sha256": _digest(profile),
+        "artifact_binding": artifact, "rows": [_row_binding(row) for row in rows]})
+    bundle = sealed({"schema": SCHEMA, "profile": profile, "producer_receipt": producer, "rows": rows})
+    expected = {"profile_sha256": _digest(profile), "producer_receipt_sha256": _digest(producer),
+        "inputs": [{"id": row["id"], "input_sha256": row["input_sha256"]} for row in rows]}
+    checked = validate_lane_bundle(bundle, expected_bindings=expected)
+    _require(receipt.to_bytes() == native_raw and _raw(requests) == request_raw
+             and _raw(artifact_binding) == artifact_raw, "native receipt lane inputs changed")
+    return {"bundle": bundle, "expected_bindings": expected, "receipt": {
+        "schema": "native384-production-receipt-lane-binding/v1",
+        "native_receipt_sha256": expected_receipt_sha256,
+        "requests_sha256": expected_requests_sha256, "bundle_sha256": _digest(bundle),
+        "row_count": len(rows), "available_count": checked["available_count"],
+        "unavailable_count": checked["unavailable_count"],
+        "native_receipt_contract_verified": True, "source_bytes_rechecked": False,
+        "producer_execution_authenticated": False, "inference_performed": False,
+        "normalization_performed": False, "padding_or_truncation_performed": False,
+        "semantic_admission_granted": False, "proof_authority": False}}
+
+
+__all__ += ["prepare_native384_receipt_lane_bundle"]
+
+
+
+def prepare_native384_composed_lane_bundle(composition, *, expected_composition_sha256,
+        artifact_binding, requests, expected_requests_sha256):
+    """Validate externally selected composition DATA; no numerical recomputation.
+
+    Exact file and runtime provenance remains the caller's responsibility. This
+    adapter preserves a distinct composed stage and its upstream/coverage links;
+    it does not grant reviewed relation labels, model permission or raw status.
+    """
+    original_raw = _raw(composition)
+    _sha(expected_composition_sha256, "independent composition SHA")
+    _require(hashlib.sha256(original_raw).hexdigest() == expected_composition_sha256,
+             "composition differs from independent commitment")
+    value = json.loads(original_raw)
+    _closed(value, {"schema", "profile", "original_inputs", "coverage", "parents", "implementation",
+        "manifest_sha256", "native_receipt_sha256", "original_inputs_sha256", "available_count",
+        "unavailable_count", "aggregation_performed", "normalization_performed", "model_inference_executed",
+        "training_executed", "semantic_admission_granted", "proof_authority", "payload_sha256"}, "complete composition")
+    _require(value["schema"] == COMPLETE_COMPOSITION_SCHEMA
+        and value["payload_sha256"] == _digest({key:item for key,item in value.items() if key != "payload_sha256"}),
+        "closed composition schema and content seal required")
+    _require(all(value[name] is False for name in ("model_inference_executed", "training_executed",
+        "semantic_admission_granted", "proof_authority")), "composition DATA cannot grant execution or semantic authority")
+    profile = value["profile"]
+    _profile(profile)
+    _require(profile["stage"] == COMPLETE_COMPOSITION_STAGE
+        and profile["producer"]["code_sha256"] == _digest(value["implementation"]),
+        "explicit complete composition stage and implementation identity required")
+    for key in ("manifest_sha256", "native_receipt_sha256", "original_inputs_sha256"):
+        _sha(value[key], key)
+    originals, parents = value["original_inputs"], value["parents"]
+    _require(type(originals) is list and type(parents) is list and 1 <= len(originals) == len(parents) <= MAX_ROWS,
+             "complete ordered original composition population required")
+    offered_raw, artifact_raw = _raw(requests), _raw(artifact_binding)
+    offered, artifact = json.loads(offered_raw), json.loads(artifact_raw)
+    _sha(expected_requests_sha256, "independent composed request SHA")
+    _require(hashlib.sha256(offered_raw).hexdigest() == expected_requests_sha256
+        and type(offered) is list and len(offered) == len(parents), "complete independent composition requests required")
+    _closed(artifact, {"path", "bytes", "sha256"}, "declared composition artifact")
+    _require(artifact["sha256"] == expected_composition_sha256
+        and type(artifact["bytes"]) is int and artifact["bytes"] == len(original_raw),
+        "declared composition artifact differs from exact bytes")
+    rows = []
+    for request, original, parent in zip(offered, originals, parents, strict=True):
+        _closed(request, {"id", "input_id", "input"}, "composed lane request")
+        _input(request["input"])
+        _require(request["input_id"] == original["input_id"] == parent["input_id"]
+            and request["input"]["source_text"] == original["text"]
+            and request["input"]["context"]["role"] == "none_required", "exact complete composed input and empty context required")
+        _closed(parent, {"input_id", "status", "reason", "vector", "vector_sha256", "upstream_vector_sha256",
+            "token_receipt_sha256", "chunk_count", "byte_weight_sum"}, "composed parent")
+        binding = {"id":request["id"], "input_sha256":_digest(request["input"]),
+            "encoder_text_sha256":hashlib.sha256(original["text"].encode()).hexdigest(),
+            **{key:parent[key] for key in ("status", "reason", "vector_sha256", "upstream_vector_sha256", "token_receipt_sha256")}}
+        rows.append({**binding, "input":request["input"], "encoder_text":original["text"],
+            "vector":parent["vector"], "producer_row_sha256":_digest(binding)})
+    def sealed(body):return {**body,"content_sha256":_digest(body)}
+    producer = sealed({"schema":PRODUCER_SCHEMA,"profile_sha256":_digest(profile),
+        "artifact_binding":artifact,"rows":[_row_binding(row) for row in rows]})
+    bundle = sealed({"schema":SCHEMA,"profile":profile,"producer_receipt":producer,"rows":rows})
+    expected = {"profile_sha256":_digest(profile),"producer_receipt_sha256":_digest(producer),
+        "inputs":[{"id":row["id"],"input_sha256":row["input_sha256"]} for row in rows]}
+    checked = validate_lane_bundle(bundle,expected_bindings=expected)
+    _require(type(value["available_count"]) is int and value["available_count"] == checked["available_count"]
+        and type(value["unavailable_count"]) is int and value["unavailable_count"] == checked["unavailable_count"]
+        and value["normalization_performed"] is (checked["available_count"] > 0), "composition availability counts differ")
+    _require(_raw(composition)==original_raw and _raw(requests)==offered_raw
+        and _raw(artifact_binding)==artifact_raw, "composed lane inputs changed")
+    return {"bundle":bundle,"expected_bindings":expected,"receipt":{
+        "schema":"native384-composed-lane-binding/v1","composition_sha256":expected_composition_sha256,
+        "requests_sha256":expected_requests_sha256,"bundle_sha256":_digest(bundle),
+        "raw_embedding_impersonation":False,"numerical_computation_replayed":False,
+        "source_bytes_rechecked":False,"producer_execution_authenticated":False,
+        "semantic_admission_granted":False,"proof_authority":False}}
+
+
+__all__ += ["prepare_native384_composed_lane_bundle"]

@@ -38,6 +38,32 @@ Reviewed source/version/applicability, legal interpretation and formal targets r
 
 Every authority flag stays false and both training and evaluation-gold masks stay integer zero. This operation performs no model inference, training, graph admission, human review or Lean build. The [comprehensive plan](../../../../../docs/autoencoders/legal_ir_uscode_corpus_improvement_plan_20261015.md) tracks the remaining review, connected-target and matched 8D/384D/768D milestones.
 
+## Controlled relational prose
+
+Use `decompile_relational(expression, argument_roles=..., profile=...)` to realize a supported typed expression, and pass the visible text to `compile_relational(text, profile=...)`. The relational profile preserves ordered arguments, role labels, lexical binders, Boolean structure, and obligation, permission, and prohibition. The fixed-three profile reuses the exact existing counted membership expansion. Unsupported constructs and residual text cause a complete refusal.
+
+`prepare_relational_prose_reconstruction_v1` runs both steps. `compare_relational_prose_structure_v1` reports complete ordered structure separately from exact expression serialization. Role labels are a separate declaration, so a role-only change preserves exact expression serialization and changes ordered structure and canonical prose. `score_relational_legal_text_roundtrip` accepts original UTF-8 only for scoring. Its optional byte comparison records the presence or absence of exact source restoration independently from the typed measures.
+
+The ordinary qualification covers authored typed round trips, case mutations, refusal boundaries, and the existing literal regressions. Temporal applicability, governing definitions, statutory source correspondence, and proof validity each require their own evidence. [Ordinary qualification](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-relational-prose-inverse-source-20261110-v02/ordinary-qualification-summary.json)
+
+## Controlled typed deadlines
+
+Use `compile_extended` and `decompile_extended` with `TYPED_DEADLINE_PROSE_PROFILE` for explicit normative deadlines. The same temporal list can contain typed constraints and quoted literals. The list preserves occurrence order, duplicates, and ownership by each norm. `ExtendedLegalIR.from_dict` restores the typed profile from its `legal-surface-ir-with-typed-deadlines/v1` wire schema.
+
+```text
+Norm: "clerk" must "file" "notice". Temporal: within 3 business days after event "receipt_of_notice"; "effective 2025-01-01".
+```
+
+Relative clauses require an integer quantity, an explicit `calendar day(s)` or `business day(s)` unit, a direction, and a named event. `within` includes the outer boundary and `less than` excludes it. Ordered clauses distinguish `on or before`, `before`, and `after` and preserve whether the named anchor is an event, an instant, or unresolved between them. Unsupported units, incomplete anchors, malformed quantities, and trailing text refuse the entire controlled span. Quoted effective dates retain their literal values. Business-day calendars, applicability, and source correspondence require separate evidence.
+
+The default quoted profile retains its `legal-surface-ir/v2` wire schema and literal temporal clauses. The historical TDFOL `compile_temporal_deadline` candidate API retains its provenance IDs. Use the strict `parse_temporal_deadline` and `render_temporal_deadline` in the same TDFOL owner for standalone controlled clauses.
+
+## Governing fields in reviewed v2 IR
+
+Use `compare_relational_governing_fields_v1` to compare independently supplied `governing_context` and `definition_uses` projections of the existing reviewed v2 IR. The text scorer accepts the same projections through `reference_governing_fields` and `candidate_governing_fields`. The scorer keeps both projections outside the renderer and parser, and reports their exact agreement independently of normalized prose, AST structure, and original UTF-8. Changes to an effective date or a definition endpoint can therefore register when the typed expression and its prose are identical.
+
+A field omitted on both sides receives a null measurement. A field omitted on one side disagrees with an authored null, empty value, or complete value on the other. Complete field payloads, ordered definition-use rows and paths, and competing or unresolved declarations remain visible. An exact match records agreement of the supplied data and carries no applicability, governing-use, or source verification authority.
+
 ## Native qualification and retained declarations
 
 The final native qualification passed **187 unique cases** with no failures, errors or skips: 84 new reconstruction cases, all 70 relational cases and all 33 shared-algebra cases. Collection, successful calls and JUnit identities agree. The request froze 240 source pins; 89 product origins executed checked buffers. Its receipt records 4.84 seconds. The ten legacy preflight inputs/assertions are unchanged; explicit descriptive parameter IDs keep the oversized byte-bound input from producing a 524 KB JUnit name.

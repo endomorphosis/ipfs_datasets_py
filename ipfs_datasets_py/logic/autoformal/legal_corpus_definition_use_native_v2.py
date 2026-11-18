@@ -10,12 +10,19 @@ Callers retain their existing owned validation resources throughout execution.
 
 from __future__ import annotations
 
+import ast
 import hashlib
 import json
 import math
 import os
 from pathlib import Path
 import re
+import stat
+import subprocess
+import sys
+import threading
+import types
+import weakref
 
 BUILD_SCHEMA = "legal-corpus-v2-definition-use-native-build/v1"
 PROFILE = "replayed-v2-definition-use-conditional-native-build/v1"
@@ -544,8 +551,18 @@ def _build_validated_native(preparation, validated, *, replay,
         timeout_seconds, cancellation, build_schema, profile, flags, receipt_binding,
         maximum_files=MAX_FILES, maximum_modules=MAX_MODULES,
         maximum_theorems=None, producer_pin_reader=None, receipt_scope=None,
-        preparation_document_reader=None, closing_custody_guard=None):
+        preparation_document_reader=None, closing_custody_guard=None, execution_observer=None,
+        frozen_authority=None):
     """One bounded native execution path, with each source profile replayed by its owner."""
+    if frozen_authority is not None:
+        _need(type(frozen_authority) is dict and frozen_authority
+              and all(type(key) is str and value is False for key, value in frozen_authority.items()),
+              "explicit frozen false native observation authority required")
+        frozen_authority = dict(frozen_authority)
+
+    def receipt_authority():
+        return dict(AUTHORITY) if frozen_authority is None else dict(frozen_authority)
+
     owners = _owners()
     # Resolve the legacy reader dynamically: existing callers and monkeypatches
     # retain the original cache domain unless a new public profile opts in.
@@ -576,9 +593,33 @@ def _build_validated_native(preparation, validated, *, replay,
           and (maximum_modules != MAX_MODULES or len(modules) == MAX_MODULES),
           "complete bounded native module population required")
     _need(1 <= len(checked.files) <= maximum_files, "complete bounded native file population required")
-    theorems = (list(dict.fromkeys(name for row in receipt_binding["theorem_contributors"]
-                                  for name in row["conditional_theorems"])) if shared_type
-                else manifest["conditional_theorems"])
+    reviewed_type = (type(checked) is getattr(owners[4], "ReviewedPreservationCorpusPreparation", None))
+    if reviewed_type:
+        # Freeze both closed domains. Mutable public aliases cannot give a V3
+        # project the original V2 receipt profile (or the converse).
+        reviewed_domains = {
+            ("legal-corpus-reviewed-preservation-preparation/v2",
+             "reviewed-multi-unit-object-relational-preservation/v2"):
+                ("legal-corpus-reviewed-preservation-native-build/v2",
+                 "replayed-reviewed-multiunit-preservation-native-build/v2"),
+            ("legal-corpus-reviewed-preservation-preparation/v3",
+             "reviewed-multi-unit-mixed-relational-preservation/v3"):
+                ("legal-corpus-reviewed-preservation-native-build/v3",
+                 "replayed-reviewed-mixed-multiunit-preservation-native-build/v3"),
+        }
+        reviewed_domain = (manifest.get("schema"), manifest.get("profile"))
+        _need(reviewed_domain in reviewed_domains
+              and (build_schema, profile) == reviewed_domains[reviewed_domain],
+              "reviewed preservation projects require their exact closed native domain")
+        theorems = manifest["preservation_obligations"]
+        # These are concrete preservation theorems, not statutory truth claims.
+        # The declaration's formal assumptions remain separate, unproved data.
+        theorem_assumptions = []
+    else:
+        theorems = (list(dict.fromkeys(name for row in receipt_binding["theorem_contributors"]
+                                      for name in row["conditional_theorems"])) if shared_type
+                    else manifest["conditional_theorems"])
+        theorem_assumptions = manifest["theorem_assumptions"]
     _need(1 <= len(theorems) <= (MAX_THEOREMS if maximum_theorems is None else maximum_theorems),
           "complete bounded conditional theorem population required")
     executable, binaries, probes = _installed_toolchain(lake_executable, toolchain)
@@ -599,8 +640,11 @@ def _build_validated_native(preparation, validated, *, replay,
             resident_memory_bytes=2 * 1024**3, max_output_bytes=MAX_CAPTURE_BYTES,
             max_input_bytes=MAX_PROJECT_BYTES, max_workspace_bytes=128 * MAX_RECORD_BYTES,
             max_output_files=len(output_paths)))
+    runner = process.BoundedToolRunner()
+    if execution_observer is not None:
+        execution_observer("before", dict(process=process, runner=runner, invocation=invocation))
     try:
-        run = process.BoundedToolRunner().run(invocation, cancellation=cancellation)
+        run = runner.run(invocation, cancellation=cancellation)
     except process.OwnedToolCleanupError as error:
         try:
             refusal = transport.contracts.seal_record({
@@ -617,8 +661,8 @@ def _build_validated_native(preparation, validated, *, replay,
                 "cleanup_owner_retained_on_exception": True, "cleanup_confirmed": False,
                 "error": str(error)[:2048], "artifact_sha256": {}, "artifact_files": {},
                 "theorem_axiom_dependencies": {},
-                "theorem_assumptions": manifest["theorem_assumptions"],
-                "authority": dict(AUTHORITY), "training_mask": 0, "evaluation_gold_mask": 0,
+                "theorem_assumptions": theorem_assumptions,
+                "authority": receipt_authority(), "training_mask": 0, "evaluation_gold_mask": 0,
                 **flags,
             })
             _persist_build(checked, output, owners, {}, {}, {}, refusal,
@@ -627,9 +671,19 @@ def _build_validated_native(preparation, validated, *, replay,
         except (ValueError, TypeError, OSError) as preservation_error:
             error.add_note("Native cleanup refusal preservation also failed: " + type(preservation_error).__name__)
         raise
+    execution_observer_error = None
+    if execution_observer is not None:
+        try:
+            execution_observer("after", dict(process=process, runner=runner, invocation=invocation, run=run))
+        except _LiveNativeObserverRefusal as error:
+            # Only the private live observer uses this typed refusal, after it
+            # has checked that all remaining postprocessing/persistence owners
+            # are still original. Keep the completed native observations in the
+            # existing failed receipt before its closing guard re-raises.
+            execution_observer_error = {"type": type(error).__name__, "message": str(error)[:2048]}
     if closing_custody_guard is not None:
         closing_custody_guard("runner_returned", dict(run=run))
-    post_error, binary_error = None, None
+    post_error, binary_error = execution_observer_error, None
     try:
         replay()
         _need(preparation == checked, "original preparation changed during native compilation")
@@ -667,9 +721,18 @@ def _build_validated_native(preparation, validated, *, replay,
           "bounded native process observations required")
     previews = {name: raw[:MAX_LOG_PREVIEW_BYTES].decode("utf-8", errors="replace").replace("\x00", "\\u0000")
                 for name, raw in logs.items()}
+    reviewed_execution = {}
+    if reviewed_type:
+        try:
+            reviewed_execution["reviewed_execution_evidence"] = _reviewed_native_execution_projection(invocation, run, process)
+            reviewed_execution["reviewed_execution_projection_error"] = None
+        except (ValueError, TypeError, KeyError, OSError, UnicodeError, RecursionError) as error:
+            passed = False
+            reviewed_execution = {"reviewed_execution_evidence": None,
+                "reviewed_execution_projection_error": {"type": type(error).__name__, "message": str(error)[:2048]}}
     # Retain the complete original preparation list separately; this observation
     # carries every real hypothesis without its obsolete execution-status text.
-    assumptions = [text for text in manifest["theorem_assumptions"]
+    assumptions = [text for text in theorem_assumptions
                    if text not in {
                        "Modular joint equivalence is a generated definitional obligation; native kernel checking has not run.",
                        "This profile prepares files only; native and incremental qualification have not run."}]
@@ -680,6 +743,7 @@ def _build_validated_native(preparation, validated, *, replay,
         "preparation_full_canonical_sha256": expected_preparation_sha256,
         "preparation_manifest_sha256": _sha(checked.manifest_json.encode("utf-8")),
         **receipt_binding,
+        **reviewed_execution,
         "original_preparation_unchanged": post_error is None,
         "toolchain": toolchain, "command": list(run.command), "expected_command": list(command),
         "runtime": run.runtime.value, "pid": run.pid, "returncode": run.returncode,
@@ -704,7 +768,7 @@ def _build_validated_native(preparation, validated, *, replay,
         "axiom_observations_passed": axiom_passed,
         "axiom_observation_errors": axiom_errors,
         "theorem_assumptions": assumptions,
-        "original_preparation_theorem_assumptions": manifest["theorem_assumptions"],
+        "original_preparation_theorem_assumptions": theorem_assumptions,
         "stdout": previews["stdout.txt"], "stderr": previews["stderr.txt"],
         "error": previews["runner-error.txt"],
         "log_sha256": {name: _sha(raw) for name, raw in logs.items()},
@@ -722,7 +786,7 @@ def _build_validated_native(preparation, validated, *, replay,
         "build_passed": passed, "native_runtime_verified": native_runtime,
         "status": "conditional_native_checks_passed" if passed else "conditional_native_checks_failed",
         "alias_assumption_proved": False, "source_to_model_equivalence_proved": False,
-        "authority": dict(AUTHORITY), "training_mask": 0, "evaluation_gold_mask": 0,
+        "authority": receipt_authority(), "training_mask": 0, "evaluation_gold_mask": 0,
         "scope": (receipt_scope if receipt_scope is not None else
                   "Exact conditional kernel theorems under the retained donor, consumer and alias hypotheses; no source-fidelity proof, legal truth, review admission or model-convergence claim."),
         **(flags | {"backend_executed": native_runtime, "lean_compilation_verified": passed,
@@ -1944,3 +2008,2216 @@ def parent_bound_norm_definition_compilation_receipt_sha256(receipt):
 __all__ += ["PARENT_BOUND_NORM_BUILD_SCHEMA", "PARENT_BOUND_NORM_NATIVE_PROFILE",
     "validate_parent_bound_norm_definition_native_v1", "build_parent_bound_norm_definition_native_v1",
     "parent_bound_norm_definition_compilation_receipt_sha256"]
+
+
+# Closed additive port for the existing reviewed multiunit preservation project.
+# This profile proves concrete IR/rendering preservation only. It neither proves
+# a statute true nor applies a governing definition across distinct source units.
+REVIEWED_PRESERVATION_BUILD_SCHEMA = "legal-corpus-reviewed-preservation-native-build/v2"
+REVIEWED_PRESERVATION_NATIVE_PROFILE = "replayed-reviewed-multiunit-preservation-native-build/v2"
+MAX_REVIEWED_PRESERVATION_UNITS = 8
+MAX_REVIEWED_PRESERVATION_FILES = 9 * MAX_REVIEWED_PRESERVATION_UNITS + 6
+MAX_REVIEWED_PRESERVATION_MODULES = MAX_REVIEWED_PRESERVATION_UNITS + 3
+MAX_REVIEWED_PRESERVATION_THEOREMS = 5 * MAX_REVIEWED_PRESERVATION_UNITS
+_REVIEWED_PRESERVATION_OPERATION_PINS = None
+
+
+def _reviewed_preservation_native_document(preparation):
+    cls = type(preparation)
+    _need(cls.__module__ == _PARENT_SHARED_MODULE and cls.__name__ == "ReviewedPreservationCorpusPreparation",
+          "existing typed reviewed preservation preparation required")
+    storage = object.__getattribute__(preparation, "__dict__")
+    _need(type(storage) is dict and set(storage) == {"manifest_json", "files"},
+          "closed reviewed preservation preparation fields required")
+    text, offered = storage["manifest_json"], storage["files"]
+    _need(type(text) is str and 0 < len(text) <= MAX_RECORD_BYTES,
+          "bounded reviewed preservation manifest required")
+    # Parse only for bounded structural diagnostics. The public preparation pin
+    # commits the exact manifest string, including its original UTF8 bytes.
+    _parse(text.encode("utf-8"), MAX_RECORD_BYTES)
+    _need(type(offered) is tuple and 1 <= len(offered) <= MAX_REVIEWED_PRESERVATION_FILES,
+          "complete bounded reviewed preservation file population required")
+    files, names, size = [], [], 0
+    for item in offered:
+        _need(type(item) is tuple and len(item) == 2, "exact reviewed project file pairs required")
+        name, body = item
+        _need(type(name) is str and len(name) <= 256
+              and re.fullmatch(r"[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)?", name)
+              and all(part not in (".", "..") for part in name.split("/")),
+              "closed reviewed preservation project paths required")
+        _need(type(body) is str and "\x00" not in body, "ordinary reviewed project UTF8 text required")
+        try:
+            size += len(body.encode("utf-8"))
+        except UnicodeError as error:
+            raise ValueError("valid reviewed project UTF8 required") from error
+        _need(size <= MAX_PROJECT_BYTES, "complete reviewed preservation project byte bound exceeded")
+        names.append(name); files.append([name, body])
+    _need(names == sorted(set(names)), "sorted distinct complete reviewed project files required")
+    # This reviewed-only reader also feeds the frozen gate in the original
+    # native engine. Keep the canonical shared owner's public transport recipe.
+    return {"manifest_json": text, "files": files}
+
+
+def _reviewed_preservation_native_pins(owners, manifest):
+    global _REVIEWED_PRESERVATION_OPERATION_PINS
+    shared = owners[4]
+    current = shared._reviewed_preservation_pins(shared._reviewed_preservation_owners())
+    pins = _observed_producer_pins(owners, manifest)
+    for path, expected in current.items():
+        _need(path not in pins or pins[path] == expected, "reviewed native producer pin collision")
+        pins[path] = expected
+    if _REVIEWED_PRESERVATION_OPERATION_PINS is None:
+        _REVIEWED_PRESERVATION_OPERATION_PINS = dict(pins)
+    _need(pins == _REVIEWED_PRESERVATION_OPERATION_PINS,
+          "reviewed native operation owners changed since first use")
+    return pins
+
+
+def _reviewed_preservation_native_manifest(manifest, shared):
+    _need(manifest.get("schema") == shared.REVIEWED_PRESERVATION_SCHEMA
+          and manifest.get("profile") == shared.REVIEWED_PRESERVATION_PROFILE,
+          "exact current reviewed preservation preparation profile required")
+    _need(shared.MAX_REVIEWED_PRESERVATION_FILES == MAX_REVIEWED_PRESERVATION_FILES
+          and shared.MAX_REVIEWED_PRESERVATION_MODULES == MAX_REVIEWED_PRESERVATION_MODULES
+          and shared.MAX_REVIEWED_PRESERVATION_OBLIGATIONS == MAX_REVIEWED_PRESERVATION_THEOREMS,
+          "reviewed native and preparation bounds require an explicit port")
+    units = manifest["units"]
+    _need(type(units) is list and 3 <= len(units) <= MAX_REVIEWED_PRESERVATION_UNITS,
+          "complete three-to-eight reviewed source units required")
+    theorems = [name for unit in units for name in unit["preservation_obligations"]]
+    _need(all(len(unit["preservation_obligations"]) == 5 for unit in units)
+          and len(theorems) == len(set(theorems)) == 5 * len(units)
+          and manifest["preservation_obligations"] == theorems,
+          "all five ordered concrete obligations per reviewed unit required")
+    _need(manifest["support_profile"]["cross_unit_definition_application_proved"] is False
+          and manifest["preparation_only"] is True
+          and manifest["proof_status"] == "not_executed"
+          and manifest["lean_compilation_status"] == "not_executed",
+          "preparation cannot supply its own native or definition-application proof")
+    return manifest
+
+
+def _reviewed_preservation_native_operation(preparation, graph, admission, args, kwargs, *,
+        expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256,
+        toolchain, operation=None, reviewed_version=2):
+    _need(type(reviewed_version) is int and reviewed_version in (2, 3),
+          "explicit closed reviewed native version required")
+    if reviewed_version == 3:
+        _reviewed_mixed_native_policy()
+    document = _reviewed_preservation_native_document(preparation)
+    for value, label in ((expected_preservation_sha256, "complete reviewed preservation preparation"),
+                         (expected_graph_sha256, "complete reviewed graph"),
+                         (expected_admission_sha256, "complete current reviewed admission")):
+        _pin(value, label)
+    _need(type(toolchain) is str and len(toolchain) <= 128 and _TOOLCHAIN.fullmatch(toolchain),
+          "explicit version-pinned Lean toolchain required")
+    _need(len(args) == 4 and type(kwargs) is dict, "complete original admission replay arguments required")
+    original = dict(graph=graph, admission=admission, args=list(args), kwargs=kwargs,
+        expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
+        toolchain=toolchain)
+    _bound_tree({"preparation": document, **original}, MAX_INPUT_BYTES, allow_bytes=True)
+    _need(_sha(_wire(document, MAX_PREPARATION_BYTES)) == expected_preservation_sha256,
+          "independent complete reviewed preservation preparation pin differs")
+    _need(_sha(Path(__file__).read_bytes()) == _SELF_PIN, "reviewed native owner changed since import")
+    owners = _owners(); shared = owners[4]
+    _need(type(preparation) is shared.ReviewedPreservationCorpusPreparation,
+          "exact canonical reviewed preservation preparation type required")
+    _need(shared.reviewed_preservation_corpus_sha256(preparation) == expected_preservation_sha256,
+          "canonical public reviewed preservation preparation pin differs")
+    if reviewed_version == 2:
+        admission_owner = shared._reviewed_preservation_owners()[1]
+        validate_project = shared.validate_reviewed_norm_preservation_corpus_v2
+        validate_manifest = _reviewed_preservation_native_manifest
+        read_pins = _reviewed_preservation_native_pins
+        domain_callables = ()
+    else:
+        _reviewed_mixed_native_policy(shared)
+        admission_owner = shared._reviewed_mixed_preservation_owners()[1]
+        validate_project = shared.validate_reviewed_norm_preservation_corpus_v3
+        validate_manifest = _reviewed_mixed_preservation_native_manifest
+        read_pins = _reviewed_mixed_preservation_native_pins
+        domain_callables = tuple((name, _live_callable_state(getattr(shared, name))) for name in (
+            "validate_reviewed_norm_preservation_corpus_v3", "_reviewed_mixed_preservation_owners",
+            "_reviewed_preservation_pins"))
+    detached, commitment = admission_owner.norm._snapshot(original)
+    frozen_document, project_commitment = admission_owner.norm._snapshot(document)
+    # Parsed semantics are execution data, never a replacement for the exact
+    # raw manifest envelope authenticated by the public shared preparation pin.
+    execution_document, _ = admission_owner.norm._snapshot({
+        "manifest": _parse(frozen_document["manifest_json"].encode("utf-8"), MAX_RECORD_BYTES),
+        "files": frozen_document["files"]})
+
+    def fence():
+        if reviewed_version == 3:
+            _reviewed_mixed_native_policy(shared)
+            _need(all(_live_callable_matches(getattr(shared, name), state) for name, state in domain_callables),
+                  "mixed shared preparation callbacks changed during native replay")
+        _need(admission_owner.norm._snapshot(original)[1] == commitment
+              and admission_owner.norm._snapshot(detached)[1] == commitment
+              and admission_owner.norm._snapshot(_reviewed_preservation_native_document(preparation))[1]
+                    == project_commitment
+              and shared.reviewed_preservation_corpus_sha256(preparation) == expected_preservation_sha256,
+              "reviewed native source, graph, admission, project or current observations changed")
+
+    def replay():
+        fence()
+        project_validator = (shared.validate_reviewed_norm_preservation_corpus_v2
+                             if reviewed_version == 2 else validate_project)
+        checked = project_validator(preparation,
+            detached["graph"], detached["admission"], *detached["args"],
+            expected_preservation_sha256=expected_preservation_sha256,
+            expected_graph_sha256=detached["expected_graph_sha256"],
+            expected_admission_sha256=detached["expected_admission_sha256"],
+            toolchain=toolchain, **detached["kwargs"])
+        _need(_reviewed_preservation_native_document(checked) == frozen_document
+              and shared.reviewed_preservation_corpus_sha256(checked) == expected_preservation_sha256,
+              "canonical current reviewed project replay differs")
+        parsed_manifest = checked.to_dict()
+        _need(parsed_manifest == execution_document["manifest"],
+              "parsed reviewed preservation execution manifest differs from exact envelope")
+        if reviewed_version == 2:
+            _reviewed_preservation_native_manifest(parsed_manifest, shared)
+            _reviewed_preservation_native_pins(owners, parsed_manifest)
+        else:
+            validate_manifest(parsed_manifest, shared)
+            read_pins(owners, parsed_manifest)
+        fence()
+        return checked
+
+    checked = replay()
+    if operation is None:
+        return checked
+    error = None
+
+    def custody(stage, values):
+        nonlocal error
+        try:
+            fence()
+            if reviewed_version == 2:
+                _reviewed_preservation_native_pins(owners, checked.to_dict())
+            else:
+                read_pins(owners, checked.to_dict())
+        except (ValueError, TypeError, KeyError, OSError, UnicodeError, RecursionError) as failure:
+            if stage in ("snapshot", "toolchain", "after_persistence"):
+                raise
+            error = {"type": type(failure).__name__, "message": str(failure)[:2048]}
+        return error if stage == "before_persistence" else None
+
+    result = operation(checked, replay, custody)
+    fence()
+    return result
+
+
+def validate_reviewed_norm_preservation_native_v2(preparation, graph, admission, *args,
+        expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256,
+        toolchain, **kwargs):
+    """Replay the complete current source/review/graph/project, without building.
+
+    Validation of preparation is not validation of a previous native receipt.
+    No generic Lean receipt or caller eligibility boolean can replace this replay.
+    """
+    return _reviewed_preservation_native_operation(preparation, graph, admission, args, kwargs,
+        expected_preservation_sha256=expected_preservation_sha256,
+        expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
+        toolchain=toolchain)
+
+
+def _reviewed_preservation_receipt_binding(manifest, admission):
+    return {name: manifest[name] for name in (
+        "input_commitment_sha256", "reviewed_graph_sha256", "reviewed_admission_sha256",
+        "declaration_sha256", "provenance_kind", "scope_record_cid", "interpretation_record_cid",
+        "units", "signature_header", "predicate_compatibility_ledger", "module_imports",
+        "preservation_obligations", "file_sha256", "support_profile")} | {
+        "preservation_only": True, "cross_unit_definition_application_proved": False,
+        "statutory_meaning_proved": False, "release_ready": False,
+        "full_formal_corpus_consistency_verified": False,
+        "generic_lean_v3_receipt_substituted": False,
+        "formal_assumptions": admission["formal_assumptions"], "formal_assumptions_proved": False}
+
+
+def build_reviewed_norm_preservation_native_v2(preparation, graph, admission, *args,
+        expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256,
+        toolchain, lake_executable, output_directory, timeout_seconds=60, cancellation=None, **kwargs):
+    """Observe all concrete multiunit preservation obligations through the old runner.
+
+    Callers must retain existing admitted native resources. Current original
+    inputs are replayed before and after the one bounded offline Lake build.
+    No source meaning, governing definition application or corpus readiness is
+    established. Generic v3 Main.lean receipts remain a separate proof profile.
+    """
+    _need(type(timeout_seconds) in (int, float) and math.isfinite(timeout_seconds)
+          and 0 < timeout_seconds <= 60, "finite compiler timeout in (0,60] required")
+
+    def execute(checked, replay, custody):
+        def binding(manifest):
+            return _reviewed_preservation_receipt_binding(manifest, admission)
+        return _build_validated_native(preparation, checked, replay=replay,
+            expected_preparation_sha256=expected_preservation_sha256, toolchain=toolchain,
+            lake_executable=lake_executable, output_directory=output_directory,
+            timeout_seconds=timeout_seconds, cancellation=cancellation,
+            build_schema=REVIEWED_PRESERVATION_BUILD_SCHEMA, profile=REVIEWED_PRESERVATION_NATIVE_PROFILE,
+            flags=dict(PARENT_FALSE_FLAGS), receipt_binding=binding,
+            maximum_files=MAX_REVIEWED_PRESERVATION_FILES,
+            maximum_modules=MAX_REVIEWED_PRESERVATION_MODULES,
+            maximum_theorems=MAX_REVIEWED_PRESERVATION_THEOREMS,
+            producer_pin_reader=_reviewed_preservation_native_pins,
+            preparation_document_reader=_reviewed_preservation_native_document,
+            closing_custody_guard=custody,
+            receipt_scope="Five exact independent concrete IR/native preservation obligations for each current reviewed source unit; no cross-unit governing-definition application, statutory truth, universal compiler theorem, legal review or corpus/release admission.")
+
+    return _reviewed_preservation_native_operation(preparation, graph, admission, args, kwargs,
+        expected_preservation_sha256=expected_preservation_sha256,
+        expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
+        toolchain=toolchain, operation=execute)
+
+
+__all__ += ["REVIEWED_PRESERVATION_BUILD_SCHEMA", "REVIEWED_PRESERVATION_NATIVE_PROFILE",
+            "validate_reviewed_norm_preservation_native_v2", "build_reviewed_norm_preservation_native_v2"]
+
+
+_REVIEWED_EXECUTION_SCHEMA = "legal-reviewed-preservation-execution-projection/v1"
+_REVIEWED_RUN_FIELDS = ("interface_version", "runtime", "command", "returncode", "pid", "elapsed_seconds",
+    "timed_out", "cancelled", "unavailable", "output_truncated", "workspace_limit_exceeded",
+    "process_tree_terminated", "resource_exhausted", "workspace_cleaned", "termination_reason", "native_lifecycle")
+
+
+def _reviewed_native_lifecycle_from_dict(value, process):
+    """Closed structural decoder; this observes no process and grants no authority."""
+    if value is None:
+        return None
+    _bound_tree(value, MAX_RECORD_BYTES)
+    fields = {"schema", "parent", "leader", "observed_descendants", "leader_reaped",
+        "descendant_tracking_complete", "group_scan_complete", "remaining_group_members",
+        "remaining_tracked_descendants", "readers", "stdin_writer", "workspace", "observation_errors",
+        "ownership_is_sampled", "kernel_containment_attested", "cleanup_confirmed"}
+    _need(type(value) is dict and set(value) == fields and value["schema"] == "native-owned-tool-lifecycle@1",
+          "closed supported native lifecycle record required")
+    _need(value["ownership_is_sampled"] is True and value["kernel_containment_attested"] is False,
+          "sampled ownership cannot become kernel containment")
+    parent = value["parent"]
+    _need(type(parent) is dict and set(parent) == {"pid", "birth_ticks"}
+          and all(type(item) is int and item > 0 for item in parent.values()), "closed parent identity required")
+
+    def identity(row):
+        _need(type(row) is dict and set(row) == {"pid", "birth_ticks", "parent_pid", "process_group_id", "session_id"}
+              and all(type(item) is int and item > 0 for item in row.values()), "closed positive native identity required")
+        return process.NativeProcessIdentity(**row)
+
+    groups = {}
+    for name in ("observed_descendants", "remaining_group_members", "remaining_tracked_descendants"):
+        rows = value[name]
+        _need(type(rows) is list and len(rows) <= 4096, "bounded complete sampled identity array required")
+        groups[name] = tuple(identity(row) for row in rows)
+        _need(len({(row.pid, row.birth_ticks) for row in groups[name]}) == len(rows),
+              "duplicate sampled native identity refused")
+    for name in ("leader_reaped", "descendant_tracking_complete", "group_scan_complete", "cleanup_confirmed"):
+        _need(type(value[name]) is bool, "exact native lifecycle boolean required")
+    counts = {}
+    for name, bound in (("readers", 2), ("stdin_writer", 1)):
+        row = value[name]
+        _need(type(row) is dict and set(row) == {"started", "joined"}
+              and all(type(item) is int and 0 <= item <= bound for item in row.values())
+              and row["joined"] <= row["started"], "closed native I/O counts required")
+        counts[name] = row
+    workspace = value["workspace"]
+    _need(type(workspace) is dict and set(workspace) == {"device", "inode", "removed"}
+          and type(workspace["device"]) is int and workspace["device"] >= 0
+          and type(workspace["inode"]) is int and workspace["inode"] > 0
+          and type(workspace["removed"]) is bool, "closed native workspace observation required")
+    errors = value["observation_errors"]
+    _need(type(errors) is list and len(errors) <= 64
+          and all(type(item) is str and len(item.encode("utf-8")) <= 2048 for item in errors),
+          "bounded complete lifecycle errors required")
+    result = process.NativeToolLifecycleObservation(parent_pid=parent["pid"], parent_birth_ticks=parent["birth_ticks"],
+        leader=identity(value["leader"]), **groups, leader_reaped=value["leader_reaped"],
+        descendant_tracking_complete=value["descendant_tracking_complete"], group_scan_complete=value["group_scan_complete"],
+        readers_started=counts["readers"]["started"], readers_joined=counts["readers"]["joined"],
+        stdin_writer_started=counts["stdin_writer"]["started"], stdin_writer_joined=counts["stdin_writer"]["joined"],
+        workspace_device=workspace["device"], workspace_inode=workspace["inode"], workspace_removed=workspace["removed"],
+        observation_errors=tuple(errors))
+    _need(result.to_dict() == value, "native lifecycle derived cleanup or exact shape differs")
+    return result
+
+
+def _reviewed_native_execution_projection(invocation, run, process):
+    """Pure, lossless sidecar identities; binary artifacts are never text-decoded.
+
+    Capturing a result records its supplied interface and lifecycle. This is not
+    independent execution attestation or a persisted-receipt qualification.
+    """
+    from dataclasses import fields
+    from types import MappingProxyType
+    _need(type(invocation) is process.ToolRunRequest and type(run) is process.ToolRunResult,
+          "exact canonical tool request and result required")
+    _need(invocation.stdin is None and not invocation.secrets and invocation.owned_process_observation is True,
+          "closed source-only owned native invocation required")
+    _need(type(invocation.limits) is process.ToolRunLimits and type(run.runtime) is process.ToolRuntime
+          and (run.returncode is None or type(run.returncode) is int)
+          and all(type(getattr(run, name)) is bool for name in _REVIEWED_RUN_FIELDS
+                  if name not in ("interface_version", "runtime", "command", "returncode", "pid", "elapsed_seconds",
+                                  "termination_reason", "native_lifecycle")), "typed ordinary original runner fields required")
+    _need(len(invocation.input_files) <= MAX_REVIEWED_PRESERVATION_FILES
+          and type(run.output_files) in (dict, MappingProxyType)
+          and len(run.output_files) <= MAX_REVIEWED_PRESERVATION_FILES + MAX_REVIEWED_PRESERVATION_MODULES,
+          "bounded ordinary raw source/output mappings required")
+    _need(all(type(getattr(run, name)) is str for name in ("stdout", "stderr", "error")),
+          "ordinary raw diagnostic text required")
+    _bound_tree({"sources": dict(invocation.input_files), "outputs": dict(run.output_files),
+                 "stdout": run.stdout, "stderr": run.stderr, "error": run.error}, MAX_INPUT_BYTES, allow_bytes=True)
+    def byte_ref(raw):
+        _need(type(raw) is bytes, "raw sidecar bytes required")
+        return {"bytes": len(raw), "sha256": _sha(raw)}
+    sources = {}
+    for name, body in invocation.input_files.items():
+        _need(type(name) is str and type(body) in (str, bytes), "ordinary source input required")
+        sources[name] = body.encode("utf-8") if type(body) is str else body
+    _need(sum(len(raw) for raw in sources.values()) <= MAX_PROJECT_BYTES,
+          "complete projected source byte bound exceeded")
+    outputs = dict(run.output_files)
+    _need(len(outputs) <= MAX_REVIEWED_PRESERVATION_FILES + MAX_REVIEWED_PRESERVATION_MODULES
+          and all(type(name) is str and type(raw) is bytes for name, raw in outputs.items())
+          and sum(len(raw) for raw in outputs.values()) <= invocation.limits.max_workspace_bytes,
+          "complete raw projected output population bound exceeded")
+    logs = {name: getattr(run, attr).encode("utf-8") for name, attr in
+            (("stdout.txt", "stdout"), ("stderr.txt", "stderr"), ("runner-error.txt", "error"))}
+    _need(all(len(raw) <= 3 * MAX_CAPTURE_BYTES for raw in logs.values()), "complete raw diagnostic bound exceeded")
+    lifecycle = None
+    if run.native_lifecycle is not None:
+        _need(type(run.native_lifecycle) is process.NativeToolLifecycleObservation, "typed native lifecycle required")
+        lifecycle = run.native_lifecycle.to_dict()
+        _reviewed_native_lifecycle_from_dict(lifecycle, process)
+    metadata = {name: getattr(run, name) for name in _REVIEWED_RUN_FIELDS
+                if name not in ("runtime", "command", "native_lifecycle")}
+    metadata.update(runtime=run.runtime.value, command=list(run.command), native_lifecycle=lifecycle)
+    result = {"schema": _REVIEWED_EXECUTION_SCHEMA, "invocation": {
+        "argv": list(invocation.argv), "runtime": invocation.runtime.value,
+        "limits": {field.name: getattr(invocation.limits, field.name) for field in fields(process.ToolRunLimits)},
+        "environment": dict(invocation.environment), "owned_process_observation": True,
+        "input_file_refs": {name: byte_ref(raw) for name, raw in sorted(sources.items())},
+        "output_paths": list(invocation.output_paths)}, "result": metadata,
+        "raw_logs": {name: byte_ref(raw) for name, raw in logs.items()},
+        "output_file_refs": {name: byte_ref(raw) for name, raw in sorted(outputs.items())}}
+    _wire(result, MAX_RECORD_BYTES)
+    return result
+
+
+def _reviewed_native_execution_from_projection(value, *, sources, outputs, logs, process):
+    """Reconstruct ordinary typed metadata and raw bytes, with no tool execution.
+
+    The future persisted loader must still bind full current project semantics,
+    independently trusted receipt/owner evidence, strict proof reports and all
+    producer/toolchain/closure identities. This helper grants none of those.
+    """
+    from dataclasses import fields
+    _bound_tree({"projection": value, "sources": sources, "outputs": outputs, "logs": logs},
+                MAX_INPUT_BYTES, allow_bytes=True)
+    _bound_tree(value, MAX_RECORD_BYTES)
+    _need(type(value) is dict and set(value) == {"schema", "invocation", "result", "raw_logs", "output_file_refs"}
+          and value["schema"] == _REVIEWED_EXECUTION_SCHEMA, "closed reviewed execution projection required")
+    invocation, metadata = value["invocation"], value["result"]
+    _need(type(invocation) is dict and set(invocation) == {"argv", "runtime", "limits", "environment",
+        "owned_process_observation", "input_file_refs", "output_paths"}, "closed original native invocation required")
+    _need(type(metadata) is dict and set(metadata) == set(_REVIEWED_RUN_FIELDS), "closed original result metadata required")
+    _need(type(sources) is dict and type(outputs) is dict and type(logs) is dict
+          and set(sources) == set(invocation["input_file_refs"])
+          and set(outputs) == set(value["output_file_refs"])
+          and set(logs) == set(value["raw_logs"]) == {"stdout.txt", "stderr.txt", "runner-error.txt"},
+          "complete independently supplied raw source/output/log populations required")
+    for actual, refs in ((sources, invocation["input_file_refs"]), (outputs, value["output_file_refs"]), (logs, value["raw_logs"])):
+        _need(type(refs) is dict, "closed raw byte references required")
+        for name, raw in actual.items():
+            reference = refs[name]
+            _need(type(name) is str and type(raw) is bytes and type(reference) is dict
+                  and set(reference) == {"bytes", "sha256"}
+                  and type(reference["bytes"]) is int and reference["bytes"] == len(raw)
+                  and reference["sha256"] == _sha(raw), "complete raw sidecar reference differs")
+    limits = invocation["limits"]
+    _need(type(limits) is dict and set(limits) == {field.name for field in fields(process.ToolRunLimits)},
+          "complete original invocation limits required")
+    _need(type(invocation["argv"]) is list and type(invocation["output_paths"]) is list
+          and type(metadata["command"]) is list and type(invocation["environment"]) is dict,
+          "ordinary original invocation arrays and environment required")
+    _need(0 < len(invocation["argv"]) <= 256 and len(invocation["output_paths"]) <= MAX_REVIEWED_PRESERVATION_FILES + MAX_REVIEWED_PRESERVATION_MODULES
+          and len(metadata["command"]) <= 256 and len(invocation["environment"]) <= 64,
+          "bounded original argument/path/environment population required")
+    for parts in (invocation["argv"], metadata["command"]):
+        _need(all(type(part) is str and "\x00" not in part and len(part.encode("utf-8")) <= 4096 for part in parts),
+              "ordinary original argument strings required")
+    _need(all(type(name) is str and type(body) is str and "\x00" not in name + body
+              for name, body in invocation["environment"].items()), "ordinary original environment required")
+    _need(all(type(path) is str and 0 < len(path) <= 512 and not path.startswith("/")
+              and "\\" not in path and "\x00" not in path
+              and all(part not in ("", ".", "..") for part in path.split("/"))
+              for path in invocation["output_paths"]), "closed original output paths required")
+    for name in _REVIEWED_RUN_FIELDS:
+        if name in ("interface_version", "termination_reason"):
+            _need(type(metadata[name]) is str and len(metadata[name].encode("utf-8")) <= 256,
+                  "bounded original runner text required")
+        elif name not in ("runtime", "command", "native_lifecycle", "returncode", "pid", "elapsed_seconds"):
+            _need(type(metadata[name]) is bool, "exact original result boolean required")
+    _need(metadata["returncode"] is None or type(metadata["returncode"]) is int, "ordinary original exit code required")
+    _need(metadata["pid"] is None or (type(metadata["pid"]) is int and metadata["pid"] > 0),
+          "ordinary positive original tool PID required")
+    _need(type(metadata["elapsed_seconds"]) in (int, float) and math.isfinite(metadata["elapsed_seconds"])
+          and metadata["elapsed_seconds"] >= 0, "finite original tool elapsed time required")
+    request = process.ToolRunRequest(argv=tuple(invocation["argv"]), runtime=invocation["runtime"],
+        limits=process.ToolRunLimits(**limits), input_files=sources, output_paths=tuple(invocation["output_paths"]),
+        environment=invocation["environment"], owned_process_observation=invocation["owned_process_observation"])
+    texts = {name: raw.decode("utf-8") for name, raw in logs.items()}
+    record = dict(metadata, runtime=process.ToolRuntime(metadata["runtime"]), command=tuple(metadata["command"]),
+        native_lifecycle=_reviewed_native_lifecycle_from_dict(metadata["native_lifecycle"], process),
+        stdout=texts["stdout.txt"], stderr=texts["stderr.txt"], error=texts["runner-error.txt"], output_files=outputs)
+    result = process.ToolRunResult(**record)
+    _need(_reviewed_native_execution_projection(request, result, process) == value,
+          "complete original execution projection differs after typed raw reconstruction")
+    return request, result
+
+
+# Retained reviewed-native observations remain zero-authority. A trusted
+# original admitted-success adapter is a separate, currently absent prerequisite.
+REVIEWED_RECEIPT_REPLAY_SCHEMA = "legal-reviewed-native-receipt-replay/v1"
+REVIEWED_RECEIPT_REPLAY_PROFILE = "current-reviewed-native-retained-observation-replay/v1"
+_REVIEWED_REPLAY_ACTUAL = "retained-native-observation/v1"
+_REVIEWED_REPLAY_FICTIONAL = "fictional-authored-observation/v1"
+_REVIEWED_REPLAY_BINDINGS = (
+    "input_commitment_sha256", "reviewed_graph_sha256", "reviewed_admission_sha256",
+    "declaration_sha256", "provenance_kind", "scope_record_cid", "interpretation_record_cid",
+    "units", "signature_header", "predicate_compatibility_ledger", "module_imports",
+    "preservation_obligations", "file_sha256", "support_profile",
+    "preservation_only", "cross_unit_definition_application_proved", "statutory_meaning_proved",
+    "release_ready", "full_formal_corpus_consistency_verified", "generic_lean_v3_receipt_substituted",
+    "formal_assumptions", "formal_assumptions_proved",
+)
+_REVIEWED_REPLAY_CORE_FIELDS = frozenset({
+    "schema", "profile", "record_cid", "cid_scope", "preparation_cid",
+    "preparation_full_canonical_sha256", "preparation_manifest_sha256",
+    "reviewed_execution_evidence", "reviewed_execution_projection_error",
+    "original_preparation_unchanged", "toolchain", "command", "expected_command", "runtime",
+    "pid", "returncode", "expected_modules", "compiled_modules", "manifest_coverage_passed",
+    "executed_project_readback_passed", "executed_project_sha256", "producer_pins",
+    "binary_sha256", "binaries_unchanged", "version_probes", "post_run_validation_passed",
+    "post_run_validation_error", "binary_recheck_error", "artifact_sha256", "artifact_bytes",
+    "artifact_files", "conditional_theorems", "conditional_kernel_status",
+    "theorem_axiom_dependencies", "axiom_observations_passed", "axiom_observation_errors",
+    "theorem_assumptions", "original_preparation_theorem_assumptions", "stdout", "stderr", "error",
+    "log_sha256", "log_bytes", "receipt_text_truncated", "elapsed_seconds", "termination_reason",
+    "timed_out", "cancelled", "unavailable", "output_truncated", "workspace_limit_exceeded",
+    "resource_exhausted", "workspace_cleaned", "process_tree_terminated", "native_lifecycle",
+    "cleanup_confirmed", "observed_process_scope_passed", "ownership_is_sampled",
+    "kernel_containment_attested", "build_passed", "native_runtime_verified", "status",
+    "alias_assumption_proved", "source_to_model_equivalence_proved", "authority",
+    "training_mask", "evaluation_gold_mask", "scope",
+}) | frozenset(_REVIEWED_REPLAY_BINDINGS) | frozenset(PARENT_FALSE_FLAGS)
+_REVIEWED_REPLAY_SCOPE = (
+    "Five exact independent concrete IR/native preservation obligations for each current reviewed "
+    "source unit; no cross-unit governing-definition application, statutory truth, universal compiler "
+    "theorem, legal review or corpus/release admission.")
+
+
+def reviewed_norm_preservation_receipt_bytes_v2(receipt):
+    """Format one complete reviewed-profile observation, granting no authority.
+
+    This is a bounded closed formatter, not receipt validation, producer
+    authentication or an original-success adapter. No operation owner is loaded.
+    """
+    _bound_tree(receipt, MAX_RECEIPT_BYTES)
+    _need(type(receipt) is dict and set(receipt) == _REVIEWED_REPLAY_CORE_FIELDS
+          and receipt["schema"] == REVIEWED_PRESERVATION_BUILD_SCHEMA
+          and receipt["profile"] == REVIEWED_PRESERVATION_NATIVE_PROFILE,
+          "closed complete reviewed-native receipt required")
+    return _wire(receipt, MAX_RECEIPT_BYTES)
+
+
+def _reviewed_retained_packet(packet_files):
+    _need(type(packet_files) in (tuple, list)
+          and 1 <= len(packet_files) <= 2 * MAX_REVIEWED_PRESERVATION_FILES
+              + MAX_REVIEWED_PRESERVATION_MODULES + 5,
+          "bounded complete reviewed-native byte packet required")
+    pairs, names = [], []
+    for item in packet_files:
+        _need(type(item) in (tuple, list) and len(item) == 2,
+              "exact retained path/raw-byte pairs required")
+        name, raw = item
+        _need(type(name) is str and 0 < len(name) <= 512
+              and re.fullmatch(r"[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*", name)
+              and all(part not in (".", "..") for part in name.split("/"))
+              and type(raw) is bytes, "closed retained paths and complete raw bytes required")
+        names.append(name); pairs.append([name, raw])
+    _need(names == sorted(set(names)), "sorted unique complete retained byte paths required")
+    _bound_tree(pairs, MAX_INPUT_BYTES, allow_bytes=True)
+    inventory = [{"path": name, "bytes": len(raw), "sha256": _sha(raw)} for name, raw in pairs]
+    return dict(pairs), inventory
+
+
+def reviewed_norm_preservation_packet_sha256_v2(packet_files):
+    """Commit the complete retained byte inventory, without authenticating it."""
+    _, inventory = _reviewed_retained_packet(packet_files)
+    return _sha(_wire(inventory, MAX_RECORD_BYTES))
+
+
+def _reviewed_replay_binary_observations(receipt, expected, toolchain, observation_profile, packets):
+    _need(type(expected) is dict and len(expected) == 2 and receipt["binary_sha256"] == expected,
+          "complete independently pinned compiler identities required")
+    for path, digest in expected.items():
+        _pin(digest, "retained compiler binary")
+        _need(type(path) is str and path.startswith("/") and "\x00" not in path
+              and "\\" not in path and all(p not in ("", ".", "..") for p in path[1:].split("/")),
+              "canonical retained compiler pathname required")
+    if observation_profile == _REVIEWED_REPLAY_FICTIONAL:
+        # Preserve the existing authored boundary honestly; never relabel its
+        # fake binary/probe interface as a genuine native observation.
+        names = {Path(path).name: path for path in expected}
+        _need(set(names) == {"synthetic-lake", "synthetic-lean"}
+              and len({str(Path(path).parent) for path in expected}) == 1
+              and receipt["version_probes"] == {}, "exact fictional compiler boundary required")
+        return names["synthetic-lake"]
+    names = packets._binary_map(expected)
+    probes = receipt["version_probes"]
+    _need(type(probes) is dict and set(probes) == {"lake", "lean"}, "complete retained version probes required")
+    version = toolchain.rsplit("v", 1)[1]
+    for name, probe in probes.items():
+        _need(type(probe) is dict and set(probe) == {"command", "returncode", "stdout", "stderr"}
+              and probe["command"] == [names[name], "--version"]
+              and type(probe["returncode"]) is int and probe["returncode"] == 0
+              and type(probe["stdout"]) is str and type(probe["stderr"]) is str
+              and re.search(r"\bversion " + re.escape(version) + r"(?:[,\s)])", probe["stdout"]),
+              "retained version probe differs from selected toolchain")
+    return names["lake"]
+
+
+def validate_reviewed_norm_preservation_native_receipt_v2(
+        receipt_raw, preparation, graph, admission, *args,
+        packet_files, expected_receipt_sha256, expected_packet_sha256, expected_binary_sha256,
+        expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256,
+        toolchain, observation_profile=_REVIEWED_REPLAY_ACTUAL, **kwargs):
+    """Replay retained observations and current complete semantics without Lean.
+
+    The caller owns physical acquisition and independently trusted receipt,
+    packet and compiler pins. Historical PIDs are never inspected. This API
+    cannot authenticate original admitted success, validate olean bytes in the
+    kernel or authorize release/cache/native/statutory admission. The missing
+    original-success adapter remains an explicit prerequisite in every result.
+    """
+    for value, label in ((expected_receipt_sha256, "retained reviewed receipt"),
+                         (expected_packet_sha256, "whole retained reviewed packet")):
+        _pin(value, label)
+    _bound_tree(expected_binary_sha256, MAX_RECORD_BYTES)
+    contents, inventory = _reviewed_retained_packet(packet_files)
+    _need(_sha(_wire(inventory, MAX_RECORD_BYTES)) == expected_packet_sha256,
+          "independent complete retained packet commitment differs")
+    _need(type(receipt_raw) is bytes and 0 < len(receipt_raw) <= MAX_RECEIPT_BYTES
+          and _sha(receipt_raw) == expected_receipt_sha256
+          and contents.get("build-receipt.json") == receipt_raw,
+          "independent original receipt bytes differ")
+    receipt = _parse(receipt_raw, MAX_RECEIPT_BYTES)
+    _need(reviewed_norm_preservation_receipt_bytes_v2(receipt) == receipt_raw,
+          "original reviewed receipt must retain its canonical complete bytes")
+    _need(type(observation_profile) is str
+          and observation_profile in (_REVIEWED_REPLAY_ACTUAL, _REVIEWED_REPLAY_FICTIONAL),
+          "explicit supported retained observation profile required")
+    if observation_profile == _REVIEWED_REPLAY_FICTIONAL:
+        _need(type(admission) is dict and admission.get("fixture_only") is True
+              and admission.get("provenance_kind") == "fictional_fixture",
+              "fictional interface requires unchanged explicit fictional admission")
+    # The existing source/admission/graph/project owner retains all current
+    # review, revocation and source replay; no saved eligibility flag replaces it.
+    checked = validate_reviewed_norm_preservation_native_v2(preparation, graph, admission, *args,
+        expected_preservation_sha256=expected_preservation_sha256,
+        expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
+        toolchain=toolchain, **kwargs)
+    owners = _owners(); transport, process = owners[1], owners[3]
+    from . import legal_corpus_definition_use_preservation_packet_v2 as packets
+    packet_owner_pin = _sha(Path(packets.__file__).read_bytes())
+    _need(packet_owner_pin == packets._SELF_PIN, "existing retained-packet validator changed since import")
+    manifest = checked.to_dict(); contracts = transport.contracts
+    contracts.validate_record(receipt, schema=REVIEWED_PRESERVATION_BUILD_SCHEMA,
+        fields=set(receipt) - {"schema", "record_cid", "cid_scope"})
+    binding = _reviewed_preservation_receipt_binding(manifest, admission)
+    binding.update(preparation_cid=manifest["record_cid"],
+        preparation_full_canonical_sha256=expected_preservation_sha256,
+        preparation_manifest_sha256=_sha(checked.manifest_json.encode("utf-8")), toolchain=toolchain,
+        expected_modules=manifest["expected_modules"], compiled_modules=manifest["expected_modules"],
+        producer_pins=_reviewed_preservation_native_pins(owners, manifest),
+        conditional_theorems=manifest["preservation_obligations"],
+        original_preparation_theorem_assumptions=[], theorem_assumptions=[], scope=_REVIEWED_REPLAY_SCOPE)
+    _need(_wire({name: receipt[name] for name in binding}, MAX_RECEIPT_BYTES)
+          == _wire(binding, MAX_RECEIPT_BYTES),
+          "retained receipt differs from current whole reviewed semantics or producers")
+    success_flags = {"backend_executed", "lean_compilation_verified", "proof_checked",
+                     "kernel_proofs_checked", "conditional_proofs_verified"}
+    for name in PARENT_FALSE_FLAGS:
+        _need(receipt[name] is (name in success_flags), "retained authority/profile flag differs: " + name)
+    _need(receipt["authority"] == AUTHORITY and all(v is False for v in receipt["authority"].values())
+          and type(receipt["training_mask"]) is int and receipt["training_mask"] == 0
+          and type(receipt["evaluation_gold_mask"]) is int and receipt["evaluation_gold_mask"] == 0,
+          "retained receipt cannot grant authority or training masks")
+    for name in ("original_preparation_unchanged", "manifest_coverage_passed", "executed_project_readback_passed",
+                 "binaries_unchanged", "post_run_validation_passed", "axiom_observations_passed",
+                 "workspace_cleaned", "cleanup_confirmed", "observed_process_scope_passed",
+                 "ownership_is_sampled", "build_passed", "native_runtime_verified"):
+        _need(receipt[name] is True, "retained successful observation differs: " + name)
+    for name in ("timed_out", "cancelled", "unavailable", "output_truncated", "workspace_limit_exceeded",
+                 "resource_exhausted", "kernel_containment_attested", "alias_assumption_proved",
+                 "source_to_model_equivalence_proved"):
+        _need(receipt[name] is False, "retained failure/authority field differs: " + name)
+    _need(receipt["reviewed_execution_projection_error"] is None
+          and receipt["post_run_validation_error"] is None and receipt["binary_recheck_error"] is None
+          and receipt["status"] == "conditional_native_checks_passed"
+          and receipt["conditional_kernel_status"] == "checked_under_explicit_hypotheses",
+          "retained profile reports an incomplete or failed build")
+    sources = {name: body.encode("utf-8") for name, body in checked.files}
+    artifacts = [".lake/build/lib/lean/" + name.replace(".", "/") + ".olean"
+                 for name in manifest["expected_modules"]]
+    wanted = ({"build-receipt.json", "stdout.txt", "stderr.txt", "runner-error.txt",
+               "project/" + transport.MANIFEST_FILE}
+              | {"project/" + name for name in sources} | {"executed-inputs/" + name for name in sources}
+              | {"compiled/" + name.removeprefix(".lake/build/lib/lean/") for name in artifacts})
+    _need(set(contents) == wanted
+          and contents["project/" + transport.MANIFEST_FILE] == checked.manifest_json.encode("utf-8")
+          and all(contents["project/" + name] == contents["executed-inputs/" + name] == raw
+                  for name, raw in sources.items()), "complete original project/source packet differs")
+    outputs = {**sources, **{name: contents["compiled/" + name.removeprefix(".lake/build/lib/lean/")]
+                            for name in artifacts}}
+    logs = {name: contents[name] for name in ("stdout.txt", "stderr.txt", "runner-error.txt")}
+    invocation, run = _reviewed_native_execution_from_projection(receipt["reviewed_execution_evidence"],
+        sources=sources, outputs=outputs, logs=logs, process=process)
+    expected_interface = ("synthetic-unit-boundary/v1" if observation_profile == _REVIEWED_REPLAY_FICTIONAL
+                          else process.BOUNDED_TOOL_RUNNER_VERSION)
+    _need(run.interface_version == expected_interface and run.runtime is process.ToolRuntime.NATIVE
+          and invocation.runtime is process.ToolRuntime.NATIVE
+          and type(receipt["runtime"]) is str and receipt["runtime"] == run.runtime.value
+          and type(run.pid) is int and run.pid > 0 and type(run.returncode) is int and run.returncode == 0
+          and run.ok and run.workspace_cleaned and not run.error,
+          "retained runner interface or successful typed result differs")
+    executable = _reviewed_replay_binary_observations(receipt, expected_binary_sha256,
+        toolchain, observation_profile, packets)
+    command = (executable, "--offline", "--no-cache", "build", "legal")
+    _need(invocation.argv == run.command == command and receipt["command"] == receipt["expected_command"] == list(command)
+          and dict(invocation.environment) == {"ELAN_TOOLCHAIN": toolchain, "LEAN_NUM_THREADS": "1"}
+          and invocation.output_paths == tuple(artifacts) + tuple(sources),
+          "original complete invocation, environment or artifact paths differ")
+    from dataclasses import fields
+    timeout = invocation.limits.timeout_seconds
+    _need(type(timeout) in (int, float) and math.isfinite(timeout) and 0 < timeout <= 60,
+          "original bounded compiler timeout required")
+    expected_limits = process.ToolRunLimits(timeout_seconds=timeout, cpu_seconds=timeout,
+        resident_memory_bytes=2 * 1024**3, max_output_bytes=MAX_CAPTURE_BYTES,
+        max_input_bytes=MAX_PROJECT_BYTES, max_workspace_bytes=128 * MAX_RECORD_BYTES,
+        max_output_files=len(outputs))
+    _need(all(getattr(invocation.limits, f.name) == getattr(expected_limits, f.name)
+              and type(getattr(invocation.limits, f.name)) is type(getattr(expected_limits, f.name))
+              for f in fields(process.ToolRunLimits)), "original native resource limits differ")
+    packets._historical_lifecycle(receipt["native_lifecycle"], run.pid)
+    _need(receipt["native_lifecycle"] == run.native_lifecycle.to_dict()
+          and receipt["pid"] == run.pid and type(receipt["pid"]) is int
+          and receipt["returncode"] == run.returncode and type(receipt["returncode"]) is int
+          and type(receipt["process_tree_terminated"]) is bool,
+          "historical lifecycle and result bindings differ")
+    for name in ("elapsed_seconds", "termination_reason", "timed_out", "cancelled", "unavailable",
+                 "output_truncated", "workspace_limit_exceeded", "resource_exhausted",
+                 "workspace_cleaned", "process_tree_terminated"):
+        _need(type(receipt[name]) is type(getattr(run, name)) and receipt[name] == getattr(run, name),
+              "retained runner scalar differs: " + name)
+    artifact_hashes = {name: _sha(outputs[name]) for name in artifacts}
+    expected_artifacts = {"artifact_sha256": artifact_hashes,
+        "artifact_bytes": {name: len(outputs[name]) for name in artifacts},
+        "artifact_files": {name: "compiled/" + name.removeprefix(".lake/build/lib/lean/") for name in artifacts},
+        "executed_project_sha256": {name: _sha(raw) for name, raw in sources.items()}}
+    _need(all(outputs[name] for name in artifacts)
+          and _wire({name: receipt[name] for name in expected_artifacts}, MAX_RECEIPT_BYTES)
+              == _wire(expected_artifacts, MAX_RECEIPT_BYTES),
+          "retained complete source/artifact commitments differ")
+    for name, field in (("stdout.txt", "stdout"), ("stderr.txt", "stderr"), ("runner-error.txt", "error")):
+        raw = logs[name]
+        _need(receipt["log_sha256"][name] == _sha(raw) and type(receipt["log_bytes"][name]) is int
+              and receipt["log_bytes"][name] == len(raw)
+              and receipt[field] == raw[:MAX_LOG_PREVIEW_BYTES].decode("utf-8", errors="replace").replace("\x00", "\\u0000"),
+              "retained complete compiler logs or previews differ")
+    _need(set(receipt["log_sha256"]) == set(receipt["log_bytes"]) == set(logs)
+          and logs["runner-error.txt"] == b""
+          and receipt["receipt_text_truncated"] is any(len(raw) > MAX_LOG_PREVIEW_BYTES for raw in logs.values()),
+          "retained diagnostics or truncation frame differs")
+    axioms, errors, passed = _axiom_observations(run.stdout, run.stderr,
+        {"conditional_theorems": manifest["preservation_obligations"]},
+        maximum_theorems=MAX_REVIEWED_PRESERVATION_THEOREMS)
+    _need(passed is True and errors == receipt["axiom_observation_errors"] == []
+          and axioms == receipt["theorem_axiom_dependencies"],
+          "retained exact preservation obligation/axiom reports differ")
+    # Recheck current source/review/graph dependencies after the full byte replay.
+    validate_reviewed_norm_preservation_native_v2(preparation, graph, admission, *args,
+        expected_preservation_sha256=expected_preservation_sha256,
+        expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
+        toolchain=toolchain, **kwargs)
+    _need(_sha(Path(packets.__file__).read_bytes()) == packet_owner_pin,
+          "retained-packet validator changed during replay")
+    return contracts.seal_record({**dict(PARENT_FALSE_FLAGS), "schema": REVIEWED_RECEIPT_REPLAY_SCHEMA,
+        "profile": REVIEWED_RECEIPT_REPLAY_PROFILE, "observation_profile": observation_profile,
+        "retained_receipt_sha256": expected_receipt_sha256, "retained_packet_sha256": expected_packet_sha256,
+        "preparation_sha256": expected_preservation_sha256, "graph_sha256": expected_graph_sha256,
+        "admission_sha256": expected_admission_sha256, "retained_observations_consistent": True,
+        "current_complete_semantics_replayed": True, "obligations": list(manifest["preservation_obligations"]),
+        "packet_inventory": inventory, "producer_pins": {**_reviewed_preservation_native_pins(owners, manifest),
+            str(Path(packets.__file__).resolve()): packet_owner_pin},
+        "original_success_authenticated": False, "native_execution_authenticated": False,
+        "native_execution_performed": False, "olean_kernel_rechecked": False,
+        "release_ready": False, "Lean_admitted": False, "training_mask": 0, "evaluation_gold_mask": 0,
+        "authority": dict(AUTHORITY), "missing_prerequisites": [
+            "Independently trusted original admitted-success custody adapter for this reviewed profile.",
+            "Source-matched actual native qualification and reviewed release-native consumer integration."],
+        "scope": "Retained observation consistency and current replay only; no historical process, kernel, legal or release authority."})
+
+
+def load_reviewed_norm_preservation_native_v2(packet_files, preparation, graph, admission, *args, **kwargs):
+    """Reopen an acquired byte packet; caller owns physical file acquisition.
+
+    No path is opened and no compiler/process is run by this entry. The existing
+    replay owners may read their pinned code as part of current-source fencing.
+    This returns the same zero-authority observation as the explicit validator.
+    """
+    contents, _ = _reviewed_retained_packet(packet_files)
+    _need("build-receipt.json" in contents, "original complete native receipt required")
+    return validate_reviewed_norm_preservation_native_receipt_v2(contents["build-receipt.json"],
+        preparation, graph, admission, *args, packet_files=packet_files, **kwargs)
+
+
+__all__ += ["REVIEWED_RECEIPT_REPLAY_SCHEMA", "REVIEWED_RECEIPT_REPLAY_PROFILE",
+    "reviewed_norm_preservation_receipt_bytes_v2", "reviewed_norm_preservation_packet_sha256_v2",
+    "validate_reviewed_norm_preservation_native_receipt_v2", "load_reviewed_norm_preservation_native_v2"]
+
+
+# This capability authenticates a fresh execution by this native owner. It does
+# not authenticate the caller's separate Source/native/storage admission or its
+# parent closeout. Python process memory and the standard library are cooperative
+# trusted infrastructure; this is not a sandbox against arbitrary Python code.
+REVIEWED_LIVE_SUCCESS_SCHEMA = "legal-reviewed-native-live-success/v1"
+REVIEWED_LIVE_SUCCESS_PROFILE = "current-reviewed-live-native-owner-success/v1"
+REVIEWED_MIXED_LIVE_SUCCESS_SCHEMA = "legal-reviewed-native-live-success/v3"
+REVIEWED_MIXED_LIVE_SUCCESS_PROFILE = "current-reviewed-mixed-live-native-owner-success/v3"
+_LIVE_SUCCESS_HANDLES = weakref.WeakKeyDictionary()
+_LIVE_MODULE_BINDINGS = None
+_LIVE_REVIEW_BINDINGS = None
+_LIVE_MIXED_REVIEW_BINDINGS = None
+
+
+class _LiveNativeObserverRefusal(ValueError):
+    """Private completed-run refusal whose genuine persistence remains safe."""
+
+
+class VerifiedReviewedPreservationNativeSuccess:
+    """Opaque, nonserializable, process/native-thread-local live build handle.
+
+    Only a fresh successful original native execution can issue one. Saved JSON,
+    retained packets, historical receipts and reconstructed instances cannot.
+    The handle carries no parent-admission or legal/release authority.
+    """
+
+    __slots__ = ("__weakref__",)
+    __hash__ = object.__hash__
+    __eq__ = object.__eq__
+
+    def __new__(cls):
+        raise TypeError("live success handles are issued only by the fresh native builder")
+
+    def __init_subclass__(cls, **kwargs):
+        raise TypeError("live success handles cannot be subclassed")
+
+    def __reduce_ex__(self, protocol):
+        raise TypeError("live success handles cannot be copied or serialized")
+
+    def __repr__(self):
+        return "<VerifiedReviewedPreservationNativeSuccess>"
+
+
+def _live_callable_state(function):
+    return (function, function.__code__, function.__defaults__,
+            tuple(sorted((function.__kwdefaults__ or {}).items())))
+
+
+def _live_callable_matches(function, state):
+    if (type(function) is not types.FunctionType or function is not state[0]
+            or function.__code__ is not state[1] or function.__defaults__ is not state[2]):
+        return False
+    current = function.__kwdefaults__ or {}
+    return (set(current) == {key for key, _ in state[3]}
+            and all(current[key] is value for key, value in state[3]))
+
+
+def _live_descriptor_function(descriptor):
+    if type(descriptor) in (staticmethod, classmethod):
+        return descriptor.__func__
+    if type(descriptor) is property:
+        return descriptor.fget
+    return descriptor
+
+
+def _live_compiled_module_bindings(module):
+    """Verify source function origin before lazily accepting runtime identities.
+
+    Comparing a fresh nested code map prevents first-use monkeypatches from
+    becoming the baseline. Dataclass-generated methods are identity/code/default
+    fenced together with the source-declared class methods after that check.
+    No imported source is executed by this provenance operation.
+    """
+    _need(type(module) is types.ModuleType and sys.modules.get(module.__name__) is module,
+          "live success callable bindings changed: canonical owner module required")
+    filename = str(Path(module.__file__).resolve())
+    raw = Path(filename).read_bytes()
+    tree = ast.parse(raw, filename=filename)
+    compiled = compile(raw, filename, "exec", dont_inherit=True, optimize=sys.flags.optimize)
+    codes = {}
+
+    def walk(code):
+        codes[code.co_qualname] = code
+        for constant in code.co_consts:
+            if type(constant) is types.CodeType:
+                walk(constant)
+
+    walk(compiled)
+    functions, classes = [], []
+
+    def source_function(name, function):
+        expected = codes.get(name)
+        _need(type(function) is types.FunctionType and expected is not None
+              and function.__code__ == expected and function.__globals__ is vars(module)
+              and function.__module__ == module.__name__ and function.__qualname__ == name,
+              "live success callable bindings changed: source origin " + name)
+
+    for node in tree.body:
+        if type(node) in (ast.FunctionDef, ast.AsyncFunctionDef):
+            function = vars(module).get(node.name)
+            source_function(node.name, function)
+            functions.append((None, node.name, _live_callable_state(function)))
+        elif type(node) is ast.ClassDef:
+            owner = vars(module).get(node.name)
+            _need(isinstance(owner, type) and owner.__module__ == module.__name__
+                  and owner.__qualname__ == node.name,
+                  "live success callable bindings changed: source class " + node.name)
+            declared = {child.name for child in node.body
+                        if type(child) in (ast.FunctionDef, ast.AsyncFunctionDef)}
+            # A lazy baseline must never bless a newly supplied lookup hook.
+            # Dataclasses generate equality/initialization/frozen setters, but
+            # do not generate attribute-lookup or descriptor-control hooks.
+            forbidden = {"__getattribute__", "__getattr__", "__call__", "__get__", "__set__", "__delete__"}
+            _need(not ((set(vars(owner)) & forbidden) - declared),
+                  "live success callable bindings changed: undeclared class lookup " + node.name)
+            if module.__name__ == "ipfs_datasets_py.logic.backends.process" and node.name in (
+                    "BoundedToolRunner", "SubprocessExecutor"):
+                _need(type(owner) is type and owner.__bases__ == (object,)
+                      and owner.__getattribute__ is object.__getattribute__
+                      and owner.__new__ is object.__new__
+                      and owner.__setattr__ is object.__setattr__
+                      and owner.__delattr__ is object.__delattr__
+                      and not hasattr(owner, "__getattr__"),
+                      "live success callable bindings changed: original runner class lookup")
+            classes.append((node.name, owner, type(owner), owner.__bases__, frozenset(vars(owner))))
+            for child in node.body:
+                if type(child) in (ast.FunctionDef, ast.AsyncFunctionDef):
+                    function = _live_descriptor_function(vars(owner).get(child.name))
+                    source_function(node.name + "." + child.name, function)
+            for name, descriptor in vars(owner).items():
+                function = _live_descriptor_function(descriptor)
+                if type(function) is types.FunctionType:
+                    functions.append((owner, name, _live_callable_state(function)))
+    return (module, filename, _sha(raw), tuple(classes), tuple(functions))
+
+
+def _live_check_module_bindings(snapshot, *, skip=()):
+    module, filename, digest, classes, functions = snapshot
+    _need(sys.modules.get(module.__name__) is module and str(Path(module.__file__).resolve()) == filename
+          and _sha(Path(filename).read_bytes()) == digest,
+          "live success callable bindings changed: owner source")
+    for name, owner, metaclass, bases, keys in classes:
+        _need(vars(module).get(name) is owner and type(owner) is metaclass
+              and owner.__bases__ is bases and frozenset(vars(owner)) == keys,
+              "live success callable bindings changed: owner class " + name)
+    for owner, name, state in functions:
+        if owner is not None and (owner.__name__, name) in skip:
+            continue
+        current = vars(module).get(name) if owner is None else _live_descriptor_function(vars(owner).get(name))
+        _need(_live_callable_matches(current, state),
+              "live success callable bindings changed: owner function " + name)
+
+
+def _live_success_guard(owners=None, *, reviewed_version=2):
+    """Fence code identity, not caller-provided success booleans or callbacks."""
+    global _LIVE_MODULE_BINDINGS, _LIVE_REVIEW_BINDINGS, _LIVE_MIXED_REVIEW_BINDINGS
+    _need(type(reviewed_version) is int and reviewed_version in (2, 3),
+          "explicit closed live guard version required")
+    for name, state in _LIVE_NATIVE_FUNCTIONS:
+        _need(_live_callable_matches(globals().get(name), state),
+              "live success callable bindings changed: native function " + name)
+    for name, state in _LIVE_HANDLE_FUNCTIONS:
+        _need(_live_callable_matches(_live_descriptor_function(
+            vars(VerifiedReviewedPreservationNativeSuccess).get(name)), state),
+            "live success callable bindings changed: opaque handle")
+    _need(VerifiedReviewedPreservationNativeSuccess is _LIVE_HANDLE_CLASS
+          and type(_LIVE_HANDLE_CLASS) is _LIVE_HANDLE_METACLASS
+          and _LIVE_HANDLE_CLASS.__bases__ is _LIVE_HANDLE_BASES
+          and frozenset(vars(_LIVE_HANDLE_CLASS)) == _LIVE_HANDLE_KEYS
+          and vars(_LIVE_HANDLE_CLASS).get("__hash__") is object.__hash__
+          and vars(_LIVE_HANDLE_CLASS).get("__eq__") is object.__eq__
+          and subprocess.Popen is _LIVE_POPEN_CLASS
+          and type(_LIVE_POPEN_CLASS) is _LIVE_POPEN_METACLASS
+          and _LIVE_POPEN_CLASS.__bases__ is _LIVE_POPEN_BASES
+          and frozenset(vars(_LIVE_POPEN_CLASS)) == _LIVE_POPEN_KEYS,
+          "live success callable bindings changed: native class")
+    for name, state in _LIVE_POPEN_FUNCTIONS:
+        _need(_live_callable_matches(_live_descriptor_function(vars(subprocess.Popen).get(name)), state),
+              "live success callable bindings changed: stdlib Popen " + name)
+    _need(_sha(Path(__file__).read_bytes()) == _SELF_PIN,
+          "live success callable bindings changed: native source")
+    canonical_name = "ipfs_datasets_py.logic.autoformal.legal_corpus_definition_use_native_v2"
+    canonical = sys.modules.get(canonical_name)
+    _need(__name__ == canonical_name and type(canonical) is types.ModuleType
+          and vars(canonical) is globals(),
+          "live success callable bindings changed: canonical native owner required")
+    if owners is not None:
+        _need(type(owners) is tuple and len(owners) == 5
+              and owners[3].__name__ == "ipfs_datasets_py.logic.backends.process",
+              "live success callable bindings changed: exact execution owner")
+        _need(Path(__file__).resolve() == Path(owners[4].__file__).resolve().with_name(
+                  "legal_corpus_definition_use_native_v2.py"),
+              "live success callable bindings changed: canonical native source path required")
+        if _LIVE_MODULE_BINDINGS is None:
+            candidate = tuple(_live_compiled_module_bindings(module) for module in owners)
+            for snapshot in candidate:
+                _live_check_module_bindings(snapshot)
+            _LIVE_MODULE_BINDINGS = candidate
+        _need(all(owners[index] is state[0] for index, state in enumerate(_LIVE_MODULE_BINDINGS)),
+              "live success callable bindings changed: execution owner identity")
+        for snapshot in _LIVE_MODULE_BINDINGS:
+            _live_check_module_bindings(snapshot)
+        direct, admission_owner = _live_review_components(owners, reviewed_version)
+        bindings = _LIVE_REVIEW_BINDINGS if reviewed_version == 2 else _LIVE_MIXED_REVIEW_BINDINGS
+        if bindings is None:
+            first = tuple(_live_compiled_module_bindings(module) for module in direct)
+            # Check source origins before nested current-review callbacks run.
+            nested = (*admission_owner._reviewed_owners(), *admission_owner.norm._owners())
+            extra = tuple(module for index, module in enumerate(nested)
+                          if module not in direct and module not in nested[:index])
+            bindings = (first, tuple(_live_compiled_module_bindings(module) for module in extra))
+            if reviewed_version == 2:
+                _LIVE_REVIEW_BINDINGS = bindings
+            else:
+                _LIVE_MIXED_REVIEW_BINDINGS = bindings
+        first, extra = bindings
+        _need(tuple(state[0] for state in first) == direct,
+              "live success callable bindings changed: current review owners")
+        for snapshot in (*first, *extra):
+            _live_check_module_bindings(snapshot)
+        nested = (*admission_owner._reviewed_owners(), *admission_owner.norm._owners())
+        _need(all(module in direct or any(module is state[0] for state in extra) for module in nested),
+              "live success callable bindings changed: nested current review owners")
+
+
+def _live_postrun_persistence_trusted(owners, *, reviewed_version=2):
+    """Allow evidence retention only through still-original remaining owners."""
+    try:
+        _need(type(reviewed_version) is int and reviewed_version in (2, 3), "closed live persistence version required")
+        bindings = _LIVE_REVIEW_BINDINGS if reviewed_version == 2 else _LIVE_MIXED_REVIEW_BINDINGS
+        for name, state in _LIVE_NATIVE_FUNCTIONS:
+            _need(_live_callable_matches(globals().get(name), state),
+                  "live success callable bindings changed: post-run persistence")
+        _need(_LIVE_MODULE_BINDINGS is not None and bindings is not None,
+              "live success original persistence bindings required")
+        for index, snapshot in enumerate(_LIVE_MODULE_BINDINGS):
+            _need(owners[index] is snapshot[0], "live success original persistence owner required")
+            _live_check_module_bindings(snapshot, skip=(
+                (("BoundedToolRunner", "run"), ("SubprocessExecutor", "execute")) if index == 3 else ()))
+        first, extra = bindings
+        for snapshot in (*first, *extra):
+            _live_check_module_bindings(snapshot)
+        return True
+    except (ValueError, TypeError, OSError, KeyError, AttributeError):
+        return False
+
+
+def _live_freeze_inputs(value):
+    """Detach the entire ordinary current-review tree, retaining byte bodies."""
+    remaining, nodes = MAX_INPUT_BYTES + MAX_PREPARATION_BYTES, 2_000_000
+
+    def freeze(item, depth):
+        nonlocal remaining, nodes
+        nodes -= 1
+        _need(nodes >= 0 and depth <= 64, "bounded live success original inputs required")
+        if type(item) is dict:
+            _need(all(type(key) is str for key in item), "ordinary live success input keys required")
+            result = ("dict", tuple((freeze(key, depth + 1), freeze(item[key], depth + 1))
+                                    for key in sorted(item)))
+            remaining -= 2 + 2 * len(item)
+        elif type(item) in (tuple, list):
+            result = ("tuple" if type(item) is tuple else "list",
+                      tuple(freeze(child, depth + 1) for child in item))
+            remaining -= 2 + len(item)
+        elif type(item) in (str, bytes):
+            raw = item.encode("utf-8") if type(item) is str else item
+            remaining -= len(raw) + 2
+            result = ("str" if type(item) is str else "bytes", raw)
+        elif item is None or type(item) in (bool, int):
+            remaining -= 24
+            result = (type(item).__name__, item)
+        elif type(item) is float and math.isfinite(item):
+            remaining -= 32
+            result = ("float", item.hex())
+        else:
+            raise ValueError("ordinary detached live success original inputs required")
+        _need(remaining >= 0, "complete live success original input byte bound exceeded")
+        return result
+
+    return freeze(value, 0)
+
+
+def _live_original_inputs(preparation, graph, admission, args, kwargs):
+    return _live_freeze_inputs((_reviewed_preservation_native_document(preparation),
+                               graph, admission, args, kwargs))
+
+
+def _live_read_persisted_packet(output, checked, receipt, transport, *, reviewed_version=2):
+    """Reopen the closed original packet through existing no-follow readers."""
+    output = transport._path(output)
+    transport._check_directories(output)
+    root_fd = os.open(output, os.O_RDONLY | os.O_NOFOLLOW | os.O_DIRECTORY)
+    leaf_names = {"build-receipt.json", "stdout.txt", "stderr.txt", "runner-error.txt"}
+    wanted = leaf_names | {"project", "compiled", "executed-inputs"}
+    contents = {}
+    try:
+        transport._check_directories(output, root_fd)
+        with os.scandir(root_fd) as entries:
+            observed = set()
+            for entry in entries:
+                _need(not entry.is_symlink() and entry.name in wanted,
+                      "complete ordinary live success packet required")
+                observed.add(entry.name)
+        _need(observed == wanted, "complete original persisted live success packet required")
+        for name in sorted(leaf_names):
+            descriptor = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=root_fd)
+            with os.fdopen(descriptor, "rb") as source:
+                before = os.fstat(source.fileno())
+                _need(stat.S_ISREG(before.st_mode) and before.st_size <= 3 * MAX_CAPTURE_BYTES,
+                      "bounded ordinary live success packet file required")
+                raw = source.read(3 * MAX_CAPTURE_BYTES + 1)
+                after = os.fstat(source.fileno())
+                current = os.stat(name, dir_fd=root_fd, follow_symlinks=False)
+                _need(transport._stable_stat(before) == transport._stable_stat(after)
+                      == transport._stable_stat(current) and len(raw) == before.st_size,
+                      "live success packet changed during readback")
+                contents[name] = raw
+        sources = {name for name, _ in checked.files}
+        compiled = {name.removeprefix("compiled/") for name in receipt["artifact_files"].values()}
+        for directory, names, maximum in (
+                ("project", sources | {transport.MANIFEST_FILE}, MAX_REVIEWED_PRESERVATION_FILES + 1),
+                ("executed-inputs", sources, MAX_REVIEWED_PRESERVATION_FILES),
+                ("compiled", compiled, MAX_REVIEWED_PRESERVATION_MODULES)):
+            files = transport._read_files(output / directory, names, maximum_files=maximum)
+            contents.update((directory + "/" + name, raw) for name, raw in files.items())
+        transport._check_directories(output, root_fd)
+    finally:
+        os.close(root_fd)
+    packet = tuple(sorted(contents.items()))
+    _reviewed_retained_packet(packet)
+    _need(contents["build-receipt.json"] == _live_success_domain(reviewed_version)[9](receipt),
+          "persisted live success receipt differs from original returned receipt")
+    return packet
+
+
+def _live_handle_entry(handle, *, reviewed_version=2):
+    _need(type(reviewed_version) is int and reviewed_version in (2, 3),
+          "explicit closed live handle version required")
+    # This check intentionally precedes every owner import and preparation read.
+    _need(type(handle) is _LIVE_HANDLE_CLASS
+          and VerifiedReviewedPreservationNativeSuccess is _LIVE_HANDLE_CLASS
+          and type(_LIVE_HANDLE_CLASS) is _LIVE_HANDLE_METACLASS
+          and _LIVE_HANDLE_CLASS.__bases__ is _LIVE_HANDLE_BASES
+          and frozenset(vars(_LIVE_HANDLE_CLASS)) == _LIVE_HANDLE_KEYS
+          and vars(_LIVE_HANDLE_CLASS).get("__hash__") is object.__hash__
+          and vars(_LIVE_HANDLE_CLASS).get("__eq__") is object.__eq__,
+          "live success handle was not issued by this process and native thread")
+    entry = _LIVE_SUCCESS_HANDLES.get(handle)
+    _need(type(entry) is tuple and len(entry) == 9 and type(entry[8]) is int
+          and entry[8] == reviewed_version and entry[0] == os.getpid() and entry[1] == threading.get_native_id()
+          and entry[6]() is threading.current_thread() and entry[7]() is handle,
+          "live success handle was not issued by this process and native thread")
+    return entry
+
+
+def _live_success_domain(reviewed_version):
+    """Select one closed literal domain after the independent callable fence."""
+    _need(type(reviewed_version) is int and reviewed_version in (2, 3),
+          "explicit closed live success version required")
+    _need(type(PARENT_FALSE_FLAGS) is dict and set(PARENT_FALSE_FLAGS) == _REVIEWED_MIXED_FALSE_KEYS
+          and all(value is False for value in PARENT_FALSE_FLAGS.values())
+          and type(AUTHORITY) is dict and set(AUTHORITY) == _REVIEWED_MIXED_AUTHORITY_KEYS
+          and all(value is False for value in AUTHORITY.values()),
+          "live success cannot widen its closed false-authority policy")
+    if reviewed_version == 2:
+        _need((REVIEWED_PRESERVATION_BUILD_SCHEMA, REVIEWED_PRESERVATION_NATIVE_PROFILE,
+               REVIEWED_LIVE_SUCCESS_SCHEMA, REVIEWED_LIVE_SUCCESS_PROFILE) == (
+            "legal-corpus-reviewed-preservation-native-build/v2",
+            "replayed-reviewed-multiunit-preservation-native-build/v2",
+            "legal-reviewed-native-live-success/v1", "current-reviewed-live-native-owner-success/v1"),
+            "closed Object live success domain cannot alias another profile")
+        return ("legal-corpus-reviewed-preservation-native-build/v2",
+            "replayed-reviewed-multiunit-preservation-native-build/v2",
+            "legal-reviewed-native-live-success/v1", "current-reviewed-live-native-owner-success/v1",
+            _reviewed_preservation_receipt_binding, _reviewed_preservation_native_pins,
+            reviewed_norm_preservation_packet_sha256_v2, load_reviewed_norm_preservation_native_v2,
+            validate_reviewed_norm_preservation_native_v2, reviewed_norm_preservation_receipt_bytes_v2,
+            _REVIEWED_REPLAY_SCOPE)
+    _reviewed_mixed_native_policy()
+    _need((REVIEWED_MIXED_LIVE_SUCCESS_SCHEMA, REVIEWED_MIXED_LIVE_SUCCESS_PROFILE) == (
+        "legal-reviewed-native-live-success/v3", "current-reviewed-mixed-live-native-owner-success/v3"),
+        "closed mixed live success domain cannot alias another profile")
+    return ("legal-corpus-reviewed-preservation-native-build/v3",
+        "replayed-reviewed-mixed-multiunit-preservation-native-build/v3",
+        "legal-reviewed-native-live-success/v3", "current-reviewed-mixed-live-native-owner-success/v3",
+        _reviewed_mixed_preservation_receipt_binding, _reviewed_mixed_preservation_native_pins,
+        reviewed_norm_preservation_packet_sha256_v3, load_reviewed_norm_preservation_native_v3,
+        validate_reviewed_norm_preservation_native_v3, reviewed_norm_preservation_receipt_bytes_v3,
+        _REVIEWED_MIXED_SCOPE)
+
+
+def _live_review_components(owners, reviewed_version):
+    """Retain the existing V2 owners and the explicit V3 legacy-alias closure."""
+    _need(type(reviewed_version) is int and reviewed_version in (2, 3),
+          "explicit closed live review version required")
+    if reviewed_version == 2:
+        graph, admission, preservation = owners[4]._reviewed_preservation_owners()
+        return ((graph, admission, preservation, admission.norm, admission.content, admission.reader),
+                admission)
+    graph, admission, preservation = owners[4]._reviewed_mixed_preservation_owners()
+    _need(type(admission) is types.ModuleType, "original mixed review module required")
+    legacy = vars(admission).get("legacy")
+    _need(type(legacy) is types.ModuleType and vars(admission).get("norm") is vars(legacy).get("norm"),
+          "mixed live review alias bindings changed")
+    for name in ("_need", "_keys", "_sha", "_auth", "_reviewed_refs", "_distinct_pair",
+                 "_reviewed_owners", "norm_content_adjudication_sha256"):
+        _need(vars(admission).get(name) is vars(legacy).get(name),
+              "mixed live review alias bindings changed: " + name)
+    for name in ("_need", "_keys", "_sha"):
+        _need(vars(legacy).get(name) is vars(legacy.norm).get(name),
+              "mixed live legacy predicate binding changed: " + name)
+    return ((graph, admission, preservation, legacy, legacy.norm, legacy.content, legacy.reader), legacy)
+
+
+def _build_verified_reviewed_norm_preservation_native(preparation, graph, admission, *args,
+        _live_integrity_state, reviewed_version, expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256,
+        toolchain, lake_executable, output_directory, timeout_seconds=60, cancellation=None, **kwargs):
+    """Issue an opaque handle after one fresh default native build and replay.
+
+    Existing Source/native/storage admission remains with the original caller.
+    Historical packets and caller-authored ToolRunResults cannot issue handles.
+    No fixture executor, runner, toolchain or persistence injection is accepted.
+    """
+
+    (integrity_function, integrity_code, integrity_defaults,
+     integrity_keywords, persistence_state) = _live_integrity_state
+
+    def integrity_fence(owners=None):
+        # The required private bundle comes from a lexical public entry, never
+        # an admission keyword or a mutable global checker lookup.
+        if (integrity_function.__code__ is not integrity_code
+                or integrity_function.__defaults__ is not integrity_defaults
+                or set(integrity_function.__kwdefaults__ or {}) != {key for key, _ in integrity_keywords}
+                or not all((integrity_function.__kwdefaults__ or {})[key] is value
+                           for key, value in integrity_keywords)):
+            raise ValueError("live success callable bindings changed: captured core integrity")
+        return integrity_function(owners, reviewed_version=reviewed_version)
+
+    def persistence_trusted(owners):
+        function, code, defaults, keywords = persistence_state
+        if (globals().get("_live_postrun_persistence_trusted") is not function
+                or function.__code__ is not code or function.__defaults__ is not defaults
+                or set(function.__kwdefaults__ or {}) != {key for key, _ in keywords}
+                or not all((function.__kwdefaults__ or {})[key] is value
+                           for key, value in keywords)):
+            return False
+        return function(owners, reviewed_version=reviewed_version)
+
+    _need(type(timeout_seconds) in (int, float) and math.isfinite(timeout_seconds)
+          and 0 < timeout_seconds <= 60, "finite compiler timeout in (0,60] required")
+    integrity_fence()
+    domain = _live_success_domain(reviewed_version)
+    (build_schema, native_profile, live_schema, live_profile, receipt_binding, pin_reader,
+     packet_hasher, retained_loader, validator, formatter, receipt_scope) = domain
+    authority_snapshot = dict(AUTHORITY)
+    original = _live_original_inputs(preparation, graph, admission, args, kwargs)
+    owners = _owners()
+    integrity_fence(owners)
+    process = owners[3]
+    observed = {}
+
+    def fence():
+        integrity_fence(owners)
+        _need(_live_success_domain(reviewed_version) == domain, "live success domain changed during build")
+        _need(_live_original_inputs(preparation, graph, admission, args, kwargs) == original,
+              "live success original inputs changed during build")
+
+    def execution(stage, values):
+        try:
+            fence()
+        except (ValueError, TypeError, OSError) as error:
+            if stage == "after" and persistence_trusted(owners):
+                raise _LiveNativeObserverRefusal(str(error)) from error
+            error.add_note("No live success handle issued; remaining native persistence owners were not trusted.")
+            raise
+        runner, invocation = values["runner"], values["invocation"]
+        _need(values["process"] is process and type(runner) is process.BoundedToolRunner
+              and runner._default_executor is True
+              and type(runner._executor) is process.SubprocessExecutor
+              and runner._executor._popen is _LIVE_POPEN_CLASS
+              and runner._executor._clock is process.time.monotonic
+              and set(vars(runner)) == {"_default_executor", "_executor", "_workspace_root",
+                                      "_base_environment", "_executable_roots"}
+              and set(vars(runner._executor)) == {"_popen", "_clock", "_poll_interval_seconds"}
+              and type(invocation) is process.ToolRunRequest and invocation.owned_process_observation is True,
+              "original default live success native execution required")
+        if stage == "before":
+            _need(not observed, "single original live success native invocation required")
+            observed.update(runner=runner, invocation=invocation)
+        else:
+            _need(stage == "after" and observed.get("runner") is runner
+                  and observed.get("invocation") is invocation and "projection" not in observed
+                  and type(values["run"]) is process.ToolRunResult,
+                  "same original live success native invocation/result required")
+            observed["projection"] = _wire(_reviewed_native_execution_projection(
+                invocation, values["run"], process), MAX_RECEIPT_BYTES)
+
+    def execute(checked, replay, custody):
+        integrity_fence(owners)
+        refusal = None
+
+        def guard(stage, values):
+            nonlocal refusal
+            integrity_fence(owners)
+            result = custody(stage, values)
+            try:
+                fence()
+            except (ValueError, TypeError, OSError) as error:
+                if stage in ("snapshot", "toolchain") or not persistence_trusted(owners):
+                    error.add_note("No live success handle issued; untrusted remaining persistence was not invoked.")
+                    raise
+                refusal = {"type": type(error).__name__, "message": str(error)[:2048]}
+                if stage == "after_persistence":
+                    error.add_note("Completed original native observations retained as a failed receipt at "
+                                   + str(values["output"]) + "; no live success handle issued.")
+                    raise
+            return (refusal or result) if stage == "before_persistence" else result
+
+        receipt = _build_validated_native(preparation, checked, replay=replay,
+            expected_preparation_sha256=expected_preservation_sha256, toolchain=toolchain,
+            lake_executable=lake_executable, output_directory=output_directory,
+            timeout_seconds=timeout_seconds, cancellation=cancellation,
+            build_schema=build_schema, profile=native_profile,
+            flags=dict(PARENT_FALSE_FLAGS),
+            receipt_binding=lambda manifest: receipt_binding(manifest, admission),
+            maximum_files=MAX_REVIEWED_PRESERVATION_FILES,
+            maximum_modules=MAX_REVIEWED_PRESERVATION_MODULES,
+            maximum_theorems=MAX_REVIEWED_PRESERVATION_THEOREMS,
+            producer_pin_reader=pin_reader,
+            preparation_document_reader=_reviewed_preservation_native_document,
+            closing_custody_guard=guard, execution_observer=execution, receipt_scope=receipt_scope,
+            frozen_authority=authority_snapshot)
+        fence()
+        _need(receipt["build_passed"] is True and "projection" in observed
+              and _wire(receipt["reviewed_execution_evidence"], MAX_RECEIPT_BYTES) == observed["projection"],
+              "successful original live native execution required")
+        packet = _live_read_persisted_packet(output_directory, checked, receipt, owners[1],
+                                            reviewed_version=reviewed_version)
+        receipt_hash = _sha(dict(packet)["build-receipt.json"])
+        packet_hash = packet_hasher(packet)
+        old = retained_loader(packet, preparation, graph, admission, *args,
+            expected_receipt_sha256=receipt_hash, expected_packet_sha256=packet_hash,
+            expected_binary_sha256=receipt["binary_sha256"],
+            expected_preservation_sha256=expected_preservation_sha256,
+            expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
+            toolchain=toolchain, **kwargs)
+        fence()
+        _need(old["retained_observations_consistent"] is True
+              and old["current_complete_semantics_replayed"] is True
+              and _binary_recheck(receipt["binary_sha256"]),
+              "original live success closing replay or compiler custody differs")
+        joins = _live_freeze_inputs((reviewed_version, expected_preservation_sha256, expected_graph_sha256,
+            expected_admission_sha256, toolchain, receipt["binary_sha256"],
+            old["producer_pins"], receipt_hash, packet_hash))
+        return packet, joins, observed["projection"]
+
+    packet, joins, projection = _reviewed_preservation_native_operation(
+        preparation, graph, admission, args, kwargs,
+        expected_preservation_sha256=expected_preservation_sha256,
+        expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
+        toolchain=toolchain, operation=execute, reviewed_version=reviewed_version)
+    # The existing after-persistence custody and final outer semantic fence have
+    # finished before any capability is inserted into the issuance registry.
+    fence()
+    handle = object.__new__(VerifiedReviewedPreservationNativeSuccess)
+    entry = (os.getpid(), threading.get_native_id(), packet, joins, projection, original,
+             weakref.ref(threading.current_thread()), weakref.ref(handle), reviewed_version)
+    _LIVE_SUCCESS_HANDLES[handle] = entry
+    # A return-hook mutation cannot leave an issued handle after our last check.
+    try:
+        fence()
+    except BaseException:
+        _LIVE_SUCCESS_HANDLES.pop(handle, None)
+        raise
+    return handle
+
+
+def _load_verified_reviewed_norm_preservation_native(handle, packet_files, preparation, graph, admission, *args,
+        _live_integrity_state, reviewed_version, expected_receipt_sha256, expected_packet_sha256, expected_binary_sha256,
+        expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain, **kwargs):
+    """Join this process's live issuance to exact bytes and current review state.
+
+    Reads invoke no compiler, executable, cleanup action or historical PID probe.
+    Parent admitted-success custody, legal admission and release remain absent.
+    """
+
+    (integrity_function, integrity_code, integrity_defaults,
+     integrity_keywords, persistence_state) = _live_integrity_state
+
+    def integrity_fence(owners=None):
+        # The required private bundle comes from a lexical public entry, never
+        # an admission keyword or a mutable global checker lookup.
+        if (integrity_function.__code__ is not integrity_code
+                or integrity_function.__defaults__ is not integrity_defaults
+                or set(integrity_function.__kwdefaults__ or {}) != {key for key, _ in integrity_keywords}
+                or not all((integrity_function.__kwdefaults__ or {})[key] is value
+                           for key, value in integrity_keywords)):
+            raise ValueError("live success callable bindings changed: captured core integrity")
+        return integrity_function(owners, reviewed_version=reviewed_version)
+
+    def persistence_trusted(owners):
+        function, code, defaults, keywords = persistence_state
+        if (globals().get("_live_postrun_persistence_trusted") is not function
+                or function.__code__ is not code or function.__defaults__ is not defaults
+                or set(function.__kwdefaults__ or {}) != {key for key, _ in keywords}
+                or not all((function.__kwdefaults__ or {})[key] is value
+                           for key, value in keywords)):
+            return False
+        return function(owners, reviewed_version=reviewed_version)
+
+    integrity_fence()
+    entry = _live_handle_entry(handle, reviewed_version=reviewed_version)
+    integrity_fence()
+    domain = _live_success_domain(reviewed_version)
+    (build_schema, native_profile, live_schema, live_profile, receipt_binding, pin_reader,
+     packet_hasher, retained_loader, validator, formatter, receipt_scope) = domain
+    authority_snapshot = dict(AUTHORITY)
+    contents, _ = _reviewed_retained_packet(packet_files)
+    packet = tuple(sorted(contents.items()))
+    _need(packet == entry[2], "exact issued live success packet required")
+    original = _live_original_inputs(preparation, graph, admission, args, kwargs)
+    _need(original == entry[5], "exact issued live success original inputs required")
+    owners = _owners()
+    integrity_fence(owners)
+
+    def fence():
+        _need(_live_success_domain(reviewed_version) == domain, "live success domain changed during read")
+        _need(_live_handle_entry(handle, reviewed_version=reviewed_version) is entry,
+              "same issued live success handle required")
+        integrity_fence(owners)
+        _need(_live_original_inputs(preparation, graph, admission, args, kwargs) == original,
+              "live success original inputs changed during read")
+
+    replay = retained_loader(packet, preparation, graph, admission, *args,
+        expected_receipt_sha256=expected_receipt_sha256, expected_packet_sha256=expected_packet_sha256,
+        expected_binary_sha256=expected_binary_sha256,
+        expected_preservation_sha256=expected_preservation_sha256,
+        expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
+        toolchain=toolchain, **kwargs)
+    fence()
+    joins = _live_freeze_inputs((reviewed_version, expected_preservation_sha256, expected_graph_sha256,
+        expected_admission_sha256, toolchain, expected_binary_sha256,
+        replay["producer_pins"], expected_receipt_sha256, expected_packet_sha256))
+    _need(joins == entry[3] and _wire(_parse(contents["build-receipt.json"], MAX_RECEIPT_BYTES)
+          ["reviewed_execution_evidence"], MAX_RECEIPT_BYTES) == entry[4],
+          "exact issued live success commitments required")
+    checked = validator(preparation, graph, admission, *args,
+        expected_preservation_sha256=expected_preservation_sha256,
+        expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
+        toolchain=toolchain, **kwargs)
+    fence()
+    _need(_live_original_inputs(checked, graph, admission, args, kwargs) == original,
+          "exact issued live success regenerated project required")
+    binding = receipt_binding(checked.to_dict(), admission) if reviewed_version == 3 else {}
+    fence()
+    result = owners[1].contracts.seal_record({
+        **{key: value for key, value in replay.items() if key not in {"schema", "profile", "record_cid", "cid_scope"}},
+        **binding,
+        "schema": live_schema, "profile": live_profile,
+        "original_success_authenticated": False, "live_native_success_authenticated": True,
+        "native_execution_authenticated": True, "original_admitted_parent_custody_authenticated": False,
+        "native_execution_performed": False, "olean_kernel_rechecked": False,
+        "release_ready": False, "Lean_admitted": False, "authority": authority_snapshot,
+        "training_mask": 0, "evaluation_gold_mask": 0,
+        "missing_prerequisites": [
+            "Independently trusted original admitted-success parent Source/native/storage custody adapter for this reviewed profile.",
+            "Source-matched actual native qualification and reviewed release-native consumer integration."],
+        "scope": "Exact current-review replay joined to a fresh native-owner execution in this cooperative process/native thread; no original parent-admission, kernel recheck, legal or release authority."})
+    fence()
+    return result
+
+
+def build_verified_reviewed_norm_preservation_native_v2(preparation, graph, admission, *args,
+        expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256,
+        toolchain, lake_executable, output_directory, timeout_seconds=60, cancellation=None, **kwargs):
+    """Issue this explicit reviewed domain through the shared original live engine."""
+    _need(type(timeout_seconds) in (int, float) and math.isfinite(timeout_seconds)
+          and 0 < timeout_seconds <= 60, "finite compiler timeout in (0,60] required")
+    _live_entry_guard(2)
+    return _build_verified_reviewed_norm_preservation_native(
+        preparation, graph, admission, *args, reviewed_version=2,
+        expected_preservation_sha256=expected_preservation_sha256,
+        expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
+        toolchain=toolchain, lake_executable=lake_executable, output_directory=output_directory,
+        timeout_seconds=timeout_seconds, cancellation=cancellation, **kwargs)
+
+
+def load_verified_reviewed_norm_preservation_native_v2(handle, packet_files, preparation, graph, admission, *args,
+        expected_receipt_sha256, expected_packet_sha256, expected_binary_sha256,
+        expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain, **kwargs):
+    """Join this explicit domain's original live issuance without new execution."""
+    _live_handle_entry(handle, reviewed_version=2)
+    _live_entry_guard(2)
+    return _load_verified_reviewed_norm_preservation_native(
+        handle, packet_files, preparation, graph, admission, *args, reviewed_version=2,
+        expected_receipt_sha256=expected_receipt_sha256, expected_packet_sha256=expected_packet_sha256,
+        expected_binary_sha256=expected_binary_sha256,
+        expected_preservation_sha256=expected_preservation_sha256,
+        expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
+        toolchain=toolchain, **kwargs)
+
+
+__all__ += ["REVIEWED_LIVE_SUCCESS_SCHEMA", "REVIEWED_LIVE_SUCCESS_PROFILE",
+    "VerifiedReviewedPreservationNativeSuccess", "build_verified_reviewed_norm_preservation_native_v2",
+    "load_verified_reviewed_norm_preservation_native_v2"]
+
+# Explicit mixed reviewed aggregate domain. Existing V2 public operations keep
+# their original signatures and ASTs; no report is retagged between domains.
+REVIEWED_MIXED_PRESERVATION_BUILD_SCHEMA = "legal-corpus-reviewed-preservation-native-build/v3"
+REVIEWED_MIXED_PRESERVATION_NATIVE_PROFILE = "replayed-reviewed-mixed-multiunit-preservation-native-build/v3"
+REVIEWED_MIXED_RECEIPT_REPLAY_SCHEMA = "legal-reviewed-native-receipt-replay/v3"
+REVIEWED_MIXED_RECEIPT_REPLAY_PROFILE = "current-reviewed-mixed-native-retained-observation-replay/v3"
+_REVIEWED_MIXED_PRESERVATION_OPERATION_PINS = None
+_REVIEWED_MIXED_FALSE_KEYS = frozenset(PARENT_FALSE_FLAGS)
+_REVIEWED_MIXED_AUTHORITY_KEYS = frozenset(AUTHORITY)
+_REVIEWED_MIXED_SCOPE = (
+    "Five exact independent concrete preservation obligations for every complete reviewed V3 source unit; "
+    "each unchanged Object-native or mixed-renderer child keeps its own signature namespace, ordered roles "
+    "and raw formula. No cross-namespace carrier coercion, cross-unit governing-definition application, "
+    "native TDFOL/parser for mixed units, statutory truth, universal compiler theorem or corpus/release admission.")
+_REVIEWED_MIXED_BINDINGS = (
+    "input_commitment_sha256", "reviewed_graph_sha256", "reviewed_admission_sha256",
+    "declaration_sha256", "provenance_kind", "scope_record_cid", "interpretation_record_cid",
+    "units", "definition_use_record_cids", "signature_headers_by_unit", "predicate_compatibility_ledger",
+    "common_module_profiles", "module_imports", "preservation_obligations", "file_sha256", "support_profile",
+    "preservation_only", "cross_unit_definition_application_proved", "statutory_meaning_proved",
+    "release_ready", "full_formal_corpus_consistency_verified", "generic_lean_v3_receipt_substituted",
+    "formal_assumptions", "formal_assumptions_proved",
+)
+_REVIEWED_MIXED_CORE_FIELDS = (
+    _REVIEWED_REPLAY_CORE_FIELDS - frozenset(_REVIEWED_REPLAY_BINDINGS)
+    | frozenset(_REVIEWED_MIXED_BINDINGS))
+_REVIEWED_MIXED_CHILD_DOMAINS = {
+    "authored-object-relational-deontic/v1": (
+        "typed-relational-deontic-native-preservation/v1", "deontic_fol", "LegalRelationalAstPreservation",
+        ("native_value_exact", "native_ast_closed", "denotation_matches_native",
+         "typed_source_lowering_exact", "role_denotation_matches_native")),
+    "authored-many-sorted-relational-deontic/v1": (
+        "typed-many-sorted-relational-deontic-renderer-preservation/v1", "tdfol", "LegalMixedRelationalAstPreservation",
+        ("mixed_typed_value_exact", "mixed_renderer_value_exact", "mixed_ast_closed",
+         "mixed_denotation_matches_lowering", "mixed_role_denotation_matches_lowering")),
+}
+
+
+def _reviewed_mixed_native_policy(shared=None):
+    _need((REVIEWED_MIXED_PRESERVATION_BUILD_SCHEMA, REVIEWED_MIXED_PRESERVATION_NATIVE_PROFILE,
+           REVIEWED_MIXED_RECEIPT_REPLAY_SCHEMA, REVIEWED_MIXED_RECEIPT_REPLAY_PROFILE) == (
+        "legal-corpus-reviewed-preservation-native-build/v3",
+        "replayed-reviewed-mixed-multiunit-preservation-native-build/v3",
+        "legal-reviewed-native-receipt-replay/v3",
+        "current-reviewed-mixed-native-retained-observation-replay/v3"),
+        "closed mixed native/retained profiles cannot alias another domain")
+    _need(all(type(value) is int for value in (
+        MAX_REVIEWED_PRESERVATION_UNITS, MAX_REVIEWED_PRESERVATION_FILES,
+        MAX_REVIEWED_PRESERVATION_MODULES, MAX_REVIEWED_PRESERVATION_THEOREMS,
+        MAX_RECORD_BYTES, MAX_INPUT_BYTES, MAX_PROJECT_BYTES, MAX_PREPARATION_BYTES,
+        MAX_CAPTURE_BYTES, MAX_RECEIPT_BYTES, MAX_LOG_PREVIEW_BYTES))
+          and (MAX_REVIEWED_PRESERVATION_UNITS, MAX_REVIEWED_PRESERVATION_FILES,
+           MAX_REVIEWED_PRESERVATION_MODULES, MAX_REVIEWED_PRESERVATION_THEOREMS,
+           MAX_RECORD_BYTES, MAX_INPUT_BYTES, MAX_PROJECT_BYTES, MAX_PREPARATION_BYTES,
+           MAX_CAPTURE_BYTES, MAX_RECEIPT_BYTES, MAX_LOG_PREVIEW_BYTES) == (
+        8, 78, 11, 40, 1024**2, 48 * 1024**2, 8 * 1024**2, 20 * 1024**2,
+        2 * 1024**2, 1024**2, 32768), "mixed native bounds require a separate explicit port")
+    _need(type(PARENT_FALSE_FLAGS) is dict and set(PARENT_FALSE_FLAGS) == _REVIEWED_MIXED_FALSE_KEYS
+          and all(value is False for value in PARENT_FALSE_FLAGS.values())
+          and type(AUTHORITY) is dict and set(AUTHORITY) == _REVIEWED_MIXED_AUTHORITY_KEYS
+          and all(value is False for value in AUTHORITY.values()),
+          "mixed native execution cannot widen its closed false-authority policy")
+    _need(_REVIEWED_MIXED_CHILD_DOMAINS == {
+        "authored-object-relational-deontic/v1": (
+            "typed-relational-deontic-native-preservation/v1", "deontic_fol", "LegalRelationalAstPreservation",
+            ("native_value_exact", "native_ast_closed", "denotation_matches_native",
+             "typed_source_lowering_exact", "role_denotation_matches_native")),
+        "authored-many-sorted-relational-deontic/v1": (
+            "typed-many-sorted-relational-deontic-renderer-preservation/v1", "tdfol", "LegalMixedRelationalAstPreservation",
+            ("mixed_typed_value_exact", "mixed_renderer_value_exact", "mixed_ast_closed",
+             "mixed_denotation_matches_lowering", "mixed_role_denotation_matches_lowering"))},
+        "mixed native child domains and theorem populations cannot be replaced")
+    if shared is not None:
+        _need((shared.REVIEWED_MIXED_PRESERVATION_SCHEMA, shared.REVIEWED_MIXED_PRESERVATION_PROFILE,
+               shared.REVIEWED_MIXED_PRESERVATION_ROOT) == (
+            "legal-corpus-reviewed-preservation-preparation/v3",
+            "reviewed-multi-unit-mixed-relational-preservation/v3", "LegalReviewedMixedNormPreservation")
+            and all(type(value) is int for value in (
+                shared.MAX_REVIEWED_PRESERVATION_UNITS, shared.MAX_REVIEWED_PRESERVATION_FILES,
+                shared.MAX_REVIEWED_PRESERVATION_MODULES, shared.MAX_REVIEWED_PRESERVATION_OBLIGATIONS))
+            and (shared.MAX_REVIEWED_PRESERVATION_UNITS, shared.MAX_REVIEWED_PRESERVATION_FILES,
+                 shared.MAX_REVIEWED_PRESERVATION_MODULES, shared.MAX_REVIEWED_PRESERVATION_OBLIGATIONS)
+                == (8, 78, 11, 40), "closed current mixed shared preparation domain required")
+
+
+def _reviewed_mixed_preservation_native_pins(owners, manifest):
+    global _REVIEWED_MIXED_PRESERVATION_OPERATION_PINS
+    shared = owners[4]
+    _reviewed_mixed_native_policy(shared)
+    current = shared._reviewed_preservation_pins(shared._reviewed_mixed_preservation_owners())
+    pins = _observed_producer_pins(owners, manifest)
+    for path, expected in current.items():
+        _need(path not in pins or pins[path] == expected, "mixed native producer pin collision")
+        pins[path] = expected
+    if _REVIEWED_MIXED_PRESERVATION_OPERATION_PINS is None:
+        _REVIEWED_MIXED_PRESERVATION_OPERATION_PINS = dict(pins)
+    _need(pins == _REVIEWED_MIXED_PRESERVATION_OPERATION_PINS,
+          "mixed native operation owners changed since first use")
+    return pins
+
+
+def _reviewed_mixed_preservation_native_manifest(manifest, shared):
+    _reviewed_mixed_native_policy(shared)
+    _need(manifest.get("schema") == "legal-corpus-reviewed-preservation-preparation/v3"
+          and manifest.get("profile") == "reviewed-multi-unit-mixed-relational-preservation/v3",
+          "exact current mixed reviewed preservation preparation required")
+    units = manifest["units"]
+    _need(type(units) is list and 3 <= len(units) <= 8,
+          "complete three-to-eight explicit V3 reviewed units required")
+    headers, namespace_units, common = [], {}, {}
+    obligations, instances = [], []
+    for ordinal, unit in enumerate(units):
+        domain = _REVIEWED_MIXED_CHILD_DOMAINS.get(unit.get("relational_profile"))
+        _need(domain is not None, "unknown reviewed unit preservation domain")
+        profile, family, root, suffixes = domain
+        instance = unit["instance_module"]
+        _need(type(unit["ordinal"]) is int and unit["ordinal"] == ordinal
+              and unit["child_preservation_profile"] == profile and unit["child_family"] == family
+              and re.fullmatch(re.escape(root) + r"\.Instance[0-9a-f]{64}", instance)
+              and instance not in instances, "complete unchanged profile-specific unit instance required")
+        wanted = [instance + "." + suffix for suffix in suffixes]
+        _need(unit["preservation_obligations"] == wanted, "five exact ordered obligations for each unit required")
+        instances.append(instance); obligations.extend(wanted)
+        header = unit["signature_header"]
+        namespace = _sha(_wire({"relational_profile": unit["relational_profile"], "signature_header": header}, MAX_RECORD_BYTES))
+        _need(unit["signature_namespace_sha256"] == namespace and unit["signature_id"] == header["signature_id"],
+              "complete per-unit signature namespace commitment differs")
+        headers.append({"unit_id": unit["unit_id"], "relational_profile": unit["relational_profile"],
+            "signature_header": header, "signature_namespace_sha256": namespace})
+        key = unit["relational_profile"] + ":" + _sha(_wire(header, MAX_RECORD_BYTES))
+        namespace_units.setdefault(key, []).append(unit["unit_id"])
+        common[root] = {"relational_profile": unit["relational_profile"], "preservation_profile": profile,
+            "family": family, "project_root": root, "modules": [root + ".Prelude", root + ".Semantics"],
+            "theorem_suffixes": list(suffixes)}
+    _need(manifest["signature_headers_by_unit"] == headers
+          and set(manifest["predicate_compatibility_ledger"]) == set(namespace_units),
+          "complete ordered headers and exact signature namespaces required")
+    for key, unit_ids in namespace_units.items():
+        ledger = manifest["predicate_compatibility_ledger"][key]
+        exemplar = next(row for row in headers if row["unit_id"] == unit_ids[0])
+        _need(type(ledger) is dict and set(ledger) == {"relational_profile", "signature_header", "unit_ids", "predicates"}
+              and ledger["unit_ids"] == unit_ids and ledger["relational_profile"] == exemplar["relational_profile"]
+              and ledger["signature_header"] == exemplar["signature_header"]
+              and type(ledger["predicates"]) is dict and ledger["predicates"],
+              "within-namespace predicate and ordered-role ledger cannot be omitted or merged")
+    profiles = [common[key] for key in sorted(common)]
+    modules = [name for row in profiles for name in row["modules"]] + instances + ["LegalReviewedMixedNormPreservation"]
+    _need(manifest["common_module_profiles"] == profiles and manifest["expected_modules"] == modules
+          and len(modules) <= 11 and len(set(modules)) == len(modules)
+          and manifest["preservation_obligations"] == obligations
+          and len(set(obligations)) == 5 * len(units) <= 40
+          and type(manifest["definition_use_record_cids"]) is list and manifest["definition_use_record_cids"],
+          "complete common-module, definition-use and obligation populations required")
+    support = manifest["support_profile"]
+    _need(support["cross_namespace_signature_or_carrier_coercion"] is False
+          and support["cross_unit_definition_application_proved"] is False
+          and support["predicate_compatibility_is_syntactic_only"] is True
+          and manifest["preparation_only"] is True and manifest["proof_status"] == "not_executed"
+          and manifest["lean_compilation_status"] == "not_executed",
+          "preparation cannot acquire native, cross-namespace or governing-definition authority")
+    return manifest
+
+
+def _reviewed_mixed_preservation_receipt_binding(manifest, admission):
+    keys = ("input_commitment_sha256", "reviewed_graph_sha256", "reviewed_admission_sha256",
+        "declaration_sha256", "provenance_kind", "scope_record_cid", "interpretation_record_cid",
+        "units", "definition_use_record_cids", "signature_headers_by_unit", "predicate_compatibility_ledger",
+        "common_module_profiles", "module_imports", "preservation_obligations", "file_sha256", "support_profile")
+    return {name: manifest[name] for name in keys} | {
+        "preservation_only": True, "cross_unit_definition_application_proved": False,
+        "statutory_meaning_proved": False, "release_ready": False,
+        "full_formal_corpus_consistency_verified": False, "generic_lean_v3_receipt_substituted": False,
+        "formal_assumptions": admission["formal_assumptions"], "formal_assumptions_proved": False}
+
+
+def validate_reviewed_norm_preservation_native_v3(preparation, graph, admission, *args,
+        expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain, **kwargs):
+    """Replay complete current V3 source, review, mixed graph and exact project."""
+    _reviewed_mixed_native_policy()
+    return _reviewed_preservation_native_operation(preparation, graph, admission, args, kwargs,
+        expected_preservation_sha256=expected_preservation_sha256, expected_graph_sha256=expected_graph_sha256,
+        expected_admission_sha256=expected_admission_sha256, toolchain=toolchain, reviewed_version=3)
+
+
+def build_reviewed_norm_preservation_native_v3(preparation, graph, admission, *args,
+        expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256,
+        toolchain, lake_executable, output_directory, timeout_seconds=60, cancellation=None, **kwargs):
+    """Build every complete V3 unit with its unchanged child semantics and formula."""
+    _reviewed_mixed_native_policy()
+    _need(type(timeout_seconds) in (int, float) and math.isfinite(timeout_seconds)
+          and 0 < timeout_seconds <= 60, "finite compiler timeout in (0,60] required")
+
+    def execute(checked, replay, custody):
+        def binding(manifest):
+            return _reviewed_mixed_preservation_receipt_binding(manifest, admission)
+        return _build_validated_native(preparation, checked, replay=replay,
+            expected_preparation_sha256=expected_preservation_sha256, toolchain=toolchain,
+            lake_executable=lake_executable, output_directory=output_directory,
+            timeout_seconds=timeout_seconds, cancellation=cancellation,
+            build_schema="legal-corpus-reviewed-preservation-native-build/v3",
+            profile="replayed-reviewed-mixed-multiunit-preservation-native-build/v3",
+            flags=dict(PARENT_FALSE_FLAGS), receipt_binding=binding,
+            maximum_files=MAX_REVIEWED_PRESERVATION_FILES, maximum_modules=MAX_REVIEWED_PRESERVATION_MODULES,
+            maximum_theorems=MAX_REVIEWED_PRESERVATION_THEOREMS,
+            producer_pin_reader=_reviewed_mixed_preservation_native_pins,
+            preparation_document_reader=_reviewed_preservation_native_document,
+            closing_custody_guard=custody, receipt_scope=_REVIEWED_MIXED_SCOPE,
+            frozen_authority=dict(AUTHORITY))
+
+    return _reviewed_preservation_native_operation(preparation, graph, admission, args, kwargs,
+        expected_preservation_sha256=expected_preservation_sha256, expected_graph_sha256=expected_graph_sha256,
+        expected_admission_sha256=expected_admission_sha256, toolchain=toolchain,
+        operation=execute, reviewed_version=3)
+
+
+def reviewed_norm_preservation_receipt_bytes_v3(receipt):
+    """Format one complete mixed aggregate observation, without authentication."""
+    _reviewed_mixed_native_policy()
+    _bound_tree(receipt, MAX_RECEIPT_BYTES)
+    _need(type(receipt) is dict and set(receipt) == _REVIEWED_MIXED_CORE_FIELDS
+          and receipt.get("schema") == "legal-corpus-reviewed-preservation-native-build/v3"
+          and receipt.get("profile") == "replayed-reviewed-mixed-multiunit-preservation-native-build/v3",
+          "closed complete mixed aggregate receipt required")
+    return _wire(receipt, MAX_RECEIPT_BYTES)
+
+
+def reviewed_norm_preservation_packet_sha256_v3(packet_files):
+    """Commit every complete sorted retained path/byte pair, without authority."""
+    _reviewed_mixed_native_policy()
+    _, inventory = _reviewed_retained_packet(packet_files)
+    return _sha(_wire(inventory, MAX_RECORD_BYTES))
+
+
+__all__ += ["REVIEWED_MIXED_PRESERVATION_BUILD_SCHEMA", "REVIEWED_MIXED_PRESERVATION_NATIVE_PROFILE",
+    "REVIEWED_MIXED_RECEIPT_REPLAY_SCHEMA", "REVIEWED_MIXED_RECEIPT_REPLAY_PROFILE",
+    "validate_reviewed_norm_preservation_native_v3", "build_reviewed_norm_preservation_native_v3",
+    "reviewed_norm_preservation_receipt_bytes_v3", "reviewed_norm_preservation_packet_sha256_v3"]
+
+
+def validate_reviewed_norm_preservation_native_receipt_v3(
+        receipt_raw, preparation, graph, admission, *args,
+        packet_files, expected_receipt_sha256, expected_packet_sha256, expected_binary_sha256,
+        expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256,
+        toolchain, observation_profile=_REVIEWED_REPLAY_ACTUAL, **kwargs):
+    """Replay the complete retained V3 mixed aggregate and current inputs without Lean.
+
+    The caller owns physical acquisition and independently trusted receipt,
+    packet and compiler pins. Historical PIDs are never inspected. This API
+    cannot authenticate original admitted success, validate olean bytes in the
+    kernel or authorize release/cache/native/statutory admission. The missing
+    original-success adapter remains an explicit prerequisite in every result.
+    """
+    _reviewed_mixed_native_policy()
+    for value, label in ((expected_receipt_sha256, "retained reviewed receipt"),
+                         (expected_packet_sha256, "whole retained reviewed packet")):
+        _pin(value, label)
+    _bound_tree(expected_binary_sha256, MAX_RECORD_BYTES)
+    contents, inventory = _reviewed_retained_packet(packet_files)
+    _need(_sha(_wire(inventory, MAX_RECORD_BYTES)) == expected_packet_sha256,
+          "independent complete retained packet commitment differs")
+    _need(type(receipt_raw) is bytes and 0 < len(receipt_raw) <= MAX_RECEIPT_BYTES
+          and _sha(receipt_raw) == expected_receipt_sha256
+          and contents.get("build-receipt.json") == receipt_raw,
+          "independent original receipt bytes differ")
+    receipt = _parse(receipt_raw, MAX_RECEIPT_BYTES)
+    _need(reviewed_norm_preservation_receipt_bytes_v3(receipt) == receipt_raw,
+          "original reviewed receipt must retain its canonical complete bytes")
+    _need(type(observation_profile) is str
+          and observation_profile in (_REVIEWED_REPLAY_ACTUAL, _REVIEWED_REPLAY_FICTIONAL),
+          "explicit supported retained observation profile required")
+    if observation_profile == _REVIEWED_REPLAY_FICTIONAL:
+        _need(type(admission) is dict and admission.get("fixture_only") is True
+              and admission.get("provenance_kind") == "fictional_fixture",
+              "fictional interface requires unchanged explicit fictional admission")
+    # The existing source/admission/graph/project owner retains all current
+    # review, revocation and source replay; no saved eligibility flag replaces it.
+    checked = validate_reviewed_norm_preservation_native_v3(preparation, graph, admission, *args,
+        expected_preservation_sha256=expected_preservation_sha256,
+        expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
+        toolchain=toolchain, **kwargs)
+    owners = _owners(); transport, process = owners[1], owners[3]
+    from . import legal_corpus_definition_use_preservation_packet_v2 as packets
+    packet_owner_pin = _sha(Path(packets.__file__).read_bytes())
+    _need(packet_owner_pin == packets._SELF_PIN, "existing retained-packet validator changed since import")
+    manifest = checked.to_dict(); contracts = transport.contracts
+    contracts.validate_record(receipt, schema=REVIEWED_MIXED_PRESERVATION_BUILD_SCHEMA,
+        fields=set(receipt) - {"schema", "record_cid", "cid_scope"})
+    binding = _reviewed_mixed_preservation_receipt_binding(manifest, admission)
+    binding.update(preparation_cid=manifest["record_cid"],
+        preparation_full_canonical_sha256=expected_preservation_sha256,
+        preparation_manifest_sha256=_sha(checked.manifest_json.encode("utf-8")), toolchain=toolchain,
+        expected_modules=manifest["expected_modules"], compiled_modules=manifest["expected_modules"],
+        producer_pins=_reviewed_mixed_preservation_native_pins(owners, manifest),
+        conditional_theorems=manifest["preservation_obligations"],
+        original_preparation_theorem_assumptions=[], theorem_assumptions=[], scope=_REVIEWED_MIXED_SCOPE)
+    _need(_wire({name: receipt[name] for name in binding}, MAX_RECEIPT_BYTES)
+          == _wire(binding, MAX_RECEIPT_BYTES),
+          "retained receipt differs from current whole reviewed semantics or producers")
+    success_flags = {"backend_executed", "lean_compilation_verified", "proof_checked",
+                     "kernel_proofs_checked", "conditional_proofs_verified"}
+    for name in PARENT_FALSE_FLAGS:
+        _need(receipt[name] is (name in success_flags), "retained authority/profile flag differs: " + name)
+    _need(receipt["authority"] == AUTHORITY and all(v is False for v in receipt["authority"].values())
+          and type(receipt["training_mask"]) is int and receipt["training_mask"] == 0
+          and type(receipt["evaluation_gold_mask"]) is int and receipt["evaluation_gold_mask"] == 0,
+          "retained receipt cannot grant authority or training masks")
+    for name in ("original_preparation_unchanged", "manifest_coverage_passed", "executed_project_readback_passed",
+                 "binaries_unchanged", "post_run_validation_passed", "axiom_observations_passed",
+                 "workspace_cleaned", "cleanup_confirmed", "observed_process_scope_passed",
+                 "ownership_is_sampled", "build_passed", "native_runtime_verified"):
+        _need(receipt[name] is True, "retained successful observation differs: " + name)
+    for name in ("timed_out", "cancelled", "unavailable", "output_truncated", "workspace_limit_exceeded",
+                 "resource_exhausted", "kernel_containment_attested", "alias_assumption_proved",
+                 "source_to_model_equivalence_proved"):
+        _need(receipt[name] is False, "retained failure/authority field differs: " + name)
+    _need(receipt["reviewed_execution_projection_error"] is None
+          and receipt["post_run_validation_error"] is None and receipt["binary_recheck_error"] is None
+          and receipt["status"] == "conditional_native_checks_passed"
+          and receipt["conditional_kernel_status"] == "checked_under_explicit_hypotheses",
+          "retained profile reports an incomplete or failed build")
+    sources = {name: body.encode("utf-8") for name, body in checked.files}
+    artifacts = [".lake/build/lib/lean/" + name.replace(".", "/") + ".olean"
+                 for name in manifest["expected_modules"]]
+    wanted = ({"build-receipt.json", "stdout.txt", "stderr.txt", "runner-error.txt",
+               "project/" + transport.MANIFEST_FILE}
+              | {"project/" + name for name in sources} | {"executed-inputs/" + name for name in sources}
+              | {"compiled/" + name.removeprefix(".lake/build/lib/lean/") for name in artifacts})
+    _need(set(contents) == wanted
+          and contents["project/" + transport.MANIFEST_FILE] == checked.manifest_json.encode("utf-8")
+          and all(contents["project/" + name] == contents["executed-inputs/" + name] == raw
+                  for name, raw in sources.items()), "complete original project/source packet differs")
+    outputs = {**sources, **{name: contents["compiled/" + name.removeprefix(".lake/build/lib/lean/")]
+                            for name in artifacts}}
+    logs = {name: contents[name] for name in ("stdout.txt", "stderr.txt", "runner-error.txt")}
+    _need(all(len(raw) <= MAX_CAPTURE_BYTES for raw in outputs.values())
+          and all(len(raw) <= 3 * MAX_CAPTURE_BYTES for raw in logs.values()),
+          "complete retained mixed outputs and diagnostics exceed original capture bounds")
+    invocation, run = _reviewed_native_execution_from_projection(receipt["reviewed_execution_evidence"],
+        sources=sources, outputs=outputs, logs=logs, process=process)
+    expected_interface = ("synthetic-unit-boundary/v1" if observation_profile == _REVIEWED_REPLAY_FICTIONAL
+                          else process.BOUNDED_TOOL_RUNNER_VERSION)
+    _need(run.interface_version == expected_interface and run.runtime is process.ToolRuntime.NATIVE
+          and invocation.runtime is process.ToolRuntime.NATIVE
+          and type(receipt["runtime"]) is str and receipt["runtime"] == run.runtime.value
+          and type(run.pid) is int and run.pid > 0 and type(run.returncode) is int and run.returncode == 0
+          and run.ok and run.workspace_cleaned and not run.error,
+          "retained runner interface or successful typed result differs")
+    executable = _reviewed_replay_binary_observations(receipt, expected_binary_sha256,
+        toolchain, observation_profile, packets)
+    command = (executable, "--offline", "--no-cache", "build", "legal")
+    _need(invocation.argv == run.command == command and receipt["command"] == receipt["expected_command"] == list(command)
+          and dict(invocation.environment) == {"ELAN_TOOLCHAIN": toolchain, "LEAN_NUM_THREADS": "1"}
+          and invocation.output_paths == tuple(artifacts) + tuple(sources),
+          "original complete invocation, environment or artifact paths differ")
+    from dataclasses import fields
+    timeout = invocation.limits.timeout_seconds
+    _need(type(timeout) in (int, float) and math.isfinite(timeout) and 0 < timeout <= 60,
+          "original bounded compiler timeout required")
+    expected_limits = process.ToolRunLimits(timeout_seconds=timeout, cpu_seconds=timeout,
+        resident_memory_bytes=2 * 1024**3, max_output_bytes=MAX_CAPTURE_BYTES,
+        max_input_bytes=MAX_PROJECT_BYTES, max_workspace_bytes=128 * MAX_RECORD_BYTES,
+        max_output_files=len(outputs))
+    _need(all(getattr(invocation.limits, f.name) == getattr(expected_limits, f.name)
+              and type(getattr(invocation.limits, f.name)) is type(getattr(expected_limits, f.name))
+              for f in fields(process.ToolRunLimits)), "original native resource limits differ")
+    packets._historical_lifecycle(receipt["native_lifecycle"], run.pid)
+    _need(receipt["native_lifecycle"] == run.native_lifecycle.to_dict()
+          and receipt["pid"] == run.pid and type(receipt["pid"]) is int
+          and receipt["returncode"] == run.returncode and type(receipt["returncode"]) is int
+          and type(receipt["process_tree_terminated"]) is bool,
+          "historical lifecycle and result bindings differ")
+    for name in ("elapsed_seconds", "termination_reason", "timed_out", "cancelled", "unavailable",
+                 "output_truncated", "workspace_limit_exceeded", "resource_exhausted",
+                 "workspace_cleaned", "process_tree_terminated"):
+        _need(type(receipt[name]) is type(getattr(run, name)) and receipt[name] == getattr(run, name),
+              "retained runner scalar differs: " + name)
+    artifact_hashes = {name: _sha(outputs[name]) for name in artifacts}
+    expected_artifacts = {"artifact_sha256": artifact_hashes,
+        "artifact_bytes": {name: len(outputs[name]) for name in artifacts},
+        "artifact_files": {name: "compiled/" + name.removeprefix(".lake/build/lib/lean/") for name in artifacts},
+        "executed_project_sha256": {name: _sha(raw) for name, raw in sources.items()}}
+    _need(all(outputs[name] for name in artifacts)
+          and _wire({name: receipt[name] for name in expected_artifacts}, MAX_RECEIPT_BYTES)
+              == _wire(expected_artifacts, MAX_RECEIPT_BYTES),
+          "retained complete source/artifact commitments differ")
+    for name, field in (("stdout.txt", "stdout"), ("stderr.txt", "stderr"), ("runner-error.txt", "error")):
+        raw = logs[name]
+        _need(receipt["log_sha256"][name] == _sha(raw) and type(receipt["log_bytes"][name]) is int
+              and receipt["log_bytes"][name] == len(raw)
+              and receipt[field] == raw[:MAX_LOG_PREVIEW_BYTES].decode("utf-8", errors="replace").replace("\x00", "\\u0000"),
+              "retained complete compiler logs or previews differ")
+    _need(set(receipt["log_sha256"]) == set(receipt["log_bytes"]) == set(logs)
+          and logs["runner-error.txt"] == b""
+          and receipt["receipt_text_truncated"] is any(len(raw) > MAX_LOG_PREVIEW_BYTES for raw in logs.values()),
+          "retained diagnostics or truncation frame differs")
+    axioms, errors, passed = _axiom_observations(run.stdout, run.stderr,
+        {"conditional_theorems": manifest["preservation_obligations"]},
+        maximum_theorems=MAX_REVIEWED_PRESERVATION_THEOREMS)
+    _need(passed is True and errors == receipt["axiom_observation_errors"] == []
+          and axioms == receipt["theorem_axiom_dependencies"],
+          "retained exact preservation obligation/axiom reports differ")
+    # Recheck current source/review/graph dependencies after the full byte replay.
+    validate_reviewed_norm_preservation_native_v3(preparation, graph, admission, *args,
+        expected_preservation_sha256=expected_preservation_sha256,
+        expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
+        toolchain=toolchain, **kwargs)
+    _need(_sha(Path(packets.__file__).read_bytes()) == packet_owner_pin,
+          "retained-packet validator changed during replay")
+    _reviewed_mixed_native_policy()
+    return contracts.seal_record({**dict(PARENT_FALSE_FLAGS), "schema": REVIEWED_MIXED_RECEIPT_REPLAY_SCHEMA,
+        "profile": REVIEWED_MIXED_RECEIPT_REPLAY_PROFILE, "observation_profile": observation_profile,
+        "retained_receipt_sha256": expected_receipt_sha256, "retained_packet_sha256": expected_packet_sha256,
+        "preparation_sha256": expected_preservation_sha256, "graph_sha256": expected_graph_sha256,
+        "admission_sha256": expected_admission_sha256, "retained_observations_consistent": True,
+        "current_complete_semantics_replayed": True, "obligations": list(manifest["preservation_obligations"]),
+        "packet_inventory": inventory, "producer_pins": {**_reviewed_mixed_preservation_native_pins(owners, manifest),
+            str(Path(packets.__file__).resolve()): packet_owner_pin},
+        "original_success_authenticated": False, "native_execution_authenticated": False,
+        "live_native_success_authenticated": False, "original_admitted_parent_custody_authenticated": False,
+        "native_execution_performed": False, "olean_kernel_rechecked": False,
+        "release_ready": False, "Lean_admitted": False, "training_mask": 0, "evaluation_gold_mask": 0,
+        "authority": dict(AUTHORITY), "missing_prerequisites": [
+            "Independently trusted original admitted-success custody adapter for this reviewed profile.",
+            "Source-matched actual native qualification and reviewed release-native consumer integration."],
+        "scope": "Retained observation consistency and current replay only; no historical process, kernel, legal or release authority."})
+
+
+
+def load_reviewed_norm_preservation_native_v3(packet_files, preparation, graph, admission, *args, **kwargs):
+    """Replay every retained byte under the explicit mixed V3 receipt domain."""
+    _reviewed_mixed_native_policy()
+    contents, _ = _reviewed_retained_packet(packet_files)
+    _need("build-receipt.json" in contents, "original complete mixed native receipt required")
+    return validate_reviewed_norm_preservation_native_receipt_v3(contents["build-receipt.json"],
+        preparation, graph, admission, *args, packet_files=packet_files, **kwargs)
+
+
+__all__ += ["validate_reviewed_norm_preservation_native_receipt_v3", "load_reviewed_norm_preservation_native_v3"]
+
+
+def build_verified_reviewed_norm_preservation_native_v3(preparation, graph, admission, *args,
+        expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256,
+        toolchain, lake_executable, output_directory, timeout_seconds=60, cancellation=None, **kwargs):
+    """Issue this explicit reviewed domain through the shared original live engine."""
+    _need(type(timeout_seconds) in (int, float) and math.isfinite(timeout_seconds)
+          and 0 < timeout_seconds <= 60, "finite compiler timeout in (0,60] required")
+    _live_entry_guard(3)
+    return _build_verified_reviewed_norm_preservation_native(
+        preparation, graph, admission, *args, reviewed_version=3,
+        expected_preservation_sha256=expected_preservation_sha256,
+        expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
+        toolchain=toolchain, lake_executable=lake_executable, output_directory=output_directory,
+        timeout_seconds=timeout_seconds, cancellation=cancellation, **kwargs)
+
+
+def load_verified_reviewed_norm_preservation_native_v3(handle, packet_files, preparation, graph, admission, *args,
+        expected_receipt_sha256, expected_packet_sha256, expected_binary_sha256,
+        expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain, **kwargs):
+    """Join this explicit domain's original live issuance without new execution."""
+    _live_handle_entry(handle, reviewed_version=3)
+    _live_entry_guard(3)
+    return _load_verified_reviewed_norm_preservation_native(
+        handle, packet_files, preparation, graph, admission, *args, reviewed_version=3,
+        expected_receipt_sha256=expected_receipt_sha256, expected_packet_sha256=expected_packet_sha256,
+        expected_binary_sha256=expected_binary_sha256,
+        expected_preservation_sha256=expected_preservation_sha256,
+        expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
+        toolchain=toolchain, **kwargs)
+
+
+__all__ += ["REVIEWED_MIXED_LIVE_SUCCESS_SCHEMA", "REVIEWED_MIXED_LIVE_SUCCESS_PROFILE",
+    "build_verified_reviewed_norm_preservation_native_v3", "load_verified_reviewed_norm_preservation_native_v3"]
+
+# Capture callable objects AND code/default bindings at import completion. The
+# existing public profiles remain unchanged and never consult these guards.
+_LIVE_NATIVE_FUNCTIONS = tuple((name, _live_callable_state(value))
+    for name, value in tuple(globals().items())
+    if type(value) is types.FunctionType and value.__module__ == __name__)
+_LIVE_HANDLE_CLASS = VerifiedReviewedPreservationNativeSuccess
+_LIVE_HANDLE_METACLASS = type(_LIVE_HANDLE_CLASS)
+_LIVE_HANDLE_BASES = _LIVE_HANDLE_CLASS.__bases__
+_LIVE_HANDLE_KEYS = frozenset(vars(_LIVE_HANDLE_CLASS))
+_LIVE_HANDLE_FUNCTIONS = tuple((name, _live_callable_state(_live_descriptor_function(value)))
+    for name, value in vars(_LIVE_HANDLE_CLASS).items()
+    if type(_live_descriptor_function(value)) is types.FunctionType)
+_LIVE_POPEN_CLASS = subprocess.Popen
+_LIVE_POPEN_METACLASS = type(_LIVE_POPEN_CLASS)
+_LIVE_POPEN_BASES = _LIVE_POPEN_CLASS.__bases__
+_LIVE_POPEN_KEYS = frozenset(vars(_LIVE_POPEN_CLASS))
+_LIVE_POPEN_FUNCTIONS = tuple((name, _live_callable_state(_live_descriptor_function(value)))
+    for name, value in vars(_LIVE_POPEN_CLASS).items()
+    if type(_live_descriptor_function(value)) is types.FunctionType)
+
+
+# The original integrity checker must not enforce its own predicate's identity
+# through that same mutable global predicate. Keep the qualified implementation
+# and its import-time callable states in this independent closure. This protects
+# cooperative callable drift; it does not claim hostile Python memory isolation.
+def _bind_live_success_independent_guard_v1():
+    """Bind both guard directions to actual callbacks, never mutable aliases."""
+    original_guard = _live_success_guard
+    original_build_core = _build_verified_reviewed_norm_preservation_native
+    original_load_core = _load_verified_reviewed_norm_preservation_native
+    original_handle_entry = _live_handle_entry
+    function_type = type(original_guard)
+    original_guard_code, original_guard_defaults = original_guard.__code__, original_guard.__defaults__
+    original_guard_keywords = tuple(sorted((original_guard.__kwdefaults__ or {}).items()))
+    issued_handles = _LIVE_SUCCESS_HANDLES
+    issued_handle_class = VerifiedReviewedPreservationNativeSuccess
+
+    def verify_native_functions():
+        for name, state in states:
+            function = globals().get(name)
+            if (type(function) is not function_type or function is not state[0]
+                    or function.__code__ is not state[1] or function.__defaults__ is not state[2]):
+                raise ValueError("live success callable bindings changed: independent " + name)
+            current = function.__kwdefaults__ or {}
+            if (set(current) != {key for key, _ in state[3]}
+                    or not all(current[key] is value for key, value in state[3])):
+                raise ValueError("live success callable bindings changed: independent defaults " + name)
+
+    def integrity(owners=None, *, reviewed_version=2):
+        if (original_guard.__code__ is not original_guard_code
+                or original_guard.__defaults__ is not original_guard_defaults
+                or set(original_guard.__kwdefaults__ or {}) != {key for key, _ in original_guard_keywords}
+                or not all((original_guard.__kwdefaults__ or {})[key] is value
+                           for key, value in original_guard_keywords)):
+            raise ValueError("live success callable bindings changed: captured original guard")
+        verify_native_functions()
+        result = original_guard(owners, reviewed_version=reviewed_version)
+        # A genuine source read or callback may return after changing globals.
+        # Check the immutable callback set again before the next stage proceeds.
+        verify_native_functions()
+        return result
+
+    def guarded(owners=None, *, reviewed_version=2):
+        return integrity(owners, reviewed_version=reviewed_version)
+
+    def entry_guard(reviewed_version):
+        if (globals().get("_live_success_guard") is not guarded
+                or guarded.__code__ is not guard_code
+                or guarded.__defaults__ is not guard_defaults
+                or set(guarded.__kwdefaults__ or {}) != {key for key, _ in guard_keywords}
+                or not all((guarded.__kwdefaults__ or {})[key] is value
+                           for key, value in guard_keywords)):
+            raise ValueError("live success callable bindings changed: independent guard")
+        return guarded(reviewed_version=reviewed_version)
+
+    guard_code, guard_defaults = guarded.__code__, guarded.__defaults__
+    guard_keywords = tuple(sorted((guarded.__kwdefaults__ or {}).items()))
+    persistence_function = _live_postrun_persistence_trusted
+    persistence_state = (persistence_function, persistence_function.__code__, persistence_function.__defaults__,
+                         tuple(sorted((persistence_function.__kwdefaults__ or {}).items())))
+    integrity_state = (integrity, integrity.__code__, integrity.__defaults__,
+                       tuple(sorted((integrity.__kwdefaults__ or {}).items())), persistence_state)
+    entry_code, entry_defaults = entry_guard.__code__, entry_guard.__defaults__
+
+    handle_code, handle_defaults = original_handle_entry.__code__, original_handle_entry.__defaults__
+    handle_keywords = tuple(sorted((original_handle_entry.__kwdefaults__ or {}).items()))
+
+    def build_verified_reviewed_norm_preservation_native_v2(preparation, graph, admission, *args,
+            expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256,
+            toolchain, lake_executable, output_directory, timeout_seconds=60, cancellation=None, **kwargs):
+        """Issue this explicit reviewed domain through the shared original live engine."""
+        _need(type(timeout_seconds) in (int, float) and math.isfinite(timeout_seconds)
+              and 0 < timeout_seconds <= 60, "finite compiler timeout in (0,60] required")
+        if (entry_guard.__code__ is not entry_code
+                or entry_guard.__defaults__ is not entry_defaults
+                or guarded.__code__ is not guard_code
+                or guarded.__defaults__ is not guard_defaults
+                or set(guarded.__kwdefaults__ or {}) != {key for key, _ in guard_keywords}
+                or not all((guarded.__kwdefaults__ or {})[key] is value
+                           for key, value in guard_keywords)):
+            raise ValueError("live success callable bindings changed: independent guard")
+        if "_live_integrity_state" in kwargs:
+            raise ValueError("private live integrity hook cannot be supplied")
+        entry_guard(2)
+        result = original_build_core(
+            preparation, graph, admission, *args, _live_integrity_state=integrity_state, reviewed_version=2,
+            expected_preservation_sha256=expected_preservation_sha256,
+            expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
+            toolchain=toolchain, lake_executable=lake_executable, output_directory=output_directory,
+            timeout_seconds=timeout_seconds, cancellation=cancellation, **kwargs)
+        try:
+            if (integrity.__code__ is not integrity_state[1]
+                    or integrity.__defaults__ is not integrity_state[2]
+                    or set(integrity.__kwdefaults__ or {}) != {key for key, _ in integrity_state[3]}
+                    or not all((integrity.__kwdefaults__ or {})[key] is value
+                               for key, value in integrity_state[3])):
+                raise ValueError("live success callable bindings changed: captured public integrity")
+            integrity(reviewed_version=2)
+        except BaseException:
+            if type(result) is issued_handle_class:
+                issued_handles.pop(result, None)
+            raise
+        return result
+
+    def load_verified_reviewed_norm_preservation_native_v2(handle, packet_files, preparation, graph, admission, *args,
+            expected_receipt_sha256, expected_packet_sha256, expected_binary_sha256,
+            expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain, **kwargs):
+        """Join this explicit domain's original live issuance without new execution."""
+        if (globals().get("_live_handle_entry") is not original_handle_entry
+                or original_handle_entry.__code__ is not handle_code
+                or original_handle_entry.__defaults__ is not handle_defaults
+                or set(original_handle_entry.__kwdefaults__ or {}) != {key for key, _ in handle_keywords}
+                or not all((original_handle_entry.__kwdefaults__ or {})[key] is value
+                           for key, value in handle_keywords)):
+            raise ValueError("live success callable bindings changed: independent _live_handle_entry")
+        original_handle_entry(handle, reviewed_version=2)
+        if (entry_guard.__code__ is not entry_code
+                or entry_guard.__defaults__ is not entry_defaults
+                or guarded.__code__ is not guard_code
+                or guarded.__defaults__ is not guard_defaults
+                or set(guarded.__kwdefaults__ or {}) != {key for key, _ in guard_keywords}
+                or not all((guarded.__kwdefaults__ or {})[key] is value
+                           for key, value in guard_keywords)):
+            raise ValueError("live success callable bindings changed: independent guard")
+        if "_live_integrity_state" in kwargs:
+            raise ValueError("private live integrity hook cannot be supplied")
+        entry_guard(2)
+        result = original_load_core(
+            handle, packet_files, preparation, graph, admission, *args, _live_integrity_state=integrity_state, reviewed_version=2,
+            expected_receipt_sha256=expected_receipt_sha256, expected_packet_sha256=expected_packet_sha256,
+            expected_binary_sha256=expected_binary_sha256,
+            expected_preservation_sha256=expected_preservation_sha256,
+            expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
+            toolchain=toolchain, **kwargs)
+        if (integrity.__code__ is not integrity_state[1]
+                or integrity.__defaults__ is not integrity_state[2]
+                or set(integrity.__kwdefaults__ or {}) != {key for key, _ in integrity_state[3]}
+                or not all((integrity.__kwdefaults__ or {})[key] is value
+                           for key, value in integrity_state[3])):
+            raise ValueError("live success callable bindings changed: captured public integrity")
+        integrity(reviewed_version=2)
+        return result
+
+    def build_verified_reviewed_norm_preservation_native_v3(preparation, graph, admission, *args,
+            expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256,
+            toolchain, lake_executable, output_directory, timeout_seconds=60, cancellation=None, **kwargs):
+        """Issue this explicit reviewed domain through the shared original live engine."""
+        _need(type(timeout_seconds) in (int, float) and math.isfinite(timeout_seconds)
+              and 0 < timeout_seconds <= 60, "finite compiler timeout in (0,60] required")
+        if (entry_guard.__code__ is not entry_code
+                or entry_guard.__defaults__ is not entry_defaults
+                or guarded.__code__ is not guard_code
+                or guarded.__defaults__ is not guard_defaults
+                or set(guarded.__kwdefaults__ or {}) != {key for key, _ in guard_keywords}
+                or not all((guarded.__kwdefaults__ or {})[key] is value
+                           for key, value in guard_keywords)):
+            raise ValueError("live success callable bindings changed: independent guard")
+        if "_live_integrity_state" in kwargs:
+            raise ValueError("private live integrity hook cannot be supplied")
+        entry_guard(3)
+        result = original_build_core(
+            preparation, graph, admission, *args, _live_integrity_state=integrity_state, reviewed_version=3,
+            expected_preservation_sha256=expected_preservation_sha256,
+            expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
+            toolchain=toolchain, lake_executable=lake_executable, output_directory=output_directory,
+            timeout_seconds=timeout_seconds, cancellation=cancellation, **kwargs)
+        try:
+            if (integrity.__code__ is not integrity_state[1]
+                    or integrity.__defaults__ is not integrity_state[2]
+                    or set(integrity.__kwdefaults__ or {}) != {key for key, _ in integrity_state[3]}
+                    or not all((integrity.__kwdefaults__ or {})[key] is value
+                               for key, value in integrity_state[3])):
+                raise ValueError("live success callable bindings changed: captured public integrity")
+            integrity(reviewed_version=3)
+        except BaseException:
+            if type(result) is issued_handle_class:
+                issued_handles.pop(result, None)
+            raise
+        return result
+
+    def load_verified_reviewed_norm_preservation_native_v3(handle, packet_files, preparation, graph, admission, *args,
+            expected_receipt_sha256, expected_packet_sha256, expected_binary_sha256,
+            expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain, **kwargs):
+        """Join this explicit domain's original live issuance without new execution."""
+        if (globals().get("_live_handle_entry") is not original_handle_entry
+                or original_handle_entry.__code__ is not handle_code
+                or original_handle_entry.__defaults__ is not handle_defaults
+                or set(original_handle_entry.__kwdefaults__ or {}) != {key for key, _ in handle_keywords}
+                or not all((original_handle_entry.__kwdefaults__ or {})[key] is value
+                           for key, value in handle_keywords)):
+            raise ValueError("live success callable bindings changed: independent _live_handle_entry")
+        original_handle_entry(handle, reviewed_version=3)
+        if (entry_guard.__code__ is not entry_code
+                or entry_guard.__defaults__ is not entry_defaults
+                or guarded.__code__ is not guard_code
+                or guarded.__defaults__ is not guard_defaults
+                or set(guarded.__kwdefaults__ or {}) != {key for key, _ in guard_keywords}
+                or not all((guarded.__kwdefaults__ or {})[key] is value
+                           for key, value in guard_keywords)):
+            raise ValueError("live success callable bindings changed: independent guard")
+        if "_live_integrity_state" in kwargs:
+            raise ValueError("private live integrity hook cannot be supplied")
+        entry_guard(3)
+        result = original_load_core(
+            handle, packet_files, preparation, graph, admission, *args, _live_integrity_state=integrity_state, reviewed_version=3,
+            expected_receipt_sha256=expected_receipt_sha256, expected_packet_sha256=expected_packet_sha256,
+            expected_binary_sha256=expected_binary_sha256,
+            expected_preservation_sha256=expected_preservation_sha256,
+            expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
+            toolchain=toolchain, **kwargs)
+        if (integrity.__code__ is not integrity_state[1]
+                or integrity.__defaults__ is not integrity_state[2]
+                or set(integrity.__kwdefaults__ or {}) != {key for key, _ in integrity_state[3]}
+                or not all((integrity.__kwdefaults__ or {})[key] is value
+                           for key, value in integrity_state[3])):
+            raise ValueError("live success callable bindings changed: captured public integrity")
+        integrity(reviewed_version=3)
+        return result
+
+    functions = {name: value for name, value in tuple(globals().items())
+                 if type(value) is function_type and value.__module__ == __name__}
+    functions.update(_live_success_guard=guarded, _live_entry_guard=entry_guard,
+        _live_integrity_checker=integrity,
+        build_verified_reviewed_norm_preservation_native_v2=build_verified_reviewed_norm_preservation_native_v2,
+        load_verified_reviewed_norm_preservation_native_v2=load_verified_reviewed_norm_preservation_native_v2,
+        build_verified_reviewed_norm_preservation_native_v3=build_verified_reviewed_norm_preservation_native_v3,
+        load_verified_reviewed_norm_preservation_native_v3=load_verified_reviewed_norm_preservation_native_v3)
+    states = tuple((name, _live_callable_state(value)) for name, value in functions.items())
+    return (guarded, entry_guard, integrity, build_verified_reviewed_norm_preservation_native_v2,
+            load_verified_reviewed_norm_preservation_native_v2,
+            build_verified_reviewed_norm_preservation_native_v3,
+            load_verified_reviewed_norm_preservation_native_v3, states)
+
+
+(_live_success_guard, _live_entry_guard, _live_integrity_checker, build_verified_reviewed_norm_preservation_native_v2,
+ load_verified_reviewed_norm_preservation_native_v2, build_verified_reviewed_norm_preservation_native_v3,
+ load_verified_reviewed_norm_preservation_native_v3, _LIVE_NATIVE_FUNCTIONS) = _bind_live_success_independent_guard_v1()

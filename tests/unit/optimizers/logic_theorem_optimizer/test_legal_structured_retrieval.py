@@ -269,7 +269,7 @@ def test_hashed_order_breaks_repeated_template_alignment_across_families():
     assert all(query["family_group"] != after["donor_family_group"] for query, after in zip(queries, result))
 
 
-def _reviewed_rich_case(*, query_family="query-family", query_lineage="query-component"):
+def _reviewed_rich_case(*, query_family="query-family", query_lineage="query-component", version="v2"):
     """Use the existing actual fictional source/AST/signature admission fixture."""
     import importlib.util
     from pathlib import Path
@@ -278,7 +278,9 @@ def _reviewed_rich_case(*, query_family="query-family", query_lineage="query-com
     spec = importlib.util.spec_from_file_location("_rich_context_reviewed_consumer_fixture", path)
     helper = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(helper)
-    admission_helper, admission, case, rows, options = helper.reviewed_public_consumer_case()
+    factory = (helper.reviewed_public_consumer_case if version == "v2"
+               else helper.reviewed_public_mixed_consumer_case)
+    admission_helper, admission, case, rows, options = factory()
     queries = [{"id": "unseen-query", "source_text": "Unseen lighthouse operators may archive weather messages after a storm."}]
     manifest = helper.splits.LegalIRSplitManifest(
         examples=tuple(helper.splits.LegalIRSplitExample.from_sample({"sample_id": r["id"], "text": r["source_text"],
@@ -288,18 +290,18 @@ def _reviewed_rich_case(*, query_family="query-family", query_lineage="query-com
         config_digest=helper.source_digest("fictional rich context split policy"))
     options["split_manifest"] = manifest.to_dict()
     options["expected_split_manifest_sha256"] = helper.digest(options["split_manifest"])
-    binding = bound.prepare_reviewed_source_span_consumer_binding_v2(rows, **options)
+    binding = getattr(bound, "prepare_reviewed_source_span_consumer_binding_" + version)(rows, **options)
     norm = next(r for r in rows if any(u["use_unit_id"] == r["unit_id"] for u in r["canonical_ir"]["definition_uses"]))
     selections = [{"id": queries[0]["id"], "source_sha256": helper.source_digest(queries[0]["source_text"]),
                    "index_sha256": helper.digest(rows), "retrieved_ids": [norm["id"]]}]
     return helper, admission_helper, admission, case, rows, options, binding, queries, selections
 
 
-def _consume_rich(case, callback, *, queries=None, selections=None, **overrides):
+def _consume_rich(case, callback, *, queries=None, selections=None, version="v2", **overrides):
     helper, _, _, _, rows, options, binding, original_queries, original_selections = case
     queries = original_queries if queries is None else queries
     selections = original_selections if selections is None else selections
-    return structured.consume_reviewed_contexts_v2(binding, rows,
+    return getattr(structured, "consume_reviewed_contexts_" + version)(binding, rows,
         **{k: options[k] for k in ("split_manifest", "admission_inputs", "exposure_records")},
         query_rows=queries, retrieval_rows=selections,
         expected_query_rows_sha256=helper.digest(queries), expected_retrieval_rows_sha256=helper.digest(selections),
@@ -425,18 +427,24 @@ def rich_fixture_owners():
     return tuple(modules)
 
 
-def _rich_consumer_inputs(owner, case):
+def _rich_consumer_inputs(owner, case, *, version="v2"):
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_span_consumer_binding as consumer
-    _, admission, _ = structured._rich_owners()
+    admission = owner.subject.relations._reviewed_owners(version)[0]
     args, inputs = owner.reviewed_mask_arguments_v2(case)
-    current = structured._rich_owners()[0].compile_reviewed_train_relation_masks_v2(*args, **inputs)
+    compile_masks = (owner.subject.compile_reviewed_train_relation_masks_v3 if version == "v3"
+                     else owner.subject.compile_reviewed_train_relation_masks_v2)
+    current = compile_masks(*args, **inputs)
     indexed = {}
     for endpoint in current["formal_endpoints"]:
         indexed.setdefault(endpoint["admission_id"], {}).setdefault(endpoint["unit_id"], endpoint)
     result = {}
     for identity, endpoints in indexed.items():
         entry = inputs["preparation_inputs"]["endpoint_admissions"][identity]
-        report, _ = structured._rich_current_assessment(identity, entry, inputs, admission)
+        observations = inputs["current_endpoint_observations"][identity]
+        current_inputs = dict(entry["kwargs"], at_time_utc=inputs["at_time_utc"],
+            observed_artifact_sha256s=observations["observed_artifact_sha256s"], observed_pins=observations["observed_pins"])
+        assess = admission.assess_reviewed_norm_admission_v3 if version == "v3" else admission.assess_reviewed_norm_admission_v2
+        report = assess(*entry["args"], **current_inputs)
         units = {unit["unit_id"]: unit for unit in report["units"]}
         rows = [{"id": endpoint["split_sample_id"], "unit_id": unit_id,
             "source_text": units[unit_id]["source_text"], "canonical_ir": copy.deepcopy(units[unit_id]["canonical_ir"])}
@@ -471,7 +479,7 @@ def rich_case(rich_fixture_owners):
     return owner, case, query, lane, expected, model
 
 
-def _rich_call_arguments(value):
+def _rich_call_arguments(value, *, version="v2"):
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_eval_splits as splits
     owner, case, query, lane, expected, model = value
     args, inputs = owner.reviewed_mask_arguments_v2(case)
@@ -480,7 +488,7 @@ def _rich_call_arguments(value):
         expected_query_split=splits.HOLDOUT_SPLIT, forbidden_reference_formal_sha256s=excluded,
         expected_forbidden_reference_sha256=structured.joint.checkpoint_digest(excluded), top_k=2, mode="raw")
     return (model, [query], *args), {"retrieval_inputs": inputs,
-        "example_consumer_inputs": _rich_consumer_inputs(owner, case)}
+        "example_consumer_inputs": _rich_consumer_inputs(owner, case, version=version)}
 
 
 @pytest.fixture(scope="module")
@@ -700,3 +708,406 @@ def test_rich_candidate_complete_final_wire_bound_is_independent_of_precopy_acco
     monkeypatch.setattr(structured, "RICH_MAX_BYTES", len(structured.joint._raw(baseline)) - 1)
     with pytest.raises(ValueError, match="candidate byte budget exceeded"):
         structured.build_reviewed_rich_context_candidates(*args, **inputs)
+
+
+def test_rich_candidate_reports_checkpoint_declared_historical_training_exposure(
+        rich_case, rich_fixture_owners):
+    """Keep existing numerical weights while reporting known historical overlap.
+
+    A is the unchanged checkpoint from the existing accepted toy train route.
+    B is constructed independently before source identities, split/review pins,
+    and signatures. All source/review/vector declarations remain fictional.
+    """
+    from ipfs_datasets_py.logic.formalization.autoencoder import alignment_lane_bundle as lanes
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_eval_splits as splits
+
+    owner, query_owner = rich_fixture_owners
+    _, original, _, _, _, model = rich_case
+    checkpoint = model.checkpoint
+    checkpoint_before = copy.deepcopy(checkpoint)
+    history = checkpoint["training_handoff"]
+    historical = history["source_endpoints"][0]
+    entry = original["preparation_inputs"]["endpoint_admissions"][historical["admission_id"]]
+    original_units = entry["report"]["units"]
+    unit = next(unit for unit in original_units if unit["unit_id"] == historical["unit_id"])
+    source_text = unit["source_text"]
+    assert hashlib.sha256(source_text.encode("utf-8")).hexdigest() == historical["source_sha256"]
+    assert checkpoint["progress"]["optimizer_steps"] > 0
+    assert checkpoint["implementation"] == structured.joint._reviewed_implementation()
+
+    current = owner.fixtures.reviewed_pair_fixture_v2(
+        norm_fixture_options={
+            "fixture_namespace": "other-act-v1",
+            "source_texts": [
+                "Within this separate fictional instrument, covered officer denotes any officer whom its Board appoints.",
+                "This other fictional instrument requires covered officers to submit a report, except when its Board expressly excuses them.",
+                "Under this other fictional instrument, every covered officer is permitted to examine its register.",
+            ],
+        },
+        lineage_group_id="fixture:reviewed-other-act-lineage",
+        sample_id_prefix="sample:other-act-v1:", ledger_id="fixture:other-reviewed-pairs",
+    )
+    historical_query = {"id": "query:historical-train-source", "source_text": source_text,
+                        "split_sample_id": "sample:historical-train-source"}
+    case, query, lane, expected = query_owner._reviewed_structural_query_fixture(
+        owner, current, query=historical_query, lineage_group_id=historical["exposure_group"])
+    inputs = case["preparation_inputs"]
+    old_manifest = splits.LegalIRSplitManifest.from_mapping(inputs["split_manifest"])
+    additions = [splits.LegalIRSplitExample.from_sample({
+        "sample_id": "sample:historical-component:" + unit["unit_id"],
+        "source_text": unit["source_text"], "lineage_group_id": historical["exposure_group"],
+    }) for unit in original_units if unit["unit_id"] != historical["unit_id"]]
+    manifest = splits.LegalIRSplitManifest(
+        examples=(*old_manifest.examples, *additions),
+        assignments={**old_manifest.assignments,
+                     **{row.sample_id: splits.HOLDOUT_SPLIT for row in additions}},
+        config_digest=old_manifest.config_digest, protected_splits=old_manifest.protected_splits,
+        metadata=old_manifest.metadata,
+    ).to_dict()
+    assert splits.validate_legal_ir_eval_splits(manifest).passed
+    inputs["split_manifest"] = manifest
+    split_sha = lanes._digest(manifest)
+    inputs["expected_split_manifest_sha256"] = split_sha
+    inputs["body"]["split_manifest_sha256"] = split_sha
+    artifact_id = inputs["body"]["ledger_id"] + ":split"
+    next(row for row in inputs["dependency_manifest"]["artifacts"]
+         if row["artifact_id"] == artifact_id)["artifact_sha256"] = split_sha
+    case["observed_artifacts"][artifact_id] = split_sha
+    owner.refresh_reviewed_pair_ledger_v2(case)
+    current_handoff = owner.reviewed_mask_compile_v2(case)
+    assert current_handoff["reviewed_objective_mask_ready"] is True
+    assert current_handoff["source_profile_sha256"] == history["source_profile_sha256"]
+    assert current_handoff["formal_profile_sha256"] == history["formal_profile_sha256"]
+    for field in ("source_sha256", "exposure_group", "dependency_group_sha256", "unit_id", "split_sample_id"):
+        assert not ({row[field] for row in current_handoff["source_endpoints"]}
+                    & {row[field] for row in history["source_endpoints"]})
+
+    args, offered = _rich_call_arguments((owner, case, query, lane, expected, model))
+    offered["retrieval_inputs"].update(top_k=1, mode="joint")
+    observed = structured.build_reviewed_rich_context_candidates(*args, **offered)
+    assert observed["status"] == observed["rows"][0]["status"] == "candidate_only"
+    assert observed["candidate_count"] == 1 and observed["model_forward_executed"] is True
+    assert observed["checkpoint_sha256"] == structured.joint.checkpoint_digest(checkpoint)
+    exposure = observed["rows"][0]["historical_training_exposure"]
+    assert exposure["scope"] == "checkpoint_declared_training_population_only"
+    assert exposure["population"] == "source_endpoints" and exposure["history_available"] is True
+    assert exposure["source_sha256_match"] is exposure["exposure_group_match"] is True
+    assert exposure["known_overlap"] is True and exposure["unseen_query_proven"] is False
+    assert observed["heldout_evaluation_performed"] is False
+    assert observed["decoder_context_admitted"] is observed["arbitrary_context_permission"] is False
+
+    control_case, control, control_lane, control_expected = query_owner._reviewed_structural_query_fixture(owner, current)
+    control_args, control_inputs = _rich_call_arguments(
+        (owner, control_case, control, control_lane, control_expected, model))
+    control_inputs["retrieval_inputs"].update(top_k=1, mode="joint")
+    unrelated = structured.build_reviewed_rich_context_candidates(*control_args, **control_inputs)
+    assert unrelated["rows"][0]["status"] == "candidate_only"
+    unexposed = unrelated["rows"][0]["historical_training_exposure"]
+    assert unexposed["history_available"] is True
+    assert unexposed["source_sha256_match"] is unexposed["exposure_group_match"] is False
+    assert unexposed["known_overlap"] is unexposed["unseen_query_proven"] is False
+    assert unrelated["heldout_evaluation_performed"] is False
+
+    # Pure metadata checks neither mutate nor reseal the genuine checkpoint.
+    source_only = structured._historical_training_exposure(
+        history, historical["source_sha256"], "fixture:unrelated-historical-group")
+    group_only = structured._historical_training_exposure(
+        history, hashlib.sha256(b"unrelated source").hexdigest(), historical["exposure_group"])
+    assert source_only["source_sha256_match"] is True and source_only["exposure_group_match"] is False
+    assert group_only["source_sha256_match"] is False and group_only["exposure_group_match"] is True
+    assert source_only["known_overlap"] is group_only["known_overlap"] is True
+    for unavailable in (
+        {}, {"source_endpoints": [historical], "source_row_count": True},
+        {"source_endpoints": [{"source_sha256": "malformed", "exposure_group": historical["exposure_group"]}],
+         "source_row_count": 1},
+    ):
+        unknown = structured._historical_training_exposure(
+            unavailable, historical["source_sha256"], historical["exposure_group"])
+        assert unknown["history_available"] is False
+        assert unknown["source_sha256_match"] is unknown["exposure_group_match"] is unknown["known_overlap"] is None
+        assert unknown["unseen_query_proven"] is False
+    assert model.checkpoint == checkpoint_before == checkpoint
+
+
+
+def test_rich_v3_complete_mixed_ast_and_governing_definition_reach_target_free_context():
+    case = _reviewed_rich_case(version="v3")
+    _, _, _, _, rows, _, _, queries, selected = case
+    original = copy.deepcopy(rows)
+    result = _consume_rich(case, lambda payload: payload, version="v3")
+    assert result["schema"] == "legal-reviewed-retrieval-context/v3"
+    assert result["binding_receipt"]["schema"] == "reviewed-source-span-consumer-binding/v3"
+    context = result["rows"][0]
+    assert context["source_text"] == queries[0]["source_text"]
+    norm = next(row for row in rows if row["id"] == selected[0]["retrieved_ids"][0])
+    definition_id = norm["canonical_ir"]["definition_uses"][0]["definition_unit_id"]
+    expected = [row for row in rows if row is norm or row["unit_id"] == definition_id]
+    assert {row["id"] for row in context["examples"]} == {row["id"] for row in expected}
+    for row in expected:
+        actual = next(item for item in context["examples"] if item["id"] == row["id"])
+        assert actual["canonical_ir"] == row["canonical_ir"]
+        assert actual["source_link"] == row["canonical_ir"]["source_binding"]
+        assert actual["source_text"] == row["source_text"]
+    for field in ("query_target_access", "ranking_authenticated", "training_executed",
+                  "proof_authority", "corpus_admitted", "inference_context_permission_verified"):
+        assert result[field] is False
+    assert rows == original
+
+
+@pytest.mark.parametrize("binding_version,dispatch_version", [("v2", "v3"), ("v3", "v2")])
+def test_rich_v3_explicit_dispatch_refuses_binding_domain_relabel(binding_version, dispatch_version):
+    case = _reviewed_rich_case(version=binding_version)
+    calls = []
+    with pytest.raises(ValueError, match="contract"):
+        _consume_rich(case, calls.append, version=dispatch_version)
+    assert calls == []
+
+
+@pytest.mark.parametrize("damage", ["target", "source", "index", "neighbor", "budget"])
+def test_rich_v3_preserves_target_free_source_selection_and_complete_budget_guards(damage):
+    case = _reviewed_rich_case(version="v3")
+    queries, selections = copy.deepcopy(case[-2:])
+    overrides = {}
+    if damage == "target": queries[0]["canonical_ir"] = case[4][0]["canonical_ir"]
+    elif damage == "source": queries[0]["source_text"] += " changed"
+    elif damage == "index": selections[0]["index_sha256"] = "0" * 64
+    elif damage == "neighbor": selections[0]["retrieved_ids"] = ["unreviewed"]
+    else: overrides["max_context_bytes"] = 128
+    calls = []
+    with pytest.raises(ValueError):
+        _consume_rich(case, calls.append, version="v3", queries=queries, selections=selections, **overrides)
+    assert calls == []
+
+
+@pytest.mark.parametrize("during_callback", [False, True])
+def test_rich_v3_current_review_revocation_blocks_before_or_after_callback(during_callback):
+    case = _reviewed_rich_case(version="v3")
+    helper, admission_helper, admission, original, _, options, _, _, _ = case
+    calls = []
+    def revoke():
+        original["registry"]["keys"][0]["revoked_at_utc"] = admission_helper.fixture.EVALUATED
+        original["registry"]["revocation_generation"] += 1
+        admission_helper.refresh_signed_reviews(original, admission)
+        options["admission_inputs"].update(helper.reviewed_public_admission_inputs(admission_helper.fixture, admission, original))
+    def callback(payload):
+        calls.append(payload)
+        revoke()
+    if not during_callback: revoke()
+    with pytest.raises(ValueError):
+        _consume_rich(case, callback, version="v3")
+    assert len(calls) == int(during_callback)
+
+
+@pytest.mark.parametrize("field", ["queries", "selections"])
+def test_rich_v3_checks_query_and_selection_changes_on_callback_exit(field):
+    case = _reviewed_rich_case(version="v3")
+    def change(payload):
+        if field == "queries": case[-2][0]["source_text"] += " changed"
+        else: case[-1][0]["retrieved_ids"].clear()
+    with pytest.raises(ValueError):
+        _consume_rich(case, change, version="v3")
+
+
+def test_rich_v3_preserves_callback_error_when_inputs_remain_current():
+    case = _reviewed_rich_case(version="v3")
+    error = RuntimeError("original consumer failure")
+    def fail(payload):
+        raise error
+    with pytest.raises(RuntimeError) as seen:
+        _consume_rich(case, fail, version="v3")
+    assert seen.value is error
+
+
+@pytest.fixture(scope="module")
+def rich_v3_case(rich_fixture_owners):
+    torch = pytest.importorskip("torch")
+    owner, query_owner = rich_fixture_owners
+    original = owner.fixtures.reviewed_pair_fixture_v3(include_definition=True)
+    case, query, lane, expected = query_owner._reviewed_structural_query_fixture(owner, original, admission_version="v3")
+    args, inputs = owner.reviewed_mask_arguments_v2(case)
+    previous = torch.get_num_threads()
+    torch.set_num_threads(1)
+    try:
+        trained = structured.joint.train_reviewed_retriever_v3(*args, **inputs, steps=1, joint_dimension=8)
+        model = structured.joint.ReviewedLegalJointRetriever(trained["checkpoint"],
+            expected_checkpoint_sha256=structured.joint.checkpoint_digest(trained["checkpoint"]))
+        yield owner, case, query, lane, expected, model
+    finally:
+        torch.set_num_threads(previous)
+
+
+@pytest.fixture
+def rich_v3_call_arguments(rich_v3_case):
+    args, inputs = _rich_call_arguments(rich_v3_case, version="v3")
+    inputs["retrieval_inputs"].update(top_k=4, mode="joint")
+    return (args[0], *copy.deepcopy(args[1:])), copy.deepcopy(inputs)
+
+
+def test_rich_v3_candidate_preserves_indexed_definition_mixed_AST_and_source(rich_v3_call_arguments):
+    args, inputs = rich_v3_call_arguments
+    before = copy.deepcopy(inputs)
+    result = structured.build_reviewed_rich_context_candidates_v3(*args, **inputs)
+    assert inputs == before and result["schema"] == "legal-reviewed-full-example-context-candidate/v3"
+    assert result["profile"] == "complete-reviewed-mixed-sort-training-examples/v3"
+    assert result["candidate_count"] == 1 and result["model_forward_executed"] is True
+    examples = result["rows"][0]["examples"]
+    assert len(examples) == result["rows"][0]["distinct_source_unit_count"] == 3
+    assert result["rows"][0]["selected_representation_count"] == 4
+    assert sum(e["unit_kind"] == "definition" for e in examples) == 1
+    assert result["governing_definition_bodies_supplied"] is True
+    assert result["definition_body_scope"] == "selected_indexed_exposure_bound_TRAIN_units_only"
+    assert result["supplemental_context_lookup_performed"] is False
+    assert all(result[k] is False for k in ("decoder_context_admitted", "arbitrary_context_permission",
+        "proof_authority", "kernel_checked", "corpus_admitted", "legal_applicability_verified",
+        "training_executed", "query_target_access", "proof_dependency_bodies_supplied"))
+    for example in examples:
+        offered = next(row for row in inputs["example_consumer_inputs"][example["admission_id"]]["rows"]
+                       if row["unit_id"] == example["unit_id"])
+        assert example["canonical_ir"] == offered["canonical_ir"]
+        assert example["argument_roles"] == offered["canonical_ir"]["argument_roles"]
+        assert bytes.fromhex(example["source_utf8_hex"]).decode("utf-8") == offered["source_text"]
+        assert example["TRAIN_consumer_custody"]["schema"] == "reviewed-source-span-consumer-binding/v3"
+        assert example["evaluation_gold_mask"] == example["training_mask"] == 0
+    assert any(e["relational_profile"] == "authored-many-sorted-relational-deontic/v1" for e in examples)
+    assert structured.validate_reviewed_rich_context_candidates_v3(result, *args,
+        expected_candidate_sha256=structured.joint.checkpoint_digest(result), **inputs) == result
+
+
+@pytest.mark.parametrize("direction", ["v3-to-v2", "v2-to-v3"])
+def test_rich_v3_candidate_refuses_retriever_domain_swaps(rich_v3_case, rich_case, direction):
+    version = "v3" if direction == "v3-to-v2" else "v2"
+    args, inputs = _rich_call_arguments(rich_v3_case if version == "v3" else rich_case, version=version)
+    build = structured.build_reviewed_rich_context_candidates if version == "v3" else structured.build_reviewed_rich_context_candidates_v3
+    with pytest.raises(ValueError, match="domain"):
+        build(*args, **inputs)
+
+
+@pytest.mark.parametrize("damage", ["unknown-exposure", "tampered-AST", "missing-definition", "fixture-opt-in"])
+def test_rich_v3_candidate_rechecks_complete_example_custody_before_projection(rich_v3_call_arguments, damage):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_span_consumer_binding as consumer
+    args, inputs = rich_v3_call_arguments
+    offered = next(iter(inputs["example_consumer_inputs"].values()))
+    if damage == "unknown-exposure":
+        offered["exposure_records"][0]["target_exposure"] = "unknown"
+        offered["expected_exposure_sha256"] = consumer._guard(offered["exposure_records"]).sha256
+    elif damage == "tampered-AST":
+        offered["rows"][0]["canonical_ir"]["typed_expression"]["root"]["kind"] = "false"
+        offered["expected_rows_sha256"] = consumer._guard(offered["rows"]).sha256
+    elif damage == "missing-definition":
+        offered["rows"] = offered["rows"][1:]
+        offered["exposure_records"] = offered["exposure_records"][1:]
+        offered["expected_rows_sha256"] = consumer._guard(offered["rows"]).sha256
+        offered["expected_exposure_sha256"] = consumer._guard(offered["exposure_records"]).sha256
+    else: offered["allow_fictional_fixture"] = False
+    forwards = []
+    hook = args[0]._model.source.register_forward_hook(lambda *values: forwards.append(1))
+    try:
+        if damage in ("unknown-exposure", "fixture-opt-in"):
+            result = structured.build_reviewed_rich_context_candidates_v3(*args, **inputs)
+            assert result["status"] == "abstained_example_custody_unavailable" and not result["rows"]
+        else:
+            with pytest.raises(ValueError):
+                structured.build_reviewed_rich_context_candidates_v3(*args, **inputs)
+        assert not forwards
+    finally:
+        hook.remove()
+
+
+def test_rich_v3_candidate_closing_current_trust_guard_follows_real_projection(rich_v3_call_arguments):
+    args, inputs = rich_v3_call_arguments
+    forwards = []
+    def revoke(module, values, output):
+        forwards.append(1)
+        args[3]["keys"][0]["revoked_at_utc"] = inputs["retrieval_inputs"]["at_time_utc"]
+        return None
+    hook = args[0]._model.source.register_forward_hook(revoke)
+    before = structured.joint.checkpoint_digest(args[0].checkpoint)
+    try:
+        with pytest.raises(ValueError, match="complete rich candidate inputs changed during construction"):
+            structured.build_reviewed_rich_context_candidates_v3(*args, **inputs)
+        assert forwards and structured.joint.checkpoint_digest(args[0].checkpoint) == before
+    finally:
+        hook.remove()
+
+
+def test_ranked_v3_selection_reaches_existing_complete_context_consumer(rich_v3_call_arguments):
+    args, inputs = rich_v3_call_arguments
+    prepared = structured.prepare_reviewed_ranked_training_context_v3(*args, **inputs)
+    context = prepared["context_inputs"]
+    assert set(context) == {"binding", "training_rows", "split_manifest", "admission_inputs",
+                            "exposure_records", "query_rows", "retrieval_rows"}
+    assert context["query_rows"] == [{"id": args[1][0]["split_sample_id"], "source_text": args[1][0]["source_text"]}]
+    provenance = prepared["selection_provenance"]
+    assert provenance["query_identity_bindings"] == [{"query_id": args[1][0]["id"],
+        "split_sample_id": args[1][0]["split_sample_id"]}]
+    assert provenance["ranking_scope"] == "fresh_at_preparation_only_not_later_context_authority"
+    assert provenance["decoder_context_admitted"] is provenance["legal_applicability_verified"] is False
+    payload = structured.consume_reviewed_contexts_v3(**context,
+        expected_query_rows_sha256=structured.reviewed_context_inputs_sha256(context["query_rows"]),
+        expected_retrieval_rows_sha256=structured.reviewed_context_inputs_sha256(context["retrieval_rows"]),
+        consumer=lambda value: value)
+    assert len(payload["rows"][0]["examples"]) == 3
+    definition_ids = {use["definition_unit_id"] for row in context["training_rows"]
+                      for use in row["canonical_ir"]["definition_uses"]}
+    assert definition_ids and any(e["unit_id"] in definition_ids for e in payload["rows"][0]["examples"])
+    assert payload["inference_context_permission_verified"] is False
+    for e in payload["rows"][0]["examples"]:
+        original = next(r for r in context["training_rows"] if r["id"] == e["id"])
+        assert e["canonical_ir"] == original["canonical_ir"] and e["source_text"] == original["source_text"]
+    assert len(provenance["selected_endpoint_refs"][0]["endpoint_refs"]) == 4
+
+
+def test_ranked_v3_selection_replays_current_review_when_later_consumed(rich_v3_call_arguments):
+    args, inputs = rich_v3_call_arguments
+    prepared = structured.prepare_reviewed_ranked_training_context_v3(*args, **inputs)
+    context = prepared["context_inputs"]
+    context["admission_inputs"]["registry"]["keys"][0]["revoked_at_utc"] = inputs["retrieval_inputs"]["at_time_utc"]
+    calls = []
+    with pytest.raises(ValueError):
+        structured.consume_reviewed_contexts_v3(**context,
+            expected_query_rows_sha256=structured.reviewed_context_inputs_sha256(context["query_rows"]),
+            expected_retrieval_rows_sha256=structured.reviewed_context_inputs_sha256(context["retrieval_rows"]),
+            consumer=calls.append)
+    assert not calls
+
+
+@pytest.mark.parametrize("damage", ["query-source", "unknown-exposure"])
+def test_ranked_v3_selection_never_turns_unavailable_candidates_into_context(rich_v3_call_arguments, damage):
+    args, inputs = rich_v3_call_arguments
+    if damage == "query-source":
+        args[1][0]["source_text"] += " changed"
+    else:
+        offered = next(iter(inputs["example_consumer_inputs"].values()))
+        offered["exposure_records"][0]["target_exposure"] = "unknown"
+        offered["expected_exposure_sha256"] = structured.reviewed_context_inputs_sha256(offered["exposure_records"])
+    with pytest.raises(ValueError):
+        structured.prepare_reviewed_ranked_training_context_v3(*args, **inputs)
+
+
+@pytest.mark.parametrize("damage", ["multiple-components", "all-examples-excluded", "outer-trust-drift"])
+def test_ranked_v3_selection_preserves_complete_population_and_closing_custody(rich_v3_call_arguments, damage):
+    args, inputs = rich_v3_call_arguments
+    if damage == "multiple-components":
+        inputs["example_consumer_inputs"]["unselected-extra-component"] = copy.deepcopy(
+            next(iter(inputs["example_consumer_inputs"].values())))
+        message = "one complete TRAIN admission component"
+    elif damage == "all-examples-excluded":
+        forbidden = {args[1][0]["id"]: sorted({r["formal_view_sha256"] for r in args[2]["formal_endpoints"]})}
+        inputs["retrieval_inputs"].update(forbidden_reference_formal_sha256s=forbidden,
+            expected_forbidden_reference_sha256=structured.joint.checkpoint_digest(forbidden))
+        message = "complete available ranked candidates"
+    else:
+        message = "ranked context inputs changed during preparation"
+    forwards = []
+    def observe(module, values, output):
+        forwards.append(1)
+        if damage == "outer-trust-drift":
+            args[3]["keys"][0]["revoked_at_utc"] = inputs["retrieval_inputs"]["at_time_utc"]
+        return None
+    hook = args[0]._model.source.register_forward_hook(observe)
+    try:
+        with pytest.raises(ValueError, match=message):
+            structured.prepare_reviewed_ranked_training_context_v3(*args, **inputs)
+        assert bool(forwards) == (damage == "outer-trust-drift")
+    finally:
+        hook.remove()

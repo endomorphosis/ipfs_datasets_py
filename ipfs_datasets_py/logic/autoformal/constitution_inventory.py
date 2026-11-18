@@ -386,3 +386,12 @@ def inventory_article_1(source: str | dict[str, Any]) -> dict[str, Any]:
     else:
         raise TypeError("Article 1 inventory requires constitution text or an inventory ledger")
     return constitution_shard_inventory(ledger, "A1")
+
+
+from ipfs_datasets_py.logic.autoformal import corpus_contracts as _joined_owner_contracts_v1
+
+_JOIN_LOADED_OWNER_GUARD_V1 = _joined_owner_contracts_v1._capture_loaded_owner_guard_v1(
+    globals(), value_names=(),
+    class_names=(),
+    imported_function_names=(),
+    alias_names=('Any', '__builtins__', '__loader__', '__spec__', '_joined_owner_contracts_v1', 'copy', 're'))

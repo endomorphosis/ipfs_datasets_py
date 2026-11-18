@@ -769,13 +769,40 @@ def reviewed_resign_v2(case):
         case["reviews"][index] = case["signers"][index].sign(body)
 
 
-def reviewed_norm_fixture_v2(owner):
+def reviewed_norm_fixture_v2(owner, *, fixture_namespace="act-v1", source_texts=None,
+        permitted_uses=None, predicate_prefix=None, document_revision=None,
+        governing_instrument_id=None, definition_provision_id=None,
+        cross_references=None, dependency_artifacts=None, source_bindings=None):
     """One fictional definition and two distinct complete normative provisions.
 
     This public test helper deliberately exercises the existing source,
     TypedExpression, dependency and detached-signature owners. It is reusable
     by the consumer's owning tests; no retained runtime artifact is imported.
     """
+    # Explicit fictional fixture options enter BEFORE preparation, dependency
+    # subjects, registry/policy digests and all original detached signatures.
+    # Defaults retain the original fixture's permitted uses and predicates.
+    if document_revision is not None:
+        assert type(document_revision) is str and 0 < len(document_revision) <= 512
+    if permitted_uses is not None:
+        assert type(permitted_uses) is list and permitted_uses and len(set(permitted_uses)) == len(permitted_uses)
+        assert all(type(use) is str and use in owner.REVIEWED_USES for use in permitted_uses)
+    if predicate_prefix is not None:
+        assert type(predicate_prefix) is str and 0 < len(predicate_prefix) <= 32
+        assert predicate_prefix.isascii() and predicate_prefix.isalpha()
+    if cross_references is not None:
+        assert type(cross_references) is list and len(cross_references) <= 64
+    if dependency_artifacts is not None:
+        assert type(dependency_artifacts) is dict
+        assert all(type(key) is str and type(value) is bytes and 0 < len(value) <= 1_000_000
+                   for key, value in dependency_artifacts.items())
+        assert {row["dependency_artifact_id"] for row in (cross_references or [])} == set(dependency_artifacts)
+        assert all(row["dependency_sha256"] == sha(dependency_artifacts[row["dependency_artifact_id"]])
+                   for row in cross_references)
+    def predicate(name):
+        return name if predicate_prefix is None else predicate_prefix + name
+    instrument_id = "fixture:" + fixture_namespace
+    component_id = "fixture:reviewed-" + fixture_namespace
     from cryptography.hazmat.primitives import serialization
     from ipfs_datasets_py.logic.profile_g import Ed25519Signer
     from ipfs_datasets_py.logic.autoformal import corpus_source as source_owner
@@ -785,22 +812,22 @@ def reviewed_norm_fixture_v2(owner):
     helper = load_fixture("_reviewed_admission_relational_fixture", "test_legal_relational_norm_v1.py")
     builder = helper.Builder()
     definition_request = helper.request_for(builder,
-        builder.binary("iff", builder.atom("CoveredOfficer", "officer"),
-                       builder.atom("AppointedByBoard", "officer")),
-        [("CoveredOfficer", ("officer",)), ("AppointedByBoard", ("officer",))],
+        builder.binary("iff", builder.atom(predicate("CoveredOfficer"), "officer"),
+                       builder.atom(predicate("AppointedByBoard"), "officer")),
+        [(predicate("CoveredOfficer"), ("officer",)), (predicate("AppointedByBoard"), ("officer",))],
         [("officer", "forall")])
     builder = helper.Builder()
     duty_request = helper.request_for(builder,
-        builder.binary("implies", builder.atom("CoveredOfficer", "officer"),
-            builder.binary("implies", helper.ast.mk_not(builder.nid(), builder.atom("Excused", "officer")),
-                builder.modal("O", builder.atom("FilesReport", "officer")))),
-        [("CoveredOfficer", ("officer",)), ("Excused", ("officer",)), ("FilesReport", ("officer",))],
+        builder.binary("implies", builder.atom(predicate("CoveredOfficer"), "officer"),
+            builder.binary("implies", helper.ast.mk_not(builder.nid(), builder.atom(predicate("Excused"), "officer")),
+                builder.modal("O", builder.atom(predicate("FilesReport"), "officer")))),
+        [(predicate("CoveredOfficer"), ("officer",)), (predicate("Excused"), ("officer",)), (predicate("FilesReport"), ("officer",))],
         [("officer", "forall")])
     builder = helper.Builder()
     permission_request = helper.request_for(builder,
-        builder.binary("implies", builder.atom("CoveredOfficer", "officer"),
-                       builder.modal("P", builder.atom("InspectsRegister", "officer"))),
-        [("CoveredOfficer", ("officer",)), ("InspectsRegister", ("officer",))],
+        builder.binary("implies", builder.atom(predicate("CoveredOfficer"), "officer"),
+                       builder.modal("P", builder.atom(predicate("InspectsRegister"), "officer"))),
+        [(predicate("CoveredOfficer"), ("officer",)), (predicate("InspectsRegister"), ("officer",))],
         [("officer", "forall")])
     texts = [
         "For this fictional Act, a covered officer means an officer appointed by the Board. Café.",
@@ -808,28 +835,51 @@ def reviewed_norm_fixture_v2(owner):
         "A covered officer may inspect the register.",
     ]
     requests = [definition_request, duty_request, permission_request]
+    if source_texts is not None:
+        assert type(source_texts) in (list, tuple) and len(source_texts) == len(requests)
+        texts = list(source_texts)
+    if source_bindings is not None:
+        assert type(source_bindings) is dict
+        assert set(source_bindings) == {
+            instrument_id + "/unit-" + str(index + 1) for index in range(len(requests))}
     source_inputs, relational_inputs, units = {}, {}, []
     for index, (text, request) in enumerate(zip(texts, requests)):
-        unit_id = "fixture:act-v1/unit-" + str(index + 1)
+        unit_id = instrument_id + "/unit-" + str(index + 1)
         raw = text.encode("utf-8")
-        version = source_owner.build_source_version(source_id=unit_id, release_id="fixture:act-v1",
-            edition="fictional-edition-1", provision_id=unit_id, raw_bytes=raw,
+        provision_id = definition_provision_id if index == 0 and definition_provision_id is not None else unit_id
+        version = source_owner.build_source_version(source_id=unit_id, release_id=instrument_id,
+            edition="fictional-edition-1", provision_id=provision_id, raw_bytes=raw,
             expected_raw_sha256=sha(raw), extracted_text=text, expected_extracted_sha256=sha(raw),
             extraction_profile="identity/v1", normalization_profile="identity/v1", media_type="text/plain")
         occurrence = source_owner.build_source_occurrence(version, expected_raw_sha256=sha(raw),
             extracted_text=text, expected_extracted_sha256=sha(raw), start_char=0, end_char=len(text),
             start_utf8=0, end_utf8=len(raw))
+        extracted_text = text
+        if source_bindings is not None:
+            selected = source_bindings[unit_id]
+            assert type(selected) is dict and set(selected) == {
+                "source_version", "occurrence", "raw_bytes", "extracted_text"}
+            assert type(selected["raw_bytes"]) is bytes and type(selected["extracted_text"]) is str
+            version, occurrence = deepcopy(selected["source_version"]), deepcopy(selected["occurrence"])
+            raw, extracted_text = selected["raw_bytes"], selected["extracted_text"]
+            source_owner.validate_source_version(version, expected_raw_sha256=sha(raw), raw_bytes=raw,
+                extracted_text=extracted_text, expected_extracted_sha256=sha(extracted_text.encode("utf-8")))
+            source_owner.validate_source_occurrence(occurrence, source_version=version,
+                expected_raw_sha256=sha(raw), extracted_text=extracted_text,
+                expected_extracted_sha256=sha(extracted_text.encode("utf-8")))
         request_raw = wire(request)
         report = relational.prepare_relational_norm_v1(request_raw, expected_request_sha256=sha(request_raw))
-        source_inputs[unit_id] = {"raw_bytes": raw, "extracted_text": text}
+        source_inputs[unit_id] = {"raw_bytes": raw, "extracted_text": extracted_text}
         relational_inputs[unit_id] = {"request_raw": request_raw, "report": report,
             "expected_report_sha256": relational.relational_norm_report_sha256(report)}
         units.append({"unit_id": unit_id, "kind": "definition" if index == 0 else "norm",
-            "source_version": version, "occurrence": occurrence, "document_revision": "fixture:act-v1/revision-1",
+            "source_version": version, "occurrence": occurrence, "document_revision": (instrument_id + "/revision-1"
+                if document_revision is None else document_revision),
             "parent_unit_ids": [], "relational_request_sha256": sha(request_raw),
             "source_artifact_id": unit_id + ":source", "ir_artifact_id": unit_id + ":ir",
-            "coverage": [{"typed_path": row["typed_path"], "start_char": 0, "end_char": len(text),
-                "start_utf8": 0, "end_utf8": len(raw)} for row in report["structural_mapping"]]})
+            "coverage": [{"typed_path": row["typed_path"],
+                **{key: occurrence[key] for key in ("start_char", "end_char", "start_utf8", "end_utf8")}}
+                for row in report["structural_mapping"]]})
     process_raw = b"Fictional independent review process record. No actual statutory or human-review claim."
     process_ref = {"artifact_id": REVIEWED_PROCESS_ID, "sha256": sha(process_raw)}
     definition_uses = []
@@ -842,20 +892,22 @@ def reviewed_norm_fixture_v2(owner):
             node = report["typed_expression"]
             for token in mapping["typed_path"].split("/")[1:]:
                 node = node[int(token)] if type(node) is list else node[token]
-            if node["symbol"] == "CoveredOfficer":
+            if node["symbol"] == predicate("CoveredOfficer"):
                 paths.append(mapping["typed_path"])
         definition_uses.append({"definition_unit_id": units[0]["unit_id"],
             "use_unit_id": unit["unit_id"], "use_occurrence_cid": unit["occurrence"]["record_cid"],
-            "target_typed_paths": paths, "defined_predicate": "CoveredOfficer", "applicability": "governing",
-            "interpretation_id": "fixture:act-v1/selected-interpretation", "evidence_refs": [deepcopy(process_ref)]})
+            "target_typed_paths": paths, "defined_predicate": predicate("CoveredOfficer"), "applicability": "governing",
+            "interpretation_id": instrument_id + "/selected-interpretation", "evidence_refs": [deepcopy(process_ref)]})
     source_signer = Ed25519Signer.generate("did:example:fictional-source-author")
-    declaration = {"schema": "legal-reviewed-norm-declaration/v2", "component_id": "fixture:reviewed-act-v1",
-        "provenance_kind": "fictional_fixture", "interpretation_id": "fixture:act-v1/selected-interpretation",
-        "governing_context": {"jurisdiction": "fictional-jurisdiction", "instrument_id": "fixture:act-v1",
+    declaration = {"schema": "legal-reviewed-norm-declaration/v2", "component_id": component_id,
+        "provenance_kind": "fictional_fixture", "interpretation_id": instrument_id + "/selected-interpretation",
+        "governing_context": {"jurisdiction": "fictional-jurisdiction", "instrument_id": governing_instrument_id or instrument_id,
             "governing_edition": "fictional-edition-1", "legal_as_of_utc": EVALUATED,
             "valid_from_utc": REVIEWED_START, "valid_until_utc": REVIEWED_END},
-        "units": units, "definition_uses": definition_uses, "cross_references": [],
-        "permitted_uses": ["formalization", "training", "heldout_evaluation", "proof_obligation"],
+        "units": units, "definition_uses": definition_uses,
+        "cross_references": [] if cross_references is None else deepcopy(cross_references),
+        "permitted_uses": (["formalization", "training", "heldout_evaluation", "proof_obligation"]
+                           if permitted_uses is None else list(permitted_uses)),
         "unresolved": [], "unsupported": [], "assumptions": [],
         "source_actors": [{"principal_id": "fixture:source-author", "signer_did": source_signer.did,
             "public_key_hex": source_signer.public_key.public_bytes(
@@ -868,6 +920,12 @@ def reviewed_norm_fixture_v2(owner):
                                     (unit["ir_artifact_id"], unit["relational_request_sha256"])):
             artifacts.append({"artifact_id": artifact_id, "artifact_sha256": digest,
                               "dependency_pins": {kind: [] for kind in deps.PIN_KINDS}})
+    # Explicit fictional external dependencies are frozen BEFORE preparation
+    # and detached review signatures. Existing defaults add no artifacts.
+    for artifact_id, raw in (dependency_artifacts or {}).items():
+        assert artifact_id not in {row["artifact_id"] for row in artifacts}
+        artifacts.append({"artifact_id": artifact_id, "artifact_sha256": sha(raw),
+                          "dependency_pins": {kind: [] for kind in deps.PIN_KINDS}})
     manifest = deps.build_dependency_manifest(artifacts,
         [{"dependent_id": declaration["component_id"], "dependency_id": row["artifact_id"]}
          for row in artifacts[1:]], expected_artifact_ids=[row["artifact_id"] for row in artifacts])
@@ -908,7 +966,8 @@ def reviewed_norm_fixture_v2(owner):
             "ambiguity": []}, "context_closure": deepcopy(closure)})
         for index, (signer, role) in enumerate(zip(signers, auth.ROLES))]
     case.update(registry=registry, policy=policy, reviews=reviews, signers=signers,
-                evidence={declaration["component_id"]: declaration_raw, REVIEWED_PROCESS_ID: process_raw})
+                evidence={declaration["component_id"]: declaration_raw, REVIEWED_PROCESS_ID: process_raw,
+                          **(dependency_artifacts or {})})
     return case
 
 
@@ -1069,10 +1128,35 @@ def reviewed_refresh_manifest_v2(case):
     for ref in declaration["cross_references"]:
         artifacts.append({"artifact_id": ref["dependency_artifact_id"],
             "artifact_sha256": ref["dependency_sha256"], "dependency_pins": {kind: [] for kind in deps.PIN_KINDS}})
+    # Several legal units may refer to the same exact physical artifact.
+    # The graph manifest has one record per identity; the declaration retains
+    # every distinct use. Conflicting bytes under one identity must refuse.
+    by_identity = {}
+    for artifact in artifacts:
+        previous = by_identity.setdefault(artifact["artifact_id"], artifact)
+        if previous != artifact:
+            raise ValueError("conflicting fixture artifact identity")
+    artifacts = list(by_identity.values())
     case["manifest"] = deps.build_dependency_manifest(artifacts,
         [{"dependent_id": declaration["component_id"], "dependency_id": row["artifact_id"]}
          for row in artifacts[1:]], expected_artifact_ids=[row["artifact_id"] for row in artifacts])
     case["observed_artifacts"] = {row["artifact_id"]: row["artifact_sha256"] for row in artifacts}
+
+
+def reviewed_refresh_signed_preparation_v2(owner, case):
+    reviewed_refresh_manifest_v2(case)
+    case["preparation"] = owner.prepare_reviewed_norm_admission_v2(case["declaration"],
+        **reviewed_prepare_arguments_v2(case))
+    subject = case["preparation"]["subject"]
+    raw = norm._wire(case["declaration"])
+    case["evidence"][case["declaration"]["component_id"]] = raw
+    for claim in case["reviews"]:
+        claim["subject"] = deepcopy(subject)
+        claim["interpretation"].update(reviewed_graph_sha256=subject["graph_sha256"],
+                                       reviewed_ast_sha256=subject["ast_sha256"])
+        for obligation in claim["context_closure"]["obligations"]:
+            obligation["evidence_refs"][0] = {"artifact_id": case["declaration"]["component_id"], "sha256": sha(raw)}
+    reviewed_resign_v2(case)
 
 
 def test_reviewed_v2_relabeling_one_physical_paragraph_cannot_supply_two_statutory_uses(owner, reviewed_case_v2):

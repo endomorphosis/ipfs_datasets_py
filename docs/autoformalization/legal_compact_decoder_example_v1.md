@@ -1,0 +1,11 @@
+# Documentation moved
+
+The maintained entry is [legal_compact_decoder_example_v1.md](../../ipfs_datasets_py/logic/autoformal/docs/guides/legal_compact_decoder_example_v1.md). This former path is retained for existing links; original bytes and provenance are preserved in the [migration archive](../../ipfs_datasets_py/logic/autoformal/docs/ARCHIVE.md).
+
+<!-- Legacy bookmarks refer to sections in the preserved original. -->
+<a id="compact-labels-beside-source-separated-decoder-examples"></a>
+<a id="input-and-label-compartments"></a>
+<a id="public-api"></a>
+<a id="closed-output"></a>
+<a id="bounds-and-source-custody"></a>
+<a id="remaining-integration"></a>

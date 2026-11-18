@@ -441,3 +441,12 @@ __all__ = [
     "load_uscode_embeddings_from_parquet",
     "load_uscode_samples_from_parquet",
 ]
+
+
+from ipfs_datasets_py.logic.autoformal import corpus_contracts as _joined_owner_contracts_v1
+
+_JOIN_LOADED_OWNER_GUARD_V1 = _joined_owner_contracts_v1._capture_loaded_owner_guard_v1(
+    globals(), value_names=('HF_USCODE_DATASET_ID', 'USCODE_LAWS_PARQUET', '_LAW_COLUMNS', 'RAW_USCODE_SOURCE_PROFILE', 'RAW_USCODE_MAX_ROWS', 'RAW_USCODE_MAX_FILE_BYTES', 'RAW_USCODE_MAX_TEXT_BYTES', 'RAW_USCODE_MAX_TOTAL_TEXT_BYTES', 'RAW_USCODE_MAX_ROW_GROUP_BYTES', 'RAW_USCODE_MAX_DECODED_BYTES'),
+    class_names=('USCodeParquetRecord',),
+    imported_function_names=(),
+    alias_names=('Any', 'BinaryIO', 'Dict', 'Iterable', 'Iterator', 'LegalSample', 'List', 'Mapping', 'Optional', 'Path', 'PurePosixPath', 'Sequence', '__builtins__', '__loader__', '__spec__', '_joined_owner_contracts_v1', 'build_us_code_sample', 'dataclass', 'hashlib', 'json', 'os', 're', 'stat'))

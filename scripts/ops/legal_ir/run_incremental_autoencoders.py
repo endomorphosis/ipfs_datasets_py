@@ -14,6 +14,7 @@ import hashlib
 import json
 import math
 import os
+import re
 from pathlib import Path
 import signal
 import subprocess
@@ -471,7 +472,23 @@ def _group_observation(group_pid):
     return {"wall_time": time.time(), "processes": sorted(processes, key=lambda row: row["pid"])}
 
 
-def supervised_cycle(config):
+def supervised_cycle(config, *, reviewed_parent_runtime=None):
+    if config.get("reviewed_evaluation_request") is not None:
+        from types import SimpleNamespace
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_inference import (
+            ReviewedInferenceParentRuntime, run_reviewed_source_inference_cycle)
+        if type(reviewed_parent_runtime) is not ReviewedInferenceParentRuntime:
+            raise ValueError("configured original reviewed parent runtime required")
+        runtime = reviewed_parent_runtime
+        return run_reviewed_source_inference_cycle(config, SimpleNamespace(_sha=_sha), owner=runtime.owner,
+            source_guard=runtime.source_guard, asset_policy_guard=runtime.asset_policy_guard,
+            current_admission_provider=runtime.current_admission_provider,
+            deadline_monotonic=runtime.deadline_monotonic,
+            current_training_admission_provider=runtime.current_training_admission_provider,
+            context_policy_guard=runtime.context_policy_guard,
+            **({} if runtime.typed_structure_profile is None else {"typed_structure_profile": runtime.typed_structure_profile}))
+    if reviewed_parent_runtime is not None:
+        raise ValueError("reviewed parent runtime requires explicit reviewed evaluation opt-in")
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_daemon_resources import DaemonResourceReservation
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_capacity import execution_capacity_plan, scheduler_capacity
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler import get_global_resource_scheduler
@@ -585,6 +602,10 @@ def parser():
     p.add_argument("--shared-targets", type=Path,
                    help="Optional local verified target artifact covering all training and validation rows")
     p.add_argument("--target-snapshot-id", help="Exact snapshot identity, required with --shared-targets")
+    p.add_argument("--reviewed-evaluation-request", type=Path,
+                   help="Pinned source-only evaluation DATA; requires a configured original parent runtime")
+    p.add_argument("--reviewed-evaluation-sha256",
+                   help="Exact request SHA256; not execution or asset permission")
     p.add_argument("--input-jsonl", type=Path)
     p.add_argument("--validation-jsonl", type=Path,
                    help="Disjoint optimizer selection and qualification rows (max 32); repeated tuning, not an independent canary")
@@ -638,7 +659,7 @@ def parser():
     return p
 
 
-def main(argv=None):
+def main(argv=None, *, reviewed_parent_runtime=None):
     if argv is None and sys.argv[1:] == ["--_cycle"]:
         raw = sys.stdin.buffer.readline(1024 * 1024 + 1)
         if not raw or len(raw) > 1024 * 1024:
@@ -647,6 +668,29 @@ def main(argv=None):
         return 0
     p = parser()
     args = p.parse_args(argv)
+    if args.reviewed_evaluation_request is not None:
+        # A descriptor is DATA, not a serialized runtime or a default policy.
+        # Refuse an unconfigured standalone call before input access/effects.
+        if reviewed_parent_runtime is None:
+            raise ValueError("configured original reviewed parent runtime required")
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_inference import ReviewedInferenceParentRuntime
+        if type(reviewed_parent_runtime) is not ReviewedInferenceParentRuntime:
+            raise ValueError("exact configured reviewed parent runtime required")
+        if args.execution_mode != "inference" or any((args.input_jsonl, args.validation_jsonl,
+                args.repository_id, args.publish_repository, args.arrow_feature_weights, args.shared_targets,
+                args.feature_input_manifest)):
+            raise ValueError("reviewed evaluation opt-in is exclusive with legacy inputs, training and publication")
+        if type(args.reviewed_evaluation_sha256) is not str or re.fullmatch(r"[0-9a-f]{64}", args.reviewed_evaluation_sha256) is None:
+            raise ValueError("exact reviewed evaluation request commitment required")
+        path = args.reviewed_evaluation_request.absolute()
+        config = {**vars(args), "state_directory": str(args.state_directory.absolute()),
+            "reviewed_evaluation_request": {"path": str(path), "sha256": args.reviewed_evaluation_sha256,
+                "bytes": path.stat().st_size}}
+        report = supervised_cycle(config, reviewed_parent_runtime=reviewed_parent_runtime)
+        print(_json(report), flush=True)
+        return 0
+    if args.reviewed_evaluation_sha256 is not None or reviewed_parent_runtime is not None:
+        raise ValueError("reviewed runtime/commitment requires explicit reviewed evaluation request")
     try:
         _training_purpose(vars(args))
     except ValueError as exc:

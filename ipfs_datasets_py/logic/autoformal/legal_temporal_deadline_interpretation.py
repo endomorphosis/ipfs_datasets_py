@@ -23,6 +23,7 @@ from ..software_verification.temporal import TemporalFormula
 REQUEST_SCHEMA = "legal-temporal-deadline-interpretation-requests/v1"
 DECLARATION_SCHEMA = "legal-temporal-deadline-interpretation-declaration/v1"
 ARTIFACT_SCHEMA = "legal-temporal-deadline-interpretation/v1"
+QUALIFIED_UNIT_EVIDENCE_SCHEMA = "legal-temporal-deadline-qualified-unit-evidence/v1"
 PROFILE = "caller-declared-triggered-deadline-property/v1"
 # G + implication + n alternating or/next pairs have maximum depth 2 + 2n.
 # Thirty ticks fit the existing native renderer's depth-64 budget unchanged.
@@ -40,6 +41,11 @@ _PREFIX = re.compile(
     r"(?P<quantity>[1-9][0-9]{0,2})\s+"
     r"(?P<unit>hours?|days?|weeks?|months?|years?)\s+"
     r"(?P<connector>after)\s*\Z", re.IGNORECASE)
+_QUALIFIED_DAY_PREFIX = re.compile(
+    r"(?P<cue>(?:not|no)\s+later\s+than)\s+"
+    r"(?P<quantity>[1-9][0-9]{0,2})\s+"
+    r"(?P<unit>(?P<qualifier>(?a:business|calendar))\s+days?)\s+"
+    r"(?P<connector>after)(?!\w)", re.IGNORECASE)
 _FALSE = {**until._FALSE, "deadline_semantics_inferred": False}
 _require, _closed, _copy, _wire, _seal, digest = (
     until._require, until._closed, until._copy, until._wire, until._seal, until.digest)
@@ -157,6 +163,55 @@ visible. An absent legacy parser match is never converted to a match.
         "model_calls": 0, "source_binding_is_owner_resolution": False,
         "authority": dict(_FALSE), "producer_pins": pins,
     })
+
+
+def build_deadline_qualified_unit_evidence(receipt, proposal_receipt, *, source_text,
+                                          document_text=None, rule_rows=()):
+    """Retain exact lexical units from authenticated unsupported deadline cues.
+
+    This opt-in evidence has no declaration skeleton or clock choices. The
+    existing deadline inventory and interpretation profile remain unchanged.
+    """
+    inventory = build_deadline_requests(receipt, proposal_receipt, source_text=source_text,
+                                        document_text=document_text, rule_rows=rule_rows)
+    document_text = source_text if document_text is None else document_text
+    observations = []
+    for index, issue in enumerate(inventory["issues"]):
+        if issue["reason_codes"] != ["unsupported_temporal_prefix"]:
+            continue
+        cue = issue["cue_span"]
+        match = _QUALIFIED_DAY_PREFIX.match(source_text, cue["char_start"])
+        if match is None or match.end("cue") != cue["char_end"]:
+            continue
+        observation = {"issue_index": index, "status": "unsupported_qualified_unit",
+                       "lexical_unit": match.group("qualifier").lower() + "_day",
+                       "quantity": int(match.group("quantity"))}
+        for field in ("cue", "quantity", "unit", "connector"):
+            start, end = match.span(field)
+            observation[field + "_source"] = until._source_anchor(
+                {"char_start": start, "char_end": end}, receipt, source_text, document_text)
+        observations.append(observation)
+    pins = inventory["producer_pins"]
+    _require(producer_pins() == pins, "deadline producer changed during qualified unit observation")
+    return _seal({
+        "schema": QUALIFIED_UNIT_EVIDENCE_SCHEMA,
+        "deadline_request_inventory_sha256": inventory["receipt_sha256"],
+        "source_binding": inventory["source_binding"],
+        "occurrence_receipt_sha256": inventory["occurrence_receipt_sha256"],
+        "proposal_receipt_sha256": inventory["proposal_receipt_sha256"],
+        "observations": observations, "authority": dict(_FALSE), "producer_pins": pins,
+    })
+
+
+def validate_deadline_qualified_unit_evidence(evidence, receipt, proposal_receipt, *, source_text,
+                                             document_text=None, rule_rows=()):
+    """Replay all lexical observations from the exact original inventory inputs."""
+    _require(type(evidence) is dict and evidence.get("schema") == QUALIFIED_UNIT_EVIDENCE_SCHEMA,
+             "versioned deadline qualified unit evidence required")
+    expected = build_deadline_qualified_unit_evidence(receipt, proposal_receipt, source_text=source_text,
+        document_text=document_text, rule_rows=rule_rows)
+    _require(_wire(expected) == _wire(evidence), "deadline qualified unit evidence differs from exact replay")
+    return _copy(expected)
 
 
 def _expanded_formulas(trigger, response, ticks):
@@ -344,4 +399,6 @@ def validate_deadline_interpretation(artifact, receipt, proposal_receipt, *, sou
 
 __all__ = ["build_deadline_requests", "prepare_deadline_interpretation", "validate_deadline_interpretation",
            "producer_pins", "digest", "REQUEST_SCHEMA", "DECLARATION_SCHEMA", "ARTIFACT_SCHEMA", "PROFILE",
-           "MAX_DEADLINE_TICKS", "MAX_AST_DEPTH", "MAX_AST_NODES"]
+           "MAX_DEADLINE_TICKS", "MAX_AST_DEPTH", "MAX_AST_NODES",
+           "QUALIFIED_UNIT_EVIDENCE_SCHEMA", "build_deadline_qualified_unit_evidence",
+           "validate_deadline_qualified_unit_evidence"]

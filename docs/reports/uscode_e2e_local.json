@@ -342,7 +342,7 @@
     "USCIR-028",
     "USCIR-032"
   ],
-  "evaluation_cid": "f75adbbba92410d024df4fd04833c4a1e4f7b3763429476436c25ddf60a72c57",
+  "evaluation_cid": "67bbce3a989521fd58ac9cf8b886ebeb3dc866aeb89db844c364daf89eaaf21b",
   "fixture": {
     "directory": "tests/fixtures/legal_ir/uscode_e2e_release/",
     "expected": "tests/fixtures/legal_ir/uscode_e2e_release/expected.json",
@@ -385,8 +385,8 @@
       "report",
       "vectors"
     ],
-    "manifest_digest": "a1e1bef09f85a67e6f653f43ea5007bb4cf75fcc71686c9f74c15c7c99816444",
-    "release_root_cid": "bafkreid4wn7mqws4eh7va3deareqidfvxpdalc7joafuzt4fes7h46tuce",
+    "manifest_digest": "de688f63e3caa88f5a06d5e57f01553204354e044919341630a3b88a58506142",
+    "release_root_cid": "bafkreiabv37owiwjgxpzbijgnaokpnucsxb6jafpgijt4zq252floansda",
     "valid": true
   },
   "producer": "test_uscode_sparse_graphrag.py",

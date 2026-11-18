@@ -1,0 +1,745 @@
+--- a/ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_native_v2.py
++++ b/ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_native_v2.py
+@@ -19,6 +19,8 @@
+ 
+ BUILD_SCHEMA = "legal-corpus-v2-definition-use-native-build/v1"
+ PROFILE = "replayed-v2-definition-use-conditional-native-build/v1"
++PARENT_BUILD_SCHEMA = "legal-corpus-parent-definition-use-native-build/v1"
++PARENT_PROFILE = "replayed-parent-definition-use-conditional-native-build/v1"
+ MAX_RECORD_BYTES = 1024 * 1024
+ MAX_INPUT_BYTES = 48 * MAX_RECORD_BYTES
+ MAX_PROJECT_BYTES = 8 * MAX_RECORD_BYTES
+@@ -61,6 +63,15 @@
+     ),
+     False,
+ )
++# Public import remains stdlib-only. The complete parent preparation flags are
++# also retained at execution, after its actual owner has been loaded and replayed.
++PARENT_FALSE_FLAGS = {
++    **FALSE_FLAGS,
++    "governing_scope_verified": False,
++    "governing_edition_verified": False,
++    "contributor_completeness_verified": False,
++    "source_region_roles_verified": False,
++}
+ AUTHORITY = dict.fromkeys(
+     ("source", "legal", "review", "proof", "model", "training", "gold", "corpus_admission"),
+     False,
+@@ -253,9 +264,9 @@
+     return pins
+ 
+ 
+-def validate_definition_use_native_v2(preparation, assessment_raw, *,
++def _validate_definition_use_native(preparation, assessment_raw, *,
+         expected_preparation_sha256, expected_assessment_file_sha256,
+-        review_inputs, toolchain):
++        review_inputs, toolchain, parent=False):
+     """Bound original inputs, verify the external whole pin and publicly replay."""
+     _preflight(preparation, assessment_raw, expected_preparation_sha256,
+                expected_assessment_file_sha256, review_inputs, toolchain)
+@@ -263,11 +274,17 @@
+     preparer = owners[0]
+     _need(type(preparation) is preparer.DefinitionUseCorpusPreparation,
+           "exact existing V2 definition-use preparation type required")
+-    checked = preparer.validate_definition_use_corpus_v2(
++    validate_preparation = (preparer.validate_parent_definition_use_corpus_v1 if parent
++                            else preparer.validate_definition_use_corpus_v2)
++    checked = validate_preparation(
+         preparation, assessment_raw,
+         expected_assessment_file_sha256=expected_assessment_file_sha256,
+         review_inputs=review_inputs, toolchain=toolchain)
+-    _pins(owners, checked.to_dict())
++    manifest = checked.to_dict()
++    _need(manifest["schema"] == (preparer.PARENT_SCHEMA if parent else preparer.SCHEMA)
++          and manifest["profile"] == (preparer.PARENT_PROFILE if parent else preparer.PROFILE),
++          "native preparation must retain its exact fixed source/review profile")
++    _pins(owners, manifest)
+     return checked
+ 
+ 
+@@ -348,10 +365,12 @@
+     return True
+ 
+ 
+-def compilation_receipt_sha256(receipt):
++def _compilation_receipt_sha256(receipt, *, parent=False):
+     """Full canonical observation commitment; never an admission credential."""
+-    _need(type(receipt) is dict and receipt.get("schema") == BUILD_SCHEMA,
+-          "V2 definition-use native compilation receipt required")
++    _need(type(receipt) is dict
++          and receipt.get("schema") == (PARENT_BUILD_SCHEMA if parent else BUILD_SCHEMA),
++          "parent definition-use native compilation receipt required" if parent
++          else "V2 definition-use native compilation receipt required")
+     return _sha(_wire(receipt, MAX_RECEIPT_BYTES))
+ 
+ 
+@@ -382,10 +401,10 @@
+         _need((output / name).read_bytes() == raw, "retained native compiler log failed exact readback")
+ 
+ 
+-def build_definition_use_native_v2(preparation, assessment_raw, *,
++def _build_definition_use_native(preparation, assessment_raw, *,
+         expected_preparation_sha256, expected_assessment_file_sha256,
+         review_inputs, toolchain, lake_executable, output_directory,
+-        timeout_seconds=60, cancellation=None):
++        timeout_seconds=60, cancellation=None, parent=False):
+     """Run the existing conditional project under bounded, owned native tools.
+ 
+     Valid pending or rejected assessments remain pending or rejected. Native
+@@ -394,7 +413,9 @@
+     """
+     _need(type(timeout_seconds) in (int, float) and math.isfinite(timeout_seconds)
+           and 0 < timeout_seconds <= 60, "finite compiler timeout in (0,60] required")
+-    validated = validate_definition_use_native_v2(
++    validate_native = (validate_parent_definition_use_native_v1 if parent
++                       else validate_definition_use_native_v2)
++    validated = validate_native(
+         preparation, assessment_raw, expected_preparation_sha256=expected_preparation_sha256,
+         expected_assessment_file_sha256=expected_assessment_file_sha256,
+         review_inputs=review_inputs, toolchain=toolchain)
+@@ -428,13 +449,15 @@
+             resident_memory_bytes=2 * 1024**3, max_output_bytes=MAX_CAPTURE_BYTES,
+             max_input_bytes=MAX_PROJECT_BYTES, max_workspace_bytes=128 * MAX_RECORD_BYTES,
+             max_output_files=MAX_FILES + MAX_MODULES))
+-    flags = dict(preparer.FALSE_FLAGS) | FALSE_FLAGS
++    flags = dict(preparer.PARENT_FALSE_FLAGS if parent else preparer.FALSE_FLAGS)
++    flags.update(PARENT_FALSE_FLAGS if parent else FALSE_FLAGS)
+     try:
+         run = process.BoundedToolRunner().run(invocation, cancellation=cancellation)
+     except process.OwnedToolCleanupError as error:
+         try:
+             refusal = transport.contracts.seal_record({
+-                "schema": BUILD_SCHEMA, "profile": PROFILE,
++                "schema": PARENT_BUILD_SCHEMA if parent else BUILD_SCHEMA,
++                "profile": PARENT_PROFILE if parent else PROFILE,
+                 "preparation_cid": manifest["record_cid"],
+                 "preparation_full_canonical_sha256": expected_preparation_sha256,
+                 "assessment_file_sha256": expected_assessment_file_sha256,
+@@ -455,7 +478,7 @@
+         raise
+     post_error, binary_error = None, None
+     try:
+-        validate_definition_use_native_v2(
++        validate_native(
+             preparation, assessment_raw,
+             expected_preparation_sha256=expected_preparation_sha256,
+             expected_assessment_file_sha256=expected_assessment_file_sha256,
+@@ -499,7 +522,8 @@
+     assumptions = [text for text in manifest["theorem_assumptions"]
+                    if text != "Modular joint equivalence is a generated definitional obligation; native kernel checking has not run."]
+     receipt = transport.contracts.seal_record({
+-        "schema": BUILD_SCHEMA, "profile": PROFILE,
++        "schema": PARENT_BUILD_SCHEMA if parent else BUILD_SCHEMA,
++        "profile": PARENT_PROFILE if parent else PROFILE,
+         "preparation_cid": manifest["record_cid"],
+         "preparation_full_canonical_sha256": expected_preparation_sha256,
+         "preparation_manifest_sha256": _sha(checked.manifest_json.encode("utf-8")),
+@@ -564,5 +588,123 @@
+     return receipt
+ 
+ 
++def validate_definition_use_native_v2(
++    preparation,
++    assessment_raw,
++    *,
++    expected_preparation_sha256,
++    expected_assessment_file_sha256,
++    review_inputs,
++    toolchain,
++):
++    """Replay the unchanged official V2 definition-use preparation profile."""
++    return _validate_definition_use_native(
++        preparation,
++        assessment_raw,
++        expected_preparation_sha256=expected_preparation_sha256,
++        expected_assessment_file_sha256=expected_assessment_file_sha256,
++        review_inputs=review_inputs,
++        toolchain=toolchain,
++        parent=False
++    )
++
++
++def validate_parent_definition_use_native_v1(
++    preparation,
++    assessment_raw,
++    *,
++    expected_preparation_sha256,
++    expected_assessment_file_sha256,
++    review_inputs,
++    toolchain,
++):
++    """Replay the fixed parent preparation and all original source/review inputs."""
++    return _validate_definition_use_native(
++        preparation,
++        assessment_raw,
++        expected_preparation_sha256=expected_preparation_sha256,
++        expected_assessment_file_sha256=expected_assessment_file_sha256,
++        review_inputs=review_inputs,
++        toolchain=toolchain,
++        parent=True
++    )
++
++
++def build_definition_use_native_v2(
++    preparation,
++    assessment_raw,
++    *,
++    expected_preparation_sha256,
++    expected_assessment_file_sha256,
++    review_inputs,
++    toolchain,
++    lake_executable,
++    output_directory,
++    timeout_seconds=60,
++    cancellation=None,
++):
++    """Observe official V2 conditional checks under existing caller-owned resources."""
++    return _build_definition_use_native(
++        preparation,
++        assessment_raw,
++        expected_preparation_sha256=expected_preparation_sha256,
++        expected_assessment_file_sha256=expected_assessment_file_sha256,
++        review_inputs=review_inputs,
++        toolchain=toolchain,
++        lake_executable=lake_executable,
++        output_directory=output_directory,
++        timeout_seconds=timeout_seconds,
++        cancellation=cancellation,
++        parent=False
++    )
++
++
++def build_parent_definition_use_native_v1(
++    preparation,
++    assessment_raw,
++    *,
++    expected_preparation_sha256,
++    expected_assessment_file_sha256,
++    review_inputs,
++    toolchain,
++    lake_executable,
++    output_directory,
++    timeout_seconds=60,
++    cancellation=None,
++):
++    """Observe parent conditional native checks under existing caller-owned resources."""
++    return _build_definition_use_native(
++        preparation,
++        assessment_raw,
++        expected_preparation_sha256=expected_preparation_sha256,
++        expected_assessment_file_sha256=expected_assessment_file_sha256,
++        review_inputs=review_inputs,
++        toolchain=toolchain,
++        lake_executable=lake_executable,
++        output_directory=output_directory,
++        timeout_seconds=timeout_seconds,
++        cancellation=cancellation,
++        parent=True
++    )
++
++
++def compilation_receipt_sha256(receipt):
++    """Commit the complete official V2 observation; no validation or authority is implied."""
++    return _compilation_receipt_sha256(
++        receipt,
++        parent=False
++    )
++
++
++def parent_compilation_receipt_sha256(receipt):
++    """Commit the complete parent observation; no validation or authority is implied."""
++    return _compilation_receipt_sha256(
++        receipt,
++        parent=True
++    )
++
++
+ __all__ = ["preparation_sha256", "validate_definition_use_native_v2",
+-           "build_definition_use_native_v2", "compilation_receipt_sha256"]
++           "build_definition_use_native_v2", "compilation_receipt_sha256",
++           "validate_parent_definition_use_native_v1", "build_parent_definition_use_native_v1",
++           "parent_compilation_receipt_sha256"]
+--- /dev/null
++++ b/tests/unit/logic/autoformal/test_plaintext_definition_use_native.py
+@@ -0,0 +1,324 @@
++"""Parent native adapter custody using synthetic compiler observations only.
++
++Existing plaintext, parent review and parent Lake fixtures build all original
++inputs. Existing official native fixtures replace toolchain discovery and the
++tool runner; their fake binaries are never executed. Passing adapter tests is
++not a real Lean result, human review or proof of statutory meaning.
++"""
++from copy import deepcopy
++import importlib.util
++import json
++from pathlib import Path
++from types import SimpleNamespace
++
++import pytest
++
++from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as preparer
++from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_native_v2 as native
++from ipfs_datasets_py.logic.backends import process
++
++
++def helper(filename, name):
++    spec = importlib.util.spec_from_file_location(name, Path(__file__).with_name(filename))
++    assert spec is not None and spec.loader is not None
++    module = importlib.util.module_from_spec(spec)
++    spec.loader.exec_module(module)
++    return module
++
++
++@pytest.fixture(scope="module")
++def fixtures(tmp_path_factory):
++    lake = helper("test_plaintext_definition_use_lake.py", "parent_native_existing_lake_fixture")
++    official = helper("test_legal_corpus_definition_use_native_v2.py", "parent_native_synthetic_compiler_fixture")
++    assert official.native is native and official.preparer is preparer
++    return SimpleNamespace(lake=lake, official=official,
++        authored=lake.authored.__wrapped__(tmp_path_factory))
++
++
++def family_data(fixtures, family="fol", materialized=None):
++    if materialized is None:
++        materialized = fixtures.authored.materialized[family]
++    signed = fixtures.lake.signed_material(fixtures.authored, materialized)
++    data = fixtures.lake.assessment_data(fixtures.authored, signed)
++    return data, preparer.prepare_parent_definition_use_corpus_v1(**data)
++
++
++@pytest.fixture(scope="module")
++def base(fixtures):
++    return family_data(fixtures)
++
++
++@pytest.fixture
++def synthetic_compiler(fixtures, monkeypatch, tmp_path):
++    return fixtures.official.synthetic_compiler.__wrapped__(monkeypatch, tmp_path)
++
++
++def arguments(data, preparation):
++    return dict(expected_preparation_sha256=native.preparation_sha256(preparation),
++        expected_assessment_file_sha256=data["expected_assessment_file_sha256"],
++        review_inputs=data["review_inputs"], toolchain=data["toolchain"])
++
++
++def validate(data, preparation, **overrides):
++    return native.validate_parent_definition_use_native_v1(preparation, data["assessment_raw"],
++        **(arguments(data, preparation) | overrides))
++
++
++def build(data, preparation, executable, output, **overrides):
++    return native.build_parent_definition_use_native_v1(preparation, data["assessment_raw"],
++        **(arguments(data, preparation) | dict(lake_executable=str(executable),
++            output_directory=output, timeout_seconds=12) | overrides))
++
++
++def assert_no_authority(fixtures, receipt):
++    for flag in (*fixtures.official.FALSE_AUTHORITY, "governing_scope_verified",
++                 "governing_edition_verified", "contributor_completeness_verified",
++                 "source_region_roles_verified"):
++        assert receipt[flag] is False, flag
++    assert all(value is False for value in receipt["authority"].values())
++    assert receipt["training_mask"] == receipt["evaluation_gold_mask"] == 0
++    assert type(receipt["training_mask"]) is type(receipt["evaluation_gold_mask"]) is int
++
++
++@pytest.mark.parametrize("family", ["fol", "tdfol"])
++def test_parent_native_path_replays_complete_preparation_and_retains_conditional_custody(
++        fixtures, base, synthetic_compiler, tmp_path, monkeypatch, family):
++    data, preparation = base if family == "fol" else family_data(fixtures, family)
++    before, original_manifest = deepcopy(data), preparation.manifest_json
++    assert validate(data, preparation) == preparation
++    original = preparer.validate_parent_definition_use_corpus_v1
++    replays = []
++    def observed(value, assessment_raw, **kwargs):
++        replays.append((value.manifest_json, assessment_raw, deepcopy(kwargs["review_inputs"])))
++        return original(value, assessment_raw, **kwargs)
++    monkeypatch.setattr(preparer, "validate_parent_definition_use_corpus_v1", observed)
++    token = process.CancellationToken()
++    executable, calls = synthetic_compiler(preparation, cancellation=token)
++    output = tmp_path / "synthetic-parent-project"
++    receipt = build(data, preparation, executable, output, cancellation=token)
++    manifest = preparation.to_dict()
++    assert len(calls) == 1 and len(replays) >= 2
++    assert all(row == (original_manifest, data["assessment_raw"], data["review_inputs"]) for row in replays)
++    assert receipt["schema"] == native.PARENT_BUILD_SCHEMA != native.BUILD_SCHEMA
++    assert receipt["profile"] == native.PARENT_PROFILE != native.PROFILE
++    assert receipt["preparation_full_canonical_sha256"] == native.preparation_sha256(preparation)
++    assert receipt["assessment_file_sha256"] == data["expected_assessment_file_sha256"]
++    assert receipt["review_intake_binding"] == manifest["review_intake_binding"]
++    assert receipt["build_passed"] is receipt["post_run_validation_passed"] is True
++    assert receipt["manifest_coverage_passed"] is receipt["executed_project_readback_passed"] is True
++    assert receipt["cleanup_confirmed"] is receipt["observed_process_scope_passed"] is True
++    assert receipt["expected_modules"] == receipt["compiled_modules"] == manifest["expected_modules"]
++    assert len(receipt["artifact_sha256"]) == 6 and len(receipt["executed_project_sha256"]) == 9
++    assert receipt["theorem_axiom_dependencies"] == {name: [] for name in manifest["conditional_theorems"]}
++    assert receipt["original_preparation_theorem_assumptions"] == manifest["theorem_assumptions"]
++    assert receipt["review_evidence_status"] == manifest["review_evidence_status"]
++    assert receipt["review_blockers"] == manifest["review_blockers"]
++    assert receipt["original_preparation_build_eligible"] is False
++    assert receipt["ownership_is_sampled"] is True and receipt["kernel_containment_attested"] is False
++    assert manifest["review_source_binding"]["alias_record"]["assumed_not_proved"] is True
++    for field in ("original_definitions", "contexts", "context_slot_ids", "binding_record", "scope_binding"):
++        assert manifest["review_source_binding"][field] == data["review_inputs"]["subject"]["native_binding"][field]
++    for name, text in preparation.files:
++        assert (output / "project" / name).read_bytes() == text.encode("utf-8")
++        assert (output / "executed-inputs" / name).read_bytes() == text.encode("utf-8")
++    assert (output / "project/corpus-manifest.json").read_bytes() == original_manifest.encode("utf-8")
++    assert json.loads((output / "build-receipt.json").read_bytes()) == receipt
++    assert native.parent_compilation_receipt_sha256(receipt) == fixtures.official.sha(fixtures.official.canonical(receipt))
++    with pytest.raises(ValueError):
++        native.compilation_receipt_sha256(receipt)
++    assert_no_authority(fixtures, receipt)
++    assert data == before and preparation.manifest_json == original_manifest
++
++
++@pytest.mark.parametrize("direction", ["parent_to_official", "official_to_parent"])
++def test_fixed_native_profiles_refuse_cross_profile_before_toolchain_or_execution(
++        fixtures, base, monkeypatch, tmp_path, direction):
++    if direction == "parent_to_official":
++        data, preparation = base
++        function = native.build_definition_use_native_v2
++    else:
++        data, preparation = fixtures.official.original_data()
++        function = native.build_parent_definition_use_native_v1
++    def no_operation(*args, **kwargs):
++        pytest.fail("cross-profile input reached a toolchain or execution owner")
++    monkeypatch.setattr(native, "_installed_toolchain", no_operation)
++    monkeypatch.setattr(process.BoundedToolRunner, "run", no_operation)
++    output = tmp_path / "must-not-export"
++    with pytest.raises(ValueError):
++        function(preparation, data["assessment_raw"], **arguments(data, preparation),
++            lake_executable=str(tmp_path / "never-executed"), output_directory=output, timeout_seconds=12)
++    assert not output.exists()
++
++
++def damage_original(data, damage):
++    inputs = data["review_inputs"]
++    if damage == "source_pin":
++        inputs["use_inputs"]["donor_evidence_inputs"]["expected_candidate_pin"]["source_binding_sha256"] = "0" * 64
++    elif damage == "ordered_context":
++        endpoint = inputs["use_inputs"]["consumer_evidence_inputs"]
++        endpoint["context_inputs"].reverse()
++        endpoint["expected_context_population"].reverse()
++    else:
++        identity = next(iter(inputs["observed_artifact_sha256s"]))
++        inputs["observed_artifact_sha256s"][identity] = "0" * 64
++
++
++@pytest.mark.parametrize("damage", ["source_pin", "ordered_context", "dependency_observation"])
++def test_complete_parent_inputs_refuse_before_native_dispatch(base, monkeypatch, tmp_path, damage):
++    original, preparation = base
++    data = deepcopy(original)
++    damage_original(data, damage)
++    def no_operation(*args, **kwargs):
++        pytest.fail("original parent custody failure reached native dispatch")
++    monkeypatch.setattr(native, "_installed_toolchain", no_operation)
++    monkeypatch.setattr(process.BoundedToolRunner, "run", no_operation)
++    output = tmp_path / "must-not-export"
++    with pytest.raises(ValueError):
++        build(data, preparation, tmp_path / "never-executed", output)
++    assert not output.exists()
++
++
++@pytest.mark.parametrize("damage", ["source_pin", "ordered_context", "dependency_observation"])
++def test_complete_parent_inputs_are_replayed_after_synthetic_runner(
++        fixtures, base, synthetic_compiler, tmp_path, damage):
++    original, preparation = base
++    data = deepcopy(original)
++    executable, calls = synthetic_compiler(preparation, after=lambda: damage_original(data, damage))
++    receipt = build(data, preparation, executable, tmp_path / "post-run-refusal")
++    assert len(calls) == 1
++    assert receipt["post_run_validation_passed"] is False
++    assert receipt["build_passed"] is receipt["conditional_proofs_verified"] is False
++    assert receipt["post_run_validation_error"] is not None
++    assert_no_authority(fixtures, receipt)
++
++
++def test_physical_parent_changed_after_synthetic_runner_invalidates_saved_custody(
++        fixtures, synthetic_compiler, tmp_path):
++    source = fixtures.authored.source
++    original_directory = tmp_path / "originals"
++    original_directory.mkdir(mode=0o700)
++    originals = source.materialize(source.component(fixtures.authored.fixtures, original_directory))
++    data, preparation = family_data(fixtures, materialized=originals)
++    descriptor = data["review_inputs"]["use_inputs"]["donor_evidence_inputs"]["parent_inputs"][
++        "replay_inputs"]["parent_text_views_inputs"]["parent_descriptor"]
++    path = Path(descriptor["local_path"])
++    def mutate():
++        path.write_bytes(path.read_bytes() + b"\nchanged isolated native-test source")
++    executable, _ = synthetic_compiler(preparation, after=mutate)
++    receipt = build(data, preparation, executable, tmp_path / "physical-parent-refusal")
++    assert receipt["post_run_validation_passed"] is False
++    assert receipt["build_passed"] is receipt["conditional_proofs_verified"] is False
++    assert_no_authority(fixtures, receipt)
++
++
++@pytest.mark.parametrize("status", ["pending", "rejected"])
++def test_parent_pending_and_rejected_reviews_remain_blocked_after_synthetic_build(
++        fixtures, synthetic_compiler, tmp_path, status):
++    signed = fixtures.lake.signed_material(fixtures.authored, fixtures.authored.materialized["fol"])
++    if status == "pending":
++        signed["registry"]["mode"] = signed["policy"]["mode"] = "unavailable"
++        signed["registry"]["keys"] = []
++        signed["reviews"] = []
++        fixtures.authored.fixtures.signing.refresh(signed)
++    else:
++        signed["reviews"][0]["interpretation"]["rationale"] += " unsigned synthetic mutation"
++    data = fixtures.lake.assessment_data(fixtures.authored, signed)
++    preparation = preparer.prepare_parent_definition_use_corpus_v1(**data)
++    expected = json.loads(data["assessment_raw"])
++    executable, _ = synthetic_compiler(preparation)
++    receipt = build(data, preparation, executable, tmp_path / "blocked-parent-review")
++    assert receipt["build_passed"] is True
++    assert receipt["review_evidence_status"] == expected["evidence_assessment_status"] == status
++    assert receipt["review_blockers"] == expected["blockers"] and receipt["review_blockers"]
++    assert receipt["review_prerequisites_satisfied_under_selected_trust"] is False
++    assert receipt["original_preparation_build_eligible"] is False
++    assert_no_authority(fixtures, receipt)
++
++
++def test_parent_cleanup_failure_retains_original_exception_handle_and_false_authority(
++        fixtures, base, synthetic_compiler, monkeypatch, tmp_path):
++    data, preparation = base
++    executable, _ = synthetic_compiler(preparation)
++    handle = object()
++    original = process.OwnedToolCleanupError(handle, "synthetic parent cleanup remains unresolved")
++    def fail(self, request, *, cancellation=None):
++        assert request.owned_process_observation is True
++        raise original
++    monkeypatch.setattr(process.BoundedToolRunner, "run", fail)
++    output = tmp_path / "retained-cleanup-refusal"
++    with pytest.raises(process.OwnedToolCleanupError) as caught:
++        build(data, preparation, executable, output)
++    assert caught.value is original and caught.value.cleanup_handle is handle
++    receipt = json.loads((output / "build-receipt.json").read_bytes())
++    assert receipt["schema"] == native.PARENT_BUILD_SCHEMA
++    assert receipt["profile"] == native.PARENT_PROFILE
++    assert receipt["status"] == "owned_native_cleanup_unresolved"
++    assert receipt["cleanup_owner_retained_on_exception"] is True
++    assert receipt["cleanup_confirmed"] is receipt["build_passed"] is False
++    assert receipt["conditional_proofs_verified"] is False and receipt["artifact_sha256"] == {}
++    assert_no_authority(fixtures, receipt)
++    for name, text in preparation.files:
++        assert (output / "project" / name).read_bytes() == text.encode("utf-8")
++
++
++@pytest.mark.parametrize("damage", ["missing_module", "changed_source", "extra_output"])
++def test_parent_native_output_population_and_exact_executed_sources_remain_required(
++        fixtures, base, synthetic_compiler, tmp_path, damage):
++    data, preparation = base
++    def edit(outputs, artifacts, sources):
++        if damage == "missing_module":
++            outputs.pop(artifacts[-1])
++        elif damage == "changed_source":
++            outputs[sources[-1]] = b"synthetic source substitution"
++        else:
++            outputs["unexpected.olean"] = b"synthetic unrequested artifact"
++    executable, _ = synthetic_compiler(preparation, output_edit=edit)
++    receipt = build(data, preparation, executable, tmp_path / "output-refusal")
++    assert receipt["build_passed"] is receipt["conditional_proofs_verified"] is False
++    if damage == "changed_source":
++        assert receipt["executed_project_readback_passed"] is False
++    else:
++        assert receipt["manifest_coverage_passed"] is False
++    assert_no_authority(fixtures, receipt)
++
++
++@pytest.mark.parametrize("damage", ["missing_observation", "nonempty_axioms"])
++def test_parent_native_requires_each_exact_empty_axiom_observation(
++        fixtures, base, synthetic_compiler, tmp_path, damage):
++    data, preparation = base
++    lines = fixtures.official.axiom_stdout(preparation).splitlines()
++    if damage == "missing_observation":
++        lines.pop()
++    else:
++        theorem = preparation.to_dict()["conditional_theorems"][-1]
++        lines[-1] = "'" + theorem + "' depends on axioms: [Classical.choice]"
++    executable, _ = synthetic_compiler(preparation, stdout="\n".join(lines) + "\n")
++    receipt = build(data, preparation, executable, tmp_path / "axiom-refusal")
++    assert receipt["axiom_observations_passed"] is False
++    assert receipt["build_passed"] is receipt["conditional_proofs_verified"] is False
++    assert_no_authority(fixtures, receipt)
++
++
++@pytest.mark.parametrize("damage", ["unjoined_reader", "foreign_group"])
++def test_parent_native_requires_owned_complete_lifecycle_observations(
++        fixtures, base, synthetic_compiler, tmp_path, damage):
++    data, preparation = base
++    if damage == "unjoined_reader":
++        observation = fixtures.official.lifecycle(readers_joined=1)
++    else:
++        observation = fixtures.official.lifecycle(leader=fixtures.official.identity(process_group_id=124))
++    executable, _ = synthetic_compiler(preparation, result_changes={"native_lifecycle": observation})
++    receipt = build(data, preparation, executable, tmp_path / "lifecycle-refusal")
++    assert receipt["build_passed"] is receipt["conditional_proofs_verified"] is False
++    assert receipt["cleanup_confirmed" if damage == "unjoined_reader" else "observed_process_scope_passed"] is False
++    assert_no_authority(fixtures, receipt)
++
++
++@pytest.mark.parametrize("field", ["expected_preparation_sha256", "expected_assessment_file_sha256"])
++def test_parent_native_independent_pins_refuse_before_lazy_operation_dispatch(base, monkeypatch, field):
++    data, preparation = base
++    def no_owner():
++        pytest.fail("independent pin mismatch reached lazy operation owners")
++    monkeypatch.setattr(native, "_owners", no_owner)
++    with pytest.raises(ValueError):
++        validate(data, preparation, **{field: "0" * 64})
+--- a/docs/autoencoders/legal_corpus_definition_use_native_v2.md
++++ b/docs/autoencoders/legal_corpus_definition_use_native_v2.md
+@@ -1,4 +1,4 @@
+-# Conditional native execution for V2 definition use
++# Conditional native execution for definition use
+ 
+ The separate [native executor](../../ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_native_v2.py)
+ builds the existing nine-file, six-module definition-use preparation and observes
+@@ -7,7 +7,9 @@
+ records an engineering observation; it does not admit a statutory
+ interpretation, graph, proof cache entry, training example or unified corpus.
+ 
+-Qualification passed **109 focused tests** and two authored native projects.
++The original official V2 profile's qualification passed **109 focused tests**
++and two authored native projects. The separate parent profile is described below;
++these retained historical results establish only their recorded official scope.
+ The implementation and its
+ [focused tests](../../tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py)
+ use the frozen resource-owned validation path. Synthetic process
+@@ -28,9 +30,10 @@
+ `legal_corpus_definition_use_lake_v2`. It does not implement another formula
+ parser, renderer, resolver, reviewer or proof engine.
+ 
+-The supported component has two distinct physical documents, one explicit unary
+-definition in each, a shared declared applicability, and an explicit assumed
+-alias. Both endpoints have the same family, currently FOL or TDFOL. The source
++The original official V2 component has two distinct physical documents, one
++explicit unary definition in each, a shared declared applicability, and an
++explicit assumed alias. The parent profile retains independent declared scopes
++and unknown editions instead of asserting shared governing applicability. Both endpoints have the same family, currently FOL or TDFOL. The source
+ interpretations, complete joint AST, scoped definition lookup, registry
+ partitions, physical contexts, dependencies and combined review evidence retain
+ their existing public owners and replay checks. Same-document multiple
+@@ -80,7 +83,7 @@
+ caller-controlled preparation and review inputs are bounded. The original
+ preparation type is enforced after those bounds and before public regeneration.
+ 
+-The executor exports four functions:
++The original official profile retains these four functions:
+ 
+ ```python
+ preparation_sha256(preparation)
+@@ -311,3 +314,114 @@
+ population. Actual source-first interpretation, combined legal/formal review,
+ source-equivalence proofs, learned-model training and convergence, and any
+ unified corpus publication remain separate work.
++
++
++## Literal-parent conditional native profile
++
++The parent profile extends this executor through three fixed entrypoints:
++
++```python
++validate_parent_definition_use_native_v1(
++    preparation, assessment_raw, *,
++    expected_preparation_sha256, expected_assessment_file_sha256,
++    review_inputs, toolchain,
++)
++
++build_parent_definition_use_native_v1(
++    preparation, assessment_raw, *,
++    expected_preparation_sha256, expected_assessment_file_sha256,
++    review_inputs, toolchain, lake_executable, output_directory,
++    timeout_seconds=60, cancellation=None,
++)
++
++parent_compilation_receipt_sha256(receipt)
++```
++
++The existing `preparation_sha256` helper commits the complete parent preparation
++with the same manifest-and-nine-files recipe. It does not validate the
++preparation or select an execution profile. Both profiles use the exact existing
++`DefinitionUseCorpusPreparation` class and fixed renderer layout. They retain
++separate validation and receipt domains:
++
++| Record | Parent domain |
++| --- | --- |
++| Original preparation | `legal-corpus-parent-definition-use-lake-preparation/v1` |
++| Original preparation profile | `replayed-parent-definition-use-conditional-project/v1` |
++| Native observation | `legal-corpus-parent-definition-use-native-build/v1` |
++| Native observation profile | `replayed-parent-definition-use-conditional-native-build/v1` |
++
++The parent validator delegates to
++`legal_corpus_definition_use_lake_v2.validate_parent_definition_use_corpus_v1`.
++That public owner regenerates the exact project from the original parent
++combined-review assessment, both endpoint candidate/report/request byte groups,
++physical-parent inputs, all declared contexts, original lookup population,
++independent pins and current dependency observations. The native adapter also
++requires the exact parent preparation schema and profile. Changing a schema,
++relabeling official input, or supplying a recomputed manifest hash cannot replace
++that replay. Public entrypoints have no profile-switch argument; their fixed
++domain is chosen in code. The two receipt hash helpers each accept only their
++own receipt schema and produce commitments, not proof or admission credentials.
++
++The parent build uses the existing shared implementation: replay first, capture
++the immutable original nine-file preparation, verify the explicitly installed
++native Lake and sibling Lean, run the bounded offline build, and replay the
++original parent preparation again after the result. The post-run replay includes
++physical source custody, complete review context, lookup evidence and observed
++artifact/policy pins. A changed original source, evidence group, interpretation,
++project or producer prevents successful qualification. Both original ASTs and
++the explicit alias remain retained without replacement.
++
++The command, bounds and output obligations are unchanged: one build of target
++`legal`, one Lean thread, six nonempty `.olean` outputs, nine exact executed input
++readbacks, and three exact qualified empty-axiom observations. Actual invocation
++through the installed-toolchain owner also performs two separate bounded version
++probes. Account for all three process calls; a source-generation test or synthetic
++runner does not establish that any compiler ran. The caller must retain the
++established resource admission and custody through all probes, build cleanup and
++durable output disposition. This profile adds no installer or resource owner.
++
++Parent success and unresolved-cleanup receipts retain false
++`governing_scope_verified`, `governing_edition_verified`,
++`contributor_completeness_verified` and `source_region_roles_verified`, along with
++all existing source, meaning, independent-human-review, training/gold and corpus
++admission restrictions. Their schemas remain parent-specific even when cleanup
++fails. An unresolved cleanup preserves the original exception and live cleanup
++handle; the caller remains responsible for keeping its resource custody until
++the existing owner confirms cleanup.
++
++A successful engineering receipt may set the existing conditional execution
++flags only for the exact returned native observations:
++`backend_executed`, `lean_compilation_verified`, `proof_checked`,
++`kernel_proofs_checked` and `conditional_proofs_verified`. The three theorem
++obligations remain conditional on the supplied donor and consumer definitions,
++explicit alias, interpretation, entity carrier and evaluation time. Neither the
++alias nor the statutory meaning is established as a fact. Equal unknown edition
++sentinels do not establish a governing edition. A representative first-use lookup
++does not establish applicability at every statutory occurrence. No training or
++evaluation-gold mask becomes nonzero.
++
++The receipt retains the original preparation's handoff unchanged, including
++`parent_build_execution_adapter_not_registered`, `build_eligible=false` and its
++unexecuted preparation status. Those are original preparation observations.
++Actual execution belongs to the separate native receipt's process, coverage,
++binary, cleanup and conditional-kernel fields. The inherited
++`installed_toolchain_verified`, `toolchain_probed` and
++`native_build_profile_registered` flags remain conservative false values under
++the existing receipt convention; explicit `version_probes`, `binary_sha256`,
++`binaries_unchanged` and `native_runtime_verified` record the actual observations.
++No production admission registry is modified.
++
++Valid regenerated pending, rejected or stale-dependency parent assessments keep
++their exact status and blockers after an engineering build. Synthetic signing
++credentials continue to establish fixture authentication behavior only. A native
++result supplies no qualified human review, governing applicability, official
++source authentication, source-to-model equivalence or statutory correctness.
++
++The retained October 15 official FOL/TDFOL receipts document installed native
++Lean `leanprover/lean4:v4.26.0` and their original fictional inputs. They provide
++reusable executor/toolchain evidence, with no parent-native qualification implied.
++A new parent execution needs its own admitted request, exact current source and
++input pins, actual native observations and retained artifact checks. The parent
++preparation tests' version string is a declaration, not an installation request
++or proof of an installed compiler. This guide records no new training, statutory
++review, native execution or publication result.

@@ -329,16 +329,81 @@ def test_spacy_package_links_and_size_refused(tmp_path, kind):
     root.mkdir()
     outside = tmp_path / "outside"
     outside.write_text("outside bytes")
-    if kind == "root":
-        link = tmp_path / "linked"
-        link.symlink_to(root, target_is_directory=True)
-        root = link
-    elif kind == "file":
-        (root / "linked.json").symlink_to(outside)
-    elif kind == "directory":
-        (root / "linked-directory").symlink_to(tmp_path, target_is_directory=True)
+    link = None
+    try:
+        if kind == "root":
+            link = tmp_path / "linked"
+            link.symlink_to(root, target_is_directory=True)
+            root = link
+        elif kind == "file":
+            link = root / "linked.json"
+            link.symlink_to(outside)
+        elif kind == "directory":
+            link = root / "linked-directory"
+            link.symlink_to(tmp_path, target_is_directory=True)
+        else:
+            with (root / "model").open("wb") as stream:
+                stream.truncate(16 * 1024 * 1024 + 1)
+        with pytest.raises(ValueError):
+            subject._package_assets(root)
+    finally:
+        if link is not None:
+            link.unlink(missing_ok=True)
+
+
+
+def _declared_complete_composition_case(tmp_path, *, cancellation=False, missing=False, nonunit=False):
+    import hashlib
+    from tests.unit.optimizers.logic_theorem_optimizer import test_autoencoder_embedding_production as fixtures
+    codec=fixtures.codec
+    entry=fixtures.input_entry(tmp_path,text='a'*480+'b'*(480 if cancellation else 360))
+    inputs=[entry[0]]
+    expected=hashlib.sha256(fixtures.canonical([item.to_dict() for item in inputs])).hexdigest()
+    plan=codec.prepare_native384_complete_chunks(inputs,expected_inputs_sha256=expected)
+    children=[(codec.EmbeddingInput.from_dict(row["input"]),entry[1]) for row in plan["chunks"]]
+    vectors=[[1.0]+[0.0]*383,([-1.0]+[0.0]*383) if cancellation else ([0.0,1.0]+[0.0]*382)]
+    if nonunit:vectors[0][0]=2.0
+    rows=[dict(input_id=item.input_id,status='embedded',tokens={'input_ids':[101,2000,102],'attention_mask':[1,1,1],'token_type_ids':[0,0,0]},vector=vector) for (item,_),vector in zip(children,vectors,strict=True)]
+    if missing:rows[1].update(status='missing_input',tokens=None,vector=None)
+    receipt=fixtures.declared_native_receipt(fixtures.fixture_receipt(children,results=rows))
+    options=dict(inputs=inputs,expected_inputs_sha256=expected,expected_manifest_sha256=hashlib.sha256(fixtures.canonical(plan)).hexdigest(),expected_receipt_sha256=receipt.sha256)
+    return fixtures,plan,receipt,options
+
+
+def test_complete_native384_composition_has_independent_weighted_geometry_and_explicit_profile(tmp_path):
+    import struct,math
+    fixtures,plan,receipt,options=_declared_complete_composition_case(tmp_path)
+    before=receipt.to_bytes()
+    result=subject.compose_native384_complete_chunks(plan,receipt,**options)
+    row=result['parents'][0]
+    f32=lambda x:struct.unpack('>f',struct.pack('>f',x))[0]
+    assert row['vector']==[f32(.8),f32(.6)]+[0.0]*382
+    assert abs(math.hypot(*row['vector'])-1.0)<=1e-5
+    assert row['byte_weight_sum']==840 and row['chunk_count']==2
+    assert result['profile']['stage']=='complete_chunk_composition'
+    assert result['profile']['producer']['checkpoint_sha256'] is None
+    assert result['aggregation_performed'] is result['normalization_performed'] is True
+    assert result['model_inference_executed'] is result['semantic_admission_granted'] is result['proof_authority'] is False
+    assert receipt.to_bytes()==before
+    assert result==subject.compose_native384_complete_chunks(plan,receipt,**options)
+
+
+@pytest.mark.parametrize('damage',['missing','cancellation','nonunit','manifest','receipt'])
+def test_complete_native384_composition_never_fills_or_normalizes_invalid_native_evidence(tmp_path,damage):
+    if damage=='nonunit':
+        # The existing native receipt owner refuses this before composition.
+        from tests.unit.optimizers.logic_theorem_optimizer import test_autoencoder_embedding_production as fixtures
+        with pytest.raises(fixtures.codec.EmbeddingProductionError, match='not L2 normalized'):
+            _declared_complete_composition_case(tmp_path,nonunit=True)
+        return
+    _,plan,receipt,options=_declared_complete_composition_case(tmp_path,cancellation=damage=='cancellation',missing=damage=='missing')
+    if damage=='manifest':options['expected_manifest_sha256']='f'*64
+    elif damage=='receipt':options['expected_receipt_sha256']='f'*64
+    if damage in {'manifest','receipt'}:
+        with pytest.raises(ValueError):subject.compose_native384_complete_chunks(plan,receipt,**options)
     else:
-        with (root / "model").open("wb") as stream:
-            stream.truncate(16 * 1024 * 1024 + 1)
-    with pytest.raises(ValueError):
-        subject._package_assets(root)
+        result=subject.compose_native384_complete_chunks(plan,receipt,**options)
+        assert result['available_count']==0 and result['unavailable_count']==1
+        row=result['parents'][0];assert row['status']=='unavailable' and row['vector'] is row['vector_sha256'] is None
+        assert result['normalization_performed'] is False
+        assert ('cancelled' if damage=='cancellation' else 'unavailable') in row['reason']

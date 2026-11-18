@@ -21,6 +21,9 @@ import threading
 import time
 
 ROOT = Path(__file__).resolve().parents[3]
+STARTUP_CLOCK_REQUEST_SCHEMA = 'owned-validation-request/v6'
+STARTUP_CLOCK_PROFILE = {'schema':'owned-validation-startup-clock/v1',
+    'admission_seconds':180,'productive_seconds':180,'total_seconds':420}
 
 
 def snapshot(path, maximum=1024*1024, *, allow_empty=False):
@@ -48,8 +51,10 @@ def request(path, digest):
     if hashlib.sha256(raw).hexdigest() != digest:
         raise ValueError('request hash differs')
     value = json.loads(raw)
-    if value.get('schema') != 'owned-validation-request/v1':
+    if value.get('schema') not in ('owned-validation-request/v1', 'owned-validation-request/v2', 'owned-validation-request/v4', 'owned-validation-request/v5', STARTUP_CLOCK_REQUEST_SCHEMA):
         raise ValueError('unsupported validation request')
+    if value["schema"] == STARTUP_CLOCK_REQUEST_SCHEMA and not _startup_clock_no_child_request_shape(value, raw):
+        raise ValueError("closed startup-clock request differs")
     return value, raw
 
 
@@ -76,9 +81,11 @@ def immutable_json(path, value):
         os.close(parent)
 
 
-def report_capacity_refusal(error):
-    """Best-effort aggregate diagnostic from the original refusal snapshot."""
+def report_capacity_refusal(error, *, stage="owner.open"):
+    """Best-effort aggregate diagnostic; stage grants no lifecycle authority."""
     try:
+        if type(stage) is not str or stage not in ("owner.open", "post_owner_open"):
+            return False
         message = 'storage reservation capacity exceeded'
         if (type(error).__name__ != 'DaemonResourceError'
                 or type(error.args) is not tuple or len(error.args) != 1
@@ -115,7 +122,7 @@ def report_capacity_refusal(error):
                 or not (storage_deficit > 0 or filesystem_deficit > 0)):
             return False
         raw = json.dumps(dict(schema='owned-validation-capacity-refusal/v1',
-            stage='owner.open', error_type='DaemonResourceError', error=message,
+            stage=stage, error_type='DaemonResourceError', error=message,
             observation=observation), sort_keys=True, separators=(',', ':'),
             ensure_ascii=True, allow_nan=False) + '\n'
         if len(raw.encode('utf-8')) > 4096:
@@ -135,6 +142,39 @@ _TIMEOUT_FIELDS = {'schema', 'decision_scope', 'cycle_wall_time', 'cycle_monoton
     'request_id', 'lane', 'lane_truncated', 'parent_lease_id', 'timed_out',
     'can_grant_now', 'externally_cancelled', 'parent_cancelled', 'proof_safety_enabled',
     'exact_blocking_predicate', 'exact_blocking_cause'}
+
+
+def _ordinary_scratch_no_child_request_shape(value, raw):
+    """Pure exact V5 gate; projection reuses only V4 common-field shape checks."""
+    try:
+        if (type(value) is not dict or value.get('schema') != 'owned-validation-request/v5'
+                or type(value.get('ordinary_scratch_profile')) is not dict
+                or value['ordinary_scratch_profile'] != {
+                    'schema': 'owned-validation-ordinary-scratch-live/v1'}):
+            return False
+        def pairs(items):
+            result = {}
+            for key, item in items:
+                if key in result:
+                    raise ValueError('duplicate ordinary scratch request field')
+                result[key] = item
+            return result
+        def nonfinite(_):
+            raise ValueError('nonfinite ordinary scratch request')
+        if json.loads(raw, object_pairs_hook=pairs, parse_constant=nonfinite) != value:
+            return False
+        projected = dict(value)
+        projected.pop('ordinary_scratch_profile')
+        projected['schema'] = 'owned-validation-request/v4'
+        # An extra caller V4 field is rejected, never overwritten by projection.
+        if 'live_inventory_profile' in projected:
+            return False
+        projected['live_inventory_profile'] = {
+            'schema': 'owned-validation-live-census/v1', 'max_complete_resamples': 1}
+        return _live_no_child_request_shape(projected,
+            json.dumps(projected, sort_keys=True, allow_nan=False).encode())
+    except BaseException:
+        return False
 
 
 def _no_grant_timeout_decision(decision, request_id):
@@ -198,6 +238,14 @@ def _source_custody_witness(owner, reservation, value, request_raw, request_path
     native_status = ('acquired' if owner._lease is not None else
         'not_acquired_terminal_timeout' if exact_timeout and _no_grant_timeout_decision(decision, request_id)
         else 'unknown')
+    storage = dict(status=reservation['status'], cleanup_error=reservation.get('cleanup_error'),
+        release_authorized=False)
+    if 'cleanup_failure_observations' in reservation:
+        # Optional extension only for actual new-owner cleanup failures.
+        # This is diagnostic DATA; it never changes storage-release authority.
+        storage.update(cleanup_failure_observations=json.loads(json.dumps(
+            reservation['cleanup_failure_observations'], allow_nan=False)),
+            cleanup_failure_observation_overflow=reservation['cleanup_failure_observation_overflow'])
     return dict(schema=LIFECYCLE_SCHEMA, request_sha256=request_pin,
         producer={'path': producer, 'sha256': hashlib.sha256(snapshot(producer, 4*1024*1024)).hexdigest()},
         owner={'pid': owner._owner_identity['pid'], 'birth': owner._owner_identity['birth']},
@@ -214,9 +262,312 @@ def _source_custody_witness(owner, reservation, value, request_raw, request_path
         native_grant={'status': native_status, 'exact_native_timeout': exact_timeout,
             'timeout_decision': decision if exact_timeout else None},
         source_guards=guards,
-        storage={'status': reservation['status'], 'cleanup_error': reservation.get('cleanup_error'),
-            'release_authorized': False})
+        storage=storage)
 
+
+
+PRE_GRANT_CAPACITY_REFUSAL_SCHEMA = 'owned-validation-pre-grant-capacity-refusal/v1'
+PRE_GRANT_LOCK_REFUSAL_SCHEMA = 'owned-validation-pre-grant-ledger-lock-refusal/v1'
+PRE_GRANT_LEDGER_BOUND_REFUSAL_SCHEMA = 'owned-validation-pre-grant-ledger-byte-refusal/v1'
+
+_PRE_GRANT_EVENTS = _LIFECYCLE_EVENTS - {'owner_exit_handling_completed'}
+
+_CAPACITY_NUMBERS = {'observed_apparent_bytes', 'outstanding_full_reservations_bytes',
+    'additional_requested_bytes', 'charged_bytes', 'limit_bytes', 'minimum_filesystem_free_bytes'}
+
+def _capacity_refusal_observation(value, requested_bytes):
+    """Accept only the original aggregate capacity snapshot, never an error string."""
+    fields = _CAPACITY_NUMBERS | {'schema', 'scope', 'storage_capacity_exceeded',
+        'filesystem_free_insufficient', 'storage_capacity_deficit_bytes', 'filesystem_free_deficit_bytes'}
+    if (type(value) is not dict or set(value) != fields
+            or value['schema'] != 'daemon-resource-capacity-observation/v1'
+            or value['scope'] != 'named_roots_only_apparent_bytes'
+            or type(requested_bytes) is not int or requested_bytes <= 0
+            or any(type(value[key]) is not int or value[key] < 0 for key in
+                   _CAPACITY_NUMBERS | {'storage_capacity_deficit_bytes', 'filesystem_free_deficit_bytes'})
+            or value['additional_requested_bytes'] != requested_bytes or value['limit_bytes'] <= 0):
+        return False
+    observed, outstanding, additional = (value[key] for key in
+        ('observed_apparent_bytes', 'outstanding_full_reservations_bytes', 'additional_requested_bytes'))
+    over = value['charged_bytes'] > value['limit_bytes']
+    short = value['minimum_filesystem_free_bytes'] < outstanding + additional
+    return (value['charged_bytes'] == observed + outstanding + additional
+        and type(value['storage_capacity_exceeded']) is bool
+        and type(value['filesystem_free_insufficient']) is bool
+        and value['storage_capacity_exceeded'] is over
+        and value['filesystem_free_insufficient'] is short and (over or short)
+        and value['storage_capacity_deficit_bytes'] == max(0, value['charged_bytes'] - value['limit_bytes'])
+        and value['filesystem_free_deficit_bytes'] == max(0, outstanding + additional - value['minimum_filesystem_free_bytes']))
+
+def _pre_grant_capacity_refusal_terminal(owner, value, request_raw, request_path,
+        request_pin, resource_ledger, events, failure, outcome):
+    """Authenticate the actual open/account refusal before any record or native grant.
+
+    A caller must still genuinely reap this CLI and durably capture stdout.
+    No output directory, claim, cleanup, retry or admission is created here.
+    """
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_daemon_resources as host
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.validation_run_resources import ValidationResourceReservation
+    if (type(owner) is not ValidationResourceReservation
+            or type(failure) is not host.DaemonResourceError
+            or str(failure) != 'storage reservation capacity exceeded'
+            or owner._entered or owner._opened or owner._record is not None
+            or owner._lease is not None or owner._child is not None
+            or type(events) is not dict or set(events) != _PRE_GRANT_EVENTS
+            or any(type(flag) is not bool for flag in events.values())
+            or events != {key: key == 'owner_open_attempted' for key in _PRE_GRANT_EVENTS}):
+        return None
+    # Exact original frames prove _account raised before __enter__ could write
+    # a record or call _acquire_native_lease. A copied/message-only exception,
+    # including one raised after an uncertain write, cannot provide this proof.
+    validation_module = sys.modules.get(ValidationResourceReservation.__module__)
+    expected_host = ROOT/'ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py'
+    expected_validation = expected_host.with_name('validation_run_resources.py')
+    if (Path(host.__file__).resolve() != expected_host or validation_module is None
+            or Path(validation_module.__file__).resolve() != expected_validation):
+        return None
+    functions = ((ValidationResourceReservation.open, validation_module, expected_validation),
+        (host.DaemonResourceReservation.__enter__, host, expected_host),
+        (host.DaemonResourceReservation._account, host, expected_host))
+    if any(fn.__globals__ is not module.__dict__ or fn.__code__.co_filename != str(path)
+           for fn, module, path in functions):
+        return None
+    required = {fn.__code__ for fn, _, _ in functions}
+    frames, trace = set(), failure.__traceback__
+    while trace is not None:
+        if any(trace.tb_frame.f_code is fn.__code__ and trace.tb_frame.f_globals is module.__dict__
+               for fn, module, _ in functions):
+            frames.add(trace.tb_frame.f_code)
+        trace = trace.tb_next
+    capacity = failure.capacity_observation
+    if not required <= frames or not _capacity_refusal_observation(capacity, value['storage_bytes']):
+        return None
+    reservation = owner.to_dict()
+    if (reservation['status'] != 'not_entered' or reservation['record'] is not None
+            or reservation['resource_lease'] is not None or reservation.get('cleanup_error') is not None
+            or capacity['limit_bytes'] != reservation['storage_limit_bytes']
+            or capacity['limit_bytes'] != host.MAX_STORAGE_BYTES):
+        return None
+    identity = host._process(os.getpid())
+    if identity is None or any(identity[key] != owner._owner_identity[key] for key in ('pid', 'birth')):
+        return None
+    if snapshot(request_path) != request_raw:
+        return None
+    _lifecycle_source_guard(value)
+    producer = str(Path(__file__).resolve())
+    witness = dict(schema=PRE_GRANT_CAPACITY_REFUSAL_SCHEMA,
+        stage='owner_open_capacity_refused_before_record', request_sha256=request_pin,
+        producer={'path': producer, 'sha256': value['source_sha256'].get(producer)},
+        owner={key: identity[key] for key in ('pid', 'birth')}, ledger_path=str(resource_ledger),
+        events=dict(events), owner_state={'entered': False, 'opened': False,
+            'record_created': False, 'native_lease_created': False, 'child_attached': False},
+        capacity_observation=capacity, native_grant={'status': 'not_requested_capacity_refusal'},
+        storage={'status': 'not_entered', 'release_authorized': False},
+        source_guards={'request_unchanged': True, 'source_pins_unchanged': True,
+            'owner_identity_unchanged': True, 'errors': []})
+    return dict(schema='owned-validation-failure-terminal/v1', request_sha256=request_pin,
+        completed=False, admitted=False, Lean_admitted=False, failure=outcome,
+        reservation=reservation, process_cleanup_error=None, owner_exit_error=None,
+        source_custody_lifecycle=witness)
+
+def _startup_clock_no_child_request_shape(value, raw):
+    """Pure strict v6 shape gate before any Path, owner import or filesystem IO.
+
+    This supports only the explicit native-timeout no-grant classifier below.
+    It neither admits a workload nor calls the stateful SDK constructor/parser.
+    The current pinned SDK decoder and validator identities are checked later.
+    """
+    fields = {'schema', 'argv', 'cwd', 'selected_checks', 'source_sha256',
+        'timeout_seconds', 'storage_bytes', 'memory_mb', 'cpu_slots',
+        'child_process_slots', 'attempt_directory', 'outputs',
+        'declared_external_writable_paths', 'process_scope', 'scheduler_state_path',
+        'expected_scheduler_policy_sha256', 'roots', 'live_inventory_profile', 'startup_clock_profile'}
+    if type(value) is not dict or set(value) != fields or value.get('schema') != STARTUP_CLOCK_REQUEST_SCHEMA:
+        return False
+    def pairs(items):
+        result = {}
+        for name, item in items:
+            if name in result:
+                raise ValueError('duplicate live request field')
+            result[name] = item
+        return result
+    def nonfinite(_):
+        raise ValueError('nonfinite live request JSON')
+    if json.loads(raw, object_pairs_hook=pairs, parse_constant=nonfinite) != value:
+        return False
+    def absolute(item):
+        return (type(item) is str and 0 < len(item.encode('utf-8')) <= 4096
+            and item.startswith('/') and '\x00' not in item
+            and (item == '/' or all(part not in ('', '.', '..') for part in item[1:].split('/'))))
+    def digest(item):
+        return (type(item) is str and len(item) == 64
+            and all(letter in '0123456789abcdef' for letter in item))
+    profile = value['live_inventory_profile']
+    if not (type(profile) is dict and set(profile) == {'schema', 'max_complete_resamples'}
+            and profile['schema'] == 'owned-validation-live-census/v1'
+            and type(profile['max_complete_resamples']) is int and profile['max_complete_resamples'] == 1):
+        return False
+    clock = value['startup_clock_profile']
+    if not (type(clock) is dict and set(clock) == set(STARTUP_CLOCK_PROFILE)
+            and type(clock.get('schema')) is str
+            and all(type(clock.get(key)) is int for key in ('admission_seconds','productive_seconds','total_seconds'))
+            and clock == STARTUP_CLOCK_PROFILE and type(value['timeout_seconds']) is int
+            and value['timeout_seconds'] == 180):
+        return False
+    for key in ('argv', 'selected_checks'):
+        items = value[key]
+        if not (type(items) is list and 0 < len(items) <= 256
+                and all(type(item) is str and item.strip() and len(item) <= 8192 and '\x00' not in item
+                        for item in items)):
+            return False
+    if len(set(value['selected_checks'])) != len(value['selected_checks']):
+        return False
+    if not all(absolute(value[key]) for key in ('cwd', 'attempt_directory', 'scheduler_state_path')):
+        return False
+    roots = value['roots']
+    if not (type(roots) is list and 0 < len(roots) <= 64 and all(absolute(item) for item in roots)):
+        return False
+    def below(path, root):
+        return path != root and path.startswith(root.rstrip('/') + '/')
+    if any(left == right or below(left, right) or below(right, left)
+           for index, left in enumerate(roots) for right in roots[:index]):
+        return False
+    attempt = value['attempt_directory']
+    if not any(below(attempt, root) for root in roots):
+        return False
+    if not (type(value['outputs']) is dict and value['outputs'] == {
+            name: attempt + '/' + name for name in ('pytest', 'tmp', 'cache', 'db', 'exports', 'logs')}
+            and type(value['declared_external_writable_paths']) is list
+            and value['declared_external_writable_paths'] == []
+            and value['process_scope'] == 'sampled_birth_bound_descendants'):
+        return False
+    if not (all(type(value[key]) is int and value[key] > 0
+                for key in ('storage_bytes', 'memory_mb', 'cpu_slots', 'child_process_slots'))
+            and value['storage_bytes'] <= 220_000_000_000
+            and type(value['timeout_seconds']) in (int, float)
+            and math.isfinite(value['timeout_seconds']) and 0 < value['timeout_seconds'] <= 3600
+            and digest(value['expected_scheduler_policy_sha256'])):
+        return False
+    sources = value['source_sha256']
+    required = [__file__, *(str(ROOT) + '/ipfs_datasets_py/optimizers/logic_theorem_optimizer/' + name
+                             for name in _LIFECYCLE_OWNER_NAMES)]
+    return (type(sources) is dict and 0 < len(sources) <= 256
+        and all(absolute(path) and digest(pin) for path, pin in sources.items())
+        and all(path in sources for path in required))
+
+
+def _startup_clock_no_child_observation(value, reservation, expected_request_sha256, need):
+    """Phase DATA cannot replace actual no-child/native/source predicates."""
+    clock = reservation.get('startup_clock_profile')
+    fields = {'schema','request_sha256','profile','clock_scope','admission_started_monotonic',
+        'admission_deadline_monotonic','productive_started_monotonic','productive_deadline_monotonic',
+        'total_deadline_monotonic','attachment_attempted','attachment_verified','attached_child',
+        'original_owner','original_native_lease_id','source_or_storage_release_authorized'}
+    need(type(clock) is dict and set(clock) == fields
+        and clock['schema'] == 'owned-validation-startup-clock-observation/v1'
+        and clock['request_sha256'] == expected_request_sha256
+        and type(clock['profile']) is dict and set(clock['profile']) == set(STARTUP_CLOCK_PROFILE)
+        and type(clock['profile']['schema']) is str
+        and all(type(clock['profile'][key]) is int for key in ('admission_seconds','productive_seconds','total_seconds'))
+        and clock['profile'] == value['startup_clock_profile'] == STARTUP_CLOCK_PROFILE
+        and clock['clock_scope'] == 'original_owner_process_monotonic'
+        and clock['productive_started_monotonic'] is clock['productive_deadline_monotonic'] is None
+        and clock['attachment_attempted'] is clock['attachment_verified'] is False
+        and clock['attached_child'] is None and clock['source_or_storage_release_authorized'] is False
+        and type(clock['original_owner']) is dict
+        and type(clock['original_owner'].get('pid')) is int and clock['original_owner']['pid'] > 0
+        and type(clock['original_owner'].get('birth')) is str and clock['original_owner']['birth'].isdecimal())
+    started = clock['admission_started_monotonic']
+    need((started is None and clock['admission_deadline_monotonic'] is clock['total_deadline_monotonic'] is None)
+        or (type(started) in (int,float) and math.isfinite(started) and started > 0
+            and clock['admission_deadline_monotonic'] == started + 180
+            and clock['total_deadline_monotonic'] == started + 420))
+    lease = reservation.get('resource_lease')
+    need(clock['original_native_lease_id'] == (None if lease is None else lease['lease_id']))
+    if reservation.get('record') is not None:
+        row = reservation['record'];need(type(clock['original_owner']) is dict
+            and clock['original_owner'].get('pid') == row['owner_pid'])
+        if 'owner_birth' in row:need(clock['original_owner'].get('birth') == row['owner_birth'])
+    return clock
+
+
+def _live_no_child_request_shape(value, raw):
+    """Pure strict v4 shape gate before any Path, owner import or filesystem IO.
+
+    This supports only the explicit native-timeout no-grant classifier below.
+    It neither admits a workload nor calls the stateful SDK constructor/parser.
+    The current pinned SDK decoder and validator identities are checked later.
+    """
+    fields = {'schema', 'argv', 'cwd', 'selected_checks', 'source_sha256',
+        'timeout_seconds', 'storage_bytes', 'memory_mb', 'cpu_slots',
+        'child_process_slots', 'attempt_directory', 'outputs',
+        'declared_external_writable_paths', 'process_scope', 'scheduler_state_path',
+        'expected_scheduler_policy_sha256', 'roots', 'live_inventory_profile'}
+    if type(value) is not dict or set(value) != fields or value.get('schema') != 'owned-validation-request/v4':
+        return False
+    def pairs(items):
+        result = {}
+        for name, item in items:
+            if name in result:
+                raise ValueError('duplicate live request field')
+            result[name] = item
+        return result
+    def nonfinite(_):
+        raise ValueError('nonfinite live request JSON')
+    if json.loads(raw, object_pairs_hook=pairs, parse_constant=nonfinite) != value:
+        return False
+    def absolute(item):
+        return (type(item) is str and 0 < len(item.encode('utf-8')) <= 4096
+            and item.startswith('/') and '\x00' not in item
+            and (item == '/' or all(part not in ('', '.', '..') for part in item[1:].split('/'))))
+    def digest(item):
+        return (type(item) is str and len(item) == 64
+            and all(letter in '0123456789abcdef' for letter in item))
+    profile = value['live_inventory_profile']
+    if not (type(profile) is dict and set(profile) == {'schema', 'max_complete_resamples'}
+            and profile['schema'] == 'owned-validation-live-census/v1'
+            and type(profile['max_complete_resamples']) is int and profile['max_complete_resamples'] == 1):
+        return False
+    for key in ('argv', 'selected_checks'):
+        items = value[key]
+        if not (type(items) is list and 0 < len(items) <= 256
+                and all(type(item) is str and item.strip() and len(item) <= 8192 and '\x00' not in item
+                        for item in items)):
+            return False
+    if len(set(value['selected_checks'])) != len(value['selected_checks']):
+        return False
+    if not all(absolute(value[key]) for key in ('cwd', 'attempt_directory', 'scheduler_state_path')):
+        return False
+    roots = value['roots']
+    if not (type(roots) is list and 0 < len(roots) <= 64 and all(absolute(item) for item in roots)):
+        return False
+    def below(path, root):
+        return path != root and path.startswith(root.rstrip('/') + '/')
+    if any(left == right or below(left, right) or below(right, left)
+           for index, left in enumerate(roots) for right in roots[:index]):
+        return False
+    attempt = value['attempt_directory']
+    if not any(below(attempt, root) for root in roots):
+        return False
+    if not (type(value['outputs']) is dict and value['outputs'] == {
+            name: attempt + '/' + name for name in ('pytest', 'tmp', 'cache', 'db', 'exports', 'logs')}
+            and type(value['declared_external_writable_paths']) is list
+            and value['declared_external_writable_paths'] == []
+            and value['process_scope'] == 'sampled_birth_bound_descendants'):
+        return False
+    if not (all(type(value[key]) is int and value[key] > 0
+                for key in ('storage_bytes', 'memory_mb', 'cpu_slots', 'child_process_slots'))
+            and value['storage_bytes'] <= 220_000_000_000
+            and type(value['timeout_seconds']) in (int, float)
+            and math.isfinite(value['timeout_seconds']) and 0 < value['timeout_seconds'] <= 3600
+            and digest(value['expected_scheduler_policy_sha256'])):
+        return False
+    sources = value['source_sha256']
+    required = [__file__, *(str(ROOT) + '/ipfs_datasets_py/optimizers/logic_theorem_optimizer/' + name
+                             for name in _LIFECYCLE_OWNER_NAMES)]
+    return (type(sources) is dict and 0 < len(sources) <= 256
+        and all(absolute(path) and digest(pin) for path, pin in sources.items())
+        and all(path in sources for path in required))
 
 
 PRE_OWNER_REFUSAL_SCHEMA = 'owned-validation-pre-owner-refusal/v1'
@@ -262,6 +613,327 @@ def _pre_owner_refusal_terminal(value, request_raw, request_path, request_pin,
             Lean_admitted=False, authority_granted=False, model_weights_downloaded=False))
 
 
+def _complete_preentry_terminal_shape(terminal, request_pin):
+    """Pure full-envelope gate; a schema/header alone grants no Path/import IO."""
+    fields = {'schema','request_sha256','completed','admitted','Lean_admitted','failure',
+              'reservation','process_cleanup_error','owner_exit_error','source_custody_lifecycle'}
+    if (type(terminal) is not dict or set(terminal) != fields
+            or terminal.get('schema') != 'owned-validation-failure-terminal/v1'
+            or terminal.get('request_sha256') != request_pin
+            or any(terminal.get(k) is not False for k in ('completed','admitted','Lean_admitted'))
+            or terminal['process_cleanup_error'] is not None or terminal['owner_exit_error'] is not None):
+        return False
+    witness, reservation = terminal['source_custody_lifecycle'], terminal['reservation']
+    if type(witness) is not dict or type(reservation) is not dict or type(terminal['failure']) is not dict:
+        return False
+    kind = witness.get('schema')
+    observation = ('capacity_observation' if kind == PRE_GRANT_CAPACITY_REFUSAL_SCHEMA else
+                   'lock_observation' if kind == PRE_GRANT_LOCK_REFUSAL_SCHEMA else
+                   'ledger_write_bound_observation' if kind == PRE_GRANT_LEDGER_BOUND_REFUSAL_SCHEMA else None)
+    return (observation is not None and set(witness) == {'schema','stage','request_sha256','producer',
+        'owner','ledger_path','events','owner_state',observation,'native_grant','storage','source_guards'}
+        and witness.get('request_sha256') == request_pin
+        and type(witness.get(observation)) is dict
+        and reservation.get('status') == 'not_entered' and reservation.get('record') is None
+        and reservation.get('resource_lease') is None and reservation.get('process_observation') is None)
+
+
+def _lock_refusal_observation(value, ledger_path):
+    fields = {'schema','stage','lock_path','opened_lock_identity','configured_lock_timeout_seconds',
+              'started_monotonic','deadline_monotonic','observed_monotonic','lock_acquired','holder_identity_established'}
+    if (type(value) is not dict or set(value) != fields
+            or value['schema'] != 'daemon-resource-ledger-lock-timeout/v1'
+            or value['stage'] != 'exclusive_acquire_before_yield'
+            or value['lock_path'] != str(ledger_path)+'.lock'
+            or value['lock_acquired'] is not False or value['holder_identity_established'] is not False):
+        return False
+    info = value['opened_lock_identity']
+    keys = {'st_dev','st_ino','st_mode','st_uid','st_gid','st_nlink','st_size','st_mtime_ns','st_ctime_ns'}
+    if (type(info) is not dict or set(info) != keys
+            or any(type(x) is not int or x < 0 for x in info.values())
+            or not stat.S_ISREG(info['st_mode']) or info['st_nlink'] != 1 or info['st_ino'] <= 0):
+        return False
+    keys = ('configured_lock_timeout_seconds','started_monotonic','deadline_monotonic','observed_monotonic')
+    return (all(type(value[k]) in (int,float) and math.isfinite(value[k]) and value[k] >= 0 for k in keys)
+        and value['configured_lock_timeout_seconds'] <= 60
+        and value['started_monotonic'] <= value['deadline_monotonic'] <= value['observed_monotonic']
+        and value['deadline_monotonic'] <= value['started_monotonic'] + value['configured_lock_timeout_seconds'])
+
+
+def _live_no_native_sdk_receipt(value, request_raw, expected_request_sha256, reservation, need):
+    if value['schema'] == 'owned-validation-request/v5':
+        return _ordinary_scratch_no_native_sdk_receipt(value, request_raw, expected_request_sha256, reservation, need)
+    if value['schema'] == STARTUP_CLOCK_REQUEST_SCHEMA:
+        need(_startup_clock_no_child_request_shape(value, request_raw))
+        _startup_clock_no_child_observation(value, reservation, expected_request_sha256, need)
+    # Match the existing v2 source-verified parser pattern without
+    # constructing an owner or entering native/storage custody.
+    import importlib.util
+    for package_name in ('ipfs_datasets_py', 'ipfs_datasets_py.optimizers',
+            'ipfs_datasets_py.optimizers.logic_theorem_optimizer'):
+        package = sys.modules.get(package_name)
+        need(package is not None and list(getattr(package, '__path__', [])) ==
+             [str(ROOT/package_name.replace('.', '/'))])
+    parser_name = 'ipfs_datasets_py.optimizers.logic_theorem_optimizer.validation_run_resources'
+    parser_path = ROOT/'ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_run_resources.py'
+    parser_spec = importlib.util.find_spec(parser_name)
+    need(parser_spec is not None and parser_spec.origin == str(parser_path))
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import validation_run_resources as sdk
+    need(sdk is sys.modules[parser_name] and sdk.__file__ == str(parser_path)
+         and sdk.__spec__.origin == str(parser_path)
+         and sdk.LIVE_REQUEST_SCHEMA == 'owned-validation-request/v4'
+         and sdk.LIVE_INVENTORY_SCHEMA == 'owned-validation-live-census/v1'
+         and sdk.TRACKED_SCOPE == 'sampled_birth_bound_descendants'
+         and sdk.MAX_SOURCE_PINS == 256 and type(sdk.MAX_SOURCE_PINS) is int
+         and sdk.OUTPUT_NAMES == ('pytest', 'tmp', 'cache', 'db', 'exports', 'logs'))
+    if value['schema'] == STARTUP_CLOCK_REQUEST_SCHEMA:
+        need(sdk.STARTUP_CLOCK_REQUEST_SCHEMA == STARTUP_CLOCK_REQUEST_SCHEMA
+             and sdk.STARTUP_CLOCK_PROFILE == value['startup_clock_profile'])
+    decoder, validator = sdk._decode, sdk.ValidationResourceReservation._validate_request
+    need(decoder.__module__ == parser_name and validator.__module__ == parser_name
+         and decoder.__code__.co_filename == validator.__code__.co_filename == str(parser_path)
+         and decoder.__globals__ is vars(sdk) and validator.__globals__ is vars(sdk))
+    host_path = ROOT/'ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py'
+    need(sdk.host.__file__ == str(host_path)
+         and sdk.host._json_pairs.__code__.co_filename == str(host_path)
+         and decoder(request_raw) == value)
+    profile = value['live_inventory_profile']
+    observation = reservation.get('live_inventory_profile')
+    need(type(observation) is dict and set(observation) == {
+        'schema', 'max_complete_resamples', 'request_sha256',
+        'complete_resamples_observed', 'live_exception_active', 'resample_limit_scope'}
+        and type(observation['schema']) is str and type(observation['request_sha256']) is str
+        and type(observation['resample_limit_scope']) is str
+        and type(observation['max_complete_resamples']) is int
+        and type(observation['complete_resamples_observed']) is int
+        and observation['live_exception_active'] is False
+        and observation == {'schema': profile['schema'], 'max_complete_resamples': 1,
+            'request_sha256': expected_request_sha256, 'complete_resamples_observed': 0,
+            'live_exception_active': False, 'resample_limit_scope': 'per_logical_live_census'})
+
+
+def _ordinary_scratch_no_native_sdk_receipt(value, request_raw, expected_request_sha256, reservation, need):
+    # Match the existing v2 source-verified parser pattern without
+    # constructing an owner or entering native/storage custody.
+    import importlib.util
+    for package_name in ('ipfs_datasets_py', 'ipfs_datasets_py.optimizers',
+            'ipfs_datasets_py.optimizers.logic_theorem_optimizer'):
+        package = sys.modules.get(package_name)
+        need(package is not None and list(getattr(package, '__path__', [])) ==
+             [str(ROOT/package_name.replace('.', '/'))])
+    parser_name = 'ipfs_datasets_py.optimizers.logic_theorem_optimizer.validation_run_resources'
+    parser_path = ROOT/'ipfs_datasets_py/optimizers/logic_theorem_optimizer/validation_run_resources.py'
+    parser_spec = importlib.util.find_spec(parser_name)
+    need(parser_spec is not None and parser_spec.origin == str(parser_path))
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import validation_run_resources as sdk
+    need(sdk is sys.modules[parser_name] and sdk.__file__ == str(parser_path)
+         and sdk.__spec__.origin == str(parser_path)
+         and sdk.ORDINARY_SCRATCH_REQUEST_SCHEMA == 'owned-validation-request/v5'
+         and sdk.ORDINARY_SCRATCH_PROFILE_SCHEMA == 'owned-validation-ordinary-scratch-live/v1'
+         and sdk.TRACKED_SCOPE == 'sampled_birth_bound_descendants'
+         and sdk.MAX_SOURCE_PINS == 256 and type(sdk.MAX_SOURCE_PINS) is int
+         and sdk.OUTPUT_NAMES == ('pytest', 'tmp', 'cache', 'db', 'exports', 'logs'))
+    decoder, validator = sdk._decode, sdk.ValidationResourceReservation._validate_request
+    need(decoder.__module__ == parser_name and validator.__module__ == parser_name
+         and decoder.__code__.co_filename == validator.__code__.co_filename == str(parser_path)
+         and decoder.__globals__ is vars(sdk) and validator.__globals__ is vars(sdk))
+    host_path = ROOT/'ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py'
+    need(sdk.host.__file__ == str(host_path)
+         and sdk.host._json_pairs.__code__.co_filename == str(host_path)
+         and decoder(request_raw) == value)
+    profile = value['ordinary_scratch_profile']
+    observation = reservation.get('ordinary_scratch_profile')
+    need(type(observation) is dict and set(observation) == {
+        'schema', 'request_sha256', 'ordinary_absences_observed',
+        'live_exception_active', 'unseen_leaf_ownership_attested', 'whole_census_resampling'}
+        and type(observation['schema']) is str and type(observation['request_sha256']) is str
+        and type(observation['ordinary_absences_observed']) is int
+        and observation['live_exception_active'] is False
+        and observation['unseen_leaf_ownership_attested'] is False
+        and observation['whole_census_resampling'] is False
+        and observation == {'schema': profile['schema'], 'request_sha256': expected_request_sha256,
+            'ordinary_absences_observed': 0, 'live_exception_active': False,
+            'unseen_leaf_ownership_attested': False, 'whole_census_resampling': False})
+
+
+def _pre_grant_lock_refusal_terminal(owner, value, request_raw, request_path,
+        request_pin, resource_ledger, events, failure, outcome):
+    """Authenticate the actual opening-lock refusal before any record or native grant.
+
+    A caller must still genuinely reap this CLI and durably capture stdout.
+    No output directory, claim, cleanup, retry or admission is created here.
+    """
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_daemon_resources as host
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.validation_run_resources import ValidationResourceReservation
+    if (type(owner) is not ValidationResourceReservation
+            or type(failure) is not host.DaemonResourceError
+            or str(failure) != 'disk ledger lock unavailable'
+            or owner._entered is not False or owner._opened is not False or owner._record is not None
+            or owner._lease is not None or owner._child is not None
+            or type(events) is not dict or set(events) != _PRE_GRANT_EVENTS
+            or any(type(flag) is not bool for flag in events.values())
+            or events != {key: key == 'owner_open_attempted' for key in _PRE_GRANT_EVENTS}):
+        return None
+    # Exact original self/error frames prove the opening _locked timeout
+    # preceded yield, record publication and native admission. A copied exception,
+    # including one raised after an uncertain write, cannot provide this proof.
+    validation_module = sys.modules.get(ValidationResourceReservation.__module__)
+    expected_host = ROOT/'ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py'
+    expected_validation = expected_host.with_name('validation_run_resources.py')
+    if (Path(host.__file__).resolve() != expected_host or validation_module is None
+            or Path(validation_module.__file__).resolve() != expected_validation):
+        return None
+    locked = getattr(host.DaemonResourceReservation._locked, '__wrapped__', None)
+    if locked is None:
+        return None
+    functions = ((ValidationResourceReservation.open, validation_module, expected_validation),
+        (host.DaemonResourceReservation.__enter__, host, expected_host), (locked, host, expected_host))
+    if any(fn.__globals__ is not module.__dict__ or fn.__code__.co_filename != str(path)
+           for fn, module, path in functions):
+        return None
+    frames, trace = {}, failure.__traceback__
+    while trace is not None:
+        for fn, module, _ in functions:
+            if (trace.tb_frame.f_code is fn.__code__ and trace.tb_frame.f_globals is module.__dict__
+                    and trace.tb_frame.f_locals.get('self') is owner):
+                frames[fn.__code__] = trace.tb_frame
+        trace = trace.tb_next
+    if set(frames) != {fn.__code__ for fn, _, _ in functions}:
+        return None
+    locals_ = frames[locked.__code__].f_locals
+    if locals_.get('error') is not failure or locals_.get('lock_acquired') is not False:
+        return None
+    info = locals_.get('info')
+    if type(info) is not os.stat_result:
+        return None
+    observation = failure.lock_observation
+    expected = dict(schema='daemon-resource-ledger-lock-timeout/v1',stage='exclusive_acquire_before_yield',
+        lock_path=str(owner.lock_path),opened_lock_identity={key:getattr(info,key) for key in
+            ('st_dev','st_ino','st_mode','st_uid','st_gid','st_nlink','st_size','st_mtime_ns','st_ctime_ns')},
+        configured_lock_timeout_seconds=owner.ledger_lock_timeout_seconds,
+        started_monotonic=locals_.get('lock_started'),deadline_monotonic=locals_.get('deadline'),
+        observed_monotonic=locals_.get('observed_at'),lock_acquired=False,holder_identity_established=False)
+    if observation != expected or not _lock_refusal_observation(observation, resource_ledger):
+        return None
+    reservation = owner.to_dict()
+    if (reservation['status'] != 'not_entered' or reservation['record'] is not None
+            or reservation['resource_lease'] is not None or reservation.get('cleanup_error') is not None):
+        return None
+    identity = host._process(os.getpid())
+    if identity is None or any(identity[key] != owner._owner_identity[key] for key in ('pid', 'birth')):
+        return None
+    if snapshot(request_path) != request_raw:
+        return None
+    _lifecycle_source_guard(value)
+    producer = str(Path(__file__).resolve())
+    witness = dict(schema=PRE_GRANT_LOCK_REFUSAL_SCHEMA,
+        stage='owner_open_ledger_lock_refused_before_record', request_sha256=request_pin,
+        producer={'path': producer, 'sha256': value['source_sha256'].get(producer)},
+        owner={key: identity[key] for key in ('pid', 'birth')}, ledger_path=str(resource_ledger),
+        events=dict(events), owner_state={'entered': False, 'opened': False,
+            'record_created': False, 'native_lease_created': False, 'child_attached': False},
+        lock_observation=observation, native_grant={'status': 'not_requested_lock_timeout'},
+        storage={'status': 'not_entered', 'release_authorized': False},
+        source_guards={'request_unchanged': True, 'source_pins_unchanged': True,
+            'owner_identity_unchanged': True, 'errors': []})
+    return dict(schema='owned-validation-failure-terminal/v1', request_sha256=request_pin,
+        completed=False, admitted=False, Lean_admitted=False, failure=outcome,
+        reservation=reservation, process_cleanup_error=None, owner_exit_error=None,
+        source_custody_lifecycle=witness)
+
+
+def _ledger_bound_refusal_observation(value, maximum_bytes):
+    fields = {'schema', 'serialized_bytes', 'maximum_bytes', 'excess_bytes', 'write_started'}
+    return (type(value) is dict and set(value) == fields
+        and value['schema'] == 'daemon-resource-ledger-write-bound/v1'
+        and all(type(value[key]) is int and 0 < value[key] < 2**63
+                for key in ('serialized_bytes', 'maximum_bytes', 'excess_bytes'))
+        and value['maximum_bytes'] == maximum_bytes
+        and value['serialized_bytes'] > maximum_bytes
+        and value['excess_bytes'] == value['serialized_bytes'] - maximum_bytes
+        and value['write_started'] is False)
+
+
+def _pre_grant_ledger_bound_refusal_terminal(owner, value, request_raw, request_path,
+        request_pin, resource_ledger, events, failure, outcome):
+    """Authenticate the original first-write size refusal before publication."""
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_daemon_resources as host
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.validation_run_resources import ValidationResourceReservation
+    if (type(owner) is not ValidationResourceReservation
+            or type(failure) is not host.DaemonResourceError
+            or failure.args != ('disk ledger byte bound exceeded',)
+            or owner._entered is not False or owner._opened is not False or owner._record is not None
+            or owner._lease is not None or owner._child is not None
+            or type(events) is not dict or set(events) != _PRE_GRANT_EVENTS
+            or any(type(flag) is not bool for flag in events.values())
+            or events != {key: key == 'owner_open_attempted' for key in _PRE_GRANT_EVENTS}):
+        return None
+    validation_module = sys.modules.get(ValidationResourceReservation.__module__)
+    expected_host = ROOT/'ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py'
+    expected_validation = expected_host.with_name('validation_run_resources.py')
+    if (Path(host.__file__).resolve() != expected_host or validation_module is None
+            or Path(validation_module.__file__).resolve() != expected_validation):
+        return None
+    enter, write = host.DaemonResourceReservation.__enter__, host.DaemonResourceReservation._write
+    functions = ((ValidationResourceReservation.open, validation_module, expected_validation),
+        (enter, host, expected_host), (write, host, expected_host))
+    if any(fn.__globals__ is not module.__dict__ or fn.__code__.co_filename != str(path)
+           for fn, module, path in functions):
+        return None
+    frames, trace = {}, failure.__traceback__
+    while trace is not None:
+        for fn, module, _ in functions:
+            if (trace.tb_frame.f_code is fn.__code__ and trace.tb_frame.f_globals is module.__dict__
+                    and trace.tb_frame.f_locals.get('self') is owner):
+                frames[fn.__code__] = trace.tb_frame
+        trace = trace.tb_next
+    if set(frames) != {fn.__code__ for fn, _, _ in functions}:
+        return None
+    write_locals, enter_locals = frames[write.__code__].f_locals, frames[enter.__code__].f_locals
+    raw, ledger, record = (write_locals.get('raw'), enter_locals.get('ledger'), enter_locals.get('record'))
+    if (write_locals.get('error') is not failure or 'temporary' in write_locals
+            or type(raw) is not bytes or type(ledger) is not dict or type(record) is not dict
+            or write_locals.get('value') is not ledger
+            or type(ledger.get('reservations')) is not dict
+            or ledger['reservations'].get(owner.reservation_id) is not record
+            or record.get('status') != 'reserved'
+            or raw != (json.dumps(ledger, sort_keys=True, separators=(',', ':'),
+                                 allow_nan=False) + '\n').encode()):
+        return None
+    observation = failure.ledger_write_bound_observation
+    expected = dict(schema='daemon-resource-ledger-write-bound/v1',
+        serialized_bytes=len(raw), maximum_bytes=host.MAX_LEDGER_BYTES,
+        excess_bytes=len(raw) - host.MAX_LEDGER_BYTES, write_started=False)
+    if observation != expected or not _ledger_bound_refusal_observation(observation, host.MAX_LEDGER_BYTES):
+        return None
+    reservation = owner.to_dict()
+    if (reservation['status'] != 'not_entered' or reservation['record'] is not None
+            or reservation['resource_lease'] is not None or reservation.get('cleanup_error') is not None):
+        return None
+    identity = host._process(os.getpid())
+    if identity is None or any(identity[key] != owner._owner_identity[key] for key in ('pid', 'birth')):
+        return None
+    if snapshot(request_path) != request_raw:
+        return None
+    _lifecycle_source_guard(value)
+    producer = str(Path(__file__).resolve())
+    witness = dict(schema=PRE_GRANT_LEDGER_BOUND_REFUSAL_SCHEMA,
+        stage='owner_open_ledger_bytes_refused_before_record', request_sha256=request_pin,
+        producer={'path': producer, 'sha256': value['source_sha256'].get(producer)},
+        owner={key: identity[key] for key in ('pid', 'birth')}, ledger_path=str(resource_ledger),
+        events=dict(events), owner_state={'entered': False, 'opened': False,
+            'record_created': False, 'native_lease_created': False, 'child_attached': False},
+        ledger_write_bound_observation=observation,
+        native_grant={'status': 'not_requested_ledger_byte_refusal'},
+        storage={'status': 'not_entered', 'release_authorized': False},
+        source_guards={'request_unchanged': True, 'source_pins_unchanged': True,
+            'owner_identity_unchanged': True, 'errors': []})
+    return dict(schema='owned-validation-failure-terminal/v1', request_sha256=request_pin,
+        completed=False, admitted=False, Lean_admitted=False, failure=outcome,
+        reservation=reservation, process_cleanup_error=None, owner_exit_error=None,
+        source_custody_lifecycle=witness)
+
+
 def classify_owned_validation_source_custody(terminal, request_raw, *,
         expected_request_sha256, owner_pid, owner_birth, returncode, expected_resource_ledger):
     """Prove only explicit original no-child/no-native source-custody closure.
@@ -281,7 +953,18 @@ def classify_owned_validation_source_custody(terminal, request_raw, *,
              and hashlib.sha256(request_raw).hexdigest() == expected_request_sha256)
         value = json.loads(request_raw)
         need(type(value) is dict and value.get('schema') in
-             ('owned-validation-request/v1', 'owned-validation-request/v2'))
+             ('owned-validation-request/v1', 'owned-validation-request/v2', 'owned-validation-request/v4', 'owned-validation-request/v5', STARTUP_CLOCK_REQUEST_SCHEMA))
+        live = value['schema'] in ('owned-validation-request/v4', 'owned-validation-request/v5', STARTUP_CLOCK_REQUEST_SCHEMA)
+        if live:
+            need((_startup_clock_no_child_request_shape(value, request_raw)
+                  if value['schema'] == STARTUP_CLOCK_REQUEST_SCHEMA else
+                  _ordinary_scratch_no_child_request_shape(value, request_raw)
+                  if value['schema'] == 'owned-validation-request/v5'
+                  else _live_no_child_request_shape(value, request_raw))
+                 and type(terminal) is dict
+                 and type(terminal.get('source_custody_lifecycle')) is dict
+                 and (terminal['source_custody_lifecycle'].get('schema') == LIFECYCLE_SCHEMA
+                      or _complete_preentry_terminal_shape(terminal, expected_request_sha256)))
         need(type(expected_resource_ledger) is str and Path(expected_resource_ledger).is_absolute()
              and str(Path(expected_resource_ledger).resolve(strict=True)) == expected_resource_ledger)
         ledger_info = Path(expected_resource_ledger).lstat()
@@ -298,6 +981,156 @@ def classify_owned_validation_source_custody(terminal, request_raw, *,
              and all(terminal[key] is False for key in ('completed', 'admitted', 'Lean_admitted'))
              and terminal['process_cleanup_error'] is None and terminal['owner_exit_error'] is None)
         failure, reservation, witness = terminal['failure'], terminal['reservation'], terminal['source_custody_lifecycle']
+        if value['schema'] == STARTUP_CLOCK_REQUEST_SCHEMA and reservation:
+            phase_owner = reservation['startup_clock_profile']['original_owner']
+            need(type(phase_owner) is dict and type(phase_owner.get('pid')) is int
+                 and phase_owner.get('pid') == owner_pid and phase_owner.get('birth') == owner_birth)
+        if type(witness) is dict and witness.get('schema') == PRE_GRANT_CAPACITY_REFUSAL_SCHEMA:
+            from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_daemon_resources as host
+            need(set(witness) == {'schema', 'stage', 'request_sha256', 'producer', 'owner',
+                'ledger_path', 'events', 'owner_state', 'capacity_observation', 'native_grant',
+                'storage', 'source_guards'})
+            need(witness['stage'] == 'owner_open_capacity_refused_before_record'
+                and witness['request_sha256'] == expected_request_sha256
+                and witness['owner'] == {'pid': owner_pid, 'birth': owner_birth}
+                and witness['ledger_path'] == expected_resource_ledger)
+            producer = str(Path(__file__).resolve())
+            producer_pin = value['source_sha256'].get(producer)
+            need(type(producer_pin) is str
+                and witness['producer'] == {'path': producer, 'sha256': producer_pin}
+                and hashlib.sha256(snapshot(producer, 4*1024*1024)).hexdigest() == producer_pin)
+            _lifecycle_source_guard(value)
+            if live:
+                _live_no_native_sdk_receipt(value, request_raw, expected_request_sha256, reservation, need)
+            need(type(failure) is dict and failure.get('schema') == 'owned-validation-result/v1'
+                and failure.get('request_sha256') == expected_request_sha256
+                and failure.get('error_type') == 'DaemonResourceError'
+                and failure.get('error') == 'storage reservation capacity exceeded'
+                and failure.get('executed_checks') == [] and failure.get('returncode') is None
+                and failure.get('watchdog_errors') == [] and failure.get('received_signals') == []
+                and all(failure.get(key) is False for key in ('completed', 'admitted', 'Lean_admitted',
+                    'authority_granted', 'model_weights_downloaded')))
+            need(type(reservation) is dict and reservation.get('schema') == 'daemon-resource-reservations-v1'
+                and reservation.get('status') == 'not_entered' and reservation['record'] is None
+                and reservation['resource_lease'] is None and reservation['cleanup_error'] is None
+                and reservation.get('ledger_path') == expected_resource_ledger
+                and reservation.get('scheduler_lane') == 'validation'
+                and reservation.get('workload') == 'canonical_validation'
+                and reservation.get('process_observation') is None)
+            need(witness['owner_state'] == {'entered': False, 'opened': False,
+                'record_created': False, 'native_lease_created': False, 'child_attached': False}
+                and all(type(flag) is bool for flag in witness['owner_state'].values()))
+            need(type(witness['events']) is dict and set(witness['events']) == _PRE_GRANT_EVENTS
+                and all(type(flag) is bool for flag in witness['events'].values())
+                and witness['events'] == {key: key == 'owner_open_attempted' for key in _PRE_GRANT_EVENTS})
+            need(_capacity_refusal_observation(witness['capacity_observation'], value['storage_bytes'])
+                and witness['capacity_observation']['limit_bytes'] == reservation['storage_limit_bytes']
+                and witness['capacity_observation']['limit_bytes'] == host.MAX_STORAGE_BYTES)
+            need(witness['native_grant'] == {'status': 'not_requested_capacity_refusal'}
+                and witness['storage'] == {'status': 'not_entered', 'release_authorized': False}
+                and witness['storage']['release_authorized'] is False
+                and witness['source_guards'] == {'request_unchanged': True, 'source_pins_unchanged': True,
+                    'owner_identity_unchanged': True, 'errors': []}
+                and all(type(witness['source_guards'][key]) is bool for key in
+                    ('request_unchanged', 'source_pins_unchanged', 'owner_identity_unchanged')))
+            return dict(verdict='proven_original_no_child_no_native_grant', source_custody_closed=True,
+                        storage_release_authorized=False)
+        if type(witness) is dict and witness.get('schema') == PRE_GRANT_LOCK_REFUSAL_SCHEMA:
+            from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_daemon_resources as host
+            need(set(witness) == {'schema', 'stage', 'request_sha256', 'producer', 'owner',
+                'ledger_path', 'events', 'owner_state', 'lock_observation', 'native_grant',
+                'storage', 'source_guards'})
+            need(witness['stage'] == 'owner_open_ledger_lock_refused_before_record'
+                and witness['request_sha256'] == expected_request_sha256
+                and witness['owner'] == {'pid': owner_pid, 'birth': owner_birth}
+                and witness['ledger_path'] == expected_resource_ledger)
+            producer = str(Path(__file__).resolve())
+            producer_pin = value['source_sha256'].get(producer)
+            need(type(producer_pin) is str
+                and witness['producer'] == {'path': producer, 'sha256': producer_pin}
+                and hashlib.sha256(snapshot(producer, 4*1024*1024)).hexdigest() == producer_pin)
+            _lifecycle_source_guard(value)
+            if live:
+                _live_no_native_sdk_receipt(value, request_raw, expected_request_sha256, reservation, need)
+            need(type(failure) is dict and failure.get('schema') == 'owned-validation-result/v1'
+                and failure.get('request_sha256') == expected_request_sha256
+                and failure.get('error_type') == 'DaemonResourceError'
+                and failure.get('error') == 'disk ledger lock unavailable'
+                and failure.get('executed_checks') == [] and failure.get('returncode') is None
+                and failure.get('watchdog_errors') == [] and failure.get('received_signals') == []
+                and all(failure.get(key) is False for key in ('completed', 'admitted', 'Lean_admitted',
+                    'authority_granted', 'model_weights_downloaded')))
+            need(type(reservation) is dict and reservation.get('schema') == 'daemon-resource-reservations-v1'
+                and reservation.get('status') == 'not_entered' and reservation['record'] is None
+                and reservation['resource_lease'] is None and reservation['cleanup_error'] is None
+                and reservation.get('ledger_path') == expected_resource_ledger
+                and reservation.get('scheduler_lane') == 'validation'
+                and reservation.get('workload') == 'canonical_validation'
+                and reservation.get('process_observation') is None)
+            need(witness['owner_state'] == {'entered': False, 'opened': False,
+                'record_created': False, 'native_lease_created': False, 'child_attached': False}
+                and all(type(flag) is bool for flag in witness['owner_state'].values()))
+            need(type(witness['events']) is dict and set(witness['events']) == _PRE_GRANT_EVENTS
+                and all(type(flag) is bool for flag in witness['events'].values())
+                and witness['events'] == {key: key == 'owner_open_attempted' for key in _PRE_GRANT_EVENTS})
+            need(_lock_refusal_observation(witness['lock_observation'], expected_resource_ledger))
+            need(witness['native_grant'] == {'status': 'not_requested_lock_timeout'}
+                and witness['storage'] == {'status': 'not_entered', 'release_authorized': False}
+                and witness['storage']['release_authorized'] is False
+                and witness['source_guards'] == {'request_unchanged': True, 'source_pins_unchanged': True,
+                    'owner_identity_unchanged': True, 'errors': []}
+                and all(type(witness['source_guards'][key]) is bool for key in
+                    ('request_unchanged', 'source_pins_unchanged', 'owner_identity_unchanged')))
+            return dict(verdict='proven_original_no_child_no_native_grant', source_custody_closed=True,
+                        storage_release_authorized=False)
+        if type(witness) is dict and witness.get('schema') == PRE_GRANT_LEDGER_BOUND_REFUSAL_SCHEMA:
+            from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_daemon_resources as host
+            need(set(witness) == {'schema', 'stage', 'request_sha256', 'producer', 'owner',
+                'ledger_path', 'events', 'owner_state', 'ledger_write_bound_observation', 'native_grant',
+                'storage', 'source_guards'})
+            need(witness['stage'] == 'owner_open_ledger_bytes_refused_before_record'
+                and witness['request_sha256'] == expected_request_sha256
+                and witness['owner'] == {'pid': owner_pid, 'birth': owner_birth}
+                and witness['ledger_path'] == expected_resource_ledger)
+            producer = str(Path(__file__).resolve())
+            producer_pin = value['source_sha256'].get(producer)
+            need(type(producer_pin) is str
+                and witness['producer'] == {'path': producer, 'sha256': producer_pin}
+                and hashlib.sha256(snapshot(producer, 4*1024*1024)).hexdigest() == producer_pin)
+            _lifecycle_source_guard(value)
+            if live:
+                _live_no_native_sdk_receipt(value, request_raw, expected_request_sha256, reservation, need)
+            need(type(failure) is dict and failure.get('schema') == 'owned-validation-result/v1'
+                and failure.get('request_sha256') == expected_request_sha256
+                and failure.get('error_type') == 'DaemonResourceError'
+                and failure.get('error') == 'disk ledger byte bound exceeded'
+                and failure.get('executed_checks') == [] and failure.get('returncode') is None
+                and failure.get('watchdog_errors') == [] and failure.get('received_signals') == []
+                and all(failure.get(key) is False for key in ('completed', 'admitted', 'Lean_admitted',
+                    'authority_granted', 'model_weights_downloaded')))
+            need(type(reservation) is dict and reservation.get('schema') == 'daemon-resource-reservations-v1'
+                and reservation.get('status') == 'not_entered' and reservation['record'] is None
+                and reservation['resource_lease'] is None and reservation['cleanup_error'] is None
+                and reservation.get('ledger_path') == expected_resource_ledger
+                and reservation.get('scheduler_lane') == 'validation'
+                and reservation.get('workload') == 'canonical_validation'
+                and reservation.get('process_observation') is None)
+            need(witness['owner_state'] == {'entered': False, 'opened': False,
+                'record_created': False, 'native_lease_created': False, 'child_attached': False}
+                and all(type(flag) is bool for flag in witness['owner_state'].values()))
+            need(type(witness['events']) is dict and set(witness['events']) == _PRE_GRANT_EVENTS
+                and all(type(flag) is bool for flag in witness['events'].values())
+                and witness['events'] == {key: key == 'owner_open_attempted' for key in _PRE_GRANT_EVENTS})
+            need(_ledger_bound_refusal_observation(witness['ledger_write_bound_observation'], host.MAX_LEDGER_BYTES))
+            need(witness['native_grant'] == {'status': 'not_requested_ledger_byte_refusal'}
+                and witness['storage'] == {'status': 'not_entered', 'release_authorized': False}
+                and witness['storage']['release_authorized'] is False
+                and witness['source_guards'] == {'request_unchanged': True, 'source_pins_unchanged': True,
+                    'owner_identity_unchanged': True, 'errors': []}
+                and all(type(witness['source_guards'][key]) is bool for key in
+                    ('request_unchanged', 'source_pins_unchanged', 'owner_identity_unchanged')))
+            return dict(verdict='proven_original_no_child_no_native_grant', source_custody_closed=True,
+                        storage_release_authorized=False)
         if type(witness) is dict and witness.get('schema') == PRE_OWNER_REFUSAL_SCHEMA:
             # The invalid request is intentionally not revalidated as an admitted
             # v1/v2 workload. The pinned producer proves the earlier constructor
@@ -396,6 +1229,14 @@ def classify_owned_validation_source_custody(terminal, request_raw, *,
                 'schema': PHYSICAL_FIXTURE_SCHEMA, 'request_sha256': expected_request_sha256,
                 'root': profile['root'], 'case_count': len(cases), 'entry_count': len(entries),
                 'live_special_file_window': False})
+        if live:
+            _live_no_native_sdk_receipt(value, request_raw, expected_request_sha256, reservation, need)
+            need(returncode == 1 and failure.get('watchdog_errors') == []
+                 and failure.get('received_signals') == []
+                 and reservation.get('status') == 'retained'
+                 and type(reservation.get('record')) is dict
+                 and reservation['record'].get('retention_reason') == 'scheduler_admission_failed'
+                 and reservation.get('cleanup_error') is None)
         need(witness['source_guards'] == {'request_unchanged': True, 'source_pins_unchanged': True,
              'owner_identity_unchanged': True, 'errors': []}
              and all(type(witness['source_guards'][key]) is bool for key in
@@ -442,6 +1283,775 @@ def classify_owned_validation_source_custody(terminal, request_raw, *,
                     storage_release_authorized=False)
     except BaseException:
         return unknown
+
+
+def _no_child_native_closed_profile(terminal, request_raw, *, request_version,
+        expected_request_sha256, owner_pid, owner_birth, returncode, expected_resource_ledger):
+    """Shared finite bindings; each public profile selects original request bytes.
+
+    V5 is only the SDK-open post-grant deadline with exact zero process samples.
+    No request or terminal projection is used to establish either profile.
+    """
+    def need(condition):
+        if not condition:
+            raise ValueError('unproven original acquired no-child lifecycle')
+    def pairs(items):
+        result = {}
+        for key, item in items:
+            need(key not in result)
+            result[key] = item
+        return result
+    def nonfinite(_):
+        raise ValueError('nonfinite original request')
+    def absolute(item):
+        return (type(item) is str and 0 < len(item.encode()) <= 4096
+            and item.startswith('/') and '\x00' not in item
+            and (item == '/' or all(part not in ('', '.', '..') for part in item[1:].split('/'))))
+    def digest(item):
+        return (type(item) is str and len(item) == 64
+            and all(character in '0123456789abcdef' for character in item))
+    def identifier(item):
+        return type(item) is str and len(item) == 32 and digest(item + item)
+    def zero_process_observation(item):
+        # Exact pre-child sampled DATA, never an absence proof by itself.
+        if (type(item) is not dict or set(item) != {'scope', 'group_rss',
+                'live_processes', 'rss_bytes', 'observed_identities',
+                'out_of_group_live_identities', 'tracking_error'}):
+            return False
+        group = item['group_rss']
+        return (type(item['scope']) is str and item['scope'] == 'sampled_birth_bound_descendants'
+            and type(group) is dict and set(group) == {'available', 'live_processes', 'rss_bytes'}
+            and group['available'] is True
+            and all(type(group[key]) is int and group[key] == 0 for key in ('live_processes', 'rss_bytes'))
+            and all(type(item[key]) is int and item[key] == 0 for key in ('live_processes', 'rss_bytes'))
+            and type(item['observed_identities']) is list and item['observed_identities'] == []
+            and type(item['out_of_group_live_identities']) is list and item['out_of_group_live_identities'] == []
+            and type(item['tracking_error']) is str and item['tracking_error'] == '')
+    need(type(request_raw) is bytes and 0 < len(request_raw) <= 1024*1024
+        and digest(expected_request_sha256)
+        and hashlib.sha256(request_raw).hexdigest() == expected_request_sha256
+        and type(owner_pid) is int and owner_pid > 0
+        and type(owner_birth) is str and owner_birth.isdecimal()
+        and type(returncode) is int and returncode == 1 and absolute(expected_resource_ledger))
+    need(request_version in ('v1', 'v5', 'v6'))
+    value = json.loads(request_raw, object_pairs_hook=pairs, parse_constant=nonfinite)
+    fields = {'schema', 'argv', 'cwd', 'selected_checks', 'source_sha256',
+        'timeout_seconds', 'storage_bytes', 'memory_mb', 'cpu_slots',
+        'child_process_slots', 'attempt_directory', 'outputs', 'declared_external_writable_paths',
+        'process_scope', 'scheduler_state_path', 'expected_scheduler_policy_sha256', 'roots'}
+    if request_version == 'v5':
+        fields.add('ordinary_scratch_profile')
+        need(_ordinary_scratch_no_child_request_shape(value, request_raw))
+    if request_version == 'v6':
+        fields.update(('live_inventory_profile','startup_clock_profile'))
+        need(_startup_clock_no_child_request_shape(value, request_raw))
+    if request_version in ('v5','v6'):
+        remaining_nodes = 65536
+        def finite_json(item, depth=0):
+            nonlocal remaining_nodes
+            remaining_nodes -= 1
+            need(depth <= 32 and remaining_nodes >= 0)
+            if item is None or type(item) in (str, bool, int):
+                return
+            if type(item) is float:
+                need(math.isfinite(item)); return
+            if type(item) is list:
+                need(len(item) <= 16384)
+                for entry in item: finite_json(entry, depth+1)
+                return
+            need(type(item) is dict and len(item) <= 16384
+                and all(type(key) is str for key in item))
+            for entry in item.values(): finite_json(entry, depth+1)
+        finite_json(terminal)
+        need(len(json.dumps(terminal, sort_keys=True, allow_nan=False).encode()) <= 1024*1024)
+    need(type(value) is dict and set(value) == fields
+        and value['schema'] == 'owned-validation-request/' + request_version
+        and value['process_scope'] == 'sampled_birth_bound_descendants'
+        and value['declared_external_writable_paths'] == []
+        and absolute(value['cwd']) and absolute(value['attempt_directory'])
+        and absolute(value['scheduler_state_path']) and digest(value['expected_scheduler_policy_sha256']))
+    for field in ('argv', 'selected_checks'):
+        need(type(value[field]) is list and 0 < len(value[field]) <= 256
+            and all(type(item) is str and item.strip() and len(item) <= 8192
+                and '\x00' not in item for item in value[field]))
+    need(len(set(value['selected_checks'])) == len(value['selected_checks'])
+        and type(value['roots']) is list and 0 < len(value['roots']) <= (64 if request_version in ('v5','v6') else 16)
+        and len(set(value['roots'])) == len(value['roots']) and all(absolute(item) for item in value['roots'])
+        and type(value['source_sha256']) is dict and 0 < len(value['source_sha256']) <= 256
+        and all(absolute(path) and digest(pin) for path, pin in value['source_sha256'].items()))
+    budgets = ('cpu_slots', 'memory_mb', 'child_process_slots', 'storage_bytes')
+    need(all(type(value[key]) is int and 0 < value[key] < 2**63 for key in budgets)
+        and ((request_version == 'v1' and type(value['timeout_seconds']) is int
+              and 0 < value['timeout_seconds'] < 2**63)
+            or (request_version == 'v5' and type(value['timeout_seconds']) in (int, float)
+                and math.isfinite(value['timeout_seconds']) and 0 < value['timeout_seconds'] <= 3600)
+            or (request_version == 'v6' and type(value['timeout_seconds']) is int and value['timeout_seconds'] == 180))
+        and type(value['outputs']) is dict and set(value['outputs']) == {'pytest', 'tmp', 'cache', 'db', 'exports', 'logs'}
+        and all(path == value['attempt_directory'] + '/' + name for name, path in value['outputs'].items()))
+    need(type(terminal) is dict and set(terminal) == {'schema', 'request_sha256', 'completed',
+        'admitted', 'Lean_admitted', 'failure', 'reservation', 'process_cleanup_error',
+        'owner_exit_error', 'source_custody_lifecycle'}
+        and terminal['schema'] == 'owned-validation-failure-terminal/v1'
+        and terminal['request_sha256'] == expected_request_sha256
+        and all(terminal[key] is False for key in ('completed', 'admitted', 'Lean_admitted'))
+        and terminal['process_cleanup_error'] is None and terminal['owner_exit_error'] is None)
+    failure, reservation, witness = (terminal[key] for key in
+        ('failure', 'reservation', 'source_custody_lifecycle'))
+    need(type(failure) is dict and set(failure) == {'schema', 'request_sha256', 'executed_checks',
+        'returncode', 'completed', 'admitted', 'Lean_admitted', 'resource_scope', 'model_weights_downloaded',
+        'authority_granted', 'error_type', 'error', 'elapsed_seconds', 'watchdog_errors',
+        'received_signals', 'process_observation', 'process_cleanup_error'}
+        and failure['schema'] == 'owned-validation-result/v1'
+        and failure['request_sha256'] == expected_request_sha256
+        and failure['executed_checks'] == [] and failure['returncode'] is None
+        and failure['watchdog_errors'] == [] and failure['received_signals'] == []
+        and failure['process_cleanup_error'] is None
+        and failure['resource_scope'] == 'cooperative_sampled_birth_bound_descendants_and_owned_attempt'
+        and type(failure['elapsed_seconds']) in (int, float) and math.isfinite(failure['elapsed_seconds'])
+        and all(failure[key] is False for key in ('completed', 'admitted', 'Lean_admitted',
+            'authority_granted', 'model_weights_downloaded')))
+    # Keep the original admission-deadline profile distinct from a stopped
+    # post-grant owner-open ledger-lock refusal before that original deadline.
+    deadline_profile = (request_version == 'v1'
+        and failure['error_type'] == 'ResourceAdmissionDeadlineError'
+        and failure['error'] == 'original absolute resource operation deadline expired'
+        and failure['process_observation'] is None
+        and failure['elapsed_seconds'] >= value['timeout_seconds'])
+    postgrant_lock_profile = (request_version == 'v1'
+        and type(failure['error_type']) is str
+        and failure['error_type'] == 'DaemonResourceError'
+        and type(failure['error']) is str and failure['error'] == 'disk ledger lock unavailable'
+        and 0 < failure['elapsed_seconds'] < value['timeout_seconds']
+        and zero_process_observation(failure['process_observation']))
+    ordinary_deadline_profile = (request_version in ('v5','v6')
+        and type(failure['error_type']) is str
+        and failure['error_type'] == 'ResourceAdmissionDeadlineError'
+        and type(failure['error']) is str
+        and failure['error'] == 'original absolute resource operation deadline expired'
+        and value['timeout_seconds'] <= failure['elapsed_seconds'] < 2**63
+        and zero_process_observation(failure['process_observation']))
+    need(deadline_profile or postgrant_lock_profile or ordinary_deadline_profile)
+    need(type(witness) is dict and set(witness) == {'schema', 'request_sha256', 'producer', 'owner',
+        'reservation_id', 'resource_request_id', 'ledger_path', 'scheduler', 'attempt_directory',
+        'outputs', 'budgets', 'process_scope', 'events', 'owner_child_attached', 'native_grant',
+        'source_guards', 'storage'} and witness['schema'] == LIFECYCLE_SCHEMA
+        and witness['request_sha256'] == expected_request_sha256
+        and witness['owner'] == {'pid': owner_pid, 'birth': owner_birth}
+        and type(witness['owner']['pid']) is int
+        and type(witness['events']) is dict and set(witness['events']) == _LIFECYCLE_EVENTS
+        and all(type(flag) is bool for flag in witness['events'].values())
+        and witness['events'] == {key: key in ('owner_open_attempted', 'owner_exit_handling_completed')
+            for key in _LIFECYCLE_EVENTS} and witness['owner_child_attached'] is False
+        and witness['native_grant'] == {'status': 'acquired', 'exact_native_timeout': False, 'timeout_decision': None}
+        and witness['native_grant']['exact_native_timeout'] is False
+        and witness['source_guards'] == {'request_unchanged': True, 'source_pins_unchanged': True,
+            'owner_identity_unchanged': True, 'errors': []}
+        and all(witness['source_guards'][key] is True for key in
+            ('request_unchanged', 'source_pins_unchanged', 'owner_identity_unchanged')))
+    need(type(reservation) is dict and set(reservation) == {'schema', 'ledger_path', 'reservation_id',
+        'status', 'record', 'resource_lease', 'process_observation', 'cleanup_error', 'roots',
+        'scheduler_lane', 'workload', 'storage_limit_bytes', 'enforcement'}
+            | ({'ordinary_scratch_profile'} if request_version == 'v5' else
+               {'live_inventory_profile','startup_clock_profile'} if request_version == 'v6' else set())
+        and reservation['schema'] == 'daemon-resource-reservations-v1'
+        and reservation['status'] == 'retained' and reservation['cleanup_error'] is None
+        and ((deadline_profile and reservation['process_observation'] is None)
+            or ((postgrant_lock_profile or ordinary_deadline_profile) and zero_process_observation(reservation['process_observation'])))
+        and reservation['enforcement'] == 'cooperative_admission_and_polled_usage_not_kernel_quota')
+    row, lease = reservation['record'], reservation['resource_lease']
+    need(type(row) is dict and set(row) == {'reservation_id', 'status', 'owner_pid', 'storage_bytes',
+        'memory_mb', 'cpu_slots', 'child_process_slots', 'external_charges', 'created_at',
+        'prior_children', 'child', 'artifacts_durable_asserted', 'scheduler_lane', 'workload',
+        'attempt_directory', 'last_usage', 'retention_reason'}
+        and row['reservation_id'] == reservation['reservation_id'] == witness['reservation_id']
+        and identifier(row['reservation_id'])
+        and row['status'] == 'retained'
+        and ((deadline_profile and row['retention_reason'] == 'scheduler_admission_failed')
+            or ((postgrant_lock_profile or ordinary_deadline_profile) and row['retention_reason'] == 'context_failed'))
+        and type(row['owner_pid']) is int and row['owner_pid'] == owner_pid
+        and row['child'] is None and row['prior_children'] == [] and row['external_charges'] == {}
+        and row['artifacts_durable_asserted'] is False
+        and type(row['created_at']) in (int, float) and math.isfinite(row['created_at']) and row['created_at'] > 0
+        and row['scheduler_lane'] == reservation['scheduler_lane'] == 'validation'
+        and row['workload'] == reservation['workload'] == 'canonical_validation'
+        and reservation['ledger_path'] == witness['ledger_path'] == expected_resource_ledger
+        and type(row['attempt_directory']) is dict and set(row['attempt_directory']) == {'device', 'inode', 'path'}
+        and all(type(row['attempt_directory'][key]) is int and row['attempt_directory'][key] > 0
+            for key in ('device', 'inode'))
+        and row['attempt_directory']['path'] == witness['attempt_directory'] == value['attempt_directory']
+        and witness['outputs'] == value['outputs'] and witness['process_scope'] == value['process_scope']
+        and type(witness['budgets']) is dict and set(witness['budgets']) == set(budgets)
+        and all(type(row[key]) is int and type(witness['budgets'][key]) is int
+            and row[key] == witness['budgets'][key] == value[key] for key in budgets)
+        and witness['storage'] == {'status': 'retained', 'cleanup_error': None, 'release_authorized': False}
+        and witness['storage']['release_authorized'] is False)
+    usage = row['last_usage']
+    numbers = {'additional_requested_bytes', 'charged_bytes', 'limit_bytes',
+        'minimum_filesystem_free_bytes', 'observed_apparent_bytes', 'outstanding_full_reservations_bytes'}
+    need(type(usage) is dict and set(usage) == numbers | {'inventory', 'scope'}
+        and usage['scope'] == 'named_roots_only_apparent_bytes'
+        and all(type(usage[key]) is int and 0 <= usage[key] < 2**63 for key in numbers)
+        and usage['additional_requested_bytes'] == value['storage_bytes']
+        and usage['charged_bytes'] == usage['observed_apparent_bytes']
+            + usage['outstanding_full_reservations_bytes'] + usage['additional_requested_bytes']
+        and usage['limit_bytes'] == reservation['storage_limit_bytes']
+        and type(usage['inventory']) is dict and set(usage['inventory']) ==
+            {'apparent_bytes', 'entry_count', 'special_file_count', 'symlink_count'}
+        and all(type(item) is int and 0 <= item < 2**63 for item in usage['inventory'].values())
+        and usage['inventory']['apparent_bytes'] == usage['observed_apparent_bytes'])
+    need(type(lease) is dict and set(lease) == {'lease_id', 'lane', 'owner_pid', 'parent_lease_id',
+        'cpu_slots', 'memory_mb', 'child_process_slots', 'gpu_memory_mb', 'unified_memory_mb',
+        'requires_gpu', 'acquired_at', 'wait_seconds', 'released', 'cancelled'}
+        and identifier(lease['lease_id']) and lease['lane'] == 'validation'
+        and type(lease['owner_pid']) is int and lease['owner_pid'] == owner_pid
+        and lease['parent_lease_id'] is None and lease['released'] is True and lease['cancelled'] is True
+        and lease['requires_gpu'] is False
+        and all(type(lease[key]) is int and lease[key] == 0 for key in ('gpu_memory_mb', 'unified_memory_mb'))
+        and all(type(lease[key]) is int and lease[key] == value[key]
+            for key in ('cpu_slots', 'memory_mb', 'child_process_slots'))
+        and all(type(lease[key]) in (int, float) and math.isfinite(lease[key]) and lease[key] >= 0
+            for key in ('acquired_at', 'wait_seconds'))
+        and lease['acquired_at'] >= row['created_at']
+        and witness['resource_request_id'] == 'validation:' + row['reservation_id']
+        and witness['scheduler'] == {'state_path': value['scheduler_state_path'],
+            'policy_sha256': value['expected_scheduler_policy_sha256'], 'lane': 'validation',
+            'workload': 'canonical_validation'})
+    if request_version == 'v5':
+        scratch = reservation['ordinary_scratch_profile']
+        need(type(scratch) is dict and set(scratch) == {'schema', 'request_sha256',
+            'ordinary_absences_observed', 'live_exception_active', 'unseen_leaf_ownership_attested',
+            'whole_census_resampling'}
+            and scratch['schema'] == 'owned-validation-ordinary-scratch-live/v1'
+            and scratch['request_sha256'] == expected_request_sha256
+            and type(scratch['ordinary_absences_observed']) is int
+            and scratch['ordinary_absences_observed'] == 0
+            and all(scratch[key] is False for key in ('live_exception_active',
+                'unseen_leaf_ownership_attested', 'whole_census_resampling')))
+    if request_version == 'v6':
+        _live_no_native_sdk_receipt(value, request_raw, expected_request_sha256, reservation, need)
+        clock = _startup_clock_no_child_observation(value, reservation, expected_request_sha256, need)
+        need(clock['original_owner'].get('pid') == owner_pid
+             and clock['original_owner'].get('birth') == owner_birth)
+    return value, witness, reservation, row, lease
+
+
+def _no_child_native_closed_profile_v1(terminal, request_raw, *,
+        expected_request_sha256, owner_pid, owner_birth, returncode, expected_resource_ledger):
+    """Preserve the original explicit v1 pre-child acquired-and-closed gate."""
+    return _no_child_native_closed_profile(terminal, request_raw, request_version='v1',
+        expected_request_sha256=expected_request_sha256, owner_pid=owner_pid,
+        owner_birth=owner_birth, returncode=returncode, expected_resource_ledger=expected_resource_ledger)
+
+
+def _no_child_native_closed_profile_v5(terminal, request_raw, *,
+        expected_request_sha256, owner_pid, owner_birth, returncode, expected_resource_ledger):
+    """Bind original V5 post-grant SDK-open deadline DATA without normalization."""
+    return _no_child_native_closed_profile(terminal, request_raw, request_version='v5',
+        expected_request_sha256=expected_request_sha256, owner_pid=owner_pid,
+        owner_birth=owner_birth, returncode=returncode, expected_resource_ledger=expected_resource_ledger)
+
+
+def inspect_owned_validation_no_child_native_closed_v1(terminal, request_raw, *,
+        expected_request_sha256, owner_pid, owner_birth, returncode, expected_resource_ledger,
+        cleanup_timeout_seconds=5):
+    """Observe explicit v1 closure after the original caller genuinely waits.
+
+    Source READ remains held; no grant, state write or storage release occurs.
+    """
+    return _inspect_owned_validation_no_child_native_closed(terminal, request_raw,
+        profile=_no_child_native_closed_profile_v1, expected_request_sha256=expected_request_sha256,
+        owner_pid=owner_pid, owner_birth=owner_birth, returncode=returncode,
+        expected_resource_ledger=expected_resource_ledger, cleanup_timeout_seconds=cleanup_timeout_seconds)
+
+
+def inspect_owned_validation_no_child_native_closed_v5(terminal, request_raw, *,
+        expected_request_sha256, owner_pid, owner_birth, returncode, expected_resource_ledger,
+        cleanup_timeout_seconds=5):
+    """Observe exact acquired-no-child V5 closure after a genuine original wait.
+
+    Only the original Source-held Popen caller may use this observation to close
+    its reads. It neither qualifies a vanished caller nor releases retained
+    storage. Original bytes and typed zero-sample deadline evidence stay intact.
+    Current PID/root/row/source and locked Native checks are shared with v1.
+    """
+    return _inspect_owned_validation_no_child_native_closed(terminal, request_raw,
+        profile=_no_child_native_closed_profile_v5, expected_request_sha256=expected_request_sha256,
+        owner_pid=owner_pid, owner_birth=owner_birth, returncode=returncode,
+        expected_resource_ledger=expected_resource_ledger, cleanup_timeout_seconds=cleanup_timeout_seconds)
+
+
+
+def wait_and_inspect_owned_validation_no_child_native_closed_v5(process, terminal, request_raw, *,
+        expected_request_sha256, owner_birth, expected_resource_ledger,
+        original_wait_deadline_monotonic):
+    """Future original Source-held caller integration; never closes Source here.
+
+    Call with the original Popen and its original absolute wait cutoff before
+    the productive observed-identity-count branch. This performs the genuine
+    wait itself, then observes only explicit V5 no-child Native closure. An
+    exhausted cutoff, failed binding or uncertain wait remains unknown, without
+    signals, retries, replacement owners, state writes or storage release.
+    A vanished historical caller cannot be reconstructed with this function.
+    """
+    unknown = dict(verdict='requires_original_native_cleanup', source_custody_closed=False,
+                   storage_release_authorized=False)
+    try:
+        if (type(process) is not subprocess.Popen
+                or type(original_wait_deadline_monotonic) not in (int, float)
+                or not math.isfinite(original_wait_deadline_monotonic)):
+            return unknown
+        original_remaining = original_wait_deadline_monotonic - time.monotonic()
+        if not 0 < original_remaining <= 3600:
+            return unknown
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer import resource_scheduler as native
+        previous = native.resource_operation_deadline()
+        end = original_wait_deadline_monotonic
+        if previous is not None:
+            end = min(end, previous.native_deadline_monotonic)
+        # Waiting is cleanup too: it must honor an earlier existing parent
+        # lifetime before Popen.wait starts, without renewing either clock.
+        remaining = end - time.monotonic()
+        if remaining <= 0:
+            return unknown
+        returncode = process.wait(timeout=remaining)
+        remaining = end - time.monotonic()
+        if type(returncode) is not int or returncode != 1 or remaining <= 0:
+            return unknown
+        value, _, _, _, _ = _no_child_native_closed_profile_v5(terminal, request_raw,
+            expected_request_sha256=expected_request_sha256, owner_pid=process.pid,
+            owner_birth=owner_birth, returncode=returncode,
+            expected_resource_ledger=expected_resource_ledger)
+        _lifecycle_source_guard(value)
+        remaining = end - time.monotonic()
+        if remaining <= 0:
+            return unknown
+        with native.resource_cleanup_deadline(native_deadline_monotonic=end):
+            verdict = inspect_owned_validation_no_child_native_closed_v5(terminal, request_raw,
+                expected_request_sha256=expected_request_sha256, owner_pid=process.pid,
+                owner_birth=owner_birth, returncode=returncode,
+                expected_resource_ledger=expected_resource_ledger,
+                cleanup_timeout_seconds=min(5, remaining))
+            if time.monotonic() >= end:
+                return unknown
+            return verdict
+    except BaseException:
+        return unknown
+
+
+def _inspect_owned_validation_no_child_native_closed(terminal, request_raw, *, profile,
+        expected_request_sha256, owner_pid, owner_birth, returncode, expected_resource_ledger,
+        cleanup_timeout_seconds):
+    """Shared current absence observation, with no authority from sampled DATA."""
+    unknown = dict(verdict='requires_original_native_cleanup', source_custody_closed=False,
+                   storage_release_authorized=False)
+    try:
+        def need(condition):
+            if not condition:
+                raise ValueError('unproven current no-child native closure')
+        need(type(cleanup_timeout_seconds) in (int, float) and math.isfinite(cleanup_timeout_seconds)
+            and 0 < cleanup_timeout_seconds <= 10)
+        value, witness, reservation, row, lease = profile(terminal,
+            request_raw, expected_request_sha256=expected_request_sha256, owner_pid=owner_pid,
+            owner_birth=owner_birth, returncode=returncode, expected_resource_ledger=expected_resource_ledger)
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_daemon_resources as host
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer import existing_resource_scheduler as existing
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer import resource_scheduler as native
+        end = time.monotonic() + cleanup_timeout_seconds
+        previous = native.resource_operation_deadline()
+        if previous is not None:
+            end = min(end, previous.native_deadline_monotonic)
+        with native.resource_cleanup_deadline(native_deadline_monotonic=end):
+            producer = str(Path(__file__).resolve())
+            need(witness['producer'] == {'path': producer, 'sha256': value['source_sha256'].get(producer)})
+            _lifecycle_source_guard(value)
+            if profile is _no_child_native_closed_profile_v5:
+                # Reuse only the existing SDK decoder/origin and ordinary
+                # diagnostic authentication; it supplies no Native-absence fact.
+                _ordinary_scratch_no_native_sdk_receipt(value, request_raw,
+                    expected_request_sha256, reservation, need)
+            if profile is _no_child_native_closed_profile_v6:
+                _live_no_native_sdk_receipt(value, request_raw, expected_request_sha256, reservation, need)
+            directory = Path(value['attempt_directory'])
+            def stopped():
+                native._check_resource_operation_deadline()
+                need(host._process(owner_pid) is None)
+                need(host._root_identity(directory) == row['attempt_directory'])
+                with os.scandir(directory) as entries:
+                    need(next(entries, None) is None)
+                need(host._root_identity(directory) == row['attempt_directory'])
+                ledger = json.loads(snapshot(expected_resource_ledger, 16*1024*1024), object_pairs_hook=host._json_pairs)
+                need(type(ledger) is dict and set(ledger) == {'schema', 'roots', 'limit_bytes', 'reservations'}
+                    and ledger['schema'] == host.SCHEMA
+                    and type(ledger['limit_bytes']) is int
+                    and ledger['limit_bytes'] == reservation['storage_limit_bytes'] == host.MAX_STORAGE_BYTES
+                    and json.dumps(ledger['roots'], sort_keys=True, allow_nan=False) ==
+                        json.dumps(reservation['roots'], sort_keys=True, allow_nan=False)
+                    and json.dumps(ledger['roots'], sort_keys=True, allow_nan=False) ==
+                        json.dumps([host._root_identity(Path(path)) for path in value['roots']], sort_keys=True)
+                    and type(ledger['reservations']) is dict
+                    and json.dumps(ledger['reservations'].get(row['reservation_id']), sort_keys=True, allow_nan=False) ==
+                        json.dumps(row, sort_keys=True, allow_nan=False))
+                _lifecycle_source_guard(value)
+                native._check_resource_operation_deadline()
+            stopped()
+            scheduler = existing.open_existing_scheduler(value['scheduler_state_path'],
+                value['expected_scheduler_policy_sha256'], inspection_only=True)
+            observed = scheduler.inspect_lease(lease['lease_id'], expected_request_id=witness['resource_request_id'],
+                expected_lane='validation', expected_owner_pid=owner_pid, expected_owner_birth_marker=owner_birth,
+                bounded_lock_timeout=min(1, cleanup_timeout_seconds))
+            need(observed.get('status') == 'absent' and type(observed.get('descendant_count')) is int
+                and observed['descendant_count'] == 0)
+            with scheduler._locked_state(persist=False, strict_existing=True) as state:
+                for kind in ('leases', 'waiters'):
+                    entries = state.get(kind)
+                    need(type(entries) is dict and len(entries) <= 16384)
+                    for key, item in entries.items():
+                        native._check_resource_operation_deadline()
+                        need(type(key) is str and type(item) is dict
+                            and key != lease['lease_id'] and item.get('lease_id') != lease['lease_id']
+                            and item.get('parent_lease_id') != lease['lease_id']
+                            and item.get('request_id') != witness['resource_request_id'])
+                stopped()
+            return dict(verdict='proven_original_no_child_native_closed', source_custody_closed=True,
+                        storage_release_authorized=False)
+    except BaseException:
+        return unknown
+
+
+
+def _productive_cleanup_diagnostic_v1(reservation, expected_resource_ledger):
+    """Validate serialized diagnostic DATA, without attesting an unseen cause."""
+    if (reservation['cleanup_failure_observation_overflow'] is not False
+            or type(reservation['cleanup_failure_observations']) is not list
+            or len(reservation['cleanup_failure_observations']) != 1):
+        return False
+    diagnostic = reservation['cleanup_failure_observations'][0]
+    kinds = {'DaemonResourceError':'daemon_resource_error',
+        'ResourceAdmissionDeadlineError':'resource_deadline','OSError':'os_error','RuntimeError':'unknown_error'}
+    if (type(diagnostic) is not dict or set(diagnostic) != {'schema','stage','error_kind','reason_code',
+            'lock_observation_status','lock_observation'}
+            or diagnostic['schema'] != 'owned-resource-cleanup-failure/v1'
+            or diagnostic['stage'] != 'failure_retention'
+            or diagnostic['error_kind'] != kinds.get(reservation['cleanup_error'])):
+        return False
+    status, offered = diagnostic['lock_observation_status'], diagnostic['lock_observation']
+    if status in ('absent','rejected'):
+        return diagnostic['reason_code'] == 'unclassified' and offered is None
+    if (status != 'accepted' or diagnostic['reason_code'] != 'ledger_lock_unavailable'
+            or diagnostic['error_kind'] != 'daemon_resource_error'
+            or type(offered) is not dict or set(offered) != {'schema','stage','lock_path',
+                'opened_lock_identity','configured_lock_timeout_seconds','started_monotonic',
+                'deadline_monotonic','observed_monotonic','lock_acquired','holder_identity_established'}
+            or offered['schema'] != 'daemon-resource-ledger-lock-timeout/v1'
+            or offered['stage'] != 'exclusive_acquire_before_yield'
+            or offered['lock_path'] != expected_resource_ledger+'.lock'
+            or offered['lock_acquired'] is not False or offered['holder_identity_established'] is not False):
+        return False
+    identity = offered['opened_lock_identity']
+    if (type(identity) is not dict or set(identity) != {'st_dev','st_ino','st_mode','st_uid','st_gid',
+            'st_nlink','st_size','st_mtime_ns','st_ctime_ns'}
+            or not all(type(item) is int and 0 <= item < 2**63 for item in identity.values())
+            or identity['st_dev'] <= 0 or identity['st_ino'] <= 0 or not stat.S_ISREG(identity['st_mode'])
+            or identity['st_nlink'] != 1 or identity['st_uid'] != os.geteuid()):
+        return False
+    fields = ('configured_lock_timeout_seconds','started_monotonic','deadline_monotonic','observed_monotonic')
+    if not all(type(offered[key]) in (int,float) and math.isfinite(offered[key])
+            and 0 <= offered[key] < 2**63 for key in fields):
+        return False
+    timeout,started,deadline,observed = (offered[key] for key in fields)
+    return timeout <= 60 and started <= deadline <= observed and deadline-started <= timeout+1e-6
+
+
+def _productive_native_closed_profile_v1(terminal, request_raw, *,
+        expected_request_sha256, owner_pid, owner_birth, returncode, expected_resource_ledger):
+    """Closed V5 bindings for an original productive exit with failed retention.
+
+    This is a pure binding gate, not a native-absence or genuine-wait proof.
+    The original Source-held caller supplies its genuine Popen/wait separately.
+    """
+    def need(condition):
+        if not condition:
+            raise ValueError('unproven original productive lifecycle')
+    remaining_nodes = 65536
+    def exact_json(item, depth=0):
+        nonlocal remaining_nodes
+        remaining_nodes -= 1
+        need(depth <= 32 and remaining_nodes >= 0)
+        if item is None or type(item) in (str, bool, int):
+            return
+        if type(item) is float:
+            need(math.isfinite(item));return
+        if type(item) is list:
+            need(len(item) <= 16384)
+            for entry in item: exact_json(entry, depth+1)
+            return
+        need(type(item) is dict and len(item) <= 16384
+            and all(type(key) is str for key in item))
+        for entry in item.values(): exact_json(entry, depth+1)
+    def digest(item):
+        return type(item) is str and len(item) == 64 and all(c in '0123456789abcdef' for c in item)
+    def identifier(item):
+        return type(item) is str and len(item) == 32 and digest(item+item)
+    def integer(item):
+        return type(item) is int and 0 < item < 2**63
+    def same(left, right):
+        return json.dumps(left, sort_keys=True, allow_nan=False) == json.dumps(right, sort_keys=True, allow_nan=False)
+    need(type(request_raw) is bytes and 0 < len(request_raw) <= 1024*1024
+        and digest(expected_request_sha256) and hashlib.sha256(request_raw).hexdigest() == expected_request_sha256
+        and integer(owner_pid) and type(owner_birth) is str and owner_birth.isdecimal()
+        and type(returncode) is int and returncode == 1
+        and type(expected_resource_ledger) is str and Path(expected_resource_ledger).is_absolute())
+    value = json.loads(request_raw)
+    need(_ordinary_scratch_no_child_request_shape(value, request_raw))
+    exact_json(terminal)
+    need(len(json.dumps(terminal, sort_keys=True, allow_nan=False).encode()) <= 1024*1024
+        and type(terminal) is dict and set(terminal) == {'schema','request_sha256','completed',
+            'admitted','Lean_admitted','failure','reservation','process_cleanup_error','owner_exit_error',
+            'source_custody_lifecycle'}
+        and terminal['schema'] == 'owned-validation-failure-terminal/v1'
+        and terminal['request_sha256'] == expected_request_sha256
+        and all(terminal[key] is False for key in ('completed','admitted','Lean_admitted'))
+        and terminal['process_cleanup_error'] is None and terminal['owner_exit_error'] is None)
+    failure, reservation, witness = (terminal[key] for key in ('failure','reservation','source_custody_lifecycle'))
+    need(type(failure) is dict and set(failure) == {'schema','request_sha256','executed_checks',
+        'returncode','completed','admitted','Lean_admitted','resource_scope','model_weights_downloaded',
+        'authority_granted','error_type','error','elapsed_seconds','watchdog_errors','received_signals',
+        'process_observation','process_cleanup_error'}
+        and failure['schema'] == 'owned-validation-result/v1'
+        and failure['request_sha256'] == expected_request_sha256
+        and same(failure['executed_checks'], value['selected_checks'])
+        and type(failure['returncode']) is int and failure['returncode'] != 0
+        and failure['error_type'] == 'RuntimeError'
+        and failure['error'] == 'validation command failed with returncode '+str(failure['returncode'])
+        and all(failure[key] is False for key in ('completed','admitted','Lean_admitted',
+            'authority_granted','model_weights_downloaded'))
+        and failure['watchdog_errors'] == [] and failure['received_signals'] == []
+        and failure['process_cleanup_error'] is None
+        and type(failure['elapsed_seconds']) in (int,float) and math.isfinite(failure['elapsed_seconds'])
+        and 0 <= failure['elapsed_seconds'] < 2**63
+        and failure['resource_scope'] == 'cooperative_sampled_birth_bound_descendants_and_owned_attempt')
+    need(type(reservation) is dict and set(reservation) == {'schema','ledger_path','reservation_id',
+        'status','record','resource_lease','process_observation','cleanup_error','roots','scheduler_lane',
+        'workload','storage_limit_bytes','enforcement','ordinary_scratch_profile',
+        'cleanup_failure_observations','cleanup_failure_observation_overflow'}
+        and reservation['schema'] == 'daemon-resource-reservations-v1'
+        and reservation['status'] == 'active' and reservation['cleanup_error'] in
+            ('DaemonResourceError','ResourceAdmissionDeadlineError','OSError','RuntimeError')
+        and reservation['ledger_path'] == expected_resource_ledger
+        and reservation['scheduler_lane'] == 'validation' and reservation['workload'] == 'canonical_validation'
+        and type(reservation['storage_limit_bytes']) is int and reservation['storage_limit_bytes'] > 0
+        and reservation['enforcement'] == 'cooperative_admission_and_polled_usage_not_kernel_quota'
+        and reservation['cleanup_failure_observation_overflow'] is False)
+    diagnostics = reservation['cleanup_failure_observations']
+    need(type(diagnostics) is list and len(diagnostics) == 1)
+    diagnostic = diagnostics[0]
+    need(type(diagnostic) is dict and set(diagnostic) == {'schema','stage','error_kind','reason_code',
+        'lock_observation_status','lock_observation'}
+        and diagnostic['schema'] == 'owned-resource-cleanup-failure/v1'
+        and diagnostic['stage'] == 'failure_retention'
+        and diagnostic['error_kind'] in ('resource_deadline','daemon_resource_error','os_error','unknown_error')
+        and diagnostic['reason_code'] in ('unclassified','ledger_lock_unavailable')
+        and diagnostic['lock_observation_status'] in ('absent','rejected','accepted')
+        and _productive_cleanup_diagnostic_v1(reservation, expected_resource_ledger))
+    need(type(witness) is dict and set(witness) == {'schema','request_sha256','producer','owner',
+        'reservation_id','resource_request_id','ledger_path','scheduler','attempt_directory','outputs',
+        'budgets','process_scope','events','owner_child_attached','native_grant','source_guards','storage'}
+        and witness['schema'] == LIFECYCLE_SCHEMA and witness['request_sha256'] == expected_request_sha256
+        and witness['owner'] == {'pid':owner_pid,'birth':owner_birth}
+        and type(witness['owner']['pid']) is int and witness['owner_child_attached'] is True
+        and type(witness['events']) is dict and set(witness['events']) == _LIFECYCLE_EVENTS
+        and all(flag is True for flag in witness['events'].values())
+        and witness['native_grant'] == {'status':'acquired','exact_native_timeout':False,'timeout_decision':None}
+        and witness['native_grant']['exact_native_timeout'] is False
+        and witness['source_guards'] == {'request_unchanged':True,'source_pins_unchanged':True,
+            'owner_identity_unchanged':True,'errors':[]}
+        and all(witness['source_guards'][key] is True for key in
+            ('request_unchanged','source_pins_unchanged','owner_identity_unchanged'))
+        and witness['ledger_path'] == expected_resource_ledger)
+    producer = str(Path(__file__).resolve())
+    need(witness['producer'] == {'path':producer,'sha256':value['source_sha256'].get(producer)}
+        and digest(value['source_sha256'].get(producer)))
+    row, lease, observation = (reservation[key] for key in ('record','resource_lease','process_observation'))
+    need(type(row) is dict and set(row) == {'reservation_id','status','owner_pid','storage_bytes',
+        'memory_mb','cpu_slots','child_process_slots','external_charges','created_at','prior_children',
+        'child','artifacts_durable_asserted','scheduler_lane','workload','attempt_directory','last_usage',
+        'native_lease_id','outputs','owner_birth','process_scope','scheduler_policy_sha256',
+        'scheduler_state_path','validation_request_sha256'}
+        and identifier(row['reservation_id'])
+        and row['reservation_id'] == reservation['reservation_id'] == witness['reservation_id']
+        and row['status'] == 'active' and row['owner_pid'] == owner_pid and type(row['owner_pid']) is int
+        and row['owner_birth'] == owner_birth and row['artifacts_durable_asserted'] is False
+        and row['prior_children'] == [] and row['external_charges'] == {}
+        and row['process_scope'] == witness['process_scope'] == value['process_scope']
+        and row['scheduler_lane'] == 'validation' and row['workload'] == 'canonical_validation'
+        and row['scheduler_state_path'] == value['scheduler_state_path']
+        and row['scheduler_policy_sha256'] == value['expected_scheduler_policy_sha256']
+        and row['validation_request_sha256'] == expected_request_sha256
+        and type(row['attempt_directory']) is dict and set(row['attempt_directory']) == {'path','device','inode'}
+        and row['attempt_directory']['path'] == witness['attempt_directory'] == value['attempt_directory']
+        and all(integer(row['attempt_directory'][key]) for key in ('device','inode'))
+        and type(row['child']) is dict and set(row['child']) == {'pid','birth'}
+        and integer(row['child']['pid']) and row['child']['pid'] != owner_pid
+        and type(row['child']['birth']) is str and row['child']['birth'].isdecimal()
+        and type(row['last_usage']) is dict
+        and type(row['created_at']) in (int,float) and math.isfinite(row['created_at']) and row['created_at'] > 0
+        and same(row['outputs'], value['outputs']) and same(witness['outputs'],value['outputs']))
+    budgets = ('cpu_slots','memory_mb','child_process_slots','storage_bytes')
+    need(type(witness['budgets']) is dict and set(witness['budgets']) == set(budgets)
+        and all(integer(row[key]) and type(witness['budgets'][key]) is int
+            and row[key] == witness['budgets'][key] == value[key] for key in budgets)
+        and witness['scheduler'] == {'state_path':value['scheduler_state_path'],
+            'policy_sha256':value['expected_scheduler_policy_sha256'],'lane':'validation','workload':'canonical_validation'}
+        and witness['resource_request_id'] == 'validation:'+row['reservation_id']
+        and same(witness['storage'], {'status':'active','cleanup_error':reservation['cleanup_error'],
+            'release_authorized':False,'cleanup_failure_observations':diagnostics,
+            'cleanup_failure_observation_overflow':False}))
+    need(type(lease) is dict and set(lease) == {'lease_id','lane','owner_pid','parent_lease_id',
+        'cpu_slots','memory_mb','child_process_slots','gpu_memory_mb','unified_memory_mb','requires_gpu',
+        'acquired_at','wait_seconds','released','cancelled'}
+        and identifier(lease['lease_id']) and lease['lease_id'] == row['native_lease_id']
+        and lease['lane'] == 'validation' and type(lease['owner_pid']) is int and lease['owner_pid'] == owner_pid
+        and lease['parent_lease_id'] is None and lease['released'] is True and lease['cancelled'] is True
+        and lease['requires_gpu'] is False
+        and all(type(lease[key]) is int and lease[key] == 0 for key in ('gpu_memory_mb','unified_memory_mb'))
+        and all(type(lease[key]) is int and lease[key] == value[key]
+            for key in ('cpu_slots','memory_mb','child_process_slots'))
+        and all(type(lease[key]) in (int,float) and math.isfinite(lease[key]) and lease[key] >= 0
+            for key in ('acquired_at','wait_seconds')) and lease['acquired_at'] >= row['created_at'])
+    need(type(observation) is dict and set(observation) == {'scope','group_rss','live_processes',
+        'rss_bytes','observed_identities','out_of_group_live_identities','tracking_error'}
+        and observation['scope'] == 'sampled_birth_bound_descendants'
+        and type(observation['group_rss']) is dict and set(observation['group_rss']) ==
+            {'available','live_processes','rss_bytes'} and observation['group_rss']['available'] is True
+        and all(type(item[key]) is int and item[key] == 0 for item in
+            (observation, observation['group_rss']) for key in ('live_processes','rss_bytes'))
+        and observation['out_of_group_live_identities'] == [] and observation['tracking_error'] == ''
+        and same(observation,failure['process_observation']))
+    identities = observation['observed_identities']
+    need(type(identities) is list and 0 < len(identities) <= 4096)
+    by_pid = {}
+    for identity in identities:
+        need(type(identity) is dict and set(identity) == {'pid','birth_ticks','parent_pid',
+            'process_group_id','session_id'} and all(integer(item) for item in identity.values())
+            and identity['pid'] not in by_pid and identity['pid'] != owner_pid)
+        by_pid[identity['pid']] = identity
+    child = by_pid.get(row['child']['pid'])
+    need(type(child) is dict and str(child['birth_ticks']) == row['child']['birth']
+        and child['parent_pid'] == owner_pid
+        and child['process_group_id'] == child['session_id'] == child['pid'])
+    for identity in identities:
+        seen, cursor = set(), identity['pid']
+        while cursor != owner_pid:
+            need(cursor in by_pid and cursor not in seen)
+            seen.add(cursor);cursor = by_pid[cursor]['parent_pid']
+    scratch = reservation['ordinary_scratch_profile']
+    need(type(scratch) is dict and set(scratch) == {'schema','request_sha256','ordinary_absences_observed',
+        'live_exception_active','unseen_leaf_ownership_attested','whole_census_resampling'}
+        and scratch['schema'] == 'owned-validation-ordinary-scratch-live/v1'
+        and scratch['request_sha256'] == expected_request_sha256
+        and type(scratch['ordinary_absences_observed']) is int and 0 <= scratch['ordinary_absences_observed'] < 2**63
+        and all(scratch[key] is False for key in
+            ('live_exception_active','unseen_leaf_ownership_attested','whole_census_resampling')))
+    return value, witness, reservation, row, lease
+
+
+def inspect_owned_validation_productive_native_closed_v1(terminal, request_raw, *,
+        expected_request_sha256, owner_pid, owner_birth, returncode, expected_resource_ledger,
+        original_wait_deadline_monotonic):
+    """Inspect sampled productive closure while failed storage stays ACTIVE.
+
+    Caller prerequisites: genuine original Popen/wait, fixed original absolute
+    420s wait cutoff, and the same original Source READs held through this call
+    and final source checks. Existing stable no-follow snapshots read only the
+    selected row; unrelated foreign rows may advance between observations.
+    No lock file, grant, retry, deadline, disk claim, census or fsync is created.
+    Unknown wait/process/native/source/own-row facts retain Source custody.
+    """
+    unknown = dict(verdict='requires_original_native_cleanup', source_custody_closed=False,
+                   storage_release_authorized=False)
+    try:
+        def need(condition):
+            if not condition: raise ValueError('unproven productive native closure')
+        observed_start = time.monotonic()
+        need(type(original_wait_deadline_monotonic) in (int,float)
+            and math.isfinite(original_wait_deadline_monotonic)
+            and observed_start < original_wait_deadline_monotonic <= observed_start+420)
+        value, witness, reservation, row, lease = _productive_native_closed_profile_v1(terminal,
+            request_raw, expected_request_sha256=expected_request_sha256, owner_pid=owner_pid,
+            owner_birth=owner_birth, returncode=returncode, expected_resource_ledger=expected_resource_ledger)
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_daemon_resources as host
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_resource_recovery as recovery
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer import resource_scheduler as native
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer import existing_resource_scheduler as existing
+        directory = ROOT/'ipfs_datasets_py/optimizers/logic_theorem_optimizer'
+        required = [str(directory/'autoencoder_resource_recovery.py'), str(ROOT/'ipfs_datasets_py/logic/backends/process.py')]
+        need(all(type(value['source_sha256'].get(path)) is str for path in required)
+            and recovery.resources is host and host.native_deadlines is native and existing.native is native)
+        for module, name, functions in ((host,'autoencoder_daemon_resources.py',('_process','_group_usage','_root_identity','_json_pairs')),
+                (recovery,'autoencoder_resource_recovery.py',('_sampled_open_scheduler','_sampled_stopped',
+                    '_sampled_processes_stopped','_sampled_scheduler_absence','_sampled_scheduler_observation')),
+                (existing,'existing_resource_scheduler.py',('open_existing_scheduler',))):
+            path = str(directory/name)
+            need(module.__file__ == path and module.__spec__.origin == path)
+            for name in functions:
+                function = getattr(module,name)
+                function = getattr(function,'__wrapped__',function)
+                need(function.__code__.co_filename == path and function.__globals__ is vars(module))
+        end = original_wait_deadline_monotonic
+        prior = native.resource_operation_deadline()
+        if prior is not None: end = min(end,prior.native_deadline_monotonic)
+        with native.resource_cleanup_deadline(native_deadline_monotonic=end):
+            def current_own_row():
+                native._check_resource_operation_deadline()
+                def nonfinite(_): raise ValueError('nonfinite current disk ledger')
+                need(Path(expected_resource_ledger).lstat().st_uid == os.geteuid())
+                ledger = json.loads(snapshot(expected_resource_ledger,16*1024*1024),
+                    object_pairs_hook=host._json_pairs,parse_constant=nonfinite)
+                need(Path(expected_resource_ledger).lstat().st_uid == os.geteuid())
+                roots = [host._root_identity(Path(path)) for path in value['roots']]
+                need(type(ledger) is dict and set(ledger) == {'schema','roots','limit_bytes','reservations'}
+                    and ledger['schema'] == host.SCHEMA
+                    and type(ledger['limit_bytes']) is int
+                    and ledger['limit_bytes'] == reservation['storage_limit_bytes'] == host.MAX_STORAGE_BYTES
+                    and json.dumps(ledger['roots'],sort_keys=True,allow_nan=False)
+                        == json.dumps(reservation['roots'],sort_keys=True,allow_nan=False)
+                        == json.dumps(roots,sort_keys=True,allow_nan=False)
+                    and type(ledger['reservations']) is dict and len(ledger['reservations']) <= host.MAX_RESERVATIONS
+                    and json.dumps(ledger['reservations'].get(row['reservation_id']),sort_keys=True,allow_nan=False)
+                        == json.dumps(row,sort_keys=True,allow_nan=False)
+                    and host._root_identity(Path(value['attempt_directory'])) == row['attempt_directory'])
+                native._check_resource_operation_deadline()
+            _lifecycle_source_guard(value)
+            current_own_row()
+            profile = {'request':value,'record':row,'observation':reservation['process_observation']}
+            recovery._sampled_open_scheduler(profile)
+            scheduler = profile['scheduler']
+            need(type(scheduler) is existing._PinnedGlobalResourceScheduler and scheduler._inspection_only is True
+                and scheduler.state_path == Path(value['scheduler_state_path'])
+                and scheduler._policy_sha256 == value['expected_scheduler_policy_sha256'])
+            for method_name, owner_class, owner_module in (
+                    ('inspect_lease',native.GlobalResourceScheduler,native),
+                    ('_locked_state',existing._PinnedGlobalResourceScheduler,existing)):
+                method = getattr(scheduler,method_name)
+                expected = getattr(owner_class,method_name)
+                need(method.__self__ is scheduler and method.__func__ is expected)
+                function = getattr(expected,'__wrapped__',expected)
+                need(function.__globals__ is vars(owner_module)
+                    and function.__code__.co_filename == str(directory/Path(owner_module.__file__).name))
+            recovery._sampled_stopped(profile)
+            current_own_row()
+            with recovery._sampled_scheduler_absence(profile):
+                recovery._sampled_processes_stopped(profile)
+                current_own_row()
+                _lifecycle_source_guard(value)
+                recovery._sampled_processes_stopped(profile)
+                current_own_row()
+                native._check_resource_operation_deadline()
+            return dict(verdict='proven_original_productive_native_closed_storage_separate',
+                source_custody_closed=True,storage_release_authorized=False)
+    except BaseException:
+        return unknown
+
 
 
 def child_main(path, digest):
@@ -506,6 +2116,51 @@ def stop_and_reap(child, birth, owner=None):
         raise RuntimeError("owned validation process cleanup unresolved: " + "; ".join(errors))
 
 
+def _validation_watchdog_shutdown_observation(monitor, finished, state, *,
+        request_sha256, phase, owner=None, observer_stop=None):
+    """Bounded diagnostic only: no locals, closure proof or resource authority."""
+    now = time.monotonic()
+    stage, started = state.get('phase', ('unknown', now))
+    observation = {
+        'schema': 'owned-validation-watchdog-shutdown-observation/v1',
+        'request_sha256': request_sha256, 'phase': phase,
+        'finished_event_set': finished.is_set(), 'join_timeout_seconds': 5,
+        'monitor_alive': monitor.is_alive(), 'monitor_ident': monitor.ident,
+        'monitor_native_id': monitor.native_id,
+        'observed_at_monotonic': now, 'stage': stage,
+        'stage_elapsed_seconds': max(0.0, now - started),
+        'stack': [], 'stack_truncated': False,
+        'scope': 'local_watcher_observation_only', 'authority_granted': False,
+    }
+    if observer_stop is not None:
+        observation['sdk_observation'] = owner._local_observation_diagnostic(observer_stop)
+    frame = sys._current_frames().get(monitor.ident)
+    try:
+        while frame is not None and len(observation['stack']) < 16:
+            code = frame.f_code
+            observation['stack'].append({
+                'file': code.co_filename.replace('\x00', '')[:512],
+                'function': code.co_qualname.replace('\x00', '')[:128],
+                'line': frame.f_lineno})
+            frame = frame.f_back
+        observation['stack_truncated'] = frame is not None
+    finally:
+        del frame
+    return observation
+
+
+def _report_validation_watchdog_shutdown(monitor, finished, state, *,
+        request_sha256, phase, owner=None, observer_stop=None):
+    # Diagnostic publication cannot replace an original resource exception or
+    # change the existing stdout terminal's closed record schema.
+    try:
+        value = _validation_watchdog_shutdown_observation(monitor, finished, state,
+            request_sha256=request_sha256, phase=phase, owner=owner, observer_stop=observer_stop)
+        print(json.dumps(value, sort_keys=True, allow_nan=False), file=sys.stderr, flush=True)
+    except BaseException:
+        pass
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--request',required=True,type=Path)
@@ -519,16 +2174,20 @@ def main(argv=None):
     if args.resource_ledger is None:
         parser.error('--resource-ledger is required for native ownership')
     value, raw = request(args.request,args.expected_request_sha256)
-    source_guard(value)
-    script = str(Path(__file__).resolve())
-    if value['source_sha256'].get(script) != hashlib.sha256(snapshot(script,4*1024*1024)).hexdigest():
-        raise ValueError('launcher source must be explicitly pinned')
+    if value['schema'] in ('owned-validation-request/v5', STARTUP_CLOCK_REQUEST_SCHEMA):
+        _lifecycle_source_guard(value)
+    else:
+        source_guard(value)
+        script = str(Path(__file__).resolve())
+        if value['source_sha256'].get(script) != hashlib.sha256(snapshot(script,4*1024*1024)).hexdigest():
+            raise ValueError('launcher source must be explicitly pinned')
     # Resolve the source tree from this script, before importing the package.
     # Never reuse a package imported from the editable HACC installation.
     if 'ipfs_datasets_py' in sys.modules:
         raise RuntimeError('run owned validation in a fresh process')
     sys.path.insert(0,str(ROOT))
-    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.validation_run_resources import ValidationResourceReservation
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.validation_run_resources import (
+        ValidationResourceReservation, LocalValidationObservationStopped)
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_daemon_resources as host
     if Path(host.__file__).resolve() != ROOT/'ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py':
         raise RuntimeError('different native resource tree loaded')
@@ -559,6 +2218,9 @@ def main(argv=None):
     finished = threading.Event()
     child = birth = monitor = None
     failure = None
+    observer_stop = None
+    watchdog_state = {'phase': ('not_started', time.monotonic())}
+    watchdog_stop_error = None
     lifecycle_events = dict(owner_open_attempted=False, owner_open_returned=False,
         child_launch_attempted=False, child_created=False,
         barrier_release_attempted=False, barrier_released=False)
@@ -582,26 +2244,56 @@ def main(argv=None):
             report_capacity_refusal(error)
             raise
         lifecycle_events['owner_open_returned'] = True
-        deadline = time.monotonic()+value['timeout_seconds']
+        startup_clock = value['schema'] == STARTUP_CLOCK_REQUEST_SCHEMA
+        deadline = (owner.startup_clock_observation()['admission_deadline_monotonic']
+                    if startup_clock else time.monotonic()+value['timeout_seconds'])
+        if value['schema'] == 'owned-validation-request/v5':
+            observer_stop = owner._new_local_observation_stop(finished)
         def guard():
             if snapshot(args.request) != raw:
                 raise RuntimeError('validation request changed')
             source_guard(value)
             if cancelled.is_set():
                 raise RuntimeError('validation cancelled: '+repr(errors))
-            if time.monotonic()>=deadline:
+            if startup_clock:
+                clock = owner.startup_clock_observation()
+                active_deadline = (clock['admission_deadline_monotonic'] if clock['productive_started_monotonic'] is None
+                                   else clock['productive_deadline_monotonic'])
+                if time.monotonic() >= min(active_deadline, clock['total_deadline_monotonic']):
+                    raise TimeoutError('validation startup admission deadline exceeded'
+                        if clock['productive_started_monotonic'] is None else 'validation deadline exceeded')
+                owner.guard()
+            elif time.monotonic()>=deadline:
                 raise TimeoutError('validation deadline exceeded')
         def watch():
-            while not finished.wait(.1):
-                try:
+            try:
+                while not finished.wait(.1):
+                    watchdog_state['phase'] = ('source_guard', time.monotonic())
                     guard()
                     # Strictly local sampling stays responsive while the owner
                     # performs a separately serialized fresh global census.
-                    owner.check_limits(full=False)
-                except BaseException as error:
-                    errors.append(type(error).__name__+': '+str(error))
+                    watchdog_state['phase'] = ('local_limits', time.monotonic())
+                    if observer_stop is None:
+                        owner.check_limits(full=False)
+                    else:
+                        owner.check_limits(full=False, _observer_stop=observer_stop)
+                    watchdog_state['phase'] = ('waiting_finished', time.monotonic())
+                if observer_stop is not None:
+                    # A very short child may finish between observations. It
+                    # still requires the owner's real zero-process barrier.
+                    owner._check_local_observation_stop(observer_stop)
+            except LocalValidationObservationStopped as error:
+                try:
+                    if observer_stop is None:
+                        raise RuntimeError('unscoped local observation stop') from error
+                    owner._accept_local_observation_stop(error, observer_stop)
+                    watchdog_state['phase'] = ('stopped_after_zero_process_barrier', time.monotonic())
+                except BaseException as refusal:
+                    errors.append(type(refusal).__name__+': '+str(refusal))
                     cancelled.set()
-                    return
+            except BaseException as error:
+                errors.append(type(error).__name__+': '+str(error))
+                cancelled.set()
         monitor = threading.Thread(target=watch,name='owned-validation-local-watchdog',daemon=True)
         monitor.start()
         stdout = Path(owner.output_layout['logs'])/'stdout.log'
@@ -619,7 +2311,7 @@ def main(argv=None):
                     IPFS_DATASETS_PY_MINIMAL_IMPORTS='1',IPFS_DATASETS_AUTO_INSTALL='0',
                     IPFS_AUTO_INSTALL='false',TRANSFORMERS_OFFLINE='1'),stdin=subprocess.PIPE,
                 stdout=out,stderr=err,start_new_session=True,
-                umask=0o077 if value['schema']=='owned-validation-request/v2' else -1)
+                umask=0o077 if value['schema'] in ('owned-validation-request/v2', 'owned-validation-request/v5') else -1)
             lifecycle_events['child_created'] = True
             identity = host._process(child.pid)
             if identity is None:
@@ -629,6 +2321,9 @@ def main(argv=None):
             guard()
             if errors or not owner.heartbeat() or owner.cancelled:
                 raise RuntimeError('native validation lease lost during attachment')
+            if startup_clock:
+                owner.start_productive_work(child.pid, birth)
+                owner.require_productive_work()
             lifecycle_events['barrier_release_attempted'] = True
             child.stdin.write(b'1')
             child.stdin.flush()
@@ -655,10 +2350,15 @@ def main(argv=None):
             if child.returncode != 0:
                 raise RuntimeError('validation command failed with returncode '+str(child.returncode))
         stop_and_reap(child,birth,owner)
+        if observer_stop is not None:
+            owner._stop_local_observation(observer_stop)
         finished.set()
         monitor.join(timeout=5)
         guard()
         if monitor.is_alive() or errors:
+            _report_validation_watchdog_shutdown(monitor, finished, watchdog_state,
+                request_sha256=args.expected_request_sha256, phase='success_join',
+                owner=owner, observer_stop=observer_stop)
             raise RuntimeError('validation watchdog did not finish cleanly')
         if owner.tracks_descendants:
             outcome["process_observation"] = owner.observe_processes()
@@ -677,20 +2377,53 @@ def main(argv=None):
         return 0
     except BaseException as error:
         failure = error
+        if lifecycle_events['owner_open_returned'] is True:
+            try:
+                report_capacity_refusal(error, stage='post_owner_open')
+            except BaseException:
+                # Reporting cannot replace the original post-admission failure.
+                pass
         outcome.update(completed=False,error_type=type(error).__name__,error=str(error),
             elapsed_seconds=time.monotonic()-started,watchdog_errors=list(errors),
             received_signals=list(interrupted))
         raise
     finally:
-        finished.set()
-        if monitor is not None:
-            monitor.join(timeout=5)
+        # Legacy order stays unchanged. The explicit V5 observer must obtain
+        # its real zero-process proof before setting the finished event.
+        if observer_stop is None:
+            finished.set()
+            if monitor is not None:
+                monitor.join(timeout=5)
         cleanup_error = None
         try:
             if child is not None and birth is not None:
                 stop_and_reap(child,birth,owner)
         except BaseException as error:
             cleanup_error = error
+        if observer_stop is not None:
+            try:
+                if cleanup_error is None:
+                    owner._stop_local_observation(observer_stop)
+            except BaseException as error:
+                watchdog_stop_error = error
+                if failure is not None:
+                    failure.add_note('Local watcher shutdown remained unverified: ' +
+                        type(error).__name__ + ': ' + str(error)[:1000])
+            finally:
+                finished.set()
+            if monitor is not None:
+                try:
+                    monitor.join(timeout=5)
+                except BaseException as error:
+                    watchdog_stop_error = watchdog_stop_error or error
+                    if failure is not None:
+                        failure.add_note('Local watcher join failed: ' + type(error).__name__)
+                if monitor.is_alive() or watchdog_stop_error is not None:
+                    _report_validation_watchdog_shutdown(monitor, finished, watchdog_state,
+                        request_sha256=args.expected_request_sha256, phase='finally_join',
+                        owner=owner, observer_stop=observer_stop)
+                    if failure is None and watchdog_stop_error is None:
+                        watchdog_stop_error = RuntimeError('validation watchdog did not finish cleanly')
         try:
             if owner._entered and owner.to_dict()['status'] != 'released':
                 if owner.tracks_descendants:
@@ -705,7 +2438,10 @@ def main(argv=None):
                         cleanup_error or RuntimeError(outcome.get('error','validation did not finalize')),None)
                 except BaseException as error:
                     exit_error = type(error).__name__ + ': ' + str(error)
-                    raise
+                    if value['schema'] == 'owned-validation-request/v5' and failure is not None:
+                        failure.add_note('Original validation owner exit also failed: ' + exit_error[:1000])
+                    else:
+                        raise
                 finally:
                     if owner.tracks_descendants:
                         # Report the original owner's actual post-exit state.
@@ -732,11 +2468,41 @@ def main(argv=None):
                                     type(reporting_error).__name__, file=sys.stderr, flush=True)
                             except BaseException:
                                 pass
+            elif failure is not None:
+                # open() can refuse capacity before the base owner enters. Its
+                # exact original pre-record exception is not an unclosed child.
+                # Every other pre-entered failure retains the unknown outcome.
+                try:
+                    terminal = _pre_grant_capacity_refusal_terminal(owner, value, raw,
+                        args.request, args.expected_request_sha256, args.resource_ledger,
+                        lifecycle_events, failure, outcome)
+                    if terminal is None:
+                        terminal = _pre_grant_lock_refusal_terminal(owner, value, raw,
+                            args.request, args.expected_request_sha256, args.resource_ledger,
+                            lifecycle_events, failure, outcome)
+                    if terminal is None:
+                        terminal = _pre_grant_ledger_bound_refusal_terminal(owner, value, raw,
+                            args.request, args.expected_request_sha256, args.resource_ledger,
+                            lifecycle_events, failure, outcome)
+                    if terminal is not None:
+                        print(json.dumps(terminal), flush=True)
+                except BaseException as reporting_error:
+                    try:
+                        print('Failed to report original validation pre-grant refusal: ' +
+                            type(reporting_error).__name__, file=sys.stderr, flush=True)
+                    except BaseException:
+                        pass
         finally:
             for number,handler in previous.items():
                 signal.signal(number,handler)
         if cleanup_error is not None:
-            raise cleanup_error
+            if value['schema'] == 'owned-validation-request/v5' and failure is not None:
+                failure.add_note('Original process cleanup also failed: ' +
+                    type(cleanup_error).__name__ + ': ' + str(cleanup_error)[:1000])
+            else:
+                raise cleanup_error
+        if watchdog_stop_error is not None and failure is None:
+            raise watchdog_stop_error
 
 
 # The training branch is deliberately separate from validation manifests and
@@ -755,7 +2521,7 @@ _TRAINER_COMPUTE_FIELDS = {'input_descriptors', 'initial_parity', 'runtime_contr
 _TRAINER_DIRECTORY = ROOT/'ipfs_datasets_py/optimizers/logic_theorem_optimizer'
 _TRAINER_BOOTSTRAP = _TRAINER_DIRECTORY/'autoencoder_campaign_process_worker.py'
 _TRAINER_NETWORK = _TRAINER_DIRECTORY/'autoencoder_daemon_invocation_worker.py'
-_TRAINER_DAEMON_SHA256 = 'da6c3596a413ba5c8dab14f9e06a6fc288d7eb9166d261a96abfdf96dd60130b'
+_TRAINER_DAEMON_SHA256 = 'c99d78004e6ce6b8a861f15e2c0b7009bbb6f45a37a89daabc8894ac440b282d'
 
 
 def _trainer_need(condition, message):
@@ -1415,6 +3181,102 @@ def entrypoint(argv=None):
     if '--trainer-request' in arguments or any(x.startswith('--trainer-request=') for x in arguments):
         return trainer_main(arguments)
     return main(arguments)
+
+
+
+def classify_owned_validation_startup_clock_source_custody_v1(terminal, request_raw, **caller):
+    """Explicit v6 no-grant/no-child selector; original bytes are never projected."""
+    unknown = dict(verdict='requires_original_native_cleanup', source_custody_closed=False,
+                   storage_release_authorized=False)
+    try:
+        value = json.loads(request_raw)
+        if not _startup_clock_no_child_request_shape(value, request_raw):return unknown
+        events = terminal['source_custody_lifecycle']['events']
+        reservation = terminal.get('reservation')
+        if reservation:
+            observed_owner = reservation['startup_clock_profile']['original_owner']
+            if observed_owner.get('pid') != caller.get('owner_pid') or observed_owner.get('birth') != caller.get('owner_birth'):
+                return unknown
+        if any(events.get(key) is True for key in ('child_launch_attempted','child_created','barrier_release_attempted','barrier_released')):
+            return unknown
+        return classify_owned_validation_source_custody(terminal, request_raw, **caller)
+    except BaseException:return unknown
+
+
+def _no_child_native_closed_profile_v6(terminal, request_raw, *,
+        expected_request_sha256, owner_pid, owner_birth, returncode, expected_resource_ledger):
+    """Only actual acquired-and-closed SDK admission before any child launch."""
+    return _no_child_native_closed_profile(terminal, request_raw, request_version='v6',
+        expected_request_sha256=expected_request_sha256, owner_pid=owner_pid,
+        owner_birth=owner_birth, returncode=returncode, expected_resource_ledger=expected_resource_ledger)
+
+
+def inspect_owned_validation_no_child_native_closed_v6(terminal, request_raw, *,
+        expected_request_sha256, owner_pid, owner_birth, returncode, expected_resource_ledger,
+        cleanup_timeout_seconds=5):
+    """Versioned v6 selector over the unchanged real PID/row/locked Native inspector."""
+    return _inspect_owned_validation_no_child_native_closed(terminal, request_raw,
+        profile=_no_child_native_closed_profile_v6, expected_request_sha256=expected_request_sha256,
+        owner_pid=owner_pid, owner_birth=owner_birth, returncode=returncode,
+        expected_resource_ledger=expected_resource_ledger, cleanup_timeout_seconds=cleanup_timeout_seconds)
+
+
+
+def wait_and_inspect_owned_validation_no_child_native_closed_v6(process, terminal, request_raw, *,
+        expected_request_sha256, owner_birth, expected_resource_ledger,
+        original_wait_deadline_monotonic):
+    """Explicit v6 original Source-held caller integration; never closes Source here.
+
+    Call with the original Popen and its original absolute wait cutoff before
+    the productive observed-identity-count branch. This performs the genuine
+    wait itself, then observes only explicit V6 no-child Native closure. An
+    exhausted cutoff, failed binding or uncertain wait remains unknown, without
+    signals, retries, replacement owners, state writes or storage release.
+    A vanished historical caller cannot be reconstructed with this function.
+    """
+    unknown = dict(verdict='requires_original_native_cleanup', source_custody_closed=False,
+                   storage_release_authorized=False)
+    try:
+        if (type(process) is not subprocess.Popen
+                or type(original_wait_deadline_monotonic) not in (int, float)
+                or not math.isfinite(original_wait_deadline_monotonic)):
+            return unknown
+        original_remaining = original_wait_deadline_monotonic - time.monotonic()
+        if not 0 < original_remaining <= 420:
+            return unknown
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer import resource_scheduler as native
+        previous = native.resource_operation_deadline()
+        end = original_wait_deadline_monotonic
+        if previous is not None:
+            end = min(end, previous.native_deadline_monotonic)
+        # Waiting is cleanup too: it must honor an earlier existing parent
+        # lifetime before Popen.wait starts, without renewing either clock.
+        remaining = end - time.monotonic()
+        if remaining <= 0:
+            return unknown
+        returncode = process.wait(timeout=remaining)
+        remaining = end - time.monotonic()
+        if type(returncode) is not int or returncode != 1 or remaining <= 0:
+            return unknown
+        value, _, _, _, _ = _no_child_native_closed_profile_v6(terminal, request_raw,
+            expected_request_sha256=expected_request_sha256, owner_pid=process.pid,
+            owner_birth=owner_birth, returncode=returncode,
+            expected_resource_ledger=expected_resource_ledger)
+        _lifecycle_source_guard(value)
+        remaining = end - time.monotonic()
+        if remaining <= 0:
+            return unknown
+        with native.resource_cleanup_deadline(native_deadline_monotonic=end):
+            verdict = inspect_owned_validation_no_child_native_closed_v6(terminal, request_raw,
+                expected_request_sha256=expected_request_sha256, owner_pid=process.pid,
+                owner_birth=owner_birth, returncode=returncode,
+                expected_resource_ledger=expected_resource_ledger,
+                cleanup_timeout_seconds=min(5, remaining))
+            if time.monotonic() >= end:
+                return unknown
+            return verdict
+    except BaseException:
+        return unknown
 
 
 if __name__ == '__main__':

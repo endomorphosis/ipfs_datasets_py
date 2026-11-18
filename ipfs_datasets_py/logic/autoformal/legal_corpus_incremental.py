@@ -82,7 +82,9 @@ def _owners():
     return incremental, passes, native
 
 
-def _owner_pins(incremental, passes, *, parent=False, manifest=None):
+def _owner_pins(incremental, passes, *, parent=False, manifest=None, reviewed=False):
+    if reviewed:
+        return _reviewed_owner_pins(incremental, passes, manifest)
     native = _owners()[2]
     if parent:
         from ..integration.reasoning import legal_ir_obligations, legal_ir_schema_evolution, legal_ir_source_maps
@@ -289,15 +291,19 @@ def _parent_recipe_provenance(module, value):
     return value
 
 
-def _recipe(module, source, imports, contract, *, provenance=None):
+def _recipe(module, source, imports, contract, *, provenance=None, reviewed_provenance=None):
     result = {"module": module, "source_sha256": _sha(source.encode("utf-8")),
               "imports": imports, "contract_cid": contract["record_cid"]}
     if provenance is not None:
         result["provenance"] = _parent_recipe_provenance(module, provenance)
+    if reviewed_provenance is not None:
+        result["reviewed_provenance"] = _reviewed_recipe_provenance(module, reviewed_provenance)
     return result
 
 
-def _facts(preparation, contract, *, parent=False):
+def _facts(preparation, contract, *, parent=False, reviewed=False, graph=None):
+    if reviewed:
+        return _reviewed_facts(preparation, contract, graph)
     manifest, files = preparation.to_dict(), dict(preparation.files)
     provenance = _parent_provenance(preparation) if parent else {}
     facts = []
@@ -321,8 +327,8 @@ def _facts(preparation, contract, *, parent=False):
     return facts
 
 
-def _parent_contract(contract):
-    if (contract["profile"] != PARENT_PROFILE or type(contract["toolchain"]) is not str
+def _parent_contract(contract, *, reviewed=False):
+    if (contract["profile"] != (REVIEWED_PROFILE if reviewed else PARENT_PROFILE) or type(contract["toolchain"]) is not str
             or not re.fullmatch(r"leanprover/lean4:v[0-9]+\.[0-9]+\.[0-9]+", contract["toolchain"])
             or contract["environment"] != {"LEAN_PATH": "compiled", "LEAN_NUM_THREADS": "1"}
             or contract["argv_recipe"] != ["installed-sibling-lean", "-o", "compiled/<module>.olean", "<module>.lean"]):
@@ -349,7 +355,7 @@ def _parent_contract(contract):
     return lean[0]
 
 
-def _parent_execution_evidence(evidence, row, facts, process, contract):
+def _parent_execution_evidence(evidence, row, facts, process, contract, *, reviewed=False):
     """Validate historical sampled ownership internally; fresh scope uses its owner."""
     contracts.require_keys(evidence, EVIDENCE_FIELDS, "parent native execution evidence")
     module, source = row["module"], row["source"]
@@ -393,7 +399,7 @@ def _parent_execution_evidence(evidence, row, facts, process, contract):
     command = evidence["command"]
     wanted = ["-o", "compiled/" + module.replace(".", "/") + ".olean", module.replace(".", "/") + ".lean"]
     if (evidence["runtime"] != process.ToolRuntime.NATIVE.value or type(command) is not list
-            or len(command) != 4 or command[1:] != wanted or command[0] != _parent_contract(contract)
+            or len(command) != 4 or command[1:] != wanted or command[0] != _parent_contract(contract, reviewed=reviewed)
             or evidence["source_readback_sha256"] != _sha(source.encode())):
         _fail("native executed source/command evidence differs")
     needed, frontier = set(), list(row["imports"])
@@ -409,7 +415,7 @@ def _parent_execution_evidence(evidence, row, facts, process, contract):
     expected = [module + "." + name for name in re.findall(r"^theorem ([A-Za-z0-9_]+)", source, re.M)]
     if expected:
         axioms, errors, passed = _parent_native()._axiom_observations(stdout, stderr,
-            {"conditional_theorems": expected}, maximum_theorems=3)
+            {"conditional_theorems": expected}, maximum_theorems=5 if reviewed else 3)
         if not passed or errors or axioms != {name: [] for name in expected}:
             _fail("strict parent conditional axiom observations differ")
     elif re.search(r"\b(?:axiom|axioms|sorry|sorryAx)\b", stdout + stderr):
@@ -421,48 +427,51 @@ def _artifact_root(facts):
     return cid_for_dag_json({row["module"]: row["output"]["artifact_sha256"] for row in facts})
 
 
-def _previous(raw, expected_sha256, artifacts, *, parent=False):
+def _previous(raw, expected_sha256, artifacts, *, parent=False, reviewed=False):
     if raw is None:
         if expected_sha256 is not None or artifacts is not None:
             _fail("previous cache, independent pin and complete artifacts must be supplied together")
         return None
     value = contracts.load_record_bytes(raw, expected_sha256=expected_sha256)
-    flags = _parent_flags() if parent else FALSE_FLAGS
+    flags = _reviewed_flags() if reviewed else _parent_flags() if parent else FALSE_FLAGS
     fields = {"profile", "qualified", "execution_contract", "module_facts", "artifact_root_cid", *flags}
-    value = contracts.validate_record(value, schema=PARENT_CACHE_SCHEMA if parent else CACHE_SCHEMA, fields=fields)
-    if (value["profile"] != (PARENT_PROFILE if parent else PROFILE) or value["qualified"] is not True
+    value = contracts.validate_record(value, schema=REVIEWED_CACHE_SCHEMA if reviewed else PARENT_CACHE_SCHEMA if parent else CACHE_SCHEMA, fields=fields)
+    if (value["profile"] != (REVIEWED_PROFILE if reviewed else PARENT_PROFILE if parent else PROFILE) or value["qualified"] is not True
             or any(value[key] is not False for key in flags)):
         _fail("independently pinned qualified technical cache required")
-    contract = contracts.validate_record(value["execution_contract"], schema=PARENT_CONTRACT_SCHEMA if parent else CONTRACT_SCHEMA, fields=CONTRACT_FIELDS)
-    if contract["profile"] != (PARENT_PROFILE if parent else PROFILE):
+    contract = contracts.validate_record(value["execution_contract"], schema=REVIEWED_CONTRACT_SCHEMA if reviewed else PARENT_CONTRACT_SCHEMA if parent else CONTRACT_SCHEMA, fields=CONTRACT_FIELDS)
+    if contract["profile"] != (REVIEWED_PROFILE if reviewed else PARENT_PROFILE if parent else PROFILE):
         _fail("prior execution contract profile differs")
-    if parent:
-        _parent_contract(contract)
+    if parent or reviewed:
+        _parent_contract(contract, reviewed=reviewed)
     facts = value["module_facts"]
-    if type(facts) is not list or not 1 <= len(facts) <= (34 if parent else 130) or type(artifacts) is not dict or (parent and len(artifacts) != len(facts)):
+    if type(facts) is not list or not 1 <= len(facts) <= (shared.MAX_REVIEWED_PRESERVATION_MODULES if reviewed else 34 if parent else 130) or type(artifacts) is not dict or ((parent or reviewed) and len(artifacts) != len(facts)):
         _fail("bounded complete prior module/artifact population required")
     by_module = {row.get("module"): row for row in facts if type(row) is dict}
     if len(by_module) != len(facts) or set(by_module) != set(artifacts):
         _fail("prior artifact population differs or repeats a module")
     total = 0
     prior_bound = (min(MAX_ARTIFACT_POPULATION_BYTES,
-        shared.joint_owner.MAX_PROJECT_BYTES + contracts.MAX_RECORD_BYTES) if parent else MAX_ARTIFACT_POPULATION_BYTES)
+        shared.joint_owner.MAX_PROJECT_BYTES + contracts.MAX_RECORD_BYTES) if parent or reviewed else MAX_ARTIFACT_POPULATION_BYTES)
     for row in facts:
         contracts.require_keys(row, FACT_FIELDS, "prior module fact")
         module = contracts.require_text(row["module"], "prior module")
-        if not (_PARENT_MODULE if parent else _MODULE).fullmatch(module):
+        if not (_REVIEWED_MODULE if reviewed else _PARENT_MODULE if parent else _MODULE).fullmatch(module):
             _fail("unsupported prior module identity")
         source = contracts.require_text(row["source"], "prior generated source", max_bytes=contracts.MAX_RECORD_BYTES)
-        imports = (_PARENT_IMPORT if parent else _IMPORT).findall(source)
+        imports = (_REVIEWED_IMPORT if reviewed else _PARENT_IMPORT if parent else _IMPORT).findall(source)
         if row["imports"] != imports or any(item not in by_module for item in imports):
             _fail("prior import population differs")
         provenance = row["recipe"].get("provenance") if parent and type(row["recipe"]) is dict else None
         if parent and provenance is None:
             _fail("complete parent semantic recipe required")
-        recipe = _recipe(module, source, imports, contract, provenance=provenance)
+        recipe = _recipe(module, source, imports, contract, provenance=provenance,
+            reviewed_provenance=row["recipe"].get("reviewed_provenance") if reviewed else None)
+        if reviewed and "reviewed_provenance" not in recipe:
+            _fail("complete reviewed unit/dependency provenance required")
         if row["recipe"] != recipe:
             _fail("prior recipe differs from its exact source and contract")
-        output = contracts.require_keys(row["output"], OUTPUT_FIELDS | ({"execution_evidence"} if parent else set()), "prior native output")
+        output = contracts.require_keys(row["output"], OUTPUT_FIELDS | ({"execution_evidence"} if parent or reviewed else set()), "prior native output")
         artifact = artifacts[module]
         if type(artifact) is not bytes or not 1 <= len(artifact) <= MAX_ARTIFACT_BYTES:
             _fail("bounded complete prior compiler artifact bytes required")
@@ -479,11 +488,11 @@ def _previous(raw, expected_sha256, artifacts, *, parent=False):
         theorems = re.findall(r"^theorem ([A-Za-z0-9_]+)", source, re.M)
         if output["theorem_axiom_dependencies"] != {module + "." + name: [] for name in theorems}:
             _fail("prior theorem evidence differs from exact generated declarations")
-    if parent:
-        _parent_graph(facts)
+    if parent or reviewed:
+        _reviewed_graph(facts) if reviewed else _parent_graph(facts)
         process = _parent_native()._owners()[3]
         for row in facts:
-            _parent_execution_evidence(row["output"]["execution_evidence"], row, by_module, process, contract)
+            _parent_execution_evidence(row["output"]["execution_evidence"], row, by_module, process, contract, reviewed=reviewed)
     if value["artifact_root_cid"] != _artifact_root(facts):
         _fail("prior artifact root differs")
     return value
@@ -493,10 +502,10 @@ def _key(module):
     return "m" + _sha(module.encode())
 
 
-def _compiler(facts, functions, incremental, passes, *, parent=False):
-    depths = _parent_graph(facts) if parent else {}
+def _compiler(facts, functions, incremental, passes, *, parent=False, reviewed=False):
+    depths = _reviewed_graph(facts) if reviewed else _parent_graph(facts) if parent else {}
     def order(module):
-        if parent:
+        if parent or reviewed:
             return depths[module]
         if module == "LegalCorpus.Prelude":
             return 0
@@ -526,7 +535,7 @@ def _run(compiler, facts, previous=None):
 
 
 def _build_incremental_corpus(preparation, *, candidate_inputs=None, component_inputs=None,
-        expected_preparation_sha256=None, parent=False, operation_timeout_seconds=3600, expected_population, toolchain,
+        expected_preparation_sha256=None, parent=False, reviewed_inputs=None, operation_timeout_seconds=3600, expected_population, toolchain,
         lake_executable, output_directory, previous_cache_raw=None, expected_previous_cache_sha256=None,
         previous_artifacts=None, timeout_seconds=60, cancellation=None):
     """Compile/reuse exact modules under the caller's shared validation lease."""
@@ -535,19 +544,32 @@ def _build_incremental_corpus(preparation, *, candidate_inputs=None, component_i
     if (type(operation_timeout_seconds) not in (int, float) or not math.isfinite(operation_timeout_seconds)
             or not 0 < operation_timeout_seconds <= 3600):
         _fail("finite whole-operation cooperative deadline required")
+    reviewed = reviewed_inputs is not None
+    if reviewed and parent:
+        _fail("reviewed mixed and parent profiles are distinct")
+    strict = parent or reviewed
+    if reviewed:
+        _reviewed_policy()
+    cache_schema = REVIEWED_CACHE_SCHEMA if reviewed else PARENT_CACHE_SCHEMA if parent else CACHE_SCHEMA
+    contract_schema = REVIEWED_CONTRACT_SCHEMA if reviewed else PARENT_CONTRACT_SCHEMA if parent else CONTRACT_SCHEMA
+    build_schema = REVIEWED_BUILD_SCHEMA if reviewed else PARENT_BUILD_SCHEMA if parent else BUILD_SCHEMA
+    profile = REVIEWED_PROFILE if reviewed else PARENT_PROFILE if parent else PROFILE
+    flags = _reviewed_flags() if reviewed else None
     started, deadline = time.monotonic(), time.monotonic() + timeout_seconds
-    operation_deadline = started + operation_timeout_seconds if parent else deadline
-    if parent:
+    operation_deadline = started + operation_timeout_seconds if strict else deadline
+    if strict:
         deadline = operation_deadline
     _deadline(deadline, cancellation)
     output = shared.joint_owner._path(output_directory)
     shared.joint_owner._check_directories(output.parent, allow_missing=True)
     if output.exists() or output.is_symlink():
         _fail("fresh incremental output directory required")
-    prior = _previous(previous_cache_raw, expected_previous_cache_sha256, previous_artifacts, parent=parent) if parent else None
+    prior = _previous(previous_cache_raw, expected_previous_cache_sha256, previous_artifacts, parent=parent, reviewed=reviewed) if strict else None
     def replay(offered):
         _deadline(operation_deadline, cancellation)
-        if parent:
+        if reviewed:
+            result = _reviewed_replay(offered, reviewed_inputs, expected_preparation_sha256, toolchain)
+        elif parent:
             result = _parent_native().validate_parent_shared_definition_use_native_v1(offered,
                 component_inputs=component_inputs, expected_population=expected_population,
                 expected_preparation_sha256=expected_preparation_sha256, toolchain=toolchain)
@@ -557,7 +579,16 @@ def _build_incremental_corpus(preparation, *, candidate_inputs=None, component_i
         _deadline(operation_deadline, cancellation)
         return result
     checked = replay(preparation)
-    if parent:
+    if reviewed:
+        if type(checked) is not shared.ReviewedPreservationCorpusPreparation:
+            _fail("exact reviewed mixed preservation preparation type required")
+        checked = shared.ReviewedPreservationCorpusPreparation(checked.manifest_json, tuple(checked.files))
+        if shared.reviewed_preservation_corpus_sha256(checked) != expected_preparation_sha256:
+            _fail("reviewed mixed snapshot differs from independently pinned preparation")
+        reviewed_execution = _reviewed_execution_snapshot(reviewed_inputs)
+        _deadline(operation_deadline, cancellation)
+        deadline = min(operation_deadline, time.monotonic() + timeout_seconds)
+    elif parent:
         if type(checked) is not shared.ParentSharedCorpusPreparation:
             _fail("exact validated parent shared preparation type required")
         checked = shared.ParentSharedCorpusPreparation(checked.manifest_json,
@@ -569,7 +600,7 @@ def _build_incremental_corpus(preparation, *, candidate_inputs=None, component_i
     else:
         prior = _previous(previous_cache_raw, expected_previous_cache_sha256, previous_artifacts)
     incremental, passes, native = _owners()
-    owner_pins = _owner_pins(incremental, passes, parent=parent, manifest=checked.to_dict()) if parent else _owner_pins(incremental, passes)
+    owner_pins = _owner_pins(incremental, passes, parent=parent, reviewed=reviewed, manifest=checked.to_dict()) if strict else _owner_pins(incremental, passes)
     _deadline(deadline, cancellation)
     # The two installed-toolchain version probes each have a five-second cap.
     if deadline - time.monotonic() < 10:
@@ -578,12 +609,13 @@ def _build_incremental_corpus(preparation, *, candidate_inputs=None, component_i
     _deadline(deadline, cancellation)
     lean = Path(executable).parent / "lean"
     closure, closure_raw = _toolchain_closure(executable, deadline, cancellation)
-    contract = contracts.seal_record({"schema": PARENT_CONTRACT_SCHEMA if parent else CONTRACT_SCHEMA, "profile": PARENT_PROFILE if parent else PROFILE, "toolchain": toolchain,
+    contract = contracts.seal_record({"schema": contract_schema, "profile": profile, "toolchain": toolchain,
         "binary_sha256": binaries, "toolchain_closure": closure, "owner_pins": owner_pins,
         "platform": {"system": platform.system(), "machine": platform.machine(), "libc": list(platform.libc_ver())},
         "argv_recipe": ["installed-sibling-lean", "-o", "compiled/<module>.olean", "<module>.lean"],
         "environment": {"LEAN_PATH": "compiled", "LEAN_NUM_THREADS": "1"}})
-    facts = _facts(checked, contract, parent=parent)
+    facts = _facts(checked, contract, parent=parent, reviewed=reviewed,
+        graph=reviewed_execution["graph"] if reviewed else None)
     by_module = {row["module"]: row for row in facts}
     artifacts = {} if prior is None else {name: raw for name, raw in previous_artifacts.items() if name in by_module}
     old_snapshot = None
@@ -591,7 +623,7 @@ def _build_incremental_corpus(preparation, *, candidate_inputs=None, component_i
         old_facts = prior["module_facts"]
         functions = {_key(row["module"]): (lambda _state, row=row: {"compiled": {_key(row["module"]): row["output"]}})
                      for row in old_facts}
-        old_result = _run(_compiler(old_facts, functions, incremental, passes, parent=parent), old_facts)
+        old_result = _run(_compiler(old_facts, functions, incremental, passes, parent=parent, reviewed=reviewed), old_facts)
         if not old_result.successful:
             _fail("prior module dependency graph failed independent reconstruction")
         old_snapshot = old_result.snapshot
@@ -601,7 +633,7 @@ def _build_incremental_corpus(preparation, *, candidate_inputs=None, component_i
         def compile_module(state):
             if cleanup_latch:
                 raise cleanup_latch[0]
-            if parent:
+            if strict:
                 _deadline(operation_deadline, cancellation)
             module, recipe = row["module"], row["recipe"]
             dependencies = {item: state.get("compiled", {}).get(_key(item)) for item in row["imports"]}
@@ -628,22 +660,22 @@ def _build_incremental_corpus(preparation, *, candidate_inputs=None, component_i
             path = "compiled/" + module.replace(".", "/") + ".olean"
             # The root has no imports only in a one-module profile; create its
             # relative output parent without trusting any external filesystem.
-            inputs["compiled/" + ("LegalCorpusParent" if parent else "LegalCorpus") + "/.keep"] = b""
+            inputs["compiled/" + ("LegalReviewedMixedNormPreservation" if reviewed else "LegalCorpusParent" if parent else "LegalCorpus") + "/.keep"] = b""
             command = (str(lean), "-o", path, module.replace(".", "/") + ".lean")
             captured_inputs = {name: (raw.encode() if type(raw) is str else raw)
                                for name, raw in inputs.items() if not name.endswith("/.keep")}
             try:
                 result = native.process.BoundedToolRunner().run(native.process.ToolRunRequest(
                     argv=command, input_files=inputs,
-                    output_paths=tuple([path, *sorted(captured_inputs)]) if parent else (path,),
-                    environment=contract["environment"], owned_process_observation=parent,
+                    output_paths=tuple([path, *sorted(captured_inputs)]) if strict else (path,),
+                    environment=contract["environment"], owned_process_observation=strict,
                     limits=native.process.ToolRunLimits(timeout_seconds=max(0.001, deadline - time.monotonic()),
                         cpu_seconds=max(0.001, deadline - time.monotonic()), resident_memory_bytes=2 * 1024**3,
                         max_output_bytes=MAX_ARTIFACT_BYTES, max_input_bytes=40 * 1024**2, max_workspace_bytes=128 * 1024**2,
-                        max_output_files=len(captured_inputs) + 1 if parent else 1)),
+                        max_output_files=len(captured_inputs) + 1 if strict else 1)),
                     **({"cancellation": cancellation} if cancellation is not None else {}))
             except native.process.OwnedToolCleanupError as error:
-                if parent and not cleanup_latch:
+                if strict and not cleanup_latch:
                     cleanup_latch.append(error)
                 raise
             fresh.append(module)
@@ -653,11 +685,11 @@ def _build_incremental_corpus(preparation, *, candidate_inputs=None, component_i
             expected_theorems = [module + "." + name for name in re.findall(r"^theorem ([A-Za-z0-9_]+)", row["source"], re.M)]
             axioms = {name: [] for name in expected_theorems if "'" + name + "' does not depend on any axioms" in result.stdout}
             passed = bool(result.ok and result.pid is not None and tuple(result.command) == command
-                and set(result.output_files) == ({path, *captured_inputs} if parent else {path}) and type(raw) is bytes and 1 <= len(raw) <= MAX_ARTIFACT_BYTES
+                and set(result.output_files) == ({path, *captured_inputs} if strict else {path}) and type(raw) is bytes and 1 <= len(raw) <= MAX_ARTIFACT_BYTES
                 and result.workspace_cleaned and not result.error and not result.output_truncated
                 and not result.workspace_limit_exceeded and len(axioms) == len(expected_theorems)
                 and not re.search(r"\b(?:sorry|sorryAx)\b", result.stdout + result.stderr))
-            if parent:
+            if strict:
                 lifecycle = result.native_lifecycle
                 passed = bool(passed and result.runtime is native.process.ToolRuntime.NATIVE
                     and type(lifecycle) is native.process.NativeToolLifecycleObservation
@@ -671,7 +703,7 @@ def _build_incremental_corpus(preparation, *, candidate_inputs=None, component_i
                         "stdout": result.stdout, "stderr": result.stderr}
                     executed_facts = {name: {**fact, "output": state.get("compiled", {}).get(_key(name))}
                                       for name, fact in by_module.items()}
-                    _parent_execution_evidence(evidence, row, executed_facts, native.process, contract)
+                    _parent_execution_evidence(evidence, row, executed_facts, native.process, contract, reviewed=reviewed)
                     result_output["execution_evidence"] = evidence
             if passed:
                 artifacts[module] = raw
@@ -685,7 +717,7 @@ def _build_incremental_corpus(preparation, *, candidate_inputs=None, component_i
 
     functions = {_key(row["module"]): function(row) for row in facts}
     try:
-        result = _run(_compiler(facts, functions, incremental, passes, parent=parent), facts, old_snapshot)
+        result = _run(_compiler(facts, functions, incremental, passes, parent=parent, reviewed=reviewed), facts, old_snapshot)
     finally:
         # Framework callbacks are diagnosticized; custody must retain the exact owner.
         if cleanup_latch:
@@ -696,8 +728,14 @@ def _build_incremental_corpus(preparation, *, candidate_inputs=None, component_i
     try:
         _deadline(deadline, cancellation)
         replay_started = time.monotonic()
-        after_preparation = replay(preparation if parent else checked)
-        if parent:
+        after_preparation = replay(preparation if strict else checked)
+        if reviewed:
+            if (type(after_preparation) is not shared.ReviewedPreservationCorpusPreparation
+                    or after_preparation != checked
+                    or shared.reviewed_preservation_corpus_sha256(after_preparation) != expected_preparation_sha256):
+                _fail("closing reviewed replay differs from frozen executed preparation")
+            deadline = min(operation_deadline, deadline + time.monotonic() - replay_started)
+        elif parent:
             if (type(after_preparation) is not shared.ParentSharedCorpusPreparation
                     or after_preparation.manifest_json != checked.manifest_json
                     or after_preparation.files != checked.files
@@ -705,7 +743,7 @@ def _build_incremental_corpus(preparation, *, candidate_inputs=None, component_i
                 _fail("closing parent replay differs from frozen executed preparation")
             deadline = min(operation_deadline, deadline + time.monotonic() - replay_started)
         after_closure, after_raw = _toolchain_closure(executable, deadline, cancellation)
-        if closure != after_closure or closure_raw != after_raw or (_owner_pins(incremental, passes, parent=True, manifest=checked.to_dict()) if parent else _owner_pins(incremental, passes)) != owner_pins:
+        if closure != after_closure or closure_raw != after_raw or (_owner_pins(incremental, passes, parent=parent, reviewed=reviewed, manifest=checked.to_dict()) if strict else _owner_pins(incremental, passes)) != owner_pins:
             _fail("compiler closure or owner changed during native compilation")
         if any(_sha(Path(name).read_bytes()) != digest for name, digest in binaries.items()):
             _fail("native compiler executable changed during compilation")
@@ -726,13 +764,13 @@ def _build_incremental_corpus(preparation, *, candidate_inputs=None, component_i
     retained = {row["module"]: artifacts[row["module"]] for row in facts if row["module"] in artifacts
                 and row["output"] is not None and row["output"]["kernel_checked"]}
     retained_bound = (min(MAX_ARTIFACT_POPULATION_BYTES,
-        shared.joint_owner.MAX_PROJECT_BYTES + contracts.MAX_RECORD_BYTES) if parent else MAX_ARTIFACT_POPULATION_BYTES)
+        shared.joint_owner.MAX_PROJECT_BYTES + contracts.MAX_RECORD_BYTES) if strict else MAX_ARTIFACT_POPULATION_BYTES)
     if sum(map(len, retained.values())) > retained_bound:
-        _fail("complete compiled artifact population exceeds exact transport byte bound" if parent
+        _fail("complete compiled artifact population exceeds exact transport byte bound" if strict
               else "complete compiled artifact population exceeds byte bound")
     artifact_root = cid_for_dag_json({name: _sha(raw) for name, raw in sorted(retained.items())})
-    cache = contracts.seal_record({"schema": PARENT_CACHE_SCHEMA if parent else CACHE_SCHEMA, "profile": PARENT_PROFILE if parent else PROFILE, "qualified": qualified,
-        "execution_contract": contract, "module_facts": facts, "artifact_root_cid": artifact_root, **(_parent_flags() if parent else FALSE_FLAGS)})
+    cache = contracts.seal_record({"schema": cache_schema, "profile": profile, "qualified": qualified,
+        "execution_contract": contract, "module_facts": facts, "artifact_root_cid": artifact_root, **(flags if reviewed else _parent_flags() if parent else FALSE_FLAGS)})
     cache_raw = canonical_dag_json_bytes(cache)
     reused = [row["module"] for row in facts if row["module"] not in fresh and row["output"] is not None
               and row["output"]["kernel_checked"]]
@@ -740,7 +778,7 @@ def _build_incremental_corpus(preparation, *, candidate_inputs=None, component_i
                                for row in observations)
     if len(observation_raw) > MAX_OBSERVATION_BYTES:
         _fail("complete native execution observation byte bound exceeded")
-    receipt = contracts.seal_record({"schema": PARENT_BUILD_SCHEMA if parent else BUILD_SCHEMA, "profile": PARENT_PROFILE if parent else PROFILE,
+    receipt = contracts.seal_record({"schema": build_schema, "profile": profile,
         "preparation_cid": checked.to_dict()["record_cid"], "execution_contract_cid": contract["record_cid"],
         "cache_identity": {"record_cid": cache["record_cid"], "sha256": _sha(cache_raw), "bytes": len(cache_raw)},
         "previous_cache_cid": None if prior is None else prior["record_cid"],
@@ -757,7 +795,7 @@ def _build_incremental_corpus(preparation, *, candidate_inputs=None, component_i
         "framework_successful": result.successful, "framework_diagnostics": [item.to_dict() for item in result.diagnostics],
         "framework_metrics": result.metrics.to_dict(), "observed_wall_seconds": time.monotonic() - started,
         "build_passed": qualified, "lean_compilation_verified": qualified, "backend_executed": bool(observations),
-        "composition_obligations_checked": qualified, **(_parent_flags() if parent else FALSE_FLAGS)})
+        "composition_obligations_checked": qualified, **(flags if reviewed else _parent_flags() if parent else FALSE_FLAGS)})
     if parent:
         manifest = checked.to_dict()
         receipt = contracts.seal_record({**{key: value for key, value in receipt.items()
@@ -774,32 +812,39 @@ def _build_incremental_corpus(preparation, *, candidate_inputs=None, component_i
             "source_replay_preempted": False, "fresh_proof_for_reused_modules": False,
             "implementation_pin_scope": "native-producer-closure-and-five-direct-LegalIR-framework-owners"})
         _deadline(operation_deadline, cancellation)
+    if reviewed:
+        _reviewed_policy()
+        receipt = _reviewed_receipt(receipt, checked, reviewed_execution, expected_preparation_sha256,
+            timeout_seconds, operation_timeout_seconds)
+        _deadline(operation_deadline, cancellation)
     shared._write_frozen_project(checked, output / "project")
     compiled = {name.replace(".", "/") + ".olean": raw for name, raw in retained.items()}
     shared._write_compiled(output / "compiled", compiled)
-    if parent:
+    if strict:
         _deadline(operation_deadline, cancellation)
-        observed = shared.joint_owner._read_files(output / "compiled", set(compiled), maximum_files=34)
+        observed = shared.joint_owner._read_files(output / "compiled", set(compiled), maximum_files=shared.MAX_REVIEWED_PRESERVATION_MODULES if reviewed else 34)
         if observed != compiled:
             _fail("retained parent compiler artifacts differ on exact readback")
     for name, raw in (("cache.json", cache_raw), ("toolchain-closure.jsonl", closure_raw),
                       ("module-executions.jsonl", observation_raw)):
-        if parent:
+        if strict:
             _deadline(operation_deadline, cancellation)
         with (output / name).open("xb") as stream:
             stream.write(raw)
         if (output / name).read_bytes() != raw:
             _fail("retained native build evidence differs on readback")
     # Publish the receipt only after all referenced compiler evidence exists.
-    if parent:
+    if strict:
         _deadline(operation_deadline, cancellation)
     receipt_raw = canonical_dag_json_bytes(receipt)
     with (output / "build-receipt.json").open("xb") as stream:
         stream.write(receipt_raw)
     if (output / "build-receipt.json").read_bytes() != receipt_raw:
         _fail("retained native build receipt differs on readback")
-    if parent:
+    if strict:
         _deadline(operation_deadline, cancellation)
+    if reviewed:
+        _reviewed_policy()
     return receipt
 
 
@@ -834,3 +879,339 @@ def build_incremental_parent_shared_corpus_v1(preparation, *, component_inputs, 
 
 
 __all__ = ["build_incremental_shared_corpus", "build_incremental_parent_shared_corpus_v1"]
+
+
+# Explicit reviewed mixed preservation domain. Legacy and parent public entry
+# points retain their schemas, cache identities and default execution paths.
+REVIEWED_CACHE_SCHEMA = "legal-corpus-reviewed-mixed-direct-lean-cache/v3"
+REVIEWED_CONTRACT_SCHEMA = "legal-corpus-reviewed-mixed-direct-lean-execution-contract/v3"
+REVIEWED_BUILD_SCHEMA = "legal-corpus-reviewed-mixed-incremental-native-build/v3"
+REVIEWED_PROFILE = "verified-reviewed-mixed-preservation-olean-per-module/v3"
+_REVIEWED_ROOT = "LegalReviewedMixedNormPreservation"
+_REVIEWED_MODULE = re.compile(r"(?:LegalReviewedMixedNormPreservation|Legal(?:MixedRelational|Relational)AstPreservation\.(?:Prelude|Semantics|Instance[0-9a-f]{64}))\Z")
+_REVIEWED_IMPORT = re.compile(r"^import ((?:LegalReviewedMixedNormPreservation|Legal(?:MixedRelational|Relational)AstPreservation\.(?:Prelude|Semantics|Instance[0-9a-f]{64})))$", re.M)
+_REVIEWED_DOMAINS = {
+    "LegalRelationalAstPreservation": (
+        "native_value_exact", "native_ast_closed", "denotation_matches_native",
+        "typed_source_lowering_exact", "role_denotation_matches_native"),
+    "LegalMixedRelationalAstPreservation": (
+        "mixed_typed_value_exact", "mixed_renderer_value_exact", "mixed_ast_closed",
+        "mixed_denotation_matches_lowering", "mixed_role_denotation_matches_lowering"),
+}
+_REVIEWED_PROVENANCE_FIELDS = {"module", "role", "contributors", "dependency_units", "dependency_record_cids"}
+
+
+def _reviewed_policy():
+    if (REVIEWED_CACHE_SCHEMA, REVIEWED_CONTRACT_SCHEMA, REVIEWED_BUILD_SCHEMA, REVIEWED_PROFILE,
+            _REVIEWED_ROOT) != (
+            "legal-corpus-reviewed-mixed-direct-lean-cache/v3",
+            "legal-corpus-reviewed-mixed-direct-lean-execution-contract/v3",
+            "legal-corpus-reviewed-mixed-incremental-native-build/v3",
+            "verified-reviewed-mixed-preservation-olean-per-module/v3",
+            "LegalReviewedMixedNormPreservation"):
+        _fail("fixed reviewed incremental domain cannot alias another profile")
+    if (any(type(value) is not int for value in (MAX_ARTIFACT_BYTES, MAX_ARTIFACT_POPULATION_BYTES,
+            MAX_LIBRARY_FILES, MAX_LIBRARY_BYTES, MAX_CLOSURE_BYTES, MAX_OBSERVATION_BYTES))
+            or (MAX_ARTIFACT_BYTES, MAX_ARTIFACT_POPULATION_BYTES, MAX_LIBRARY_FILES, MAX_LIBRARY_BYTES,
+                MAX_CLOSURE_BYTES, MAX_OBSERVATION_BYTES) != (
+                4 * 1024**2, 32 * 1024**2, 16384, 3 * 1024**3, 4 * 1024**2, 8 * 1024**2)):
+        _fail("reviewed incremental execution retains the original finite bounds")
+    owner = _parent_native()
+    if not callable(getattr(owner, "validate_reviewed_norm_preservation_native_v3", None)):
+        _fail("explicit reviewed V3 native validation interface required")
+    owner._reviewed_mixed_native_policy(shared)
+    if _REVIEWED_DOMAINS != {
+        "LegalRelationalAstPreservation": (
+            "native_value_exact", "native_ast_closed", "denotation_matches_native",
+            "typed_source_lowering_exact", "role_denotation_matches_native"),
+        "LegalMixedRelationalAstPreservation": (
+            "mixed_typed_value_exact", "mixed_renderer_value_exact", "mixed_ast_closed",
+            "mixed_denotation_matches_lowering", "mixed_role_denotation_matches_lowering"),
+    }:
+        _fail("reviewed incremental preservation theorem domains changed")
+
+
+def _reviewed_flags():
+    flags = _parent_flags()
+    if not flags or any(value is not False for value in flags.values()):
+        _fail("reviewed incremental cache grants no legal or release authority")
+    return dict(flags)
+
+
+def _reviewed_owner_pins(incremental, passes, manifest):
+    from ..integration.reasoning import legal_ir_obligations, legal_ir_schema_evolution, legal_ir_source_maps
+    _reviewed_policy()
+    if _sha(Path(__file__).read_bytes()) != _SELF_PIN:
+        _fail("reviewed incremental owner changed since import")
+    owner = _parent_native()
+    return owner._reviewed_mixed_preservation_native_pins(owner._owners(), manifest) | {
+        str(Path(module.__file__).resolve()): _sha(Path(module.__file__).read_bytes())
+        for module in (incremental, passes, legal_ir_obligations, legal_ir_schema_evolution, legal_ir_source_maps)
+    } | {str(Path(__file__).resolve()): _SELF_PIN}
+
+
+def _reviewed_replay(preparation, inputs, expected_preparation_sha256, toolchain):
+    return _parent_native().validate_reviewed_norm_preservation_native_v3(
+        preparation, inputs["graph"], inputs["admission"], *inputs["args"],
+        expected_preservation_sha256=expected_preparation_sha256,
+        expected_graph_sha256=inputs["expected_graph_sha256"],
+        expected_admission_sha256=inputs["expected_admission_sha256"],
+        toolchain=toolchain, **inputs["kwargs"])
+
+
+def _reviewed_execution_snapshot(inputs):
+    """Detach the opening-validated meaning used by recipes and receipts.
+
+    Fresh replay continues to observe the original caller inputs. These copies
+    supply execution provenance only, and must match both independent pins.
+    """
+    graph_owner, admission_owner, _ = shared._reviewed_mixed_preservation_owners()
+    detached, _ = admission_owner.norm._snapshot({
+        "graph": inputs["graph"], "admission": inputs["admission"]})
+    if (graph_owner.norm_definition_graph_sha256(detached["graph"]) != inputs["expected_graph_sha256"]
+            or admission_owner.norm_content_adjudication_sha256(detached["admission"])
+                != inputs["expected_admission_sha256"]):
+        _fail("opening reviewed execution snapshot differs from independent graph/admission pins")
+    return {**detached, "expected_graph_sha256": inputs["expected_graph_sha256"],
+        "expected_admission_sha256": inputs["expected_admission_sha256"]}
+
+
+def _reviewed_role(module):
+    if type(module) is not str or not _REVIEWED_MODULE.fullmatch(module):
+        _fail("closed reviewed preservation module identity required")
+    if module == _REVIEWED_ROOT:
+        return "root"
+    suffix = module.split(".")[1]
+    return "prelude" if suffix == "Prelude" else "semantics" if suffix == "Semantics" else "instance"
+
+
+def _reviewed_graph(facts):
+    """Check the preserved child import DAG independently of cache labels."""
+    if type(facts) is not list or not 6 <= len(facts) <= shared.MAX_REVIEWED_PRESERVATION_MODULES:
+        _fail("complete bounded reviewed preservation module population required")
+    known, depths, instances, namespaces = {}, {}, [], set()
+    for row in facts:
+        module, imports, source = row["module"], row["imports"], row["source"]
+        role = _reviewed_role(module)
+        if (module in known or type(imports) is not list or len(set(imports)) != len(imports)
+                or not set(imports) <= set(known)
+                or imports != _REVIEWED_IMPORT.findall(source)
+                or re.findall(r"^import ([^\n]+)$", source, re.M) != imports):
+            _fail("complete topological reviewed import DAG and exact source imports required")
+        namespace = module.split(".")[0]
+        if role == "root":
+            if imports != instances or not 3 <= len(instances) <= shared.MAX_REVIEWED_PRESERVATION_UNITS:
+                _fail("reviewed root must import every complete ordered unit instance")
+        else:
+            namespaces.add(namespace)
+            wanted = [] if role == "prelude" else [namespace + ".Prelude"] if role == "semantics" else [namespace + ".Semantics"]
+            if imports != wanted:
+                _fail("unchanged profile-specific reviewed child imports required")
+        theorems = re.findall(r"^theorem ([A-Za-z0-9_]+)", source, re.M)
+        if theorems != (list(_REVIEWED_DOMAINS[namespace]) if role == "instance" else []):
+            _fail("five exact profile-specific preservation declarations required")
+        if role == "instance":
+            instances.append(module)
+        depths[module] = max((depths[name] + 1 for name in imports), default=0)
+        known[module] = row
+    wanted = {_REVIEWED_ROOT, *instances, *(name + suffix for name in namespaces for suffix in (".Prelude", ".Semantics"))}
+    if set(known) != wanted or facts[-1]["module"] != _REVIEWED_ROOT:
+        _fail("complete reviewed common, instance and root population required")
+    return depths
+
+
+
+# This named consumer contract is the exact complete V3 unit emitted by the
+# existing shared aggregate. It covers copied cache provenance, not a second
+# admission or graph implementation. Changing that upstream row requires an
+# explicit compatible profile rather than accepting or discarding extra fields.
+REVIEWED_UNIT_PROVENANCE_FIELDS_V3 = frozenset({
+    "ordinal", "unit_id", "kind", "source_version_cid", "source_occurrence_cid", "document_revision",
+    "parent_unit_ids", "source_text_sha256", "graph_unit_record_cid", "graph_ast_record_cid", "complete_ir_sha256",
+    "scope_record_cid", "interpretation_record_cid", "signature_id", "relational_request_sha256",
+    "relational_report_sha256", "relational_profile", "signature_header", "signature_namespace_sha256",
+    "child_preparation_sha256", "child_manifest_sha256", "child_manifest_path", "original_child_files",
+    "instance_module", "preservation_obligations", "child_preservation_profile", "child_family",
+})
+
+
+def _reviewed_unit_provenance_v3(row):
+    from ..syntax_core import signatures
+    contracts.require_keys(row, REVIEWED_UNIT_PROVENANCE_FIELDS_V3, "complete reviewed V3 unit provenance")
+    ordinal = row["ordinal"]
+    if type(ordinal) is not int or not 0 <= ordinal < shared.MAX_REVIEWED_PRESERVATION_UNITS:
+        _fail("exact integer reviewed source ordinal required")
+    for key in ("unit_id", "document_revision", "signature_id"):
+        contracts.require_text(row[key], "reviewed unit " + key, max_bytes=512)
+    if row["kind"] not in ("definition", "norm"):
+        _fail("reviewed source unit kind differs")
+    parents = row["parent_unit_ids"]
+    if (type(parents) is not list or len(parents) > shared.MAX_REVIEWED_PRESERVATION_UNITS
+            or any(type(parent) is not str for parent in parents)
+            or len(set(parents)) != len(parents) or row["unit_id"] in parents):
+        _fail("complete distinct reviewed parent-unit identifiers required")
+    for parent in parents:
+        contracts.require_text(parent, "reviewed parent unit", max_bytes=512)
+    for key in ("complete_ir_sha256", "source_text_sha256", "relational_request_sha256", "relational_report_sha256",
+                "signature_namespace_sha256", "child_preparation_sha256", "child_manifest_sha256"):
+        contracts.require_sha256(row[key], "reviewed unit " + key)
+    for key in ("source_version_cid", "source_occurrence_cid", "graph_unit_record_cid", "graph_ast_record_cid",
+                "scope_record_cid", "interpretation_record_cid"):
+        contracts.require_cid(row[key], "reviewed unit " + key)
+    domain = _parent_native()._REVIEWED_MIXED_CHILD_DOMAINS.get(row["relational_profile"])
+    if domain is None:
+        _fail("existing reviewed child provenance domain required")
+    profile, family, root, suffixes = domain
+    if (row["child_preservation_profile"] != profile or row["child_family"] != family
+            or type(row["instance_module"]) is not str
+            or not re.fullmatch(re.escape(root) + r"\.Instance[0-9a-f]{64}", row["instance_module"])
+            or row["preservation_obligations"] != [row["instance_module"] + "." + suffix for suffix in suffixes]):
+        _fail("exact existing child namespace, family and five obligations required")
+    header = row["signature_header"]
+    contracts.require_keys(header, {"family", "features", "interface", "metadata", "profile", "schema_version",
+        "signature_id", "sorts"}, "complete reviewed signature header")
+    canonical = signatures.LogicSignature.from_dict(dict(header, symbols=[])).to_dict()
+    del canonical["symbols"]
+    if (canonical_dag_json_bytes(canonical) != canonical_dag_json_bytes(header)
+            or row["signature_id"] != header["signature_id"]
+            or row["signature_namespace_sha256"] != _sha(canonical_dag_json_bytes({
+                "relational_profile": row["relational_profile"], "signature_header": header}))):
+        _fail("complete typed signature header and namespace commitment differ")
+    prefix = "unit-companions/" + format(ordinal, "02d") + "-"
+    if row["child_manifest_path"] != prefix + "manifest.json":
+        _fail("exact reviewed unit manifest locator required")
+    companions = row["original_child_files"]
+    if type(companions) is not list or len(companions) != 7:
+        _fail("all seven original child companions required")
+    names = []
+    for index, item in enumerate(companions):
+        contracts.require_keys(item, {"original_path", "companion_path", "sha256"}, "reviewed child companion")
+        contracts.require_sha256(item["sha256"], "complete original child companion")
+        if item["companion_path"] != prefix + "file-" + format(index, "02d") + ".txt":
+            _fail("complete ordered reviewed child companion locator required")
+        contracts.require_text(item["original_path"], "original reviewed child path", max_bytes=256)
+        names.append(item["original_path"])
+    wanted = {"lakefile.toml", "lean-toolchain", "preservation-inputs.json", root + ".lean",
+        root + "/Prelude.lean", root + "/Semantics.lean", row["instance_module"].replace(".", "/") + ".lean"}
+    if len(set(names)) != 7 or set(names) != wanted:
+        _fail("complete exact reviewed child source and companion population required")
+    return row
+
+
+def _reviewed_recipe_provenance(module, value):
+    contracts.require_keys(value, _REVIEWED_PROVENANCE_FIELDS, "reviewed native recipe provenance")
+    role = _reviewed_role(module)
+    if value["module"] != module or value["role"] != role:
+        _fail("reviewed provenance belongs to another module or role")
+    for key in ("contributors", "dependency_units", "dependency_record_cids"):
+        maximum = (shared.MAX_REVIEWED_PRESERVATION_OBLIGATIONS if key == "dependency_record_cids"
+                   else shared.MAX_REVIEWED_PRESERVATION_UNITS)
+        if type(value[key]) is not list or len(value[key]) > maximum:
+            _fail("bounded complete reviewed provenance population required")
+    contributors, dependencies = value["contributors"], value["dependency_units"]
+    for rows in (contributors, dependencies):
+        for row in rows:
+            _reviewed_unit_provenance_v3(row)
+        if len({row["unit_id"] for row in rows}) != len(rows):
+            _fail("reviewed provenance cannot duplicate a physical unit")
+    if role == "instance":
+        if len(contributors) != 1 or contributors[0]["instance_module"] != module:
+            _fail("exact reviewed physical unit contributor required")
+    elif role == "root":
+        if not 3 <= len(contributors) <= shared.MAX_REVIEWED_PRESERVATION_UNITS:
+            _fail("complete ordered reviewed root contributors required")
+    elif contributors or dependencies or value["dependency_record_cids"]:
+        _fail("generic preservation modules cannot invent statutory contributors")
+    for cid in value["dependency_record_cids"]:
+        contracts.require_cid(cid, "reviewed governing dependency record")
+    if len(set(value["dependency_record_cids"])) != len(value["dependency_record_cids"]):
+        _fail("reviewed governing dependency records cannot be duplicated")
+    return value
+
+
+def _reviewed_facts(preparation, contract, graph):
+    manifest, files = preparation.to_dict(), dict(preparation.files)
+    units = manifest["units"]
+    # Complete graph-unit identities include the common reviewed admission.
+    # A correction may therefore invalidate an otherwise byte-identical instance
+    # conservatively. Generic Prelude/Semantics reuse remains source/contract
+    # based; a warm hit never carries current legal or review eligibility.
+    by_unit = {row["unit_id"]: row for row in units}
+    if len(by_unit) != len(units) or manifest["definition_use_record_cids"] != [row["record_cid"] for row in graph["definition_use_records"]]:
+        _fail("complete reviewed graph definition-use population differs")
+    edges = {key: list(row["parent_unit_ids"]) for key, row in by_unit.items()}
+    for edge in graph["definition_use_records"]:
+        if edge["use_unit_id"] not in by_unit or edge["definition_unit_id"] not in by_unit:
+            _fail("reviewed governing dependency endpoint is outside the complete component")
+        edges[edge["use_unit_id"]].append(edge["definition_unit_id"])
+    def closure(unit_id, active=()):
+        if unit_id in active or unit_id not in by_unit:
+            _fail("cyclic or unresolved reviewed governing dependency")
+        found = set()
+        for name in edges[unit_id]:
+            found.add(name)
+            found.update(closure(name, (*active, unit_id)))
+        return found
+    result = []
+    for module in manifest["expected_modules"]:
+        role = _reviewed_role(module)
+        contributors = units if role == "root" else [row for row in units if row["instance_module"] == module] if role == "instance" else []
+        dependent = set().union(*(closure(row["unit_id"]) for row in contributors)) if contributors else set()
+        selected = {row["unit_id"] for row in contributors} | dependent
+        provenance = {"module": module, "role": role, "contributors": contributors,
+            "dependency_units": [row for row in units if row["unit_id"] in dependent],
+            "dependency_record_cids": [row["record_cid"] for row in graph["definition_use_records"] if row["use_unit_id"] in selected]}
+        source = files[module.replace(".", "/") + ".lean"]
+        imports = _REVIEWED_IMPORT.findall(source)
+        if imports != manifest["module_imports"][module]:
+            _fail("reviewed source imports differ from current replayed manifest")
+        result.append({"module": module, "source": source, "imports": imports,
+            "recipe": _recipe(module, source, imports, contract, reviewed_provenance=provenance), "output": None})
+    _reviewed_graph(result)
+    return result
+
+
+def _reviewed_receipt(receipt, preparation, inputs, expected_preparation_sha256, timeout_seconds, operation_timeout_seconds):
+    manifest = preparation.to_dict()
+    return contracts.seal_record({**{key: value for key, value in receipt.items() if key not in {"record_cid", "cid_scope"}},
+        **_parent_native()._reviewed_mixed_preservation_receipt_binding(manifest, inputs["admission"]),
+        "expected_preparation_sha256": expected_preparation_sha256,
+        "reviewed_graph_sha256": inputs["expected_graph_sha256"],
+        "reviewed_admission_sha256": inputs["expected_admission_sha256"],
+        "composition_obligations_checked": False,
+        "concrete_preservation_obligations_checked": receipt["build_passed"],
+        "compiler_timeout_seconds": timeout_seconds, "operation_timeout_seconds": operation_timeout_seconds,
+        "deadline_profile": "cooperative-whole-operation; cumulative-compiler-budget-excludes-source-review-replays",
+        "invalidation_scope": "Complete unit and governing-dependency rows, including common-admission-derived graph identities; conservative instance recompilation is intentional.",
+        "fresh_proof_for_reused_modules": False, "original_success_authenticated": False,
+        "live_native_success_authenticated": False, "original_admitted_parent_custody_authenticated": False,
+        "authority": dict(_parent_native().AUTHORITY), "training_mask": 0, "evaluation_gold_mask": 0,
+        "native_TDFOL_route_used": False, "native_parser_roundtrip": False,
+        "reuse_scope": "Exact technical per-module artifact reuse after fresh complete reviewed V3 replay; independent child preservation only, no cross-unit governing-definition theorem, statutory truth or release admission."})
+
+
+def build_incremental_reviewed_preservation_corpus_v3(preparation, graph, admission, *args,
+        expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain,
+        lake_executable, output_directory, previous_cache_raw=None, expected_previous_cache_sha256=None,
+        previous_artifacts=None, timeout_seconds=60, operation_timeout_seconds=3600, cancellation=None, **kwargs):
+    """Replay complete current reviewed meaning; incrementally check its exact witnesses.
+
+    This is the existing direct-Lean pass/runner algorithm in a separate domain.
+    Cached proofs never replace current source, interpretation or revocation
+    replay and neither this route nor a cache hit issues a release capability.
+    """
+    for name, pin in (("preservation", expected_preservation_sha256), ("graph", expected_graph_sha256),
+                      ("admission", expected_admission_sha256)):
+        contracts.require_sha256(pin, "reviewed incremental " + name)
+    inputs = {"graph": graph, "admission": admission, "args": args, "kwargs": kwargs,
+        "expected_graph_sha256": expected_graph_sha256, "expected_admission_sha256": expected_admission_sha256}
+    return _build_incremental_corpus(preparation, reviewed_inputs=inputs, expected_population=None,
+        expected_preparation_sha256=expected_preservation_sha256, toolchain=toolchain,
+        lake_executable=lake_executable, output_directory=output_directory,
+        previous_cache_raw=previous_cache_raw, expected_previous_cache_sha256=expected_previous_cache_sha256,
+        previous_artifacts=previous_artifacts, timeout_seconds=timeout_seconds,
+        operation_timeout_seconds=operation_timeout_seconds, cancellation=cancellation)
+
+
+__all__ += ["REVIEWED_CACHE_SCHEMA", "REVIEWED_CONTRACT_SCHEMA", "REVIEWED_BUILD_SCHEMA", "REVIEWED_PROFILE",
+    "build_incremental_reviewed_preservation_corpus_v3"]

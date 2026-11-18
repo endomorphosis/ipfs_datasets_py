@@ -463,17 +463,19 @@ def test_selected_legacy_numerical_ast_policy_detects_math_or_exclusion_changes(
     assert retrieval._legacy_numerical_ast_identity(raw.replace(before, after).encode()) != retrieval.SELECTED_LEGACY_NUMERICAL_AST_SHA256
 
 
-def _reviewed_structural_query_fixture(owner, original):
+def _reviewed_structural_query_fixture(owner, original, *, query=None,
+        lineage_group_id="fixture:heldout-unrelated-family", admission_version="v2"):
     """Extend the existing toy ledger with a source-only held-out query."""
     from ipfs_datasets_py.logic.formalization.autoencoder import alignment_lane_bundle as lanes
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_eval_splits as splits
     case = owner.reviewed_pair_clone_v2(original)
     inputs = case["preparation_inputs"]
     old = splits.LegalIRSplitManifest.from_mapping(inputs["split_manifest"])
-    query = {"id": "query:heldout", "source_text": "An unrelated fictional agency may inspect a lunar archive.",
-             "split_sample_id": "sample:heldout-query"}
+    query = copy.deepcopy(query) if query is not None else {
+        "id": "query:heldout", "source_text": "An unrelated fictional agency may inspect a lunar archive.",
+        "split_sample_id": "sample:heldout-query"}
     sample = splits.LegalIRSplitExample.from_sample({"sample_id": query["split_sample_id"],
-        "source_text": query["source_text"], "lineage_group_id": "fixture:heldout-unrelated-family"})
+        "source_text": query["source_text"], "lineage_group_id": lineage_group_id})
     manifest = splits.LegalIRSplitManifest(examples=(*old.examples, sample),
         assignments={**old.assignments, sample.sample_id: splits.HOLDOUT_SPLIT}, config_digest=old.config_digest,
         protected_splits=old.protected_splits, metadata=old.metadata).to_dict()
@@ -484,7 +486,10 @@ def _reviewed_structural_query_fixture(owner, original):
     artifact_id = inputs["body"]["ledger_id"] + ":split"
     next(row for row in inputs["dependency_manifest"]["artifacts"] if row["artifact_id"] == artifact_id)["artifact_sha256"] = split_sha
     case["observed_artifacts"][artifact_id] = split_sha
-    owner.refresh_reviewed_pair_ledger_v2(case)
+    if admission_version == "v3":
+        owner.refresh_reviewed_pair_ledger_v3(case)
+    else:
+        owner.refresh_reviewed_pair_ledger_v2(case)
     profile = copy.deepcopy(inputs["source_lane"]["profile"])
     request = {"source_text": query["source_text"], "context": {"role": "none_required", "text": "", "bindings": {},
         "sha256": hashlib.sha256(b"").hexdigest()}}
@@ -672,3 +677,127 @@ def test_reviewed_index_adds_declared_representation_without_weight_retraining(
     assert outcome["current_index_differs_from_training"] is True
     assert outcome["historical_training_requalification_performed"] is False
     assert model.checkpoint == before
+
+
+@pytest.mark.parametrize("steps", [0, 3])
+def test_reviewed_mixed_v3_joint_updates_restore_and_retrieve_current_index(steps, monkeypatch, tmp_path):
+    from tests.unit.logic.formalization.autoencoder import test_alignment_relation_mask_handoff as owner
+    case = owner.fixtures.reviewed_pair_fixture_v3()
+    args, options = owner.reviewed_mask_arguments_v2(case)
+    fitted = retrieval.train_reviewed_retriever_v3(*args, **options, steps=steps, joint_dimension=8)
+    checkpoint, report = fitted["checkpoint"], fitted["report"]
+    assert checkpoint["schema"] == "legal-joint-retrieval-checkpoint/v3"
+    assert report["schema"] == "legal-joint-retrieval-training/v3"
+    assert report["optimizer_steps"] == len(report["losses"]) == steps
+    assert bool(report["changed_parameter_names"]) is (steps > 0)
+    saved = copy.deepcopy(checkpoint)
+    path = tmp_path / "reviewed-joint-v3.json"
+    sha = retrieval.save_checkpoint(checkpoint, path)
+    loaded = retrieval.load_checkpoint(path, sha)
+    assert loaded == checkpoint == saved
+    model = retrieval.ReviewedLegalJointRetriever(loaded,
+        expected_checkpoint_sha256=retrieval.checkpoint_digest(loaded))
+    assert model.checkpoint == checkpoint
+    current, query, lane, expected = _reviewed_structural_query_fixture(owner, case, admission_version="v3")
+    result = _structural_call(model, owner, current, query, lane, expected, top_k=2)
+    assert result["schema"] == "legal-joint-retrieval-result/v3"
+    assert result["status"] == "retrieval_completed" and result["model_forward_executed"] is True
+    assert result["current_index_differs_from_training"] is True
+    assert result["query_target_access"] is result["decoder_context_admitted"] is False
+    current["reviews"] = []
+    denied = _structural_call(model, owner, current, query, lane, expected, top_k=2)
+    assert denied["status"] == "abstained_current_index_unavailable" and denied["model_forward_executed"] is False
+
+
+def test_reviewed_mixed_v3_joint_rechecks_authority_after_real_updates(monkeypatch):
+    from tests.unit.logic.formalization.autoencoder import test_alignment_relation_mask_handoff as owner
+    from ipfs_datasets_py.logic.formalization.autoencoder import alignment_relation_mask_handoff as handoff
+    case = owner.fixtures.reviewed_pair_fixture_v3()
+    args, options = owner.reviewed_mask_arguments_v2(case)
+    original = handoff.compile_reviewed_train_relation_masks_v3
+    calls = []
+    def revoke_at_exit(*values, **kwargs):
+        calls.append(1)
+        if len(calls) == 2: values[1]["keys"][0]["revoked_at_utc"] = case["at_time_utc"]
+        return original(*values, **kwargs)
+    monkeypatch.setattr(handoff, "compile_reviewed_train_relation_masks_v3", revoke_at_exit)
+    with pytest.raises(ValueError, match="independently pinned trust input differs"):
+        retrieval.train_reviewed_retriever_v3(*args, **options, steps=1, joint_dimension=8)
+    assert len(calls) == 2
+
+
+@pytest.mark.parametrize('mode',['joint','raw'])
+def test_reviewed_composed_v3_fit_restore_and_source_query_preserve_profile_and_revocation(tmp_path,mode):
+    from tests.unit.logic.formalization.autoencoder import test_alignment_relation_mask_handoff as owner
+    from tests.unit.logic.formalization.autoencoder import test_alignment_relation_declarations as declared
+    from ipfs_datasets_py.logic.formalization.autoencoder import alignment_lane_bundle as lanes
+    case=declared.declared_composed_reviewed_pair_fixture_v3(tmp_path)
+    args,options=owner.reviewed_mask_arguments_v2(case)
+    fitted=retrieval.train_reviewed_retriever_v3(*args,**options,steps=1,joint_dimension=8)
+    checkpoint=fitted['checkpoint'];assert fitted['report']['optimizer_steps']==1
+    assert fitted['report']['changed_parameter_names']
+    assert checkpoint['training_handoff']['source_representation_profile']['stage']=='complete_chunk_composition'
+    path=tmp_path/'composed-fixture-checkpoint.json';sha=retrieval.save_checkpoint(checkpoint,path)
+    loaded=retrieval.load_checkpoint(path,sha);assert loaded==checkpoint
+    model=retrieval.ReviewedLegalJointRetriever(loaded,expected_checkpoint_sha256=retrieval.checkpoint_digest(loaded))
+    current,query,lane,expected=_reviewed_structural_query_fixture(owner,case,admission_version='v3')
+    row=lane['rows'][0];row['upstream_vector_sha256']=lanes._digest({'declared_mean':row['vector']});row['token_receipt_sha256']='c'*64
+    binding={key:row[key] for key in lanes.ROW_BINDING_FIELDS};row['producer_row_sha256']=lanes._digest(binding)
+    lane['producer_receipt']['rows']=[binding];owner.fixtures.seal(lane['producer_receipt']);owner.fixtures.seal(lane)
+    expected['producer_receipt_sha256']=lanes._digest(lane['producer_receipt'])
+    result=_structural_call(model,owner,current,query,lane,expected,mode=mode,top_k=2)
+    assert result['status']=='retrieval_completed' and result['model_forward_executed'] is (mode=='joint')
+    assert result['query_target_access'] is result['decoder_context_admitted'] is False
+    current['reviews']=[]
+    denied=_structural_call(model,owner,current,query,lane,expected,mode=mode,top_k=2)
+    assert denied['status']=='abstained_current_index_unavailable' and denied['model_forward_executed'] is False
+    assert model.checkpoint==checkpoint
+
+
+@pytest.mark.parametrize('damage',[None,'reference-excluded','review-withdrawn','query-target'])
+def test_reviewed_lexical_baseline_uses_existing_BM25_on_only_permitted_TRAIN_formal_text(
+        reviewed_trained,reviewed_fixture_owner,reviewed_query_case,monkeypatch,damage):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import frame_bm25_selector as lexical
+    case,query,lane,expected=reviewed_query_case
+    case=reviewed_fixture_owner.reviewed_pair_clone_v2(case)
+    query=copy.deepcopy(query)
+    model=retrieval.ReviewedLegalJointRetriever(reviewed_trained['checkpoint'],
+        expected_checkpoint_sha256=retrieval.checkpoint_digest(reviewed_trained['checkpoint']))
+    def no_forward(*args,**kwargs):raise AssertionError('lexical baseline forwarded neural model')
+    monkeypatch.setattr(model._model,'forward',no_forward)
+    omitted=[]
+    if damage=='reference-excluded':omitted=[case['preparation_inputs']['body']['formal_endpoints'][0]['formal_view_sha256']]
+    elif damage=='review-withdrawn':case['reviews']=[]
+    elif damage=='query-target':query['canonical_ir']={'hidden':'reference'}
+    if damage=='query-target':
+        with pytest.raises(ValueError):_structural_call(model,reviewed_fixture_owner,case,query,lane,expected,mode='lexical',top_k=1)
+        return
+    if damage=='review-withdrawn':
+        monkeypatch.setattr(lexical.BM25FrameSelector,'rank',lambda *a,**k:pytest.fail('lexical scoring before current review'))
+    result=_structural_call(model,reviewed_fixture_owner,case,query,lane,expected,
+        mode='lexical',top_k=1,forbidden={query['id']:omitted})
+    assert result['model_forward_executed'] is False
+    if damage=='review-withdrawn':assert result['status']=='abstained_current_index_unavailable';return
+    inputs=case['preparation_inputs'];formal=inputs['formal_lane']['rows'];endpoints=inputs['body']['formal_endpoints']
+    candidates=[row for row,endpoint in zip(formal,endpoints,strict=True) if endpoint['formal_view_sha256'] not in omitted]
+    selector=lexical.BM25FrameSelector([lexical.FrameCandidate(frame_id=row['id'],label=row['encoder_text'],domain='') for row in candidates])
+    expected_rank=selector.rank(query['source_text'],top_k=1)
+    assert result['rows'][0]['retrieved_ids']==[item.frame.frame_id for item in expected_rank]
+    assert result['rows'][0]['scores']==[item.score for item in expected_rank]
+    assert result['lexical_profile']['candidate_view']=='complete_TRAIN_formal_encoder_text'
+    assert result['query_target_access'] is result['legal_applicability_verified'] is False
+    assert model.checkpoint==reviewed_trained['checkpoint']
+
+
+def test_reviewed_lexical_budget_refuses_complete_oversized_query_without_clipping(
+        reviewed_trained,reviewed_fixture_owner,reviewed_case,monkeypatch):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import frame_bm25_selector as lexical
+    query=dict(id='query:lexical-work',split_sample_id='sample:lexical-work',
+        source_text=' '.join('w'+str(i) for i in range(9000)))
+    assert len(query['source_text'])<=65536
+    case,query,lane,expected=_reviewed_structural_query_fixture(reviewed_fixture_owner,reviewed_case,query=query)
+    model=retrieval.ReviewedLegalJointRetriever(reviewed_trained['checkpoint'],
+        expected_checkpoint_sha256=retrieval.checkpoint_digest(reviewed_trained['checkpoint']))
+    monkeypatch.setattr(lexical.BM25FrameSelector,'rank',lambda *a,**k:pytest.fail('scored before lexical work admission'))
+    with pytest.raises(ValueError,match='lexical token comparison budget exceeded'):
+        _structural_call(model,reviewed_fixture_owner,case,query,lane,expected,mode='lexical',top_k=1)

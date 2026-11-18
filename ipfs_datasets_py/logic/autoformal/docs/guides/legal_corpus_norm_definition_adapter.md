@@ -291,3 +291,56 @@ binds 189 pinned product buffers and 134 actual compiled/executed source buffers
 not additional tests. Older admission/graph/native cohorts remain separate.
 No actual statutory reviews, training/model gain, native Lean proof or accepted
 semantic graph/corpus follows from this software qualification.
+
+
+## Explicit reviewed mixed-sort candidate graph V3
+
+The same owner adds `build_reviewed_norm_graph_v3` and
+`validate_reviewed_norm_graph_v3` for the explicit
+`legal_reviewed_norm_admission_v3` assessment domain. Use the unchanged complete
+assessment arguments and independent full admission/candidate SHA256 values:
+
+```python
+candidate = build_reviewed_norm_graph_v3(
+    admission, *assessment_args,
+    expected_admission_sha256=independent_admission_hash,
+    **assessment_kwargs,
+)
+validate_reviewed_norm_graph_v3(
+    candidate, admission, *assessment_args,
+    expected_graph_sha256=independent_candidate_hash,
+    expected_admission_sha256=independent_admission_hash,
+    **assessment_kwargs,
+)
+```
+
+`norm_definition_graph_sha256` hashes the whole candidate. The V3 schema is
+`legal-corpus-reviewed-norm-candidate-graph/v3`; its profile is
+`complete-reviewed-mixed-sort-relational-candidate-graph/v3`. V2 and V3 remain
+separate domains: a valid V3 admission cannot be passed through the V2 APIs.
+Both original V1 routes and the explicit reviewed V2 APIs retain their contracts.
+
+Each operation replays current original V3 validation, assessment and preparation,
+including complete source/IR/review/dependency inputs. It preserves every unit,
+complete canonical typed-IR JSON companion, ordered argument roles, source
+version/occurrence/coverage, governing context, interpretation, definition-use
+path and declared cross-reference. Per-unit relational profiles remain explicit.
+Caller and detached inputs, offered candidates and original producer pins are
+checked across complete regeneration; resealing changed data supplies no bypass.
+Existing corpus record/graph and upstream input bounds remain unchanged.
+
+The accepted upstream fictional admission does not promote graph authority.
+Every graph authority flag remains false, `semantic_use_eligible` remains false,
+and training/evaluation-gold masks remain plain integer zero. Complete external
+replay inputs are still required. V3 adds no export, native parser, preservation,
+Lean build, shared-corpus or release-admission API. Current aggregate preservation
+is Object-only. Independent concrete mixed-AST/role preservation and explicit
+aggregate/coordinator successors retain their own gates.
+
+[Selected private-source evidence](../../../../../workspace/test-logs/federal-corpus-audits/legal-ir-clean-base-reviewed-norm-graph-20261108-v01/reviewed-mixed-v3-private-v01/qualification-summary-v01.json) covers60 cases across13
+functions:40 new V3 cases and20 existing reviewed-V2 cases, followed by exact
+two-file Source adoption and independent canonical READ. This is not whole-file
+qualification or a canonical pytest rerun. The one-failure baseline and the first
+fixed attempt's zero-test post-grant/pre-barrier capacity refusal remain preserved.
+No new model/training/Lean, statutory meaning, corpus admission or convergence
+result follows. Hosted CI remains unqualified.

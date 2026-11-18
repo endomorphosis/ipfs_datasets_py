@@ -1,0 +1,664 @@
+{
+  "canonical_selection_digest_recipe": "SHA256 complete selected JSON value encoded sorted compact UTF8 ensure_ascii=false; original record_cid payload seals retained unmodified and not recomputed.",
+  "evaluation_gold_mask": 0,
+  "governing_definition_use": null,
+  "legacy_HF_physical_join": null,
+  "owner_validation_required": "corpus_source.validate_source_occurrence with unchanged full source_version, original expected_raw_sha256, complete extracted_text from pinned P06documents.json, expected_extracted_sha256; use corpus_contracts.validate_record/ref as needed. No new source IDs/CIDs or samplers.",
+  "population": {
+    "distinct_selected_units": 4,
+    "duplicate_statutory_examples_claimed": false,
+    "original_source_versions": 3,
+    "physical_parent_rows": 3
+  },
+  "reuse_complete_extracted_texts": {
+    "bytes": 83276,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data1-v02/exports/documents.json",
+    "sha256": "73ef8f120b9712c01d2de02f8c1668b8d6c49a599c5638a41ceed3227c7c5eaf"
+  },
+  "schema": "legal-ir-retained-four-unit-original-record-projection/v1",
+  "scope": "Exact immutable original JSON record selections and independent full-source pins only. No sampler/sourceproducer/owner/validator execution, ID construction, newsource acquisition, semanticreview or originalcachejoin.",
+  "sections": [
+    {
+      "extracted_text": {
+        "UTF8_bytes": 72592,
+        "UTF8_sha256": "e16ca14e06034a08bc1e732cdb790c9ec5bbb96d3ba38ac3bee23367c8481851",
+        "chars": 71598,
+        "original_json_pointer": "/document_view_report/document/document_text",
+        "reuse_documents_json_pointer": "/0/text"
+      },
+      "original_sampler": {
+        "bytes": 2790274,
+        "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/101/sampling-report.json",
+        "sha256": "be524c7822f5e19a16ee56740560b19b0311001c553bd7ca9c2c9ed989af98b1"
+      },
+      "parent_row_ordinal": 0,
+      "section": "101",
+      "selected_evidence": {
+        "bytes": 59083,
+        "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/101/selected-evidence.json",
+        "sha256": "c8be609111dd142a15b2181138d7fda5880960686c0bb33c3e0a06f59761bd5d"
+      },
+      "source_version": {
+        "complete_value": {
+          "cid_scope": "payload_without_record_cid/v1",
+          "edition": "2024",
+          "extracted_view": {
+            "byte_length": 72592,
+            "character_length": 71598,
+            "cid": "bafkreihbnsqu4bqdjielyhttftnxsde6yw53s3j3uofmhpxcgnt4qsayke",
+            "coordinate_system": "extracted-unicode-codepoints-and-utf8-half-open/v1",
+            "extraction_profile": "legal-official-markup-document/v2",
+            "normalization_profile": "HTML-entities-body-text-block-whitespace-collapse-UTF8-LF/v2",
+            "sha256": "e16ca14e06034a08bc1e732cdb790c9ec5bbb96d3ba38ac3bee23367c8481851"
+          },
+          "historical_aliases": [],
+          "provision_id": "usc:us:10:101",
+          "raw_artifact": {
+            "cid": "bafkreicoruaxpfbcb4msm2gvge74kn73w4kamuvmjiapvl4tu3esdqwarm",
+            "media_type": "text/html",
+            "sha256": "4e8d017794220f192668d5313fc537fbb7140652ac4a00faaf93a6c921c2c08b"
+          },
+          "record_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+          "release_id": "govinfo-markup-v2-edition:2024",
+          "schema": "legal-corpus-source-version/v1",
+          "source_id": "usc:us:10:101"
+        },
+        "complete_value_sha256": "7894137f375a07b3c263964e9524ac6e6a6acc7111694f5d7c9c8c2f9b5b2af4",
+        "json_pointer": "/records/0"
+      }
+    },
+    {
+      "extracted_text": {
+        "UTF8_bytes": 1912,
+        "UTF8_sha256": "6b0c306698da9e5e44262e74e1f14dac151e0f7e84f466b44285bd544cd52963",
+        "chars": 1887,
+        "original_json_pointer": "/document_view_report/document/document_text",
+        "reuse_documents_json_pointer": "/1/text"
+      },
+      "original_sampler": {
+        "bytes": 134030,
+        "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7213/sampling-report.json",
+        "sha256": "7a0c92ddbb93469fd7d5ce4512f3dec55511791ff904e001050f9614ed1637c3"
+      },
+      "parent_row_ordinal": 1,
+      "section": "7213",
+      "selected_evidence": {
+        "bytes": 18215,
+        "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7213/selected-evidence.json",
+        "sha256": "f7ed1753af645c19cf76fae3a940a1ccd488cae18c6cc268a4307c7c7aa71b05"
+      },
+      "source_version": {
+        "complete_value": {
+          "cid_scope": "payload_without_record_cid/v1",
+          "edition": "2024",
+          "extracted_view": {
+            "byte_length": 1912,
+            "character_length": 1887,
+            "cid": "bafkreidlbqygngg2tzpeijrootq7ctnmcupa67ue6rtliqufxvkezvjjmm",
+            "coordinate_system": "extracted-unicode-codepoints-and-utf8-half-open/v1",
+            "extraction_profile": "legal-official-markup-document/v2",
+            "normalization_profile": "HTML-entities-body-text-block-whitespace-collapse-UTF8-LF/v2",
+            "sha256": "6b0c306698da9e5e44262e74e1f14dac151e0f7e84f466b44285bd544cd52963"
+          },
+          "historical_aliases": [],
+          "provision_id": "usc:us:10:7213",
+          "raw_artifact": {
+            "cid": "bafkreidhdesrctvnu5zrunk6gpeao25knetp5unxzm24scumjryfyvnq54",
+            "media_type": "text/html",
+            "sha256": "671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef"
+          },
+          "record_cid": "baguqeera3y2krszyd5mqfdh6jfieircvqtzxcib45qamwrs4klhmhwkql5ca",
+          "release_id": "govinfo-markup-v2-edition:2024",
+          "schema": "legal-corpus-source-version/v1",
+          "source_id": "usc:us:10:7213"
+        },
+        "complete_value_sha256": "02ff7c1a16969273029e272439cd567dac58a33624ea21c3d93b6f6a1d63f572",
+        "json_pointer": "/records/0"
+      }
+    },
+    {
+      "extracted_text": {
+        "UTF8_bytes": 3858,
+        "UTF8_sha256": "58e446ec84d0d3cf42d4b322f0da06a16620c2621cfa29fab0f0c5ddbe834b64",
+        "chars": 3817,
+        "original_json_pointer": "/document_view_report/document/document_text",
+        "reuse_documents_json_pointer": "/2/text"
+      },
+      "original_sampler": {
+        "bytes": 209925,
+        "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7214/sampling-report.json",
+        "sha256": "335181759ba447324c17b6249201d5395dce8f7bdfd7dd69f5cb2add7535a4b0"
+      },
+      "parent_row_ordinal": 2,
+      "section": "7214",
+      "selected_evidence": {
+        "bytes": 18225,
+        "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7214/selected-evidence.json",
+        "sha256": "2f7b039e2b19384d0210057580e4da61b120a64b723726825d64311840ae6e25"
+      },
+      "source_version": {
+        "complete_value": {
+          "cid_scope": "payload_without_record_cid/v1",
+          "edition": "2024",
+          "extracted_view": {
+            "byte_length": 3858,
+            "character_length": 3817,
+            "cid": "bafkreicy4rdozbgq2phufvftelynubvbmyqmeyq47iu7vmhqyxo35a2lmq",
+            "coordinate_system": "extracted-unicode-codepoints-and-utf8-half-open/v1",
+            "extraction_profile": "legal-official-markup-document/v2",
+            "normalization_profile": "HTML-entities-body-text-block-whitespace-collapse-UTF8-LF/v2",
+            "sha256": "58e446ec84d0d3cf42d4b322f0da06a16620c2621cfa29fab0f0c5ddbe834b64"
+          },
+          "historical_aliases": [],
+          "provision_id": "usc:us:10:7214",
+          "raw_artifact": {
+            "cid": "bafkreie4gomg4iloqxn24m7frizadpz4alj4j74ipveol3csj6ebhrmefy",
+            "media_type": "text/html",
+            "sha256": "9c33986e216e85dbae33e58a3201bf3c02d3c4ff887d48e5ec524f8813c5842e"
+          },
+          "record_cid": "baguqeerazs3yvjdtyapov3z5dbwfgpc7sks2lttcphq624tbw3ozrsp3pgba",
+          "release_id": "govinfo-markup-v2-edition:2024",
+          "schema": "legal-corpus-source-version/v1",
+          "source_id": "usc:us:10:7214"
+        },
+        "complete_value_sha256": "b5411324377f4e696d994bd56aef968447a5feafbf3138371aed06c308a4d70f",
+        "json_pointer": "/records/0"
+      }
+    }
+  ],
+  "selected_unit_population": [
+    {
+      "context": {
+        "complete_value": {
+          "availability": "required_unavailable",
+          "cid_scope": "payload_without_record_cid/v1",
+          "context_references": [
+            {
+              "purpose": "complete normalized source view retained, not dependency closure",
+              "record_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+              "record_kind": "source_version"
+            }
+          ],
+          "dependency_verification": "declaration_only",
+          "missing_requirements": [
+            "definition",
+            "authority",
+            "antecedent",
+            "shared_qualifier",
+            "temporal_origin",
+            "referenced_provision"
+          ],
+          "reason": "Whole source view is retained; legal context attachments and scope remain unreviewed.",
+          "record_cid": "baguqeeralpcglyrjsh555a64ri2zkv7mkr4zsuyx3sjbsgtzcj6mywwhr2dq",
+          "schema": "legal-corpus-context-declaration/v1",
+          "source_occurrence_cid": "baguqeera2cmwvh2ny35xyhcok4zd7v6lvhdswp3ca3uj4tnoo6lcodlzsl2a"
+        },
+        "complete_value_sha256": "e9321b8117f556e23526404f8133ab600acd52dd22132fc51e88a9820325589d",
+        "json_pointer": "/records/146"
+      },
+      "occurrence": {
+        "complete_value": {
+          "cid_scope": "payload_without_record_cid/v1",
+          "coordinate_system": "extracted-unicode-codepoints-and-utf8-half-open/v1",
+          "end_char": 6527,
+          "end_utf8": 6551,
+          "historical_aliases": [],
+          "record_cid": "baguqeera2cmwvh2ny35xyhcok4zd7v6lvhdswp3ca3uj4tnoo6lcodlzsl2a",
+          "schema": "legal-corpus-source-occurrence/v1",
+          "source_version_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+          "span_cid": "bafkreicddvi46ydescidocgmhsrordpbdyqawvmb6rmyimljgqiybtkpyq",
+          "span_sha256": "431d51cf606490903708cc3ca2e88de11e200b5581f459843169341180cd4fc4",
+          "span_text": "(b) Personnel Generally.\u2014The following definitions relating to military personnel apply in this title:",
+          "start_char": 6425,
+          "start_utf8": 6447
+        },
+        "complete_value_sha256": "afa05079d6c5a859f31d18118e87129e0dcb0f8f3ab849b034ed31a69ccf8e49",
+        "json_pointer": "/records/145"
+      },
+      "parent_row_ordinal": 0,
+      "section": "101",
+      "source_role_and_semantics_reviewed": false,
+      "source_version_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+      "unit": {
+        "complete_value": {
+          "authority": {
+            "Lean_admitted": false,
+            "Lean_kernel_admission": false,
+            "context_closure_verified": false,
+            "css_rendering_verified": false,
+            "definition_operator_interpreted": false,
+            "formalized": false,
+            "global_consistency_verified": false,
+            "governing_source_binding_verified": false,
+            "legal_currentness_verified": false,
+            "legal_hierarchy_verified": false,
+            "legal_review_verified": false,
+            "legal_roles_verified": false,
+            "original_source_body_mapping_verified": false,
+            "producer_edition_correspondence_verified": false,
+            "producer_revision_correspondence_verified": false,
+            "proof_authority": false,
+            "publisher_authenticity_verified": false,
+            "raw_html_coordinate_mapping_verified": false,
+            "semantic_graph_admitted": false,
+            "source_occurrence_selected": false,
+            "source_semantics_verified": false,
+            "training_gold_qualified": false,
+            "training_qualified": false
+          },
+          "candidate_input": true,
+          "cid_scope": "payload_without_record_cid/v1",
+          "context_ref": {
+            "record_cid": "baguqeeralpcglyrjsh555a64ri2zkv7mkr4zsuyx3sjbsgtzcj6mywwhr2dq",
+            "schema": "legal-corpus-context-declaration/v1",
+            "sha256": "e9321b8117f556e23526404f8133ab600acd52dd22132fc51e88a9820325589d"
+          },
+          "evaluation_gold_mask": 0,
+          "formal_outputs": [],
+          "markup_block_ref": {
+            "block_id": "legal-markup-block:sha256:f36171fea1233778c6bf1e1185da821c79043fe502fdc38b712951a2b1a01b74",
+            "block_index": 48,
+            "sha256": "00a7086f57502d2a84a479392d0f08bacb9b655f0852ec794d588a693af01e9e"
+          },
+          "meaning_target": null,
+          "normalized_view_id": "legal-official-markup-view:sha256:6a4190668d49d48b72067e555ff274380e76d58a3501088f43137f41dabe7973",
+          "ordinal": 48,
+          "paragraph_fragment_withheld": false,
+          "record_cid": "baguqeerahdfpg6hzil7fbc45vksgjzsqdq7uh4dmch4bwt3oo3cybch7btpa",
+          "sampling_stratum": "candidate_statute_paragraph",
+          "schema": "legal-source-structured-sample-unit/v1",
+          "semantic_assertions": [],
+          "source_occurrence_ref": {
+            "record_cid": "baguqeera2cmwvh2ny35xyhcok4zd7v6lvhdswp3ca3uj4tnoo6lcodlzsl2a",
+            "schema": "legal-corpus-source-occurrence/v1",
+            "sha256": "afa05079d6c5a859f31d18118e87129e0dcb0f8f3ab849b034ed31a69ccf8e49"
+          },
+          "source_version_ref": {
+            "record_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+            "schema": "legal-corpus-source-version/v1",
+            "sha256": "7894137f375a07b3c263964e9524ac6e6a6acc7111694f5d7c9c8c2f9b5b2af4"
+          },
+          "training_mask": 0
+        },
+        "complete_value_sha256": "8cf40c47c26e77e5721b7bd124740b21c0a81f10239963b7ba5c195de04e7706",
+        "json_pointer": "/records/147"
+      },
+      "unit_ordinal": 48,
+      "unit_ref": {
+        "record_cid": "baguqeerahdfpg6hzil7fbc45vksgjzsqdq7uh4dmch4bwt3oo3cybch7btpa",
+        "schema": "legal-source-structured-sample-unit/v1",
+        "sha256": "8cf40c47c26e77e5721b7bd124740b21c0a81f10239963b7ba5c195de04e7706"
+      }
+    },
+    {
+      "context": {
+        "complete_value": {
+          "availability": "required_unavailable",
+          "cid_scope": "payload_without_record_cid/v1",
+          "context_references": [
+            {
+              "purpose": "complete normalized source view retained, not dependency closure",
+              "record_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+              "record_kind": "source_version"
+            }
+          ],
+          "dependency_verification": "declaration_only",
+          "missing_requirements": [
+            "definition",
+            "authority",
+            "antecedent",
+            "shared_qualifier",
+            "temporal_origin",
+            "referenced_provision"
+          ],
+          "reason": "Whole source view is retained; legal context attachments and scope remain unreviewed.",
+          "record_cid": "baguqeeraxfs35w7bh6ljxu4jw54gk7xysss4frxgm6dzfd6oyz53fmv5nd7a",
+          "schema": "legal-corpus-context-declaration/v1",
+          "source_occurrence_cid": "baguqeeracyfied5gomuscg5pdep44znimi2zdlqjbs4n2jwq4yf6dekbgera"
+        },
+        "complete_value_sha256": "dfefdabee16e8e3643ea37bc5dbe54e62a35ae091ce391d4d788472f78c7cb08",
+        "json_pointer": "/records/149"
+      },
+      "occurrence": {
+        "complete_value": {
+          "cid_scope": "payload_without_record_cid/v1",
+          "coordinate_system": "extracted-unicode-codepoints-and-utf8-half-open/v1",
+          "end_char": 6591,
+          "end_utf8": 6615,
+          "historical_aliases": [],
+          "record_cid": "baguqeeracyfied5gomuscg5pdep44znimi2zdlqjbs4n2jwq4yf6dekbgera",
+          "schema": "legal-corpus-source-occurrence/v1",
+          "source_version_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+          "span_cid": "bafkreid2qrvxccbvr32wtjwambvr2fyf66postmphu7otwrshbwb7lvh44",
+          "span_sha256": "7a846b7108358ef569a6c0606b1d1705f79ee94d8f3d3ee9da32386c1faea7e7",
+          "span_text": "(1) The term \"officer\" means a commissioned or warrant officer.",
+          "start_char": 6528,
+          "start_utf8": 6552
+        },
+        "complete_value_sha256": "2589544ca5436085bb28b4ba81ca44cd829e5c5c045e299120810e4e27b95882",
+        "json_pointer": "/records/148"
+      },
+      "parent_row_ordinal": 0,
+      "section": "101",
+      "source_role_and_semantics_reviewed": false,
+      "source_version_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+      "unit": {
+        "complete_value": {
+          "authority": {
+            "Lean_admitted": false,
+            "Lean_kernel_admission": false,
+            "context_closure_verified": false,
+            "css_rendering_verified": false,
+            "definition_operator_interpreted": false,
+            "formalized": false,
+            "global_consistency_verified": false,
+            "governing_source_binding_verified": false,
+            "legal_currentness_verified": false,
+            "legal_hierarchy_verified": false,
+            "legal_review_verified": false,
+            "legal_roles_verified": false,
+            "original_source_body_mapping_verified": false,
+            "producer_edition_correspondence_verified": false,
+            "producer_revision_correspondence_verified": false,
+            "proof_authority": false,
+            "publisher_authenticity_verified": false,
+            "raw_html_coordinate_mapping_verified": false,
+            "semantic_graph_admitted": false,
+            "source_occurrence_selected": false,
+            "source_semantics_verified": false,
+            "training_gold_qualified": false,
+            "training_qualified": false
+          },
+          "candidate_input": true,
+          "cid_scope": "payload_without_record_cid/v1",
+          "context_ref": {
+            "record_cid": "baguqeeraxfs35w7bh6ljxu4jw54gk7xysss4frxgm6dzfd6oyz53fmv5nd7a",
+            "schema": "legal-corpus-context-declaration/v1",
+            "sha256": "dfefdabee16e8e3643ea37bc5dbe54e62a35ae091ce391d4d788472f78c7cb08"
+          },
+          "evaluation_gold_mask": 0,
+          "formal_outputs": [],
+          "markup_block_ref": {
+            "block_id": "legal-markup-block:sha256:0addbe3f65b0d78ff9b2f5ba57c224b9cb023941d82acbe19b63b410ee03f08b",
+            "block_index": 49,
+            "sha256": "f0369ddfb77edf46c2f2df6f79cf154c2fad81cb0b59af3c4501bf5d91c6b2dc"
+          },
+          "meaning_target": null,
+          "normalized_view_id": "legal-official-markup-view:sha256:6a4190668d49d48b72067e555ff274380e76d58a3501088f43137f41dabe7973",
+          "ordinal": 49,
+          "paragraph_fragment_withheld": false,
+          "record_cid": "baguqeeraaa3y5jwjaf2d2jkar6now7eq3vml7do7ytuy7jvkajfcrwzx2dgq",
+          "sampling_stratum": "candidate_statute_paragraph",
+          "schema": "legal-source-structured-sample-unit/v1",
+          "semantic_assertions": [],
+          "source_occurrence_ref": {
+            "record_cid": "baguqeeracyfied5gomuscg5pdep44znimi2zdlqjbs4n2jwq4yf6dekbgera",
+            "schema": "legal-corpus-source-occurrence/v1",
+            "sha256": "2589544ca5436085bb28b4ba81ca44cd829e5c5c045e299120810e4e27b95882"
+          },
+          "source_version_ref": {
+            "record_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+            "schema": "legal-corpus-source-version/v1",
+            "sha256": "7894137f375a07b3c263964e9524ac6e6a6acc7111694f5d7c9c8c2f9b5b2af4"
+          },
+          "training_mask": 0
+        },
+        "complete_value_sha256": "a15dca5d46ad7783a09b4f6ec69b97cdb45aa393df9a48caa5c328612a6a356a",
+        "json_pointer": "/records/150"
+      },
+      "unit_ordinal": 49,
+      "unit_ref": {
+        "record_cid": "baguqeeraaa3y5jwjaf2d2jkar6now7eq3vml7do7ytuy7jvkajfcrwzx2dgq",
+        "schema": "legal-source-structured-sample-unit/v1",
+        "sha256": "a15dca5d46ad7783a09b4f6ec69b97cdb45aa393df9a48caa5c328612a6a356a"
+      }
+    },
+    {
+      "context": {
+        "complete_value": {
+          "availability": "required_unavailable",
+          "cid_scope": "payload_without_record_cid/v1",
+          "context_references": [
+            {
+              "purpose": "complete normalized source view retained, not dependency closure",
+              "record_cid": "baguqeera3y2krszyd5mqfdh6jfieircvqtzxcib45qamwrs4klhmhwkql5ca",
+              "record_kind": "source_version"
+            }
+          ],
+          "dependency_verification": "declaration_only",
+          "missing_requirements": [
+            "definition",
+            "authority",
+            "antecedent",
+            "shared_qualifier",
+            "temporal_origin",
+            "referenced_provision"
+          ],
+          "reason": "Whole source view is retained; legal context attachments and scope remain unreviewed.",
+          "record_cid": "baguqeerarwgueicrqclip7qv7vwvnt3gd7mpedlhdmpl2sgxlh4ojg3d76pq",
+          "schema": "legal-corpus-context-declaration/v1",
+          "source_occurrence_cid": "baguqeerarbvejvawh23hjqt5b7e7ii5x5zzibekdweepvmi36sqzywkchcda"
+        },
+        "complete_value_sha256": "9b957a2c7496cca1ce9768ee764f52da501cb327cdf0d38ed6994c526bb9e51b",
+        "json_pointer": "/records/29"
+      },
+      "occurrence": {
+        "complete_value": {
+          "cid_scope": "payload_without_record_cid/v1",
+          "coordinate_system": "extracted-unicode-codepoints-and-utf8-half-open/v1",
+          "end_char": 624,
+          "end_utf8": 625,
+          "historical_aliases": [],
+          "record_cid": "baguqeerarbvejvawh23hjqt5b7e7ii5x5zzibekdweepvmi36sqzywkchcda",
+          "schema": "legal-corpus-source-occurrence/v1",
+          "source_version_cid": "baguqeera3y2krszyd5mqfdh6jfieircvqtzxcib45qamwrs4klhmhwkql5ca",
+          "span_cid": "bafkreia476xedqoqlpdycozp2v4olmdplbyeeirbzgn4hgujqa6kizcoki",
+          "span_sha256": "1cffae41c1d05bc7813b2fd578e5b06f5870422221c99bc39a89803ca4644e52",
+          "span_text": "Officers of the Corps of Engineers may be assigned or transferred to and from duties involving the civil functions of the Corps of Engineers only with the approval of the Secretary of the Army.",
+          "start_char": 431,
+          "start_utf8": 432
+        },
+        "complete_value_sha256": "63f8c88c633e433f9ca75f8493a1299b947c3bd07aa8122433a5a07422dc6322",
+        "json_pointer": "/records/28"
+      },
+      "parent_row_ordinal": 1,
+      "section": "7213",
+      "source_role_and_semantics_reviewed": false,
+      "source_version_cid": "baguqeera3y2krszyd5mqfdh6jfieircvqtzxcib45qamwrs4klhmhwkql5ca",
+      "unit": {
+        "complete_value": {
+          "authority": {
+            "Lean_admitted": false,
+            "Lean_kernel_admission": false,
+            "context_closure_verified": false,
+            "css_rendering_verified": false,
+            "definition_operator_interpreted": false,
+            "formalized": false,
+            "global_consistency_verified": false,
+            "governing_source_binding_verified": false,
+            "legal_currentness_verified": false,
+            "legal_hierarchy_verified": false,
+            "legal_review_verified": false,
+            "legal_roles_verified": false,
+            "original_source_body_mapping_verified": false,
+            "producer_edition_correspondence_verified": false,
+            "producer_revision_correspondence_verified": false,
+            "proof_authority": false,
+            "publisher_authenticity_verified": false,
+            "raw_html_coordinate_mapping_verified": false,
+            "semantic_graph_admitted": false,
+            "source_occurrence_selected": false,
+            "source_semantics_verified": false,
+            "training_gold_qualified": false,
+            "training_qualified": false
+          },
+          "candidate_input": true,
+          "cid_scope": "payload_without_record_cid/v1",
+          "context_ref": {
+            "record_cid": "baguqeerarwgueicrqclip7qv7vwvnt3gd7mpedlhdmpl2sgxlh4ojg3d76pq",
+            "schema": "legal-corpus-context-declaration/v1",
+            "sha256": "9b957a2c7496cca1ce9768ee764f52da501cb327cdf0d38ed6994c526bb9e51b"
+          },
+          "evaluation_gold_mask": 0,
+          "formal_outputs": [],
+          "markup_block_ref": {
+            "block_id": "legal-markup-block:sha256:273550c4d2ddd0de722382b2eace236d0959c101b704e4fdf65603151c67c062",
+            "block_index": 9,
+            "sha256": "8761867999be50a009443bedee774d449493b2babc82c1e59bad6b6028e1385c"
+          },
+          "meaning_target": null,
+          "normalized_view_id": "legal-official-markup-view:sha256:5268bd461c786e873a4faea3413cc8af3475905eca3646f3d900094e6d45ef13",
+          "ordinal": 9,
+          "paragraph_fragment_withheld": false,
+          "record_cid": "baguqeerayiogyiuxpxy2cdjngs6vcu32575lsddffqtbdqjoklbilpe4dfvq",
+          "sampling_stratum": "candidate_statute_paragraph",
+          "schema": "legal-source-structured-sample-unit/v1",
+          "semantic_assertions": [],
+          "source_occurrence_ref": {
+            "record_cid": "baguqeerarbvejvawh23hjqt5b7e7ii5x5zzibekdweepvmi36sqzywkchcda",
+            "schema": "legal-corpus-source-occurrence/v1",
+            "sha256": "63f8c88c633e433f9ca75f8493a1299b947c3bd07aa8122433a5a07422dc6322"
+          },
+          "source_version_ref": {
+            "record_cid": "baguqeera3y2krszyd5mqfdh6jfieircvqtzxcib45qamwrs4klhmhwkql5ca",
+            "schema": "legal-corpus-source-version/v1",
+            "sha256": "02ff7c1a16969273029e272439cd567dac58a33624ea21c3d93b6f6a1d63f572"
+          },
+          "training_mask": 0
+        },
+        "complete_value_sha256": "14510dd173adbb2100c99a76e4a7802e0bbb8f42ea01a0b8e6cf67621125af3e",
+        "json_pointer": "/records/30"
+      },
+      "unit_ordinal": 9,
+      "unit_ref": {
+        "record_cid": "baguqeerayiogyiuxpxy2cdjngs6vcu32575lsddffqtbdqjoklbilpe4dfvq",
+        "schema": "legal-source-structured-sample-unit/v1",
+        "sha256": "14510dd173adbb2100c99a76e4a7802e0bbb8f42ea01a0b8e6cf67621125af3e"
+      }
+    },
+    {
+      "context": {
+        "complete_value": {
+          "availability": "required_unavailable",
+          "cid_scope": "payload_without_record_cid/v1",
+          "context_references": [
+            {
+              "purpose": "complete normalized source view retained, not dependency closure",
+              "record_cid": "baguqeerazs3yvjdtyapov3z5dbwfgpc7sks2lttcphq624tbw3ozrsp3pgba",
+              "record_kind": "source_version"
+            }
+          ],
+          "dependency_verification": "declaration_only",
+          "missing_requirements": [
+            "definition",
+            "authority",
+            "antecedent",
+            "shared_qualifier",
+            "temporal_origin",
+            "referenced_provision"
+          ],
+          "reason": "Whole source view is retained; legal context attachments and scope remain unreviewed.",
+          "record_cid": "baguqeeravicuner7iijjt7uw3xgjpsgc7j6gzdxm6lfzhvcctvro6c6dmz7a",
+          "schema": "legal-corpus-context-declaration/v1",
+          "source_occurrence_cid": "baguqeeracdglsquykktyomvkuyrq2xf4ljhzwbdn7kguvnhithregnhhpoja"
+        },
+        "complete_value_sha256": "ebea95a2297c01e2b0482c41d48c22f0f5e6372aaddd68d46f48087b48f17950",
+        "json_pointer": "/records/29"
+      },
+      "occurrence": {
+        "complete_value": {
+          "cid_scope": "payload_without_record_cid/v1",
+          "coordinate_system": "extracted-unicode-codepoints-and-utf8-half-open/v1",
+          "end_char": 570,
+          "end_utf8": 571,
+          "historical_aliases": [],
+          "record_cid": "baguqeeracdglsquykktyomvkuyrq2xf4ljhzwbdn7kguvnhithregnhhpoja",
+          "schema": "legal-corpus-source-occurrence/v1",
+          "source_version_cid": "baguqeerazs3yvjdtyapov3z5dbwfgpc7sks2lttcphq624tbw3ozrsp3pgba",
+          "span_cid": "bafkreib4qjsk7xusaa5jmlocksz3yamsqwgn7ivv63y63awndynifqjrhy",
+          "span_sha256": "3c8264afde92003a962dc254b3bc0192858cdfa2b5f6f1ed82cd1e1a82c1313e",
+          "span_text": "The President may detail not more than three officers assigned to the Corps of Engineers to assist the Mayor of the District of Columbia in discharging his duties.",
+          "start_char": 407,
+          "start_utf8": 408
+        },
+        "complete_value_sha256": "557afc10d0e76cfd08d340ddf7ad047e585dc290fba093be6849df527c1fd970",
+        "json_pointer": "/records/28"
+      },
+      "parent_row_ordinal": 2,
+      "section": "7214",
+      "source_role_and_semantics_reviewed": false,
+      "source_version_cid": "baguqeerazs3yvjdtyapov3z5dbwfgpc7sks2lttcphq624tbw3ozrsp3pgba",
+      "unit": {
+        "complete_value": {
+          "authority": {
+            "Lean_admitted": false,
+            "Lean_kernel_admission": false,
+            "context_closure_verified": false,
+            "css_rendering_verified": false,
+            "definition_operator_interpreted": false,
+            "formalized": false,
+            "global_consistency_verified": false,
+            "governing_source_binding_verified": false,
+            "legal_currentness_verified": false,
+            "legal_hierarchy_verified": false,
+            "legal_review_verified": false,
+            "legal_roles_verified": false,
+            "original_source_body_mapping_verified": false,
+            "producer_edition_correspondence_verified": false,
+            "producer_revision_correspondence_verified": false,
+            "proof_authority": false,
+            "publisher_authenticity_verified": false,
+            "raw_html_coordinate_mapping_verified": false,
+            "semantic_graph_admitted": false,
+            "source_occurrence_selected": false,
+            "source_semantics_verified": false,
+            "training_gold_qualified": false,
+            "training_qualified": false
+          },
+          "candidate_input": true,
+          "cid_scope": "payload_without_record_cid/v1",
+          "context_ref": {
+            "record_cid": "baguqeeravicuner7iijjt7uw3xgjpsgc7j6gzdxm6lfzhvcctvro6c6dmz7a",
+            "schema": "legal-corpus-context-declaration/v1",
+            "sha256": "ebea95a2297c01e2b0482c41d48c22f0f5e6372aaddd68d46f48087b48f17950"
+          },
+          "evaluation_gold_mask": 0,
+          "formal_outputs": [],
+          "markup_block_ref": {
+            "block_id": "legal-markup-block:sha256:7638c7434212de8be67b87aebdbe9d455a4afbd7932a4d45c1e833970933e4db",
+            "block_index": 9,
+            "sha256": "c386f12bd897ccd844f1274e833d2afd19adcfde01dc1adc3eaa81f74e7e9eb8"
+          },
+          "meaning_target": null,
+          "normalized_view_id": "legal-official-markup-view:sha256:25a28893afb8dbd67bc9b404a88470b214a9bb548c338abf6f67f444ca8ef107",
+          "ordinal": 9,
+          "paragraph_fragment_withheld": false,
+          "record_cid": "baguqeera632lzwmnhvsgkmnw6ydcqxmhepnxg7nssnnq2ayxcihfgevvlbrq",
+          "sampling_stratum": "candidate_statute_paragraph",
+          "schema": "legal-source-structured-sample-unit/v1",
+          "semantic_assertions": [],
+          "source_occurrence_ref": {
+            "record_cid": "baguqeeracdglsquykktyomvkuyrq2xf4ljhzwbdn7kguvnhithregnhhpoja",
+            "schema": "legal-corpus-source-occurrence/v1",
+            "sha256": "557afc10d0e76cfd08d340ddf7ad047e585dc290fba093be6849df527c1fd970"
+          },
+          "source_version_ref": {
+            "record_cid": "baguqeerazs3yvjdtyapov3z5dbwfgpc7sks2lttcphq624tbw3ozrsp3pgba",
+            "schema": "legal-corpus-source-version/v1",
+            "sha256": "b5411324377f4e696d994bd56aef968447a5feafbf3138371aed06c308a4d70f"
+          },
+          "training_mask": 0
+        },
+        "complete_value_sha256": "71d864e39fa5e175eb3af26eb78427418435fb89eb4868a2bb68bc2cc7a4a65c",
+        "json_pointer": "/records/30"
+      },
+      "unit_ordinal": 9,
+      "unit_ref": {
+        "record_cid": "baguqeera632lzwmnhvsgkmnw6ydcqxmhepnxg7nssnnq2ayxcihfgevvlbrq",
+        "schema": "legal-source-structured-sample-unit/v1",
+        "sha256": "71d864e39fa5e175eb3af26eb78427418435fb89eb4868a2bb68bc2cc7a4a65c"
+      }
+    }
+  ],
+  "training_mask": 0
+}

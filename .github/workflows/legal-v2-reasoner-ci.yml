@@ -15,7 +15,18 @@ on:
       - "ipfs_datasets_py/logic/formalization/autoencoder/**"
       - "ipfs_datasets_py/optimizers/logic_theorem_optimizer/**"
       - "tests/unit/optimizers/logic_theorem_optimizer/test_legal_*.py"
+      - "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py"
+      - "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_process.py"
+      - "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py"
+      - "scripts/ops/legal_ir/run_incremental_autoencoders.py"
+      - "tests/unit/logic/test_autoformal_campaign_training_inputs.py"
+      - "tests/unit/logic/test_autoformal_reviewed_context_sharing.py"
       - "tests/unit/logic/formalization/autoencoder/test_alignment_relation_*.py"
+      - "tests/unit/logic/formalization/autoencoder/test_alignment_richer_embeddings.py"
+      - "tests/unit/logic/formalization/autoencoder/test_alignment_lane_bundle.py"
+      - "tests/unit/logic/formalization/autoencoder/test_source_embeddings_384_device.py"
+      - "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_embedding_runtime.py"
+      - "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_embedding_production.py"
       - "tests/fixtures/legal_ir/joint_retrieval/**"
       - "ipfs_datasets_py/logic/integration/reasoning/**"
       - "tests/unit/logic/integration/test_hammer.py"
@@ -51,7 +62,18 @@ on:
       - "ipfs_datasets_py/logic/formalization/autoencoder/**"
       - "ipfs_datasets_py/optimizers/logic_theorem_optimizer/**"
       - "tests/unit/optimizers/logic_theorem_optimizer/test_legal_*.py"
+      - "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py"
+      - "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_process.py"
+      - "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py"
+      - "scripts/ops/legal_ir/run_incremental_autoencoders.py"
+      - "tests/unit/logic/test_autoformal_campaign_training_inputs.py"
+      - "tests/unit/logic/test_autoformal_reviewed_context_sharing.py"
       - "tests/unit/logic/formalization/autoencoder/test_alignment_relation_*.py"
+      - "tests/unit/logic/formalization/autoencoder/test_alignment_richer_embeddings.py"
+      - "tests/unit/logic/formalization/autoencoder/test_alignment_lane_bundle.py"
+      - "tests/unit/logic/formalization/autoencoder/test_source_embeddings_384_device.py"
+      - "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_embedding_runtime.py"
+      - "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_embedding_production.py"
       - "tests/fixtures/legal_ir/joint_retrieval/**"
       - "ipfs_datasets_py/logic/integration/reasoning/**"
       - "tests/unit/logic/integration/test_hammer.py"
@@ -250,165 +272,570 @@ jobs:
           echo "Backend smoke failed for ${{ matrix.backend_id }}. See uploaded log artifact."
           exit 1
 
+  legal-autoformal-validation:
+    name: Legal autoformal validation (${{ matrix.lane }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        include:
+        - lane: native-lean
+          group: native
+          shard: 0
+        - lane: contracts
+          group: contracts
+          shard: 0
+        - lane: parent-0
+          group: parent
+          shard: 0
+        - lane: parent-1
+          group: parent
+          shard: 1
+        - lane: admission
+          group: admission
+          shard: 0
+        - lane: cpu-0
+          group: cpu
+          shard: 0
+        - lane: cpu-1
+          group: cpu
+          shard: 1
+        - lane: cpu-2
+          group: cpu
+          shard: 2
+        - lane: cpu-3
+          group: cpu
+          shard: 3
+        - lane: cpu-4
+          group: cpu
+          shard: 4
+        - lane: cpu-5
+          group: cpu
+          shard: 5
+        - lane: cpu-6
+          group: cpu
+          shard: 6
+        - lane: cpu-7
+          group: cpu
+          shard: 7
+    env:
+      IPFS_DATASETS_PY_MINIMAL_IMPORTS: '1'
+      IPFS_DATASETS_PY_ENABLE_MCP_IMPORTS: '0'
+      IPFS_DATASETS_PY_ENABLE_FASTAPI_IMPORTS: '0'
+      IPFS_DATASETS_PY_ENABLE_FINANCE_DASHBOARD_IMPORTS: '0'
+      IPFS_DATASETS_PY_ENABLE_LLM_IMPORTS: '0'
+      IPFS_DATASETS_PY_WARN_OPTIONAL_IMPORTS: '0'
+      HF_HUB_OFFLINE: '1'
+      TRANSFORMERS_OFFLINE: '1'
+      IPFS_DATASETS_AUTO_INSTALL: '0'
+      IPFS_KIT_AUTO_INSTALL_DEPS: '0'
+      PYTEST_DISABLE_PLUGIN_AUTOLOAD: '1'
+      IPFS_DATASETS_RUN_NATIVE_LEAN: '1'
+      IPFS_DATASETS_LEAN_VERSION: 4.34.1
+      IPFS_DATASETS_NATIVE_LEAN_REPORT: native-lean-v3-result.json
+      OMP_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
+      CUDA_VISIBLE_DEVICES: ''
+    steps:
+    - uses: actions/checkout@v5
+    - uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    - name: Install focused Python test dependencies
+      run: python -m pip install pytest==8.3.4 numpy==2.1.3 beartype duckdb multiformats cryptography requests rich huggingface_hub
+        z3-solver transformers==5.19.0 tokenizers==0.23.3
+    - name: Install pinned CPU retrieval test dependency
+      run: python -m pip install torch==2.9.1 --index-url https://download.pytorch.org/whl/cpu
+    - name: Restore pinned Lean toolchain
+      id: lean-cache
+      uses: actions/cache@v4
+      with:
+        path: ~/.elan/toolchains/leanprover--lean4---v4.34.1
+        key: legal-autoformal-lean-4.34.1-${{ runner.os }}-${{ runner.arch }}
+      if: ${{ matrix.group == 'native' }}
+    - name: Install the pinned Lean toolchain
+      if: ${{ matrix.group == 'native' && steps.lean-cache.outputs.cache-hit != 'true' }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        mkdir -p "$RUNNER_TEMP/legal-ir-elan"
+        curl --fail --location --retry 2 \
+          https://github.com/leanprover/elan/releases/download/v4.1.2/elan-x86_64-unknown-linux-gnu.tar.gz \
+          --output "$RUNNER_TEMP/legal-ir-elan/elan.tar.gz"
+        tar -xzf "$RUNNER_TEMP/legal-ir-elan/elan.tar.gz" -C "$RUNNER_TEMP/legal-ir-elan"
+        "$RUNNER_TEMP/legal-ir-elan/elan-init" -y --no-modify-path \
+          --default-toolchain leanprover/lean4:v4.34.1
+    - name: Select the pinned executable
+      shell: bash
+      run: |
+        printf '%s\n' "IPFS_DATASETS_LEAN_EXECUTABLE=$HOME/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lean" >> "$GITHUB_ENV"
+        printf '%s\n' "IPFS_DATASETS_NATIVE_LAKE_TEST_EXECUTABLE=$HOME/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake" >> "$GITHUB_ENV"
+      if: ${{ matrix.group == 'native' }}
+    - name: Run focused proof and cache contracts
+      env:
+        IPFS_DATASETS_RUN_NATIVE_LEAN: '0'
+        PYTHONPATH: ${{ github.workspace }}
+      run: |
+        python -m pytest -c /dev/null --noconftest \
+          tests/integration/logic/backends/test_kernel_backends.py \
+          tests/unit/logic/legal_ir/test_proof_cache.py \
+          tests/unit/logic/autoformal/test_corpus_graph.py \
+          tests/unit/logic/autoformal/test_legal_graph_dependencies.py \
+          tests/unit/logic/test_duckdb_proof_migration.py \
+          tests/unit/logic/test_duckdb_proof_store.py::test_exact_verification_cache_interop_bridge \
+          tests/unit/logic/test_duckdb_proof_store.py::test_verification_cache_entry_can_be_put_directly \
+          tests/unit/logic/test_duckdb_proof_store.py::test_advisory_verification_projection_uses_target_status_polarity \
+          tests/unit/logic/test_duckdb_proof_store.py::test_store_put_retains_advisory_candidate_without_proof_authority \
+          --deselect tests/integration/logic/backends/test_kernel_backends.py::test_lean_native_v2_expected_type_and_dependency_policy \
+          --deselect tests/integration/logic/backends/test_kernel_backends.py::test_lean_native_v3_proof_cache_round_trip_and_exact_reuse_context \
+          --deselect tests/integration/logic/backends/test_kernel_backends.py::test_lean_native_quoted_identifier_preserves_expected_goal \
+          -q --tb=short --junitxml=legal-autoformal-contracts-junit.xml
+      if: ${{ matrix.group == 'contracts' }}
+    - name: Run actual Lean declaration, type and dependency controls
+      env:
+        PYTHONPATH: ${{ github.workspace }}
+      run: |
+        python -m pytest -c /dev/null --noconftest \
+          tests/integration/logic/backends/test_kernel_backends.py::test_lean_native_v2_expected_type_and_dependency_policy \
+          tests/integration/logic/backends/test_kernel_backends.py::test_lean_native_v3_proof_cache_round_trip_and_exact_reuse_context \
+          tests/integration/logic/backends/test_kernel_backends.py::test_lean_native_quoted_identifier_preserves_expected_goal \
+          --basetemp=native-lean-cases \
+          -v --tb=short --junitxml=native-lean-v3-junit.xml
+      if: ${{ matrix.group == 'native' }}
+    - name: Run preservation mutation and custody contracts
+      env:
+        IPFS_DATASETS_RUN_NATIVE_LEAN: '0'
+        PYTHONPATH: ${{ github.workspace }}
+      run: |
+        python -m pytest -c /dev/null --noconftest \
+          tests/unit/logic/autoformal/test_legal_native_ast_preservation.py \
+          tests/unit/logic/autoformal/test_legal_native_ast_preservation_native.py \
+          -k 'not installed_lean' \
+          -q --tb=short --junitxml=legal-preservation-contracts-junit.xml
+      if: ${{ matrix.group == 'contracts' }}
+    - name: Run Hammer and proof-feedback trust boundaries
+      env:
+        IPFS_DATASETS_RUN_NATIVE_LEAN: '0'
+        PYTHONPATH: ${{ github.workspace }}
+      run: |
+        python -m pytest -c /dev/null --noconftest \
+          tests/unit/logic/integration/test_hammer.py \
+          tests/unit/logic/integration/test_legal_ir_hammer_translation.py \
+          tests/unit/logic/integration/test_legal_ir_proof_feedback.py \
+          -q --tb=short --junitxml=legal-proof-feedback-trust-junit.xml
+      if: ${{ matrix.group == 'contracts' }}
+    - name: Run source-withheld surface cycle and canonical regressions
+      env:
+        IPFS_DATASETS_RUN_NATIVE_LEAN: '0'
+        PYTHONPATH: ${{ github.workspace }}
+      run: |
+        python -m pytest -c /dev/null --noconftest \
+          tests/unit/logic/legal_ir/test_extended_decompiler.py \
+          tests/unit/logic/legal_ir/test_canonical_decompiler.py \
+          tests/unit/logic/legal_ir/test_canonical_decompiler_reconstruction.py \
+          -q --tb=short --junitxml=legal-source-withheld-cycle-junit.xml
+      if: ${{ matrix.group == 'contracts' }}
+    - name: Run complete reviewed retrieval controls
+      env:
+        IPFS_DATASETS_RUN_NATIVE_LEAN: '0'
+        PYTHONPATH: ${{ github.workspace }}
+      run: |
+        python -m pytest -c /dev/null --noconftest \
+          tests/unit/logic/formalization/autoencoder/test_alignment_relation_declarations.py \
+          tests/unit/logic/formalization/autoencoder/test_alignment_relation_mask_handoff.py \
+          tests/unit/logic/formalization/autoencoder/test_alignment_richer_embeddings.py \
+          tests/unit/logic/formalization/autoencoder/test_alignment_lane_bundle.py \
+          tests/unit/logic/formalization/autoencoder/test_source_embeddings_384_device.py \
+          tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_embedding_runtime.py \
+          tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py::test_actual_GTE_ranked_context_capacity_and_source_only_T5_baseline \
+          tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py::test_actual_GTE_shorttag_complete_context_reaches_local_T5 \
+          tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_embedding_production.py \
+          tests/unit/optimizers/logic_theorem_optimizer/test_legal_joint_retrieval.py \
+          tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_semantic_metrics.py \
+          tests/unit/optimizers/logic_theorem_optimizer/test_legal_structured_retrieval.py \
+          tests/unit/logic/test_autoformal_reviewed_context_sharing.py \
+          -q --tb=short --junitxml=legal-reviewed-retrieval-junit.xml
+      if: ${{ matrix.group == 'contracts' }}
+    - name: Run bounded reviewed decoder and original-parent controls
+      env:
+        IPFS_DATASETS_RUN_NATIVE_LEAN: '0'
+        IPFS_AUTO_INSTALL: 'false'
+        IPFS_DATASETS_AUTO_INSTALL_TEST_DEPS: '0'
+        TOKENIZERS_PARALLELISM: 'false'
+        PYTHONDONTWRITEBYTECODE: '1'
+        PYTHONPATH: ${{ github.workspace }}
+        REVIEWED_VALIDATION_GROUP: ${{ matrix.group }}
+        REVIEWED_VALIDATION_SHARD: ${{ matrix.shard }}
+      run: |
+        python - <<'PYTEST_SHARD'
+        # Ceiling of the slowest saved case time for each function; parameters share the conservative weight.
+        # Unknown/new selected cases use two seconds and remain part of this deterministic assignment.
+        WEIGHTS = {
+            'test_autoencoder_training_worker.py::test_reviewed_Qwen2_training_default_retains_raw_prompt_before_chatml_opt_in': 2,
+            'test_autoencoder_training_worker.py::test_reviewed_Qwen2_training_invalid_profile_refuses_without_native_import': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_Qwen2_training_preflights_complete_batch_before_mutation': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_Qwen2_training_profile_checkpoint_identity_and_exact_resume': 3,
+            'test_autoencoder_training_worker.py::test_reviewed_Qwen2_training_profile_existing_mixed_job_preserves_complete_targets': 77,
+            'test_autoencoder_training_worker.py::test_reviewed_Qwen2_training_profile_mutation_after_forward_refuses_before_backward': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_Qwen2_training_profile_rejects_other_architecture_or_runtime': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_Qwen2_training_recipe_refuses_closed_data_before_allocation': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_Qwen2_training_recipe_restores_profile_without_training': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_Qwen2_training_selected_chatml_matches_native_frame_and_labels': 1,
+            'test_autoencoder_inference.py::test_reviewed_inference_actual_Qwen25_rich_layout_typed_audit_physical_original_owner': 516,
+            'test_autoencoder_inference.py::test_reviewed_inference_actual_Qwen25_source_layout_typed_audit_physical_original_owner': 174,
+            'test_autoencoder_inference.py::test_reviewed_inference_parent_typed_audit_binds_complete_original_artifacts': 14,
+            'test_autoencoder_inference.py::test_reviewed_inference_parent_typed_audit_cannot_be_enabled_by_packet': 2,
+            'test_autoencoder_inference.py::test_reviewed_inference_parent_typed_audit_original_owner': 196,
+            'test_autoencoder_inference.py::test_reviewed_inference_parent_typed_audit_runtime_is_trusted_closed_data': 6,
+            'test_legal_ir_evaluation_artifacts.py::test_reviewed_producer_typed_structure_invalid_profile_refuses_before_callback': 1,
+            'test_legal_ir_evaluation_artifacts.py::test_reviewed_producer_typed_structure_opt_in_binds_reports_and_cache': 11,
+            'test_legal_ir_evaluation_artifacts.py::test_reviewed_producer_typed_structure_references_check_before_callback': 1,
+            'test_autoencoder_inference.py::test_reviewed_inference_cli_without_parent_runtime_refuses_before_effects': 1,
+            'test_autoencoder_inference.py::test_reviewed_inference_closed_data_packet_refuses_before_original_popen': 1,
+            'test_autoencoder_inference.py::test_reviewed_inference_late_new_parent_admission_mapping_refuses_completed_child': 14,
+            # New V4 physical estimate is provisional; capacity refused its first run.
+            'test_autoencoder_inference.py::test_reviewed_inference_mixed_rich_v4_physical_original_owner': 40,
+            'test_autoencoder_inference.py::test_reviewed_inference_shorttag_v2_physical_original_owner': 75,
+            'test_autoencoder_inference.py::test_reviewed_inference_actual_GTE_ranked_context_physical_original_owner': 55,
+            'test_autoencoder_training_worker.py::test_reviewed_generation_llama_last_position_preserves_nonzero_logits_and_full_source': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_decoder_artifact_materialization_avoids_second_full_payload': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_decoder_artifact_buffer_preserves_complete_authentication': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_profiled_generation_policy_rejects_closed_data_before_native_import': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_profiled_generation_source_factory_binds_forwards_and_preserves_denial': 9,
+            'test_autoencoder_inference.py::test_reviewed_inference_profiled_generation_request_is_closed_data': 1,
+            'test_autoencoder_inference.py::test_reviewed_inference_profiled_generation_physical_original_owner': 20,
+            'test_autoencoder_inference.py::test_reviewed_inference_Qwen2_generation_physical_original_owner': 20,
+            'test_autoencoder_inference.py::test_reviewed_inference_profiled_generation_rich_physical_original_owner': 72,
+            'test_autoencoder_inference.py::test_reviewed_inference_Qwen2_rich_generation_physical_original_owner': 73,
+            'test_autoencoder_inference.py::test_reviewed_inference_profiled_generation_original_parent_policy_matches_request': 1,
+            'test_autoencoder_inference.py::test_reviewed_inference_profiled_generation_output_commitment_checked_after_bytes': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_generation_chatml_invalid_profile_is_data_only': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_generation_chatml_matches_independent_native_frame_and_greedy_body': 4,
+            'test_autoencoder_training_worker.py::test_reviewed_generation_chatml_default_remains_raw_source_plus_bos': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_generation_chatml_rejects_other_native_models_before_forward': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_generation_chatml_requires_actual_native_marker_mapping': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_generation_chatml_rejects_source_control_tokens_and_target_fields': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_generation_chatml_full_frame_capacity_checks_entire_batch_before_forward': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_generation_chatml_preserves_original_post_forward_denial_and_state': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_generation_chatml_authored_eos_controls_do_not_strip_generated_headers': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_local_loader_restore_drops_decoded_model_before_independent_verification': 3,
+            'test_autoencoder_training_worker.py::test_reviewed_generation_time_invalid_budget_is_data_only': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_generation_time_returns_each_whole_source_prefix_as_incomplete': 3,
+            'test_autoencoder_training_worker.py::test_reviewed_generation_time_none_keeps_legacy_behavior_without_clock_calls': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_generation_time_does_not_admit_oversized_full_budget_before_clock': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_generation_time_preserves_original_post_forward_denial': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_generation_time_keeps_completed_eos_from_last_cooperative_forward': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_generation_time_can_expire_before_first_forward_after_preflight': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_generation_time_stops_actual_t5_and_gpt2_without_losing_state': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_local_loader_finite_state_bounds_temporary_tensor_elements': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_local_loader_finite_state_chunk_boundary_nonfinite_refuses': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_local_loader_finite_state_preserves_empty_scalar_and_nested_types': 0,
+            'test_autoencoder_training_worker.py::test_reviewed_local_loader_finite_state_preserves_aggregate_byte_bound_before_scan': 0,
+            'test_autoencoder_training_worker.py::test_reviewed_local_loader_restore_current_guard_orders_decode_and_preserves_denial': 3,
+            'test_autoencoder_training_worker.py::test_reviewed_local_loader_restore_current_guard_invalid_is_data_only': 0,
+            'test_autoencoder_training_worker.py::test_reviewed_local_loader_forwards_current_guard_at_each_restore_decode': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_generation_llama_dynamic_cache_fault_restores_owned_state': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_generation_llama_dynamic_cache_invalid_profile_is_data_only': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_generation_llama_dynamic_cache_matches_nonzero_native_prefix_and_is_row_private': 5,
+            'test_autoencoder_training_worker.py::test_reviewed_generation_llama_dynamic_cache_rejects_other_native_models': 1,
+            'test_autoencoder_inference.py::test_reviewed_inference_BF16_request_data_is_explicit_and_closed': 1,
+            'test_autoencoder_inference.py::test_reviewed_inference_BF16_rich_physical_original_owner': 71,
+            'test_autoencoder_inference.py::test_reviewed_inference_BF16_source_only_physical_original_owner': 20,
+            'test_autoencoder_training_worker.py::test_reviewed_cached_gpt2_complete_target_preflight': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_actual_fast_pinned_Smollm2_complete_target_preflight': 2,
+            'test_autoencoder_training_worker.py::test_reviewed_actual_Smollm2_full_rich_chatml_reservation_requires_longer_context': 2,
+            'test_autoencoder_training_worker.py::test_reviewed_pinned_Qwen25_candidate_complete_rich_capacity_without_weights': 3,
+            'test_autoencoder_training_worker.py::test_reviewed_pinned_Qwen25_candidate_capacity_refuses_broken_metadata_chain': 2,
+            'test_autoencoder_training_worker.py::test_reviewed_local_loader_llama_bfloat16_bad_profile_refuses_before_allocation': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_local_loader_llama_bfloat16_changed_rotary_recipe_refuses': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_local_loader_llama_bfloat16_original_policy_sees_dtype_before_import': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_local_loader_llama_bfloat16_post_forward_failure_restores_numeric_state': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_local_loader_llama_bfloat16_restores_pair_and_generates': 4,
+            'test_autoencoder_training_worker.py::test_reviewed_local_loader_retires_parsed_tokenizer_before_numerical_loading': 4,
+            'test_autoencoder_training_worker.py::test_reviewed_Qwen2_generation_policy_is_closed_data': 1,
+            'test_autoencoder_inference.py::test_reviewed_inference_Qwen2_public_layout_request_is_closed_data': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_Qwen2_public_layout_policy_is_closed_data': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_Qwen2_public_layout_source_factory_binds_and_preserves_denial': 10,
+            'test_autoencoder_training_worker.py::test_reviewed_generation_Qwen2_public_layouts_exact_native_frame': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_generation_Qwen2_public_layouts_refuse_before_forward': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_Qwen2_source_factory_binds_runtime_and_context_budget': 9,
+            'test_autoencoder_training_worker.py::test_reviewed_Qwen2_native_context_budget_profile_rejects_before_import': 0,
+            'test_autoencoder_training_worker.py::test_reviewed_Qwen2_native_context_budget_preserves_original_early_denial': 0,
+            'test_autoencoder_training_worker.py::test_reviewed_Qwen2_complete_context_budget_is_explicit_and_lossless': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_Qwen2_input_context_budget_is_closed_data': 0,
+            'test_autoencoder_inference.py::test_reviewed_inference_Qwen2_request_is_explicit_closed_data': 1,
+            'test_autoencoder_inference.py::test_reviewed_inference_Qwen2_parent_policy_matches_original_request': 1,
+            'test_autoencoder_inference.py::test_reviewed_inference_Qwen2_context_transport_matches_explicit_budget': 0,
+            'test_autoencoder_inference.py::test_reviewed_inference_Qwen2_output_commitment_checked_after_bytes': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_generation_Qwen2_chatml_matches_native_frame_and_greedy_body': 4,
+            'test_autoencoder_training_worker.py::test_reviewed_generation_Qwen2_chatml_full_batch_capacity_before_forward': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_generation_Qwen2_chatml_preserves_original_denial': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_generation_Qwen2_chatml_bad_boundaries_refuse_before_forward': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_local_loader_Qwen2_native_chatml_unknown_none_and_eos': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_local_loader_Qwen2_bfloat16_padded_pair_and_native_generation': 4,
+            'test_autoencoder_training_worker.py::test_reviewed_local_loader_Qwen2_generation_failure_restores_exact_state': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_local_loader_Qwen2_bad_profile_refuses_before_allocation': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_local_loader_Qwen2_original_policy_denies_before_vendor_import': 1,
+            'test_autoencoder_inference.py::test_reviewed_inference_actual_pretrained_profiled_source_physical_original_owner': 102,
+            'test_autoencoder_inference.py::test_reviewed_inference_actual_Qwen25_source_physical_original_owner': 176,
+            'test_autoencoder_inference.py::test_reviewed_inference_actual_Qwen25_source_120s_physical_original_owner': 475,
+            'test_autoencoder_inference.py::test_reviewed_inference_actual_Qwen25_source_layout_120s_physical_original_owner': 471,
+            'test_autoencoder_inference.py::test_reviewed_inference_actual_Qwen25_rich_physical_original_owner': 490,
+            'test_autoencoder_inference.py::test_reviewed_inference_actual_Qwen25_rich_packet_is_descriptor_only': 5,
+            'test_autoencoder_inference.py::test_reviewed_inference_actual_Qwen25_pair_input_refuses_changed_evidence': 1,
+            'test_autoencoder_inference.py::test_reviewed_inference_actual_pretrained_pair_input_refuses_changed_evidence': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_local_loader_llama_bfloat16_unknown_meta_buffer_refuses_before_materialization': 1,
+            'test_autoencoder_training_worker.py::test_reviewed_local_loader_llama_bfloat16_v3_domain_restores_exact_pair': 1,
+            'test_autoencoder_inference.py::test_reviewed_inference_mixed_rich_v4_request_data_domains': 1,
+            'test_autoencoder_inference.py::test_reviewed_inference_mixed_v3_request_authenticates_data_without_model_or_effects': 1,
+            'test_autoencoder_inference.py::test_reviewed_inference_mixed_v3_request_refuses_domain_and_context_swaps_before_execution': 1,
+            'test_autoencoder_inference.py::test_reviewed_inference_normal_cli_physical_original_owner_reaches_real_heldout_t5': 19,
+            'test_autoencoder_inference.py::test_reviewed_inference_normal_cli_physical_original_owner_reaches_rich_heldout_t5': 32,
+            'test_autoencoder_inference.py::test_reviewed_inference_normal_cli_refuses_mixed_legacy_or_remote_before_packet': 1,
+            'test_autoencoder_inference.py::test_reviewed_inference_original_parent_asset_denial_precedes_missing_model_and_is_preserved': 2,
+            'test_autoencoder_inference.py::test_reviewed_inference_original_private_native_cancellation_stops_before_asset_ack': 2,
+            'test_autoencoder_inference.py::test_reviewed_inference_rechecks_exact_output_bytes_after_final_parent_callback': 14,
+            'test_autoencoder_inference.py::test_reviewed_inference_rich_heldout_context_policy_denial_preserves_original_error': 9,
+            'test_autoencoder_inference.py::test_reviewed_inference_rich_heldout_rechecks_exact_context_policy_after_child_wait': 31,
+            'test_autoencoder_inference.py::test_reviewed_inference_rich_heldout_rechecks_train_admission_after_child_wait': 31,
+            'test_autoencoder_inference.py::test_reviewed_inference_rich_heldout_refuses_changed_transport_or_leaked_reference': 9,
+            'test_autoencoder_inference.py::test_reviewed_inference_supervisor_adapter_runs_normal_cli_and_preserves_native_task': 91,
+            'test_autoencoder_training_worker.py::test_reviewed_component_decoder_worker_dispatches_v9_job_file_and_publishes_exact_binding': 95,
+            'test_autoencoder_training_worker.py::test_reviewed_component_decoder_worker_exact_resume_matches_uninterrupted_numeric_fixture': 305,
+            'test_autoencoder_training_worker.py::test_reviewed_component_decoder_worker_refuses_progressed_parent_from_other_profile': 98,
+            'test_autoencoder_training_worker.py::test_reviewed_generation_retains_complete_nine_field_output_without_target_filling': 9,
+            'test_autoencoder_training_worker.py::test_reviewed_local_loader_real_t5_flows_into_signed_heldout_evaluation_without_gold': 5,
+            'test_autoencoder_training_worker.py::test_reviewed_mixed_rich_v3_numerical_transport': 31,
+            # The direct pure-input contract has a40s admitted work bound, not an observed pytest duration.
+            'test_autoencoder_training_worker.py::test_reviewed_mixed_rich_v3_lossless_input_capacity': 40,
+            'test_autoencoder_training_worker.py::test_reviewed_mixed_source_v3_complete_output_budget_refuses_before_any_forward': 3,
+            'test_autoencoder_training_worker.py::test_reviewed_mixed_source_v3_forward_original_baseexception_closes_pair_and_rng': 5,
+            'test_autoencoder_training_worker.py::test_reviewed_mixed_source_v3_fresh_late_revocation_rejects_after_actual_forward': 4,
+            'test_autoencoder_training_worker.py::test_reviewed_mixed_source_v3_late_input_damage_cannot_publish': 5,
+            'test_autoencoder_training_worker.py::test_reviewed_mixed_source_v3_legacy_factory_refuses_genuine_prepared_binding': 4,
+            'test_autoencoder_training_worker.py::test_reviewed_mixed_source_v3_real_local_forward_scores_full_targets_without_encoder_gold': 6,
+            'test_autoencoder_training_worker.py::test_reviewed_mixed_source_v3_reference_target_in_source_arguments_refuses_before_builder': 3,
+            'test_autoencoder_training_worker.py::test_reviewed_mixed_v10_complete_budgets_refuse_before_backend_or_output': 19,
+            'test_autoencoder_training_worker.py::test_reviewed_mixed_v10_dispatch_preserves_complete_targets_and_component_custody': 123,
+            'test_autoencoder_training_worker.py::test_reviewed_mixed_v10_prepared_v4_is_refused_by_v9_before_backend': 15,
+            'test_autoencoder_training_worker.py::test_reviewed_mixed_v10_progressed_cross_profile_parents_refuse_before_restore': 122,
+            'test_autoencoder_training_worker.py::test_reviewed_mixed_v10_real_torch_fresh_and_exact_resume_match_complete_window': 197,
+            'test_autoencoder_training_worker.py::test_reviewed_torch_backend_public_job_file_reaches_full_reviewed_forward_and_checkpoint': 45,
+            'test_autoformal_campaign_training_inputs.py::test_reviewed_component_decoder_prepares_exact_order_and_separate_custody': 11,
+            'test_autoformal_campaign_training_inputs.py::test_reviewed_component_decoder_rechecks_all_admissions_after_last_tokenizer_callback': 11,
+            'test_autoformal_campaign_training_inputs.py::test_reviewed_component_decoder_refuses_incomplete_or_stale_components_before_tokenizer': 9,
+            'test_autoformal_campaign_training_inputs.py::test_reviewed_component_successor_checks_joint_signed_dependency_observations': 5,
+            'test_autoformal_campaign_training_inputs.py::test_reviewed_component_successor_refuses_independently_signed_physical_alias': 5,
+            'test_autoformal_campaign_training_inputs.py::test_reviewed_component_successor_refuses_linked_heldout_use_before_staging': 5,
+            'test_autoformal_campaign_training_inputs.py::test_reviewed_cycle_retains_adds_and_corrects_with_new_ids_and_complete_history': 6,
+            'test_autoformal_campaign_training_inputs.py::test_reviewed_cycle_retains_one_signed_component_and_adds_another': 10,
+            'test_autoformal_campaign_training_inputs.py::test_reviewed_mixed_cycle_v4_complete_token_budgets_refuse_without_truncation': 5,
+            'test_autoformal_campaign_training_inputs.py::test_reviewed_mixed_cycle_v4_joint_genuine_signed_components_keep_physical_and_dependency_guards': 11,
+            'test_autoformal_campaign_training_inputs.py::test_reviewed_mixed_cycle_v4_late_revocation_after_final_serializer_cannot_publish': 5,
+            'test_autoformal_campaign_training_inputs.py::test_reviewed_mixed_cycle_v4_legacy_worker_refuses_before_restore_or_numeric_callbacks': 8,
+            'test_autoformal_campaign_training_inputs.py::test_reviewed_mixed_cycle_v4_preserves_complete_mixed_targets_bytes_and_explicit_custody': 6,
+            'test_autoformal_campaign_training_inputs.py::test_reviewed_mixed_cycle_v4_refuses_cross_version_routes_before_staging_or_tokens': 4,
+            'test_autoformal_campaign_training_inputs.py::test_reviewed_mixed_cycle_v4_resealed_or_cross_domain_damage_refuses_before_tokens': 4,
+            'test_autoformal_campaign_training_inputs.py::test_reviewed_mixed_cycle_v4_successor_retains_only_its_own_profile_lineage': 10,
+            'test_autoformal_campaign_training_inputs.py::test_reviewed_mixed_cycle_v4_withdrawal_and_fresh_same_profile_readmission_preserve_history': 9,
+            'test_autoformal_campaign_training_inputs.py::test_withdrawn_parent_can_be_followed_by_genuine_new_revision_admission': 6,
+            'test_legal_ir_evaluation_artifacts.py::test_reviewed_producer_v3_checks_every_callback_exit_against_current_mapping_and_rows': 3,
+            'test_legal_ir_evaluation_artifacts.py::test_reviewed_producer_v3_genuine_mixed_component_uses_existing_full_nine_evaluator': 3,
+            'test_legal_ir_evaluation_artifacts.py::test_reviewed_retention_counts_every_failed_candidate_as_lost': 3,
+            'test_legal_ir_evaluation_artifacts.py::test_reviewed_retention_proof_feedback_cannot_relabel_wrong_interpretation': 3,
+            'test_legal_ir_evaluation_artifacts.py::test_reviewed_retention_reports_retained_lost_and_gained_on_same_frozen_panel': 3,
+            'test_legal_ir_evaluation_artifacts.py::test_reviewed_torch_context_factory_TRAIN_exposure_is_replayed': 3,
+            'test_legal_ir_evaluation_artifacts.py::test_reviewed_torch_context_factory_cache_identity_binds_rich_selection': 4,
+            'test_legal_ir_evaluation_artifacts.py::test_reviewed_torch_context_factory_complete_oversized_context_never_truncates': 3,
+            'test_legal_ir_evaluation_artifacts.py::test_reviewed_torch_context_factory_context_policy_cannot_revoke_QUERY_and_reuse_cached_admission': 3,
+            'test_legal_ir_evaluation_artifacts.py::test_reviewed_torch_context_factory_context_policy_denial_precedes_tokenization': 3,
+            'test_legal_ir_evaluation_artifacts.py::test_reviewed_torch_context_factory_current_provider_binding_is_exact': 3,
+            'test_legal_ir_evaluation_artifacts.py::test_reviewed_torch_context_factory_family_split_overlap_never_reaches_tokenizer': 3,
+            'test_legal_ir_evaluation_artifacts.py::test_reviewed_torch_context_factory_fresh_TRAIN_revocation_refuses_before_or_after_forward': 9,
+            'test_legal_ir_evaluation_artifacts.py::test_reviewed_torch_context_factory_heldout_refuses_signed_leakage': 4,
+            'test_legal_ir_evaluation_artifacts.py::test_reviewed_torch_context_factory_heldout_requires_live_policy_and_rechecks_training': 11,
+            'test_legal_ir_evaluation_artifacts.py::test_reviewed_torch_context_factory_missing_governing_definition_is_not_dropped': 3,
+            'test_legal_ir_evaluation_artifacts.py::test_reviewed_torch_context_factory_nested_query_ID_is_screened_after_complete_TRAIN_replay': 4,
+            'test_legal_ir_evaluation_artifacts.py::test_reviewed_torch_context_factory_real_local_hf_hparam_rich_TRAIN_forward': 14,
+            'test_legal_ir_evaluation_artifacts.py::test_reviewed_torch_context_factory_signed_heldout_rich_TRAIN_forward': 15,
+            'test_legal_ir_evaluation_artifacts.py::test_reviewed_torch_context_factory_target_subtree_screen_precedes_builder': 3,
+            'test_legal_ir_evaluation_artifacts.py::test_reviewed_torch_source_producer_evaluate_replays_signed_heldout_and_real_forward_without_gold': 5,
+            'test_legal_ir_evaluation_artifacts.py::test_reviewed_torch_source_producer_fresh_late_revocation_cannot_escape_evaluator_old_mapping': 3,
+            'test_legal_ir_evaluation_artifacts.py::test_reviewed_torch_source_producer_pair_change_keys_same_abstention_outputs_separately': 11,
+            'test_legal_ir_evaluation_artifacts.py::test_reviewed_torch_source_producer_preflight_error_keeps_full_evaluator_population': 3,
+            'test_legal_ir_evaluation_artifacts.py::test_reviewed_profiled_retention_accepts_genuine_factory_checkpoint_pair': 23,
+            'test_legal_ir_evaluation_artifacts.py::test_reviewed_profiled_retention_rejects_same_resealed_invalid_policy_before_scoring': 1,
+            'test_legal_ir_evaluation_artifacts.py::test_reviewed_profiled_retention_rejects_changed_frozen_inputs_after_recommit': 1,
+            'test_legal_ir_evaluation_artifacts.py::test_reviewed_profiled_retention_rejects_observation_commitment_and_route_swaps': 1,
+            'test_legal_ir_evaluation_artifacts.py::test_reviewed_profiled_retention_accepts_reordered_policy_object_keys': 1,
+            'test_legal_ir_evaluation_artifacts.py::test_reviewed_profiled_retention_nonfinite_policy_cannot_form_an_ordinary_artifact': 1,
+            'test_legal_ir_evaluation_artifacts.py::test_reviewed_profiled_retention_metadata_comparison_does_not_import_numeric_worker': 1,
+        }
+        import json
+        import os
+        from pathlib import Path
+        import pytest
+
+        GROUP = os.environ["REVIEWED_VALIDATION_GROUP"]
+        SHARD = int(os.environ["REVIEWED_VALIDATION_SHARD"])
+        SHARDS_BY_GROUP = {"cpu": 8, "parent": 2}
+        assert GROUP in SHARDS_BY_GROUP
+        SHARDS = SHARDS_BY_GROUP[GROUP]
+        assert 0 <= SHARD < SHARDS
+        PREFIX = f"reviewed-decoder-cpu-{SHARD}" if GROUP == "cpu" else f"reviewed-parent-route-{SHARD}"
+        SCHEMA = f"legal-autoformal-{GROUP}-shard/v1"
+        ROOT = Path.cwd().resolve()
+
+        def node_id(item):
+            return item.path.resolve().relative_to(ROOT).as_posix() + "::" + item.nodeid.split("::", 1)[1]
+
+        def weight(node):
+            return WEIGHTS.get(node.split("[", 1)[0].rsplit("/", 1)[-1], 2)
+
+        class Shard:
+            @pytest.hookimpl(trylast=True)
+            def pytest_collection_modifyitems(self, config, items):
+                # Run after pytest's complete -k selection. Assignment uses actual relative nodeIDs.
+                nodes = {node_id(item): item for item in items}
+                assert len(nodes) == len(items), "duplicate repository-relative test nodeID"
+                loads = [0] * SHARDS
+                partitions = [[] for _ in loads]
+                for node in sorted(nodes, key=lambda value: (-weight(value), value)):
+                    index = min(range(SHARDS), key=lambda value: (loads[value], value))
+                    partitions[index].append(node)
+                    loads[index] += weight(node)
+                selected = set(partitions[SHARD])
+                assert selected, "empty validation shard; update the bounded matrix"
+                rejected = [item for node, item in nodes.items() if node not in selected]
+                config.hook.pytest_deselected(items=rejected)
+                items[:] = [item for node, item in nodes.items() if node in selected]
+                Path(f"{PREFIX}-collection.json").write_text(json.dumps({
+                    "schema": SCHEMA, "shard": SHARD, "shards": SHARDS,
+                    "all_nodeids": sorted(nodes), "selected_nodeids": sorted(selected),
+                    "weighted_seconds": loads[SHARD], "all_weighted_seconds": loads,
+                }, sort_keys=True, indent=2) + "\n")
+
+        ARGS_BY_GROUP = {'cpu': ['--noconftest', '-c', '/dev/null', '--assert=plain', '--import-mode=importlib', 'tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py', 'tests/unit/logic/test_autoformal_campaign_training_inputs.py', 'tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_evaluation_artifacts.py', '-k', '(reviewed_Qwen2_ or reviewed_pinned_Qwen25_candidate or reviewed_actual_Smollm2_full_rich_chatml_reservation_requires_longer_context or reviewed_cached_gpt2_complete_target_preflight or reviewed_torch or reviewed_tokenizer or reviewed_actual_fast or reviewed_production_wrapper or reviewed_generation or reviewed_profiled_generation or reviewed_decoder_artifact or source_only_generation or reviewed_local_loader or reviewed_retention or reviewed_producer_v3 or reviewed_producer_typed_structure_ or reviewed_mixed or reviewed_component or retains_one_signed_component or withdrawn_parent_can_be_followed or retains_adds_and_corrects or reviewed_profiled_retention_)'], 'parent': ['--noconftest', '-c', '/dev/null', '--assert=plain', '--import-mode=importlib', '-p', 'ipfs_datasets_py.optimizers.logic_theorem_optimizer.validation_pytest', 'tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_campaign_process.py', 'tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py', '-k', '(reviewed_parent_callback_ or reviewed_inference_ or reviewed_dependency_prefix_ or reviewed_network_fixed_soname_)']}
+        ARGS = ARGS_BY_GROUP[GROUP] + [
+            "--basetemp=" + (f"{PREFIX}-cases" if GROUP == "cpu" else str(ROOT / f"{PREFIX}-cases")),
+            "-q", "--tb=short", "--junitxml=" + (f"legal-reviewed-decoder-cpu-{SHARD}-junit.xml"
+                if GROUP == "cpu" else f"legal-reviewed-parent-route-{SHARD}-junit.xml"),
+        ]
+        raise SystemExit(pytest.main(ARGS, plugins=[Shard()]))
+        PYTEST_SHARD
+      if: ${{ matrix.group == 'cpu' || matrix.group == 'parent' }}
+    - name: Run reviewed semantic admission controls
+      env:
+        IPFS_DATASETS_RUN_NATIVE_LEAN: '0'
+        PYTHONPATH: ${{ github.workspace }}
+      run: |
+        python -m pytest -c /dev/null --noconftest \
+          tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_consumer_binding.py \
+          tests/unit/logic/autoformal/test_legal_norm_content_adjudication_v1.py \
+          tests/unit/logic/autoformal/test_legal_reviewed_norm_admission_v3.py \
+          tests/unit/logic/autoformal/test_corpus_norm_definition_adapter.py \
+          -q --tb=short --junitxml=legal-reviewed-admission-junit.xml
+      if: ${{ matrix.group == 'admission' }}
+    - name: Run actual unary, relational and counted preservation
+      env:
+        PYTHONPATH: ${{ github.workspace }}
+      run: |
+        python -m pytest -c /dev/null --noconftest \
+          tests/unit/logic/autoformal/test_legal_native_ast_preservation_native.py \
+          -k installed_lean --basetemp=native-preservation-cases \
+          -v --tb=short --junitxml=native-preservation-junit.xml
+      if: ${{ matrix.group == 'native' }}
+    - name: Retain validation evidence for ${{ matrix.lane }}
+      if: ${{ always() && matrix.group != 'cpu' && matrix.group != 'parent' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: legal-autoformal-${{ matrix.lane }}-v3
+        if-no-files-found: error
+        path: |
+          native-lean-v3-result.json
+          native-lean-cases/**/native-lean-proof-cache-v3.json
+          native-lean-cases/**/quoted-identifier-expected-goal-outcome.json
+          native-lean-v3-junit.xml
+          legal-autoformal-contracts-junit.xml
+          legal-preservation-contracts-junit.xml
+          native-preservation-junit.xml
+          legal-reviewed-retrieval-junit.xml
+          legal-reviewed-parent-route-junit.xml
+          legal-reviewed-admission-junit.xml
+          legal-source-withheld-cycle-junit.xml
+          legal-proof-feedback-trust-junit.xml
+          native-preservation-cases/**/installed-legacy-unary/**
+          native-preservation-cases/**/installed-relational-*/**
+          native-preservation-cases/**/installed-counted-three/**
+          native-preservation-cases/**/installed-mixed-*/**
+    - name: Retain bounded validation shard evidence
+      if: ${{ always() && (matrix.group == 'cpu' || matrix.group == 'parent') }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: legal-autoformal-${{ matrix.group }}-${{ matrix.shard }}-v3
+        if-no-files-found: error
+        path: |
+          legal-reviewed-decoder-cpu-${{ matrix.shard }}-junit.xml
+          reviewed-decoder-cpu-${{ matrix.shard }}-collection.json
+          legal-reviewed-parent-route-${{ matrix.shard }}-junit.xml
+          reviewed-parent-route-${{ matrix.shard }}-collection.json
   legal-autoformal-native-lean:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    env:
-      IPFS_DATASETS_PY_MINIMAL_IMPORTS: "1"
-      IPFS_DATASETS_PY_ENABLE_MCP_IMPORTS: "0"
-      IPFS_DATASETS_PY_ENABLE_FASTAPI_IMPORTS: "0"
-      IPFS_DATASETS_PY_ENABLE_FINANCE_DASHBOARD_IMPORTS: "0"
-      IPFS_DATASETS_PY_ENABLE_LLM_IMPORTS: "0"
-      IPFS_DATASETS_PY_WARN_OPTIONAL_IMPORTS: "0"
-      HF_HUB_OFFLINE: "1"
-      TRANSFORMERS_OFFLINE: "1"
-      IPFS_DATASETS_AUTO_INSTALL: "0"
-      IPFS_KIT_AUTO_INSTALL_DEPS: "0"
-      PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
-      IPFS_DATASETS_RUN_NATIVE_LEAN: "1"
-      IPFS_DATASETS_LEAN_VERSION: "4.34.1"
-      IPFS_DATASETS_NATIVE_LEAN_REPORT: native-lean-v3-result.json
-      OMP_NUM_THREADS: "1"
-      OPENBLAS_NUM_THREADS: "1"
-      MKL_NUM_THREADS: "1"
-      CUDA_VISIBLE_DEVICES: ""
+    if: ${{ always() }}
+    needs:
+    - legal-autoformal-validation
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-      - name: Install focused Python test dependencies
-        run: python -m pip install pytest==8.3.4 numpy==2.1.3 beartype duckdb multiformats cryptography requests rich huggingface_hub z3-solver
-      - name: Install pinned CPU retrieval test dependency
-        run: python -m pip install torch==2.9.1 --index-url https://download.pytorch.org/whl/cpu
-      - name: Restore pinned Lean toolchain
-        id: lean-cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.elan/toolchains/leanprover--lean4---v4.34.1
-          key: legal-autoformal-lean-4.34.1-${{ runner.os }}-${{ runner.arch }}
-      - name: Install the pinned Lean toolchain
-        if: steps.lean-cache.outputs.cache-hit != 'true'
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p "$RUNNER_TEMP/legal-ir-elan"
-          curl --fail --location --retry 2 \
-            https://github.com/leanprover/elan/releases/download/v4.1.2/elan-x86_64-unknown-linux-gnu.tar.gz \
-            --output "$RUNNER_TEMP/legal-ir-elan/elan.tar.gz"
-          tar -xzf "$RUNNER_TEMP/legal-ir-elan/elan.tar.gz" -C "$RUNNER_TEMP/legal-ir-elan"
-          "$RUNNER_TEMP/legal-ir-elan/elan-init" -y --no-modify-path \
-            --default-toolchain leanprover/lean4:v4.34.1
-      - name: Select the pinned executable
-        shell: bash
-        run: |
-          printf '%s\n' "IPFS_DATASETS_LEAN_EXECUTABLE=$HOME/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lean" >> "$GITHUB_ENV"
-          printf '%s\n' "IPFS_DATASETS_NATIVE_LAKE_TEST_EXECUTABLE=$HOME/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake" >> "$GITHUB_ENV"
-      - name: Run focused proof and cache contracts
-        env:
-          IPFS_DATASETS_RUN_NATIVE_LEAN: "0"
-          PYTHONPATH: ${{ github.workspace }}
-        run: |
-          python -m pytest -c /dev/null --noconftest \
-            tests/integration/logic/backends/test_kernel_backends.py \
-            tests/unit/logic/legal_ir/test_proof_cache.py \
-            tests/unit/logic/test_duckdb_proof_migration.py \
-            tests/unit/logic/test_duckdb_proof_store.py::test_exact_verification_cache_interop_bridge \
-            tests/unit/logic/test_duckdb_proof_store.py::test_verification_cache_entry_can_be_put_directly \
-            tests/unit/logic/test_duckdb_proof_store.py::test_advisory_verification_projection_uses_target_status_polarity \
-            tests/unit/logic/test_duckdb_proof_store.py::test_store_put_retains_advisory_candidate_without_proof_authority \
-            --deselect tests/integration/logic/backends/test_kernel_backends.py::test_lean_native_v2_expected_type_and_dependency_policy \
-            --deselect tests/integration/logic/backends/test_kernel_backends.py::test_lean_native_v3_proof_cache_round_trip_and_exact_reuse_context \
-            -q --tb=short --junitxml=legal-autoformal-contracts-junit.xml
-      # This canonical opt-in uses the existing ResourceAdmittedToolRunner with
-      # one CPU/child, a finite AS ceiling and a 512 MiB RSS bound per tool.
-      # CI is an isolated runner; no retained host policy or budget is reset.
-      - name: Run actual Lean declaration, type and dependency controls
-        env:
-          PYTHONPATH: ${{ github.workspace }}
-        run: |
-          python -m pytest -c /dev/null --noconftest \
-            tests/integration/logic/backends/test_kernel_backends.py::test_lean_native_v2_expected_type_and_dependency_policy \
-            tests/integration/logic/backends/test_kernel_backends.py::test_lean_native_v3_proof_cache_round_trip_and_exact_reuse_context \
-            --basetemp=native-lean-cases \
-            -v --tb=short --junitxml=native-lean-v3-junit.xml
-      - name: Run preservation mutation and custody contracts
-        env:
-          IPFS_DATASETS_RUN_NATIVE_LEAN: "0"
-          PYTHONPATH: ${{ github.workspace }}
-        run: |
-          python -m pytest -c /dev/null --noconftest \
-            tests/unit/logic/autoformal/test_legal_native_ast_preservation.py \
-            tests/unit/logic/autoformal/test_legal_native_ast_preservation_native.py \
-            -k 'not installed_lean' \
-            -q --tb=short --junitxml=legal-preservation-contracts-junit.xml
-      - name: Run Hammer and proof-feedback trust boundaries
-        env:
-          IPFS_DATASETS_RUN_NATIVE_LEAN: "0"
-          PYTHONPATH: ${{ github.workspace }}
-        run: |
-          python -m pytest -c /dev/null --noconftest \
-            tests/unit/logic/integration/test_hammer.py \
-            tests/unit/logic/integration/test_legal_ir_hammer_translation.py \
-            tests/unit/logic/integration/test_legal_ir_proof_feedback.py \
-            -q --tb=short --junitxml=legal-proof-feedback-trust-junit.xml
-      - name: Run source-withheld surface cycle and canonical regressions
-        env:
-          IPFS_DATASETS_RUN_NATIVE_LEAN: "0"
-          PYTHONPATH: ${{ github.workspace }}
-        run: |
-          python -m pytest -c /dev/null --noconftest \
-            tests/unit/logic/legal_ir/test_extended_decompiler.py \
-            tests/unit/logic/legal_ir/test_canonical_decompiler.py \
-            tests/unit/logic/legal_ir/test_canonical_decompiler_reconstruction.py \
-            -q --tb=short --junitxml=legal-source-withheld-cycle-junit.xml
-      - name: Run complete reviewed retrieval controls
-        env:
-          IPFS_DATASETS_RUN_NATIVE_LEAN: "0"
-          PYTHONPATH: ${{ github.workspace }}
-        run: |
-          python -m pytest -c /dev/null --noconftest \
-            tests/unit/logic/formalization/autoencoder/test_alignment_relation_declarations.py \
-            tests/unit/logic/formalization/autoencoder/test_alignment_relation_mask_handoff.py \
-            tests/unit/optimizers/logic_theorem_optimizer/test_legal_joint_retrieval.py \
-            tests/unit/optimizers/logic_theorem_optimizer/test_legal_structured_retrieval.py \
-            -q --tb=short --junitxml=legal-reviewed-retrieval-junit.xml
-      - name: Run reviewed semantic admission controls
-        env:
-          IPFS_DATASETS_RUN_NATIVE_LEAN: "0"
-          PYTHONPATH: ${{ github.workspace }}
-        run: |
-          python -m pytest -c /dev/null --noconftest \
-            tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_consumer_binding.py \
-            tests/unit/logic/autoformal/test_legal_norm_content_adjudication_v1.py \
-            -q --tb=short --junitxml=legal-reviewed-admission-junit.xml
-      # The same canonical executor retains real compiler output, source readback,
-      # finite process bounds and exact empty-dependency theorem reports.
-      - name: Run actual unary, relational and counted preservation
-        env:
-          PYTHONPATH: ${{ github.workspace }}
-        run: |
-          python -m pytest -c /dev/null --noconftest \
-            tests/unit/logic/autoformal/test_legal_native_ast_preservation_native.py \
-            -k installed_lean --basetemp=native-preservation-cases \
-            -v --tb=short --junitxml=native-preservation-junit.xml
-      - name: Retain actual native proof-check evidence
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: legal-autoformal-native-lean-v3
-          if-no-files-found: error
-          path: |
-            native-lean-v3-result.json
-            native-lean-cases/**/native-lean-proof-cache-v3.json
-            native-lean-v3-junit.xml
-            legal-autoformal-contracts-junit.xml
-            legal-preservation-contracts-junit.xml
-            native-preservation-junit.xml
-            legal-reviewed-retrieval-junit.xml
-            legal-reviewed-admission-junit.xml
-            legal-source-withheld-cycle-junit.xml
-            legal-proof-feedback-trust-junit.xml
-            native-preservation-cases/**/installed-legacy-unary/**
-            native-preservation-cases/**/installed-relational-*/**
-            native-preservation-cases/**/installed-counted-three/**
+    - name: Require every bounded validation lane
+      env:
+        VALIDATION_RESULT: ${{ needs.legal-autoformal-validation.result }}
+      run: |
+        if [ "$VALIDATION_RESULT" != success ]; then
+          echo "A validation lane failed, was cancelled, or was skipped: $VALIDATION_RESULT"
+          exit 1
+        fi
+    - uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    - uses: actions/download-artifact@v4
+      with:
+        pattern: legal-autoformal-cpu-*-v3
+        path: cpu-shard-coverage
+        merge-multiple: true
+    - uses: actions/download-artifact@v4
+      with:
+        pattern: legal-autoformal-parent-*-v3
+        path: parent-shard-coverage
+        merge-multiple: true
+    - name: Verify complete disjoint CPU and parent coverage
+      run: |
+        python - <<'PYTEST_COVERAGE'
+        from pathlib import Path
+        import json
+
+        GROUPS = {"cpu": (8, "cpu-shard-coverage", "reviewed-decoder-cpu"),
+                  "parent": (2, "parent-shard-coverage", "reviewed-parent-route")}
+        all_seen = set()
+        for group, (count, directory, prefix) in GROUPS.items():
+            files = sorted(Path(directory).rglob(f"{prefix}-*-collection.json"))
+            assert len(files) == count, f"all {count} {group} shard manifests are required"
+            reports = [json.loads(path.read_text()) for path in files]
+            assert all(type(report["shard"]) is int for report in reports)
+            assert {report["shard"] for report in reports} == set(range(count))
+            expected = reports[0]["all_nodeids"]
+            assert expected and len(expected) == len(set(expected))
+            seen = set()
+            for report in reports:
+                assert report["schema"] == f"legal-autoformal-{group}-shard/v1" and report["shards"] == count
+                assert report["all_nodeids"] == expected, f"{group} jobs collected different selected populations"
+                selected = report["selected_nodeids"]
+                assert selected and len(selected) == len(set(selected)) and not seen.intersection(selected)
+                seen.update(selected)
+            assert seen == set(expected), f"{group} coverage is missing or contains foreign test nodes"
+            assert not all_seen.intersection(seen), "validation groups execute overlapping test nodes"
+            all_seen.update(seen)
+            print(f"Verified {len(expected)} selected {group} cases exactly once across {count} shards.")
+        PYTEST_COVERAGE

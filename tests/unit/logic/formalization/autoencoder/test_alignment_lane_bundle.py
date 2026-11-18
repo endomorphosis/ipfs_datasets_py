@@ -720,3 +720,120 @@ assert all(name not in sys.modules for name in ('torch','numpy','spacy','transfo
     result = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, timeout=20,
                             cwd=Path(subject.__file__).resolve().parents[4])
     assert result.returncode == 0, result.stderr
+
+
+
+def _native384_declared_receipt_case(tmp_path):
+    # Existing conspicuous serialized native-claim fixture; no encoder runs.
+    from tests.unit.optimizers.logic_theorem_optimizer import test_autoencoder_embedding_production as fixtures
+    entries=[fixtures.input_entry(tmp_path,index=i) for i in range(1,4)]
+    injected=fixtures.fixture_receipt(entries)
+    receipt=fixtures.declared_native_receipt(injected)
+    requests=[{"id":"source-"+str(i),"input_id":item.input_id,"input":{"source_text":item.text,
+        "context":{"role":"none_required","text":"","bindings":{},"sha256":text_sha("")}}} for i,(item,_) in enumerate(entries)]
+    options=dict(expected_receipt_sha256=receipt.sha256,artifact_binding={"path":"unopened-native-declaration.json","bytes":len(receipt.to_bytes()),"sha256":receipt.sha256},requests=requests,expected_requests_sha256=digest(requests))
+    return fixtures,receipt,injected,options
+
+
+def test_native384_receipt_lane_preserves_exact_vectors_without_authority(tmp_path):
+    fixtures,receipt,_,options=_native384_declared_receipt_case(tmp_path)
+    prepared=subject.prepare_native384_receipt_lane_bundle(receipt,**options)
+    checked=subject.validate_lane_bundle(prepared["bundle"],expected_bindings=prepared["expected_bindings"])
+    assert checked["available_count"]==3 and checked["encoder_calls"]==0
+    for row,native in zip(prepared["bundle"]["rows"],receipt.to_dict()["results"],strict=True):
+        assert raw(row["vector"])==raw(list(fixtures.codec._decode_vector(native["vector"])))
+        assert row["token_receipt_sha256"]==digest({key:native[key] for key in ("input_id","status","tokens")})
+    assert prepared["receipt"]["source_bytes_rechecked"] is False
+    assert prepared["receipt"]["producer_execution_authenticated"] is False
+    assert prepared["receipt"]["inference_performed"] is False
+    assert checked["proof_authority"] is checked["semantic_label_admission"] is False
+    assert set(checked["masks"].values())=={0}
+
+
+@pytest.mark.parametrize("damage",["injected","receipt-hash","artifact-hash","requests-hash","drop","duplicate","text","context","unknown-input","repeated-input"])
+def test_native384_receipt_lane_refuses_remapped_or_unbound_inputs(tmp_path,damage):
+    _,receipt,injected,options=_native384_declared_receipt_case(tmp_path)
+    if damage=="injected":
+        receipt=injected;options.update(expected_receipt_sha256=receipt.sha256,artifact_binding={"path":"fixture.json","bytes":len(receipt.to_bytes()),"sha256":receipt.sha256})
+    elif damage=="receipt-hash":options["expected_receipt_sha256"]="f"*64
+    elif damage=="artifact-hash":options["artifact_binding"]["sha256"]="f"*64
+    elif damage=="requests-hash":options["expected_requests_sha256"]="f"*64
+    elif damage=="drop":options["requests"].pop()
+    elif damage=="duplicate":options["requests"].append(deepcopy(options["requests"][0]))
+    elif damage=="text":options["requests"][0]["input"]["source_text"]+=" changed"
+    elif damage=="context":options["requests"][0]["input"]["context"]={"role":"declared_context","text":"New context","bindings":{},"sha256":text_sha("New context")}
+    elif damage=="unknown-input":options["requests"][0]["input_id"]="sha256:"+"e"*64
+    elif damage=="repeated-input":options["requests"][0]["input_id"]=options["requests"][1]["input_id"]
+    if damage not in {"requests-hash"}:options["expected_requests_sha256"]=digest(options["requests"])
+    with pytest.raises(ValueError):subject.prepare_native384_receipt_lane_bundle(receipt,**options)
+
+
+@pytest.mark.parametrize("status",["missing_input","token_limit_exceeded"])
+def test_native384_receipt_lane_keeps_unavailable_rows_without_padding(tmp_path,status):
+    fixtures,receipt,_,options=_native384_declared_receipt_case(tmp_path)
+    data=receipt.to_dict();row=data["results"][1];row.update(status=status,vector=None,tokens=None if status=="missing_input" else {"token_count":513,"sha256":"a"*64});data["status_counts"].update(embedded=2,**{status:1})
+    receipt=fixtures.codec.EmbeddingProductionReceipt(fixtures.canonical(data));options.update(expected_receipt_sha256=receipt.sha256,artifact_binding={"path":"unopened.json","bytes":len(receipt.to_bytes()),"sha256":receipt.sha256})
+    prepared=subject.prepare_native384_receipt_lane_bundle(receipt,**options)
+    checked=subject.validate_lane_bundle(prepared["bundle"],expected_bindings=prepared["expected_bindings"])
+    assert checked["available_count"]==2 and checked["unavailable_count"]==1
+    assert prepared["bundle"]["rows"][1]["vector"] is None
+    assert status in prepared["bundle"]["rows"][1]["reason"]
+
+
+@pytest.mark.skipif(not (Path.home()/".cache/huggingface/hub/models--thenlper--gte-small/snapshots/17e1f347d17fe144873b1201da91788898c639cd/model.safetensors").is_file(),reason="exact pinned local GTE-small assets unavailable; no download")
+def test_native384_receipt_lane_actual_cached_encoder_complete_reviewed_sources(tmp_path):
+    from tests.unit.optimizers.logic_theorem_optimizer import test_autoencoder_embedding_production as fixtures
+    from tests.unit.optimizers.logic_theorem_optimizer import test_legal_ir_evaluation_artifacts as reviewed
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_embedding_runtime as runtime
+    _,_,populations,_,_=reviewed._rich_v3_heldout_case()
+    rows=populations["train"]+populations["holdout"]
+    entries=[fixtures.input_entry(tmp_path,index=i+1,text=row["source_text"]) for i,row in enumerate(rows)]
+    receipt=runtime.produce_native_embedding_receipt([item for item,_ in entries],resolver=fixtures.resolver_for(entries),batch_size=6)
+    assert receipt.status_counts["embedded"]==6
+    from ipfs_datasets_py.logic.formalization.autoencoder import source_embeddings_384 as cached
+    cached.clear_embedding_cache()
+    try:
+        actual=cached.embed_texts([row["source_text"] for row in rows])
+        expected=[list(fixtures.codec._decode_vector(row["vector"])) for row in receipt.to_dict()["results"]]
+        assert len(actual)==6 and all(len(vector)==384 for vector in actual)
+        assert all(abs(a-b)<=1e-5 for left,right in zip(actual,expected,strict=True) for a,b in zip(left,right,strict=True))
+    finally:cached.clear_embedding_cache()
+    saved=receipt.save(tmp_path/"actual-native384-receipt.json",resolver=fixtures.resolver_for(entries))
+    requests=[{"id":row["id"],"input_id":item.input_id,"input":{"source_text":row["source_text"],"context":{"role":"none_required","text":"","bindings":{},"sha256":text_sha("")}}} for row,(item,_) in zip(rows,entries,strict=True)]
+    prepared=subject.prepare_native384_receipt_lane_bundle(receipt,expected_receipt_sha256=receipt.sha256,artifact_binding=saved,requests=requests,expected_requests_sha256=digest(requests))
+    checked=subject.validate_lane_bundle(prepared["bundle"],expected_bindings=prepared["expected_bindings"])
+    assert checked["available_count"]==6 and [r["id"] for r in prepared["bundle"]["rows"]]==[r["id"] for r in rows]
+    assert any(prepared["bundle"]["rows"][0]["vector"]!=r["vector"] for r in prepared["bundle"]["rows"][1:])
+    assert all(len(row["tokens"]["input_ids"])<=512 for row in receipt.to_dict()["results"])
+    (tmp_path/"actual-native384-lane.json").write_bytes(raw(prepared))
+    assert prepared["receipt"]["producer_execution_authenticated"] is False and checked["proof_authority"] is False
+
+
+@pytest.mark.parametrize('damage',[None,'raw-impersonation','context','source','omitted-parent','artifact','authority','composition-hash'])
+def test_complete_native384_composed_lane_has_closed_independent_data_bindings(tmp_path,damage):
+    from tests.unit.logic.formalization.autoencoder import test_alignment_richer_embeddings as numerical
+    fixtures,plan,receipt,options=numerical._declared_complete_composition_case(tmp_path)
+    composition=numerical.subject.compose_native384_complete_chunks(plan,receipt,**options)
+    original=composition['original_inputs'][0]
+    requests=[dict(id='parent-source',input_id=original['input_id'],input=dict(source_text=original['text'],context=dict(role='none_required',text='',bindings={},sha256=text_sha(''))))]
+    if damage=='raw-impersonation':
+        composition['profile']['stage']='raw_embedding';composition['profile']['content_sha256']=digest({k:v for k,v in composition['profile'].items() if k!='content_sha256'})
+    elif damage=='context':requests[0]['input']['context']=dict(role='declared_context',text='new context',bindings={},sha256=text_sha('new context'))
+    elif damage=='source':requests[0]['input']['source_text']+='changed'
+    elif damage=='omitted-parent':requests=[]
+    elif damage=='authority':composition['semantic_admission_granted']=True
+    composition['payload_sha256']=digest({k:v for k,v in composition.items() if k!='payload_sha256'})
+    artifact=dict(path='unopened-composition.json',bytes=len(raw(composition)),sha256=digest(composition))
+    if damage=='artifact':artifact['sha256']='f'*64
+    kwargs=dict(expected_composition_sha256=digest(composition),artifact_binding=artifact,requests=requests,expected_requests_sha256=digest(requests))
+    if damage=='composition-hash':kwargs['expected_composition_sha256']='f'*64
+    if damage is not None:
+        with pytest.raises(ValueError):subject.prepare_native384_composed_lane_bundle(composition,**kwargs)
+    else:
+        prepared=subject.prepare_native384_composed_lane_bundle(composition,**kwargs)
+        checked=subject.validate_lane_bundle(prepared['bundle'],expected_bindings=prepared['expected_bindings'])
+        assert checked['stage']=='complete_chunk_composition' and checked['available_count']==1
+        assert prepared['bundle']['rows'][0]['vector']==composition['parents'][0]['vector']
+        assert prepared['bundle']['rows'][0]['upstream_vector_sha256']==composition['parents'][0]['upstream_vector_sha256']
+        assert checked['proof_authority'] is checked['semantic_label_admission'] is False
+        assert set(checked['masks'].values())=={0}

@@ -1,0 +1,11 @@
+# Documentation moved
+
+The maintained entry is [legal_stored_source_adoption_requests_v1.md](../../ipfs_datasets_py/logic/autoformal/docs/guides/legal_stored_source_adoption_requests_v1.md). This former path is retained for existing links; original bytes and provenance are preserved in the [migration archive](../../ipfs_datasets_py/logic/autoformal/docs/ARCHIVE.md).
+
+<!-- Legacy bookmarks refer to sections in the preserved original. -->
+<a id="unsigned-stored-source-adoption-authoring"></a>
+<a id="public-api"></a>
+<a id="prepared-physical-requests"></a>
+<a id="explicit-unsigned-choices"></a>
+<a id="preserved-substantive-gates"></a>
+<a id="bounds-and-cooperative-custody"></a>

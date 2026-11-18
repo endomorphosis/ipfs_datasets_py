@@ -1,0 +1,214 @@
+{
+  "deduplication": {
+    "archive": {
+      "path": "docs/autoformalization/evidence/consolidation-20261019.tar.gz",
+      "root": "datasets_repository"
+    },
+    "archive_index_members": 116,
+    "archive_index_sha256": "f2473d0570b2e792d979c06be362821ac4b9a0d8cb34a5aeb26eeb968ed74c75",
+    "checked_scope": "All six source SHA256 values compared with every indexed archive member. Existing full-norm source/history is already preserved and excluded here.",
+    "exact_source_hash_matches": 0
+  },
+  "historical_qualification": "Original engineering qualifications, cohorts and results retain their original evidence scope. A new canonical port has not been qualified by this export.",
+  "intended_directory": {
+    "path": "docs/autoformalization/proposals/",
+    "root": "datasets_repository"
+  },
+  "proposals": [
+    {
+      "canonical_port_qualification": "not_started",
+      "compatibility_status": "Versioned projected384 context initialization; a canonical source/profile bridge is required.",
+      "id": "context_initialization",
+      "intended_shared_owner": {
+        "path": "ipfs_datasets_py/logic/formalization/autoencoder/",
+        "root": "datasets_repository"
+      },
+      "optional_architecture": false,
+      "patch": {
+        "bytes": 22937,
+        "format": "unified_addition",
+        "path": "patches/context_initialization.patch",
+        "reconstruction_target": "reference_sources/context_initialization/projected_context_decoder_v01.py",
+        "sha256": "7d990e13e0e0e2395d932682fdcdc0cb5878bf64c6027589b905007f83cd6163"
+      },
+      "runtime_installed": false,
+      "source": {
+        "bytes": 22244,
+        "path": "artifacts/legal-ir-native-request-recovery-20261017-01/retained-legal-context-parity-20261018-v01/projected_context_decoder_v01.py",
+        "root": "workspace_repository",
+        "sha256": "de68e2ed3975c3ae27c6ed733fec7e1b162ffecc7d5a073280b40411eff3574d"
+      },
+      "source_hash_bridge_requirements": [
+        "Preserve all 13 tensors, exact original parent binding, normalization, codec and zero added context columns.",
+        "Record the original implementation SHA256 and explicitly bridge any packaged implementation identity; do not rewrite original checkpoints or weaken exact source checks.",
+        "Qualify strict saved-state reload, target-free logits/output parity, and wrong-parent/profile refusals without repeating training."
+      ],
+      "status": "preserved_proposal_only"
+    },
+    {
+      "canonical_port_qualification": "not_started",
+      "compatibility_status": "Versioned trained context150 loader; exact source and initialization identities remain enforced.",
+      "id": "context_trained",
+      "intended_shared_owner": {
+        "path": "ipfs_datasets_py/logic/formalization/autoencoder/",
+        "root": "datasets_repository"
+      },
+      "optional_architecture": false,
+      "patch": {
+        "bytes": 22697,
+        "format": "unified_addition",
+        "path": "patches/context_trained.patch",
+        "reconstruction_target": "reference_sources/context_trained/trained_projected_context_decoder_v01.py",
+        "sha256": "c40802def6e6d50bb66d1df62eb9c1d0c003438219486846df96993251f64270"
+      },
+      "runtime_installed": false,
+      "source": {
+        "bytes": 22018,
+        "path": "artifacts/legal-ir-native-request-recovery-20261017-01/retained-legal-context-training-20261018-v01/trained_projected_context_decoder_v01.py",
+        "root": "workspace_repository",
+        "sha256": "508e77f75061d0a0567577f025d69a2a6680a286c82e8679e9ae972b1b2e0cf2"
+      },
+      "source_hash_bridge_requirements": [
+        "Bridge both this source identity and the pinned parity-module identity explicitly; original source and parent checkpoints retain their original digests.",
+        "Preserve all 13 model tensors, selected/exposed cohort identities, auxiliary-state provenance and target-free logits/output parity.",
+        "Retain auxiliary state for continuation and declare a fresh optimizer when historical optimizer state is unavailable; do not infer resume compatibility from inference state."
+      ],
+      "status": "preserved_proposal_only"
+    },
+    {
+      "canonical_port_qualification": "not_started",
+      "compatibility_status": "Optional experimental architecture; choose this profile before implementing a canonical port.",
+      "id": "gated_conditioning",
+      "intended_shared_owner": {
+        "path": "ipfs_datasets_py/logic/formalization/autoencoder/",
+        "root": "datasets_repository"
+      },
+      "optional_architecture": true,
+      "patch": {
+        "bytes": 22417,
+        "format": "unified_addition",
+        "path": "patches/gated_conditioning.patch",
+        "reconstruction_target": "reference_sources/gated_conditioning/gated_conditioning.py",
+        "sha256": "876a346fdfdce2f1715272e86302bfa21323fffa38d707f8c545ee60649faf3f"
+      },
+      "runtime_installed": false,
+      "source": {
+        "bytes": 21788,
+        "path": "artifacts/legal-ir-step-conditioning-20261018-01/gated_conditioning.py",
+        "root": "workspace_repository",
+        "sha256": "dd91a47e8c116ea2cb6daa60716f0c452b82585df78d4c88756a1147eb55ba00"
+      },
+      "source_hash_bridge_requirements": [
+        "Preserve the exact 13-to-15 tensor transition, donor lineage and optimizer policy.",
+        "Version implementation/profile identities and preserve source mutation detection; a renamed source is not automatically checkpoint-compatible.",
+        "Reconcile existing shared decoder owners before introducing another implementation."
+      ],
+      "status": "preserved_proposal_only"
+    },
+    {
+      "canonical_port_qualification": "not_started",
+      "compatibility_status": "Optional experimental training state; experiment module registration is not a supported package interface.",
+      "id": "gated_training_state",
+      "intended_shared_owner": {
+        "path": "ipfs_datasets_py/logic/formalization/autoencoder/",
+        "root": "datasets_repository"
+      },
+      "optional_architecture": true,
+      "patch": {
+        "bytes": 25741,
+        "format": "unified_addition",
+        "path": "patches/gated_training_state.patch",
+        "reconstruction_target": "reference_sources/gated_training_state/training_state.py",
+        "sha256": "13ac5bfbf934788ba001b7c0bbf36c18c5a5c6296612e6d0b59f8a1a7fe8255e"
+      },
+      "runtime_installed": false,
+      "source": {
+        "bytes": 25068,
+        "path": "artifacts/legal-ir-gated-training-state-20261018-01/training_state.py",
+        "root": "workspace_repository",
+        "sha256": "a1ad93184fbf417b704c801ce6c15b932f0d138974f4f020239c7cbb4e0493a3"
+      },
+      "source_hash_bridge_requirements": [
+        "Replace experiment sys.modules owner names through a versioned supported import contract.",
+        "Bridge source hashes and state schema explicitly; preserve the fresh-Adam policy and donor lineage.",
+        "Keep training_core.py and its host-specific run controls in historical evidence."
+      ],
+      "status": "preserved_proposal_only"
+    },
+    {
+      "canonical_port_qualification": "not_started",
+      "compatibility_status": "Optional unweighted journal profile; fixed anchors and cumulative session limits require explicit compatibility.",
+      "id": "journal_session",
+      "intended_shared_owner": {
+        "path": "ipfs_datasets_py/logic/formalization/autoencoder/",
+        "root": "datasets_repository"
+      },
+      "optional_architecture": true,
+      "patch": {
+        "bytes": 40480,
+        "format": "unified_addition",
+        "path": "patches/journal_session.patch",
+        "reconstruction_target": "reference_sources/journal_session/session.py",
+        "sha256": "be7542ca85c1231cc67212edd1e303de956a2ba4c51289f4233a6b714c80ba19"
+      },
+      "runtime_installed": false,
+      "source": {
+        "bytes": 39666,
+        "path": "artifacts/legal-ir-journal-training-session-20261018-01/candidate/session.py",
+        "root": "workspace_repository",
+        "sha256": "527159a86b380e81c376d80e8464aa79420b71ab13e471faa33a3e72442beffc"
+      },
+      "source_hash_bridge_requirements": [
+        "Bridge the pinned gated-state and gated-conditioning owner identities and this source identity through a versioned contract.",
+        "Preserve the fixed legacy anchor, hard-three transition budget, cadence-two checkpoints and original journal/Adam lineage.",
+        "Qualify mutation, resume, close and refusal boundaries before any generalized budget or runtime adoption."
+      ],
+      "status": "preserved_proposal_only"
+    },
+    {
+      "canonical_port_qualification": "not_started",
+      "compatibility_status": "Optional journal serving profile; model-only restore and fixed journal/view/row assumptions remain distinct.",
+      "id": "journal_inference",
+      "intended_shared_owner": {
+        "path": "ipfs_datasets_py/logic/formalization/autoencoder/",
+        "root": "datasets_repository"
+      },
+      "optional_architecture": true,
+      "patch": {
+        "bytes": 35074,
+        "format": "unified_addition",
+        "path": "patches/journal_inference.patch",
+        "reconstruction_target": "reference_sources/journal_inference/runtime.py",
+        "sha256": "1f7a283109b7638163966270454ddd3e2d8e5d253593ffc27594134ee3ec1bb9"
+      },
+      "runtime_installed": false,
+      "source": {
+        "bytes": 34369,
+        "path": "artifacts/legal-ir-journal-inference-20261018-01/candidate/runtime.py",
+        "root": "workspace_repository",
+        "sha256": "95295682fe80c4ffc0010fded4235b38e6633ba82a39e17267e8e757f50bd6a9"
+      },
+      "source_hash_bridge_requirements": [
+        "Bridge the pinned journal owner, grammar/selector identities and this source identity explicitly.",
+        "Preserve model-only restoration, fixed views/rows, full-prefix decoding and the original BOS64 serving contract.",
+        "Retain exact saved-state continuation and refusal boundaries; no optimizer or training authority follows from serving."
+      ],
+      "status": "preserved_proposal_only"
+    }
+  ],
+  "purpose": "Preserve six missing experimental source proposals inside the owning repository without installing an importable runtime copy.",
+  "roots": {
+    "datasets_repository": "The ipfs_datasets repository; external/ipfs_datasets in the parent checkout.",
+    "workspace_repository": "The lift_coding checkout containing the historical artifacts directory."
+  },
+  "schema": "legal-ir-portable-source-proposals/v1",
+  "scope": {
+    "canonical_files_changed": 0,
+    "checkpoints_or_transcripts_included": false,
+    "models_loaded": 0,
+    "source_files": 6,
+    "tests_run": 0,
+    "training_or_inference_executed": false
+  },
+  "verification": "Each patch addition hunk was reconstructed in memory and matched the complete original source bytes and recorded SHA256. No source was imported or executed."
+}

@@ -564,3 +564,12 @@ def validate_uscode_source_coordinates(
     maximum = expected["limits"]["max_report_bytes"]
     if _source_coordinates_wire(report, maximum) != _source_coordinates_wire(expected, maximum):
         raise USCodeSourceCoordinatesError("complete source-coordinate replay differs")
+
+
+from ipfs_datasets_py.logic.autoformal import corpus_contracts as _joined_owner_contracts_v1
+
+_JOIN_LOADED_OWNER_GUARD_V1 = _joined_owner_contracts_v1._capture_loaded_owner_guard_v1(
+    globals(), value_names=('SCHEMA', 'RETRIEVAL_METHOD', 'SOURCE_COORDINATE_SCHEMA', 'SOURCE_COORDINATE_PROFILE', 'SOURCE_COORDINATE_LIMITS'),
+    class_names=('USCodeSourceCoordinatesError',),
+    imported_function_names=('_sentences',),
+    alias_names=('Any', 'Callable', 'Iterable', 'Mapping', 'Sequence', '__builtins__', '__loader__', '__spec__', '_joined_owner_contracts_v1', '_sentences', 'census_ledger', 'hashlib', 'json', 're', 'tag_facets'))

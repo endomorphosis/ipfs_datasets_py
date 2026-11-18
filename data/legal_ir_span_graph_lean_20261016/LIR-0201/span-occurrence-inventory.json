@@ -1,0 +1,394 @@
+{
+  "admitted": false,
+  "cache_selection": {
+    "manifests": 2,
+    "repository_id": "justicedao/uscode-autoformal-span-cache",
+    "request_sha256": "ffb7a987f8d417be4b4343f0d46522acf7b6b2172345a5493134480dac9c2a82",
+    "revision": "60501f3e920f6c9050cfc452e0d9fcc2b7c184f3",
+    "span_rows": 16
+  },
+  "dispositions": {
+    "physical_rows": 62931,
+    "physical_status": {
+      "embedded": 51,
+      "token_limit_exceeded": 13,
+      "unattempted": 62867
+    },
+    "unique_inputs": 62839,
+    "unique_status": {
+      "embedded": 51,
+      "token_limit_exceeded": 13,
+      "unattempted": 62775
+    },
+    "unmapped": 0
+  },
+  "formalized": false,
+  "gold_or_teacher_admission_granted": false,
+  "intake": [
+    {
+      "bank": "v1",
+      "disposition_counts": {
+        "unresolved": 8
+      },
+      "intake_sha256": "0fa7a18421c25de73bb84b5438335e6bad5057e244e3075271b3881bc4e20950",
+      "issue_counts": {
+        "cache_status_missing": 8,
+        "canonical_source_coverage_unverified": 6,
+        "missing_independent_source_binding": 8,
+        "mock_or_diagnostic_producer_observation": 8,
+        "paired_cache_observation_only_no_span_rule_transport": 8,
+        "target_conditioned_formal_output_observation": 4
+      },
+      "row_count": 8,
+      "whole_cache_coverage_verified": false
+    },
+    {
+      "bank": "v2",
+      "disposition_counts": {
+        "unresolved": 8
+      },
+      "intake_sha256": "e58149c20efd1eecb85b8ae66eef222215da06a9f27c1a6db6543ba3016d83d3",
+      "issue_counts": {
+        "cache_status_missing": 8,
+        "canonical_source_coverage_unverified": 8,
+        "missing_independent_source_binding": 8,
+        "mock_or_diagnostic_producer_observation": 8,
+        "paired_cache_observation_only_no_span_rule_transport": 8,
+        "target_conditioned_formal_output_observation": 3
+      },
+      "row_count": 8,
+      "whole_cache_coverage_verified": false
+    }
+  ],
+  "official_source_correspondence": false,
+  "package": {
+    "file_count": 103,
+    "row_count": 62931,
+    "row_digest": "9ba5939bc2eab013dfbcb115b66c351e3d03aa3935ccf43346a7b4d0cab33db3",
+    "total_bytes": 263671066
+  },
+  "published_text_coordinates_are_document_selectors": false,
+  "repeated_exact_text": {
+    "L.": 4
+  },
+  "rows": [
+    {
+      "bank": "v1",
+      "legal_id": "usc:us:10:7362",
+      "legal_id_in_searched_source_population": false,
+      "observation_id": "c07cb15d34eaadb4611180a129281598f2d10370c8a98325aac024f4b9063c9d",
+      "official_source_correspondence": false,
+      "published_text_occurrence_count": 0,
+      "published_text_occurrences": [],
+      "record_sha256": "7608d85b1368d796184f6c354df31e9955ef3beebeffdbf1eacb38ae398eaa61",
+      "selected_occurrence": null,
+      "status": "zero_exact_published_text_occurrences",
+      "text": "L.",
+      "text_characters": 2,
+      "text_sha256": "5bfe62d9f7d85f01c08cd136878aff9508276fa1d75c2ae2f21c43cf29316eec"
+    },
+    {
+      "bank": "v1",
+      "legal_id": "usc:us:10:7374",
+      "legal_id_in_searched_source_population": false,
+      "observation_id": "6762381f712207f3597bf115f1a0ed0596eff2c231108ff24adfa822bb76f058",
+      "official_source_correspondence": false,
+      "published_text_occurrence_count": 0,
+      "published_text_occurrences": [],
+      "record_sha256": "339ce21674f7ecea33ad8eca6b525db51dbb43a93b2fd2161c023f30126cb3e3",
+      "selected_occurrence": null,
+      "status": "zero_exact_published_text_occurrences",
+      "text": "Expert accountant for Inspector General The Secretary of the Army shall appoint an expert accountant to perform duties under the Inspector General.",
+      "text_characters": 147,
+      "text_sha256": "48a93c88d591d67e133e44f967a2ba3f6bcf75faa6dba392e1a96d1a46f2749b"
+    },
+    {
+      "bank": "v1",
+      "legal_id": "usc:us:10:7346",
+      "legal_id_in_searched_source_population": false,
+      "observation_id": "44a3f41593ed3b00fead46e49b314df3131c561c51d6497e5b71e393d6c22c36",
+      "official_source_correspondence": false,
+      "published_text_occurrence_count": 0,
+      "published_text_occurrences": [],
+      "record_sha256": "0ccf603bbd2a5ca7fa0cdbc58f80cb775ecf7f0840257b7ec5fa96c9f3e857a2",
+      "selected_occurrence": null,
+      "status": "zero_exact_published_text_occurrences",
+      "text": "10 App.:1036.",
+      "text_characters": 13,
+      "text_sha256": "488806697d1cf66ba53d4251d4562e6de6adc631fdde45d381147257955f3330"
+    },
+    {
+      "bank": "v1",
+      "legal_id": "usc:us:10:7361",
+      "legal_id_in_searched_source_population": false,
+      "observation_id": "28e39e101c27355483fec36bf42eb0c7fcd7c937cc521bf30b38c90de6320c29",
+      "official_source_correspondence": false,
+      "published_text_occurrence_count": 0,
+      "published_text_occurrences": [],
+      "record_sha256": "0be40a0a380e5d071ab6b93ab25088913779b765ba6ddcc84ef18e063653f7ee",
+      "selected_occurrence": null,
+      "status": "zero_exact_published_text_occurrences",
+      "text": "L.",
+      "text_characters": 2,
+      "text_sha256": "5bfe62d9f7d85f01c08cd136878aff9508276fa1d75c2ae2f21c43cf29316eec"
+    },
+    {
+      "bank": "v1",
+      "legal_id": "usc:us:10:7346",
+      "legal_id_in_searched_source_population": false,
+      "observation_id": "57dac3c0eb3342117bbe0b21f2cbc38d6ae37c46c0ef1c076b81d310c8b1b4e8",
+      "official_source_correspondence": false,
+      "published_text_occurrence_count": 0,
+      "published_text_occurrences": [],
+      "record_sha256": "b4e7e5ae3f335976bd6533f06fc7a518292279aa3ea640f942d50848877f324c",
+      "selected_occurrence": null,
+      "status": "zero_exact_published_text_occurrences",
+      "text": "(c) The Secretary shall maintain a retired list containing the name of each retired warrant officer of the Army.",
+      "text_characters": 112,
+      "text_sha256": "fd1ed36eac72cbe3e4f95dd7e1f2384a273619252e5ff955ef6a7b1a1c4fdbb3"
+    },
+    {
+      "bank": "v1",
+      "legal_id": "usc:us:10:7377",
+      "legal_id_in_searched_source_population": false,
+      "observation_id": "8ea9390a94ccd86b34866d423d8226fe4063089e5027eb255f95714b5c1fddf9",
+      "official_source_correspondence": false,
+      "published_text_occurrence_count": 0,
+      "published_text_occurrences": [],
+      "record_sha256": "b2edaf001bf1a0b182369f268bcc44e835c3eeccdf735c2890e500c084ba3302",
+      "selected_occurrence": null,
+      "status": "zero_exact_published_text_occurrences",
+      "text": "1654, 1654A\u2013126, \u00a74027; renumbered \u00a77377, Pub.",
+      "text_characters": 46,
+      "text_sha256": "88c73c4264960dc756b5dde80973fc866aac5114f2242054ad263f2ee791035f"
+    },
+    {
+      "bank": "v1",
+      "legal_id": "usc:us:10:7361",
+      "legal_id_in_searched_source_population": false,
+      "observation_id": "a8be64afbd4c28357b2e92199bf3aefd20cda728d3835d9c80006b62185592b1",
+      "official_source_correspondence": false,
+      "published_text_occurrence_count": 0,
+      "published_text_occurrences": [],
+      "record_sha256": "199bf61c64ddb45f033f3f6f16d061a418676d39f43ffd9b1fcd1c2159ec8ae6",
+      "selected_occurrence": null,
+      "status": "zero_exact_published_text_occurrences",
+      "text": "233), the active duty pay of all members of the Army is based upon years of service.",
+      "text_characters": 84,
+      "text_sha256": "7c2871db749bcf745ae21851d5f0d29dd51ddf7ca1880926b14d0978f7c607dc"
+    },
+    {
+      "bank": "v1",
+      "legal_id": "usc:us:10:7381",
+      "legal_id_in_searched_source_population": false,
+      "observation_id": "1a3e36f6af9d71c3b0f736309c565f96bdeada9ba5ed0e21082c7b05b4abfb17",
+      "official_source_correspondence": false,
+      "published_text_occurrence_count": 0,
+      "published_text_occurrences": [],
+      "record_sha256": "7ed990c89237a8a2364219607368dd54ef67714605cd8fb4bb52b2c97b37d077",
+      "selected_occurrence": null,
+      "status": "zero_exact_published_text_occurrences",
+      "text": "U.S.C.",
+      "text_characters": 6,
+      "text_sha256": "1d1b932916ddd23b221c642bff16f451508fdbc067a5666ee17cb35de1168958"
+    },
+    {
+      "bank": "v2",
+      "legal_id": "usc:us:10:9342",
+      "legal_id_in_searched_source_population": false,
+      "observation_id": "e72d2868082d4792a4502a11073ae1fecacfb8132e9d9714fb481bea7931daa7",
+      "official_source_correspondence": false,
+      "published_text_occurrence_count": 0,
+      "published_text_occurrences": [],
+      "record_sha256": "8078be666dfdc308cc1449d7a280753698e7c3255eada0511e7ad59ac99c99a5",
+      "selected_occurrence": null,
+      "status": "zero_exact_published_text_occurrences",
+      "text": "8, 1980, 94 Stat.",
+      "text_characters": 17,
+      "text_sha256": "72caeadc0a0c9a681ec518aea54f8fc585bfa53956bf00adb1175bd762100234"
+    },
+    {
+      "bank": "v2",
+      "legal_id": "usc:us:10:9321",
+      "legal_id_in_searched_source_population": false,
+      "observation_id": "669eaecbf6a1a55c7e5817c37e11f84ab1f7544f4bc115854b5265ec43dab3aa",
+      "official_source_correspondence": false,
+      "published_text_occurrence_count": 0,
+      "published_text_occurrences": [],
+      "record_sha256": "0b05853bef8f43a7f0c5b396cbc41a32f6e2fd02ebb55b0097a5e642e6fb752e",
+      "selected_occurrence": null,
+      "status": "zero_exact_published_text_occurrences",
+      "text": "1833; Pub.",
+      "text_characters": 10,
+      "text_sha256": "b8de917b5d4616c590c95cdc6a1af5b7ac6280f4a566ad6d5ef2c1ffdc87c304"
+    },
+    {
+      "bank": "v2",
+      "legal_id": "usc:us:10:9324",
+      "legal_id_in_searched_source_population": false,
+      "observation_id": "7abb3044408537a3b8f4d4ccfaa2550af67c9f05ae914468ca6437b4d8f4480a",
+      "official_source_correspondence": false,
+      "published_text_occurrence_count": 0,
+      "published_text_occurrences": [],
+      "record_sha256": "5dc5a9133efeb53e4f897486cf45a126bd634bf7dfbe52362a57b7b8de1da05d",
+      "selected_occurrence": null,
+      "status": "zero_exact_published_text_occurrences",
+      "text": "10, 1956, ch.",
+      "text_characters": 13,
+      "text_sha256": "6b2c028dc7819507b66c72d339b79d2aa73f9808686d666551854f6da8010493"
+    },
+    {
+      "bank": "v2",
+      "legal_id": "usc:us:10:9326",
+      "legal_id_in_searched_source_population": false,
+      "observation_id": "cfa2e583d2925a728dc620068b6557e8f2e2fa556a04a3f97e9e4718a4c870d6",
+      "official_source_correspondence": false,
+      "published_text_occurrence_count": 0,
+      "published_text_occurrences": [],
+      "record_sha256": "9e5c6dcad8d991877408c759cde1ac596e67534e6e456c094bacfc1a8cbb0c59",
+      "selected_occurrence": null,
+      "status": "zero_exact_published_text_occurrences",
+      "text": "L.",
+      "text_characters": 2,
+      "text_sha256": "5bfe62d9f7d85f01c08cd136878aff9508276fa1d75c2ae2f21c43cf29316eec"
+    },
+    {
+      "bank": "v2",
+      "legal_id": "usc:us:10:9341",
+      "legal_id_in_searched_source_population": false,
+      "observation_id": "f94dbc5b46f91046af287bef94d2181839dd73fb8515ba92f05f56315f8512be",
+      "official_source_correspondence": false,
+      "published_text_occurrence_count": 0,
+      "published_text_occurrences": [],
+      "record_sha256": "b56308670139cd1409781fa83a178fbdc8fb9090c98dbbe31f991ee285308b4a",
+      "selected_occurrence": null,
+      "status": "zero_exact_published_text_occurrences",
+      "text": "96\u2013513 added subsec.",
+      "text_characters": 20,
+      "text_sha256": "2f1c57ba5fddb1a79f56ffcda55749f0def6a3477602c348020c9415e5cd632c"
+    },
+    {
+      "bank": "v2",
+      "legal_id": "usc:us:10:9286",
+      "legal_id_in_searched_source_population": false,
+      "observation_id": "54b68fd27a84c3f11d63965fd363babc4de72a68c48414812545b69564732af9",
+      "official_source_correspondence": false,
+      "published_text_occurrence_count": 0,
+      "published_text_occurrences": [],
+      "record_sha256": "83b66496efa6705870b3c3811106b76ec5e119f675e99eb2599662feac4cf04d",
+      "selected_occurrence": null,
+      "status": "zero_exact_published_text_occurrences",
+      "text": "A, title X, \u00a71084(d)(33), Oct.",
+      "text_characters": 30,
+      "text_sha256": "0351764be769b07f43ca4651e04acb2f9ade464f711d2b8ca9928936afd16b45"
+    },
+    {
+      "bank": "v2",
+      "legal_id": "usc:us:10:9324",
+      "legal_id_in_searched_source_population": false,
+      "observation_id": "f27882476fba85cc5ea97e590f385ab5febb31796b340e9b3edb34db782dafdf",
+      "official_source_correspondence": false,
+      "published_text_occurrence_count": 0,
+      "published_text_occurrences": [],
+      "record_sha256": "b0743dabef3e71cd4285e79a25a5523029bdccd1867a06cf62a77308e5735ef6",
+      "selected_occurrence": null,
+      "status": "zero_exact_published_text_occurrences",
+      "text": "Atty.",
+      "text_characters": 5,
+      "text_sha256": "6eef08983b042db447871632df1f7c3eb8e0bb668457995c586df50ae433a544"
+    },
+    {
+      "bank": "v2",
+      "legal_id": "usc:us:10:9325",
+      "legal_id_in_searched_source_population": false,
+      "observation_id": "11b2d9c4034c82c3ada1d2f83ecae184b99493c92ffa8b88fcb484ea2bdedf75",
+      "official_source_correspondence": false,
+      "published_text_occurrence_count": 0,
+      "published_text_occurrences": [],
+      "record_sha256": "28f48d23117ce6084e23052850896abbb1a626db19c2c8823b7843423d904bc6",
+      "selected_occurrence": null,
+      "status": "zero_exact_published_text_occurrences",
+      "text": "L.",
+      "text_characters": 2,
+      "text_sha256": "5bfe62d9f7d85f01c08cd136878aff9508276fa1d75c2ae2f21c43cf29316eec"
+    }
+  ],
+  "schema": "legal-ir-0201-span-occurrence-inventory/v1",
+  "searched_source_population": [
+    {
+      "embedding_status": "unattempted",
+      "entry_cid": "sha256:6408d8b2df41bf5e1e21f538d919a2ecacd939df067980bc958e32f297b89ded",
+      "input_id": "sha256:427afd8abc42fd7c24b105f6e0c433803c93d604475991e91323cad2c7a62441",
+      "legal_id": "usc:us:10:7213",
+      "ordinal": 24590,
+      "record_sha256": "d2abf994c7751a9452a2ce7645da9addce06da07f670b536f7198c8aba2d5c4f",
+      "text_bytes": 293,
+      "text_sha256": "ec22e73863b6bd1fb64804d35fc5fba86cd0f2fe0050be705f76c25d7e4e44ec"
+    },
+    {
+      "embedding_status": "unattempted",
+      "entry_cid": "sha256:910a2e4d2f12677c1ebd4a9c4bcd281b9200c40582fefa12f458c82a145755c2",
+      "input_id": "sha256:2527c74af2cd37ce9001fe7c1b7b0f897d5b42d73de8508461890e844c015b57",
+      "legal_id": "usc:us:10:101",
+      "ordinal": 35579,
+      "record_sha256": "d778c2c7849b981de2a6a1410e0d5992c1b0a5e2159376974760186e3f990476",
+      "text_bytes": 20654,
+      "text_sha256": "d903badc4ad7934d08076f0078ef8e9654ef4279164fed736bfaac0e8c7562aa"
+    },
+    {
+      "embedding_status": "unattempted",
+      "entry_cid": "sha256:b53659694aec9346b0594bc0de6e5606edfb22c4d3dd6c1360a5e6c1fb7ee76f",
+      "input_id": "sha256:fc1f2c69712563268d7bcd60571f5bcab7378d11970eefee93dd5b839fc71291",
+      "legal_id": "usc:us:10:7214",
+      "ordinal": 44465,
+      "record_sha256": "1fdb153e759a5c5940a94275677fce4b81b00a04e7d577ae29bcc0c1dd67ce52",
+      "text_bytes": 251,
+      "text_sha256": "5183252020bf1c95d25a8e9272af2c719ec4cfc38ebd1f2c26e4c4805f2c12ac"
+    }
+  ],
+  "status_counts": {
+    "zero_exact_published_text_occurrences": 16
+  },
+  "table_pins": [
+    {
+      "bank": "v1",
+      "bytes": 3147447,
+      "filename": "artifacts-1e65d0c608e6d681281f0aed671e85440ae3379f656215500aed9f43066e5c42-bbd16f7f9cda564c74035ae26181186381d17e5abb34479b5e0d3fbff43583b1.parquet",
+      "sha256": "bbd16f7f9cda564c74035ae26181186381d17e5abb34479b5e0d3fbff43583b1"
+    },
+    {
+      "bank": "v1",
+      "bytes": 11654,
+      "filename": "goals-1e65d0c608e6d681281f0aed671e85440ae3379f656215500aed9f43066e5c42-1ffa2211257bf1e9a3329a551a350a964217005431526ef38d312320b5bfda34.parquet",
+      "sha256": "1ffa2211257bf1e9a3329a551a350a964217005431526ef38d312320b5bfda34"
+    },
+    {
+      "bank": "v1",
+      "bytes": 44324,
+      "filename": "paired_spans-1e65d0c608e6d681281f0aed671e85440ae3379f656215500aed9f43066e5c42-dac287c0f68b667fc3204855daf82291482f95205cd48810369a449dcee0039d.parquet",
+      "sha256": "dac287c0f68b667fc3204855daf82291482f95205cd48810369a449dcee0039d"
+    },
+    {
+      "bank": "v2",
+      "bytes": 2608120,
+      "filename": "artifacts-1e61fdb42b6df84addc75ea1fcecc4e3a481193ddaf8fc5aa4f028b7749660fa-f7811ba1eea106cdf193b8fcd247a35fb2e5f9e649ff111297e12ef262a25ab0.parquet",
+      "sha256": "f7811ba1eea106cdf193b8fcd247a35fb2e5f9e649ff111297e12ef262a25ab0"
+    },
+    {
+      "bank": "v2",
+      "bytes": 12016,
+      "filename": "goals-1e61fdb42b6df84addc75ea1fcecc4e3a481193ddaf8fc5aa4f028b7749660fa-20dec780f4c02a23fd0e7f2b5b57f45ef84784444203b12c7166b040f62e5356.parquet",
+      "sha256": "20dec780f4c02a23fd0e7f2b5b57f45ef84784444203b12c7166b040f62e5356"
+    },
+    {
+      "bank": "v2",
+      "bytes": 42120,
+      "filename": "paired_spans-1e61fdb42b6df84addc75ea1fcecc4e3a481193ddaf8fc5aa4f028b7749660fa-86a5039cf5274f3498563efb86f8ff22153c2d146a60dc6a9e66c6dc02699f3b.parquet",
+      "sha256": "86a5039cf5274f3498563efb86f8ff22153c2d146a60dc6a9e66c6dc02699f3b"
+    }
+  ],
+  "task_id": "LIR-0201",
+  "training_executed": false,
+  "weight_download_performed": false,
+  "whole_corpus_claim": false
+}

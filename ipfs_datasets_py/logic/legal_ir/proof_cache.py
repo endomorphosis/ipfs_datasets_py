@@ -308,17 +308,18 @@ def _validate_proof_binding(
             or claim.metadata.get("source_digest") != artifact.declaration_digest
             or claim.metadata.get("proof_context_digest") != stable_digest(context)):
         raise LegalProofIntegrityError("claim does not bind the artifact/source/reuse context")
-    if _json_ready(request.payload.get("legal_proof_context")) != context:
+    if _canonical_bytes(_json_ready(request.payload.get("legal_proof_context"))) != _canonical_bytes(context):
         raise LegalProofIntegrityError("backend request does not bind the exact reuse context")
     obligations = {item.obligation_id: item for item in artifact.proof_obligations}
     if receipt.obligation_id not in obligations:
         raise LegalProofIntegrityError("proved obligation is not declared by the artifact")
     for item in claim.obligations:
-        if item.obligation_id not in obligations or item.to_dict() != obligations[item.obligation_id].to_dict():
+        if (item.obligation_id not in obligations
+                or _canonical_bytes(item.to_dict()) != _canonical_bytes(obligations[item.obligation_id].to_dict())):
             raise LegalProofIntegrityError("claim obligation differs from the artifact obligation")
     expected_assumptions = sorted((item.to_dict() for item in artifact.assumptions), key=lambda x: x["assumption_id"])
     actual_assumptions = sorted((item.to_dict() for item in claim.assumptions), key=lambda x: x["assumption_id"])
-    if expected_assumptions != actual_assumptions:
+    if _canonical_bytes(expected_assumptions) != _canonical_bytes(actual_assumptions):
         raise LegalProofIntegrityError("formal assumption content differs from the artifact")
     obligation = obligations[receipt.obligation_id]
     if (receipt.obligation_digest != obligation.digest
@@ -347,7 +348,7 @@ def _validate_proof_binding(
             or kernel.theorem_name != context["expected_declaration"]
             or kernel.expected_proposition != context["expected_proposition"]
             or kernel.axiom_policy_digest != context["axiom_policy_digest"]
-            or kernel.toolchain.to_dict() != context["toolchain"]
+            or _canonical_bytes(kernel.toolchain.to_dict()) != _canonical_bytes(context["toolchain"])
             or kernel.toolchain.kernel_id != receipt.backend_id):
         raise LegalProofIntegrityError("checked kernel receipt does not match the proof context")
     source_values = [request.payload.get(name) for name in ("lean", "source", "checked_source")
@@ -560,7 +561,7 @@ class LegalProofRecord:
         bindings = {item["receipt_digest"]: item for item in self.proof_bindings}
         matches = tuple(receipt for receipt in headers
                         if (obligation_id is None or receipt.obligation_id == obligation_id)
-                        and _json_ready(bindings[receipt.digest]["context"]) == context)
+                        and _canonical_bytes(_json_ready(bindings[receipt.digest]["context"])) == _canonical_bytes(context))
         if not matches:
             raise LegalProofIntegrityError("no proved obligation matches the expected reuse context")
         return matches

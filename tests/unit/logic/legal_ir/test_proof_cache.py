@@ -521,7 +521,7 @@ def _fictional_native_identity(*, executable="/fictional/lean", version="test"):
         version_returncode=0,observation_kind="trusted_fictional_identity_fixture")
 
 
-def _fictional_kernel_receipt(request):
+def _fictional_kernel_receipt(request, *, toolchain=None):
     from ipfs_datasets_py.logic.backends.kernel import lean
     from ipfs_datasets_py.logic.backends.kernel.wasm import CapabilityPlane,KernelSourceTreeBinding,KernelToolchainBinding
     payload=request.payload.to_dict()
@@ -534,7 +534,7 @@ def _fictional_kernel_receipt(request):
     return lean.LeanKernelReceipt(request_digest=request.digest,source_binding=lean.LeanSourceBinding.bind(request,source),
         theorem_name=name,theorem_digest=lean.content_digest(source),imports=lean.extract_lean_imports(source),
         generated_proof=proof,generated_proof_digest=lean.content_digest(proof),
-        toolchain=KernelToolchainBinding(toolchain_id="fictional:lean-v3",kernel_id="lean",plane=CapabilityPlane.NATIVE,
+        toolchain=toolchain if toolchain is not None else KernelToolchainBinding(toolchain_id="fictional:lean-v3",kernel_id="lean",plane=CapabilityPlane.NATIVE,
             executable=identity.resolved_executable,version=identity.actual_version,metadata=lean.FrozenMap({
                 "approved_axioms":[],"approved_imports":list(lean.LEAN_DEFAULT_APPROVED_IMPORTS),"axiom_policy_digest":policy,
                 "native_identity_digest":identity.identity_digest,"native_library_scope":identity.library_scope})),
@@ -547,7 +547,10 @@ def _fictional_kernel_receipt(request):
         compiled_source_digest=lean.content_digest(compiled),approved_axioms=(),approved_imports=lean.LEAN_DEFAULT_APPROVED_IMPORTS,axiom_policy_digest=policy)
 
 
-def _bound_fixture(*, extra_obligation: bool = False):
+def _bound_fixture(*, extra_obligation: bool = False,
+                   native_resource_profile: dict[str, Any] | None = None,
+                   request_native_resource_profile: dict[str, Any] | None = None,
+                   kernel_native_resource_profile: dict[str, Any] | None = None):
     from ipfs_datasets_py.logic.backends.kernel import lean
     from ipfs_datasets_py.logic.backends.kernel.wasm import CapabilityPlane, KernelToolchainBinding
     from ipfs_datasets_py.logic.ir_core.claims import FrozenMap
@@ -569,6 +572,9 @@ def _bound_fixture(*, extra_obligation: bool = False):
         metadata=FrozenMap({"approved_axioms": [], "approved_imports": list(lean.LEAN_DEFAULT_APPROVED_IMPORTS),
             "axiom_policy_digest": policy, "native_identity_digest": identity.identity_digest,
             "native_library_scope": identity.library_scope}))
+    if native_resource_profile is not None:
+        toolchain = replace(toolchain, metadata={**toolchain.metadata.to_dict(),
+            "native_resource_profile": deepcopy(native_resource_profile)})
     context = dict(schema_version=LEGAL_PROOF_CONTEXT_SCHEMA_VERSION, jurisdiction="fictional",
         interpretation_digest=stable_digest({"fictional_interpretation": 1}),
         dependency_versions={"fictional-definition": stable_digest({"definition": 1})},
@@ -578,12 +584,19 @@ def _bound_fixture(*, extra_obligation: bool = False):
         assumptions=artifact.assumptions, obligations=(obligation,), domain="legal", source_refs=(source_ref,),
         metadata={"artifact_digest": artifact.digest, "source_digest": artifact.declaration_digest,
                   "proof_context_digest": stable_digest(context)})
+    request_context = deepcopy(context)
+    if request_native_resource_profile is not None:
+        request_context["toolchain"]["metadata"]["native_resource_profile"] = deepcopy(request_native_resource_profile)
     request = BackendRequest.for_claim(claim, obligation.obligation_id, request_id="request:fictional-cache",
         requested_backend_id="lean", bounds=ExecutionBounds(timeout_ms=1000, max_steps=1000,
             max_memory_bytes=1000000, max_output_bytes=4096),
         payload={"lean": "theorem cache_fixture : True := by trivial\n", "expected_declaration": "cache_fixture",
-                 "expected_proposition": "True", "legal_proof_context": context})
-    kernel = _fictional_kernel_receipt(request)
+                 "expected_proposition": "True", "legal_proof_context": request_context})
+    kernel_toolchain = toolchain
+    if kernel_native_resource_profile is not None:
+        kernel_toolchain = replace(toolchain, metadata={**toolchain.metadata.to_dict(),
+            "native_resource_profile": deepcopy(kernel_native_resource_profile)})
+    kernel = _fictional_kernel_receipt(request, toolchain=kernel_toolchain)
     attempt = BackendAttempt(attempt_id="attempt:fictional-cache", request_digest=request.digest, backend_id="lean",
         backend_version="fictional", status=AttemptStatus.SUCCEEDED, bounds=request.bounds,
         usage=ResourceUsage(elapsed_ms=1, steps=1, peak_memory_bytes=1024, output_bytes=40),
@@ -599,8 +612,9 @@ def _bound_fixture(*, extra_obligation: bool = False):
     return artifact, receipt, binding, context
 
 
-def _bound_record(*, extra_obligation: bool = False):
-    artifact, receipt, binding, context = _bound_fixture(extra_obligation=extra_obligation)
+def _bound_record(*, extra_obligation: bool = False, native_resource_profile: dict[str, Any] | None = None):
+    artifact, receipt, binding, context = _bound_fixture(extra_obligation=extra_obligation,
+                                                       native_resource_profile=native_resource_profile)
     record = LegalProofRecord.build(artifact, profile="fictional-bound", jurisdiction="fictional",
                                     theorem_receipts=(receipt,), proof_bindings=(binding,))
     return record, artifact, receipt, binding, context
@@ -685,6 +699,70 @@ def test_proof_reuse_rejects_changed_expected_context(facet: str) -> None:
         changed["axiom_policy_digest"] = stable_digest({"approved_axioms": ["foreign"]})
     else:
         changed["jurisdiction"] = "different"
+    with pytest.raises(LegalProofIntegrityError, match="expected reuse context"):
+        record.theorem_receipt_results(expected_context=changed)
+
+
+# Python treats these values as equal; their canonical JSON identities differ.
+_NUMERIC_CONTEXT_ALIASES = [
+    pytest.param(1, True, id="int-to-bool"),
+    pytest.param(True, 1, id="bool-to-int"),
+    pytest.param(1, 1.0, id="int-to-float"),
+    pytest.param(1.0, 1, id="float-to-int"),
+    pytest.param(True, 1.0, id="bool-to-float"),
+    pytest.param(1.0, True, id="float-to-bool"),
+]
+
+
+@pytest.mark.parametrize(("stored", "alias"), _NUMERIC_CONTEXT_ALIASES)
+def test_proof_reuse_requires_exact_json_numeric_context(stored: Any, alias: Any) -> None:
+    record, _, receipt, _, context = _bound_record(native_resource_profile={"cpu_slots": stored})
+    assert record.theorem_receipt_results(expected_context=context) == (receipt,)
+    changed = deepcopy(context)
+    changed["toolchain"]["metadata"]["native_resource_profile"]["cpu_slots"] = alias
+    assert changed == context and stable_digest(changed) != stable_digest(context)
+    with pytest.raises(LegalProofIntegrityError, match="expected reuse context"):
+        record.theorem_receipt_results(expected_context=changed)
+
+
+@pytest.mark.parametrize(("stored", "alias"), _NUMERIC_CONTEXT_ALIASES)
+def test_bound_request_requires_exact_json_numeric_context(stored: Any, alias: Any) -> None:
+    # The claim, request, attempt, kernel receipt and proof header are genuinely
+    # reissued by the fixture owners. Only the two declared contexts disagree.
+    with pytest.raises(LegalProofIntegrityError, match="backend request.*exact reuse context"):
+        _bound_fixture(native_resource_profile={"cpu_slots": stored},
+                       request_native_resource_profile={"cpu_slots": alias})
+
+
+@pytest.mark.parametrize(("stored", "alias"), _NUMERIC_CONTEXT_ALIASES)
+def test_checked_kernel_toolchain_requires_exact_json_numeric_context(stored: Any, alias: Any) -> None:
+    with pytest.raises(LegalProofIntegrityError, match="checked kernel receipt.*proof context"):
+        _bound_fixture(native_resource_profile={"cpu_slots": stored},
+                       kernel_native_resource_profile={"cpu_slots": alias})
+
+
+@pytest.mark.parametrize("numeric", [pytest.param(1, id="int"), pytest.param(True, id="bool"),
+                                   pytest.param(1.0, id="float")])
+def test_exact_typed_numeric_context_reuse_is_key_order_independent(numeric: Any) -> None:
+    record, _, receipt, _, context = _bound_record(native_resource_profile={"cpu_slots": numeric,
+                                                                         "child_process_slots": 4})
+    reordered = dict(reversed(list(deepcopy(context).items())))
+    reordered["toolchain"] = dict(reversed(list(reordered["toolchain"].items())))
+    reordered["toolchain"]["metadata"] = dict(reversed(list(reordered["toolchain"]["metadata"].items())))
+    profile = reordered["toolchain"]["metadata"]["native_resource_profile"]
+    reordered["toolchain"]["metadata"]["native_resource_profile"] = dict(reversed(list(profile.items())))
+    assert type(profile["cpu_slots"]) is type(numeric)
+    assert stable_digest(reordered) == stable_digest(context)
+    assert record.theorem_receipt_results(expected_context=reordered) == (receipt,)
+
+
+@pytest.mark.parametrize("different", [pytest.param(2, id="different-int"), pytest.param(False, id="different-bool"),
+                                     pytest.param(1.5, id="different-float")])
+def test_proof_reuse_rejects_changed_numeric_context(different: Any) -> None:
+    record, _, _, _, context = _bound_record(native_resource_profile={"cpu_slots": 1})
+    changed = deepcopy(context)
+    changed["toolchain"]["metadata"]["native_resource_profile"]["cpu_slots"] = different
+    assert changed != context
     with pytest.raises(LegalProofIntegrityError, match="expected reuse context"):
         record.theorem_receipt_results(expected_context=changed)
 
@@ -866,3 +944,132 @@ def test_bound_proof_reuse_refuses_an_installed_older_kernel_profile(monkeypatch
         LegalProofRecord.build(artifact, profile="older-owner", jurisdiction="fictional",
             theorem_receipts=(receipt,), proof_bindings=(binding,))
     assert calls == []
+
+
+# Reissue every protocol link with independently supplied artifact/claim content.
+# Updating the artifact digest correctly avoids an unrelated early refusal. The
+# extra-obligation mode explicitly enrolls the unselected target in the claim;
+# its presence never establishes proof of that second target.
+def _reissued_formal_content_binding(artifact_metadata: dict[str, Any],
+                                    claim_metadata: dict[str, Any], *,
+                                    facet: str = "assumption", reverse_content_order: bool = False):
+    assert facet in {"assumption", "unselected-obligation"}
+    artifact, _, previous_binding, context = _bound_fixture(extra_obligation=facet == "unselected-obligation")
+    claim_assumptions = artifact.assumptions
+    claim_obligations = artifact.proof_obligations[:1]
+    if facet == "assumption":
+        declared = replace(artifact.assumptions[0], metadata=deepcopy(artifact_metadata))
+        artifact_assumptions = (declared,)
+        claim_assumptions = (replace(declared, metadata=deepcopy(claim_metadata)),)
+        if reverse_content_order:
+            second = replace(declared, assumption_id="assumption:fictional-second-premise",
+                statement="A second explicitly fictional premise.", metadata={"fixture_only": True})
+            artifact_assumptions += (second,)
+            claim_assumptions = (second,) + claim_assumptions
+        artifact = replace(artifact, assumptions=artifact_assumptions)
+    else:
+        declared = replace(artifact.proof_obligations[1], metadata=deepcopy(artifact_metadata))
+        artifact = replace(artifact, proof_obligations=(artifact.proof_obligations[0], declared))
+        claim_obligations = (artifact.proof_obligations[0], replace(declared, metadata=deepcopy(claim_metadata)))
+        if reverse_content_order:
+            claim_obligations = tuple(reversed(claim_obligations))
+    previous_claim = IRClaim.from_dict(previous_binding["claim"])
+    claim = replace(previous_claim, assumptions=claim_assumptions, obligations=claim_obligations,
+        metadata={**previous_claim.metadata.to_dict(), "artifact_digest": artifact.digest})
+    previous_request = BackendRequest.from_dict(previous_binding["request"])
+    request = BackendRequest.for_claim(claim, previous_request.obligation_id,
+        request_id="request:fictional-formal-content", requested_backend_id="lean",
+        bounds=previous_request.bounds, payload=previous_request.payload.to_dict())
+    assert request.obligation_digest == artifact.proof_obligations[0].digest
+    kernel = _fictional_kernel_receipt(request)
+    previous_attempt = BackendAttempt.from_dict(previous_binding["attempt"])
+    attempt = replace(previous_attempt, request_digest=request.digest,
+        output_digest=stable_digest({"authored_kernel_fixture": kernel.to_dict()}))
+    previous_result = ProofResult.from_dict(previous_binding["result"])
+    result = ProofResult.for_attempt(request, attempt, result_id="result:fictional-formal-content",
+        authority=replace(previous_result.authority, scope_digest=request.digest),
+        status=ResultStatus.PROVED, payload={"kernel_receipt": kernel.to_dict(), "fixture_only": True})
+    receipt = ProofReceipt.issue(claim, request, attempt, result,
+        receipt_id="receipt:fictional-formal-content", verifier="fictional-test")
+    assert receipt.obligation_digest == artifact.proof_obligations[0].digest
+    binding = build_legal_proof_binding(artifact, receipt, claim=claim, request=request,
+        attempt=attempt, result=result, context=context)
+    return artifact, receipt, binding, context
+
+
+@pytest.mark.parametrize(("artifact_value", "claim_value"), _NUMERIC_CONTEXT_ALIASES)
+def test_bound_proof_rejects_numeric_assumption_alias(artifact_value: Any, claim_value: Any) -> None:
+    artifact_metadata = {"fictional_threshold": artifact_value}
+    claim_metadata = {"fictional_threshold": claim_value}
+    assert artifact_metadata == claim_metadata
+    assert stable_digest(artifact_metadata) != stable_digest(claim_metadata)
+    with pytest.raises(LegalProofIntegrityError, match="formal assumption content"):
+        _reissued_formal_content_binding(artifact_metadata, claim_metadata)
+
+
+@pytest.mark.parametrize("numeric", [pytest.param(1, id="int"), pytest.param(True, id="bool"),
+                                   pytest.param(1.0, id="float")])
+def test_bound_proof_preserves_typed_assumption_content_and_order(numeric: Any) -> None:
+    artifact_metadata = {"fictional_threshold": numeric,
+                         "nested": {"fixture_only": True, "labels": ["fictional", "premise"]}}
+    claim_metadata = {"nested": {"labels": ["fictional", "premise"], "fixture_only": True},
+                      "fictional_threshold": numeric}
+    artifact, receipt, binding, context = _reissued_formal_content_binding(
+        artifact_metadata, claim_metadata, reverse_content_order=True)
+    claim = IRClaim.from_dict(binding["claim"])
+    assert [item.assumption_id for item in claim.assumptions] == list(reversed(
+        [item.assumption_id for item in artifact.assumptions]))
+    by_id = {item.assumption_id: item for item in claim.assumptions}
+    assert all(item.digest == by_id[item.assumption_id].digest for item in artifact.assumptions)
+    record = LegalProofRecord.build(artifact, profile="fictional-assumption-content", jurisdiction="fictional",
+        theorem_receipts=(receipt,), proof_bindings=(binding,))
+    assert record.theorem_receipt_results(expected_context=context) == (receipt,)
+
+
+@pytest.mark.parametrize("different", [pytest.param(2, id="different-int"), pytest.param(False, id="different-bool"),
+                                     pytest.param(1.5, id="different-float")])
+def test_bound_proof_rejects_changed_numeric_assumption_content(different: Any) -> None:
+    with pytest.raises(LegalProofIntegrityError, match="formal assumption content"):
+        _reissued_formal_content_binding({"fictional_threshold": 1}, {"fictional_threshold": different})
+
+
+@pytest.mark.parametrize(("artifact_value", "claim_value"), _NUMERIC_CONTEXT_ALIASES)
+def test_bound_proof_rejects_numeric_unselected_obligation_alias(artifact_value: Any, claim_value: Any) -> None:
+    artifact_metadata = {"fictional_threshold": artifact_value}
+    claim_metadata = {"fictional_threshold": claim_value}
+    assert artifact_metadata == claim_metadata
+    assert stable_digest(artifact_metadata) != stable_digest(claim_metadata)
+    with pytest.raises(LegalProofIntegrityError, match="claim obligation differs"):
+        _reissued_formal_content_binding(artifact_metadata, claim_metadata, facet="unselected-obligation")
+
+
+@pytest.mark.parametrize("numeric", [pytest.param(1, id="int"), pytest.param(True, id="bool"),
+                                   pytest.param(1.0, id="float")])
+def test_bound_proof_preserves_typed_unselected_obligation_content_and_order(numeric: Any) -> None:
+    artifact_metadata = {"fictional_threshold": numeric,
+                         "nested": {"fixture_only": True, "labels": ["fictional", "unproved"]}}
+    claim_metadata = {"nested": {"labels": ["fictional", "unproved"], "fixture_only": True},
+                      "fictional_threshold": numeric}
+    artifact, receipt, binding, context = _reissued_formal_content_binding(
+        artifact_metadata, claim_metadata, facet="unselected-obligation", reverse_content_order=True)
+    claim = IRClaim.from_dict(binding["claim"])
+    assert [item.obligation_id for item in claim.obligations] == list(reversed(
+        [item.obligation_id for item in artifact.proof_obligations]))
+    by_id = {item.obligation_id: item for item in claim.obligations}
+    assert all(item.digest == by_id[item.obligation_id].digest for item in artifact.proof_obligations)
+    record = LegalProofRecord.build(artifact, profile="fictional-extra-obligation", jurisdiction="fictional",
+        theorem_receipts=(receipt,), proof_bindings=(binding,))
+    assert record.theorem_receipt_results(expected_context=context, obligation_id=receipt.obligation_id) == (receipt,)
+    spy = _ShadowObservation()
+    cache = LegalProofCache()
+    cache.bind_shadow_repository(spy)
+    cache.put(record)
+    assert spy.writes[-1]["status"] == "unknown" and spy.writes[-1]["kernel_accepted"] is False
+
+
+@pytest.mark.parametrize("different", [pytest.param(2, id="different-int"), pytest.param(False, id="different-bool"),
+                                     pytest.param(1.5, id="different-float")])
+def test_bound_proof_rejects_changed_numeric_unselected_obligation_content(different: Any) -> None:
+    with pytest.raises(LegalProofIntegrityError, match="claim obligation differs"):
+        _reissued_formal_content_binding({"fictional_threshold": 1}, {"fictional_threshold": different},
+                                         facet="unselected-obligation")

@@ -24,9 +24,11 @@ BUILD_SCHEMA = "legal-native-ast-preservation-native-build/v1"
 PROFILE = "replayed-unary-definition-native-ast-concrete-preservation/v1"
 RELATIONAL_PROFILE = "replayed-typed-relational-deontic-native-ast-concrete-preservation/v1"
 COUNTED_PROFILE = "replayed-typed-many-sorted-fixed-three-counted-preservation/v1"
+MIXED_PROFILE = "replayed-typed-many-sorted-relational-deontic-renderer-preservation/v1"
 _PREPARATION_PROFILE = "native-unary-boolean-fol-json-value-preservation/v1"
 _RELATIONAL_PREPARATION_PROFILE = "typed-relational-deontic-native-preservation/v1"
 _COUNTED_PREPARATION_PROFILE = "typed-many-sorted-fixed-three-counted-preservation/v1"
+_MIXED_PREPARATION_PROFILE = "typed-many-sorted-relational-deontic-renderer-preservation/v1"
 _THEOREM_SUFFIXES = (
     "native_value_exact", "native_ast_closed", "denotation_matches_native",
 )
@@ -36,6 +38,10 @@ _RELATIONAL_THEOREM_SUFFIXES = _THEOREM_SUFFIXES + (
 _COUNTED_THEOREM_SUFFIXES = (
     "counted_value_exact", "counted_ast_closed", "counted_denotation_matches_lowering",
     "cap_two_counterexample", "cap_four_counterexample",
+)
+_MIXED_THEOREM_SUFFIXES = (
+    "mixed_typed_value_exact", "mixed_renderer_value_exact", "mixed_ast_closed",
+    "mixed_denotation_matches_lowering", "mixed_role_denotation_matches_lowering",
 )
 MAX_RECORD_BYTES = 1024 * 1024
 MAX_FRAGMENT_BYTES = MAX_RECORD_BYTES
@@ -262,11 +268,26 @@ def _report_preflight(preparation, report, request_raw,
 
 
 def _profile(manifest):
+    # These are closed proof domains, never caller-configurable route labels.
+    _need((PROFILE, RELATIONAL_PROFILE, COUNTED_PROFILE, MIXED_PROFILE,
+           _PREPARATION_PROFILE, _RELATIONAL_PREPARATION_PROFILE,
+           _COUNTED_PREPARATION_PROFILE, _MIXED_PREPARATION_PROFILE) == (
+        "replayed-unary-definition-native-ast-concrete-preservation/v1",
+        "replayed-typed-relational-deontic-native-ast-concrete-preservation/v1",
+        "replayed-typed-many-sorted-fixed-three-counted-preservation/v1",
+        "replayed-typed-many-sorted-relational-deontic-renderer-preservation/v1",
+        "native-unary-boolean-fol-json-value-preservation/v1",
+        "typed-relational-deontic-native-preservation/v1",
+        "typed-many-sorted-fixed-three-counted-preservation/v1",
+        "typed-many-sorted-relational-deontic-renderer-preservation/v1"),
+        "native preservation proof-domain policy changed")
     selected = manifest.get("profile")
     if selected == _PREPARATION_PROFILE:
         return PROFILE, _THEOREM_SUFFIXES
     if selected == _RELATIONAL_PREPARATION_PROFILE:
         return RELATIONAL_PROFILE, _RELATIONAL_THEOREM_SUFFIXES
+    if selected == _MIXED_PREPARATION_PROFILE:
+        return MIXED_PROFILE, _MIXED_THEOREM_SUFFIXES
     _need(selected == _COUNTED_PREPARATION_PROFILE,
           "unsupported native AST preservation preparation profile")
     return COUNTED_PROFILE, _COUNTED_THEOREM_SUFFIXES
@@ -286,8 +307,12 @@ def _pins(owners, manifest):
           "native AST preservation executor changed since import")
     _profile(manifest)
     pins = dict(manifest["producer_pins"])
-    pins.update(manifest["counted_producer_pins"] if manifest["profile"] ==
-                _COUNTED_PREPARATION_PROFILE else manifest["native_producer_pins"])
+    if manifest["profile"] == _COUNTED_PREPARATION_PROFILE:
+        pins.update(manifest["counted_producer_pins"])
+    elif manifest["profile"] == _MIXED_PREPARATION_PROFILE:
+        pins.update(manifest["mixed_producer_pins"])
+    else:
+        pins.update(manifest["native_producer_pins"])
     pins.update(owners[1]._pins())
     pins.update({str(Path(module.__file__).resolve()): _sha(Path(module.__file__).read_bytes())
                  for module in owners})
@@ -355,6 +380,28 @@ def validate_counted_ast_preservation(preparation, report, request_raw, *,
     _need(type(preparation) is preparer.NativeAstPreservationPreparation,
           "exact existing native AST preservation preparation type required")
     checked = preparer.validate_counted_ast_preservation(
+        preparation, report, request_raw,
+        expected_preparation_sha256=expected_preparation_sha256,
+        expected_report_sha256=expected_report_sha256,
+        expected_request_sha256=expected_request_sha256,
+        toolchain=toolchain)
+    _pins(owners, checked.to_dict())
+    return checked
+
+
+def validate_mixed_relational_ast_preservation(preparation, report, request_raw, *,
+        expected_preparation_sha256, expected_report_sha256,
+        expected_request_sha256, toolchain):
+    """Replay complete sorted source/renderer inputs without a native parser."""
+    _report_preflight(preparation, report, request_raw,
+        expected_preparation_sha256, expected_report_sha256, expected_request_sha256,
+        toolchain, _MIXED_PREPARATION_PROFILE,
+        MAX_RELATIONAL_REPORT_BYTES, MAX_RELATIONAL_REQUEST_BYTES)
+    owners = _owners()
+    preparer = owners[0]
+    _need(type(preparation) is preparer.NativeAstPreservationPreparation,
+          "exact existing native AST preservation preparation type required")
+    checked = preparer.validate_mixed_relational_ast_preservation(
         preparation, report, request_raw,
         expected_preparation_sha256=expected_preparation_sha256,
         expected_report_sha256=expected_report_sha256,
@@ -591,23 +638,41 @@ def _build_ast_preservation(preparation, replay, *,
         validated.manifest_json, tuple(validated.files))
     manifest = checked.to_dict()
     profile, suffixes = _profile(manifest)
-    if profile == COUNTED_PROFILE:
+    preparation_domain = manifest["profile"]
+    counted_domain = preparation_domain == _COUNTED_PREPARATION_PROFILE
+    mixed_domain = preparation_domain == _MIXED_PREPARATION_PROFILE
+    native_ast_domain = preparation_domain in (
+        _PREPARATION_PROFILE, _RELATIONAL_PREPARATION_PROFILE)
+    if counted_domain:
         source_bindings = {name: manifest[name] for name in (
             "counted_report_sha256", "original_request_sha256", "typed_expression_sha256",
             "typed_expression_content_digest", "lean_body_sha256", "typed_ast_node_count",
         )}
         refusal_bindings = dict(source_bindings)
-        counted_flags = {"typed_ast_value_preservation_proved": False,
+        profile_flags = {"typed_ast_value_preservation_proved": False,
                          "counted_ast_denotation_preservation_proved": False,
                          "counted_boundary_counterexamples_checked": False,
                          "native_TDFOL_route_used": False}
+    elif mixed_domain:
+        source_bindings = {name: manifest[name] for name in (
+            "mixed_report_sha256", "original_request_sha256", "typed_expression_sha256",
+            "typed_expression_content_digest", "argument_roles_sha256",
+            "renderer_ast_sha256", "lean_body_sha256", "typed_ast_node_count",
+        )}
+        refusal_bindings = dict(source_bindings)
+        profile_flags = {"typed_ast_value_preservation_proved": False,
+                         "renderer_ast_value_preservation_proved": False,
+                         "mixed_ast_denotation_preservation_proved": False,
+                         "ordered_role_denotation_preservation_proved": False,
+                         "native_ast": None, "native_TDFOL_route_used": False,
+                         "native_parser_roundtrip": False}
     else:
         source_bindings = {name: manifest[name] for name in (
             "original_fragment_file_sha256", "original_fragment_canonical_sha256",
             "native_ast_sha256", "lean_body_sha256",
         )}
         refusal_bindings = {"original_fragment_file_sha256": manifest["original_fragment_file_sha256"]}
-        counted_flags = {}
+        profile_flags = {}
         if profile == RELATIONAL_PROFILE:
             relational_bindings = {name: manifest[name] for name in (
                 "relational_report_sha256", "original_request_sha256",
@@ -663,7 +728,7 @@ def _build_ast_preservation(preparation, replay, *,
                 },
                 "build_passed": False, "status": "owned_native_cleanup_unresolved",
                 "authority": dict(AUTHORITY), "training_mask": 0, "evaluation_gold_mask": 0,
-                **FALSE_FLAGS, **counted_flags,
+                **FALSE_FLAGS, **profile_flags,
             })
             _persist_build(checked, output, owners, {}, {}, {}, refusal)
             error.add_note("Unqualified frozen preservation project/cleanup refusal retained at " + str(output))
@@ -763,8 +828,10 @@ def _build_ast_preservation(preparation, replay, *,
         "status": "concrete_native_preservation_checks_passed" if passed else "concrete_native_preservation_checks_failed",
         "authority": dict(AUTHORITY), "training_mask": 0, "evaluation_gold_mask": 0,
         "proof_scope": (
+            "Five exact concrete mixed-sort checks: complete serialized typed-expression and ordered-role values, complete renderer-record value, source closedness and sorting, independent source AST denotation versus the unchanged sorted formula, and ordered-role denotation versus that same formula. Arbitrary including empty Object/EventFrame/TimeFrame carriers are retained. No native TDFOL/parser roundtrip, JSON hashing/parser proof, general compiler theorem, legal meaning or model equivalence is established."
+            if mixed_domain else
             "Five exact concrete typed counted checks: complete serialized typed-expression value, sorted AST closedness, independent counted AST denotation versus the unchanged fixed-three lowering, and genuine finite cap-two/cap-four counterexamples. No native TDFOL fragment, universal compiler correctness or statutory counting interpretation is established."
-            if profile == COUNTED_PROFILE else
+            if counted_domain else
             "Five exact concrete checks: complete native JSON value mirror, typed AST closedness, independent AST denotation versus the unchanged native formula_0, exact typed-source lowering, and independent ordered-role denotation versus the unchanged native formula_0. Python JSON parsing/reification, original source interpretation and universal compiler correctness remain outside the theorems."
             if profile == RELATIONAL_PROFILE else
             "Three exact concrete checks: complete native JSON value mirror, typed AST closedness, and independent AST denotation versus the unchanged existing native formula_0. Python JSON parsing/reification and original source interpretation remain outside the theorem."
@@ -772,12 +839,17 @@ def _build_ast_preservation(preparation, replay, *,
         **(FALSE_FLAGS | {
             "backend_executed": native_runtime, "lean_compilation_verified": passed,
             "proof_checked": passed, "kernel_proofs_checked": passed,
-            "native_ast_value_preservation_proved": passed and profile != COUNTED_PROFILE,
+            "native_ast_value_preservation_proved": passed and native_ast_domain,
         }),
-        **(dict(counted_flags, typed_ast_value_preservation_proved=passed,
+        **(dict(profile_flags, typed_ast_value_preservation_proved=passed,
                 counted_ast_denotation_preservation_proved=passed,
                 counted_boundary_counterexamples_checked=passed)
-           if profile == COUNTED_PROFILE else {}),
+           if counted_domain else
+           dict(profile_flags, typed_ast_value_preservation_proved=passed,
+                renderer_ast_value_preservation_proved=passed,
+                mixed_ast_denotation_preservation_proved=passed,
+                ordered_role_denotation_preservation_proved=passed)
+           if mixed_domain else {}),
     })
     executed_sources = {name: run.output_files[name] for name in source_files if name in run.output_files}
     _persist_build(checked, output, owners, artifacts, executed_sources, logs, receipt)
@@ -788,3 +860,31 @@ __all__ = ["preparation_sha256", "validate_native_ast_preservation",
            "build_native_ast_preservation", "validate_relational_ast_preservation",
            "build_relational_ast_preservation", "validate_counted_ast_preservation",
            "build_counted_ast_preservation", "compilation_receipt_sha256"]
+
+
+def build_mixed_relational_ast_preservation(preparation, report, request_raw, *,
+        expected_preparation_sha256, expected_report_sha256,
+        expected_request_sha256, toolchain, lake_executable, output_directory,
+        timeout_seconds=60, cancellation=None):
+    """Check the five sorted-source obligations through the existing runner.
+
+    Exact input replay, compiler identity, module capture, empty-axiom policy
+    and observed process cleanup remain mandatory. No native AST is invented.
+    """
+    def replay():
+        return validate_mixed_relational_ast_preservation(
+            preparation, report, request_raw,
+            expected_preparation_sha256=expected_preparation_sha256,
+            expected_report_sha256=expected_report_sha256,
+            expected_request_sha256=expected_request_sha256,
+            toolchain=toolchain)
+    return _build_ast_preservation(
+        preparation, replay,
+        expected_preparation_sha256=expected_preparation_sha256,
+        toolchain=toolchain, lake_executable=lake_executable,
+        output_directory=output_directory, timeout_seconds=timeout_seconds,
+        cancellation=cancellation)
+
+
+__all__ += ["MIXED_PROFILE", "validate_mixed_relational_ast_preservation",
+            "build_mixed_relational_ast_preservation"]

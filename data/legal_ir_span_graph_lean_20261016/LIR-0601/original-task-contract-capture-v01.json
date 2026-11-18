@@ -1,0 +1,184 @@
+{
+  "original_population_ref": {
+    "bytes": 589727,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-supervisor-plan-20261016/catalog-02/population.json",
+    "sha256": "ae902ebf03aee807ea9518a4b803e9f4a38bd36c3767895abe9c818048f85b89"
+  },
+  "source": "Already-captured verified original source READ; no new source access.",
+  "task": {
+    "acceptance": "Candidate-blind packets contain complete source/context and no candidate AST, predictions or answer graph.; Retain actual question catalog, coordinates, source edition and exposure history.",
+    "acceptance_criteria": [
+      "Candidate-blind packets contain complete source/context and no candidate AST, predictions or answer graph.",
+      "Retain actual question catalog, coordinates, source edition and exposure history."
+    ],
+    "authored_task": {
+      "acceptance": "Candidate-blind packets contain complete source/context and no candidate AST, predictions or answer graph.; Retain actual question catalog, coordinates, source edition and exposure history.",
+      "acceptance_criteria": [
+        "Candidate-blind packets contain complete source/context and no candidate AST, predictions or answer graph.",
+        "Retain actual question catalog, coordinates, source edition and exposure history."
+      ],
+      "blocked_reason": "Requires a reviewed current job packet, exact eligible inputs and fresh purpose-specific native admission.",
+      "code_edit_allowlist": [],
+      "completion": "manual",
+      "depends_on": [
+        "LIR-9004",
+        "LIR-0302",
+        "LIR-0502"
+      ],
+      "exclusive_keys": [
+        "result:legal-ir-span-graph-lean-refinement-20261016:LIR-0601",
+        "writer:LIR-0601"
+      ],
+      "execution_authorized_by_this_file": false,
+      "execution_packet_required": true,
+      "existing_owners": [
+        "ipfs_datasets_py/logic/autoformal/legal_source_sampling_review_handoff.py",
+        "ipfs_datasets_py/logic/autoformal/legal_source_sampling_review.py"
+      ],
+      "goal_id": "LIR-G106",
+      "gold_or_teacher_admission_granted": false,
+      "inputs": {
+        "references": [
+          "ipfs_datasets_py/logic/autoformal/legal_source_sampling_review_handoff.py",
+          "ipfs_datasets_py/logic/autoformal/legal_source_sampling_review.py"
+        ],
+        "required_dependency_results": [
+          "LIR-9004",
+          "LIR-0302",
+          "LIR-0502"
+        ],
+        "roles": [
+          "pinned_source",
+          "declared_context",
+          "provenance_metadata"
+        ]
+      },
+      "legacy_parent_task": "LIR-06",
+      "objective": "Reuse existing blank sampling review/handoff owners with exact original source and population commitments.",
+      "outputs": [
+        "data/legal_ir_span_graph_lean_20261016/LIR-0601/source-first-review-packet-manifest.json"
+      ],
+      "owned_paths": [
+        "data/legal_ir_span_graph_lean_20261016/LIR-0601"
+      ],
+      "priority": "P0",
+      "related_lac_tasks": [
+        "LAC-012",
+        "LAC-013",
+        "LAC-014",
+        "LAC-015"
+      ],
+      "repository": "ipfs_datasets_py",
+      "required_stage_packets": [
+        "corpus"
+      ],
+      "requires_product_change_scope": false,
+      "resource_profile": "selected_corpus",
+      "resource_stage": "corpus",
+      "stage_owner_policy": "Distinct purpose-specific native grants and role-authorized inputs; evaluation references only after producer output freeze.",
+      "status": "blocked",
+      "task_id": "LIR-0601",
+      "title": "Prepare source-first legal and formal review packets",
+      "track": "corpus",
+      "validation": []
+    },
+    "blocked_reason": "Requires a reviewed current job packet, exact eligible inputs and fresh purpose-specific native admission.",
+    "code_edit_allowlist": [],
+    "completion": "manual",
+    "constraints": {
+      "Constitution_formalized": false,
+      "Lean_admission_command": "lake build <Lib>",
+      "Mathlib_allowed": false,
+      "canonical_logic_root": "/home/barberb/lift_coding/external/ipfs_datasets",
+      "encoder_context_fixed": true,
+      "source_review_is_not_semantic_review": true,
+      "temperature": 0,
+      "weight_download_allowed": false,
+      "worker_launch_authorized": false
+    },
+    "dependencies": [
+      "baguqeera5j2okczdszugq3uy5t2kqbpczu3boair2yq2d2nltp5zwqvqslxa",
+      "baguqeerazdbfbb7dg3al2ehcetflfayvo4bno6uoybajk2u2paxouiv6kvwa",
+      "baguqeeraudolynbwohxzl73gevyxbqcjq4qswddp7yeozab4itgcugu6staq"
+    ],
+    "depends_on": [
+      "LIR-9004",
+      "LIR-0302",
+      "LIR-0502"
+    ],
+    "exclusive_keys": [
+      "result:legal-ir-span-graph-lean-refinement-20261016:LIR-0601",
+      "writer:LIR-0601"
+    ],
+    "execution_authorized_by_this_file": false,
+    "execution_packet_required": true,
+    "existing_owners": [
+      "ipfs_datasets_py/logic/autoformal/legal_source_sampling_review_handoff.py",
+      "ipfs_datasets_py/logic/autoformal/legal_source_sampling_review.py"
+    ],
+    "goal_cid": "baguqeeralyvy6xhtliucdjy363vjyabtfkkqnfgndfhl35cvkjtgd3zpafqq",
+    "goal_id": "LIR-G106",
+    "gold_or_teacher_admission_granted": false,
+    "inputs": {
+      "references": [
+        "ipfs_datasets_py/logic/autoformal/legal_source_sampling_review_handoff.py",
+        "ipfs_datasets_py/logic/autoformal/legal_source_sampling_review.py"
+      ],
+      "required_dependency_results": [
+        "LIR-9004",
+        "LIR-0302",
+        "LIR-0502"
+      ],
+      "roles": [
+        "pinned_source",
+        "declared_context",
+        "provenance_metadata"
+      ]
+    },
+    "legacy_parent_task": "LIR-06",
+    "objective": "Reuse existing blank sampling review/handoff owners with exact original source and population commitments.",
+    "objective_id": "baguqeeramzzko7up7ru6627a6viufrbcqwygc4vhc72rr7q3druyp5f6oyra",
+    "ordinal": 15,
+    "outputs": [
+      {
+        "kind": "planned_artifact",
+        "materialized": false,
+        "path": "data/legal_ir_span_graph_lean_20261016/LIR-0601/source-first-review-packet-manifest.json"
+      }
+    ],
+    "owned_paths": [
+      "data/legal_ir_span_graph_lean_20261016/LIR-0601"
+    ],
+    "parallel_lane": "source-graph",
+    "phase_blocker": "current task packet, capability and dependency acceptance pending",
+    "plan_cid": "baguqeeraiddmy4khowkyv37gwstmexmmku3lecsjtnaekhpqnlwx4vuwrhza",
+    "planning_context": {
+      "/home/barberb/lift_coding/artifacts/legal-ir-supervisor-task-intake-20261016-03/context/legal-ir-autoformalization-roadmap-2026-10-16.md": "787bfe8a77a7c37940f4eb675fc591c898a43890dcfe48a6d039bc3f9f08b232",
+      "/home/barberb/lift_coding/artifacts/legal-ir-supervisor-task-intake-20261016-03/context/legal-ir-next-implementation-plan-2026-10-16.md": "0318c5a526ae730eb9fea47b75ab82d0c6009d16f1eb5c30a522b9da9de907a0",
+      "/home/barberb/lift_coding/artifacts/legal-ir-supervisor-task-intake-20261016-03/context/legal-ir-supervisor-operations-2026-10-16.md": "17d8327c8c00a2c5c459f8cf72bcafd7bf619779e0e13c919e375b3cfdc226d1"
+    },
+    "priority": "P0",
+    "related_lac_tasks": [
+      "LAC-012",
+      "LAC-013",
+      "LAC-014",
+      "LAC-015"
+    ],
+    "repository": "ipfs_datasets_py",
+    "required_stage_packets": [
+      "corpus"
+    ],
+    "requires_product_change_scope": false,
+    "resource_profile": "selected_corpus",
+    "resource_stage": "corpus",
+    "stage_owner_policy": "Distinct purpose-specific native grants and role-authorized inputs; evaluation references only after producer output freeze.",
+    "status": "blocked",
+    "task_alias": "LIR-0601",
+    "task_cid": "baguqeerac6t737q4cfohhukzzd6xqqm3av72or7kdbaght7gs7b33anb5y7a",
+    "task_id": "LIR-0601",
+    "title": "Prepare source-first legal and formal review packets",
+    "track": "corpus",
+    "validation": [],
+    "validation_commands": []
+  }
+}

@@ -20,6 +20,7 @@ def isolated_encoder_cache():
 def test_device_selection_after_cpu_validation(monkeypatch, cuda):
     events = []
     model = SimpleNamespace(
+        float=lambda: events.append("float32"),
         eval=lambda: events.append("eval"),
         to=lambda device: events.append(device),
         tokenizer=lambda *args, **kwargs: {"input_ids": [1, 2]},
@@ -38,7 +39,7 @@ def test_device_selection_after_cpu_validation(monkeypatch, cuda):
         inference_mode=nullcontext,
     ))
     assert len(subject.embed_texts(["The agency shall report."])[0]) == 384
-    assert events == ["load", "eval", "validate"] + (["cuda:0"] if cuda else [])
+    assert events == ["load", "float32", "eval", "validate"] + (["cuda:0"] if cuda else [])
     # Warm calls reuse the model, but still verify all pinned asset hashes.
     verified = []
     monkeypatch.setattr(producer, "_snapshot_assets", lambda path: (verified.append(path) or path, []))
@@ -61,7 +62,7 @@ def test_cache_is_bounded_and_separates_process_device_and_snapshot(monkeypatch)
     loads = []
     def load(path, **options):
         loads.append(path)
-        return SimpleNamespace(eval=lambda: None, to=lambda device: None)
+        return SimpleNamespace(float=lambda: None, eval=lambda: None, to=lambda device: None)
     monkeypatch.setitem(sys.modules, "sentence_transformers", SimpleNamespace(SentenceTransformer=load))
     torch = SimpleNamespace(random=SimpleNamespace(fork_rng=lambda **kwargs: nullcontext()))
     validator = SimpleNamespace(_validate_model=lambda *args: None)

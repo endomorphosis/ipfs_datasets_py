@@ -1,0 +1,888 @@
+{
+  "schema": "legal-ir-e1-conditions-ranking-design-freeze/v1",
+  "task_id": "LIR-9101",
+  "training_executed": false,
+  "new_training_launched": false,
+  "admitted": false,
+  "formalized": false,
+  "gold_or_teacher_admission_granted": false,
+  "completion_authority": false,
+  "historical_f19_compound_recipe": {
+    "preserved": true,
+    "isolates_margin_effect": false,
+    "proposal": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/next-training-proposal-v01.json",
+      "bytes": 49817,
+      "sha256": "3701f01f6ee48dfd42214a433c4e801df73e22e99537fc69dc74ced225080fa8"
+    },
+    "causal_scope": "Four-tensor freezing plus the added conditions margin is one compound recipe. It does not isolate the causal effect of the margin against an identically frozen no-margin control; no additional arm is proposed.",
+    "one_candidate_only": true,
+    "coefficient": "0.25",
+    "objective_label": "conditions-fullspan-margin-retention"
+  },
+  "matched_arms": {
+    "donor": "F18",
+    "identical_except_margin_coefficient": true,
+    "four_pointers": [
+      "start.weight",
+      "start.bias",
+      "end.weight",
+      "end.bias"
+    ],
+    "conditions_row": 3,
+    "active_scalars": 130,
+    "inactive_scalars": 650,
+    "frozen_tensors": 38,
+    "ce_retention": {
+      "schema": "conditions-fullspan-f18-four-tensor-policy/v1",
+      "profile_schema": "conditions-fullspan-f18-four-tensor-training/v1",
+      "margin_schema": "conditions-fullspan-margin/v1",
+      "margin_weight": "0",
+      "selection": {
+        "schema": "conditions-fullspan-f18-row3-selection/v1",
+        "optimizer_parameter_order": [
+          "start.weight",
+          "start.bias",
+          "end.weight",
+          "end.bias"
+        ],
+        "active_rows": {
+          "start.weight": [
+            3
+          ],
+          "start.bias": [
+            3
+          ],
+          "end.weight": [
+            3
+          ],
+          "end.bias": [
+            3
+          ]
+        },
+        "inactive_rows": {
+          "start.weight": [
+            0,
+            1,
+            2,
+            4,
+            5
+          ],
+          "start.bias": [
+            0,
+            1,
+            2,
+            4,
+            5
+          ],
+          "end.weight": [
+            0,
+            1,
+            2,
+            4,
+            5
+          ],
+          "end.bias": [
+            0,
+            1,
+            2,
+            4,
+            5
+          ]
+        },
+        "active_scalar_count": 130,
+        "stored_scalar_count": 780,
+        "inactive_scalar_count": 650,
+        "donor_tensor_count": 42,
+        "frozen_tensor_count": 38,
+        "frozen_parameter_names": [
+          "byte_embedding.weight",
+          "token_projection.weight",
+          "token_projection.bias",
+          "encoder.weight_ih_l0",
+          "encoder.weight_hh_l0",
+          "encoder.bias_ih_l0",
+          "encoder.bias_hh_l0",
+          "encoder.weight_ih_l0_reverse",
+          "encoder.weight_hh_l0_reverse",
+          "encoder.bias_ih_l0_reverse",
+          "encoder.bias_hh_l0_reverse",
+          "modality.weight",
+          "modality.bias",
+          "presence.weight",
+          "presence.bias",
+          "latent_down.weight",
+          "latent_down.bias",
+          "latent_up.weight",
+          "latent_up.bias",
+          "span_byte_embedding.weight",
+          "span_token_projection.weight",
+          "span_token_projection.bias",
+          "span_encoder.weight_ih_l0",
+          "span_encoder.weight_hh_l0",
+          "span_encoder.bias_ih_l0",
+          "span_encoder.bias_hh_l0",
+          "span_encoder.weight_ih_l0_reverse",
+          "span_encoder.weight_hh_l0_reverse",
+          "span_encoder.bias_ih_l0_reverse",
+          "span_encoder.bias_hh_l0_reverse",
+          "actor_start.weight",
+          "actor_start.bias",
+          "actor_end.weight",
+          "actor_end.bias",
+          "actor_attention.query",
+          "actor_context.gate",
+          "conditions_presence.weight",
+          "conditions_presence.bias"
+        ],
+        "modality_frozen": true,
+        "conditions_row": 3
+      },
+      "optimizer": {
+        "name": "Adam",
+        "parameter_order": [
+          "start.weight",
+          "start.bias",
+          "end.weight",
+          "end.bias"
+        ],
+        "learning_rate": "0.001",
+        "betas": [
+          "0.9",
+          "0.999"
+        ],
+        "eps": "1e-08",
+        "weight_decay": "0",
+        "foreach": false,
+        "gradient_clip_norm": "5",
+        "inherited_moments": false
+      },
+      "seed": 1729,
+      "batch_size": 12,
+      "training_rows": 168,
+      "gold_present_rows": 72,
+      "gold_absent_rows": 96,
+      "max_cumulative_updates": 32,
+      "max_call_seconds": 32,
+      "schedule_sha256": "ef67aaa929ebdb93294bc170ceb7c0252ed20aff79b21bc86a2220f06db1952c",
+      "schedule_owner": "legal_span_targeted_loss._batch_indices/_advance_progress",
+      "objective_owner": "legal_span_modality_conditions_retention._loss + conditions_fullspan_margin_from_logits",
+      "ce_outer_denominator": 8,
+      "kl_full_batch_denominator": 72,
+      "latent_enabled": false,
+      "teacher_model_forwards": 0,
+      "tuning_or_evaluation_references_used": false,
+      "rng_policy": "deterministic_F18_no_CPU_RNG_consumption; scoped_restore_on_success_or_error",
+      "input_authentication_owner": "caller_original_physical_source_resource_owner"
+    },
+    "ce_retention_plus_margin": {
+      "schema": "conditions-fullspan-f18-four-tensor-policy/v1",
+      "profile_schema": "conditions-fullspan-f18-four-tensor-training/v1",
+      "margin_schema": "conditions-fullspan-margin/v1",
+      "margin_weight": "0.25",
+      "selection": {
+        "schema": "conditions-fullspan-f18-row3-selection/v1",
+        "optimizer_parameter_order": [
+          "start.weight",
+          "start.bias",
+          "end.weight",
+          "end.bias"
+        ],
+        "active_rows": {
+          "start.weight": [
+            3
+          ],
+          "start.bias": [
+            3
+          ],
+          "end.weight": [
+            3
+          ],
+          "end.bias": [
+            3
+          ]
+        },
+        "inactive_rows": {
+          "start.weight": [
+            0,
+            1,
+            2,
+            4,
+            5
+          ],
+          "start.bias": [
+            0,
+            1,
+            2,
+            4,
+            5
+          ],
+          "end.weight": [
+            0,
+            1,
+            2,
+            4,
+            5
+          ],
+          "end.bias": [
+            0,
+            1,
+            2,
+            4,
+            5
+          ]
+        },
+        "active_scalar_count": 130,
+        "stored_scalar_count": 780,
+        "inactive_scalar_count": 650,
+        "donor_tensor_count": 42,
+        "frozen_tensor_count": 38,
+        "frozen_parameter_names": [
+          "byte_embedding.weight",
+          "token_projection.weight",
+          "token_projection.bias",
+          "encoder.weight_ih_l0",
+          "encoder.weight_hh_l0",
+          "encoder.bias_ih_l0",
+          "encoder.bias_hh_l0",
+          "encoder.weight_ih_l0_reverse",
+          "encoder.weight_hh_l0_reverse",
+          "encoder.bias_ih_l0_reverse",
+          "encoder.bias_hh_l0_reverse",
+          "modality.weight",
+          "modality.bias",
+          "presence.weight",
+          "presence.bias",
+          "latent_down.weight",
+          "latent_down.bias",
+          "latent_up.weight",
+          "latent_up.bias",
+          "span_byte_embedding.weight",
+          "span_token_projection.weight",
+          "span_token_projection.bias",
+          "span_encoder.weight_ih_l0",
+          "span_encoder.weight_hh_l0",
+          "span_encoder.bias_ih_l0",
+          "span_encoder.bias_hh_l0",
+          "span_encoder.weight_ih_l0_reverse",
+          "span_encoder.weight_hh_l0_reverse",
+          "span_encoder.bias_ih_l0_reverse",
+          "span_encoder.bias_hh_l0_reverse",
+          "actor_start.weight",
+          "actor_start.bias",
+          "actor_end.weight",
+          "actor_end.bias",
+          "actor_attention.query",
+          "actor_context.gate",
+          "conditions_presence.weight",
+          "conditions_presence.bias"
+        ],
+        "modality_frozen": true,
+        "conditions_row": 3
+      },
+      "optimizer": {
+        "name": "Adam",
+        "parameter_order": [
+          "start.weight",
+          "start.bias",
+          "end.weight",
+          "end.bias"
+        ],
+        "learning_rate": "0.001",
+        "betas": [
+          "0.9",
+          "0.999"
+        ],
+        "eps": "1e-08",
+        "weight_decay": "0",
+        "foreach": false,
+        "gradient_clip_norm": "5",
+        "inherited_moments": false
+      },
+      "seed": 1729,
+      "batch_size": 12,
+      "training_rows": 168,
+      "gold_present_rows": 72,
+      "gold_absent_rows": 96,
+      "max_cumulative_updates": 32,
+      "max_call_seconds": 32,
+      "schedule_sha256": "ef67aaa929ebdb93294bc170ceb7c0252ed20aff79b21bc86a2220f06db1952c",
+      "schedule_owner": "legal_span_targeted_loss._batch_indices/_advance_progress",
+      "objective_owner": "legal_span_modality_conditions_retention._loss + conditions_fullspan_margin_from_logits",
+      "ce_outer_denominator": 8,
+      "kl_full_batch_denominator": 72,
+      "latent_enabled": false,
+      "teacher_model_forwards": 0,
+      "tuning_or_evaluation_references_used": false,
+      "rng_policy": "deterministic_F18_no_CPU_RNG_consumption; scoped_restore_on_success_or_error",
+      "input_authentication_owner": "caller_original_physical_source_resource_owner"
+    }
+  },
+  "population": {
+    "training_identity_count": 168,
+    "training_identities": [
+      "structured-train-aster-t0-q0-o",
+      "structured-train-aster-t0-q0-p",
+      "structured-train-aster-t0-q0-f",
+      "structured-train-aster-t1-q1-o",
+      "structured-train-aster-t1-q1-p",
+      "structured-train-aster-t1-q1-f",
+      "structured-train-aster-t2-q2-o",
+      "structured-train-aster-t2-q2-p",
+      "structured-train-aster-t2-q2-f",
+      "structured-train-aster-t3-q3-o",
+      "structured-train-aster-t3-q3-p",
+      "structured-train-aster-t3-q3-f",
+      "structured-train-aster-t4-q4-o",
+      "structured-train-aster-t4-q4-p",
+      "structured-train-aster-t4-q4-f",
+      "structured-train-aster-t5-q5-o",
+      "structured-train-aster-t5-q5-p",
+      "structured-train-aster-t5-q5-f",
+      "structured-train-aster-t6-q6-o",
+      "structured-train-aster-t6-q6-p",
+      "structured-train-aster-t6-q6-f",
+      "structured-train-aster-t7-q7-o",
+      "structured-train-aster-t7-q7-p",
+      "structured-train-aster-t7-q7-f",
+      "structured-train-bramble-t0-q1-o",
+      "structured-train-bramble-t0-q1-p",
+      "structured-train-bramble-t0-q1-f",
+      "structured-train-bramble-t1-q2-o",
+      "structured-train-bramble-t1-q2-p",
+      "structured-train-bramble-t1-q2-f",
+      "structured-train-bramble-t2-q3-o",
+      "structured-train-bramble-t2-q3-p",
+      "structured-train-bramble-t2-q3-f",
+      "structured-train-bramble-t3-q4-o",
+      "structured-train-bramble-t3-q4-p",
+      "structured-train-bramble-t3-q4-f",
+      "structured-train-bramble-t4-q5-o",
+      "structured-train-bramble-t4-q5-p",
+      "structured-train-bramble-t4-q5-f",
+      "structured-train-bramble-t5-q6-o",
+      "structured-train-bramble-t5-q6-p",
+      "structured-train-bramble-t5-q6-f",
+      "structured-train-bramble-t6-q7-o",
+      "structured-train-bramble-t6-q7-p",
+      "structured-train-bramble-t6-q7-f",
+      "structured-train-bramble-t7-q0-o",
+      "structured-train-bramble-t7-q0-p",
+      "structured-train-bramble-t7-q0-f",
+      "structured-train-cypress-t0-q2-o",
+      "structured-train-cypress-t0-q2-p",
+      "structured-train-cypress-t0-q2-f",
+      "structured-train-cypress-t1-q3-o",
+      "structured-train-cypress-t1-q3-p",
+      "structured-train-cypress-t1-q3-f",
+      "structured-train-cypress-t2-q4-o",
+      "structured-train-cypress-t2-q4-p",
+      "structured-train-cypress-t2-q4-f",
+      "structured-train-cypress-t3-q5-o",
+      "structured-train-cypress-t3-q5-p",
+      "structured-train-cypress-t3-q5-f",
+      "structured-train-cypress-t4-q6-o",
+      "structured-train-cypress-t4-q6-p",
+      "structured-train-cypress-t4-q6-f",
+      "structured-train-cypress-t5-q7-o",
+      "structured-train-cypress-t5-q7-p",
+      "structured-train-cypress-t5-q7-f",
+      "structured-train-cypress-t6-q0-o",
+      "structured-train-cypress-t6-q0-p",
+      "structured-train-cypress-t6-q0-f",
+      "structured-train-cypress-t7-q1-o",
+      "structured-train-cypress-t7-q1-p",
+      "structured-train-cypress-t7-q1-f",
+      "structured-train-dahlia-t0-q3-o",
+      "structured-train-dahlia-t0-q3-p",
+      "structured-train-dahlia-t0-q3-f",
+      "structured-train-dahlia-t1-q4-o",
+      "structured-train-dahlia-t1-q4-p",
+      "structured-train-dahlia-t1-q4-f",
+      "structured-train-dahlia-t2-q5-o",
+      "structured-train-dahlia-t2-q5-p",
+      "structured-train-dahlia-t2-q5-f",
+      "structured-train-dahlia-t3-q6-o",
+      "structured-train-dahlia-t3-q6-p",
+      "structured-train-dahlia-t3-q6-f",
+      "structured-train-dahlia-t4-q7-o",
+      "structured-train-dahlia-t4-q7-p",
+      "structured-train-dahlia-t4-q7-f",
+      "structured-train-dahlia-t5-q0-o",
+      "structured-train-dahlia-t5-q0-p",
+      "structured-train-dahlia-t5-q0-f",
+      "structured-train-dahlia-t6-q1-o",
+      "structured-train-dahlia-t6-q1-p",
+      "structured-train-dahlia-t6-q1-f",
+      "structured-train-dahlia-t7-q2-o",
+      "structured-train-dahlia-t7-q2-p",
+      "structured-train-dahlia-t7-q2-f",
+      "matched-temporal-train-plain_deadline-0-o-absent",
+      "matched-temporal-train-plain_deadline-0-o-present",
+      "matched-temporal-train-plain_deadline-0-p-absent",
+      "matched-temporal-train-plain_deadline-0-p-present",
+      "matched-temporal-train-plain_deadline-0-f-absent",
+      "matched-temporal-train-plain_deadline-0-f-present",
+      "matched-temporal-train-plain_deadline-1-o-absent",
+      "matched-temporal-train-plain_deadline-1-o-present",
+      "matched-temporal-train-plain_deadline-1-p-absent",
+      "matched-temporal-train-plain_deadline-1-p-present",
+      "matched-temporal-train-plain_deadline-1-f-absent",
+      "matched-temporal-train-plain_deadline-1-f-present",
+      "matched-temporal-train-condition_duration-0-o-absent",
+      "matched-temporal-train-condition_duration-0-o-present",
+      "matched-temporal-train-condition_duration-0-p-absent",
+      "matched-temporal-train-condition_duration-0-p-present",
+      "matched-temporal-train-condition_duration-0-f-absent",
+      "matched-temporal-train-condition_duration-0-f-present",
+      "matched-temporal-train-condition_duration-1-o-absent",
+      "matched-temporal-train-condition_duration-1-o-present",
+      "matched-temporal-train-condition_duration-1-p-absent",
+      "matched-temporal-train-condition_duration-1-p-present",
+      "matched-temporal-train-condition_duration-1-f-absent",
+      "matched-temporal-train-condition_duration-1-f-present",
+      "matched-temporal-train-exception_duration-0-o-absent",
+      "matched-temporal-train-exception_duration-0-o-present",
+      "matched-temporal-train-exception_duration-0-p-absent",
+      "matched-temporal-train-exception_duration-0-p-present",
+      "matched-temporal-train-exception_duration-0-f-absent",
+      "matched-temporal-train-exception_duration-0-f-present",
+      "matched-temporal-train-exception_duration-1-o-absent",
+      "matched-temporal-train-exception_duration-1-o-present",
+      "matched-temporal-train-exception_duration-1-p-absent",
+      "matched-temporal-train-exception_duration-1-p-present",
+      "matched-temporal-train-exception_duration-1-f-absent",
+      "matched-temporal-train-exception_duration-1-f-present",
+      "matched-temporal-train-actor_duration_name-0-o-absent",
+      "matched-temporal-train-actor_duration_name-0-o-present",
+      "matched-temporal-train-actor_duration_name-0-p-absent",
+      "matched-temporal-train-actor_duration_name-0-p-present",
+      "matched-temporal-train-actor_duration_name-0-f-absent",
+      "matched-temporal-train-actor_duration_name-0-f-present",
+      "matched-temporal-train-actor_duration_name-1-o-absent",
+      "matched-temporal-train-actor_duration_name-1-o-present",
+      "matched-temporal-train-actor_duration_name-1-p-absent",
+      "matched-temporal-train-actor_duration_name-1-p-present",
+      "matched-temporal-train-actor_duration_name-1-f-absent",
+      "matched-temporal-train-actor_duration_name-1-f-present",
+      "matched-temporal-train-object_duration_title-0-o-absent",
+      "matched-temporal-train-object_duration_title-0-o-present",
+      "matched-temporal-train-object_duration_title-0-p-absent",
+      "matched-temporal-train-object_duration_title-0-p-present",
+      "matched-temporal-train-object_duration_title-0-f-absent",
+      "matched-temporal-train-object_duration_title-0-f-present",
+      "matched-temporal-train-object_duration_title-1-o-absent",
+      "matched-temporal-train-object_duration_title-1-o-present",
+      "matched-temporal-train-object_duration_title-1-p-absent",
+      "matched-temporal-train-object_duration_title-1-p-present",
+      "matched-temporal-train-object_duration_title-1-f-absent",
+      "matched-temporal-train-object_duration_title-1-f-present",
+      "matched-temporal-train-condition_exception_duration-0-o-absent",
+      "matched-temporal-train-condition_exception_duration-0-o-present",
+      "matched-temporal-train-condition_exception_duration-0-p-absent",
+      "matched-temporal-train-condition_exception_duration-0-p-present",
+      "matched-temporal-train-condition_exception_duration-0-f-absent",
+      "matched-temporal-train-condition_exception_duration-0-f-present",
+      "matched-temporal-train-condition_exception_duration-1-o-absent",
+      "matched-temporal-train-condition_exception_duration-1-o-present",
+      "matched-temporal-train-condition_exception_duration-1-p-absent",
+      "matched-temporal-train-condition_exception_duration-1-p-present",
+      "matched-temporal-train-condition_exception_duration-1-f-absent",
+      "matched-temporal-train-condition_exception_duration-1-f-present"
+    ],
+    "training_identity_order_sha256": "633daa2401691a671b18692473c1a2c349ecebd5229645644e4c2d154278c62c",
+    "training_manifest_sha256": "afa0deeebf4052831883c046104a8808342b67a7c8dc2e58de2f9208a9287c34",
+    "gold_present_conditions_definition": "both conditions_start and conditions_end gold_index are present",
+    "gold_present_conditions_rows": [
+      {
+        "id": "structured-train-aster-t1-q1-o",
+        "training_index": 3
+      },
+      {
+        "id": "structured-train-aster-t1-q1-p",
+        "training_index": 4
+      },
+      {
+        "id": "structured-train-aster-t1-q1-f",
+        "training_index": 5
+      },
+      {
+        "id": "structured-train-aster-t4-q4-o",
+        "training_index": 12
+      },
+      {
+        "id": "structured-train-aster-t4-q4-p",
+        "training_index": 13
+      },
+      {
+        "id": "structured-train-aster-t4-q4-f",
+        "training_index": 14
+      },
+      {
+        "id": "structured-train-aster-t5-q5-o",
+        "training_index": 15
+      },
+      {
+        "id": "structured-train-aster-t5-q5-p",
+        "training_index": 16
+      },
+      {
+        "id": "structured-train-aster-t5-q5-f",
+        "training_index": 17
+      },
+      {
+        "id": "structured-train-aster-t7-q7-o",
+        "training_index": 21
+      },
+      {
+        "id": "structured-train-aster-t7-q7-p",
+        "training_index": 22
+      },
+      {
+        "id": "structured-train-aster-t7-q7-f",
+        "training_index": 23
+      },
+      {
+        "id": "structured-train-bramble-t0-q1-o",
+        "training_index": 24
+      },
+      {
+        "id": "structured-train-bramble-t0-q1-p",
+        "training_index": 25
+      },
+      {
+        "id": "structured-train-bramble-t0-q1-f",
+        "training_index": 26
+      },
+      {
+        "id": "structured-train-bramble-t3-q4-o",
+        "training_index": 33
+      },
+      {
+        "id": "structured-train-bramble-t3-q4-p",
+        "training_index": 34
+      },
+      {
+        "id": "structured-train-bramble-t3-q4-f",
+        "training_index": 35
+      },
+      {
+        "id": "structured-train-bramble-t4-q5-o",
+        "training_index": 36
+      },
+      {
+        "id": "structured-train-bramble-t4-q5-p",
+        "training_index": 37
+      },
+      {
+        "id": "structured-train-bramble-t4-q5-f",
+        "training_index": 38
+      },
+      {
+        "id": "structured-train-bramble-t6-q7-o",
+        "training_index": 42
+      },
+      {
+        "id": "structured-train-bramble-t6-q7-p",
+        "training_index": 43
+      },
+      {
+        "id": "structured-train-bramble-t6-q7-f",
+        "training_index": 44
+      },
+      {
+        "id": "structured-train-cypress-t2-q4-o",
+        "training_index": 54
+      },
+      {
+        "id": "structured-train-cypress-t2-q4-p",
+        "training_index": 55
+      },
+      {
+        "id": "structured-train-cypress-t2-q4-f",
+        "training_index": 56
+      },
+      {
+        "id": "structured-train-cypress-t3-q5-o",
+        "training_index": 57
+      },
+      {
+        "id": "structured-train-cypress-t3-q5-p",
+        "training_index": 58
+      },
+      {
+        "id": "structured-train-cypress-t3-q5-f",
+        "training_index": 59
+      },
+      {
+        "id": "structured-train-cypress-t5-q7-o",
+        "training_index": 63
+      },
+      {
+        "id": "structured-train-cypress-t5-q7-p",
+        "training_index": 64
+      },
+      {
+        "id": "structured-train-cypress-t5-q7-f",
+        "training_index": 65
+      },
+      {
+        "id": "structured-train-cypress-t7-q1-o",
+        "training_index": 69
+      },
+      {
+        "id": "structured-train-cypress-t7-q1-p",
+        "training_index": 70
+      },
+      {
+        "id": "structured-train-cypress-t7-q1-f",
+        "training_index": 71
+      },
+      {
+        "id": "structured-train-dahlia-t1-q4-o",
+        "training_index": 75
+      },
+      {
+        "id": "structured-train-dahlia-t1-q4-p",
+        "training_index": 76
+      },
+      {
+        "id": "structured-train-dahlia-t1-q4-f",
+        "training_index": 77
+      },
+      {
+        "id": "structured-train-dahlia-t2-q5-o",
+        "training_index": 78
+      },
+      {
+        "id": "structured-train-dahlia-t2-q5-p",
+        "training_index": 79
+      },
+      {
+        "id": "structured-train-dahlia-t2-q5-f",
+        "training_index": 80
+      },
+      {
+        "id": "structured-train-dahlia-t4-q7-o",
+        "training_index": 84
+      },
+      {
+        "id": "structured-train-dahlia-t4-q7-p",
+        "training_index": 85
+      },
+      {
+        "id": "structured-train-dahlia-t4-q7-f",
+        "training_index": 86
+      },
+      {
+        "id": "structured-train-dahlia-t6-q1-o",
+        "training_index": 90
+      },
+      {
+        "id": "structured-train-dahlia-t6-q1-p",
+        "training_index": 91
+      },
+      {
+        "id": "structured-train-dahlia-t6-q1-f",
+        "training_index": 92
+      },
+      {
+        "id": "matched-temporal-train-condition_duration-0-o-absent",
+        "training_index": 108
+      },
+      {
+        "id": "matched-temporal-train-condition_duration-0-o-present",
+        "training_index": 109
+      },
+      {
+        "id": "matched-temporal-train-condition_duration-0-p-absent",
+        "training_index": 110
+      },
+      {
+        "id": "matched-temporal-train-condition_duration-0-p-present",
+        "training_index": 111
+      },
+      {
+        "id": "matched-temporal-train-condition_duration-0-f-absent",
+        "training_index": 112
+      },
+      {
+        "id": "matched-temporal-train-condition_duration-0-f-present",
+        "training_index": 113
+      },
+      {
+        "id": "matched-temporal-train-condition_duration-1-o-absent",
+        "training_index": 114
+      },
+      {
+        "id": "matched-temporal-train-condition_duration-1-o-present",
+        "training_index": 115
+      },
+      {
+        "id": "matched-temporal-train-condition_duration-1-p-absent",
+        "training_index": 116
+      },
+      {
+        "id": "matched-temporal-train-condition_duration-1-p-present",
+        "training_index": 117
+      },
+      {
+        "id": "matched-temporal-train-condition_duration-1-f-absent",
+        "training_index": 118
+      },
+      {
+        "id": "matched-temporal-train-condition_duration-1-f-present",
+        "training_index": 119
+      },
+      {
+        "id": "matched-temporal-train-condition_exception_duration-0-o-absent",
+        "training_index": 156
+      },
+      {
+        "id": "matched-temporal-train-condition_exception_duration-0-o-present",
+        "training_index": 157
+      },
+      {
+        "id": "matched-temporal-train-condition_exception_duration-0-p-absent",
+        "training_index": 158
+      },
+      {
+        "id": "matched-temporal-train-condition_exception_duration-0-p-present",
+        "training_index": 159
+      },
+      {
+        "id": "matched-temporal-train-condition_exception_duration-0-f-absent",
+        "training_index": 160
+      },
+      {
+        "id": "matched-temporal-train-condition_exception_duration-0-f-present",
+        "training_index": 161
+      },
+      {
+        "id": "matched-temporal-train-condition_exception_duration-1-o-absent",
+        "training_index": 162
+      },
+      {
+        "id": "matched-temporal-train-condition_exception_duration-1-o-present",
+        "training_index": 163
+      },
+      {
+        "id": "matched-temporal-train-condition_exception_duration-1-p-absent",
+        "training_index": 164
+      },
+      {
+        "id": "matched-temporal-train-condition_exception_duration-1-p-present",
+        "training_index": 165
+      },
+      {
+        "id": "matched-temporal-train-condition_exception_duration-1-f-absent",
+        "training_index": 166
+      },
+      {
+        "id": "matched-temporal-train-condition_exception_duration-1-f-present",
+        "training_index": 167
+      }
+    ],
+    "gold_present_conditions_count": 72,
+    "gold_present_identity_sha256": "0620a2cd62d554b8918290aeeb7ef72ccd201fd170ed4284db52b1a457ff239b",
+    "row_weight_selected_count": 2,
+    "row_weight_selected_ids": [
+      "matched-temporal-train-condition_exception_duration-0-p-absent",
+      "matched-temporal-train-condition_exception_duration-0-p-present"
+    ],
+    "row_weight_is_not_the_gold_present_population": true,
+    "mask_certificate": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/modality-conditions-training-mask-v02.json",
+      "bytes": 879934,
+      "sha256": "1aef873043042b6aa155a529c70577e583e36084c44c248c9127384642ca4593"
+    },
+    "mask_recount": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-modality-conditions-retention-20261014-01/modality-conditions-training-mask-recount-v01.json",
+      "bytes": 9614,
+      "sha256": "1af06faa39d98140514479cea18d0938c314bcfab1626e83edcae3192d4dda3e"
+    },
+    "evaluation_references_used": false,
+    "candidate_derived_mask_refresh": false
+  },
+  "objective": {
+    "weighted_ce": "Keep F18 exact legacy association: (2*mean(modality_CE)+sum(six facet means with the entire conditions facet weighted by existing authenticated row weight))/8.",
+    "teacher_kl": "Keep existing F15 teacher, six component logits/masks, temperature1, coefficient1 and sum(masked KL)/(6*full B), rederived from the exact168 authenticated training rows. Do not replace the teacher with F19 composed outputs or refresh masks from the candidate.",
+    "kl_blocks": 6,
+    "teacher_role": "F15",
+    "teacher_checkpoint_sha256": "f421514dc02cb3542e7587767191aa99bd32551f145e0af4d01c47595d4d73c4",
+    "teacher_model_state_sha256": "a1bb3158f19c7b619b7d15ee7ba4887046cc7d22eebecad7b04e8a8111ac3d42",
+    "teacher_capture_sha256": "221fa2ec37fc41298f787d4dfef1d4daf60b07c4c565a1194d2097e7c538fff1",
+    "teacher_capture_body_opened": false
+  },
+  "optimizer": {
+    "name": "Adam",
+    "learning_rate": "0.001",
+    "betas": [
+      "0.9",
+      "0.999"
+    ],
+    "eps": "1e-08",
+    "weight_decay": "0",
+    "foreach": false,
+    "gradient_clip_norm": "5",
+    "fresh_moments": true
+  },
+  "arithmetic_and_outputs": {
+    "full_width": "full six-row GEMM geometry; exact binary32 tensor restore",
+    "raw_and_joint": "Same raw decoder and joint fullspan top8, same1e-7 ambiguity and search/abstention limits.",
+    "raw_and_joint_frozen_before_scoring": true
+  },
+  "budgets": {
+    "fixture": "If retained, preregister exactly1 isolated synthetic forward/2 synthetic occurrences/1 separate fixture Adam step; restore CPU RNG/grad mode. These are separate from experimental32 updates/1312 forwards/1664 source occurrences.",
+    "experimental_updates_per_arm": 32,
+    "experimental_forwards": 1312,
+    "experimental_source_occurrences": 1664,
+    "fixture_budget_separate_from_experimental_budget": true
+  },
+  "vetoes": {
+    "critical_retention": "Final all632 protected score bits for modality/actor/all presence/action/object/exceptions/temporal; only conditions start/end scores may change.",
+    "critical_error_vetoes_preregistered": true,
+    "protected_heads": {
+      "presence": [
+        "object",
+        "conditions",
+        "exceptions",
+        "temporal"
+      ],
+      "boundaries": [
+        "actor",
+        "action",
+        "object",
+        "exceptions",
+        "temporal"
+      ]
+    },
+    "mutable_heads": [
+      "modality",
+      "conditions_start",
+      "conditions_end"
+    ]
+  },
+  "dispositions": {
+    "technical_failure": "Owner refusal or deadline_before_batch before a completed 32-update trace. Not a scientific result.",
+    "partial_run": "Continuation report all_requested_steps_completed false. A partial trace is not a completed arm and not scientific acceptance.",
+    "scientific_acceptance": "Not granted by this freeze. A better margin score alone does not pass. Report both diagnosed conditions errors, complete-rule performance, and every protected permission/retention case. Neither arm is preselected.",
+    "publication": "This spec is a design freeze. Upload, registry, or a written file is not promotion. admitted, formalized, and gold_or_teacher_admission_granted stay false.",
+    "candidate_derived_mask_refresh": false
+  },
+  "sources": {
+    "preserved_execution_plan": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-composition-diagnostic-20261015-01/datasets/docs/autoencoders/legal_ir_span_graph_lean_execution_plan_20261016.md",
+      "bytes": 61649,
+      "sha256": "f4b974b31cefb868856ba441c60e73617c64292a22f9d5248f93d84cdce8b2c6"
+    },
+    "live_execution_plan_stub": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/legal_ir_span_graph_lean_execution_plan_20261016.md",
+      "bytes": 748,
+      "sha256": "d4fc3d0a78a2eb4d59e0bb12b8dd17d179f7137ca5355ac0285946a478160365",
+      "design_body_present": false
+    },
+    "profile": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_fullspan_training_v1.py",
+    "preparation_admitted": false
+  }
+}

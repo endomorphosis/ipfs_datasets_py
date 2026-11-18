@@ -395,3 +395,80 @@ def score_legal_original_text_roundtrip(corpus_pin, captured_inputs, candidate_r
 
 
 __all__ = ["SCHEMA", "LegalTextRoundTripError", "score_legal_original_text_roundtrip"]
+
+
+def score_relational_legal_text_roundtrip(reference_expression, candidate_text, *,
+        reference_argument_roles, profile, original_text=None,
+        reference_governing_fields=None, candidate_governing_fields=None):
+    """Score one complete opt-in controlled-prose prediction against typed content.
+
+    Original source is optional and remains exclusively on the scoring side.
+    The compiler receives only candidate prose and its explicit profile; the
+    reference and original source cannot influence its reconstruction. Unsupported
+    candidates remain an abstention in the one-input denominator. No model, file,
+    native backend or legal review operation is performed by this score path.
+    Optional governing_context and definition_uses observations are compared
+    independently and stay on the scoring side, even for unsupported prose.
+    """
+    from ipfs_datasets_py.logic.legal_ir.extended_decompiler import decompile_relational
+    from ipfs_datasets_py.logic.legal_ir.extended_compiler import compile_relational
+    from ipfs_datasets_py.logic.autoformal.legal_relational_reconstruction_v1 import (
+        compare_relational_governing_fields_v1,
+        compare_relational_prose_structure_v1,
+    )
+
+    _require(type(candidate_text) is str, "candidate prose text required")
+    _require(original_text is None or type(original_text) is str, "optional original source text required")
+    try:
+        candidate_bytes = candidate_text.encode("utf-8")
+        original_bytes = None if original_text is None else original_text.encode("utf-8")
+    except UnicodeError as error:
+        raise LegalTextRoundTripError("valid UTF8 candidate and optional original text required") from error
+    _require(len(candidate_bytes) <= _MAX_JSON and (original_bytes is None or len(original_bytes) <= _MAX_JSON),
+             "bounded candidate and optional original source text required")
+    governing_comparison = None
+    if reference_governing_fields is not None or candidate_governing_fields is not None:
+        governing_comparison = compare_relational_governing_fields_v1(
+            reference_governing_fields, candidate_governing_fields)
+    reference_prose = decompile_relational(reference_expression,
+        argument_roles=reference_argument_roles, profile=profile)
+    candidate = compile_relational(candidate_text, profile=profile) if candidate_text.strip() else None
+    comparison = dict.fromkeys(("exact_typed_expression_equal", "typed_structure_equal",
+                                 "canonical_prose_equal", "argument_roles_equal"), False)
+    normalized_candidate = None
+    if candidate is not None:
+        expression, roles = candidate
+        comparison = compare_relational_prose_structure_v1(reference_expression, expression,
+            reference_argument_roles=reference_argument_roles, candidate_argument_roles=roles, profile=profile)
+        normalized_candidate = decompile_relational(expression, argument_roles=roles, profile=profile)
+    byte_exact = None if original_bytes is None else candidate_bytes == original_bytes
+    result = {
+        "schema": "legal-relational-text-roundtrip-score/v1", "profile": profile,
+        "status": "complete_candidate_scored" if candidate is not None else "unsupported_candidate_abstained",
+        "input_count": 1, "supported_count": int(candidate is not None),
+        "abstention_count": int(candidate is None),
+        "measurements": {
+            "original_utf8_exact": byte_exact,
+            "canonical_prose_exact": comparison["canonical_prose_equal"],
+            "complete_typed_structure_exact": comparison["typed_structure_equal"],
+            "exact_typed_expression_equal": comparison["exact_typed_expression_equal"],
+            "argument_roles_exact": comparison["argument_roles_equal"],
+            "joint_typed_structure_original_utf8_exact": (None if byte_exact is None else
+                comparison["typed_structure_equal"] and byte_exact),
+            "semantic_equivalence_verified": False, "source_correspondence_verified": False,
+            "proof_validity_verified": False, "source_dependence_evaluated": False,
+        },
+        "normalized_reference_prose": reference_prose,
+        "normalized_candidate_prose": normalized_candidate,
+        "original_source_available_to_inverse": False,
+        "reference_target_available_to_inverse": False,
+        "authority": {"source_semantics_verified": False, "admitted": False,
+                      "proof_authority": False, "model_quality_established": False},
+        "training_mask": 0, "evaluation_gold_mask": 0,
+    }
+    if governing_comparison is not None:
+        result["governing_fields_comparison"] = governing_comparison
+    return result
+
+
+__all__.append("score_relational_legal_text_roundtrip")

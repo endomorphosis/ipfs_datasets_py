@@ -1,0 +1,3315 @@
+{
+  "acceptance_content_coverage": {
+    "actual15_question_catalog_and_source_coordinates_retained": true,
+    "actual_statutory_meaning_or_context_closure_review_supplied": false,
+    "all_declared_missing_context_requirements_preserved": true,
+    "all_four_existing_source_review_guides_selected": true,
+    "all_three_complete_retained_physical_source_contexts_pinned": true,
+    "candidate_AST_prediction_answer_graph_content_absent": true,
+    "exposure_history_preserved_without_blind_person_claim": true,
+    "source_edition_preserved_without_governing_edition_selection": true,
+    "strict_native_acceptance_claimed": false
+  },
+  "authority": {
+    "Lean_admitted": false,
+    "corpus_packet_admitted": false,
+    "current_native_eligibility_verified": false,
+    "evaluation_gold_qualified": false,
+    "formalized": false,
+    "governing_edition_selected": false,
+    "meaning_review_completed": false,
+    "reviewer_identity_authenticated": false,
+    "reviewer_independence_verified": false,
+    "semantic_context_closed": false,
+    "semantic_graph_admitted": false,
+    "signature_created": false,
+    "source_roles_verified": false,
+    "task_status_changed": false,
+    "training_gold_qualified": false
+  },
+  "candidate_blind_input_boundary": {
+    "actual_reviewer_candidate_exposure_known": false,
+    "delivery_uses_only_explicit_source_question_context_payload": true,
+    "existing_source_navigation_cues_are_reviewed_findings": false,
+    "future_reviewer_requirement": "Use these retained source-only inputs before disclosing any candidate interpretations. Obtain actual reviewer identity/independence/exposure declarations separately; source-only packet content is not evidence that a person was blind.",
+    "organizer_requested_roles_copied_into_reviewer_packets": false,
+    "original_blank_responses_or_exposure_declarations_filled": false,
+    "reviewer_identity_or_actual_independence_verified": false,
+    "selected_packet_contents_include_answer_graphs": false,
+    "selected_packet_contents_include_candidate_ASTs": false,
+    "selected_packet_contents_include_model_predictions": false
+  },
+  "canonical_install_performed": false,
+  "canonical_metadata_relocation": {
+    "native_or_scientific_acceptance_authority": false,
+    "operative_temporary_file_references": 0,
+    "predecessor_candidate_bytes": 84242,
+    "predecessor_candidate_raw_file_sha256": "83ecd80d9f7e02fbf823329735ad7e9461be6b6c290eb0a6fa3ef07c5f8fc1ad",
+    "predecessor_original_bytes_preserved": true,
+    "scope": "Only relocate source/context/provenance file references; all four original guides/occurrences/contexts and the actual15-question catalog are unchanged.",
+    "small_unchanged_contract_capture_retained_as_canonical_data": true
+  },
+  "created_at_utc": "2026-10-31T08:50:39.018338+00:00",
+  "evaluation_gold_mask": 0,
+  "expected_canonical_output": "/home/barberb/lift_coding/external/ipfs_datasets/data/legal_ir_span_graph_lean_20261016/LIR-0601/source-first-review-packet-manifest.json",
+  "exposure_history": {
+    "actual_future_reviewer_declarations": "all original slots remain null",
+    "clean_training_or_evaluation_holdout_claimed": false,
+    "current_group_source_exposed": true,
+    "original_history_custody": {
+      "file": {
+        "bytes": 76924,
+        "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/manifest.json",
+        "raw_file_sha256": "3c035af7fbaebb49d6657122931068370ddf729f701c10bb7231af0e9f67f2a4"
+      },
+      "selector": "/organizer_proposal_exposure"
+    },
+    "original_organizer_proposal_exposure": {
+      "actual_reviewer_declarations": [],
+      "admissions": 0,
+      "candidate_blind_reviewer_or_holdout_claim": false,
+      "existing_packet_status": "blank_not_a_review",
+      "future_candidate_blind_meaning_target_collection": "Use independently retained unchanged source-only blank guides before showing these alternatives to any future target author; this record is not a reviewer declaration.",
+      "human_reviews": 0,
+      "learned_decoder_outputs": false,
+      "metadata_origin": "Explicit organizer task instruction before final artifact seal; this sidecar does not alter any candidate/subject/dependency input.",
+      "organizer_or_team_has_seen_proposed_AST_alternatives": true,
+      "organizer_or_team_has_seen_selected_source": true,
+      "proposal_origin": "caller_authored_source_grounded",
+      "schema": "statutory-proposal-exposure-and-review-boundary/v1",
+      "selected_gold_alternative": null,
+      "signatures_created": 0,
+      "source_only_blank_guides_retained_byte_equivalent_in_complete_bundles": true
+    },
+    "prior_model_training_exposure": "unknown",
+    "source_only_guides_retained_unchanged": true
+  },
+  "limits": [
+    "This preparation reuses source-only content. Current legal meaning, governing edition/as-of, definition applicability and complete semantic dependency closure remain unresolved.",
+    "No original review subject, guide, source record, question, mask or CID was altered or regenerated. Embedded original record values are unchanged copies of pinned retained assets.",
+    "An actual native/corpus acceptance is not inferred from historical task status or NULL original receipts; original0302/9102 actor provenance remains outside this review."
+  ],
+  "metadata_comparisons": [
+    {
+      "all15_questions_and_blank_answers_preserved": true,
+      "original_bundle_and_selected_guide_equal": true,
+      "packet_index": 0,
+      "source_version_unit_occurrence_context_and_guide_bound": true
+    },
+    {
+      "all15_questions_and_blank_answers_preserved": true,
+      "original_bundle_and_selected_guide_equal": true,
+      "packet_index": 1,
+      "source_version_unit_occurrence_context_and_guide_bound": true
+    },
+    {
+      "all15_questions_and_blank_answers_preserved": true,
+      "original_bundle_and_selected_guide_equal": true,
+      "packet_index": 2,
+      "source_version_unit_occurrence_context_and_guide_bound": true
+    },
+    {
+      "all15_questions_and_blank_answers_preserved": true,
+      "original_bundle_and_selected_guide_equal": true,
+      "packet_index": 3,
+      "source_version_unit_occurrence_context_and_guide_bound": true
+    }
+  ],
+  "operations": {
+    "native_API_DB_Git_unit_operations": false,
+    "new_source_READ_leases": 0,
+    "new_source_acquisition_capture_sampler": false,
+    "only_tmp_artifact_written": true,
+    "product_imports_tests_models_or_jobs": false,
+    "source_or_canonical_outputs_modified": false
+  },
+  "organizer_provenance_not_reviewer_payload": {
+    "connected_pilot_plan": {
+      "bytes": 40658,
+      "path": "/home/barberb/lift_coding/artifacts/legal-corpus-connected-pilot-20261015-01/connected-pilot-plan-v01.json",
+      "sha256": "ab38ed0d21d183e5a5bfa1507c673919ecf7e718e04a0ce0f730c21db966d325"
+    },
+    "current_BACKLOG": {
+      "bytes": 1255404,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
+      "raw_file_sha256": "26da853f12763c00da2ddc611d6e9862cba77fb29004b8ab6acd81c3758f67fb"
+    },
+    "frozen_0501_lineage": {
+      "bytes": 11944,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/data/legal_ir_span_graph_lean_20261016/LIR-0501/pilot-execution-lineage-binding-v01.json",
+      "raw_file_sha256": "ed1335ee396b18087c72a7c516648b14cef0a3028f945b2c20716936ece8f828"
+    },
+    "frozen_0501_manifest": {
+      "bytes": 28837,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/data/legal_ir_span_graph_lean_20261016/LIR-0501/pilot-execution-manifest.json",
+      "raw_file_sha256": "0350ab79e5de9788af9fb92d27f341bbbb173e93fe87f65789ed3cc37eca73c5"
+    },
+    "future_untouched_components": "policy-only reservation; no concrete untouched IDs or semantic/duplicate closure qualified",
+    "source_population_and_exposure_manifest_0502": {
+      "bytes": 89708,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/data/legal_ir_span_graph_lean_20261016/LIR-0502/pilot-population-exposure-and-splits.json",
+      "raw_file_sha256": "f9b9e445de1cbf3c6c68354a2b02002aaef42095a547d643267b70846714004c"
+    }
+  },
+  "original_population_ref": {
+    "bytes": 589727,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-supervisor-plan-20261016/catalog-02/population.json",
+    "sha256": "ae902ebf03aee807ea9518a4b803e9f4a38bd36c3767895abe9c818048f85b89"
+  },
+  "original_question_catalog_unchanged": {
+    "authority": {
+      "Lean_admitted": false,
+      "evaluation_gold_qualified": false,
+      "meaning_admitted": false,
+      "proof_authority": false,
+      "reviewer_identity_authenticated": false,
+      "reviewer_independence_verified": false,
+      "semantic_graph_admitted": false,
+      "signature_verified": false,
+      "source_context_resolved": false,
+      "source_findings_verified": false,
+      "training_gold_qualified": false
+    },
+    "catalog_provenance": {
+      "added_norm_question_ids": [
+        "meaning_statement",
+        "meaning_arguments_qualifiers"
+      ],
+      "artifact_name": "packet-fit-v01.json",
+      "artifact_sha256": "72b2f94b893f36d6021822e48849259ed11db7fb64645a745c802ec5f1f5fb4a",
+      "authentication_or_admission_equivalence_claimed": false,
+      "retained_question_count": 13
+    },
+    "cid_scope": "payload_without_record_cid/v1",
+    "questions": [
+      {
+        "category": "source",
+        "prompt": "Propose the source role of this exact occurrence: definition, introductory scope text, list/continuation, repeal marker, construction rule, note, other or unresolved. Name source evidence and keep extractor labels observational.",
+        "question_id": "source_role"
+      },
+      {
+        "category": "source",
+        "prompt": "Identify publication, edition, legal time and governing-source evidence independently. Byte custody and an acquisition URL do not settle applicability or currentness.",
+        "question_id": "authority_edition"
+      },
+      {
+        "category": "source",
+        "prompt": "Identify exact scope-introduction text and any limiting subject, title, section, sense, event or date. Record inheritance as a proposal with evidence; do not default to section-local or global.",
+        "question_id": "scope_applicability"
+      },
+      {
+        "category": "source",
+        "prompt": "Identify every physical paragraph required for the proposed meaning unit, including introduction, enumerated members, exclusions, tail text and antecedents. Retain each source occurrence; paragraph boundaries do not certify completeness.",
+        "question_id": "complete_meaning_unit"
+      },
+      {
+        "category": "source",
+        "prompt": "Record necessary definitions, authority, antecedents, shared qualifiers, temporal origin and referenced provisions; unavailable evidence remains unavailable. The six categories are a checklist, not an exhaustive inventory.",
+        "question_id": "dependency_inventory"
+      },
+      {
+        "category": "source",
+        "prompt": "Record exact referenced provision/source identities or competing and unavailable targets. Distinguish a locator from an applicable reviewed definition binding.",
+        "question_id": "reference_targets"
+      },
+      {
+        "category": "source",
+        "prompt": "Inspect retained notes, construction rules, repeal text and edition observations for potentially relevant evidence. Record unavailable or unsupported application rather than assuming notes are irrelevant.",
+        "question_id": "notes_construction"
+      },
+      {
+        "category": "meaning",
+        "prompt": "Propose which source operator(s) occur: means, includes, exclusion, refers-to, construction rule, other or unresolved. Give exact selectors and rationale; no operator is automatically translated to biconditional.",
+        "question_id": "definition_operator"
+      },
+      {
+        "category": "meaning",
+        "prompt": "Propose the exact defined expression, senses and source occurrences. Repeated labels may denote distinct scoped senses; labels alone do not identify an entity or Lean symbol.",
+        "question_id": "term_and_sense"
+      },
+      {
+        "category": "meaning",
+        "prompt": "Propose the complete definiens and constituent list/boolean/qualified structure with each source occurrence, including alternatives and exclusions. Preserve ambiguity and unsupported constructions.",
+        "question_id": "body_structure"
+      },
+      {
+        "category": "meaning",
+        "prompt": "Propose the legal sort, arguments, relations and temporal parameters needed. Mark unsupported multi-argument, role-dependent, intensional or temporal meaning; do not squeeze into the existing unary profile.",
+        "question_id": "legal_sort_arity"
+      },
+      {
+        "category": "meaning",
+        "prompt": "Propose any use-to-definition relation only by exact use occurrence, exact scoped sense/definition occurrence, proposed applicability and evidence. Cross-section lexical matches remain search observations.",
+        "question_id": "definition_use"
+      },
+      {
+        "category": "meaning",
+        "prompt": "Identify whether the reviewed meaning fits an existing native profile or needs a separately specified extension. Formal ASTs, target symbols and assumptions remain blank until that profile and mapping exist.",
+        "question_id": "formal_profile_fit"
+      },
+      {
+        "category": "meaning",
+        "prompt": "Propose the complete meaning, if supportable, without omitting material text; this is not an admitted target.",
+        "question_id": "meaning_statement"
+      },
+      {
+        "category": "meaning",
+        "prompt": "Account for arguments, quantifiers, conditions, exceptions, approvals, numbers and time, or explain non-applicability.",
+        "question_id": "meaning_arguments_qualifiers"
+      }
+    ],
+    "record_cid": "baguqeerarbagwgo54yr3ch6uh2vhoiqaza6itzquguk22g3kqj26kpbmir5a",
+    "schema": "legal-source-sampling-review-questions/v1"
+  },
+  "original_task_contract_capture": {
+    "bytes": 7845,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/data/legal_ir_span_graph_lean_20261016/LIR-0601/original-task-contract-capture-v01.json",
+    "raw_file_sha256": "27a7521e0e9ef8edfa8d9cd2b9f2f4bb84ce4ee19cebfddbeb86273e401eb886"
+  },
+  "packet_population_counts": {
+    "actual_human_reviews_or_signatures": 0,
+    "actual_interpretations_selected": 0,
+    "existing_section101_display_population": 134,
+    "new_review_templates_or_CIDs": 0,
+    "original_question_catalog_items": 15,
+    "physical_provisions": 3,
+    "questions_per_original_guide": 15,
+    "reused_optional_human_navigation_displays": 2,
+    "selected_original_blank_guides": 4,
+    "selected_units_or_controls": 4
+  },
+  "question_catalog_custody": [
+    {
+      "catalog_value_equal_across_three_bundles": true,
+      "selector": "/question_catalog",
+      "source_review_bundle_file": {
+        "bytes": 5664496,
+        "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/101/review-bundle.json",
+        "raw_file_sha256": "62bbead449c5e1d10cbdb23957f3a6325ad6cb830b86106086fd1ccd66134b33"
+      }
+    },
+    {
+      "catalog_value_equal_across_three_bundles": true,
+      "selector": "/question_catalog",
+      "source_review_bundle_file": {
+        "bytes": 274339,
+        "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7213/review-bundle.json",
+        "raw_file_sha256": "3f7a77f2de922c0fd116c990af1bafedaa14464ae4b84939d8d6189fa6d7a5e5"
+      }
+    },
+    {
+      "catalog_value_equal_across_three_bundles": true,
+      "selector": "/question_catalog",
+      "source_review_bundle_file": {
+        "bytes": 426953,
+        "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7214/review-bundle.json",
+        "raw_file_sha256": "a3f9027b690d583ff8f63fea6a138be4e867060eb2ce83873644fad9aa07d522"
+      }
+    }
+  ],
+  "remaining_original_owner_actions": [
+    "Review/adopt these exact selected source-only inputs through the existing corpus task workflow after current dependency/admission checks; no new blank guide generation or source acquisition is needed.",
+    "Present the complete original15-question catalog and unchanged blank guide for every selected occurrence; the older section10113-question display is optional navigation, not a replacement catalog.",
+    "Supply actual independently declared source/meaning/applicability responses in LIR-0602 through compatible existing owners, retaining disputes, missing context and null selections until substantive evidence exists."
+  ],
+  "review_packets": [
+    {
+      "complete_physical_provision_context": {
+        "exact_UTF8_bytes": 72592,
+        "exact_UTF8_sha256": "e16ca14e06034a08bc1e732cdb790c9ec5bbb96d3ba38ac3bee23367c8481851",
+        "missing_context_requirements": [
+          "definition",
+          "authority",
+          "antecedent",
+          "shared_qualifier",
+          "temporal_origin",
+          "referenced_provision"
+        ],
+        "parent_row_text_selector": "/rows/0/raw_row/text",
+        "parent_selected_rows_file": {
+          "bytes": 94295,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data2-v01/exports/parent-selected-rows.json",
+          "raw_file_sha256": "b37fc2444d34ba20ddd718d8ef5d58b70a6010ccd714e800ef30b85e33c13044"
+        },
+        "parent_text_views_file": {
+          "bytes": 222905,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data2-v01/exports/parent-text-views.json",
+          "raw_file_sha256": "ab01d3cee838a0124832e3db6b8d8c0aaeb06be76ac77d1be5c2c0c0e6748c8e"
+        },
+        "parent_view_text_selector": "/views/0/text_view/text",
+        "semantic_context_closed": false
+      },
+      "declared_context": {
+        "availability": "required_unavailable",
+        "cid_scope": "payload_without_record_cid/v1",
+        "context_references": [
+          {
+            "purpose": "complete normalized source view retained, not dependency closure",
+            "record_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+            "record_kind": "source_version"
+          }
+        ],
+        "dependency_verification": "declaration_only",
+        "missing_requirements": [
+          "definition",
+          "authority",
+          "antecedent",
+          "shared_qualifier",
+          "temporal_origin",
+          "referenced_provision"
+        ],
+        "reason": "Whole source view is retained; legal context attachments and scope remain unreviewed.",
+        "record_cid": "baguqeeralpcglyrjsh555a64ri2zkv7mkr4zsuyx3sjbsgtzcj6mywwhr2dq",
+        "schema": "legal-corpus-context-declaration/v1",
+        "source_occurrence_cid": "baguqeera2cmwvh2ny35xyhcok4zd7v6lvhdswp3ca3uj4tnoo6lcodlzsl2a"
+      },
+      "evaluation_gold_mask": 0,
+      "existing_guide_custody": {
+        "blank_guide_selector": "/selected/0/blank_guide",
+        "bundle_guide_selector": "/guides/48",
+        "guide_values_identical_in_both_original_containers": true,
+        "question_catalog_selector": "/question_catalog",
+        "selected_evidence_file": {
+          "bytes": 59083,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/101/selected-evidence.json",
+          "raw_file_sha256": "c8be609111dd142a15b2181138d7fda5880960686c0bb33c3e0a06f59761bd5d"
+        },
+        "source_review_bundle_file": {
+          "bytes": 5664496,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/101/review-bundle.json",
+          "raw_file_sha256": "62bbead449c5e1d10cbdb23957f3a6325ad6cb830b86106086fd1ccd66134b33"
+        }
+      },
+      "existing_optional_literal_navigation_display": {
+        "Markdown_packet": {
+          "bytes": 9920,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-review-packets-20261015-01/section101-review-01/packets/unit-0048.md",
+          "raw_file_sha256": "61c6aa0657e74557d1e3a1ed92ac38cc4a894496fccf4f6228abd9da8c805a2d"
+        },
+        "blank_draft_file": {
+          "bytes": 942732,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-review-packets-20261015-01/section101-review-01/blank-drafts.jsonl",
+          "raw_file_sha256": "545fb23b491b096f9980bbe96b3846adb4da7874b06aaa7669295fbf2039673d"
+        },
+        "blank_draft_zero_based_JSONL_line": 39,
+        "complete_source_context_display": {
+          "bytes": 1024988,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-review-packets-20261015-01/section101-review-01/complete-source-context.md",
+          "raw_file_sha256": "37505d83335e3c20f58d8ba1652e6612169ea5db66cb3c76105e81e5573258db"
+        },
+        "display_is_not_complete_15_question_catalog": true,
+        "display_meaning_questions": 6,
+        "display_source_questions": 7,
+        "included_in_reviewer_payload": false,
+        "literal_cues_are_source_navigation_observations_only": true,
+        "normalized_source_file": {
+          "bytes": 72592,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-review-packets-20261015-01/section101-review-01/normalized-source.txt",
+          "raw_file_sha256": "e16ca14e06034a08bc1e732cdb790c9ec5bbb96d3ba38ac3bee23367c8481851"
+        },
+        "packet_index_file": {
+          "bytes": 83973,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-review-packets-20261015-01/section101-review-01/packet-index.jsonl",
+          "raw_file_sha256": "f624892562015137a7937fdd9e2fcd7d0250b065b12bd105c0ea8426df4cb180"
+        },
+        "packet_index_zero_based_JSONL_line": 39,
+        "required_original_questions_not_omitted": [
+          "meaning_statement",
+          "meaning_arguments_qualifiers"
+        ]
+      },
+      "existing_original_blank_guide": {
+        "authority": {
+          "Lean_admitted": false,
+          "evaluation_gold_qualified": false,
+          "meaning_admitted": false,
+          "proof_authority": false,
+          "reviewer_identity_authenticated": false,
+          "reviewer_independence_verified": false,
+          "semantic_graph_admitted": false,
+          "signature_verified": false,
+          "source_context_resolved": false,
+          "source_findings_verified": false,
+          "training_gold_qualified": false
+        },
+        "cid_scope": "payload_without_record_cid/v1",
+        "context_ref": {
+          "record_cid": "baguqeeralpcglyrjsh555a64ri2zkv7mkr4zsuyx3sjbsgtzcj6mywwhr2dq",
+          "schema": "legal-corpus-context-declaration/v1",
+          "sha256": "e9321b8117f556e23526404f8133ab600acd52dd22132fc51e88a9820325589d"
+        },
+        "evaluation_gold_mask": 0,
+        "evidence_refs": [
+          {
+            "index": 0,
+            "kind": "document_view",
+            "sha256": "26ac99daae8452bfa43f799da7f455b6f4f228b3636712dbde203f6705b94192"
+          },
+          {
+            "index": 0,
+            "kind": "sampling_record",
+            "sha256": "7894137f375a07b3c263964e9524ac6e6a6acc7111694f5d7c9c8c2f9b5b2af4"
+          },
+          {
+            "index": 145,
+            "kind": "sampling_record",
+            "sha256": "afa05079d6c5a859f31d18118e87129e0dcb0f8f3ab849b034ed31a69ccf8e49"
+          },
+          {
+            "index": 146,
+            "kind": "sampling_record",
+            "sha256": "e9321b8117f556e23526404f8133ab600acd52dd22132fc51e88a9820325589d"
+          },
+          {
+            "index": 147,
+            "kind": "sampling_record",
+            "sha256": "8cf40c47c26e77e5721b7bd124740b21c0a81f10239963b7ba5c195de04e7706"
+          }
+        ],
+        "question_catalog_ref": {
+          "record_cid": "baguqeerarbagwgo54yr3ch6uh2vhoiqaza6itzquguk22g3kqj26kpbmir5a",
+          "schema": "legal-source-sampling-review-questions/v1",
+          "sha256": "ad9e74c8d70a9b6e43eadead0841ecaf494ec97e36598d97b6fcc39a60215c4d"
+        },
+        "record_cid": "baguqeeraiyje5ydrrvg6fe3h7r6zxlsf2hy76b5vy6vifcczhmylepwesljq",
+        "response_template": {
+          "bundle_sha256": null,
+          "exposure_declaration": {
+            "candidate_interpretations_exposed": null,
+            "organizer_source_metadata_exposed": null,
+            "other_exposure": null
+          },
+          "meaning_proposals": [
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "definition_operator",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "term_and_sense",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "body_structure",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "legal_sort_arity",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "definition_use",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "formal_profile_fit",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "meaning_statement",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "meaning_arguments_qualifiers",
+              "rationale": null,
+              "unresolved_requirements": []
+            }
+          ],
+          "question_catalog_ref": {
+            "record_cid": "baguqeerarbagwgo54yr3ch6uh2vhoiqaza6itzquguk22g3kqj26kpbmir5a",
+            "schema": "legal-source-sampling-review-questions/v1",
+            "sha256": "ad9e74c8d70a9b6e43eadead0841ecaf494ec97e36598d97b6fcc39a60215c4d"
+          },
+          "reviewer_declaration": {
+            "identity_evidence_refs": null,
+            "independence_evidence_refs": null,
+            "issued_at_utc": null,
+            "principal_id": null,
+            "role": null
+          },
+          "source_answers": [
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "source_role",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "authority_edition",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "scope_applicability",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "complete_meaning_unit",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "dependency_inventory",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "reference_targets",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "notes_construction",
+              "rationale": null,
+              "unresolved_requirements": []
+            }
+          ],
+          "subject_ref": {
+            "index": 48,
+            "kind": "unit",
+            "sha256": "8cf40c47c26e77e5721b7bd124740b21c0a81f10239963b7ba5c195de04e7706"
+          }
+        },
+        "sampling_stratum": "candidate_statute_paragraph",
+        "schema": "legal-source-sampling-review-blank-guide/v1",
+        "source_occurrence_ref": {
+          "record_cid": "baguqeera2cmwvh2ny35xyhcok4zd7v6lvhdswp3ca3uj4tnoo6lcodlzsl2a",
+          "schema": "legal-corpus-source-occurrence/v1",
+          "sha256": "afa05079d6c5a859f31d18118e87129e0dcb0f8f3ab849b034ed31a69ccf8e49"
+        },
+        "status": "blank_not_a_review",
+        "subject_ref": {
+          "index": 48,
+          "kind": "unit",
+          "sha256": "8cf40c47c26e77e5721b7bd124740b21c0a81f10239963b7ba5c195de04e7706"
+        },
+        "training_mask": 0,
+        "unanswered_question_ids": [
+          "source_role",
+          "authority_edition",
+          "scope_applicability",
+          "complete_meaning_unit",
+          "dependency_inventory",
+          "reference_targets",
+          "notes_construction",
+          "definition_operator",
+          "term_and_sense",
+          "body_structure",
+          "legal_sort_arity",
+          "definition_use",
+          "formal_profile_fit",
+          "meaning_statement",
+          "meaning_arguments_qualifiers"
+        ],
+        "unresolved": true
+      },
+      "original_blank_guide_ref": {
+        "record_cid": "baguqeeraiyje5ydrrvg6fe3h7r6zxlsf2hy76b5vy6vifcczhmylepwesljq",
+        "schema": "legal-source-sampling-review-blank-guide/v1",
+        "sha256": "bd5c44d5d06496ca5e9f31062d5e9aa6b6a1229e2f402856b8f3363b7d262acd"
+      },
+      "packet_index": 0,
+      "review_status": "blank_not_a_review",
+      "reviewer_exposure_declaration": {
+        "candidate_interpretations_exposed": null,
+        "organizer_source_metadata_exposed": null,
+        "other_exposure": null
+      },
+      "reviewer_identity_and_exposure": {
+        "identity_evidence_refs": null,
+        "independence_evidence_refs": null,
+        "issued_at_utc": null,
+        "principal_id": null,
+        "role": null
+      },
+      "reviewer_payload": {
+        "complete_physical_provision_context": {
+          "exact_UTF8_bytes": 72592,
+          "exact_UTF8_sha256": "e16ca14e06034a08bc1e732cdb790c9ec5bbb96d3ba38ac3bee23367c8481851",
+          "missing_context_requirements": [
+            "definition",
+            "authority",
+            "antecedent",
+            "shared_qualifier",
+            "temporal_origin",
+            "referenced_provision"
+          ],
+          "parent_row_text_selector": "/rows/0/raw_row/text",
+          "parent_selected_rows_file": {
+            "bytes": 94295,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data2-v01/exports/parent-selected-rows.json",
+            "raw_file_sha256": "b37fc2444d34ba20ddd718d8ef5d58b70a6010ccd714e800ef30b85e33c13044"
+          },
+          "parent_text_views_file": {
+            "bytes": 222905,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data2-v01/exports/parent-text-views.json",
+            "raw_file_sha256": "ab01d3cee838a0124832e3db6b8d8c0aaeb06be76ac77d1be5c2c0c0e6748c8e"
+          },
+          "parent_view_text_selector": "/views/0/text_view/text",
+          "semantic_context_closed": false
+        },
+        "declared_context": {
+          "availability": "required_unavailable",
+          "cid_scope": "payload_without_record_cid/v1",
+          "context_references": [
+            {
+              "purpose": "complete normalized source view retained, not dependency closure",
+              "record_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+              "record_kind": "source_version"
+            }
+          ],
+          "dependency_verification": "declaration_only",
+          "missing_requirements": [
+            "definition",
+            "authority",
+            "antecedent",
+            "shared_qualifier",
+            "temporal_origin",
+            "referenced_provision"
+          ],
+          "reason": "Whole source view is retained; legal context attachments and scope remain unreviewed.",
+          "record_cid": "baguqeeralpcglyrjsh555a64ri2zkv7mkr4zsuyx3sjbsgtzcj6mywwhr2dq",
+          "schema": "legal-corpus-context-declaration/v1",
+          "source_occurrence_cid": "baguqeera2cmwvh2ny35xyhcok4zd7v6lvhdswp3ca3uj4tnoo6lcodlzsl2a"
+        },
+        "evaluation_gold_mask": 0,
+        "original_blank_response_template": {
+          "bundle_sha256": null,
+          "exposure_declaration": {
+            "candidate_interpretations_exposed": null,
+            "organizer_source_metadata_exposed": null,
+            "other_exposure": null
+          },
+          "meaning_proposals": [
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "definition_operator",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "term_and_sense",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "body_structure",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "legal_sort_arity",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "definition_use",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "formal_profile_fit",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "meaning_statement",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "meaning_arguments_qualifiers",
+              "rationale": null,
+              "unresolved_requirements": []
+            }
+          ],
+          "question_catalog_ref": {
+            "record_cid": "baguqeerarbagwgo54yr3ch6uh2vhoiqaza6itzquguk22g3kqj26kpbmir5a",
+            "schema": "legal-source-sampling-review-questions/v1",
+            "sha256": "ad9e74c8d70a9b6e43eadead0841ecaf494ec97e36598d97b6fcc39a60215c4d"
+          },
+          "reviewer_declaration": {
+            "identity_evidence_refs": null,
+            "independence_evidence_refs": null,
+            "issued_at_utc": null,
+            "principal_id": null,
+            "role": null
+          },
+          "source_answers": [
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "source_role",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "authority_edition",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "scope_applicability",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "complete_meaning_unit",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "dependency_inventory",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "reference_targets",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "notes_construction",
+              "rationale": null,
+              "unresolved_requirements": []
+            }
+          ],
+          "subject_ref": {
+            "index": 48,
+            "kind": "unit",
+            "sha256": "8cf40c47c26e77e5721b7bd124740b21c0a81f10239963b7ba5c195de04e7706"
+          }
+        },
+        "original_question_catalog_questions": [
+          {
+            "category": "source",
+            "prompt": "Propose the source role of this exact occurrence: definition, introductory scope text, list/continuation, repeal marker, construction rule, note, other or unresolved. Name source evidence and keep extractor labels observational.",
+            "question_id": "source_role"
+          },
+          {
+            "category": "source",
+            "prompt": "Identify publication, edition, legal time and governing-source evidence independently. Byte custody and an acquisition URL do not settle applicability or currentness.",
+            "question_id": "authority_edition"
+          },
+          {
+            "category": "source",
+            "prompt": "Identify exact scope-introduction text and any limiting subject, title, section, sense, event or date. Record inheritance as a proposal with evidence; do not default to section-local or global.",
+            "question_id": "scope_applicability"
+          },
+          {
+            "category": "source",
+            "prompt": "Identify every physical paragraph required for the proposed meaning unit, including introduction, enumerated members, exclusions, tail text and antecedents. Retain each source occurrence; paragraph boundaries do not certify completeness.",
+            "question_id": "complete_meaning_unit"
+          },
+          {
+            "category": "source",
+            "prompt": "Record necessary definitions, authority, antecedents, shared qualifiers, temporal origin and referenced provisions; unavailable evidence remains unavailable. The six categories are a checklist, not an exhaustive inventory.",
+            "question_id": "dependency_inventory"
+          },
+          {
+            "category": "source",
+            "prompt": "Record exact referenced provision/source identities or competing and unavailable targets. Distinguish a locator from an applicable reviewed definition binding.",
+            "question_id": "reference_targets"
+          },
+          {
+            "category": "source",
+            "prompt": "Inspect retained notes, construction rules, repeal text and edition observations for potentially relevant evidence. Record unavailable or unsupported application rather than assuming notes are irrelevant.",
+            "question_id": "notes_construction"
+          },
+          {
+            "category": "meaning",
+            "prompt": "Propose which source operator(s) occur: means, includes, exclusion, refers-to, construction rule, other or unresolved. Give exact selectors and rationale; no operator is automatically translated to biconditional.",
+            "question_id": "definition_operator"
+          },
+          {
+            "category": "meaning",
+            "prompt": "Propose the exact defined expression, senses and source occurrences. Repeated labels may denote distinct scoped senses; labels alone do not identify an entity or Lean symbol.",
+            "question_id": "term_and_sense"
+          },
+          {
+            "category": "meaning",
+            "prompt": "Propose the complete definiens and constituent list/boolean/qualified structure with each source occurrence, including alternatives and exclusions. Preserve ambiguity and unsupported constructions.",
+            "question_id": "body_structure"
+          },
+          {
+            "category": "meaning",
+            "prompt": "Propose the legal sort, arguments, relations and temporal parameters needed. Mark unsupported multi-argument, role-dependent, intensional or temporal meaning; do not squeeze into the existing unary profile.",
+            "question_id": "legal_sort_arity"
+          },
+          {
+            "category": "meaning",
+            "prompt": "Propose any use-to-definition relation only by exact use occurrence, exact scoped sense/definition occurrence, proposed applicability and evidence. Cross-section lexical matches remain search observations.",
+            "question_id": "definition_use"
+          },
+          {
+            "category": "meaning",
+            "prompt": "Identify whether the reviewed meaning fits an existing native profile or needs a separately specified extension. Formal ASTs, target symbols and assumptions remain blank until that profile and mapping exist.",
+            "question_id": "formal_profile_fit"
+          },
+          {
+            "category": "meaning",
+            "prompt": "Propose the complete meaning, if supportable, without omitting material text; this is not an admitted target.",
+            "question_id": "meaning_statement"
+          },
+          {
+            "category": "meaning",
+            "prompt": "Account for arguments, quantifiers, conditions, exceptions, approvals, numbers and time, or explain non-applicability.",
+            "question_id": "meaning_arguments_qualifiers"
+          }
+        ],
+        "original_question_catalog_ref": {
+          "record_cid": "baguqeerarbagwgo54yr3ch6uh2vhoiqaza6itzquguk22g3kqj26kpbmir5a",
+          "schema": "legal-source-sampling-review-questions/v1",
+          "sha256": "ad9e74c8d70a9b6e43eadead0841ecaf494ec97e36598d97b6fcc39a60215c4d"
+        },
+        "source_exposure_history": {
+          "actual_reviewer_source_exposure_declared": null,
+          "prior_model_training_exposure": "unknown",
+          "retained_complete_source_available_for_preparation": true
+        },
+        "source_occurrence": {
+          "cid_scope": "payload_without_record_cid/v1",
+          "coordinate_system": "extracted-unicode-codepoints-and-utf8-half-open/v1",
+          "end_char": 6527,
+          "end_utf8": 6551,
+          "historical_aliases": [],
+          "record_cid": "baguqeera2cmwvh2ny35xyhcok4zd7v6lvhdswp3ca3uj4tnoo6lcodlzsl2a",
+          "schema": "legal-corpus-source-occurrence/v1",
+          "source_version_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+          "span_cid": "bafkreicddvi46ydescidocgmhsrordpbdyqawvmb6rmyimljgqiybtkpyq",
+          "span_sha256": "431d51cf606490903708cc3ca2e88de11e200b5581f459843169341180cd4fc4",
+          "span_text": "(b) Personnel Generally.—The following definitions relating to military personnel apply in this title:",
+          "start_char": 6425,
+          "start_utf8": 6447
+        },
+        "source_version": {
+          "cid_scope": "payload_without_record_cid/v1",
+          "edition": "2024",
+          "extracted_view": {
+            "byte_length": 72592,
+            "character_length": 71598,
+            "cid": "bafkreihbnsqu4bqdjielyhttftnxsde6yw53s3j3uofmhpxcgnt4qsayke",
+            "coordinate_system": "extracted-unicode-codepoints-and-utf8-half-open/v1",
+            "extraction_profile": "legal-official-markup-document/v2",
+            "normalization_profile": "HTML-entities-body-text-block-whitespace-collapse-UTF8-LF/v2",
+            "sha256": "e16ca14e06034a08bc1e732cdb790c9ec5bbb96d3ba38ac3bee23367c8481851"
+          },
+          "historical_aliases": [],
+          "provision_id": "usc:us:10:101",
+          "raw_artifact": {
+            "cid": "bafkreicoruaxpfbcb4msm2gvge74kn73w4kamuvmjiapvl4tu3esdqwarm",
+            "media_type": "text/html",
+            "sha256": "4e8d017794220f192668d5313fc537fbb7140652ac4a00faaf93a6c921c2c08b"
+          },
+          "record_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+          "release_id": "govinfo-markup-v2-edition:2024",
+          "schema": "legal-corpus-source-version/v1",
+          "source_id": "usc:us:10:101"
+        },
+        "training_mask": 0
+      },
+      "source_first_question_inventory": {
+        "all_answers_and_findings_blank": true,
+        "meaning_questions": 8,
+        "question_ids": [
+          "source_role",
+          "authority_edition",
+          "scope_applicability",
+          "complete_meaning_unit",
+          "dependency_inventory",
+          "reference_targets",
+          "notes_construction",
+          "definition_operator",
+          "term_and_sense",
+          "body_structure",
+          "legal_sort_arity",
+          "definition_use",
+          "formal_profile_fit",
+          "meaning_statement",
+          "meaning_arguments_qualifiers"
+        ],
+        "source_questions": 7
+      },
+      "source_occurrence": {
+        "cid_scope": "payload_without_record_cid/v1",
+        "coordinate_system": "extracted-unicode-codepoints-and-utf8-half-open/v1",
+        "end_char": 6527,
+        "end_utf8": 6551,
+        "historical_aliases": [],
+        "record_cid": "baguqeera2cmwvh2ny35xyhcok4zd7v6lvhdswp3ca3uj4tnoo6lcodlzsl2a",
+        "schema": "legal-corpus-source-occurrence/v1",
+        "source_version_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+        "span_cid": "bafkreicddvi46ydescidocgmhsrordpbdyqawvmb6rmyimljgqiybtkpyq",
+        "span_sha256": "431d51cf606490903708cc3ca2e88de11e200b5581f459843169341180cd4fc4",
+        "span_text": "(b) Personnel Generally.—The following definitions relating to military personnel apply in this title:",
+        "start_char": 6425,
+        "start_utf8": 6447
+      },
+      "source_version": {
+        "cid_scope": "payload_without_record_cid/v1",
+        "edition": "2024",
+        "extracted_view": {
+          "byte_length": 72592,
+          "character_length": 71598,
+          "cid": "bafkreihbnsqu4bqdjielyhttftnxsde6yw53s3j3uofmhpxcgnt4qsayke",
+          "coordinate_system": "extracted-unicode-codepoints-and-utf8-half-open/v1",
+          "extraction_profile": "legal-official-markup-document/v2",
+          "normalization_profile": "HTML-entities-body-text-block-whitespace-collapse-UTF8-LF/v2",
+          "sha256": "e16ca14e06034a08bc1e732cdb790c9ec5bbb96d3ba38ac3bee23367c8481851"
+        },
+        "historical_aliases": [],
+        "provision_id": "usc:us:10:101",
+        "raw_artifact": {
+          "cid": "bafkreicoruaxpfbcb4msm2gvge74kn73w4kamuvmjiapvl4tu3esdqwarm",
+          "media_type": "text/html",
+          "sha256": "4e8d017794220f192668d5313fc537fbb7140652ac4a00faaf93a6c921c2c08b"
+        },
+        "record_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+        "release_id": "govinfo-markup-v2-edition:2024",
+        "schema": "legal-corpus-source-version/v1",
+        "source_id": "usc:us:10:101"
+      },
+      "training_mask": 0,
+      "unit_ref": {
+        "record_cid": "baguqeerahdfpg6hzil7fbc45vksgjzsqdq7uh4dmch4bwt3oo3cybch7btpa",
+        "schema": "legal-source-structured-sample-unit/v1",
+        "sha256": "8cf40c47c26e77e5721b7bd124740b21c0a81f10239963b7ba5c195de04e7706"
+      }
+    },
+    {
+      "complete_physical_provision_context": {
+        "exact_UTF8_bytes": 72592,
+        "exact_UTF8_sha256": "e16ca14e06034a08bc1e732cdb790c9ec5bbb96d3ba38ac3bee23367c8481851",
+        "missing_context_requirements": [
+          "definition",
+          "authority",
+          "antecedent",
+          "shared_qualifier",
+          "temporal_origin",
+          "referenced_provision"
+        ],
+        "parent_row_text_selector": "/rows/0/raw_row/text",
+        "parent_selected_rows_file": {
+          "bytes": 94295,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data2-v01/exports/parent-selected-rows.json",
+          "raw_file_sha256": "b37fc2444d34ba20ddd718d8ef5d58b70a6010ccd714e800ef30b85e33c13044"
+        },
+        "parent_text_views_file": {
+          "bytes": 222905,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data2-v01/exports/parent-text-views.json",
+          "raw_file_sha256": "ab01d3cee838a0124832e3db6b8d8c0aaeb06be76ac77d1be5c2c0c0e6748c8e"
+        },
+        "parent_view_text_selector": "/views/0/text_view/text",
+        "semantic_context_closed": false
+      },
+      "declared_context": {
+        "availability": "required_unavailable",
+        "cid_scope": "payload_without_record_cid/v1",
+        "context_references": [
+          {
+            "purpose": "complete normalized source view retained, not dependency closure",
+            "record_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+            "record_kind": "source_version"
+          }
+        ],
+        "dependency_verification": "declaration_only",
+        "missing_requirements": [
+          "definition",
+          "authority",
+          "antecedent",
+          "shared_qualifier",
+          "temporal_origin",
+          "referenced_provision"
+        ],
+        "reason": "Whole source view is retained; legal context attachments and scope remain unreviewed.",
+        "record_cid": "baguqeeraxfs35w7bh6ljxu4jw54gk7xysss4frxgm6dzfd6oyz53fmv5nd7a",
+        "schema": "legal-corpus-context-declaration/v1",
+        "source_occurrence_cid": "baguqeeracyfied5gomuscg5pdep44znimi2zdlqjbs4n2jwq4yf6dekbgera"
+      },
+      "evaluation_gold_mask": 0,
+      "existing_guide_custody": {
+        "blank_guide_selector": "/selected/1/blank_guide",
+        "bundle_guide_selector": "/guides/49",
+        "guide_values_identical_in_both_original_containers": true,
+        "question_catalog_selector": "/question_catalog",
+        "selected_evidence_file": {
+          "bytes": 59083,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/101/selected-evidence.json",
+          "raw_file_sha256": "c8be609111dd142a15b2181138d7fda5880960686c0bb33c3e0a06f59761bd5d"
+        },
+        "source_review_bundle_file": {
+          "bytes": 5664496,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/101/review-bundle.json",
+          "raw_file_sha256": "62bbead449c5e1d10cbdb23957f3a6325ad6cb830b86106086fd1ccd66134b33"
+        }
+      },
+      "existing_optional_literal_navigation_display": {
+        "Markdown_packet": {
+          "bytes": 9189,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-review-packets-20261015-01/section101-review-01/packets/unit-0049.md",
+          "raw_file_sha256": "3c7b4630f5a74b0623af337b90b95d966215df18f1056a8b6bd12572eadfab97"
+        },
+        "blank_draft_file": {
+          "bytes": 942732,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-review-packets-20261015-01/section101-review-01/blank-drafts.jsonl",
+          "raw_file_sha256": "545fb23b491b096f9980bbe96b3846adb4da7874b06aaa7669295fbf2039673d"
+        },
+        "blank_draft_zero_based_JSONL_line": 40,
+        "complete_source_context_display": {
+          "bytes": 1024988,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-review-packets-20261015-01/section101-review-01/complete-source-context.md",
+          "raw_file_sha256": "37505d83335e3c20f58d8ba1652e6612169ea5db66cb3c76105e81e5573258db"
+        },
+        "display_is_not_complete_15_question_catalog": true,
+        "display_meaning_questions": 6,
+        "display_source_questions": 7,
+        "included_in_reviewer_payload": false,
+        "literal_cues_are_source_navigation_observations_only": true,
+        "normalized_source_file": {
+          "bytes": 72592,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-review-packets-20261015-01/section101-review-01/normalized-source.txt",
+          "raw_file_sha256": "e16ca14e06034a08bc1e732cdb790c9ec5bbb96d3ba38ac3bee23367c8481851"
+        },
+        "packet_index_file": {
+          "bytes": 83973,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-definition-review-packets-20261015-01/section101-review-01/packet-index.jsonl",
+          "raw_file_sha256": "f624892562015137a7937fdd9e2fcd7d0250b065b12bd105c0ea8426df4cb180"
+        },
+        "packet_index_zero_based_JSONL_line": 40,
+        "required_original_questions_not_omitted": [
+          "meaning_statement",
+          "meaning_arguments_qualifiers"
+        ]
+      },
+      "existing_original_blank_guide": {
+        "authority": {
+          "Lean_admitted": false,
+          "evaluation_gold_qualified": false,
+          "meaning_admitted": false,
+          "proof_authority": false,
+          "reviewer_identity_authenticated": false,
+          "reviewer_independence_verified": false,
+          "semantic_graph_admitted": false,
+          "signature_verified": false,
+          "source_context_resolved": false,
+          "source_findings_verified": false,
+          "training_gold_qualified": false
+        },
+        "cid_scope": "payload_without_record_cid/v1",
+        "context_ref": {
+          "record_cid": "baguqeeraxfs35w7bh6ljxu4jw54gk7xysss4frxgm6dzfd6oyz53fmv5nd7a",
+          "schema": "legal-corpus-context-declaration/v1",
+          "sha256": "dfefdabee16e8e3643ea37bc5dbe54e62a35ae091ce391d4d788472f78c7cb08"
+        },
+        "evaluation_gold_mask": 0,
+        "evidence_refs": [
+          {
+            "index": 0,
+            "kind": "document_view",
+            "sha256": "26ac99daae8452bfa43f799da7f455b6f4f228b3636712dbde203f6705b94192"
+          },
+          {
+            "index": 0,
+            "kind": "sampling_record",
+            "sha256": "7894137f375a07b3c263964e9524ac6e6a6acc7111694f5d7c9c8c2f9b5b2af4"
+          },
+          {
+            "index": 148,
+            "kind": "sampling_record",
+            "sha256": "2589544ca5436085bb28b4ba81ca44cd829e5c5c045e299120810e4e27b95882"
+          },
+          {
+            "index": 149,
+            "kind": "sampling_record",
+            "sha256": "dfefdabee16e8e3643ea37bc5dbe54e62a35ae091ce391d4d788472f78c7cb08"
+          },
+          {
+            "index": 150,
+            "kind": "sampling_record",
+            "sha256": "a15dca5d46ad7783a09b4f6ec69b97cdb45aa393df9a48caa5c328612a6a356a"
+          }
+        ],
+        "question_catalog_ref": {
+          "record_cid": "baguqeerarbagwgo54yr3ch6uh2vhoiqaza6itzquguk22g3kqj26kpbmir5a",
+          "schema": "legal-source-sampling-review-questions/v1",
+          "sha256": "ad9e74c8d70a9b6e43eadead0841ecaf494ec97e36598d97b6fcc39a60215c4d"
+        },
+        "record_cid": "baguqeeranhckaqx2ajyfzlgwd2r32y3qngxaocghgtnonigixbj7ae4bshwa",
+        "response_template": {
+          "bundle_sha256": null,
+          "exposure_declaration": {
+            "candidate_interpretations_exposed": null,
+            "organizer_source_metadata_exposed": null,
+            "other_exposure": null
+          },
+          "meaning_proposals": [
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "definition_operator",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "term_and_sense",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "body_structure",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "legal_sort_arity",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "definition_use",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "formal_profile_fit",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "meaning_statement",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "meaning_arguments_qualifiers",
+              "rationale": null,
+              "unresolved_requirements": []
+            }
+          ],
+          "question_catalog_ref": {
+            "record_cid": "baguqeerarbagwgo54yr3ch6uh2vhoiqaza6itzquguk22g3kqj26kpbmir5a",
+            "schema": "legal-source-sampling-review-questions/v1",
+            "sha256": "ad9e74c8d70a9b6e43eadead0841ecaf494ec97e36598d97b6fcc39a60215c4d"
+          },
+          "reviewer_declaration": {
+            "identity_evidence_refs": null,
+            "independence_evidence_refs": null,
+            "issued_at_utc": null,
+            "principal_id": null,
+            "role": null
+          },
+          "source_answers": [
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "source_role",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "authority_edition",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "scope_applicability",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "complete_meaning_unit",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "dependency_inventory",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "reference_targets",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "notes_construction",
+              "rationale": null,
+              "unresolved_requirements": []
+            }
+          ],
+          "subject_ref": {
+            "index": 49,
+            "kind": "unit",
+            "sha256": "a15dca5d46ad7783a09b4f6ec69b97cdb45aa393df9a48caa5c328612a6a356a"
+          }
+        },
+        "sampling_stratum": "candidate_statute_paragraph",
+        "schema": "legal-source-sampling-review-blank-guide/v1",
+        "source_occurrence_ref": {
+          "record_cid": "baguqeeracyfied5gomuscg5pdep44znimi2zdlqjbs4n2jwq4yf6dekbgera",
+          "schema": "legal-corpus-source-occurrence/v1",
+          "sha256": "2589544ca5436085bb28b4ba81ca44cd829e5c5c045e299120810e4e27b95882"
+        },
+        "status": "blank_not_a_review",
+        "subject_ref": {
+          "index": 49,
+          "kind": "unit",
+          "sha256": "a15dca5d46ad7783a09b4f6ec69b97cdb45aa393df9a48caa5c328612a6a356a"
+        },
+        "training_mask": 0,
+        "unanswered_question_ids": [
+          "source_role",
+          "authority_edition",
+          "scope_applicability",
+          "complete_meaning_unit",
+          "dependency_inventory",
+          "reference_targets",
+          "notes_construction",
+          "definition_operator",
+          "term_and_sense",
+          "body_structure",
+          "legal_sort_arity",
+          "definition_use",
+          "formal_profile_fit",
+          "meaning_statement",
+          "meaning_arguments_qualifiers"
+        ],
+        "unresolved": true
+      },
+      "original_blank_guide_ref": {
+        "record_cid": "baguqeeranhckaqx2ajyfzlgwd2r32y3qngxaocghgtnonigixbj7ae4bshwa",
+        "schema": "legal-source-sampling-review-blank-guide/v1",
+        "sha256": "2fef48930e492447989e6eff29515c0852d4ab6201eb5ae4a2c89ae49155f1cc"
+      },
+      "packet_index": 1,
+      "review_status": "blank_not_a_review",
+      "reviewer_exposure_declaration": {
+        "candidate_interpretations_exposed": null,
+        "organizer_source_metadata_exposed": null,
+        "other_exposure": null
+      },
+      "reviewer_identity_and_exposure": {
+        "identity_evidence_refs": null,
+        "independence_evidence_refs": null,
+        "issued_at_utc": null,
+        "principal_id": null,
+        "role": null
+      },
+      "reviewer_payload": {
+        "complete_physical_provision_context": {
+          "exact_UTF8_bytes": 72592,
+          "exact_UTF8_sha256": "e16ca14e06034a08bc1e732cdb790c9ec5bbb96d3ba38ac3bee23367c8481851",
+          "missing_context_requirements": [
+            "definition",
+            "authority",
+            "antecedent",
+            "shared_qualifier",
+            "temporal_origin",
+            "referenced_provision"
+          ],
+          "parent_row_text_selector": "/rows/0/raw_row/text",
+          "parent_selected_rows_file": {
+            "bytes": 94295,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data2-v01/exports/parent-selected-rows.json",
+            "raw_file_sha256": "b37fc2444d34ba20ddd718d8ef5d58b70a6010ccd714e800ef30b85e33c13044"
+          },
+          "parent_text_views_file": {
+            "bytes": 222905,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data2-v01/exports/parent-text-views.json",
+            "raw_file_sha256": "ab01d3cee838a0124832e3db6b8d8c0aaeb06be76ac77d1be5c2c0c0e6748c8e"
+          },
+          "parent_view_text_selector": "/views/0/text_view/text",
+          "semantic_context_closed": false
+        },
+        "declared_context": {
+          "availability": "required_unavailable",
+          "cid_scope": "payload_without_record_cid/v1",
+          "context_references": [
+            {
+              "purpose": "complete normalized source view retained, not dependency closure",
+              "record_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+              "record_kind": "source_version"
+            }
+          ],
+          "dependency_verification": "declaration_only",
+          "missing_requirements": [
+            "definition",
+            "authority",
+            "antecedent",
+            "shared_qualifier",
+            "temporal_origin",
+            "referenced_provision"
+          ],
+          "reason": "Whole source view is retained; legal context attachments and scope remain unreviewed.",
+          "record_cid": "baguqeeraxfs35w7bh6ljxu4jw54gk7xysss4frxgm6dzfd6oyz53fmv5nd7a",
+          "schema": "legal-corpus-context-declaration/v1",
+          "source_occurrence_cid": "baguqeeracyfied5gomuscg5pdep44znimi2zdlqjbs4n2jwq4yf6dekbgera"
+        },
+        "evaluation_gold_mask": 0,
+        "original_blank_response_template": {
+          "bundle_sha256": null,
+          "exposure_declaration": {
+            "candidate_interpretations_exposed": null,
+            "organizer_source_metadata_exposed": null,
+            "other_exposure": null
+          },
+          "meaning_proposals": [
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "definition_operator",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "term_and_sense",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "body_structure",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "legal_sort_arity",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "definition_use",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "formal_profile_fit",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "meaning_statement",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "meaning_arguments_qualifiers",
+              "rationale": null,
+              "unresolved_requirements": []
+            }
+          ],
+          "question_catalog_ref": {
+            "record_cid": "baguqeerarbagwgo54yr3ch6uh2vhoiqaza6itzquguk22g3kqj26kpbmir5a",
+            "schema": "legal-source-sampling-review-questions/v1",
+            "sha256": "ad9e74c8d70a9b6e43eadead0841ecaf494ec97e36598d97b6fcc39a60215c4d"
+          },
+          "reviewer_declaration": {
+            "identity_evidence_refs": null,
+            "independence_evidence_refs": null,
+            "issued_at_utc": null,
+            "principal_id": null,
+            "role": null
+          },
+          "source_answers": [
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "source_role",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "authority_edition",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "scope_applicability",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "complete_meaning_unit",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "dependency_inventory",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "reference_targets",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "notes_construction",
+              "rationale": null,
+              "unresolved_requirements": []
+            }
+          ],
+          "subject_ref": {
+            "index": 49,
+            "kind": "unit",
+            "sha256": "a15dca5d46ad7783a09b4f6ec69b97cdb45aa393df9a48caa5c328612a6a356a"
+          }
+        },
+        "original_question_catalog_questions": [
+          {
+            "category": "source",
+            "prompt": "Propose the source role of this exact occurrence: definition, introductory scope text, list/continuation, repeal marker, construction rule, note, other or unresolved. Name source evidence and keep extractor labels observational.",
+            "question_id": "source_role"
+          },
+          {
+            "category": "source",
+            "prompt": "Identify publication, edition, legal time and governing-source evidence independently. Byte custody and an acquisition URL do not settle applicability or currentness.",
+            "question_id": "authority_edition"
+          },
+          {
+            "category": "source",
+            "prompt": "Identify exact scope-introduction text and any limiting subject, title, section, sense, event or date. Record inheritance as a proposal with evidence; do not default to section-local or global.",
+            "question_id": "scope_applicability"
+          },
+          {
+            "category": "source",
+            "prompt": "Identify every physical paragraph required for the proposed meaning unit, including introduction, enumerated members, exclusions, tail text and antecedents. Retain each source occurrence; paragraph boundaries do not certify completeness.",
+            "question_id": "complete_meaning_unit"
+          },
+          {
+            "category": "source",
+            "prompt": "Record necessary definitions, authority, antecedents, shared qualifiers, temporal origin and referenced provisions; unavailable evidence remains unavailable. The six categories are a checklist, not an exhaustive inventory.",
+            "question_id": "dependency_inventory"
+          },
+          {
+            "category": "source",
+            "prompt": "Record exact referenced provision/source identities or competing and unavailable targets. Distinguish a locator from an applicable reviewed definition binding.",
+            "question_id": "reference_targets"
+          },
+          {
+            "category": "source",
+            "prompt": "Inspect retained notes, construction rules, repeal text and edition observations for potentially relevant evidence. Record unavailable or unsupported application rather than assuming notes are irrelevant.",
+            "question_id": "notes_construction"
+          },
+          {
+            "category": "meaning",
+            "prompt": "Propose which source operator(s) occur: means, includes, exclusion, refers-to, construction rule, other or unresolved. Give exact selectors and rationale; no operator is automatically translated to biconditional.",
+            "question_id": "definition_operator"
+          },
+          {
+            "category": "meaning",
+            "prompt": "Propose the exact defined expression, senses and source occurrences. Repeated labels may denote distinct scoped senses; labels alone do not identify an entity or Lean symbol.",
+            "question_id": "term_and_sense"
+          },
+          {
+            "category": "meaning",
+            "prompt": "Propose the complete definiens and constituent list/boolean/qualified structure with each source occurrence, including alternatives and exclusions. Preserve ambiguity and unsupported constructions.",
+            "question_id": "body_structure"
+          },
+          {
+            "category": "meaning",
+            "prompt": "Propose the legal sort, arguments, relations and temporal parameters needed. Mark unsupported multi-argument, role-dependent, intensional or temporal meaning; do not squeeze into the existing unary profile.",
+            "question_id": "legal_sort_arity"
+          },
+          {
+            "category": "meaning",
+            "prompt": "Propose any use-to-definition relation only by exact use occurrence, exact scoped sense/definition occurrence, proposed applicability and evidence. Cross-section lexical matches remain search observations.",
+            "question_id": "definition_use"
+          },
+          {
+            "category": "meaning",
+            "prompt": "Identify whether the reviewed meaning fits an existing native profile or needs a separately specified extension. Formal ASTs, target symbols and assumptions remain blank until that profile and mapping exist.",
+            "question_id": "formal_profile_fit"
+          },
+          {
+            "category": "meaning",
+            "prompt": "Propose the complete meaning, if supportable, without omitting material text; this is not an admitted target.",
+            "question_id": "meaning_statement"
+          },
+          {
+            "category": "meaning",
+            "prompt": "Account for arguments, quantifiers, conditions, exceptions, approvals, numbers and time, or explain non-applicability.",
+            "question_id": "meaning_arguments_qualifiers"
+          }
+        ],
+        "original_question_catalog_ref": {
+          "record_cid": "baguqeerarbagwgo54yr3ch6uh2vhoiqaza6itzquguk22g3kqj26kpbmir5a",
+          "schema": "legal-source-sampling-review-questions/v1",
+          "sha256": "ad9e74c8d70a9b6e43eadead0841ecaf494ec97e36598d97b6fcc39a60215c4d"
+        },
+        "source_exposure_history": {
+          "actual_reviewer_source_exposure_declared": null,
+          "prior_model_training_exposure": "unknown",
+          "retained_complete_source_available_for_preparation": true
+        },
+        "source_occurrence": {
+          "cid_scope": "payload_without_record_cid/v1",
+          "coordinate_system": "extracted-unicode-codepoints-and-utf8-half-open/v1",
+          "end_char": 6591,
+          "end_utf8": 6615,
+          "historical_aliases": [],
+          "record_cid": "baguqeeracyfied5gomuscg5pdep44znimi2zdlqjbs4n2jwq4yf6dekbgera",
+          "schema": "legal-corpus-source-occurrence/v1",
+          "source_version_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+          "span_cid": "bafkreid2qrvxccbvr32wtjwambvr2fyf66postmphu7otwrshbwb7lvh44",
+          "span_sha256": "7a846b7108358ef569a6c0606b1d1705f79ee94d8f3d3ee9da32386c1faea7e7",
+          "span_text": "(1) The term \"officer\" means a commissioned or warrant officer.",
+          "start_char": 6528,
+          "start_utf8": 6552
+        },
+        "source_version": {
+          "cid_scope": "payload_without_record_cid/v1",
+          "edition": "2024",
+          "extracted_view": {
+            "byte_length": 72592,
+            "character_length": 71598,
+            "cid": "bafkreihbnsqu4bqdjielyhttftnxsde6yw53s3j3uofmhpxcgnt4qsayke",
+            "coordinate_system": "extracted-unicode-codepoints-and-utf8-half-open/v1",
+            "extraction_profile": "legal-official-markup-document/v2",
+            "normalization_profile": "HTML-entities-body-text-block-whitespace-collapse-UTF8-LF/v2",
+            "sha256": "e16ca14e06034a08bc1e732cdb790c9ec5bbb96d3ba38ac3bee23367c8481851"
+          },
+          "historical_aliases": [],
+          "provision_id": "usc:us:10:101",
+          "raw_artifact": {
+            "cid": "bafkreicoruaxpfbcb4msm2gvge74kn73w4kamuvmjiapvl4tu3esdqwarm",
+            "media_type": "text/html",
+            "sha256": "4e8d017794220f192668d5313fc537fbb7140652ac4a00faaf93a6c921c2c08b"
+          },
+          "record_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+          "release_id": "govinfo-markup-v2-edition:2024",
+          "schema": "legal-corpus-source-version/v1",
+          "source_id": "usc:us:10:101"
+        },
+        "training_mask": 0
+      },
+      "source_first_question_inventory": {
+        "all_answers_and_findings_blank": true,
+        "meaning_questions": 8,
+        "question_ids": [
+          "source_role",
+          "authority_edition",
+          "scope_applicability",
+          "complete_meaning_unit",
+          "dependency_inventory",
+          "reference_targets",
+          "notes_construction",
+          "definition_operator",
+          "term_and_sense",
+          "body_structure",
+          "legal_sort_arity",
+          "definition_use",
+          "formal_profile_fit",
+          "meaning_statement",
+          "meaning_arguments_qualifiers"
+        ],
+        "source_questions": 7
+      },
+      "source_occurrence": {
+        "cid_scope": "payload_without_record_cid/v1",
+        "coordinate_system": "extracted-unicode-codepoints-and-utf8-half-open/v1",
+        "end_char": 6591,
+        "end_utf8": 6615,
+        "historical_aliases": [],
+        "record_cid": "baguqeeracyfied5gomuscg5pdep44znimi2zdlqjbs4n2jwq4yf6dekbgera",
+        "schema": "legal-corpus-source-occurrence/v1",
+        "source_version_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+        "span_cid": "bafkreid2qrvxccbvr32wtjwambvr2fyf66postmphu7otwrshbwb7lvh44",
+        "span_sha256": "7a846b7108358ef569a6c0606b1d1705f79ee94d8f3d3ee9da32386c1faea7e7",
+        "span_text": "(1) The term \"officer\" means a commissioned or warrant officer.",
+        "start_char": 6528,
+        "start_utf8": 6552
+      },
+      "source_version": {
+        "cid_scope": "payload_without_record_cid/v1",
+        "edition": "2024",
+        "extracted_view": {
+          "byte_length": 72592,
+          "character_length": 71598,
+          "cid": "bafkreihbnsqu4bqdjielyhttftnxsde6yw53s3j3uofmhpxcgnt4qsayke",
+          "coordinate_system": "extracted-unicode-codepoints-and-utf8-half-open/v1",
+          "extraction_profile": "legal-official-markup-document/v2",
+          "normalization_profile": "HTML-entities-body-text-block-whitespace-collapse-UTF8-LF/v2",
+          "sha256": "e16ca14e06034a08bc1e732cdb790c9ec5bbb96d3ba38ac3bee23367c8481851"
+        },
+        "historical_aliases": [],
+        "provision_id": "usc:us:10:101",
+        "raw_artifact": {
+          "cid": "bafkreicoruaxpfbcb4msm2gvge74kn73w4kamuvmjiapvl4tu3esdqwarm",
+          "media_type": "text/html",
+          "sha256": "4e8d017794220f192668d5313fc537fbb7140652ac4a00faaf93a6c921c2c08b"
+        },
+        "record_cid": "baguqeerave77xhahqkwfznpcifxg2axl3uesrac7yiuaginwxxvqj7aghmza",
+        "release_id": "govinfo-markup-v2-edition:2024",
+        "schema": "legal-corpus-source-version/v1",
+        "source_id": "usc:us:10:101"
+      },
+      "training_mask": 0,
+      "unit_ref": {
+        "record_cid": "baguqeeraaa3y5jwjaf2d2jkar6now7eq3vml7do7ytuy7jvkajfcrwzx2dgq",
+        "schema": "legal-source-structured-sample-unit/v1",
+        "sha256": "a15dca5d46ad7783a09b4f6ec69b97cdb45aa393df9a48caa5c328612a6a356a"
+      }
+    },
+    {
+      "complete_physical_provision_context": {
+        "exact_UTF8_bytes": 1912,
+        "exact_UTF8_sha256": "6b0c306698da9e5e44262e74e1f14dac151e0f7e84f466b44285bd544cd52963",
+        "missing_context_requirements": [
+          "definition",
+          "authority",
+          "antecedent",
+          "shared_qualifier",
+          "temporal_origin",
+          "referenced_provision"
+        ],
+        "parent_row_text_selector": "/rows/1/raw_row/text",
+        "parent_selected_rows_file": {
+          "bytes": 94295,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data2-v01/exports/parent-selected-rows.json",
+          "raw_file_sha256": "b37fc2444d34ba20ddd718d8ef5d58b70a6010ccd714e800ef30b85e33c13044"
+        },
+        "parent_text_views_file": {
+          "bytes": 222905,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data2-v01/exports/parent-text-views.json",
+          "raw_file_sha256": "ab01d3cee838a0124832e3db6b8d8c0aaeb06be76ac77d1be5c2c0c0e6748c8e"
+        },
+        "parent_view_text_selector": "/views/1/text_view/text",
+        "semantic_context_closed": false
+      },
+      "declared_context": {
+        "availability": "required_unavailable",
+        "cid_scope": "payload_without_record_cid/v1",
+        "context_references": [
+          {
+            "purpose": "complete normalized source view retained, not dependency closure",
+            "record_cid": "baguqeera3y2krszyd5mqfdh6jfieircvqtzxcib45qamwrs4klhmhwkql5ca",
+            "record_kind": "source_version"
+          }
+        ],
+        "dependency_verification": "declaration_only",
+        "missing_requirements": [
+          "definition",
+          "authority",
+          "antecedent",
+          "shared_qualifier",
+          "temporal_origin",
+          "referenced_provision"
+        ],
+        "reason": "Whole source view is retained; legal context attachments and scope remain unreviewed.",
+        "record_cid": "baguqeerarwgueicrqclip7qv7vwvnt3gd7mpedlhdmpl2sgxlh4ojg3d76pq",
+        "schema": "legal-corpus-context-declaration/v1",
+        "source_occurrence_cid": "baguqeerarbvejvawh23hjqt5b7e7ii5x5zzibekdweepvmi36sqzywkchcda"
+      },
+      "evaluation_gold_mask": 0,
+      "existing_guide_custody": {
+        "blank_guide_selector": "/selected/0/blank_guide",
+        "bundle_guide_selector": "/guides/9",
+        "guide_values_identical_in_both_original_containers": true,
+        "question_catalog_selector": "/question_catalog",
+        "selected_evidence_file": {
+          "bytes": 18215,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7213/selected-evidence.json",
+          "raw_file_sha256": "f7ed1753af645c19cf76fae3a940a1ccd488cae18c6cc268a4307c7c7aa71b05"
+        },
+        "source_review_bundle_file": {
+          "bytes": 274339,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7213/review-bundle.json",
+          "raw_file_sha256": "3f7a77f2de922c0fd116c990af1bafedaa14464ae4b84939d8d6189fa6d7a5e5"
+        }
+      },
+      "existing_optional_literal_navigation_display": null,
+      "existing_original_blank_guide": {
+        "authority": {
+          "Lean_admitted": false,
+          "evaluation_gold_qualified": false,
+          "meaning_admitted": false,
+          "proof_authority": false,
+          "reviewer_identity_authenticated": false,
+          "reviewer_independence_verified": false,
+          "semantic_graph_admitted": false,
+          "signature_verified": false,
+          "source_context_resolved": false,
+          "source_findings_verified": false,
+          "training_gold_qualified": false
+        },
+        "cid_scope": "payload_without_record_cid/v1",
+        "context_ref": {
+          "record_cid": "baguqeerarwgueicrqclip7qv7vwvnt3gd7mpedlhdmpl2sgxlh4ojg3d76pq",
+          "schema": "legal-corpus-context-declaration/v1",
+          "sha256": "9b957a2c7496cca1ce9768ee764f52da501cb327cdf0d38ed6994c526bb9e51b"
+        },
+        "evaluation_gold_mask": 0,
+        "evidence_refs": [
+          {
+            "index": 0,
+            "kind": "document_view",
+            "sha256": "e3359aec9b6d637b1d73e3d7b589640d6878e067424a46ff5d1011030d363c98"
+          },
+          {
+            "index": 0,
+            "kind": "sampling_record",
+            "sha256": "02ff7c1a16969273029e272439cd567dac58a33624ea21c3d93b6f6a1d63f572"
+          },
+          {
+            "index": 28,
+            "kind": "sampling_record",
+            "sha256": "63f8c88c633e433f9ca75f8493a1299b947c3bd07aa8122433a5a07422dc6322"
+          },
+          {
+            "index": 29,
+            "kind": "sampling_record",
+            "sha256": "9b957a2c7496cca1ce9768ee764f52da501cb327cdf0d38ed6994c526bb9e51b"
+          },
+          {
+            "index": 30,
+            "kind": "sampling_record",
+            "sha256": "14510dd173adbb2100c99a76e4a7802e0bbb8f42ea01a0b8e6cf67621125af3e"
+          }
+        ],
+        "question_catalog_ref": {
+          "record_cid": "baguqeerarbagwgo54yr3ch6uh2vhoiqaza6itzquguk22g3kqj26kpbmir5a",
+          "schema": "legal-source-sampling-review-questions/v1",
+          "sha256": "ad9e74c8d70a9b6e43eadead0841ecaf494ec97e36598d97b6fcc39a60215c4d"
+        },
+        "record_cid": "baguqeeral7eoxauinqk5t5vesjs33nwcgydqvpzv75kwpm7rvidouvhwjfna",
+        "response_template": {
+          "bundle_sha256": null,
+          "exposure_declaration": {
+            "candidate_interpretations_exposed": null,
+            "organizer_source_metadata_exposed": null,
+            "other_exposure": null
+          },
+          "meaning_proposals": [
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "definition_operator",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "term_and_sense",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "body_structure",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "legal_sort_arity",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "definition_use",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "formal_profile_fit",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "meaning_statement",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "meaning_arguments_qualifiers",
+              "rationale": null,
+              "unresolved_requirements": []
+            }
+          ],
+          "question_catalog_ref": {
+            "record_cid": "baguqeerarbagwgo54yr3ch6uh2vhoiqaza6itzquguk22g3kqj26kpbmir5a",
+            "schema": "legal-source-sampling-review-questions/v1",
+            "sha256": "ad9e74c8d70a9b6e43eadead0841ecaf494ec97e36598d97b6fcc39a60215c4d"
+          },
+          "reviewer_declaration": {
+            "identity_evidence_refs": null,
+            "independence_evidence_refs": null,
+            "issued_at_utc": null,
+            "principal_id": null,
+            "role": null
+          },
+          "source_answers": [
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "source_role",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "authority_edition",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "scope_applicability",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "complete_meaning_unit",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "dependency_inventory",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "reference_targets",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "notes_construction",
+              "rationale": null,
+              "unresolved_requirements": []
+            }
+          ],
+          "subject_ref": {
+            "index": 9,
+            "kind": "unit",
+            "sha256": "14510dd173adbb2100c99a76e4a7802e0bbb8f42ea01a0b8e6cf67621125af3e"
+          }
+        },
+        "sampling_stratum": "candidate_statute_paragraph",
+        "schema": "legal-source-sampling-review-blank-guide/v1",
+        "source_occurrence_ref": {
+          "record_cid": "baguqeerarbvejvawh23hjqt5b7e7ii5x5zzibekdweepvmi36sqzywkchcda",
+          "schema": "legal-corpus-source-occurrence/v1",
+          "sha256": "63f8c88c633e433f9ca75f8493a1299b947c3bd07aa8122433a5a07422dc6322"
+        },
+        "status": "blank_not_a_review",
+        "subject_ref": {
+          "index": 9,
+          "kind": "unit",
+          "sha256": "14510dd173adbb2100c99a76e4a7802e0bbb8f42ea01a0b8e6cf67621125af3e"
+        },
+        "training_mask": 0,
+        "unanswered_question_ids": [
+          "source_role",
+          "authority_edition",
+          "scope_applicability",
+          "complete_meaning_unit",
+          "dependency_inventory",
+          "reference_targets",
+          "notes_construction",
+          "definition_operator",
+          "term_and_sense",
+          "body_structure",
+          "legal_sort_arity",
+          "definition_use",
+          "formal_profile_fit",
+          "meaning_statement",
+          "meaning_arguments_qualifiers"
+        ],
+        "unresolved": true
+      },
+      "original_blank_guide_ref": {
+        "record_cid": "baguqeeral7eoxauinqk5t5vesjs33nwcgydqvpzv75kwpm7rvidouvhwjfna",
+        "schema": "legal-source-sampling-review-blank-guide/v1",
+        "sha256": "b18b479107c1644d1d9ea54c283a25b4077f7006d4086094ab7813a676d14e0b"
+      },
+      "packet_index": 2,
+      "review_status": "blank_not_a_review",
+      "reviewer_exposure_declaration": {
+        "candidate_interpretations_exposed": null,
+        "organizer_source_metadata_exposed": null,
+        "other_exposure": null
+      },
+      "reviewer_identity_and_exposure": {
+        "identity_evidence_refs": null,
+        "independence_evidence_refs": null,
+        "issued_at_utc": null,
+        "principal_id": null,
+        "role": null
+      },
+      "reviewer_payload": {
+        "complete_physical_provision_context": {
+          "exact_UTF8_bytes": 1912,
+          "exact_UTF8_sha256": "6b0c306698da9e5e44262e74e1f14dac151e0f7e84f466b44285bd544cd52963",
+          "missing_context_requirements": [
+            "definition",
+            "authority",
+            "antecedent",
+            "shared_qualifier",
+            "temporal_origin",
+            "referenced_provision"
+          ],
+          "parent_row_text_selector": "/rows/1/raw_row/text",
+          "parent_selected_rows_file": {
+            "bytes": 94295,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data2-v01/exports/parent-selected-rows.json",
+            "raw_file_sha256": "b37fc2444d34ba20ddd718d8ef5d58b70a6010ccd714e800ef30b85e33c13044"
+          },
+          "parent_text_views_file": {
+            "bytes": 222905,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data2-v01/exports/parent-text-views.json",
+            "raw_file_sha256": "ab01d3cee838a0124832e3db6b8d8c0aaeb06be76ac77d1be5c2c0c0e6748c8e"
+          },
+          "parent_view_text_selector": "/views/1/text_view/text",
+          "semantic_context_closed": false
+        },
+        "declared_context": {
+          "availability": "required_unavailable",
+          "cid_scope": "payload_without_record_cid/v1",
+          "context_references": [
+            {
+              "purpose": "complete normalized source view retained, not dependency closure",
+              "record_cid": "baguqeera3y2krszyd5mqfdh6jfieircvqtzxcib45qamwrs4klhmhwkql5ca",
+              "record_kind": "source_version"
+            }
+          ],
+          "dependency_verification": "declaration_only",
+          "missing_requirements": [
+            "definition",
+            "authority",
+            "antecedent",
+            "shared_qualifier",
+            "temporal_origin",
+            "referenced_provision"
+          ],
+          "reason": "Whole source view is retained; legal context attachments and scope remain unreviewed.",
+          "record_cid": "baguqeerarwgueicrqclip7qv7vwvnt3gd7mpedlhdmpl2sgxlh4ojg3d76pq",
+          "schema": "legal-corpus-context-declaration/v1",
+          "source_occurrence_cid": "baguqeerarbvejvawh23hjqt5b7e7ii5x5zzibekdweepvmi36sqzywkchcda"
+        },
+        "evaluation_gold_mask": 0,
+        "original_blank_response_template": {
+          "bundle_sha256": null,
+          "exposure_declaration": {
+            "candidate_interpretations_exposed": null,
+            "organizer_source_metadata_exposed": null,
+            "other_exposure": null
+          },
+          "meaning_proposals": [
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "definition_operator",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "term_and_sense",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "body_structure",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "legal_sort_arity",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "definition_use",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "formal_profile_fit",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "meaning_statement",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "meaning_arguments_qualifiers",
+              "rationale": null,
+              "unresolved_requirements": []
+            }
+          ],
+          "question_catalog_ref": {
+            "record_cid": "baguqeerarbagwgo54yr3ch6uh2vhoiqaza6itzquguk22g3kqj26kpbmir5a",
+            "schema": "legal-source-sampling-review-questions/v1",
+            "sha256": "ad9e74c8d70a9b6e43eadead0841ecaf494ec97e36598d97b6fcc39a60215c4d"
+          },
+          "reviewer_declaration": {
+            "identity_evidence_refs": null,
+            "independence_evidence_refs": null,
+            "issued_at_utc": null,
+            "principal_id": null,
+            "role": null
+          },
+          "source_answers": [
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "source_role",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "authority_edition",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "scope_applicability",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "complete_meaning_unit",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "dependency_inventory",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "reference_targets",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "notes_construction",
+              "rationale": null,
+              "unresolved_requirements": []
+            }
+          ],
+          "subject_ref": {
+            "index": 9,
+            "kind": "unit",
+            "sha256": "14510dd173adbb2100c99a76e4a7802e0bbb8f42ea01a0b8e6cf67621125af3e"
+          }
+        },
+        "original_question_catalog_questions": [
+          {
+            "category": "source",
+            "prompt": "Propose the source role of this exact occurrence: definition, introductory scope text, list/continuation, repeal marker, construction rule, note, other or unresolved. Name source evidence and keep extractor labels observational.",
+            "question_id": "source_role"
+          },
+          {
+            "category": "source",
+            "prompt": "Identify publication, edition, legal time and governing-source evidence independently. Byte custody and an acquisition URL do not settle applicability or currentness.",
+            "question_id": "authority_edition"
+          },
+          {
+            "category": "source",
+            "prompt": "Identify exact scope-introduction text and any limiting subject, title, section, sense, event or date. Record inheritance as a proposal with evidence; do not default to section-local or global.",
+            "question_id": "scope_applicability"
+          },
+          {
+            "category": "source",
+            "prompt": "Identify every physical paragraph required for the proposed meaning unit, including introduction, enumerated members, exclusions, tail text and antecedents. Retain each source occurrence; paragraph boundaries do not certify completeness.",
+            "question_id": "complete_meaning_unit"
+          },
+          {
+            "category": "source",
+            "prompt": "Record necessary definitions, authority, antecedents, shared qualifiers, temporal origin and referenced provisions; unavailable evidence remains unavailable. The six categories are a checklist, not an exhaustive inventory.",
+            "question_id": "dependency_inventory"
+          },
+          {
+            "category": "source",
+            "prompt": "Record exact referenced provision/source identities or competing and unavailable targets. Distinguish a locator from an applicable reviewed definition binding.",
+            "question_id": "reference_targets"
+          },
+          {
+            "category": "source",
+            "prompt": "Inspect retained notes, construction rules, repeal text and edition observations for potentially relevant evidence. Record unavailable or unsupported application rather than assuming notes are irrelevant.",
+            "question_id": "notes_construction"
+          },
+          {
+            "category": "meaning",
+            "prompt": "Propose which source operator(s) occur: means, includes, exclusion, refers-to, construction rule, other or unresolved. Give exact selectors and rationale; no operator is automatically translated to biconditional.",
+            "question_id": "definition_operator"
+          },
+          {
+            "category": "meaning",
+            "prompt": "Propose the exact defined expression, senses and source occurrences. Repeated labels may denote distinct scoped senses; labels alone do not identify an entity or Lean symbol.",
+            "question_id": "term_and_sense"
+          },
+          {
+            "category": "meaning",
+            "prompt": "Propose the complete definiens and constituent list/boolean/qualified structure with each source occurrence, including alternatives and exclusions. Preserve ambiguity and unsupported constructions.",
+            "question_id": "body_structure"
+          },
+          {
+            "category": "meaning",
+            "prompt": "Propose the legal sort, arguments, relations and temporal parameters needed. Mark unsupported multi-argument, role-dependent, intensional or temporal meaning; do not squeeze into the existing unary profile.",
+            "question_id": "legal_sort_arity"
+          },
+          {
+            "category": "meaning",
+            "prompt": "Propose any use-to-definition relation only by exact use occurrence, exact scoped sense/definition occurrence, proposed applicability and evidence. Cross-section lexical matches remain search observations.",
+            "question_id": "definition_use"
+          },
+          {
+            "category": "meaning",
+            "prompt": "Identify whether the reviewed meaning fits an existing native profile or needs a separately specified extension. Formal ASTs, target symbols and assumptions remain blank until that profile and mapping exist.",
+            "question_id": "formal_profile_fit"
+          },
+          {
+            "category": "meaning",
+            "prompt": "Propose the complete meaning, if supportable, without omitting material text; this is not an admitted target.",
+            "question_id": "meaning_statement"
+          },
+          {
+            "category": "meaning",
+            "prompt": "Account for arguments, quantifiers, conditions, exceptions, approvals, numbers and time, or explain non-applicability.",
+            "question_id": "meaning_arguments_qualifiers"
+          }
+        ],
+        "original_question_catalog_ref": {
+          "record_cid": "baguqeerarbagwgo54yr3ch6uh2vhoiqaza6itzquguk22g3kqj26kpbmir5a",
+          "schema": "legal-source-sampling-review-questions/v1",
+          "sha256": "ad9e74c8d70a9b6e43eadead0841ecaf494ec97e36598d97b6fcc39a60215c4d"
+        },
+        "source_exposure_history": {
+          "actual_reviewer_source_exposure_declared": null,
+          "prior_model_training_exposure": "unknown",
+          "retained_complete_source_available_for_preparation": true
+        },
+        "source_occurrence": {
+          "cid_scope": "payload_without_record_cid/v1",
+          "coordinate_system": "extracted-unicode-codepoints-and-utf8-half-open/v1",
+          "end_char": 624,
+          "end_utf8": 625,
+          "historical_aliases": [],
+          "record_cid": "baguqeerarbvejvawh23hjqt5b7e7ii5x5zzibekdweepvmi36sqzywkchcda",
+          "schema": "legal-corpus-source-occurrence/v1",
+          "source_version_cid": "baguqeera3y2krszyd5mqfdh6jfieircvqtzxcib45qamwrs4klhmhwkql5ca",
+          "span_cid": "bafkreia476xedqoqlpdycozp2v4olmdplbyeeirbzgn4hgujqa6kizcoki",
+          "span_sha256": "1cffae41c1d05bc7813b2fd578e5b06f5870422221c99bc39a89803ca4644e52",
+          "span_text": "Officers of the Corps of Engineers may be assigned or transferred to and from duties involving the civil functions of the Corps of Engineers only with the approval of the Secretary of the Army.",
+          "start_char": 431,
+          "start_utf8": 432
+        },
+        "source_version": {
+          "cid_scope": "payload_without_record_cid/v1",
+          "edition": "2024",
+          "extracted_view": {
+            "byte_length": 1912,
+            "character_length": 1887,
+            "cid": "bafkreidlbqygngg2tzpeijrootq7ctnmcupa67ue6rtliqufxvkezvjjmm",
+            "coordinate_system": "extracted-unicode-codepoints-and-utf8-half-open/v1",
+            "extraction_profile": "legal-official-markup-document/v2",
+            "normalization_profile": "HTML-entities-body-text-block-whitespace-collapse-UTF8-LF/v2",
+            "sha256": "6b0c306698da9e5e44262e74e1f14dac151e0f7e84f466b44285bd544cd52963"
+          },
+          "historical_aliases": [],
+          "provision_id": "usc:us:10:7213",
+          "raw_artifact": {
+            "cid": "bafkreidhdesrctvnu5zrunk6gpeao25knetp5unxzm24scumjryfyvnq54",
+            "media_type": "text/html",
+            "sha256": "671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef"
+          },
+          "record_cid": "baguqeera3y2krszyd5mqfdh6jfieircvqtzxcib45qamwrs4klhmhwkql5ca",
+          "release_id": "govinfo-markup-v2-edition:2024",
+          "schema": "legal-corpus-source-version/v1",
+          "source_id": "usc:us:10:7213"
+        },
+        "training_mask": 0
+      },
+      "source_first_question_inventory": {
+        "all_answers_and_findings_blank": true,
+        "meaning_questions": 8,
+        "question_ids": [
+          "source_role",
+          "authority_edition",
+          "scope_applicability",
+          "complete_meaning_unit",
+          "dependency_inventory",
+          "reference_targets",
+          "notes_construction",
+          "definition_operator",
+          "term_and_sense",
+          "body_structure",
+          "legal_sort_arity",
+          "definition_use",
+          "formal_profile_fit",
+          "meaning_statement",
+          "meaning_arguments_qualifiers"
+        ],
+        "source_questions": 7
+      },
+      "source_occurrence": {
+        "cid_scope": "payload_without_record_cid/v1",
+        "coordinate_system": "extracted-unicode-codepoints-and-utf8-half-open/v1",
+        "end_char": 624,
+        "end_utf8": 625,
+        "historical_aliases": [],
+        "record_cid": "baguqeerarbvejvawh23hjqt5b7e7ii5x5zzibekdweepvmi36sqzywkchcda",
+        "schema": "legal-corpus-source-occurrence/v1",
+        "source_version_cid": "baguqeera3y2krszyd5mqfdh6jfieircvqtzxcib45qamwrs4klhmhwkql5ca",
+        "span_cid": "bafkreia476xedqoqlpdycozp2v4olmdplbyeeirbzgn4hgujqa6kizcoki",
+        "span_sha256": "1cffae41c1d05bc7813b2fd578e5b06f5870422221c99bc39a89803ca4644e52",
+        "span_text": "Officers of the Corps of Engineers may be assigned or transferred to and from duties involving the civil functions of the Corps of Engineers only with the approval of the Secretary of the Army.",
+        "start_char": 431,
+        "start_utf8": 432
+      },
+      "source_version": {
+        "cid_scope": "payload_without_record_cid/v1",
+        "edition": "2024",
+        "extracted_view": {
+          "byte_length": 1912,
+          "character_length": 1887,
+          "cid": "bafkreidlbqygngg2tzpeijrootq7ctnmcupa67ue6rtliqufxvkezvjjmm",
+          "coordinate_system": "extracted-unicode-codepoints-and-utf8-half-open/v1",
+          "extraction_profile": "legal-official-markup-document/v2",
+          "normalization_profile": "HTML-entities-body-text-block-whitespace-collapse-UTF8-LF/v2",
+          "sha256": "6b0c306698da9e5e44262e74e1f14dac151e0f7e84f466b44285bd544cd52963"
+        },
+        "historical_aliases": [],
+        "provision_id": "usc:us:10:7213",
+        "raw_artifact": {
+          "cid": "bafkreidhdesrctvnu5zrunk6gpeao25knetp5unxzm24scumjryfyvnq54",
+          "media_type": "text/html",
+          "sha256": "671925114eada7731a355e33c8076baa6926fed1b7cb35c90a8c4c705c55b0ef"
+        },
+        "record_cid": "baguqeera3y2krszyd5mqfdh6jfieircvqtzxcib45qamwrs4klhmhwkql5ca",
+        "release_id": "govinfo-markup-v2-edition:2024",
+        "schema": "legal-corpus-source-version/v1",
+        "source_id": "usc:us:10:7213"
+      },
+      "training_mask": 0,
+      "unit_ref": {
+        "record_cid": "baguqeerayiogyiuxpxy2cdjngs6vcu32575lsddffqtbdqjoklbilpe4dfvq",
+        "schema": "legal-source-structured-sample-unit/v1",
+        "sha256": "14510dd173adbb2100c99a76e4a7802e0bbb8f42ea01a0b8e6cf67621125af3e"
+      }
+    },
+    {
+      "complete_physical_provision_context": {
+        "exact_UTF8_bytes": 3858,
+        "exact_UTF8_sha256": "58e446ec84d0d3cf42d4b322f0da06a16620c2621cfa29fab0f0c5ddbe834b64",
+        "missing_context_requirements": [
+          "definition",
+          "authority",
+          "antecedent",
+          "shared_qualifier",
+          "temporal_origin",
+          "referenced_provision"
+        ],
+        "parent_row_text_selector": "/rows/2/raw_row/text",
+        "parent_selected_rows_file": {
+          "bytes": 94295,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data2-v01/exports/parent-selected-rows.json",
+          "raw_file_sha256": "b37fc2444d34ba20ddd718d8ef5d58b70a6010ccd714e800ef30b85e33c13044"
+        },
+        "parent_text_views_file": {
+          "bytes": 222905,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data2-v01/exports/parent-text-views.json",
+          "raw_file_sha256": "ab01d3cee838a0124832e3db6b8d8c0aaeb06be76ac77d1be5c2c0c0e6748c8e"
+        },
+        "parent_view_text_selector": "/views/2/text_view/text",
+        "semantic_context_closed": false
+      },
+      "declared_context": {
+        "availability": "required_unavailable",
+        "cid_scope": "payload_without_record_cid/v1",
+        "context_references": [
+          {
+            "purpose": "complete normalized source view retained, not dependency closure",
+            "record_cid": "baguqeerazs3yvjdtyapov3z5dbwfgpc7sks2lttcphq624tbw3ozrsp3pgba",
+            "record_kind": "source_version"
+          }
+        ],
+        "dependency_verification": "declaration_only",
+        "missing_requirements": [
+          "definition",
+          "authority",
+          "antecedent",
+          "shared_qualifier",
+          "temporal_origin",
+          "referenced_provision"
+        ],
+        "reason": "Whole source view is retained; legal context attachments and scope remain unreviewed.",
+        "record_cid": "baguqeeravicuner7iijjt7uw3xgjpsgc7j6gzdxm6lfzhvcctvro6c6dmz7a",
+        "schema": "legal-corpus-context-declaration/v1",
+        "source_occurrence_cid": "baguqeeracdglsquykktyomvkuyrq2xf4ljhzwbdn7kguvnhithregnhhpoja"
+      },
+      "evaluation_gold_mask": 0,
+      "existing_guide_custody": {
+        "blank_guide_selector": "/selected/0/blank_guide",
+        "bundle_guide_selector": "/guides/9",
+        "guide_values_identical_in_both_original_containers": true,
+        "question_catalog_selector": "/question_catalog",
+        "selected_evidence_file": {
+          "bytes": 18225,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7214/selected-evidence.json",
+          "raw_file_sha256": "2f7b039e2b19384d0210057580e4da61b120a64b723726825d64311840ae6e25"
+        },
+        "source_review_bundle_file": {
+          "bytes": 426953,
+          "path": "/home/barberb/lift_coding/artifacts/legal-corpus-statutory-component-20261015-01/real-definition-01/sources/7214/review-bundle.json",
+          "raw_file_sha256": "a3f9027b690d583ff8f63fea6a138be4e867060eb2ce83873644fad9aa07d522"
+        }
+      },
+      "existing_optional_literal_navigation_display": null,
+      "existing_original_blank_guide": {
+        "authority": {
+          "Lean_admitted": false,
+          "evaluation_gold_qualified": false,
+          "meaning_admitted": false,
+          "proof_authority": false,
+          "reviewer_identity_authenticated": false,
+          "reviewer_independence_verified": false,
+          "semantic_graph_admitted": false,
+          "signature_verified": false,
+          "source_context_resolved": false,
+          "source_findings_verified": false,
+          "training_gold_qualified": false
+        },
+        "cid_scope": "payload_without_record_cid/v1",
+        "context_ref": {
+          "record_cid": "baguqeeravicuner7iijjt7uw3xgjpsgc7j6gzdxm6lfzhvcctvro6c6dmz7a",
+          "schema": "legal-corpus-context-declaration/v1",
+          "sha256": "ebea95a2297c01e2b0482c41d48c22f0f5e6372aaddd68d46f48087b48f17950"
+        },
+        "evaluation_gold_mask": 0,
+        "evidence_refs": [
+          {
+            "index": 0,
+            "kind": "document_view",
+            "sha256": "59c6d6abd3b93dda95f92b44f8ecbfc30974bd1b85109f328b004cecc7fe290a"
+          },
+          {
+            "index": 0,
+            "kind": "sampling_record",
+            "sha256": "b5411324377f4e696d994bd56aef968447a5feafbf3138371aed06c308a4d70f"
+          },
+          {
+            "index": 28,
+            "kind": "sampling_record",
+            "sha256": "557afc10d0e76cfd08d340ddf7ad047e585dc290fba093be6849df527c1fd970"
+          },
+          {
+            "index": 29,
+            "kind": "sampling_record",
+            "sha256": "ebea95a2297c01e2b0482c41d48c22f0f5e6372aaddd68d46f48087b48f17950"
+          },
+          {
+            "index": 30,
+            "kind": "sampling_record",
+            "sha256": "71d864e39fa5e175eb3af26eb78427418435fb89eb4868a2bb68bc2cc7a4a65c"
+          }
+        ],
+        "question_catalog_ref": {
+          "record_cid": "baguqeerarbagwgo54yr3ch6uh2vhoiqaza6itzquguk22g3kqj26kpbmir5a",
+          "schema": "legal-source-sampling-review-questions/v1",
+          "sha256": "ad9e74c8d70a9b6e43eadead0841ecaf494ec97e36598d97b6fcc39a60215c4d"
+        },
+        "record_cid": "baguqeerahgqe73alfb5ws6zquw534bkirj4gszw3lzdl476dev4limfzzk5a",
+        "response_template": {
+          "bundle_sha256": null,
+          "exposure_declaration": {
+            "candidate_interpretations_exposed": null,
+            "organizer_source_metadata_exposed": null,
+            "other_exposure": null
+          },
+          "meaning_proposals": [
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "definition_operator",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "term_and_sense",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "body_structure",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "legal_sort_arity",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "definition_use",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "formal_profile_fit",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "meaning_statement",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "meaning_arguments_qualifiers",
+              "rationale": null,
+              "unresolved_requirements": []
+            }
+          ],
+          "question_catalog_ref": {
+            "record_cid": "baguqeerarbagwgo54yr3ch6uh2vhoiqaza6itzquguk22g3kqj26kpbmir5a",
+            "schema": "legal-source-sampling-review-questions/v1",
+            "sha256": "ad9e74c8d70a9b6e43eadead0841ecaf494ec97e36598d97b6fcc39a60215c4d"
+          },
+          "reviewer_declaration": {
+            "identity_evidence_refs": null,
+            "independence_evidence_refs": null,
+            "issued_at_utc": null,
+            "principal_id": null,
+            "role": null
+          },
+          "source_answers": [
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "source_role",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "authority_edition",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "scope_applicability",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "complete_meaning_unit",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "dependency_inventory",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "reference_targets",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "notes_construction",
+              "rationale": null,
+              "unresolved_requirements": []
+            }
+          ],
+          "subject_ref": {
+            "index": 9,
+            "kind": "unit",
+            "sha256": "71d864e39fa5e175eb3af26eb78427418435fb89eb4868a2bb68bc2cc7a4a65c"
+          }
+        },
+        "sampling_stratum": "candidate_statute_paragraph",
+        "schema": "legal-source-sampling-review-blank-guide/v1",
+        "source_occurrence_ref": {
+          "record_cid": "baguqeeracdglsquykktyomvkuyrq2xf4ljhzwbdn7kguvnhithregnhhpoja",
+          "schema": "legal-corpus-source-occurrence/v1",
+          "sha256": "557afc10d0e76cfd08d340ddf7ad047e585dc290fba093be6849df527c1fd970"
+        },
+        "status": "blank_not_a_review",
+        "subject_ref": {
+          "index": 9,
+          "kind": "unit",
+          "sha256": "71d864e39fa5e175eb3af26eb78427418435fb89eb4868a2bb68bc2cc7a4a65c"
+        },
+        "training_mask": 0,
+        "unanswered_question_ids": [
+          "source_role",
+          "authority_edition",
+          "scope_applicability",
+          "complete_meaning_unit",
+          "dependency_inventory",
+          "reference_targets",
+          "notes_construction",
+          "definition_operator",
+          "term_and_sense",
+          "body_structure",
+          "legal_sort_arity",
+          "definition_use",
+          "formal_profile_fit",
+          "meaning_statement",
+          "meaning_arguments_qualifiers"
+        ],
+        "unresolved": true
+      },
+      "original_blank_guide_ref": {
+        "record_cid": "baguqeerahgqe73alfb5ws6zquw534bkirj4gszw3lzdl476dev4limfzzk5a",
+        "schema": "legal-source-sampling-review-blank-guide/v1",
+        "sha256": "e1b2106493813bbcbb2cbabdaf0ba2dcf2e07504a9d66a9c6b43173f2079105c"
+      },
+      "packet_index": 3,
+      "review_status": "blank_not_a_review",
+      "reviewer_exposure_declaration": {
+        "candidate_interpretations_exposed": null,
+        "organizer_source_metadata_exposed": null,
+        "other_exposure": null
+      },
+      "reviewer_identity_and_exposure": {
+        "identity_evidence_refs": null,
+        "independence_evidence_refs": null,
+        "issued_at_utc": null,
+        "principal_id": null,
+        "role": null
+      },
+      "reviewer_payload": {
+        "complete_physical_provision_context": {
+          "exact_UTF8_bytes": 3858,
+          "exact_UTF8_sha256": "58e446ec84d0d3cf42d4b322f0da06a16620c2621cfa29fab0f0c5ddbe834b64",
+          "missing_context_requirements": [
+            "definition",
+            "authority",
+            "antecedent",
+            "shared_qualifier",
+            "temporal_origin",
+            "referenced_provision"
+          ],
+          "parent_row_text_selector": "/rows/2/raw_row/text",
+          "parent_selected_rows_file": {
+            "bytes": 94295,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data2-v01/exports/parent-selected-rows.json",
+            "raw_file_sha256": "b37fc2444d34ba20ddd718d8ef5d58b70a6010ccd714e800ef30b85e33c13044"
+          },
+          "parent_text_views_file": {
+            "bytes": 222905,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-programme-review-20261022-05/retained-official-pilot-v01/attempt-data2-v01/exports/parent-text-views.json",
+            "raw_file_sha256": "ab01d3cee838a0124832e3db6b8d8c0aaeb06be76ac77d1be5c2c0c0e6748c8e"
+          },
+          "parent_view_text_selector": "/views/2/text_view/text",
+          "semantic_context_closed": false
+        },
+        "declared_context": {
+          "availability": "required_unavailable",
+          "cid_scope": "payload_without_record_cid/v1",
+          "context_references": [
+            {
+              "purpose": "complete normalized source view retained, not dependency closure",
+              "record_cid": "baguqeerazs3yvjdtyapov3z5dbwfgpc7sks2lttcphq624tbw3ozrsp3pgba",
+              "record_kind": "source_version"
+            }
+          ],
+          "dependency_verification": "declaration_only",
+          "missing_requirements": [
+            "definition",
+            "authority",
+            "antecedent",
+            "shared_qualifier",
+            "temporal_origin",
+            "referenced_provision"
+          ],
+          "reason": "Whole source view is retained; legal context attachments and scope remain unreviewed.",
+          "record_cid": "baguqeeravicuner7iijjt7uw3xgjpsgc7j6gzdxm6lfzhvcctvro6c6dmz7a",
+          "schema": "legal-corpus-context-declaration/v1",
+          "source_occurrence_cid": "baguqeeracdglsquykktyomvkuyrq2xf4ljhzwbdn7kguvnhithregnhhpoja"
+        },
+        "evaluation_gold_mask": 0,
+        "original_blank_response_template": {
+          "bundle_sha256": null,
+          "exposure_declaration": {
+            "candidate_interpretations_exposed": null,
+            "organizer_source_metadata_exposed": null,
+            "other_exposure": null
+          },
+          "meaning_proposals": [
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "definition_operator",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "term_and_sense",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "body_structure",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "legal_sort_arity",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "definition_use",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "formal_profile_fit",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "meaning_statement",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "meaning_arguments_qualifiers",
+              "rationale": null,
+              "unresolved_requirements": []
+            }
+          ],
+          "question_catalog_ref": {
+            "record_cid": "baguqeerarbagwgo54yr3ch6uh2vhoiqaza6itzquguk22g3kqj26kpbmir5a",
+            "schema": "legal-source-sampling-review-questions/v1",
+            "sha256": "ad9e74c8d70a9b6e43eadead0841ecaf494ec97e36598d97b6fcc39a60215c4d"
+          },
+          "reviewer_declaration": {
+            "identity_evidence_refs": null,
+            "independence_evidence_refs": null,
+            "issued_at_utc": null,
+            "principal_id": null,
+            "role": null
+          },
+          "source_answers": [
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "source_role",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "authority_edition",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "scope_applicability",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "complete_meaning_unit",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "dependency_inventory",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "reference_targets",
+              "rationale": null,
+              "unresolved_requirements": []
+            },
+            {
+              "disposition": null,
+              "evidence_refs": [],
+              "finding": null,
+              "question_id": "notes_construction",
+              "rationale": null,
+              "unresolved_requirements": []
+            }
+          ],
+          "subject_ref": {
+            "index": 9,
+            "kind": "unit",
+            "sha256": "71d864e39fa5e175eb3af26eb78427418435fb89eb4868a2bb68bc2cc7a4a65c"
+          }
+        },
+        "original_question_catalog_questions": [
+          {
+            "category": "source",
+            "prompt": "Propose the source role of this exact occurrence: definition, introductory scope text, list/continuation, repeal marker, construction rule, note, other or unresolved. Name source evidence and keep extractor labels observational.",
+            "question_id": "source_role"
+          },
+          {
+            "category": "source",
+            "prompt": "Identify publication, edition, legal time and governing-source evidence independently. Byte custody and an acquisition URL do not settle applicability or currentness.",
+            "question_id": "authority_edition"
+          },
+          {
+            "category": "source",
+            "prompt": "Identify exact scope-introduction text and any limiting subject, title, section, sense, event or date. Record inheritance as a proposal with evidence; do not default to section-local or global.",
+            "question_id": "scope_applicability"
+          },
+          {
+            "category": "source",
+            "prompt": "Identify every physical paragraph required for the proposed meaning unit, including introduction, enumerated members, exclusions, tail text and antecedents. Retain each source occurrence; paragraph boundaries do not certify completeness.",
+            "question_id": "complete_meaning_unit"
+          },
+          {
+            "category": "source",
+            "prompt": "Record necessary definitions, authority, antecedents, shared qualifiers, temporal origin and referenced provisions; unavailable evidence remains unavailable. The six categories are a checklist, not an exhaustive inventory.",
+            "question_id": "dependency_inventory"
+          },
+          {
+            "category": "source",
+            "prompt": "Record exact referenced provision/source identities or competing and unavailable targets. Distinguish a locator from an applicable reviewed definition binding.",
+            "question_id": "reference_targets"
+          },
+          {
+            "category": "source",
+            "prompt": "Inspect retained notes, construction rules, repeal text and edition observations for potentially relevant evidence. Record unavailable or unsupported application rather than assuming notes are irrelevant.",
+            "question_id": "notes_construction"
+          },
+          {
+            "category": "meaning",
+            "prompt": "Propose which source operator(s) occur: means, includes, exclusion, refers-to, construction rule, other or unresolved. Give exact selectors and rationale; no operator is automatically translated to biconditional.",
+            "question_id": "definition_operator"
+          },
+          {
+            "category": "meaning",
+            "prompt": "Propose the exact defined expression, senses and source occurrences. Repeated labels may denote distinct scoped senses; labels alone do not identify an entity or Lean symbol.",
+            "question_id": "term_and_sense"
+          },
+          {
+            "category": "meaning",
+            "prompt": "Propose the complete definiens and constituent list/boolean/qualified structure with each source occurrence, including alternatives and exclusions. Preserve ambiguity and unsupported constructions.",
+            "question_id": "body_structure"
+          },
+          {
+            "category": "meaning",
+            "prompt": "Propose the legal sort, arguments, relations and temporal parameters needed. Mark unsupported multi-argument, role-dependent, intensional or temporal meaning; do not squeeze into the existing unary profile.",
+            "question_id": "legal_sort_arity"
+          },
+          {
+            "category": "meaning",
+            "prompt": "Propose any use-to-definition relation only by exact use occurrence, exact scoped sense/definition occurrence, proposed applicability and evidence. Cross-section lexical matches remain search observations.",
+            "question_id": "definition_use"
+          },
+          {
+            "category": "meaning",
+            "prompt": "Identify whether the reviewed meaning fits an existing native profile or needs a separately specified extension. Formal ASTs, target symbols and assumptions remain blank until that profile and mapping exist.",
+            "question_id": "formal_profile_fit"
+          },
+          {
+            "category": "meaning",
+            "prompt": "Propose the complete meaning, if supportable, without omitting material text; this is not an admitted target.",
+            "question_id": "meaning_statement"
+          },
+          {
+            "category": "meaning",
+            "prompt": "Account for arguments, quantifiers, conditions, exceptions, approvals, numbers and time, or explain non-applicability.",
+            "question_id": "meaning_arguments_qualifiers"
+          }
+        ],
+        "original_question_catalog_ref": {
+          "record_cid": "baguqeerarbagwgo54yr3ch6uh2vhoiqaza6itzquguk22g3kqj26kpbmir5a",
+          "schema": "legal-source-sampling-review-questions/v1",
+          "sha256": "ad9e74c8d70a9b6e43eadead0841ecaf494ec97e36598d97b6fcc39a60215c4d"
+        },
+        "source_exposure_history": {
+          "actual_reviewer_source_exposure_declared": null,
+          "prior_model_training_exposure": "unknown",
+          "retained_complete_source_available_for_preparation": true
+        },
+        "source_occurrence": {
+          "cid_scope": "payload_without_record_cid/v1",
+          "coordinate_system": "extracted-unicode-codepoints-and-utf8-half-open/v1",
+          "end_char": 570,
+          "end_utf8": 571,
+          "historical_aliases": [],
+          "record_cid": "baguqeeracdglsquykktyomvkuyrq2xf4ljhzwbdn7kguvnhithregnhhpoja",
+          "schema": "legal-corpus-source-occurrence/v1",
+          "source_version_cid": "baguqeerazs3yvjdtyapov3z5dbwfgpc7sks2lttcphq624tbw3ozrsp3pgba",
+          "span_cid": "bafkreib4qjsk7xusaa5jmlocksz3yamsqwgn7ivv63y63awndynifqjrhy",
+          "span_sha256": "3c8264afde92003a962dc254b3bc0192858cdfa2b5f6f1ed82cd1e1a82c1313e",
+          "span_text": "The President may detail not more than three officers assigned to the Corps of Engineers to assist the Mayor of the District of Columbia in discharging his duties.",
+          "start_char": 407,
+          "start_utf8": 408
+        },
+        "source_version": {
+          "cid_scope": "payload_without_record_cid/v1",
+          "edition": "2024",
+          "extracted_view": {
+            "byte_length": 3858,
+            "character_length": 3817,
+            "cid": "bafkreicy4rdozbgq2phufvftelynubvbmyqmeyq47iu7vmhqyxo35a2lmq",
+            "coordinate_system": "extracted-unicode-codepoints-and-utf8-half-open/v1",
+            "extraction_profile": "legal-official-markup-document/v2",
+            "normalization_profile": "HTML-entities-body-text-block-whitespace-collapse-UTF8-LF/v2",
+            "sha256": "58e446ec84d0d3cf42d4b322f0da06a16620c2621cfa29fab0f0c5ddbe834b64"
+          },
+          "historical_aliases": [],
+          "provision_id": "usc:us:10:7214",
+          "raw_artifact": {
+            "cid": "bafkreie4gomg4iloqxn24m7frizadpz4alj4j74ipveol3csj6ebhrmefy",
+            "media_type": "text/html",
+            "sha256": "9c33986e216e85dbae33e58a3201bf3c02d3c4ff887d48e5ec524f8813c5842e"
+          },
+          "record_cid": "baguqeerazs3yvjdtyapov3z5dbwfgpc7sks2lttcphq624tbw3ozrsp3pgba",
+          "release_id": "govinfo-markup-v2-edition:2024",
+          "schema": "legal-corpus-source-version/v1",
+          "source_id": "usc:us:10:7214"
+        },
+        "training_mask": 0
+      },
+      "source_first_question_inventory": {
+        "all_answers_and_findings_blank": true,
+        "meaning_questions": 8,
+        "question_ids": [
+          "source_role",
+          "authority_edition",
+          "scope_applicability",
+          "complete_meaning_unit",
+          "dependency_inventory",
+          "reference_targets",
+          "notes_construction",
+          "definition_operator",
+          "term_and_sense",
+          "body_structure",
+          "legal_sort_arity",
+          "definition_use",
+          "formal_profile_fit",
+          "meaning_statement",
+          "meaning_arguments_qualifiers"
+        ],
+        "source_questions": 7
+      },
+      "source_occurrence": {
+        "cid_scope": "payload_without_record_cid/v1",
+        "coordinate_system": "extracted-unicode-codepoints-and-utf8-half-open/v1",
+        "end_char": 570,
+        "end_utf8": 571,
+        "historical_aliases": [],
+        "record_cid": "baguqeeracdglsquykktyomvkuyrq2xf4ljhzwbdn7kguvnhithregnhhpoja",
+        "schema": "legal-corpus-source-occurrence/v1",
+        "source_version_cid": "baguqeerazs3yvjdtyapov3z5dbwfgpc7sks2lttcphq624tbw3ozrsp3pgba",
+        "span_cid": "bafkreib4qjsk7xusaa5jmlocksz3yamsqwgn7ivv63y63awndynifqjrhy",
+        "span_sha256": "3c8264afde92003a962dc254b3bc0192858cdfa2b5f6f1ed82cd1e1a82c1313e",
+        "span_text": "The President may detail not more than three officers assigned to the Corps of Engineers to assist the Mayor of the District of Columbia in discharging his duties.",
+        "start_char": 407,
+        "start_utf8": 408
+      },
+      "source_version": {
+        "cid_scope": "payload_without_record_cid/v1",
+        "edition": "2024",
+        "extracted_view": {
+          "byte_length": 3858,
+          "character_length": 3817,
+          "cid": "bafkreicy4rdozbgq2phufvftelynubvbmyqmeyq47iu7vmhqyxo35a2lmq",
+          "coordinate_system": "extracted-unicode-codepoints-and-utf8-half-open/v1",
+          "extraction_profile": "legal-official-markup-document/v2",
+          "normalization_profile": "HTML-entities-body-text-block-whitespace-collapse-UTF8-LF/v2",
+          "sha256": "58e446ec84d0d3cf42d4b322f0da06a16620c2621cfa29fab0f0c5ddbe834b64"
+        },
+        "historical_aliases": [],
+        "provision_id": "usc:us:10:7214",
+        "raw_artifact": {
+          "cid": "bafkreie4gomg4iloqxn24m7frizadpz4alj4j74ipveol3csj6ebhrmefy",
+          "media_type": "text/html",
+          "sha256": "9c33986e216e85dbae33e58a3201bf3c02d3c4ff887d48e5ec524f8813c5842e"
+        },
+        "record_cid": "baguqeerazs3yvjdtyapov3z5dbwfgpc7sks2lttcphq624tbw3ozrsp3pgba",
+        "release_id": "govinfo-markup-v2-edition:2024",
+        "schema": "legal-corpus-source-version/v1",
+        "source_id": "usc:us:10:7214"
+      },
+      "training_mask": 0,
+      "unit_ref": {
+        "record_cid": "baguqeera632lzwmnhvsgkmnw6ydcqxmhepnxg7nssnnq2ayxcihfgevvlbrq",
+        "schema": "legal-source-structured-sample-unit/v1",
+        "sha256": "71d864e39fa5e175eb3af26eb78427418435fb89eb4868a2bb68bc2cc7a4a65c"
+      }
+    }
+  ],
+  "reviewer_delivery": {
+    "actual_reviewer_blindness_verified": false,
+    "only_reviewer_input_JSON_pointers": [
+      "/review_packets/0/reviewer_payload",
+      "/review_packets/1/reviewer_payload",
+      "/review_packets/2/reviewer_payload",
+      "/review_packets/3/reviewer_payload"
+    ],
+    "optional_13_question_navigation_displays_sent_to_reviewer": false,
+    "organizer_provenance_or_requested_roles_or_prior_AST_history_sent_to_reviewer": false,
+    "original_source_and_question_values_unchanged": true,
+    "source_resource_access": "Resolve only the exact source-text selectors and raw hashes in the allowlisted reviewer payload. The full selection/provenance manifest and source review-bundle containers are organizer custody evidence, not reviewer inputs.",
+    "whole_manifest_may_be_sent_to_reviewer": false
+  },
+  "schema": "legal-ir-0601-source-first-review-packet-manifest/v1",
+  "source_phase_content_review": {
+    "criterion_results": [
+      "PASS",
+      "PASS"
+    ],
+    "native_completion_or_gold_authority": false,
+    "scope": "Candidate-blind content construction and retained source/question/coordinate/edition/exposure inventory only; does not authenticate an actual reviewer or supply legal answers."
+  },
+  "status": "four_original_source_first_review_inputs_selected_pending_original_owner_corpus_adoption",
+  "task_cid": "baguqeerac6t737q4cfohhukzzd6xqqm3av72or7kdbaght7gs7b33anb5y7a",
+  "task_contract": {
+    "acceptance_criteria": [
+      "Candidate-blind packets contain complete source/context and no candidate AST, predictions or answer graph.",
+      "Retain actual question catalog, coordinates, source edition and exposure history."
+    ],
+    "completion": "manual",
+    "depends_on": [
+      "LIR-9004",
+      "LIR-0302",
+      "LIR-0502"
+    ],
+    "existing_owners": [
+      "ipfs_datasets_py/logic/autoformal/legal_source_sampling_review_handoff.py",
+      "ipfs_datasets_py/logic/autoformal/legal_source_sampling_review.py"
+    ],
+    "objective": "Reuse existing blank sampling review/handoff owners with exact original source and population commitments.",
+    "required_stage_packets": [
+      "corpus"
+    ],
+    "title": "Prepare source-first legal and formal review packets"
+  },
+  "task_id": "LIR-0601",
+  "training_mask": 0
+}

@@ -4,6 +4,10 @@ Pure planning/restoration imports only stdlib. The public effectful operation
 requires genuine same-process native ORCHESTRATION root/phase leases. It is a
 dedicated lock-held administrative admission, not a ParentedPhase reservation.
 Nothing here publishes the private snapshot or changes native/storage caps.
+
+The default V1 profile preserves the historical 8 MiB / 160 GB data bounds.
+CURRENT_PROFILE explicitly selects the known 16 MiB / 220 GB Host profile.
+The effectful operation checks those selected bounds against the live Host.
 """
 from __future__ import annotations
 
@@ -18,16 +22,15 @@ import time
 import uuid
 
 SCHEMA = "released-reconciliation-archival/v1"
+CURRENT_PROFILE = "released-reconciliation-archival/v2"
 POINTER_SCHEMA = "released-reconciliation-archive-pointer/v1"
 LEDGER_SCHEMA = "daemon-resource-reservations-v1"
-MAX_LEDGER_BYTES = 16 * 1024 * 1024
+MAX_LEDGER_BYTES = 8 * 1024 * 1024
 MAX_ROWS = 8
 MAX_JOURNAL_BYTES = 1024 * 1024
-MAX_STORAGE_BYTES = 220_000_000_000
-_LEDGER_PROFILE_LIMITS = {
-    160_000_000_000: 8 * 1024 * 1024,
-    MAX_STORAGE_BYTES: MAX_LEDGER_BYTES,
-}
+MAX_STORAGE_BYTES = 160_000_000_000
+CURRENT_MAX_LEDGER_BYTES = 16 * 1024 * 1024
+CURRENT_MAX_STORAGE_BYTES = 220_000_000_000
 DEFAULT_PEAK_BYTES = 32 * 1024 * 1024
 SELECTION_FIELDS = {"reservation_id", "expected_record_sha256", "expected_reconciliation_sha256",
                     "expected_owner_pid", "expected_attempt_path"}
@@ -42,6 +45,14 @@ class ArchivalRefusal(RuntimeError):
 def need(condition, message):
     if not condition:
         raise ArchivalRefusal(message)
+
+
+def _profile_limits(profile):
+    need(type(profile) is str and profile in {SCHEMA, CURRENT_PROFILE},
+         "known archival resource profile required")
+    if profile == SCHEMA:
+        return MAX_LEDGER_BYTES, MAX_STORAGE_BYTES
+    return CURRENT_MAX_LEDGER_BYTES, CURRENT_MAX_STORAGE_BYTES
 
 
 def wire(value):
@@ -76,22 +87,16 @@ def absolute(spelling):
     return Path(spelling)
 
 
-def _decode_ledger(raw):
+def plan_reconciliation_archival(raw, *, selections, snapshot_path, administration_record,
+                                profile=SCHEMA):
+    """Pure transform. No lease, file, scheduler or storage admission is implied."""
+    maximum_ledger_bytes, maximum_storage_bytes = _profile_limits(profile)
+    need(type(raw) is bytes and 0 < len(raw) <= maximum_ledger_bytes, "bounded original ledger required")
+    absolute(snapshot_path)
     ledger = decode(raw)
     need(type(ledger) is dict and set(ledger) == {"schema", "roots", "limit_bytes", "reservations"}
-         and ledger["schema"] == LEDGER_SCHEMA and type(ledger["limit_bytes"]) is int
-         and ledger["limit_bytes"] in _LEDGER_PROFILE_LIMITS,
+         and ledger["schema"] == LEDGER_SCHEMA and ledger["limit_bytes"] == maximum_storage_bytes,
          "exact original ledger schema and cap required")
-    byte_limit = _LEDGER_PROFILE_LIMITS[ledger["limit_bytes"]]
-    need(len(raw) <= byte_limit, "ledger exceeds its profile metadata bound")
-    return ledger, byte_limit
-
-
-def plan_reconciliation_archival(raw, *, selections, snapshot_path, administration_record):
-    """Pure transform. No lease, file, scheduler or storage admission is implied."""
-    need(type(raw) is bytes and 0 < len(raw) <= MAX_LEDGER_BYTES, "bounded original ledger required")
-    absolute(snapshot_path)
-    ledger, byte_limit = _decode_ledger(raw)
     rows = ledger["reservations"]
     need(type(rows) is dict and len(rows) < 4096, "bounded ledger population required")
     need(type(selections) is list and 0 < len(selections) <= MAX_ROWS, "bounded explicit selection required")
@@ -126,7 +131,7 @@ def plan_reconciliation_archival(raw, *, selections, snapshot_path, administrati
          and administration_record.get("artifacts_durable_asserted") is True
          and administration_record.get("workload") == "canonical_resource_ledger_archival",
          "completed administrative archival record required")
-    for name, maximum in (("owner_pid", None), ("storage_bytes", ledger["limit_bytes"]),
+    for name, maximum in (("owner_pid", None), ("storage_bytes", maximum_storage_bytes),
                           ("memory_mb", None), ("cpu_slots", None), ("child_process_slots", None)):
         value = administration_record.get(name)
         need(type(value) is int and value >= 1 and (maximum is None or value <= maximum),
@@ -150,29 +155,30 @@ def plan_reconciliation_archival(raw, *, selections, snapshot_path, administrati
          "fresh administrative archival identity required")
     projected["reservations"][admin_id] = copy.deepcopy(administration_record)
     output = wire(projected)
-    need(len(output) <= byte_limit and len(raw) - len(output) >= 64 * 1024,
+    need(len(output) <= maximum_ledger_bytes and len(raw) - len(output) >= 64 * 1024,
          "archival must recover at least64KiB of ledger headroom")
     # Reconstruction authenticates the exact original full record, not merely
     # an archive path or a selected field hash supplied by a caller.
     for identifier in selected:
-        need(restore_archived_record(raw, projected["reservations"][identifier]) == rows[identifier],
+        need(restore_archived_record(raw, projected["reservations"][identifier],
+                                     profile=profile) == rows[identifier],
              "lossless record reconstruction failed")
     return {"ledger": projected, "ledger_bytes": output, "snapshot_bytes": raw,
             "pointers": pointers, "administration_id": admin_id,
             "reclaimed_ledger_bytes": len(raw) - len(output)}
 
 
-def restore_archived_record(snapshot_raw, folded_record):
+def restore_archived_record(snapshot_raw, folded_record, *, profile=SCHEMA):
     """Pure, exact original-record recovery; never trusts a pointer alone."""
-    need(type(snapshot_raw) is bytes and 0 < len(snapshot_raw) <= MAX_LEDGER_BYTES,
+    maximum_ledger_bytes, _ = _profile_limits(profile)
+    need(type(snapshot_raw) is bytes and 0 < len(snapshot_raw) <= maximum_ledger_bytes,
          "bounded original snapshot required")
     pointer = folded_record.get("explicit_reconciliation")
     need(type(pointer) is dict and set(pointer) == POINTER_FIELDS and pointer["schema"] == POINTER_SCHEMA,
          "exact archival pointer required")
     absolute(pointer["snapshot_path"])
     need(sha(snapshot_raw) == pointer["snapshot_sha256"], "snapshot content hash differs")
-    snapshot, _ = _decode_ledger(snapshot_raw)
-    original = snapshot["reservations"].get(pointer["reservation_id"])
+    original = decode(snapshot_raw)["reservations"].get(pointer["reservation_id"])
     need(type(original) is dict and original.get("status") == "released"
          and original.get("reservation_id") == folded_record.get("reservation_id")
          and digest(original) == pointer["original_record_sha256"]
@@ -184,27 +190,29 @@ def restore_archived_record(snapshot_raw, folded_record):
     return rebuilt
 
 
-def required_peak_bytes(snapshot_bytes, projected_ledger_bytes):
+def required_peak_bytes(snapshot_bytes, projected_ledger_bytes, *, profile=SCHEMA):
     """Snapshot + bounded intent/completion journals + atomic temp + dirs."""
-    need(type(snapshot_bytes) is int and 0 < snapshot_bytes <= MAX_LEDGER_BYTES
-         and type(projected_ledger_bytes) is int and 0 < projected_ledger_bytes <= MAX_LEDGER_BYTES,
+    maximum_ledger_bytes, _ = _profile_limits(profile)
+    need(type(snapshot_bytes) is int and 0 < snapshot_bytes <= maximum_ledger_bytes
+         and type(projected_ledger_bytes) is int and 0 < projected_ledger_bytes <= maximum_ledger_bytes,
          "bounded archival size inputs required")
     return snapshot_bytes + projected_ledger_bytes + 2 * MAX_JOURNAL_BYTES + 65536
 
 
-def check_capacity_precharge(observation, additional_bytes):
+def check_capacity_precharge(observation, additional_bytes, *, profile=SCHEMA):
     """Pure check of the genuine SDK census projection; grants nothing."""
+    _, maximum_storage_bytes = _profile_limits(profile)
     names = ("observed_apparent_bytes", "outstanding_full_reservations_bytes", "additional_requested_bytes",
              "charged_bytes", "limit_bytes", "minimum_filesystem_free_bytes")
     need(type(observation) is dict and all(type(observation.get(n)) is int and observation[n] >= 0 for n in names)
          and type(additional_bytes) is int and additional_bytes > 0,
          "valid capacity projection required")
-    need(observation["limit_bytes"] in _LEDGER_PROFILE_LIMITS
+    need(observation["limit_bytes"] == maximum_storage_bytes
          and observation["additional_requested_bytes"] == additional_bytes
          and observation["charged_bytes"] == observation["observed_apparent_bytes"]
              + observation["outstanding_full_reservations_bytes"] + additional_bytes,
          "capacity projection or cap differs")
-    need(observation["charged_bytes"] <= observation["limit_bytes"]
+    need(observation["charged_bytes"] <= maximum_storage_bytes
          and observation["minimum_filesystem_free_bytes"] >= observation["outstanding_full_reservations_bytes"] + additional_bytes,
          "capacity precharge does not fit")
     return True
@@ -245,7 +253,7 @@ def _write_new(path, raw):
 def archive_released_reconciliations(ledger_path, *, roots, archive_directory, selections,
         expected_ledger_sha256, root_lease, phase_lease, root_request_id, phase_request_id,
         scheduler_state_path, expected_scheduler_policy_sha256,
-        peak_storage_bytes=DEFAULT_PEAK_BYTES, timeout_seconds=900):
+        peak_storage_bytes=DEFAULT_PEAK_BYTES, timeout_seconds=900, profile=SCHEMA):
     """Genuine native, lock-held administrative archival admission and commit.
 
 There is no borrowed disk owner. Before the first file write, the normal SDK
@@ -255,6 +263,7 @@ that lock is released. A crash before commit leaves the original ledger intact
 and the durable private intent/snapshot counted in the ordinary named-root
 census; it creates no continuing storage promise or productive child.
 """
+    maximum_ledger_bytes, maximum_storage_bytes = _profile_limits(profile)
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_daemon_resources as resources
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.existing_resource_scheduler import open_existing_scheduler
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler import ResourceLease
@@ -291,8 +300,8 @@ census; it creates no continuing storage promise or productive child.
         storage_bytes=peak_storage_bytes, memory_mb=256, cpu_slots=1, child_process_slots=1,
         ledger_lock_timeout_seconds=60, scheduler_state_path=scheduler_state_path,
         expected_scheduler_policy_sha256=expected_scheduler_policy_sha256, require_existing_ledger=True)
-    byte_limit = resources.MAX_LEDGER_BYTES
-    need(_LEDGER_PROFILE_LIMITS.get(resources.MAX_STORAGE_BYTES) == byte_limit,
+    need(resources.MAX_LEDGER_BYTES == maximum_ledger_bytes
+         and resources.MAX_STORAGE_BYTES == maximum_storage_bytes,
          "unchanged native caps required")
     resources._safe_path(root_path, directory=True)
     identity = resources._root_identity(root_path)
@@ -303,7 +312,7 @@ census; it creates no continuing storage promise or productive child.
     with helper._locked():
         guard()
         ledger = helper._read()
-        raw = _read_regular(helper.ledger_path, byte_limit)
+        raw = _read_regular(helper.ledger_path, maximum_ledger_bytes)
         need(sha(raw) == expected_ledger_sha256 and decode(raw) == ledger, "exact current ledger pin differs")
         for row in ledger["reservations"].values():
             attempt = row.get("attempt_directory")
@@ -322,20 +331,20 @@ census; it creates no continuing storage promise or productive child.
                  "artifacts_durable_asserted": True, "native_lease_id": phase_lease.lease_id,
                  "parent_lease_id": root_lease.lease_id, "scheduler_state_path": state_path,
                  "scheduler_policy_sha256": expected_scheduler_policy_sha256,
-                 "archival": {"schema": SCHEMA, "snapshot_path": str(snapshot_path), "snapshot_sha256": sha(raw),
+                 "archival": {"schema": profile, "snapshot_path": str(snapshot_path), "snapshot_sha256": sha(raw),
                               "selected_reservation_ids": [s["reservation_id"] for s in selections],
                               "admission": "dedicated lock-held administrative operation; not ParentedPhase",
                               "all_operation_writes_finish_before_lock_release": True}}
         admitted = helper._account(ledger, additional=peak_storage_bytes)
-        check_capacity_precharge(admitted, peak_storage_bytes)
+        check_capacity_precharge(admitted, peak_storage_bytes, profile=profile)
         admin["last_usage"] = admitted
         admin["archival"]["postcommit_verification_readonly"] = True
         admin["archival"]["postrelease_file_writes"] = False
         plan = plan_reconciliation_archival(raw, selections=selections, snapshot_path=str(snapshot_path),
-                                            administration_record=admin)
-        need(required_peak_bytes(len(raw), len(plan["ledger_bytes"])) <= peak_storage_bytes,
+                                            administration_record=admin, profile=profile)
+        need(required_peak_bytes(len(raw), len(plan["ledger_bytes"]), profile=profile) <= peak_storage_bytes,
              "snapshot journal and atomic-temp amplification exceeds precharge")
-        intent = {"schema": SCHEMA, "status": "admitted_history_not_yet_folded", "ledger_sha256_before": sha(raw),
+        intent = {"schema": profile, "status": "admitted_history_not_yet_folded", "ledger_sha256_before": sha(raw),
                   "snapshot_path": str(snapshot_path), "snapshot_sha256": sha(raw), "snapshot_bytes": len(raw),
                   "ledger_sha256_planned": sha(plan["ledger_bytes"]), "administration_record_id": admin_id,
                   "selected_records": selections, "pointers": plan["pointers"], "peak_storage_bytes": peak_storage_bytes,
@@ -347,29 +356,30 @@ census; it creates no continuing storage promise or productive child.
         guard()
         _write_new(root_path / "admission-intent.private.json", encoded)
         _write_new(snapshot_path, raw)
-        need(_read_regular(snapshot_path, byte_limit) == raw, "durable full history snapshot differs")
+        need(_read_regular(snapshot_path, maximum_ledger_bytes) == raw, "durable full history snapshot differs")
         _fsync_dir(root_path)
         _fsync_dir(root_path.parent)
         guard()
         # This second real census includes every archive byte already written.
         # Remaining atomic-temp/journal growth still has a finite extra charge.
         before_commit = helper._account(ledger, additional=len(plan["ledger_bytes"]) + MAX_JOURNAL_BYTES + 65536)
-        need(resources._root_identity(root_path) == identity and _read_regular(helper.ledger_path, byte_limit) == raw
+        need(resources._root_identity(root_path) == identity and _read_regular(helper.ledger_path, maximum_ledger_bytes) == raw
              and helper._read() == ledger, "ledger or archive identity changed before commit")
         guard()
         # The SDK writer fsyncs the replacement and ledger parent. The exact
         # archived history above is already durable before this first fold.
         helper._write(plan["ledger"])
         actual = helper._read()
-        actual_raw = _read_regular(helper.ledger_path, byte_limit)
+        actual_raw = _read_regular(helper.ledger_path, maximum_ledger_bytes)
         need(actual == plan["ledger"] and actual_raw == plan["ledger_bytes"], "atomic archival commit differs")
-        saved = _read_regular(snapshot_path, byte_limit)
+        saved = _read_regular(snapshot_path, maximum_ledger_bytes)
         for selection in selections:
             identifier = selection["reservation_id"]
-            need(restore_archived_record(saved, actual["reservations"][identifier]) == ledger["reservations"][identifier],
+            need(restore_archived_record(saved, actual["reservations"][identifier],
+                                         profile=profile) == ledger["reservations"][identifier],
                  "postwrite original record restoration differs")
         guard()
-        completed = {"schema": SCHEMA, "status": "history_archived_ledger_folded_verified",
+        completed = {"schema": profile, "status": "history_archived_ledger_folded_verified",
                      "observed_atomic_commit_at": time.time(),
                      "administration_record_id": admin_id, "ledger_sha256_before": sha(raw),
                      "ledger_sha256_after": sha(actual_raw), "snapshot_sha256": sha(saved),

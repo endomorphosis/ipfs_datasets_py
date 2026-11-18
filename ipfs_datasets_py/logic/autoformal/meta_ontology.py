@@ -687,3 +687,12 @@ def ontology_rows(spans: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
             }
         )
     return rows
+
+
+from ipfs_datasets_py.logic.autoformal import corpus_contracts as _joined_owner_contracts_v1
+
+_JOIN_LOADED_OWNER_GUARD_V1 = _joined_owner_contracts_v1._capture_loaded_owner_guard_v1(
+    globals(), value_names=('GRAPH_NODE_CATEGORY', 'LOGICAL_RELATIONS'),
+    class_names=(),
+    imported_function_names=(),
+    alias_names=('Any', 'Mapping', 'Sequence', '__builtins__', '__loader__', '__spec__', '_joined_owner_contracts_v1', 'json', 're'))

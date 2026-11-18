@@ -1,0 +1,18 @@
+{
+  "admitted": false,
+  "experimental_32_updates_included": false,
+  "formalized": false,
+  "gold_or_teacher_admission_granted": false,
+  "launcher": {
+    "bytes": 52644,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/run_owned_validation.py",
+    "sha256": "7cdbec1093c0b2a4d10f77c8053332f0d0439ed39150cf2498fd32eff8897e7e"
+  },
+  "launcher_invoked": false,
+  "new_training_launched": false,
+  "purpose": "separate_training_request_not_executed",
+  "schema": "legal-ir-e1-training-purpose-request/v1",
+  "task_id": "LIR-9105",
+  "training_authorized": false,
+  "worker_launch_authorized": false
+}

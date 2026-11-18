@@ -1,0 +1,12 @@
+# Documentation moved
+
+The maintained entry is [legal_shared_bank_source_responses_v1.md](../../ipfs_datasets_py/logic/autoformal/docs/guides/legal_shared_bank_source_responses_v1.md). This former path is retained for existing links; original bytes and provenance are preserved in the [migration archive](../../ipfs_datasets_py/logic/autoformal/docs/ARCHIVE.md).
+
+<!-- Legacy bookmarks refer to sections in the preserved original. -->
+<a id="shared-bank-typed-source-responses-version-1"></a>
+<a id="public-api"></a>
+<a id="complete-ordered-response-calls"></a>
+<a id="existing-response-behavior-is-retained"></a>
+<a id="report-and-work-scope"></a>
+<a id="bounds-and-custody"></a>
+<a id="qualification-and-remaining-gates"></a>

@@ -1,0 +1,65 @@
+{
+  "schema": "legal-ir-e1-profile-source-manifest/v1",
+  "task_id": "LIR-9103",
+  "training_executed": false,
+  "admitted": false,
+  "formalized": false,
+  "gold_or_teacher_admission_granted": false,
+  "old_defaults_unchanged": true,
+  "old_f18_objective": [
+    "modality-conditions-retention-ce"
+  ],
+  "profile": {
+    "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_fullspan_training_v1.py",
+    "sha256": "56bd0a248a07de09519f95e5c4bae02ab9d8eb1134b483c257c1f7e7bcb07147",
+    "pointers": [
+      "start.weight",
+      "start.bias",
+      "end.weight",
+      "end.bias"
+    ],
+    "conditions_row": 3,
+    "active_scalars": 130,
+    "inactive_scalars": 650,
+    "frozen_tensors": 38,
+    "margin_arms": [
+      "0",
+      "0.25"
+    ]
+  },
+  "reused_owners": [
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_modality_conditions_retention.py",
+      "bytes": 83852,
+      "sha256": "fb7449d4794ca9a279b2df2ea533b89d360344ff786edc0798395ab799db1823"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_joint_readout_retention.py",
+      "bytes": 80912,
+      "sha256": "34db345e9b0f3daa04b5b8caee4dfa389c48598ea79cd0da529415ea5bb7c502"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py",
+      "bytes": 35294,
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    }
+  ],
+  "margin_kernel": {
+    "qualification": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoformalization/evidence/legal-ir-conditions-fullspan-margin-kernel-20261026.json",
+      "bytes": 6865,
+      "sha256": "9b799596e0145aa19dffe7aeaacc2060000e2fe59adb2a32bdbaef1692020978"
+    },
+    "qualified_source_sha256": "e4f16146cf6f64b16e979e5ee0803a41ee41a8377bfa7833918b0a25dd7d1160",
+    "live_source_matches_qualification": true,
+    "coefficient_arms": [
+      "0",
+      "0.25"
+    ],
+    "selection": "detached CPU float32; earliest row-major exact tie",
+    "normalization": "full_batch_mean",
+    "training_performed_by_qualification": false
+  },
+  "criterion_0": "four ordered pointers, row 3, 130 active, 650 inactive, 38 frozen",
+  "criterion_1": "finite float32 pair sums, stable row-major ties, detached rescore, full-batch mean"
+}

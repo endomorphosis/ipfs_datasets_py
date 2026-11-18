@@ -875,3 +875,50 @@ def validate_reviewed_norm_admission_v2(report, *args, expected_report_sha256, *
 __all__ += ["prepare_reviewed_norm_admission_v2", "assess_reviewed_norm_admission_v2",
     "validate_reviewed_norm_admission_v2", "REVIEWED_PROFILE", "REVIEWED_DECLARATION_SCHEMA",
     "REVIEWED_SUBJECT_SCHEMA", "REVIEWED_CLAIM_SCHEMA", "REVIEWED_ACTION", "REVIEWED_AUDIENCE", "REVIEWED_SLOTS"]
+
+CANDIDATE_KNOWN_INPUT_SCHEMA = "legal-complete-norm-known-input/v1"
+
+_CANDIDATE_BINDING_FIELDS = frozenset({"source_version_cid", "occurrence_cid", "document_revision"})
+
+_CANDIDATE_CONTEXT_FIELDS = frozenset({"jurisdiction", "instrument_id", "governing_edition",
+    "legal_as_of_utc", "valid_from_utc", "valid_until_utc"})
+
+def _candidate_known_facts(binding, context):
+    from . import corpus_contracts
+
+    _keys(binding, _CANDIDATE_BINDING_FIELDS, "candidate known source binding")
+    for field in ("source_version_cid", "occurrence_cid"):
+        corpus_contracts.require_cid(binding[field], field, codecs=("dag-json",))
+    corpus_contracts.require_text(binding["document_revision"], "candidate document revision")
+    _keys(context, _CANDIDATE_CONTEXT_FIELDS, "candidate known governing context")
+    auth = _auth()
+    for field in ("jurisdiction", "instrument_id", "governing_edition"):
+        auth._text(context[field], "candidate " + field)
+    start, end = auth._interval(context)
+    _need(start <= auth._time(context["legal_as_of_utc"]) < end,
+          "candidate legal-as-of lies outside the supplied applicability interval")
+
+def _candidate_input_fence(original, detached, commitment):
+    _need(norm._snapshot(original)[1] == commitment and norm._snapshot(detached)[1] == commitment,
+          "candidate inputs changed during syntax validation")
+
+def validate_complete_norm_known_input_v1(*, known_source_binding, known_governing_context):
+    """Detach and check the declared source/context shape before model access.
+
+    Canonical CID syntax and internal date consistency do not authenticate
+    source bytes or establish governing law. No candidate, review, signature,
+    target expression, registry, clock, or source replay is required or supplied.
+    """
+    original = {"source_binding": known_source_binding, "governing_context": known_governing_context}
+    detached, commitment = norm._snapshot(original)
+    _candidate_known_facts(detached["source_binding"], detached["governing_context"])
+    result = {"schema": CANDIDATE_KNOWN_INPUT_SCHEMA, **detached}
+    raw = norm._wire(result)
+    returned = json.loads(raw)
+    _need(type(returned) is dict and set(returned) == {"schema", "source_binding", "governing_context"}
+          and returned["schema"] == CANDIDATE_KNOWN_INPUT_SCHEMA
+          and norm._same(returned["source_binding"], detached["source_binding"])
+          and norm._same(returned["governing_context"], detached["governing_context"]),
+          "candidate known-input serialization changed the supplied facts")
+    _candidate_input_fence(original, detached, commitment)
+    return returned

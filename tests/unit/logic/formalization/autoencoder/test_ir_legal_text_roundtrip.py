@@ -423,3 +423,208 @@ def test_joint_exactness_is_independent_of_edit_distance_budget(bundle):
         "both_exact": 1, "ir_only_exact": 1, "text_only_exact": 0, "neither_exact": 0}
     assert all(row["rendering"]["character_edit"]["status"] == "cell_budget_exhausted"
                and row["rendering"]["character_edit"]["distance"] is None for row in result["rows"])
+
+
+# Authored relational prose scoring is an explicit additional path. These cases
+# supply neither model outputs nor statutory interpretation/review evidence.
+RELATIONAL_PROSE_PROFILE = "source-withheld-typed-relational-legal-prose/v1"
+
+
+_RELATIONAL_SCORE_TEXT = (
+    "Typed legal rule: tdfol/tdfol_default.\nTypes: Object.\n"
+    "Predicate Serve: server of type Object; addressee of type Object.\n"
+    "Rule: (for every officer of type Object, (there exists person of type Object such that "
+    "(it is obligatory that (Serve holds for server: officer of type Object; "
+    "addressee: person of type Object))))."
+)
+
+
+def _relational_score_reference():
+    """Independent AST authored from role and binder expectations, not parser output."""
+    from ipfs_datasets_py.logic.syntax_core import ast as relational_ast, signatures as relational_signatures
+    obj = relational_signatures.LogicSort("Object")
+    atom = relational_ast.mk_predicate("score:serve", "Serve", (
+        relational_ast.mk_variable("score:officer", "officer", obj),
+        relational_ast.mk_variable("score:person", "person", obj)))
+    modal = relational_ast.mk_extension("score:obligation", family="tdfol", profile="tdfol_default",
+        features=("legacy.obligation", "legacy.classic_letter"), payload_schema="legacy.deontic/v1",
+        payload={"kind": "obligation", "letter": "O", "resolution": "deontic",
+                 "schema_version": "legacy.deontic/v1"}, children=(atom,))
+    root = relational_ast.mk_forall("score:all", (relational_ast.Binder("officer", obj),),
+        relational_ast.mk_exists("score:some", (relational_ast.Binder("person", obj),), modal))
+    signature = relational_signatures.LogicSignature("score:signature", family="tdfol",
+        profile="tdfol_default", sorts=(obj,),
+        symbols=(relational_signatures.declare_predicate("Serve", (obj, obj)),))
+    return relational_ast.TypedExpression("score:expression", root, signature), [
+        {"symbol": "Serve", "roles": ["server", "addressee"]}]
+
+
+def _score_relational(candidate, *, original=None):
+    expression, roles = _relational_score_reference()
+    return scorer.score_relational_legal_text_roundtrip(expression, candidate,
+        reference_argument_roles=roles, profile=RELATIONAL_PROSE_PROFILE, original_text=original)
+
+
+def test_relational_score_separates_typed_structure_normalized_prose_and_original_bytes():
+    result = _score_relational(_RELATIONAL_SCORE_TEXT,
+        original="Every officer shall serve some person.")
+    assert result["status"] == "complete_candidate_scored"
+    assert result["input_count"] == result["supported_count"] == 1
+    assert result["abstention_count"] == 0
+    assert result["normalized_candidate_prose"] == result["normalized_reference_prose"] == _RELATIONAL_SCORE_TEXT
+    measurements = result["measurements"]
+    assert measurements["complete_typed_structure_exact"] is True
+    assert measurements["canonical_prose_exact"] is True
+    assert measurements["exact_typed_expression_equal"] is False
+    assert measurements["original_utf8_exact"] is False
+    assert measurements["joint_typed_structure_original_utf8_exact"] is False
+    assert all(measurements[key] is False for key in ("semantic_equivalence_verified",
+        "source_correspondence_verified", "proof_validity_verified", "source_dependence_evaluated"))
+    assert all(value is False for value in result["authority"].values())
+    assert result["training_mask"] == result["evaluation_gold_mask"] == 0
+
+
+def test_relational_score_original_byte_measurement_is_optional_and_same_row_joint():
+    without_source = _score_relational(_RELATIONAL_SCORE_TEXT)
+    assert without_source["measurements"]["original_utf8_exact"] is None
+    assert without_source["measurements"]["joint_typed_structure_original_utf8_exact"] is None
+    with_source = _score_relational(_RELATIONAL_SCORE_TEXT, original=_RELATIONAL_SCORE_TEXT)
+    assert with_source["measurements"]["original_utf8_exact"] is True
+    assert with_source["measurements"]["joint_typed_structure_original_utf8_exact"] is True
+    mutated = _RELATIONAL_SCORE_TEXT.replace("obligatory", "permitted")
+    wrong_structure_exact_bytes = _score_relational(mutated, original=mutated)
+    assert wrong_structure_exact_bytes["measurements"]["original_utf8_exact"] is True
+    assert wrong_structure_exact_bytes["measurements"]["complete_typed_structure_exact"] is False
+    assert wrong_structure_exact_bytes["measurements"]["canonical_prose_exact"] is False
+    assert wrong_structure_exact_bytes["measurements"]["joint_typed_structure_original_utf8_exact"] is False
+
+
+@pytest.mark.parametrize("candidate", ["", "   ", "An officer must serve a person.",
+    _RELATIONAL_SCORE_TEXT + " Further obligations apply.",
+    _RELATIONAL_SCORE_TEXT.replace("addressee: person", "server: person")])
+def test_relational_score_whole_input_abstentions_remain_in_denominator(candidate):
+    result = _score_relational(candidate, original=candidate)
+    assert result["input_count"] == result["abstention_count"] == 1
+    assert result["supported_count"] == 0
+    assert result["status"] == "unsupported_candidate_abstained"
+    assert result["normalized_candidate_prose"] is None
+    assert result["measurements"]["complete_typed_structure_exact"] is False
+    assert result["measurements"]["canonical_prose_exact"] is False
+    assert result["measurements"]["original_utf8_exact"] is True
+    assert result["measurements"]["joint_typed_structure_original_utf8_exact"] is False
+
+
+def test_relational_score_never_passes_original_source_or_reference_to_inverse(monkeypatch):
+    from ipfs_datasets_py.logic.legal_ir import extended_compiler
+    observed = []
+    original_compile = extended_compiler.compile_relational
+    def observe(text, *, profile):
+        observed.append((text, profile))
+        return original_compile(text, profile=profile)
+    monkeypatch.setattr(extended_compiler, "compile_relational", observe)
+    sentinel = "PRIVATE original UTF8 wording — unavailable to the inverse."
+    result = _score_relational(_RELATIONAL_SCORE_TEXT, original=sentinel)
+    assert observed == [(_RELATIONAL_SCORE_TEXT, RELATIONAL_PROSE_PROFILE)]
+    assert result["original_source_available_to_inverse"] is False
+    assert result["reference_target_available_to_inverse"] is False
+    assert sentinel not in result["normalized_candidate_prose"]
+    assert sentinel not in result["normalized_reference_prose"]
+
+
+@pytest.mark.parametrize("value", [None, 7, True])
+def test_relational_score_requires_explicit_text_candidate(value):
+    with pytest.raises(scorer.LegalTextRoundTripError):
+        _score_relational(value)
+
+
+@pytest.mark.parametrize("fault, message", [
+    ("candidate_surrogate", "valid UTF8 candidate and optional original text required"),
+    ("original_surrogate", "valid UTF8 candidate and optional original text required"),
+    ("original_bool", "optional original source text required"),
+])
+def test_relational_score_input_guards_run_before_any_reference_realization(monkeypatch, fault, message):
+    from ipfs_datasets_py.logic.legal_ir import extended_decompiler
+    def forbidden_realization(*args, **kwargs):
+        raise AssertionError("reference realization must follow scorer input guards")
+    monkeypatch.setattr(extended_decompiler, "decompile_relational", forbidden_realization)
+    candidate = _RELATIONAL_SCORE_TEXT + "\ud800" if fault == "candidate_surrogate" else _RELATIONAL_SCORE_TEXT
+    original = {"candidate_surrogate": None, "original_surrogate": "\ud800", "original_bool": True}[fault]
+    with pytest.raises(scorer.LegalTextRoundTripError, match=message):
+        _score_relational(candidate, original=original)
+
+
+@pytest.mark.parametrize("changed", ["governing_context", "definition_uses"])
+def test_relational_score_detects_changed_governing_fields_with_identical_prose(changed):
+    reference = {"governing_context": {"valid_from_utc": "2030-01-01T00:00:00Z"},
+        "definition_uses": [{"definition_unit_id": "fixture:definition-A", "applicability": "governing"}]}
+    candidate = {**reference, changed: {
+        "governing_context": {"valid_from_utc": "2030-04-01T00:00:00Z"},
+        "definition_uses": [{"definition_unit_id": "fixture:definition-B", "applicability": "governing"}],
+    }[changed]}
+    expression, roles = _relational_score_reference()
+    result = scorer.score_relational_legal_text_roundtrip(expression, _RELATIONAL_SCORE_TEXT,
+        reference_argument_roles=roles, profile=RELATIONAL_PROSE_PROFILE, original_text=_RELATIONAL_SCORE_TEXT,
+        reference_governing_fields=reference, candidate_governing_fields=candidate)
+    assert result["measurements"]["complete_typed_structure_exact"] is True
+    assert result["measurements"]["canonical_prose_exact"] is True
+    assert result["measurements"]["original_utf8_exact"] is True
+    assert result["measurements"]["semantic_equivalence_verified"] is False
+    assert result["governing_fields_comparison"] == {
+        "reference": reference, "candidate": candidate,
+        "measurements": {"governing_context_exact": changed != "governing_context",
+                         "definition_uses_exact": changed != "definition_uses"},
+        "authority": {"applicability_verified": False, "governing_use_verified": False},
+    }
+
+
+def test_relational_score_governing_fields_never_reach_renderer_or_inverse(monkeypatch):
+    from ipfs_datasets_py.logic.legal_ir import extended_compiler, extended_decompiler
+    compile_relational = extended_compiler.compile_relational
+    decompile_relational = extended_decompiler.decompile_relational
+    inverse_inputs, renderer_inputs = [], []
+
+    def observe_inverse(text, *, profile):
+        inverse_inputs.append((text, profile))
+        return compile_relational(text, profile=profile)
+
+    def observe_renderer(expression, *, argument_roles, profile):
+        renderer_inputs.append((expression, argument_roles, profile))
+        return decompile_relational(expression, argument_roles=argument_roles, profile=profile)
+
+    monkeypatch.setattr(extended_compiler, "compile_relational", observe_inverse)
+    monkeypatch.setattr(extended_decompiler, "decompile_relational", observe_renderer)
+    expression, roles = _relational_score_reference()
+    reference = {"governing_context": {"instrument_id": "fixture:reference-only-instrument"},
+        "definition_uses": [{"definition_unit_id": "fixture:reference-only-definition"}]}
+    result = scorer.score_relational_legal_text_roundtrip(expression, _RELATIONAL_SCORE_TEXT,
+        reference_argument_roles=roles, profile=RELATIONAL_PROSE_PROFILE,
+        original_text="Original source appears only in the UTF-8 score.", reference_governing_fields=reference)
+    assert inverse_inputs == [(_RELATIONAL_SCORE_TEXT, RELATIONAL_PROSE_PROFILE)]
+    assert renderer_inputs and all(decompile_relational(expression, argument_roles=roles, profile=profile)
+                                   == _RELATIONAL_SCORE_TEXT for expression, roles, profile in renderer_inputs)
+    assert result["normalized_candidate_prose"] == result["normalized_reference_prose"] == _RELATIONAL_SCORE_TEXT
+    assert result["governing_fields_comparison"]["candidate"] == {}
+    assert result["governing_fields_comparison"]["measurements"] == {
+        "governing_context_exact": False, "definition_uses_exact": False,
+    }
+
+
+def test_relational_score_governing_observation_cannot_turn_abstention_into_success():
+    expression, roles = _relational_score_reference()
+    declared = {"definition_uses": None}
+    result = scorer.score_relational_legal_text_roundtrip(expression, "",
+        reference_argument_roles=roles, profile=RELATIONAL_PROSE_PROFILE,
+        reference_governing_fields=declared, candidate_governing_fields=declared)
+    assert result["status"] == "unsupported_candidate_abstained"
+    assert result["input_count"] == result["abstention_count"] == 1
+    assert result["supported_count"] == 0
+    assert result["measurements"]["complete_typed_structure_exact"] is False
+    comparison = result["governing_fields_comparison"]
+    assert comparison["reference"] == comparison["candidate"] == declared
+    assert comparison["measurements"] == {"governing_context_exact": None, "definition_uses_exact": True}
+    assert not any(comparison["authority"].values())
+    assert result["training_mask"] == result["evaluation_gold_mask"] == 0
+
+
+def test_relational_score_governing_measurements_are_explicitly_opt_in():
+    assert "governing_fields_comparison" not in _score_relational(_RELATIONAL_SCORE_TEXT)

@@ -1,0 +1,165 @@
+{
+  "canonical_files_modified": false,
+  "consolidation_archive_check": {
+    "coverage": "No matching candidate filenames or original stage directory name; this is not a content-wide archive audit.",
+    "matching_member_names": [],
+    "method": "Read tar member names only; no extraction or execution.",
+    "searched_tokens": [
+      "parent-use-native",
+      "legal_corpus_definition_use_native",
+      "test_plaintext_definition_use_native"
+    ]
+  },
+  "current_dependency_observations": [
+    {
+      "bytes": 35194,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_lake_v2.py",
+      "root": "datasets_repository",
+      "sha256": "dcd1c010ab8a44ecabff423c1204ebba3fe5ccdd523cd131c6099444cffa67c4"
+    },
+    {
+      "bytes": 19517,
+      "path": "tests/unit/logic/autoformal/test_plaintext_definition_use_lake.py",
+      "root": "datasets_repository",
+      "sha256": "d8346deb05c4b387d31f220c05eabe049c6cde57411924f34e277b3ed14913a6"
+    },
+    {
+      "bytes": 36138,
+      "path": "tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py",
+      "root": "datasets_repository",
+      "sha256": "bda94ed19c11b4b5635d3a74090679a55cfea95ad7ad59867b76890a7f37a74b"
+    }
+  ],
+  "evidence": {
+    "consolidation_archive": {
+      "bytes": 619777,
+      "path": "docs/autoformalization/evidence/consolidation-20261019.tar.gz",
+      "root": "datasets_repository",
+      "sha256": "0b6dbc18b5cd7ff5015dc14a39a14f215d5496ac634ee3ca082676277f366e89"
+    },
+    "dependency_retry_observation": {
+      "bytes": 8773,
+      "path": "legal-ir-parent-use-native-20261019T193900Z/audit/dependency-retry-observation.json",
+      "root": "artifact_workspace",
+      "sha256": "84554899cdab0f0bf8a3d98d82e02931081867bfbad80f1eae9c0b845c5ff10b"
+    },
+    "original_candidate_patch": {
+      "bytes": 37892,
+      "path": "legal-ir-parent-use-native-20261019T193900Z/candidate.patch",
+      "root": "artifact_workspace",
+      "sha256": "15b448aa2533d5d550c9b968ee58c6d65ce266a5d125704eb9dc9e010847a8a7"
+    },
+    "original_handoff": {
+      "bytes": 12968,
+      "path": "legal-ir-parent-use-native-20261019T193900Z/handoff.json",
+      "root": "artifact_workspace",
+      "sha256": "f958fad1de935b72ec40ed6930150a7dd20af019297230043c74c8760dbd9bb7"
+    }
+  },
+  "files": [
+    {
+      "base_absent_reason": null,
+      "current_base": {
+        "bytes": 30842,
+        "path": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_native_v2.py",
+        "root": "datasets_repository",
+        "sha256": "98c1ff8ff52923c9c7ea392bdf77fb5baf8c946a4e8956d19be22e4f956b5e8f"
+      },
+      "current_base_matches_historical_preimage": true,
+      "historical_preimage": {
+        "bytes": 30842,
+        "path": "legal-ir-parent-use-native-20261019T193900Z/preimages/legal_corpus_definition_use_native_v2.py",
+        "root": "artifact_workspace",
+        "sha256": "98c1ff8ff52923c9c7ea392bdf77fb5baf8c946a4e8956d19be22e4f956b5e8f"
+      },
+      "source": {
+        "bytes": 35804,
+        "path": "legal-ir-parent-use-native-20261019T193900Z/candidates/legal_corpus_definition_use_native_v2.py",
+        "root": "artifact_workspace",
+        "sha256": "ee4fb3a02bf9f8956990f7983efb55b55a40ac81ccd362a870bfdb9e2572bff3"
+      },
+      "target": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_native_v2.py"
+    },
+    {
+      "base_absent_reason": "Candidate adds a test file that is absent from the canonical checkout.",
+      "current_base": null,
+      "current_base_matches_historical_preimage": true,
+      "historical_preimage": null,
+      "source": {
+        "bytes": 17518,
+        "path": "legal-ir-parent-use-native-20261019T193900Z/candidates/test_plaintext_definition_use_native.py",
+        "root": "artifact_workspace",
+        "sha256": "4318a2a03af16f2eddfe5fc498c1ed86a892296654dacdd078c2df11ccb2bf1f"
+      },
+      "target": "tests/unit/logic/autoformal/test_plaintext_definition_use_native.py"
+    },
+    {
+      "base_absent_reason": null,
+      "current_base": {
+        "bytes": 18141,
+        "path": "docs/autoencoders/legal_corpus_definition_use_native_v2.md",
+        "root": "datasets_repository",
+        "sha256": "315446a2c82e79b7594c65aea8da05397bc3f0f9c570a6180eeee2c1d708c05b"
+      },
+      "current_base_matches_historical_preimage": true,
+      "historical_preimage": {
+        "bytes": 18141,
+        "path": "legal-ir-parent-use-native-20261019T193900Z/preimages/legal_corpus_definition_use_native_v2.md",
+        "root": "artifact_workspace",
+        "sha256": "315446a2c82e79b7594c65aea8da05397bc3f0f9c570a6180eeee2c1d708c05b"
+      },
+      "source": {
+        "bytes": 24869,
+        "path": "legal-ir-parent-use-native-20261019T193900Z/candidates/legal_corpus_definition_use_native_v2.md",
+        "root": "artifact_workspace",
+        "sha256": "6fb40ca72f25ba574a276b759c9c6a308a47cf22eef4527c9668b5969ccafa11"
+      },
+      "target": "docs/autoencoders/legal_corpus_definition_use_native_v2.md"
+    }
+  ],
+  "historical_files_modified": false,
+  "id": "parent-native-adapter",
+  "intended_proposal_directory": "docs/autoformalization/proposals/parent-native-adapter",
+  "original_handoff_recorded_at_utc": "2026-10-19T19:53:09.235840+00:00",
+  "original_handoff_status": "candidate_and_static_review_complete_execution_blocked_by_foreign_dependency",
+  "patch": {
+    "bytes": 37892,
+    "identical_to_original_candidate_patch": true,
+    "path": "candidate.patch",
+    "sha256": "15b448aa2533d5d550c9b968ee58c6d65ce266a5d125704eb9dc9e010847a8a7"
+  },
+  "patch_check": {
+    "applied": false,
+    "command": "git apply --check candidate.patch",
+    "exit_code": 0,
+    "scope": "Read-only patch-context check against the recorded canonical bases; not tests, semantic qualification, dependency approval, or installation.",
+    "working_directory": "external/ipfs_datasets"
+  },
+  "purpose": "Non-executable review export of a retained three-file candidate; not a runtime installation.",
+  "qualification": {
+    "candidate_installed_at_export": false,
+    "candidate_tests_executed_by_original_stage": 0,
+    "candidate_tests_passed": null,
+    "native_execution_during_export": false,
+    "native_lean_executed_by_original_stage": false,
+    "project_imports_during_export": false,
+    "qualification_receipts_reconciled": false,
+    "tests_during_export": false
+  },
+  "rebase_requirements": [
+    "Compare exact current native source, guide and absent/new test with these recorded bases before any proposed installation; this patch is only a dated review snapshot.",
+    "Original source and guide bases still match at export. The stale boundary is dependency and frozen-control compatibility, not an observed native-source divergence.",
+    "Reconcile successful parent Lake qualification and installation receipts with the exact current source and helper test; presence alone does not establish qualification.",
+    "The original handoff reports the parent Lake helper changed from 018c73830db05517bad1dd761af7d4fe939850a3d8ede826b30217e614ab394a to b3df334608468df241fee447f828c7be4e41dda372b54d6728a21e5f9bf0cf4a. Rebase and separately review the control/spec dependencies rather than changing the archived gates.",
+    "Reconcile maintained guide placement with docs/autoformalization before installing a successor. The review patch preserves the historical docs/autoencoders target and does not create a second maintained guide.",
+    "Retain existing official API regression coverage and the planned synthetic compiler boundary. Focused adapter tests do not establish a real Lean build or qualified statutory interpretation.",
+    "Install only a separately qualified successor through the existing owner. Do not execute the archived campaign controls or replay prior training as part of consolidation."
+  ],
+  "recorded_at_utc": "2026-10-19T20:29:20.752859+00:00",
+  "roots": {
+    "artifact_workspace": "artifacts",
+    "datasets_repository": "external/ipfs_datasets"
+  },
+  "schema": "autoformalization-proposal-export/v1",
+  "status": "unqualified_archived_candidate_requires_dependency_rebase"
+}

@@ -551,10 +551,10 @@ def test_reviewed_pair_saved_report_cannot_turn_unknowns_or_analogies_into_negat
             expected_receipt_sha256=admission.norm_content_adjudication_sha256(forged), **inputs)
 
 
-def refresh_reviewed_pair_ledger_v2(case):
+def _refresh_reviewed_pair_ledger(case, version):
     """Rebuild complete toy custody and re-sign changed whole-ledger content."""
     from ipfs_datasets_py.logic.autoformal import legal_graph_dependencies as dependencies
-    admission = subject.relations._reviewed_owners()[0]
+    admission = subject.relations._reviewed_owners(version)[0]
     inputs = case["preparation_inputs"]
     body = inputs["body"]
     pin = admission.norm_content_adjudication_sha256(body)
@@ -567,7 +567,9 @@ def refresh_reviewed_pair_ledger_v2(case):
     inputs["dependency_manifest"] = manifest
     inputs["expected_manifest_sha256"] = manifest["manifest_sha256"]
     case["observed_artifacts"][body["ledger_id"]] = pin
-    case["preparation"] = subject.relations.prepare_reviewed_relation_declaration_v2(**inputs)
+    prepare = (subject.relations.prepare_reviewed_relation_declaration_v3 if version == "v3"
+               else subject.relations.prepare_reviewed_relation_declaration_v2)
+    case["preparation"] = prepare(**inputs)
     signing_subject = case["preparation"]["subject"]
     case["evidence"][body["ledger_id"]] = admission.norm._wire(body)
     for claim in case["reviews"]:
@@ -577,6 +579,15 @@ def refresh_reviewed_pair_ledger_v2(case):
         for obligation in claim["context_closure"]["obligations"]:
             obligation["evidence_refs"][0] = {"artifact_id": body["ledger_id"], "sha256": pin}
     reviewed_pair_resign_v2(case)
+
+
+
+def refresh_reviewed_pair_ledger_v2(case):
+    return _refresh_reviewed_pair_ledger(case, "v2")
+
+
+def refresh_reviewed_pair_ledger_v3(case):
+    return _refresh_reviewed_pair_ledger(case, "v3")
 
 
 @pytest.mark.parametrize("missing", ["row", "column"])
@@ -710,3 +721,169 @@ def test_reviewed_pair_mask_source_identity_is_frozen_at_import_before_first_v2_
     monkeypatch.setattr(Path, "read_bytes", changed_read)
     with pytest.raises(ValueError, match="changed since import"):
         subject._reviewed_pins()
+
+
+def test_reviewed_mixed_pair_v3_masks_preserve_complete_typed_endpoints_and_unknowns():
+    case = fixtures.reviewed_pair_fixture_v3()
+    args, options = reviewed_mask_arguments_v2(case)
+    report = subject.compile_reviewed_train_relation_masks_v3(*args, **options)
+    assert report["schema"] == "alignment-reviewed-train-relation-mask-handoff/v3"
+    assert report["profile"] == "reviewed-native384-source-formal-pairs/v3"
+    assert report["reviewed_objective_mask_ready"] is True
+    assert report["objective_positive_mask"] == [[True, True, False], [False, False, True]]
+    assert report["objective_permitted_negative_mask"] == [[False, False, True], [False, False, False]]
+    assert report["unknown_pair_count"] == report["analogy_retrieval_only_pair_count"] == 1
+    assert report["training_executed"] is report["model_executed"] is report["proof_authority"] is False
+    prepared = case["preparation"]
+    endpoint = next(iter(case["preparation_inputs"]["endpoint_admissions"].values()))
+    mixed = endpoint["report"]["units"][2]["canonical_ir"]
+    assert mixed["profile"] != endpoint["report"]["units"][1]["canonical_ir"]["profile"]
+    assert prepared["formal_endpoints"][2]["formal_view_sha256"] == subject.relations._reviewed_owners()[0].norm_content_adjudication_sha256(mixed)
+    assert subject.validate_reviewed_train_relation_masks_v3(report, *args,
+        expected_receipt_sha256=subject.relations._reviewed_owners()[0].norm_content_adjudication_sha256(report), **options) == report
+
+
+@pytest.mark.parametrize("direction", ["v3-to-v2", "v2-to-v3"])
+def test_reviewed_mixed_pair_v3_does_not_relabel_legacy_review_domains(direction):
+    mixed = direction == "v3-to-v2"
+    case = fixtures.reviewed_pair_fixture_v3() if mixed else fixtures.reviewed_pair_fixture_v2()
+    args, options = reviewed_mask_arguments_v2(case)
+    compile_other = subject.compile_reviewed_train_relation_masks_v2 if mixed else subject.compile_reviewed_train_relation_masks_v3
+    with pytest.raises(ValueError):
+        compile_other(*args, **options)
+
+
+@pytest.mark.parametrize("damage", ["missing-current-endpoint", "changed-current-artifact", "forged-pair-review"])
+def test_reviewed_mixed_pair_v3_replays_endpoint_and_independent_pair_authority(damage):
+    case = fixtures.reviewed_pair_fixture_v3()
+    args, options = reviewed_mask_arguments_v2(case)
+    if damage == "missing-current-endpoint":
+        options["current_endpoint_observations"] = {}
+        with pytest.raises(ValueError, match="current observations"):
+            subject.compile_reviewed_train_relation_masks_v3(*args, **options)
+        return
+    if damage == "changed-current-artifact":
+        current = deepcopy(options["current_endpoint_observations"])
+        observed = next(iter(current.values()))["observed_artifact_sha256s"]
+        observed[next(iter(observed))] = "0" * 64
+        options["current_endpoint_observations"] = current
+    else:
+        reviews = deepcopy(args[3])
+        import base64
+        signature = bytearray(base64.urlsafe_b64decode(reviews[0]["signature"] + "=="))
+        assert len(signature) == 64
+        signature[0] ^= 1
+        reviews[0]["signature"] = base64.urlsafe_b64encode(signature).decode().rstrip("=")
+        args = (*args[:3], reviews)
+        from ipfs_datasets_py.logic.autoformal import legal_graph_review as auth
+        options["expected_reviews_sha256"] = auth.digest(reviews)
+    report = subject.compile_reviewed_train_relation_masks_v3(*args, **options)
+    assert report["reviewed_objective_mask_ready"] is False
+    assert not any(any(row) for row in report["objective_positive_mask"])
+    assert not any(any(row) for row in report["objective_permitted_negative_mask"])
+
+
+@pytest.mark.parametrize("version", ["v2", "v3"])
+def test_reviewed_mixed_joint_v3_training_replays_complete_masks_before_torch(monkeypatch, version):
+    import builtins
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_joint_retrieval as joint
+    case = fixtures.reviewed_pair_fixture_v3() if version == "v3" else fixtures.reviewed_pair_fixture_v2()
+    args, options = reviewed_mask_arguments_v2(case)
+    observed = []
+    name = "compile_reviewed_train_relation_masks_" + version
+    original_compile = getattr(subject, name)
+    def compile_current(*values, **kwargs):
+        report = original_compile(*values, **kwargs)
+        observed.append(report)
+        return report
+    monkeypatch.setattr(subject, name, compile_current)
+    class AllocationBoundary(Exception):
+        pass
+    original_import = builtins.__import__
+    def stop_at_torch(name, *values, **kwargs):
+        if name.split(".", 1)[0] == "torch":
+            raise AllocationBoundary("real reviewed preflight reached the tensor allocation boundary")
+        return original_import(name, *values, **kwargs)
+    monkeypatch.setattr(builtins, "__import__", stop_at_torch)
+    with pytest.raises(AllocationBoundary):
+        train = joint.train_reviewed_retriever_v3 if version == "v3" else joint.train_reviewed_retriever
+        train(*args, **options, steps=1, joint_dimension=8)
+    assert len(observed) == 1 and observed[0]["reviewed_objective_mask_ready"] is True
+    source, formal, positive, negative = joint._reviewed_arrays(observed[0], _admission_version=version)
+    assert len(source) == 2 and len(formal) == 3
+    assert positive == [[True, True, False], [False, False, True]]
+    assert negative == [[False, False, True], [False, False, False]]
+
+
+@pytest.mark.parametrize("damage", ["missing-pair-review", "missing-current-endpoint", "preparation-pin",
+    "bare-ready-flags", "v2-preparation", "v2-entry-point", "negative-steps", "fractional-steps"])
+def test_reviewed_mixed_joint_v3_preflight_refuses_before_torch(monkeypatch, damage):
+    import builtins
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_joint_retrieval as joint
+    case = fixtures.reviewed_pair_fixture_v2() if damage == "v2-preparation" else fixtures.reviewed_pair_fixture_v3()
+    if damage == "missing-pair-review": case["reviews"] = []
+    if damage == "missing-current-endpoint": case["current_endpoint_observations"] = {}
+    args, options = reviewed_mask_arguments_v2(case)
+    if damage == "preparation-pin": options["expected_preparation_sha256"] = "0" * 64
+    if damage == "bare-ready-flags": args = ({"reviewed_objective_mask_ready": True}, *args[1:])
+    original_import = builtins.__import__
+    def no_torch(name, *values, **kwargs):
+        if name.split(".", 1)[0] == "torch":
+            pytest.fail("unreviewed or cross-domain pair reached tensor allocation")
+        return original_import(name, *values, **kwargs)
+    monkeypatch.setattr(builtins, "__import__", no_torch)
+    train = joint.train_reviewed_retriever if damage == "v2-entry-point" else joint.train_reviewed_retriever_v3
+    steps = -1 if damage == "negative-steps" else 0.5 if damage == "fractional-steps" else 1
+    with pytest.raises(ValueError):
+        train(*args, **options, steps=steps, joint_dimension=8)
+
+
+@pytest.mark.parametrize("damage", ["v2-mask", "v2-config", "implementation", "legacy-source-port"])
+def test_reviewed_mixed_joint_v3_checkpoint_domains_refuse_before_torch(monkeypatch, damage):
+    import builtins
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_joint_retrieval as joint
+    case = fixtures.reviewed_pair_fixture_v2() if damage == "v2-mask" else fixtures.reviewed_pair_fixture_v3()
+    args, options = reviewed_mask_arguments_v2(case)
+    compile_masks = subject.compile_reviewed_train_relation_masks_v2 if damage == "v2-mask" else subject.compile_reviewed_train_relation_masks_v3
+    handoff = compile_masks(*args, **options)
+    # Negative-only DATA: these empty tensors are never a valid checkpoint or numerical witness.
+    checkpoint = {"schema": "legal-joint-retrieval-checkpoint/v3", "implementation": joint._reviewed_implementation("v3"),
+        "training_handoff": handoff, "training_handoff_sha256": joint.checkpoint_digest(handoff),
+        "initial_model_state_sha256": "0" * 64, "model_state": {},
+        "progress": {"optimizer_steps": 0, "optimizer_state_retained": False},
+        "config": {"seed": 2718, "joint_dimension": 8, "learning_rate": .003, "temperature": .1,
+            "architecture": "two-linear-normalized-reviewed-masked-retrievers/v2",
+            "relation_scope": "full_canonical_reviewed_handoff_replay/v2",
+            "loss": "symmetric_masked_multi_positive_contrastive/v1"}}
+    if damage == "implementation": checkpoint["implementation"] = {}
+    original_import = builtins.__import__
+    def no_torch(name, *values, **kwargs):
+        if name.split(".", 1)[0] == "torch":
+            pytest.fail("cross-domain checkpoint metadata reached tensor allocation")
+        return original_import(name, *values, **kwargs)
+    monkeypatch.setattr(builtins, "__import__", no_torch)
+    with pytest.raises(ValueError):
+        if damage == "legacy-source-port": joint._restore(checkpoint, source_profile={})
+        else: joint._restore_reviewed(checkpoint)
+
+
+@pytest.mark.parametrize('damage',[None,'pair-review-revoked','endpoint-observation'])
+def test_reviewed_v3_composition_preserves_current_review_and_unknown_masks(tmp_path,damage):
+    from tests.unit.logic.formalization.autoencoder import test_alignment_relation_declarations as declared
+    case=declared.declared_composed_reviewed_pair_fixture_v3(tmp_path)
+    args,options=reviewed_mask_arguments_v2(case)
+    if damage=='pair-review-revoked':
+        case['registry']['keys'][0]['revoked_at_utc']=case['at_time_utc']
+        reviewed_pair_resign_v2(case)
+        args,options=reviewed_mask_arguments_v2(case)
+    elif damage=='endpoint-observation':
+        identity=next(iter(options['current_endpoint_observations']))
+        observed=options['current_endpoint_observations'][identity]['observed_artifact_sha256s']
+        observed[next(iter(observed))]='f'*64
+    result=subject.compile_reviewed_train_relation_masks_v3(*args,**options)
+    assert result['reviewed_objective_mask_ready'] is (damage is None)
+    for pair in case['preparation_inputs']['body']['pairs']:
+        i=next(i for i,row in enumerate(case['preparation_inputs']['body']['source_endpoints']) if row['id']==pair['left_id'])
+        j=next(i for i,row in enumerate(case['preparation_inputs']['body']['formal_endpoints']) if row['id']==pair['right_id'])
+        if damage is not None or pair['relation'] in ('unknown','analogy'):
+            assert result['objective_positive_mask'][i][j] is result['objective_permitted_negative_mask'][i][j] is False

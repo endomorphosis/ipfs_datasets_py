@@ -216,3 +216,102 @@ def test_candidate_rejects_deadline_producer_drift_before_loading_model(monkeypa
                             tmp_path / "qualification", model_config={"compute_device": "python"})
     assert reads >= change_on_read
     assert not (tmp_path / "qualification/qualification.json").exists()
+
+
+def test_qualified_deadline_unit_evidence_is_opt_in_and_keeps_legacy_compilation():
+    text = SOURCE.replace("10 days", "10 business days")
+    legacy = autoformal.AutoformalSession(capture_temporal_provenance=True)
+    enabled = autoformal.AutoformalSession(capture_temporal_provenance=True)
+    enabled.capture_qualified_deadline_unit_evidence = True
+    expected = autoformal.compile_span(legacy, text, "qualified-unit")
+    result = autoformal.compile_span(enabled, text, "qualified-unit")
+    assert without_sidecars(result) == without_sidecars(expected)
+    assert [row.public() for row in enabled.rows] == [row.public() for row in legacy.rows]
+    legacy_entry = expected["temporal_occurrence_provenance"]
+    assert "deadline_qualified_unit_evidence" not in legacy_entry
+    assert "deadline_qualified_unit_evidence_sha256" not in legacy_entry
+    entry = result["temporal_occurrence_provenance"]
+    assert {key: entry[key] for key in legacy_entry} == legacy_entry
+    inventory = assert_unresolved(entry)
+    assert not inventory["requests"]
+    assert len(inventory["issues"]) == 1
+    evidence = entry["deadline_qualified_unit_evidence"]
+    assert entry["deadline_qualified_unit_evidence_sha256"] == digest(evidence)
+    assert evidence["deadline_request_inventory_sha256"] == inventory["receipt_sha256"]
+    assert evidence["occurrence_receipt_sha256"] == entry["receipt"]["receipt_sha256"]
+    assert evidence["proposal_receipt_sha256"] == inventory["proposal_receipt_sha256"]
+    assert all(value is False for value in evidence["authority"].values())
+    observation, = evidence["observations"]
+    assert observation["lexical_unit"] == "business_day"
+    assert observation["quantity"] == 10
+    assert observation["status"] == "unsupported_qualified_unit"
+
+
+def test_qualified_deadline_unit_evidence_keeps_exact_document_anchors_and_is_detached():
+    sources = [SOURCE.replace("10 days", unit) for unit in ("10 business days", "10 calendar days")]
+    document = "Préface.\n\n" + "\n\n".join(sources).replace("calendar days", "calendar\tdays")
+    session = autoformal.AutoformalSession(
+        capture_temporal_provenance=True, capture_qualified_deadline_unit_evidence=True,
+    )
+    opened = session.open_document(document, document_id="qualified-units",
+                                   segmenter=lambda value: sources)
+    entries = []
+    for clause, source, unit, document_unit in zip(
+        opened["clauses"], sources, ("business_day", "calendar_day"),
+        ("business days", "calendar\tdays"), strict=True,
+    ):
+        result = session.compile_clause("qualified-units", clause["id"])
+        entry = result["temporal_occurrence_provenance"]
+        evidence = entry["deadline_qualified_unit_evidence"]
+        replay = deadline.validate_deadline_qualified_unit_evidence(
+            evidence, entry["receipt"], proposer.propose(source), source_text=source,
+            document_text=document, rule_rows=result["rows"],
+        )
+        assert replay == evidence
+        observation, = evidence["observations"]
+        assert observation["lexical_unit"] == unit
+        assert evidence["source_binding"]["document_text_sha256"] == hashlib.sha256(document.encode()).hexdigest()
+        for field in ("cue", "quantity", "unit", "connector"):
+            anchor = observation[field + "_source"]
+            assert anchor["document_translation_resolved"] is True
+            start, end = anchor["source_span"]["char_start"], anchor["source_span"]["char_end"]
+            assert source[start:end] == anchor["source_text"]
+            start, end = anchor["document_span"]["char_start"], anchor["document_span"]["char_end"]
+            assert start >= clause["start"]
+            assert document[start:end] == anchor["document_text"]
+        assert observation["unit_source"]["document_text"] == document_unit
+        entries.append(entry)
+    expected = session.temporal_occurrence_report()
+    assert expected["artifacts"] == entries
+    entries[0]["deadline_qualified_unit_evidence"]["observations"].clear()
+    exported = session.temporal_occurrence_report()
+    exported["artifacts"][1]["deadline_qualified_unit_evidence"]["observations"].clear()
+    assert session.temporal_occurrence_report() == expected
+
+
+def test_qualified_deadline_unit_evidence_marks_empty_and_over_budget_as_unavailable(monkeypatch):
+    text = SOURCE * 60
+    assert len(text) > proposer.MAX_SOURCE_CHARACTERS
+    legacy = autoformal.AutoformalSession(capture_temporal_provenance=True)
+    enabled = autoformal.AutoformalSession(
+        capture_temporal_provenance=True, capture_qualified_deadline_unit_evidence=True,
+    )
+
+    def unexpected(*args, **kwargs):
+        pytest.fail("unavailable input reached a proposal or qualified-unit builder")
+
+    monkeypatch.setattr(proposer, "propose", unexpected)
+    monkeypatch.setattr(deadline, "build_deadline_qualified_unit_evidence", unexpected)
+    for source, reason in (("", "empty_source"), (text, "proposer_source_character_budget_exceeded")):
+        expected = legacy.capture_span_temporal(source, "unavailable-qualified-unit")
+        entry = enabled.capture_span_temporal(source, "unavailable-qualified-unit")
+        assert {key: entry[key] for key in expected} == expected
+        unavailable = entry["deadline_qualified_unit_evidence"]
+        assert unavailable["schema"] == "legal-temporal-deadline-qualified-unit-evidence-unavailable/v1"
+        assert unavailable["status"] == "not_evaluated"
+        assert unavailable["reason_codes"] == [reason]
+        assert unavailable["model_calls"] == 0
+        assert all(value is False for value in unavailable["authority"].values())
+        assert "observations" not in unavailable
+        assert entry["deadline_qualified_unit_evidence_sha256"] == digest(unavailable)
+    assert len(enabled.temporal_occurrence_report()["artifacts"]) == 1

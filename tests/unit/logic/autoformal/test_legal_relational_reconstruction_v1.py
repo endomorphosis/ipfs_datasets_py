@@ -723,3 +723,266 @@ def test_public_import_uses_only_standard_library_and_writes_nothing(monkeypatch
         "prepare_relational_reconstruction_comparison_v1", "validate_relational_reconstruction_comparison_v1",
         "relational_reconstruction_comparison_sha256",
     ))
+
+
+# New opt-in source-withheld prose checks remain separate from the original
+# source-pinned report comparison. No fixture supplies reviewed legal meaning.
+from ipfs_datasets_py.logic.legal_ir.extended_decompiler import RELATIONAL_PROSE_PROFILE
+
+
+def _prose_expression_request(*, reverse_roles=False, reverse_arguments=False,
+                               reverse_scope=False, letter="O", exception_scope="outside"):
+    builder = _FIXTURE.Builder()
+    arguments = ("recipient", "actor") if reverse_arguments else ("actor", "recipient")
+    action = builder.atom("Notify", *arguments)
+    unless = ast.mk_not(builder.nid(), builder.atom("Exempt", "actor"))
+    if exception_scope == "outside":
+        body = builder.binary("implies", unless, builder.modal(letter, action))
+    elif exception_scope == "inside":
+        body = builder.modal(letter, builder.binary("implies", unless, action))
+    elif exception_scope == "absent":
+        # Use Exempt as an ordinary condition so declarations stay complete;
+        # the difference is negation, rather than silent signature omission.
+        body = builder.binary("implies", builder.atom("Exempt", "actor"),
+                              builder.modal(letter, action))
+    else:
+        raise AssertionError("unsupported authored fixture variation")
+    binders = [("actor", "forall"), ("recipient", "exists")]
+    if reverse_scope:
+        binders.reverse()
+    labels = ("recipient", "actor") if reverse_roles else ("actor", "recipient")
+    request = _FIXTURE.request_for(builder, body,
+        [("Exempt", ("actor",)), ("Notify", labels)], binders)
+    return ast.TypedExpression.from_dict(request["expression"]), request["argument_roles"]
+
+
+def _compare_prose_inputs(reference, candidate, roles, candidate_roles):
+    return owner.compare_relational_prose_structure_v1(reference, candidate,
+        reference_argument_roles=roles, candidate_argument_roles=candidate_roles,
+        profile=RELATIONAL_PROSE_PROFILE)
+
+
+def test_prose_reconstruction_reports_complete_typed_structure_and_prose_separately():
+    expression, roles = _prose_expression_request()
+    before = deepcopy(expression.to_dict()), deepcopy(roles)
+    result = owner.prepare_relational_prose_reconstruction_v1(expression,
+        argument_roles=roles, profile=RELATIONAL_PROSE_PROFILE)
+    assert result["schema"] == "legal-relational-prose-reconstruction/v1"
+    assert result["normalized_prose"].startswith("Typed legal rule: tdfol/tdfol_default.\n")
+    assert "it is not the case that (Exempt holds for actor: actor of type Object)" in result["normalized_prose"]
+    assert "recipient: recipient of type Object" in result["normalized_prose"]
+    assert result["measurements"]["typed_structure_equal"] is True
+    assert result["measurements"]["canonical_prose_fixed_point"] is True
+    assert result["measurements"]["exact_typed_expression_equal"] is False
+    assert result["measurements"]["semantic_equivalence_verified"] is False
+    assert result["measurements"]["source_semantics_verified"] is False
+    reconstructed = ast.TypedExpression.from_dict(result["reconstructed_typed_expression"])
+    comparison = _compare_prose_inputs(expression, reconstructed, roles,
+                                      result["reconstructed_argument_roles"])
+    assert comparison["typed_structure_equal"] is True
+    assert comparison["canonical_prose_equal"] is True
+    assert comparison["argument_roles_equal"] is True
+    assert before == (expression.to_dict(), roles)
+
+
+@pytest.mark.parametrize("variation", [
+    {"reverse_roles": True}, {"reverse_arguments": True}, {"reverse_scope": True},
+    {"letter": "P"}, {"letter": "F"}, {"exception_scope": "inside"},
+    {"exception_scope": "absent"},
+])
+def test_prose_structure_comparison_detects_independently_authored_legal_facet_mutations(variation):
+    reference, roles = _prose_expression_request()
+    candidate, candidate_roles = _prose_expression_request(**variation)
+    result = _compare_prose_inputs(reference, candidate, roles, candidate_roles)
+    assert result["exact_typed_expression_equal"] is variation.get("reverse_roles", False)
+    assert result["typed_structure_equal"] is False
+    assert result["canonical_prose_equal"] is False
+    assert result["argument_roles_equal"] is (not variation.get("reverse_roles", False))
+    # Structural diagnostics establish no reviewed source or general legal
+    # semantic-equivalence result, even when the two syntax trees differ.
+    for key in ("semantic_equivalence_verified", "source_semantics_verified"):
+        if key in result:
+            assert result[key] is False
+
+
+def test_prose_structure_ignores_only_named_transport_identifiers_and_declaration_order():
+    reference, roles = _prose_expression_request()
+    value = reference.to_dict()
+    def rename(value):
+        if type(value) is dict:
+            for key, child in value.items():
+                if key in {"node_id", "expression_id", "signature_id"}:
+                    value[key] = "new-transport:" + child
+                else:
+                    rename(child)
+        elif type(value) is list:
+            for child in value:
+                rename(child)
+    rename(value)
+    value.pop("content_digest")
+    value["signature"]["symbols"].reverse()
+    candidate = ast.TypedExpression.from_dict(value)
+    result = _compare_prose_inputs(reference, candidate, roles, list(reversed(roles)))
+    assert result["exact_typed_expression_equal"] is False
+    assert result["typed_structure_equal"] is True
+    assert result["canonical_prose_equal"] is True
+    assert result["argument_roles_equal"] is True
+
+
+def test_prose_structure_does_not_call_bound_variable_renaming_exact_typed_structure():
+    reference, roles = _prose_expression_request()
+    value = reference.to_dict()
+    def rename(value):
+        if type(value) is dict:
+            if value.get("kind") == "variable" and value.get("symbol") == "actor":
+                value["symbol"] = "officer"
+            if value.get("name") == "actor" and "sort" in value:
+                value["name"] = "officer"
+            for child in value.values():
+                rename(child)
+        elif type(value) is list:
+            for child in value:
+                rename(child)
+    rename(value["root"])
+    value.pop("content_digest")
+    candidate = ast.TypedExpression.from_dict(value)
+    result = _compare_prose_inputs(reference, candidate, roles, roles)
+    assert result["typed_structure_equal"] is False
+    assert result["canonical_prose_equal"] is False
+    assert result["argument_roles_equal"] is True
+
+
+def test_prose_reconstruction_has_no_hidden_original_text_or_target_channel():
+    expression, roles = _prose_expression_request()
+    with pytest.raises(TypeError):
+        owner.prepare_relational_prose_reconstruction_v1(expression,
+            argument_roles=roles, profile=RELATIONAL_PROSE_PROFILE,
+            original_text="Hidden original bytes, not formal semantics.")
+    with pytest.raises(TypeError):
+        owner.prepare_relational_prose_reconstruction_v1(expression,
+            argument_roles=roles, profile=RELATIONAL_PROSE_PROFILE,
+            reference_target=expression.to_dict())
+    result = owner.prepare_relational_prose_reconstruction_v1(expression,
+        argument_roles=roles, profile=RELATIONAL_PROSE_PROFILE)
+    def keys(value):
+        if type(value) is dict:
+            for key, child in value.items():
+                yield key
+                yield from keys(child)
+        elif type(value) is list:
+            for child in value:
+                yield from keys(child)
+    assert {"original_text", "source_text", "reference_target", "hidden_ast"}.isdisjoint(set(keys(result)))
+    assert "fixture:node:" not in result["normalized_prose"]
+    assert "content_digest" not in result["normalized_prose"]
+
+
+def test_prose_reconstruction_rejects_unsupported_source_metadata_as_whole_input():
+    expression, roles = _prose_expression_request()
+    source_bearing = ast.TypedExpression("fictional:source-bearing", expression.root,
+        expression.signature, metadata={"source_text": "not a renderer channel"})
+    with pytest.raises(ValueError):
+        owner.prepare_relational_prose_reconstruction_v1(source_bearing,
+            argument_roles=roles, profile=RELATIONAL_PROSE_PROFILE)
+    with pytest.raises(ValueError):
+        _compare_prose_inputs(expression, source_bearing, roles, roles)
+
+
+def test_prose_reconstruction_public_opt_in_apis_are_additive_exports():
+    assert owner.__all__[:4] == ["RelationalReconstructionError",
+        "prepare_relational_reconstruction_comparison_v1",
+        "relational_reconstruction_comparison_sha256", "validate_relational_reconstruction_comparison_v1"]
+    assert owner.__all__[4:] == ["compare_relational_prose_structure_v1",
+        "prepare_relational_prose_reconstruction_v1", "compare_relational_governing_fields_v1"]
+    assert all(callable(getattr(owner, name)) for name in owner.__all__[4:])
+
+
+@pytest.fixture
+def fictional_governing_fields():
+    return {
+        "governing_context": {
+            "jurisdiction": "fictional-jurisdiction", "instrument_id": "fixture:notification-act",
+            "governing_edition": "fixture:edition-one", "legal_as_of_utc": "2030-06-15T00:00:00Z",
+            "valid_from_utc": "2030-01-01T00:00:00Z", "valid_until_utc": None,
+        },
+        "definition_uses": [{
+            "definition_unit_id": "fixture:definition-A", "defined_predicate": "Notify",
+            "use_unit_id": "fixture:norm-A", "use_occurrence_cid": "fixture:occurrence-A",
+            "target_typed_paths": ["/root/arguments/0/arguments/0/arguments/1/extension/children/0"],
+            "applicability": "governing", "interpretation_id": "fixture:interpretation-A",
+            "evidence_refs": [{"artifact_id": "fixture:definition-evidence-A", "sha256": "a" * 64}],
+        }],
+    }
+
+
+@pytest.mark.parametrize("changed", ["valid_from_utc", "legal_as_of_utc", "definition_unit_id"])
+def test_governing_fidelity_distinguishes_same_ast_with_different_legal_context(fictional_governing_fields, changed):
+    expression, roles = _prose_expression_request()
+    structure = _compare_prose_inputs(expression, expression, roles, roles)
+    assert structure["exact_typed_expression_equal"] and structure["typed_structure_equal"]
+    assert structure["canonical_prose_equal"]
+
+    reference = fictional_governing_fields
+    candidate = deepcopy(reference)
+    date_changed = changed != "definition_unit_id"
+    if date_changed:
+        candidate["governing_context"][changed] = "2030-04-01T00:00:00Z"
+    else:
+        candidate["definition_uses"][0][changed] = "fixture:definition-B"
+    comparison = owner.compare_relational_governing_fields_v1(reference, candidate)
+    assert comparison["measurements"] == {
+        "governing_context_exact": not date_changed, "definition_uses_exact": date_changed,
+    }
+    assert comparison["reference"] == reference and comparison["candidate"] == candidate
+    assert comparison["authority"] == {"applicability_verified": False, "governing_use_verified": False}
+
+
+@pytest.mark.parametrize("candidate, expected", [
+    ({}, None), ({"definition_uses": None}, False), ({"definition_uses": []}, False),
+])
+def test_governing_fidelity_distinguishes_omitted_null_and_empty_uses(candidate, expected):
+    result = owner.compare_relational_governing_fields_v1({}, candidate)
+    assert result["measurements"] == {"governing_context_exact": None, "definition_uses_exact": expected}
+    assert result["reference"] == {} and result["candidate"] == candidate
+
+
+def test_governing_fidelity_preserves_ordered_competing_and_unresolved_uses(fictional_governing_fields):
+    reference = fictional_governing_fields
+    candidate = deepcopy(reference)
+    competing = deepcopy(candidate["definition_uses"][0])
+    competing["definition_unit_id"] = "fixture:definition-B"
+    unresolved = {"definition_unit_id": None, "applicability": "unresolved", "target_typed_paths": None}
+    candidate["definition_uses"].extend([competing, unresolved])
+    comparison = owner.compare_relational_governing_fields_v1(reference, candidate)
+    assert comparison["measurements"]["definition_uses_exact"] is False
+    assert comparison["candidate"]["definition_uses"] == candidate["definition_uses"]
+    assert not any(comparison["authority"].values())
+
+    reversed_candidate = {**candidate, "definition_uses": list(reversed(candidate["definition_uses"]))}
+    ordered = owner.compare_relational_governing_fields_v1(candidate, reversed_candidate)
+    assert ordered["measurements"]["definition_uses_exact"] is False
+    identical = owner.compare_relational_governing_fields_v1(candidate, candidate)
+    assert identical["measurements"]["definition_uses_exact"] is True
+    assert not any(identical["authority"].values())
+    unresolved["applicability"] = "changed_after_comparison"
+    assert identical["candidate"]["definition_uses"][2]["applicability"] == "unresolved"
+
+
+def test_governing_fidelity_retains_unresolved_context_without_filling_missing_values():
+    reference = {"governing_context": {"governing_edition": None}}
+    result = owner.compare_relational_governing_fields_v1(reference, {"governing_context": {}})
+    assert result["measurements"]["governing_context_exact"] is False
+    assert result["reference"] == reference
+    assert result["candidate"] == {"governing_context": {}}
+
+
+@pytest.mark.parametrize("damage", [
+    {"source_binding": {}}, {"governing_context": {"source_text": "hidden"}},
+    {"governing_context": {"valid_from_utc": 2030}}, {"definition_uses": {}},
+    {"definition_uses": [{"target_typed_paths": [True]}]},
+    {"definition_uses": [{"evidence_refs": [{"raw_source": "hidden"}]}]},
+    {"definition_uses": [{"applicability": ["governing"]}]},
+])
+def test_governing_fidelity_refuses_other_channels_and_invalid_field_types(damage):
+    with pytest.raises(owner.RelationalReconstructionError):
+        owner.compare_relational_governing_fields_v1({}, damage)
