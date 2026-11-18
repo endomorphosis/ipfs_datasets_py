@@ -11,10 +11,11 @@ from __future__ import annotations
 from collections import Counter
 from copy import deepcopy
 import hashlib
+import json
 import re
-from typing import Any
 
 from . import legal_span_cache_intake as intake
+from ...processors.legal_data.uscode_release_schema import validate_legal_id
 
 SCHEMA = "legal-span-section-observation-bridge/v1"
 POLICY_SCHEMA = "legal-span-section-source-mapping-policy/v1"
@@ -33,13 +34,6 @@ AUTHORITY = dict.fromkeys(("admitted", "formalized", "source_semantics_verified"
     "source_package_content_identity_verified", "primary_source_correspondence_verified", "context_closure_verified", "legal_review_verified",
     "global_consistency_verified", "proof_authority", "training_qualified",
     "complete_section_coverage_verified", "legacy_admission_flags_used"), False)
-
-
-def validate_legal_id(value: Any, *, name: str = "legal_id") -> str:
-    """Use the canonical schema validator only when legal-ID validation is needed."""
-    from ...processors.legal_data.uscode_release_schema import validate_legal_id as validator
-
-    return validator(value, name=name)
 
 
 class SpanSectionBridgeError(ValueError):
@@ -245,3 +239,212 @@ def validate_span_section_bridge(report, rows, **trusted_inputs):
 
 
 __all__ = ["SpanSectionBridgeError", "identity_policy_sha256", "reconcile_span_sections", "validate_span_section_bridge"]
+
+
+# Separate profile: official V2 source versions are not Git source revisions.
+# The v1 cache/source-mapping contract above deliberately remains unchanged.
+SAMPLING_SCHEMA = "legal-sampled-source-section-review-candidates/v1"
+SAMPLING_PROFILE = "pinned-complete-v2-sampler-selected-unit-primary-nominations/v1"
+SAMPLING_LIMITS = {"max_bundle_bytes": 64 * 1024**2, "max_output_bytes": 32 * 1024**2,
+                   "max_input_bytes": 80 * 1024**2, "max_selected_subjects": 128}
+SAMPLING_AUTHORITY = {**AUTHORITY, "same_source_version_verified": False,
+    "edition_correspondence_verified": False, "governing_applicability_verified": False,
+    "source_occurrence_selected_for_meaning": False, "review_response_recorded": False,
+    "semantic_graph_created": False, "typed_meaning_created": False}
+_SAMPLING_REQUIRED = {"expected_sampling_report_sha256", "descriptor", "expected_descriptor_sha256",
+                      "expected_raw_sha256", "expected_raw_bytes"}
+_SAMPLING_OPTIONAL = {"view_limits", "sampling_limits"}
+
+
+def _sampling_wire(value, maximum):
+    # This existing owner is stdlib-only; no extraction, index or native owner
+    # is loaded by its bounded JSON helper.
+    from .legal_source_sampling_review import _wire as bounded_wire
+    return bounded_wire(value, maximum)
+
+
+def _sampling_digest(value, maximum=32 * 1024**2):
+    return hashlib.sha256(_sampling_wire(value, maximum)).hexdigest()
+
+
+def _sampling_limits(limits):
+    _need(limits is None or type(limits) is dict and not set(limits)-set(SAMPLING_LIMITS),
+          "closed sampled-source bridge limits required")
+    bounds = dict(SAMPLING_LIMITS, **(limits or {}))
+    _need(all(type(value) is int and 0 < value <= SAMPLING_LIMITS[key] for key, value in bounds.items()),
+          "positive lowered sampled-source bridge limits required")
+    return bounds
+
+
+def sampling_section_subjects_sha256(selected_subject_refs):
+    """Commit an explicit unique source-ordered selection; never infer a unit."""
+    _need(type(selected_subject_refs) is list and 0 < len(selected_subject_refs) <= SAMPLING_LIMITS["max_selected_subjects"],
+          "nonempty bounded selected unit population required")
+    previous = -1
+    for ref in selected_subject_refs:
+        _need(type(ref) is dict and set(ref) == {"kind", "index", "sha256"}, "closed sampler subject reference required")
+        _need(ref["kind"] == "unit", "only explicit unit subjects are supported; withheld contexts are not units")
+        _need(type(ref["index"]) is int and previous < ref["index"] < 4096,
+              "unique source-ordered selected unit indices required")
+        _sha(ref["sha256"])
+        previous = ref["index"]
+    return _sampling_digest(selected_subject_refs, 1024**2)
+
+
+def _sampling_owners():
+    from . import legal_source_sampling_review as sampling_review
+    from .legal_primary_section_index import PrimarySectionIndex
+    return sampling_review, PrimarySectionIndex
+
+
+def _sampling_preflight(bundle, raw_html, selected_subject_refs, expected_bundle_sha256,
+        expected_selected_subjects_sha256, expected_section_index_sha256, replay_inputs, bounds):
+    for pin in (expected_bundle_sha256, expected_selected_subjects_sha256, expected_section_index_sha256):
+        _sha(pin)
+    _need(sampling_section_subjects_sha256(selected_subject_refs) == expected_selected_subjects_sha256,
+          "independent selected subject population pin differs")
+    _need(len(selected_subject_refs) <= bounds["max_selected_subjects"], "selected subject bound exceeded")
+    _need(type(bundle) is dict, "complete sampling review bundle required")
+    bundle_raw = _sampling_wire(bundle, bounds["max_bundle_bytes"])
+    _need(hashlib.sha256(bundle_raw).hexdigest() == expected_bundle_sha256, "independent complete review bundle pin differs")
+    _need(_SAMPLING_REQUIRED <= set(replay_inputs) <= _SAMPLING_REQUIRED | _SAMPLING_OPTIONAL,
+          "closed existing sampling replay inputs required")
+    replay_raw = _sampling_wire(replay_inputs, 1024**2)
+    for key in ("expected_sampling_report_sha256", "expected_descriptor_sha256", "expected_raw_sha256"):
+        _sha(replay_inputs[key])
+    count = replay_inputs["expected_raw_bytes"]
+    _need(type(count) is int and 0 < count <= 8_000_000 and type(raw_html) is bytes and len(raw_html) == count,
+          "exact bounded immutable original HTML bytes required")
+    _need(hashlib.sha256(raw_html).hexdigest() == replay_inputs["expected_raw_sha256"], "independent original HTML pin differs")
+    _need(_sampling_digest(replay_inputs["descriptor"], 1024**2) == replay_inputs["expected_descriptor_sha256"],
+          "independent acquisition descriptor pin differs")
+    _need(_sampling_digest(bundle.get("sampling_report")) == replay_inputs["expected_sampling_report_sha256"],
+          "independent complete sampling report pin differs")
+    _need(len(bundle_raw)+len(replay_raw)+count+len(_sampling_wire(selected_subject_refs, 1024**2)) <= bounds["max_input_bytes"],
+          "complete sampled-source bridge input byte bound exceeded")
+    return json.loads(bundle_raw), json.loads(replay_raw), deepcopy(selected_subject_refs)
+
+
+def _sampling_record(reference, records):
+    matches = [record for record in records if record.get("record_cid") == reference["record_cid"]
+               and record.get("schema") == reference["schema"] and _sampling_digest(record) == reference["sha256"]]
+    _need(len(matches) == 1, "one exact original sampler source record required")
+    return deepcopy(matches[0])
+
+
+def reconcile_sampling_sections(bundle, raw_html, *, expected_bundle_sha256, selected_subject_refs,
+        expected_selected_subjects_sha256, section_index, expected_section_index_sha256,
+        limits=None, **sampling_replay_inputs):
+    """Nominate primary sections for independently selected V2 review subjects.
+
+    Replay the complete source bundle, retaining its population commitments and
+    each selected original guide, unit, occurrence and open context. The full
+    primary lookup is stored once. No graph, meaning, historical correspondence
+    or completed review is inferred from a citation match or equal text.
+    """
+    bounds = _sampling_limits(limits)
+    offered, replay, selected = _sampling_preflight(bundle, raw_html, selected_subject_refs,
+        expected_bundle_sha256, expected_selected_subjects_sha256, expected_section_index_sha256,
+        sampling_replay_inputs, bounds)
+    review_owner, index_type = _sampling_owners()
+    _need(type(section_index) is index_type, "guarded PrimarySectionIndex owner required")
+    section_index.guard()
+    _need(section_index.index_sha256 == expected_section_index_sha256, "independent section index pin differs")
+    primary = section_index.primary_identity
+    checked = review_owner.validate_sampling_review_bundle(offered, raw_html,
+        expected_bundle_sha256=expected_bundle_sha256, **replay)
+    _need(_sampling_wire(checked, bounds["max_bundle_bytes"]) == _sampling_wire(offered, bounds["max_bundle_bytes"]),
+          "complete sampled-source bundle differs from exact canonical replay")
+    sampling = checked["sampling_report"]
+    _need(sampling["status"] == "whole_source_blocks_prepared", "complete available sampler population required")
+    document = sampling["document_view_report"]["document"]
+    legal_id = document["legal_id"]
+    _need(type(legal_id) is str and validate_legal_id(legal_id) == legal_id, "literal original document legal ID required")
+    units = [record for record in sampling["records"] if record["schema"] == review_owner.UNIT_SCHEMA]
+    rows = []
+    selected_bytes = 2
+    for ref in selected:
+        _need(ref["index"] < len(units), "selected unit is outside original complete population")
+        unit = units[ref["index"]]
+        _need(unit["ordinal"] == ref["index"] and _sampling_digest(unit) == ref["sha256"],
+              "selected subject differs from exact original sampler unit")
+        _need(unit["paragraph_fragment_withheld"] is False,
+              "selected withheld paragraph fragment is unsupported by whole-unit profile")
+        guides = [guide for guide in checked["guides"] if _sampling_wire(guide["subject_ref"], 1024**2) == _sampling_wire(ref, 1024**2)]
+        _need(len(guides) == 1, "one exact original selected blank guide required")
+        guide = guides[0]
+        _need(guide["source_occurrence_ref"] == unit["source_occurrence_ref"] and guide["context_ref"] == unit["context_ref"],
+              "selected original guide source/context differs")
+        row = {"subject_ref": ref, "guide": deepcopy(guide), "unit": deepcopy(unit),
+            "source_version": _sampling_record(unit["source_version_ref"], sampling["records"]),
+            "source_occurrence": _sampling_record(unit["source_occurrence_ref"], sampling["records"]),
+            "context_declaration": _sampling_record(unit["context_ref"], sampling["records"]),
+            "status": "selected_for_source_review_only", "meaning_target": None, "typed_IR": None,
+            "training_mask": 0, "evaluation_gold_mask": 0, "authority": dict(SAMPLING_AUTHORITY)}
+        selected_bytes += len(_sampling_wire(row, bounds["max_output_bytes"]))+1
+        _need(selected_bytes <= bounds["max_output_bytes"], "selected source records exceed output byte bound before lookup")
+        rows.append(row)
+    lookup = section_index.lookup_sections(legal_id)
+    _need(lookup["legal_id"] == legal_id and lookup["index_sha256"] == expected_section_index_sha256
+          and _sampling_wire(lookup["primary_identity"], 1024**2) == _sampling_wire(primary, 1024**2),
+          "guarded original section lookup identity differs")
+    sections = lookup["sections"]
+    _need(all(section["legal_id"] == legal_id for section in sections), "literal section lookup population differs")
+    disposition = "section_candidate_missing" if not sections else "section_candidate_ambiguous" if len(sections) > 1 else "unique_literal_section_nomination_only"
+    issues = [{"code": "primary_source_edition_correspondence_unverified"},
+              {"code": "governing_source_applicability_unreviewed"}]
+    issues.extend(deepcopy(lookup["issues"]))
+    for section in sections:
+        issues.extend({**deepcopy(issue), "section_entry_cid": section["entry_cid"]} for issue in section["issues"])
+    report = {"schema": SAMPLING_SCHEMA, "profile": SAMPLING_PROFILE, "limits": bounds,
+        "input_pins": {"bundle_sha256": expected_bundle_sha256,
+            "selected_subjects_sha256": expected_selected_subjects_sha256,
+            **{key: replay[key] for key in ("expected_sampling_report_sha256", "expected_descriptor_sha256", "expected_raw_sha256", "expected_raw_bytes")}},
+        "source_identity": {"legal_id": legal_id, "document_id": document["document_id"],
+            "edition": document["edition"], "document_text_sha256": document["document_text_sha256"],
+            "normalized_view_id": sampling["document_view_report"]["normalized_view"]["view_id"],
+            "acquisition_descriptor": deepcopy(replay["descriptor"])},
+        "sampling_population": {"source_status": sampling["status"], "counts": deepcopy(checked["manifest"]["counts"]),
+            "sampler_counts": deepcopy(sampling["counts"]), "guides_sha256": checked["manifest"]["guides_sha256"],
+            "complete_bundle_required": True, "complete_bundle_replayed": True,
+            "complete_population_preserved_externally": True, "selected_subset_is_not_complete_population": True},
+        "selected_subject_refs": selected, "selected_count": len(rows), "rows": rows,
+        "primary_identity": primary, "section_index_sha256": expected_section_index_sha256,
+        "section_lookup": lookup, "section_lookup_sha256": _sampling_digest(lookup),
+        "section_disposition": disposition,
+        "correspondence": {"status": "unverified_distinct_source_namespaces",
+            "official_edition": document["edition"], "official_package_id": replay["descriptor"]["package_id"],
+            "primary_release_point": primary["release_point"], "primary_source_revision": primary["source_revision"],
+            "source_package_candidates": sum(len(section["source_packages"]) for section in sections),
+            "recognized_release_point_candidates": sum(len(section["release_points"]) for section in sections),
+            "edition_mapping": None, "historical_cache_binding": None,
+            "legal_id_match_proves_source_correspondence": False, "equal_text_proves_same_source_version": False},
+        "issues": issues, "status": "source_review_candidates_only", "review_response_count": 0,
+        "semantic_graph_assertions": 0, "training_mask": 0, "evaluation_gold_mask": 0,
+        "authority": dict(SAMPLING_AUTHORITY)}
+    section_index.guard()
+    _need(section_index.index_sha256 == expected_section_index_sha256
+          and _sampling_wire(section_index.primary_identity, 1024**2) == _sampling_wire(primary, 1024**2),
+          "primary section index changed during sampled-source nomination")
+    return json.loads(_sampling_wire(report, bounds["max_output_bytes"]))
+
+
+def sampling_section_bridge_sha256(report):
+    """Full output commitment; validation still requires every original input."""
+    _need(type(report) is dict and report.get("schema") == SAMPLING_SCHEMA, "sampled-source section report required")
+    return _sampling_digest(report, _sampling_limits(report.get("limits"))["max_output_bytes"])
+
+
+def validate_sampling_section_bridge(report, bundle, raw_html, *, expected_bridge_sha256, **trusted_inputs):
+    """Regenerate source custody and guarded lookup; resealing alone is insufficient."""
+    _sha(expected_bridge_sha256)
+    _need(sampling_section_bridge_sha256(report) == expected_bridge_sha256, "independent sampled-source bridge pin differs")
+    offered = _sampling_wire(report, _sampling_limits(trusted_inputs.get("limits"))["max_output_bytes"])
+    expected = reconcile_sampling_sections(bundle, raw_html, **trusted_inputs)
+    _need(offered == _sampling_wire(expected, expected["limits"]["max_output_bytes"]),
+          "sampled-source section report differs from complete independent replay")
+    return expected
+
+
+__all__ += ["sampling_section_subjects_sha256", "reconcile_sampling_sections",
+            "sampling_section_bridge_sha256", "validate_sampling_section_bridge"]
