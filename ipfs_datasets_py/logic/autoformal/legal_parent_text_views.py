@@ -243,3 +243,12 @@ def exact_parent_text_occurrences(report, selected_rows_report, *, expected_repo
 
 __all__ = ["ParentTextViewsError", "parent_text_views_report_sha256", "prepare_parent_text_views",
     "validate_parent_text_views", "exact_parent_text_occurrences"]
+
+
+from ipfs_datasets_py.logic.autoformal import corpus_contracts as _joined_owner_contracts_v1
+
+_JOIN_LOADED_OWNER_GUARD_V1 = _joined_owner_contracts_v1._capture_loaded_owner_guard_v1(
+    globals(), value_names=(),
+    class_names=('ParentTextViewsError',),
+    imported_function_names=(),
+    alias_names=('__builtins__', '__loader__', '__spec__', '_joined_owner_contracts_v1', 'deepcopy', 'hashlib', 'json', 'pages', 're'))

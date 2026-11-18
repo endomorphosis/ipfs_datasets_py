@@ -469,3 +469,12 @@ def validate_census_bindings(report, path, *, expected_census_sha256, expected_f
 
 
 __all__ = ["EntityIndexIntakeError", "iter_observed_rows", "census_parquet", "validate_census", "validate_census_bindings"]
+
+
+from ipfs_datasets_py.logic.autoformal import corpus_contracts as _joined_owner_contracts_v1
+
+_JOIN_LOADED_OWNER_GUARD_V1 = _joined_owner_contracts_v1._capture_loaded_owner_guard_v1(
+    globals(), value_names=('FIELDS', 'BOOLEAN_FIELDS', 'KNOWN_KINDS', 'ROW_SCHEMA', 'SCHEMA', 'DETAILED_SCHEMA', '_SHA', '_FALSE', 'MAX_ROWS', 'MAX_BATCH_SIZE', 'MAX_FILE_BYTES', 'MAX_DECODED_BYTES', 'MAX_ROW_GROUP_BYTES', 'MAX_BATCH_BYTES', 'MAX_ROW_BYTES', 'MAX_SCRATCH_BYTES', 'MAX_DISTINCT_VALUES'),
+    class_names=('EntityIndexIntakeError',),
+    imported_function_names=(),
+    alias_names=('Counter', 'Path', '__builtins__', '__loader__', '__spec__', '_joined_owner_contracts_v1', 'contextmanager', 'hashlib', 'json', 'meta_ontology', 'os', 're', 'sqlite3', 'stat', 'tempfile'))

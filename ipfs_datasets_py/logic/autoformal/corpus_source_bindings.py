@@ -581,3 +581,189 @@ def validate_source_bindings(report, *args, **kwargs):
 
 __all__ = ['record_source_binding_declaration', 'validate_source_binding_declaration',
     'assess_source_bindings', 'validate_source_bindings']
+
+
+
+def bound_norm_component_inputs_sha256(value):
+    """Commit explicit handoff JSON/bytes using the existing norm snapshot recipe.
+
+    This digest is an input commitment, never an assessment or authority token.
+    """
+    from . import legal_norm_interpretation_review_v1 as norm
+    return norm._snapshot(value)[1]
+
+
+def prepare_bound_norm_component_v1(binding_report, *, binding_replay_inputs,
+        expected_binding_manifest_sha256, unit_bindings, expected_unit_bindings_sha256,
+        norm_preparation_inputs, expected_norm_preparation_inputs_sha256):
+    """Prepare an explicit complete component from current declared source tuples.
+
+    The old binding report and its unavailable contexts are never rewritten.
+    Callers supply new declaration-only context records and complete independent
+    source/typed-IR inputs. Existing source, history, trust, norm, physical-use,
+    definition-use and dependency validators remain authoritative for their
+    respective mechanical contracts. This operation performs no meaning review,
+    admission, consumer callback, training or governing-source adoption.
+
+    The narrow context handoff accepts original required-unavailable records.
+    Every named requirement must have an explicitly supplied source reference
+    within the same complete component. Reference availability is not evidence
+    that a legal question has been answered.
+    """
+    from . import legal_norm_content_adjudication_v1 as admission
+    from . import legal_norm_interpretation_review_v1 as norm
+
+    replay_fields = {'history_report', 'history_replay_inputs', 'binding_registry',
+        'binding_policy', 'binding_groups', 'expected_history_manifest_sha256',
+        'expected_binding_registry_sha256', 'expected_binding_policy_sha256',
+        'expected_binding_group_pins'}
+    if (type(binding_replay_inputs) is not dict
+            or not replay_fields <= set(binding_replay_inputs)
+            or set(binding_replay_inputs) - replay_fields - {'limits'}):
+        _fail('complete closed current binding replay inputs required')
+    for digest in (expected_binding_manifest_sha256, expected_unit_bindings_sha256,
+                   expected_norm_preparation_inputs_sha256):
+        contracts.require_sha256(digest, 'independent bound component FULL SHA256')
+    original = dict(unit_bindings=unit_bindings, norm_preparation_inputs=norm_preparation_inputs)
+    detached, commitment = norm._snapshot(original)
+    if (norm._snapshot(detached['unit_bindings'])[1] != expected_unit_bindings_sha256
+            or norm._snapshot(detached['norm_preparation_inputs'])[1] != expected_norm_preparation_inputs_sha256):
+        _fail('independent complete handoff input commitment differs')
+    pins = _pins()
+    checked = validate_source_bindings(binding_report, **binding_replay_inputs)
+    if _digest(checked['manifest']) != expected_binding_manifest_sha256:
+        _fail('current source binding manifest differs from independently selected root')
+    inputs = detached['norm_preparation_inputs']
+    contracts.require_keys(inputs, {'declaration', 'expected_declaration_sha256',
+        'source_inputs', 'relational_inputs', 'dependency_manifest', 'expected_manifest_sha256'},
+        'complete existing reviewed norm preparation inputs')
+    prepared = admission.prepare_reviewed_norm_admission_v2(**inputs)
+    units = inputs['declaration']['units']
+    links = detached['unit_bindings']
+    if (type(links) is not list or len(links) != len(units)
+            or [row.get('unit_id') for row in links if type(row) is dict] != [row['unit_id'] for row in units]):
+        _fail('complete ordered independent source binding per norm component unit required')
+    for link in links:
+        contracts.require_keys(link, {'unit_id', 'request_cid', 'binding_declaration_ref',
+            'context_declaration', 'governing_context', 'legal_as_of_civil_date'},
+            'explicit bound norm component unit')
+        contracts.require_cid(link['request_cid'], 'bound request CID', codecs=('dag-json',))
+        _reference(link['binding_declaration_ref'], DECLARATION_SCHEMA, 'current binding declaration')
+    requests = [row['request_cid'] for row in links]
+    if len(set(requests)) != len(requests):
+        _fail('one current binding request cannot manufacture distinct component uses')
+    groups = {row['request_cid']: row for row in checked['records']}
+    current = _current_inputs(binding_replay_inputs['history_replay_inputs'])
+    catalog = _catalog(current['adjudication_replay_inputs'])
+    component_records = {}
+    for unit in units:
+        for record in (unit['source_version'], unit['occurrence']):
+            cid = record['record_cid']
+            if cid in component_records and canonical_dag_json_bytes(component_records[cid]) != canonical_dag_json_bytes(record):
+                _fail('conflicting complete component source record identity')
+            component_records[cid] = record
+    context_bindings = []
+    for link, unit in zip(links, units, strict=True):
+        contracts.require_keys(link, {'unit_id', 'request_cid', 'binding_declaration_ref',
+            'context_declaration', 'governing_context', 'legal_as_of_civil_date'},
+            'explicit bound norm component unit')
+        group = groups.get(link['request_cid'])
+        if group is None or group['structured_source_binding_declared_under_selected_profile'] is not True:
+            _fail('current authenticated structured binding prerequisites unavailable')
+        declaration = group['binding_declaration_record']
+        if (group['declared_binding_refs'] != [link['binding_declaration_ref']]
+                or link['binding_declaration_ref'] != _ref(declaration)):
+            _fail('independently selected current binding declaration differs')
+        choice = declaration['choice']
+        if (choice['source_version_ref'] != _ref(unit['source_version'])
+                or choice['source_occurrence_ref'] != _ref(unit['occurrence'])):
+            _fail('complete norm unit differs from exact current bound source version or occurrence')
+        info = catalog['versions'].get((unit['source_version']['record_cid'],
+                                       choice['document_observation_ref']['record_cid']))
+        source_input = inputs['source_inputs'][unit['unit_id']]
+        if (info is None or source_input['raw_bytes'] != info['raw_bytes']
+                or source_input['extracted_text'] != info['text']):
+            _fail('independently supplied complete raw source or coordinate view differs')
+        context = link['governing_context']
+        if (choice['declared_region_role'] != 'operative_body'
+                or link['legal_as_of_civil_date'] is None
+                or link['legal_as_of_civil_date'] != choice['applicability']['legal_as_of_civil_date']
+                or not norm._same(context, inputs['declaration']['governing_context'])
+                or context['jurisdiction'] != choice['applicability']['jurisdiction_id']
+                or context['instrument_id'] != choice['applicability']['instrument_id']
+                or context['governing_edition'] != unit['source_version']['edition']):
+            _fail('explicit applicability context, edition or declared civil legal date differs')
+        known = admission.validate_complete_norm_known_input_v1(
+            known_source_binding={'source_version_cid': unit['source_version']['record_cid'],
+                'occurrence_cid': unit['occurrence']['record_cid'],
+                'document_revision': unit['document_revision']},
+            known_governing_context=context)
+        # Civil legal date and the explicit UTC context are separate declarations.
+        # Do not derive an unavailable civil date from an operational UTC clock.
+        old_context = _selected(choice['context_ref'], catalog, 'original unavailable context')
+        if old_context['availability'] != 'required_unavailable' or not old_context['missing_requirements']:
+            _fail('this explicit context-migration profile requires the original unavailable context')
+        supplied = source_records.validate_context_declaration(link['context_declaration'],
+            source_occurrence=unit['occurrence'], expected_occurrence_cid=unit['occurrence']['record_cid'])
+        if (supplied['availability'] != 'declared_context' or supplied['missing_requirements']
+                or {ref['purpose'] for ref in supplied['context_references']} != set(old_context['missing_requirements'])):
+            _fail('complete explicitly declared source context requirements remain unavailable')
+        for reference in supplied['context_references']:
+            record = component_records.get(reference['record_cid'])
+            schema = (source_records.SOURCE_VERSION_SCHEMA if reference['record_kind'] == 'source_version'
+                      else source_records.SOURCE_OCCURRENCE_SCHEMA)
+            if record is None or record['schema'] != schema:
+                _fail('context reference lacks its complete independently validated component source')
+        context_bindings.append({'unit_id': unit['unit_id'], 'request_cid': link['request_cid'],
+            'binding_declaration_ref': link['binding_declaration_ref'],
+            'original_context_ref': choice['context_ref'],
+            'original_context_availability': old_context['availability'],
+            'supplied_context_declaration': supplied, 'known_input': known,
+            'declared_legal_as_of_civil_date': link['legal_as_of_civil_date']})
+    closing = validate_source_bindings(binding_report, **binding_replay_inputs)
+    if (_digest(closing['manifest']) != expected_binding_manifest_sha256
+            or norm._snapshot(original)[1] != commitment
+            or norm._snapshot(detached)[1] != commitment
+            or _pins() != pins or admission._reviewed_pins() != prepared['producer_pins']):
+        _fail('bound component source, current trust, explicit inputs or preparation owners changed')
+    result = {'schema': 'legal-bound-norm-component-preparation/v1',
+        'profile': 'declared-source-binding-to-complete-norm-preparation/v1',
+        'binding_manifest_sha256': expected_binding_manifest_sha256,
+        'source_history_manifest_ref': checked['manifest']['history_manifest_ref'],
+        'current_epoch_id': checked['manifest']['current_epoch_id'],
+        'unit_bindings_sha256': expected_unit_bindings_sha256,
+        'norm_preparation_inputs_sha256': expected_norm_preparation_inputs_sha256,
+        'context_bindings': context_bindings, 'norm_preparation': prepared,
+        'norm_preparation_sha256': admission.norm_content_adjudication_sha256(prepared),
+        'producer_pins': pins, 'original_binding_report_unchanged': True,
+        'context_scope': 'new explicit source context declarations only; original unavailable contexts retained',
+        'semantic_use_eligible': False, 'training_mask': 0, 'evaluation_gold_mask': 0,
+        'governing_source_adoption_applied': False, 'semantic_admission_performed': False,
+        'training_executed': False, 'Lean_admitted': False, 'semantic_graph_admitted': False,
+        'corpus_admitted': False, 'formal_assumptions_proved': False}
+    returned = json.loads(norm._wire(result))
+    if (not norm._same(returned, result)
+            or admission.norm_content_adjudication_sha256(returned['norm_preparation']) != result['norm_preparation_sha256']
+            or norm._snapshot(original)[1] != commitment or _pins() != pins):
+        _fail('complete bound component serialization or explicit inputs changed')
+    return returned
+
+
+def validate_bound_norm_component_v1(report, *args, expected_report_sha256, **kwargs):
+    """Regenerate complete preparation; a stored ready/report digest is insufficient."""
+    from . import legal_norm_interpretation_review_v1 as norm
+    contracts.require_sha256(expected_report_sha256, 'independent bound component report FULL SHA256')
+    if norm.norm_review_sha256(report) != expected_report_sha256:
+        _fail('bound component report commitment differs')
+    expected = prepare_bound_norm_component_v1(*args, **kwargs)
+    if not norm._same(report, expected):
+        _fail('bound component preparation differs from complete current regeneration')
+    return expected
+
+
+# Additive public exports; the complete original module prefix is unchanged.
+__all__ += [
+    'bound_norm_component_inputs_sha256',
+    'prepare_bound_norm_component_v1',
+    'validate_bound_norm_component_v1',
+]
