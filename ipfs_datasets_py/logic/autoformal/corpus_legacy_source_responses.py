@@ -242,42 +242,32 @@ def _content(entry, signed, request, subject, preparation_sha256, evidence):
         return None, False, [str(error)[:512] or "typed_response_content_invalid"]
 
 
-def _source_response_inputs(preparation, reviews, response_bindings,
-        expected_response_bindings_sha256, evidence_artifacts):
-    """Unchanged typed-response preflight, before source authentication/replay."""
+def assess_legacy_source_responses(preparation, registry, policy, reviews, *, response_bindings,
+        expected_response_bindings_sha256, **source_inputs):
+    """Authenticate original claims, validate typed bodies, retain pending variants.
+
+    The complete ordered binding list has exactly one entry for every supplied
+    signed review, including invalid content. Evidence hashes and signature
+    checks are custody checks; exact-answer comparison is not legal adjudication.
+    """
+    contracts.require_keys(source_inputs, _SOURCE_FIELDS, "complete source assessment inputs")
     detached = source._detach(preparation)
     reviews = json.loads(auth.wire(reviews))
     if type(reviews) is not list or len(reviews) > auth.MAX_REVIEWS or any(type(row) is not dict for row in reviews):
         _fail("bounded signed review list required")
     bindings = _bindings(response_bindings, expected_response_bindings_sha256, reviews)
-    evidence = evidence_artifacts
+    evidence = source_inputs["evidence_artifacts"]
     if (type(evidence) is not dict or len(evidence) > auth.MAX_EVIDENCE
             or any(type(key) is not str or type(raw) is not bytes for key, raw in evidence.items())
             or sum(map(len, evidence.values())) > auth.MAX_BYTES):
         _fail("bounded immutable source response evidence required")
-    return detached, reviews, bindings, dict(evidence)
-
-
-def _assess_source_responses_prepared(capability, auth_inputs, *, response_bindings,
-        expected_response_bindings_sha256, capability_registry, mint_token):
-    """Private complete-preparation gate plus fresh auth and exact typed content.
-
-    No caller assessment/cache flag is accepted. The fixed legacy source owner
-    authenticates freshly inside this call before the unchanged content loop.
-    The public wrapper or fixed batch must first replay original source banks
-    and perform the unchanged response and source preflights.
-    """
-    checked = source._source_review_preparation(capability,
-        registry=capability_registry, mint_token=mint_token)
-    reviews = auth_inputs["reviews"]
-    bindings = _bindings(response_bindings, expected_response_bindings_sha256, reviews)
-    evidence = auth_inputs["evidence_artifacts"]
-    raw_assessment = source._assess_source_review_prepared(capability, auth_inputs,
-        capability_registry=capability_registry, mint_token=mint_token)
-    ordinal = auth_inputs["request_ordinal"]
-    request, subject = checked["requests"][ordinal], checked["subjects"][ordinal]
+    evidence = dict(evidence)
+    source_inputs = {**source_inputs, "evidence_artifacts": evidence}
+    raw_assessment = source.assess_legacy_source_review(detached, registry, policy, reviews, **source_inputs)
+    ordinal = source_inputs["request_ordinal"]
+    request, subject = detached["requests"][ordinal], detached["subjects"][ordinal]
     results, valid, variants, pending = [], [], [], []
-    preparation_sha = auth_inputs["expected_preparation_manifest_sha256"]
+    preparation_sha = source_inputs["expected_preparation_manifest_sha256"]
     for entry, signed, raw_row in zip(bindings, reviews, raw_assessment["reviews"], strict=True):
         record, complete, blockers = _content(entry, signed, request, subject, preparation_sha, evidence)
         authenticated = raw_row["status"] == "authenticated" and not blockers
@@ -347,34 +337,6 @@ def _assess_source_responses_prepared(capability, auth_inputs, *, response_bindi
             "applied_source_decisions": 0}, "view": "candidate", **FALSE_FLAGS, **source._UNSELECTED}
     report["assessment_sha256"] = _digest(report)
     return json.loads(auth.wire(report))
-
-
-def assess_legacy_source_responses(preparation, registry, policy, reviews, *, response_bindings,
-        expected_response_bindings_sha256, **source_inputs):
-    """Authenticate original claims, validate typed bodies, retain pending variants.
-
-    The complete ordered binding list has exactly one entry for every supplied
-    signed review, including invalid content. Evidence hashes and signature
-    checks are custody checks; exact-answer comparison is not legal adjudication.
-    The original public guard order and full original source replay remain.
-    """
-    contracts.require_keys(source_inputs, _SOURCE_FIELDS, "complete source assessment inputs")
-    detached, reviews, bindings, evidence = _source_response_inputs(preparation, reviews,
-        response_bindings, expected_response_bindings_sha256, source_inputs["evidence_artifacts"])
-    source_inputs = {**source_inputs, "evidence_artifacts": evidence}
-    join_fields = {"join_bytes", "paired_row_bytes", "expected_join_sha256", "expected_population",
-        "producer_receipt_bytes", "expected_producer_receipt_sha256", "source_sections", "expected_source_sections"}
-    detached, auth_inputs = source._source_review_auth_inputs(detached, registry, policy, reviews,
-        **{key: source_inputs[key] for key in _SOURCE_FIELDS - join_fields})
-    checked = source.validate_legacy_source_review_requests(detached, source_inputs["join_bytes"],
-        source_inputs["paired_row_bytes"],
-        **{key: source_inputs[key] for key in join_fields - {"join_bytes", "paired_row_bytes"}})
-    capabilities, token = {}, object()
-    capability = source._mint_source_review_preparation(checked,
-        generation_sha256=_digest(checked["manifest"]), registry=capabilities, mint_token=token)
-    return _assess_source_responses_prepared(capability, auth_inputs, response_bindings=bindings,
-        expected_response_bindings_sha256=expected_response_bindings_sha256,
-        capability_registry=capabilities, mint_token=token)
 
 
 def validate_legacy_source_responses(report, *args, **kwargs):

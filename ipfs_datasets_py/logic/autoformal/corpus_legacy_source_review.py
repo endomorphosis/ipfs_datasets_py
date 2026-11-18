@@ -229,81 +229,18 @@ _DOMAIN = review._ReviewDomain(SUBJECT_SCHEMA, CLAIM_SCHEMA, ACTION, AUDIENCE,
                              ASSESSMENT_SCHEMA, _subject, 9)
 
 
-class _SourceReviewPreparation:
-    """Private immutable complete-preparation capability, never a public input."""
-    __slots__ = ("_raw", "_payload", "_generation", "_mint_token")
-
-    def __new__(cls, *args, **kwargs):
-        _fail("source review preparation requires a validated internal mint")
-
-    def __setattr__(self, name, value):
-        _fail("source review preparation capability is immutable")
-
-    def __delattr__(self, name):
-        _fail("source review preparation capability is immutable")
-
-    def __reduce__(self):
-        _fail("source review preparation capability is nonserializable")
-
-    def __reduce_ex__(self, protocol):
-        _fail("source review preparation capability is nonserializable")
-
-
-def _freeze_source_preparation(value):
-    if type(value) is dict:
-        return ("d", tuple((key, _freeze_source_preparation(child)) for key, child in value.items()))
-    if type(value) is list:
-        return ("l", tuple(_freeze_source_preparation(child) for child in value))
-    return ("v", value)
-
-
-def _thaw_source_preparation(value):
-    kind, payload = value
-    if kind == "d":
-        return {key: _thaw_source_preparation(child) for key, child in payload}
-    if kind == "l":
-        return [_thaw_source_preparation(child) for child in payload]
-    if kind != "v":
-        _fail("source preparation immutable tag differs")
-    return payload
-
-
-def _mint_source_review_preparation(checked, *, generation_sha256, registry, mint_token):
-    """Internal boundary: callers must first genuinely replay complete originals.
-
-    The old public owner calls this after its unchanged full regeneration. The
-    fixed shared-bank owner calls it after the genuine public bank-context mint.
-    This private hook accepts no caller 'verified' flag or public parsed cache.
-    It is cooperative custody, not protection against arbitrary Python access.
-    """
-    contracts.require_sha256(generation_sha256, "source preparation generation")
-    detached = _detach(checked)
-    raw = review.wire(detached)
-    capability = object.__new__(_SourceReviewPreparation)
-    object.__setattr__(capability, "_raw", raw)
-    object.__setattr__(capability, "_payload", _freeze_source_preparation(detached))
-    object.__setattr__(capability, "_generation", generation_sha256)
-    object.__setattr__(capability, "_mint_token", mint_token)
-    registry[id(capability)] = (capability, raw, generation_sha256, mint_token, capability._payload)
-    return capability
-
-
-def _source_review_preparation(capability, *, registry, mint_token):
-    if type(capability) is not _SourceReviewPreparation:
-        _fail("exact private source preparation capability required")
-    witness = registry.get(id(capability))
-    if (witness is None or witness[0] is not capability or witness[1] is not capability._raw
-            or witness[2] != capability._generation or witness[3] is not capability._mint_token
-            or witness[3] is not mint_token or witness[4] is not capability._payload):
-        _fail("source preparation owner/generation/payload witness differs")
-    return _thaw_source_preparation(capability._payload)
-
-
-def _source_review_auth_inputs(preparation, registry, policy, reviews, *, request_ordinal,
+def assess_legacy_source_review(preparation, registry, policy, reviews, *, request_ordinal,
         expected_preparation_manifest_sha256, expected_registry_sha256, expected_policy_sha256,
         expected_reviews_sha256, at_time_utc, observed_artifact_sha256s, observed_pins,
-        evidence_artifacts):
-    """The unchanged public preflight, before expensive original regeneration."""
+        evidence_artifacts, join_bytes, paired_row_bytes, expected_join_sha256,
+        **independent_join_inputs):
+    """Replay source preparation, then use the existing fixed-domain verifier.
+
+    No keys, signatures, review answers, identities or trust policies are
+    synthesized. Authentication is evidence custody, not response-content
+    adjudication. Even complete signed declarations select no source occurrence
+    and qualify no semantic graph, training example or Lean theorem.
+    """
     detached = _detach(preparation)
     contracts.require_sha256(expected_preparation_manifest_sha256, "preparation manifest SHA256")
     if _digest(detached["manifest"]) != expected_preparation_manifest_sha256:
@@ -327,61 +264,24 @@ def _source_review_auth_inputs(preparation, registry, policy, reviews, *, reques
         registry, policy, reviews, detached["dependency_manifests"][request_ordinal]))
     if total + sum(map(len, evidence_artifacts.values())) > review.MAX_BYTES:
         _fail("aggregate legacy review evidence byte bound exceeded")
-    return detached, {"registry": registry, "policy": policy, "reviews": reviews,
-        "request_ordinal": request_ordinal,
-        "expected_preparation_manifest_sha256": expected_preparation_manifest_sha256,
-        "expected_registry_sha256": expected_registry_sha256, "expected_policy_sha256": expected_policy_sha256,
-        "expected_reviews_sha256": expected_reviews_sha256, "at_time_utc": at_time_utc,
-        "observed_artifact_sha256s": observed_artifact_sha256s, "observed_pins": observed_pins,
-        "evidence_artifacts": evidence_artifacts}
-
-
-def _assess_source_review_prepared(capability, auth_inputs, *, capability_registry, mint_token):
-    """Fixed fresh auth/report kernel; never accepts a parsed preparation dict."""
-    checked = _source_review_preparation(capability, registry=capability_registry, mint_token=mint_token)
-    request_ordinal = auth_inputs["request_ordinal"]
+    checked = validate_legacy_source_review_requests(detached, join_bytes, paired_row_bytes,
+        expected_join_sha256=expected_join_sha256, **independent_join_inputs)
     subject = checked["subjects"][request_ordinal]
     manifest = checked["dependency_manifests"][request_ordinal]
-    assessment = review._assess_reviews(subject, auth_inputs["registry"], auth_inputs["policy"], auth_inputs["reviews"], manifest,
-        domain=_DOMAIN, expected_subject_sha256=_digest(subject),
-        expected_registry_sha256=auth_inputs["expected_registry_sha256"],
-        expected_policy_sha256=auth_inputs["expected_policy_sha256"],
-        expected_reviews_sha256=auth_inputs["expected_reviews_sha256"],
-        expected_manifest_sha256=manifest["manifest_sha256"], at_time_utc=auth_inputs["at_time_utc"],
-        observed_artifact_sha256s=auth_inputs["observed_artifact_sha256s"], observed_pins=auth_inputs["observed_pins"],
-        evidence_artifacts=auth_inputs["evidence_artifacts"])
+    assessment = review._assess_reviews(subject, registry, policy, reviews, manifest, domain=_DOMAIN,
+        expected_subject_sha256=_digest(subject), expected_registry_sha256=expected_registry_sha256,
+        expected_policy_sha256=expected_policy_sha256, expected_reviews_sha256=expected_reviews_sha256,
+        expected_manifest_sha256=manifest["manifest_sha256"], at_time_utc=at_time_utc,
+        observed_artifact_sha256s=observed_artifact_sha256s, observed_pins=observed_pins,
+        evidence_artifacts=evidence_artifacts)
     assessment.pop("assessment_sha256")
-    assessment.update(profile=PROFILE, preparation_manifest_sha256=auth_inputs["expected_preparation_manifest_sha256"],
+    assessment.update(profile=PROFILE, preparation_manifest_sha256=expected_preparation_manifest_sha256,
         request_ordinal=request_ordinal, deferred_review_slot_ids=subject["deferred_review_slot_ids"],
         deferred_questions_remain_pending=True, response_content_adjudication_available=False,
         coverage_scope="exact_legacy_source_request_nine_evidence_declarations_and_declared_custody_only",
         **FALSE_FLAGS, **_UNSELECTED)
     assessment["assessment_sha256"] = _digest(assessment)
     return assessment
-
-
-def assess_legacy_source_review(preparation, registry, policy, reviews, *, request_ordinal,
-        expected_preparation_manifest_sha256, expected_registry_sha256, expected_policy_sha256,
-        expected_reviews_sha256, at_time_utc, observed_artifact_sha256s, observed_pins,
-        evidence_artifacts, join_bytes, paired_row_bytes, expected_join_sha256,
-        **independent_join_inputs):
-    """Replay source preparation, then use the existing fixed-domain verifier.
-
-    Original public signature, preflight order, full original replay, signing
-    domain, caps and JSON outcomes remain unchanged. No authority is memoized.
-    """
-    detached, inputs = _source_review_auth_inputs(preparation, registry, policy, reviews,
-        request_ordinal=request_ordinal, expected_preparation_manifest_sha256=expected_preparation_manifest_sha256,
-        expected_registry_sha256=expected_registry_sha256, expected_policy_sha256=expected_policy_sha256,
-        expected_reviews_sha256=expected_reviews_sha256, at_time_utc=at_time_utc,
-        observed_artifact_sha256s=observed_artifact_sha256s, observed_pins=observed_pins,
-        evidence_artifacts=evidence_artifacts)
-    checked = validate_legacy_source_review_requests(detached, join_bytes, paired_row_bytes,
-        expected_join_sha256=expected_join_sha256, **independent_join_inputs)
-    capabilities, token = {}, object()
-    capability = _mint_source_review_preparation(checked, generation_sha256=_digest(checked["manifest"]),
-        registry=capabilities, mint_token=token)
-    return _assess_source_review_prepared(capability, inputs, capability_registry=capabilities, mint_token=token)
 
 
 def validate_legacy_source_review_assessment(assessment, *args, **kwargs):

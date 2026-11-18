@@ -14,7 +14,6 @@ from pathlib import Path
 import re
 
 SCHEMA = "legal-paired-payload-intake/v1"
-SCHEMA_V2 = "legal-paired-payload-intake/v2"
 ROW_SERIALIZATION = "derived-parquet-row/sorted-ascii-json-v1"
 DEFAULT_LIMITS = {"max_bytes": 64 * 1024**2, "max_rows": 64,
                   "max_decoded_bytes": 64 * 1024**2, "max_report_bytes": 16 * 1024**2}
@@ -53,25 +52,21 @@ def _limits(supplied):
     return result
 
 
-def _pins(*, coordinate=False):
+def _pins():
     from . import (corpus_contracts, corpus_graph, corpus_source, corpus_span_adapter,
                    paired_span_census, span_cache_exchange, span_cache_feed,
                    learned_formula_observation, legal_paired_manifest_inventory_v1)
     modules = (corpus_contracts, corpus_graph, corpus_source, corpus_span_adapter,
                paired_span_census, span_cache_exchange, span_cache_feed, learned_formula_observation,
                legal_paired_manifest_inventory_v1)
-    if coordinate:
-        from . import span_cache, uscode_ingest
-        modules += (span_cache, uscode_ingest)
     paths = [Path(__file__).resolve(), *(Path(module.__file__).resolve() for module in modules)]
     root = Path(__file__).resolve().parent
     _need(all(path.parent == root for path in paths), "operation owner escaped the selected source tree")
     return {str(path): _sha(path.read_bytes()) for path in paths}
 
 
-def _prepare(*, repository_root, repository_id, revision, manifest_path_in_repo,
-        expected_manifest_sha256, source_bindings=None, limits=None, coordinate=False,
-        expected_source_coordinate_report_sha256=None):
+def prepare_paired_payload_intake(*, repository_root, repository_id, revision,
+        manifest_path_in_repo, expected_manifest_sha256, source_bindings=None, limits=None):
     """Verify one selected local bundle and retain its complete row population.
 
     ``repository_root`` contains the exact repository layout for ``revision``.
@@ -90,20 +85,12 @@ def _prepare(*, repository_root, repository_id, revision, manifest_path_in_repo,
           "independently supplied manifest SHA256 required")
     _need(type(repository_id) is str and re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repository_id),
           "explicit repository identity required")
-    version_pattern = "3" if coordinate else "[12]"
-    _need(type(manifest_path_in_repo) is str and re.fullmatch(
-        r"autoformal/uscode/paired-v" + version_pattern + r"/manifests/[A-Za-z0-9_-]+/manifest-[0-9a-f]{64}\.json",
-        manifest_path_in_repo), "supported explicit paired payload profile required")
-    if coordinate:
-        _need(type(expected_source_coordinate_report_sha256) is str
-              and re.fullmatch(r"[0-9a-f]{64}", expected_source_coordinate_report_sha256),
-              "independently supplied source coordinate report SHA256 required")
     from . import corpus_span_adapter as adapter
     from .corpus_contracts import CorpusContractError
     from .span_cache_feed import load_paired_payload, paired_source_records
     from .legal_paired_manifest_inventory_v1 import _wire as bounded_binding_wire
 
-    pins = _pins(coordinate=coordinate)
+    pins = _pins()
     root = Path(repository_root)
     loaded = load_paired_payload(root / manifest_path_in_repo, repository_root=root,
         repository_id=repository_id, path_in_repo=manifest_path_in_repo,
@@ -116,18 +103,6 @@ def _prepare(*, repository_root, repository_id, revision, manifest_path_in_repo,
     paired_source_records(loaded, repository_id=repository_id, revision=revision,
                           manifest_in_repo=manifest_path_in_repo)
     values = loaded["paired_spans"]
-    coordinates, carrier = None, None
-    if coordinate:
-        from .paired_span_census import decode_artifact, validate_paired_source_coordinates
-        coordinates = validate_paired_source_coordinates(loaded,
-            expected_report_sha256=expected_source_coordinate_report_sha256)
-        _need(coordinates is not None and len(coordinates["rows"]) == len(values),
-              "complete source coordinate row population required")
-        artifact_sha = loaded["coordinate_transport"]["report_artifact_sha256"]
-        artifact = next(row for row in loaded["artifacts"] if row["artifact_sha256"] == artifact_sha)
-        report_raw = decode_artifact(artifact)
-        carrier = {"report_raw_utf8": report_raw.decode("utf-8"), "report_bytes": len(report_raw),
-                   "report_artifact_sha256": artifact_sha, "report_sha256": coordinates["report_sha256"]}
     _need(source_bindings is None or (type(source_bindings) is list and len(source_bindings) == len(values)),
           "source binding population must match all physical paired rows")
     # Commit even refused bindings: identical error text is not input identity.
@@ -155,17 +130,12 @@ def _prepare(*, repository_root, repository_id, revision, manifest_path_in_repo,
         entry = {"row_ordinal": ordinal, "observation_id": row["observation_id"],
             "row_sha256": identity, "derived_row_json": raw.decode("utf-8"),
             "disposition": disposition, "candidate": candidate, "error": error}
-        if coordinate:
-            provenance = coordinates["rows"][ordinal]["source_provenance_json"]
-            entry.update(source_provenance_json=provenance,
-                source_coordinate_report_sha256=coordinates["report_sha256"],
-                source_coordinate_span_index=json.loads(provenance)["span_index"])
         charged += len(_wire(entry))
         _need(charged <= bounds["max_report_bytes"], "complete payload intake report exceeds byte bound")
         rows.append(entry)
         counts["physical_rows"] += 1
         counts[disposition] += 1
-    report = {"schema": SCHEMA_V2 if coordinate else SCHEMA, "repository_id": repository_id, "revision": revision,
+    report = {"schema": SCHEMA, "repository_id": repository_id, "revision": revision,
         "revision_evidence": "caller_supplied_acquisition_identity",
         "repository_root": str(root), "manifest_path_in_repo": manifest_path_in_repo,
         "manifest_sha256": expected_manifest_sha256, "manifest_fingerprint": manifest["fingerprint"],
@@ -180,52 +150,19 @@ def _prepare(*, repository_root, repository_id, revision, manifest_path_in_repo,
         "source_binding_population_supplied": source_bindings is not None,
         "source_bindings_sha256": binding_pin,
         "source_occurrence_search_performed": False, "authority": dict(AUTHORITY)}
-    if coordinate:
-        report["source_coordinates"] = carrier
     _need(len(_wire(report)) <= bounds["max_report_bytes"], "complete payload intake report exceeds byte bound")
-    _need(pins == _pins(coordinate=coordinate), "payload intake operation owner changed during preparation")
+    _need(pins == _pins(), "payload intake operation owner changed during preparation")
     return report
 
 
-def prepare_paired_payload_intake(*, repository_root, repository_id, revision,
-        manifest_path_in_repo, expected_manifest_sha256, source_bindings=None, limits=None):
-    """Preserve the legacy v1/v2 payload shape; v3 requires explicit v2 intake."""
-    return _prepare(repository_root=repository_root, repository_id=repository_id, revision=revision,
-        manifest_path_in_repo=manifest_path_in_repo, expected_manifest_sha256=expected_manifest_sha256,
-        source_bindings=source_bindings, limits=limits)
-
-
-def prepare_paired_payload_intake_v2(*, repository_root, repository_id, revision,
-        manifest_path_in_repo, expected_manifest_sha256, expected_source_coordinate_report_sha256,
-        source_bindings=None, limits=None):
-    """Replay v3 only, retaining one exact report string and original row refs.
-
-    Report custody grants no source authenticity, context permission or binding
-    to a separately supplied corpus occurrence. Source bindings stay explicit.
-    """
-    return _prepare(repository_root=repository_root, repository_id=repository_id, revision=revision,
-        manifest_path_in_repo=manifest_path_in_repo, expected_manifest_sha256=expected_manifest_sha256,
-        source_bindings=source_bindings, limits=limits, coordinate=True,
-        expected_source_coordinate_report_sha256=expected_source_coordinate_report_sha256)
-
-
-def _validate(report, *, expected_report_sha256, coordinate=False, **inputs):
+def validate_paired_payload_intake(report, *, expected_report_sha256, **inputs):
+    """Replay all original tables/rows and explicit source bindings, without writes."""
     _need(type(expected_report_sha256) is str
           and re.fullmatch(r"[0-9a-f]{64}", expected_report_sha256),
           "independently supplied report SHA256 required")
     raw = _wire(report)
     _need(len(raw) <= DEFAULT_LIMITS["max_report_bytes"], "complete report exceeds byte bound")
     _need(_sha(raw) == expected_report_sha256, "payload intake report SHA256 differs")
-    expected = (prepare_paired_payload_intake_v2 if coordinate else prepare_paired_payload_intake)(**inputs)
+    expected = prepare_paired_payload_intake(**inputs)
     _need(raw == _wire(expected), "payload intake report differs from full input replay")
     return expected
-
-
-def validate_paired_payload_intake(report, *, expected_report_sha256, **inputs):
-    """Replay all legacy tables/rows and explicit source bindings, without writes."""
-    return _validate(report, expected_report_sha256=expected_report_sha256, **inputs)
-
-
-def validate_paired_payload_intake_v2(report, *, expected_report_sha256, **inputs):
-    """Regenerate the complete v3 report carrier, row references and candidates."""
-    return _validate(report, expected_report_sha256=expected_report_sha256, coordinate=True, **inputs)
