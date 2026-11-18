@@ -1,0 +1,36 @@
+{
+  "scope": "Source-only preservation; current44 software flag guards qualified, legacy-cache migration control unexecuted. No main promotion, proof, legal, model, asset or checkpoint authority.",
+  "source_files": [
+    {
+      "preserved_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_proof_feedback_replay.py",
+      "bytes": 73978,
+      "sha256": "04f2385f74dbee214a65ac3d2abc49ffa4ebfc5cca6bb3da6aa71fd3dc16686f",
+      "qualification": "44-case software only; legacy cache risk still pending"
+    },
+    {
+      "preserved_path": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_proof_feedback_replay.py",
+      "bytes": 17420,
+      "sha256": "ec046d5821aeb5c11e4301f621468aa9fb2cdb80e3d3c90bd8e89e673b9b1c4c",
+      "qualification": "44-case software only; legacy cache risk still pending"
+    },
+    {
+      "preserved_path": "maintenance/source-preservation/proof-feedback-boolean-20261115/pending-legacy-cache-test.py",
+      "bytes": 19388,
+      "sha256": "b7f91d1e44ae8de21132597623397ebf2338a40026ab430da3dbae74af9227a2",
+      "qualification": "pending legacy-cache RED"
+    }
+  ],
+  "qualified_source_record_sha256": "c275f4e2dbb568b5cc5efb7684c376ef74621d6e7407614f75199c4a41e2ab60",
+  "red_record_sha256": "b86d0d6a84e836ee5ca2d49b56d73feb0cb857be5c4af0d18f59e15fb961ffcb",
+  "original_HEAD_at_capture": "2a746bcdd2863213a4e7f71fad6c4f25ddf22427",
+  "Source_READ": {
+    "canonical_root": "/home/barberb/lift_coding/external/ipfs_datasets",
+    "mode": "read",
+    "lock_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/control-plane/source-leases/source.lock",
+    "waited_seconds": 3.9200764149427414e-05,
+    "schema_version": "autoencoder-source-lease/v1",
+    "cooperative": true
+  },
+  "Source_READ_closed": true,
+  "private_assets_accessed": false
+}

@@ -16,9 +16,7 @@ The filesystem cache is keyed by both obligation content and the complete
 current execution policy.  Cache records are content checked before use and
 written atomically.  Consequently an interrupted replay is resumable, while a
 policy, timeout, compiler, translator, solver, theorem registry, or trust-root
-change necessarily creates a new cache namespace. The fixed exact-boolean
-validation profile also participates in this fingerprint: pre-strict cache rows
-remain immutable, but cannot supply a current replay result without execution.
+change necessarily creates a new cache namespace.
 
 Only bounded categorical fields and digests are serialized.  In particular,
 statements, decoded text, prompts, proof scripts, solver output, historical
@@ -81,11 +79,6 @@ LEGAL_IR_HISTORICAL_HAMMER_CACHE_SCHEMA_VERSION = "legal-ir-historical-hammer-re
 LEGAL_IR_HISTORICAL_HAMMER_EXECUTION_RESULT_SCHEMA_VERSION = (
     "legal-ir-historical-hammer-execution-result-v1"
 )
-
-# This fixed profile versions the authority-validation contract, independently
-# of preserved transport schemas and historical receipt/source identities.
-LEGAL_IR_HISTORICAL_HAMMER_AUTHORITY_PROFILE = "strict-proof-boolean-authority-v2"
-
 
 CANONICAL_HISTORICAL_CYCLE_FILE_COUNT = 115
 CANONICAL_HISTORICAL_NESTED_ARTIFACT_COUNT = 1_196
@@ -823,7 +816,6 @@ class HistoricalHammerReplayPolicy:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "authority_boolean_profile": LEGAL_IR_HISTORICAL_HAMMER_AUTHORITY_PROFILE,
             "compiler_schema_version": self.compiler_schema_version,
             "proof_routing_policy_fingerprint": self.proof_routing_policy_fingerprint,
             "resource_wait_timeout_seconds": self.resource_wait_timeout_seconds,
@@ -1030,23 +1022,23 @@ class ReplayExecutorResult:
                 first(value.get("backend"), receipt.get("backend"), default="unknown")
             ),
             backend_proved=first(
-                value.get("backend_proved"),
-                receipt.get("backend_proved"),
-                proof.get("proved"),
-                default=False,
-            ),
+                    value.get("backend_proved"),
+                    receipt.get("backend_proved"),
+                    proof.get("proved"),
+                    default=False,
+                ),
             proof_checked=first(
-                value.get("proof_checked"),
-                proof.get("proof_checked"),
-                proof.get("verified"),
-                default=False,
-            ),
+                    value.get("proof_checked"),
+                    proof.get("proof_checked"),
+                    proof.get("verified"),
+                    default=False,
+                ),
             trusted=first(value.get("trusted"), receipt.get("trusted"), default=False),
             draft=first(
-                value.get("draft"),
-                proof.get("draft"),
-                default=status in _DRAFT_STATUSES,
-            ),
+                    value.get("draft"),
+                    proof.get("draft"),
+                    default=status in _DRAFT_STATUSES,
+                ),
             proof_receipt_id=_safe_identifier(
                 first(
                     value.get("proof_receipt_id"),
@@ -1064,17 +1056,17 @@ class ReplayExecutorResult:
                 fallback="",
             ),
             reconstruction_attempted=first(
-                value.get("reconstruction_attempted"),
-                receipt.get("native_reconstruction"),
-                reconstruction.get("attempted"),
-                default=False,
-            ),
+                    value.get("reconstruction_attempted"),
+                    receipt.get("native_reconstruction"),
+                    reconstruction.get("attempted"),
+                    default=False,
+                ),
             reconstruction_verified=first(
-                value.get("reconstruction_verified"),
-                receipt.get("native_reconstruction_verified"),
-                reconstruction.get("verified"),
-                default=False,
-            ),
+                    value.get("reconstruction_verified"),
+                    receipt.get("native_reconstruction_verified"),
+                    reconstruction.get("verified"),
+                    default=False,
+                ),
             reconstruction_status=reconstruction_status,
             checker=checker,
             trust_root_id=_safe_identifier(
@@ -1864,7 +1856,6 @@ __all__ = [
     "CANONICAL_HISTORICAL_NESTED_ARTIFACT_COUNT",
     "CANONICAL_HISTORICAL_UNIQUE_OBLIGATION_COUNT",
     "CANONICAL_HISTORICALLY_TRUSTED_COUNT",
-    "LEGAL_IR_HISTORICAL_HAMMER_AUTHORITY_PROFILE",
     "LEGAL_IR_HISTORICAL_HAMMER_CACHE_SCHEMA_VERSION",
     "LEGAL_IR_HISTORICAL_HAMMER_EXECUTION_RESULT_SCHEMA_VERSION",
     "LEGAL_IR_HISTORICAL_HAMMER_INVENTORY_SCHEMA_VERSION",
