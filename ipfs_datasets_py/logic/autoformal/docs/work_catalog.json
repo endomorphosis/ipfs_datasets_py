@@ -10681,6 +10681,28 @@
       "task_ids": [
         "LIR-22"
       ]
+    },
+    {
+      "apis": [
+        "prepare_source_review_requests",
+        "validate_source_review_requests",
+        "assess_source_review_groups",
+        "validate_source_review_assessment"
+      ],
+      "compatibility_dependency": false,
+      "evidence_ids": [
+        "current-complete-source-review-validator-software-20261119"
+      ],
+      "id": "complete-source-context-evidence-review",
+      "notes": "Existing modern complete parent/official source-context owner, indexed after detecting it was absent while the legacy delegate was listed. Uses current official custody-v2 dependencies. Nine source/context declaration slots and seven deferred semantic/proof questions; synthetic evidence, all-authority-false software tests only. Current original-data regeneration, independent production reviews, Native AST and statutory/corpus admission remain pending. No new implementation or replacement legacy delegate.",
+      "owner_module": "ipfs_datasets_py.logic.autoformal.corpus_source_review",
+      "ownership_role": "existing_single_owner",
+      "path": "ipfs_datasets_py/logic/autoformal/corpus_source_review.py",
+      "required": true,
+      "status": "implementation_present",
+      "owning_tests": [
+        "tests/unit/logic/autoformal/test_corpus_source_review.py"
+      ]
     }
   ],
   "entry_point": "ipfs_datasets_py/logic/autoformal/README.md",
@@ -16906,6 +16928,50 @@
       "trust_and_authority_limits": "Ordinary fictional software only. No reviewed numerical fit/masks, model allocation, runtime vector computation, convergence/heldout quality, Native proof, statutory meaning, real gold or corpus/release authority. No Source epoch adoption or transfer from prior ordinary1/ab58 or historical numerical/Native scopes.",
       "evidence_availability": "Compact10116/b1a9363f49f11ee2fbea3f74fe1aad268dffa1350653c3de9d8b425e0726f27d links fullactual8019255/d22c9b0c4bc824e3a48544de73802d6d1532136b54981db6344fc21a7aece835, JUnit1644/9c97061e0515f5c85bbe10c50bf7cdcaae9d9fb1c726295eab37b1d4d5e29157 and genuine roster2175/0a331305b5ee8f11f25e6d40ae61d59d4006ef611a5ded6b1ad538bc42c6b773. Private/tmp retained receipts are not portable published proof; no raw payload copied. Failed canonical commit receipt424340/87a3cb6ca0d445212ea7a7ce600467a4e5691afe9534cea238e71e02b1a85689 at /tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/canonical-local-seven-ordinary-tested-files-commit-v01/actual-canonical-two-tested-files-commit-receipt-v01.json remains retained; WRITE was never acquired and no Git mutation occurred.",
       "next_action_pending": "Existing numerical/resource, statutory review, model, gold, live-parent and corpus/release gates remain. Canonical local CODE COMMIT `63a0cb95363c030a0650400f0e00432ac3489d8f` (parent `832f43ef88de26975386a32dcf88830534001ce9`) records the two tested files; the ordinary result remains bound to its earlier dirty Source epoch. No retry, Source overwrite, mask admission or original Native recovery is authorized by this record."
+    },
+    {
+      "id": "current-complete-source-review-validator-software-20261119",
+      "root": "artifact_workspace",
+      "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/LIR03-focused-assessment-validator-seven-ordinary-controls-v01/selected-source-review-seven-ordinary-output-v01/closed-LIR03-seven-ordinary-assessment-validator-result-v01.json",
+      "required_for_catalog_check": false,
+      "observed_bytes": 20115,
+      "observed_sha256": "2e1318a37a3b04dd24c921b8cdfb975022fa6bcbdf39f894979e7fc7f82c4cad",
+      "status": "seven_current_source_review_validator_ordinary_cases_qualified",
+      "task_ids": [
+        "LIR-02",
+        "LIR-03"
+      ],
+      "scope": "Seven existing authored software fixture cases; one synthetic signature/full assessment validator, two malformed-output early refusals, four resealed authority/pending/blocker/membership refusals. Current modern custody-v2 dependency generation, no new product implementation.",
+      "recorded_Source_epoch": {
+        "rows": 4131,
+        "sha256": "5c95b300192b068ea1806d48932c525f4bc79b37a06babb8b9c8f581c94338e8",
+        "runtime_R_HEAD": "ebab0edfa5b5630a3acd8ad7e133447a51d49252",
+        "runtime_A_HEAD": "534a5362996fa4bf4fb453fbc09fe896fea35c7c",
+        "code_binding": "34e0feacb54172d3494b6666c4a42e3be70c0829"
+      },
+      "actual_effects": {
+        "collection_seconds": 0.4760013921186328,
+        "run_seconds": 25.621291155926883,
+        "passed": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "complete_raw_report_bytes": 8017945,
+        "complete_raw_report_sha256": "134ca8eadf2cf5f81d7ae885c089ad7e47c624e233574dd22dde4a24676c4b70",
+        "raw_JUnit_bytes": 1591,
+        "raw_JUnit_sha256": "e09128048295573ee339c0fdf21986a1a8a0b4c094fe0c03a43f3d64ddb1c584"
+      },
+      "custody": "All four source maps exact; SDK cleanup confirmed, leaders reaped, readers joined, workspaces removed, Source READs closed. Sampled lifecycle only; no kernel containment attestation. Original42018 untouched.",
+      "authority_limits": "No actual full-data replay, production/legal reviews, Native/model/compiler/training, model convergence, gold or corpus/release admission. Old418 generation cannot self-repin to current producers. Full goal incomplete.",
+      "static_replay_plan": {
+        "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/LIR03-current-generation-whole-flow-static-review-v01.json",
+        "bytes": 58004,
+        "sha256": "7d6e16de1c1f4a24796c39ec314f31cb42f4c1c3b12ebfbb56570f5306499cc8",
+        "actual_full_data_runtime_selected": false,
+        "from_raw_parent_hash_bytes": 31439323608,
+        "coarse_parent_IO_upper_bytes": 69377326750
+      },
+      "evidence_availability": "Private retained /tmp receipts and raw bytes are not portable published evidence. Earlier results and preparation failures remain separate; do not pool counts."
     }
   ]
 }

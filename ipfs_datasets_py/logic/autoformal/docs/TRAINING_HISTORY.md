@@ -1,5 +1,13 @@
 # Training and experiment history
 
+## Complete source-review validator: ordinary software run — 2026-11-19
+
+Seven existing `test_corpus_source_review.py` cases passed once: synthetic-signature/full-assessment validation, two malformed-output early refusals and four resealed authority/pending/blocker/membership refusals. Collection/run took 0.476001s/25.621291s; exact JUnit7/0F/0E/0skip and all four Source4,131 maps matched epoch `5c95b300…`. SDK processes/readers/workspaces and Source READs closed. Authored local Parquet/JSON/AST/HTML and synthetic signatures only; no production reviews, Native/compiler/model/training or corpus qualification.
+
+[Closed receipt](/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/LIR03-focused-assessment-validator-seven-ordinary-controls-v01/selected-source-review-seven-ordinary-output-v01/closed-LIR03-seven-ordinary-assessment-validator-result-v01.json) is 20,115 bytes / SHA256 `2e1318a37a3b04dd24c921b8cdfb975022fa6bcbdf39f894979e7fc7f82c4cad`; raw report `8017945/134ca8ea`, actual Mapping-backed JUnit `1591/e0912804`. This is separate from earlier V4 seven-case and ordinary1 results; no new product or test implementation was needed. Preparation/checker errors were corrected before adoption, without test reruns.
+
+The existing modern owner is now indexed alongside the legacy delegate. See HANDOFF.md's complete source-context entry and work-catalog evidence `current-complete-source-review-validator-software-20261119` for current-code reconstruction, the static 84-parent-hash plan, resource/retention requirements and exact retained diagnostics. Full-data regeneration, §101-inclusive statutory review, Lean/convergence and the full eight-phase goal remain open; original42018 is untouched/raw-held/unverified. Private receipts do not establish portable published proof.
+
 ## Native resource admission repair — 2026-11-19
 
 Retain the real version-only Native failure, the separate Native1 pass and the later **three-case Native pass on Source 4,123**. Native3 closed eight resource claims; its cache control used three real commands, while reuse/mismatches and two software version reissues added none. The quoted-source case was a precompiler refusal, not another compiler proof; installed libraries/runtime remain explicitly trusted.

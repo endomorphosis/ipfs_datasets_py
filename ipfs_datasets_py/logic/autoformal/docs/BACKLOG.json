@@ -1904,7 +1904,27 @@
           }
         ]
       },
-      "title": "Join source identities and declared context"
+      "title": "Join source identities and declared context",
+      "latest_current_source_review_validator_qualification": {
+        "evidence_id": "current-complete-source-review-validator-software-20261119",
+        "component_id": "complete-source-context-evidence-review",
+        "qualification_task_id": "LIR-03",
+        "ordinary_cases_passed": 7,
+        "tests_newly_added": 0,
+        "product_implementation_changed": false,
+        "full_data_generation_qualified": false,
+        "production_or_legal_review_created": false,
+        "Source_epoch": "5c95b300192b068ea1806d48932c525f4bc79b37a06babb8b9c8f581c94338e8",
+        "static_replay_plan": {
+          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/LIR03-current-generation-whole-flow-static-review-v01.json",
+          "bytes": 58004,
+          "sha256": "7d6e16de1c1f4a24796c39ec314f31cb42f4c1c3b12ebfbb56570f5306499cc8",
+          "actual_full_data_runtime_selected": false,
+          "from_raw_parent_hash_bytes": 31439323608,
+          "coarse_parent_IO_upper_bytes": 69377326750
+        },
+        "next": "Bind current originals, caller resources, output retention and declared time/unavailable trust, then regenerate through existing canonical owners; no old artifact repin."
+      }
     },
     {
       "acceptance_criteria": [
