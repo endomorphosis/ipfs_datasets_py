@@ -11522,7 +11522,54 @@
           }
         ]
       },
-      "title": "Run source-bound corpus builds and obligations"
+      "title": "Run source-bound corpus builds and obligations",
+      "ordinary_main_compatibility_20261119": {
+        "evidence_id": "ordinary-main-compatibility-two-source-epochs-20261119",
+        "recorded_at_utc": "2026-11-19T02:51:13.457601+00:00",
+        "scope": "The exact original ordinary Phase 1 (478 cases), A (820) and R (392) identities have 1,690 passes, 0 failures, 0 errors and 0 skips across two recorded materialized-subset Source epochs: 1,648 cases at 4,116 rows and 42 cases at 4,117 rows. The 28 successful runs retain closed custody and 84 verified Source snapshots. The 14 failed or incomplete attempts remain separate. These observations apply to the exact recorded bytes and subsets; they are not a single-epoch whole 1,690 rerun or a whole Main tree attestation. Native/compiler/resource admission, legal/release authority, model training/convergence and overall goal completion remain pending.",
+        "evidence_availability": "Hash-pinned evidence is retained privately under /tmp; these paths are neither public nor a portable published proof bundle. No raw runtime archive, database, checkpoint, dataset or model payload is added by this documentation change.",
+        "aggregate": {
+          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/ordinary1690-two-source-epochs-qualified-scope-aggregate-v01.json",
+          "bytes": 35069,
+          "sha256": "76ea1a82d4b2a1e7bec2e71c5f6519605f4f796078956ac2f56dca067c63213f"
+        },
+        "case_crosswalk": {
+          "bytes": 401587,
+          "mode": "0400",
+          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/ordinary1690-two-epoch-actual-case-crosswalk-v01.json",
+          "sha256": "45901be81414ecb57211c06189d5da5769768442b91d31f9188751ab3c60295b"
+        },
+        "qualified_postimages": [
+          {
+            "repository": "A",
+            "repo_relative_path": "ipfs_accelerate_py/agent_supervisor/rescue/repair_candidate_owners.py",
+            "bytes": 460947,
+            "sha256": "2e05f6f7d8c3835e0e8538445037205cae3aa1e5b7a96dc02893f9363625c047"
+          },
+          {
+            "repository": "A",
+            "repo_relative_path": "test/api/test_agent_supervisor_productive_owner_v3.py",
+            "bytes": 445718,
+            "sha256": "a2a51cf667570d9a676c7bb3b6b889913dda71c0457e1cba7d5d1aa1de4d4338"
+          },
+          {
+            "repository": "R",
+            "repo_relative_path": "tests/unit/logic/autoformal/test_corpus_release_cli.py",
+            "bytes": 173608,
+            "sha256": "0920a2cb57a30a9ebb5da387c7448140636eb7f8ea80cdbdedfd546b5481dee3"
+          }
+        ],
+        "recorded_Source_epoch_case_counts": [
+          1648,
+          42
+        ],
+        "successful_closed_runs": 28,
+        "verified_Source_snapshots": 84,
+        "failed_or_incomplete_attempts_preserved": 14,
+        "programme_status_frontier_acceptance_criteria_changed": false,
+        "historical_completed_statuses": "Existing COMPLETE statuses retain their original recorded scopes; they do not complete all eight phases or Native, legal or model goals.",
+        "next_action_pending": "The next full-goal Phase 1 priority is the three existing Native Lean tests in tests/integration/logic/backends/test_kernel_backends.py, under fresh admission through the existing Native/resource owners. No Native execution is currently selected. The A V3 admitted build followed by a same-process/native-thread direct physical join remains a separate pending owner scope, reusing its existing single child and original V5 CLI result-writing/seal lifecycle."
+      }
     },
     {
       "acceptance_criteria": [

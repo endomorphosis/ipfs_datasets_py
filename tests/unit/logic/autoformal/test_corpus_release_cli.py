@@ -2028,7 +2028,7 @@ def direct_physical_closure_material_v3(physical_closure_material_v3):
 def replay_direct_physical_closure_v3(request):
     from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
     from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as transport
-    validator = getattr(release, 'validate_uscode_release_closure_v3', None)
+    validator = getattr(release, 'validate_uscode_release_closure_direct_v3', None)
     assert callable(validator), 'complete reviewed mixed-sort V3 artifacts have no physical release-closure consumer'
     raw = transport.encode_parent_replay_value_v1(request)
     return validator(raw, expected_request_sha256=hashlib.sha256(raw).hexdigest())
@@ -2062,7 +2062,7 @@ def test_physical_closure_v3_replays_complete_mixed_component_without_release_au
     assert {item['name'] for item in mixed['typed_expression']['signature']['sorts']} >= {'Object', 'EventFrame', 'TimeFrame'}
     assert len(mixed['definition_uses'][0]['target_typed_paths']) == 2
     assert report['schema'] == 'legal-uscode-release-closure-report/v3'
-    assert report['profile'] == 'reviewed-norm-v3-physical-three-cache-replay/v1'
+    assert report['profile'] == 'reviewed-norm-v3-physical-three-cache-direct-packet-replay/v1'
     assert report['local_replay_complete'] is True
     assert report['local_source_cache_entity_bindings_verified'] is True
     assert report['independent_reviewed_crosswalk_verified'] is True

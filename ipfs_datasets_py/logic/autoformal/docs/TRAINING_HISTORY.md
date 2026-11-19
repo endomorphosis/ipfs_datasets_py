@@ -1,5 +1,13 @@
 # Training and experiment history
 
+## Ordinary Main compatibility at two recorded Source epochs — 2026-11-19
+
+The exact ordinary Phase 1 (478 cases), A (820) and R (392) rosters recorded **1,690 passes, 0 failures, 0 errors and 0 skips**. Two Source epochs account for 1,648 and 42 cases, respectively, across declared subsets of 4,116 and 4,117 rows. All 28 successful runs closed their original custody; 84 Source snapshots were verified. The 14 failed or incomplete attempts remain separate, with no extra passing-case credit. This is not a single-epoch whole 1,690 rerun or whole Main tree attestation.
+
+Root audit `d423c5` binds the 35,069-byte aggregate, SHA256 `76ea1a82d4b2a1e7bec2e71c5f6519605f4f796078956ac2f56dca067c63213f`. The aggregate, case crosswalk and failure history are privately retained under `/tmp`, hash-pinned and not public or portable published proof. Exact postimages, epoch manifests and scope are in the [current handoff](HANDOFF.md#ordinary-main-compatibility-at-two-recorded-source-epochs--2026-11-19) and [existing catalog](work_catalog.json), evidence ID `ordinary-main-compatibility-two-source-epochs-20261119`.
+
+The next full-goal Phase 1 priority is its three existing Native Lean tests under fresh existing-owner admission. No Native execution is selected. The A V3 same-process/native-thread physical join is a separate pending scope. Native, legal/release and model/training/convergence qualifications remain open; existing task statuses retain their historical scopes.
+
 ## Historical Source variant cohorts, 2026-11-18
 
 This entry preserves software evidence from the captured Source variants. It does not qualify the merged publication tree or current-main runtime. The recorded cohorts retain their separate populations, pins, failures and custody epochs; their case counts are not added. Existing Main histories, catalog records and all 24 programme task IDs, statuses, frontiers and acceptance criteria remain unchanged.

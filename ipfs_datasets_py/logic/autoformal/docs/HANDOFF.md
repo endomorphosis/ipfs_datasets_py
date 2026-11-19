@@ -1,5 +1,28 @@
 # Current handoff
 
+## Ordinary Main compatibility at two recorded Source epochs — 2026-11-19
+
+The exact selected ordinary Phase 1 (478 cases), A (820) and R (392) identities have **1,690 passes, 0 failures, 0 errors and 0 skips** across two recorded Source epochs. The observations apply to the exact recorded bytes and declared materialized subsets. They do not constitute a single-epoch whole 1,690 rerun or a whole Main tree attestation. The observed Main bases are R `c7d698c5a3c2c85968c3348cac7a144d8454207f` and A `534a5362996fa4bf4fb453fbc09fe896fea35c7c` plus the three exact postimages below.
+
+- The 4,116-row epoch, manifest SHA256 `914f47242828776dfcba6fdf07f28142f3ea2a30fcae2dd5200367c97efd8ab2`, accounts for 1,648 passes: Phase 1 (478) + A (820) + R01–R10 (350).
+- The 4,117-row epoch, manifest SHA256 `066cf040a6368deb73bc8e61fea1415ace4480f1670a78be02c8b77e3b9560af`, accounts for 42 passes: R11 positive (1) + remainder (17) + R12A (12) + twelve exact remaining R12 cases. Its sole addition is the existing maintained `tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_consumer_binding.py`, 66,226 bytes / SHA256 `b3376a24990eaecc603ca829f5de971f092cb5cd2e83e84b9eb28fb10e399c78`; all prior 4,116 rows remain identical.
+
+The case crosswalk is disjoint and complete for the three original rosters. All 28 successful runs retain closed original Source/SDK/FD/reader/leader/workspace custody and 84 verified Source snapshots; 67 sampled descendants were verified gone. The 14 failed or incomplete attempts, including setup failures and timeouts without final JUnit, remain in their separate history with no added qualification credit. Diagnostic progress markers are not passing-case evidence.
+
+Recorded postimages:
+
+- A `ipfs_accelerate_py/agent_supervisor/rescue/repair_candidate_owners.py`: 460,947 bytes, SHA256 `2e05f6f7d8c3835e0e8538445037205cae3aa1e5b7a96dc02893f9363625c047`.
+- A `test/api/test_agent_supervisor_productive_owner_v3.py`: 445,718 bytes, SHA256 `a2a51cf667570d9a676c7bb3b6b889913dda71c0457e1cba7d5d1aa1de4d4338`.
+- R `tests/unit/logic/autoformal/test_corpus_release_cli.py`: 173,608 bytes, SHA256 `0920a2cb57a30a9ebb5da387c7448140636eb7f8ea80cdbdedfd546b5481dee3`.
+
+The A owner recognizes only the two independently Source-declared/compiled realization wrappers in its existing Native bootstrap; complete population, code, closure and identity guards remain. The existing A cross-domain control checks both closed-shape and independently pinned packet-population refusals. The R fixture explicitly calls the direct V3 API and checks its direct-packet profile; public chunk transport remains separate. No new implementation owner, child, controller or DATA bootstrap is introduced.
+
+Root audit `d423c5` binds the retained aggregate `/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/ordinary1690-two-source-epochs-qualified-scope-aggregate-v01.json` (35,069 bytes / SHA256 `76ea1a82d4b2a1e7bec2e71c5f6519605f4f796078956ac2f56dca067c63213f`), exact-case crosswalk (401,587 / `45901be81414ecb57211c06189d5da5769768442b91d31f9188751ab3c60295b`) and failure/timeout history index (7,608 / `9933ee26c4729605fc4849ab83ce5e82a328e799824236c9e4765f1cbe140122`). These artifacts are private, retained under `/tmp` and hash-pinned; they are **not public or portable published proof**. This guide update adds no generated runtime archive, database, checkpoint, dataset or model payload. The aggregate itself performs zero Source body reads; this proposal uses immutable private inputs. Original canonical R `3f1691d59cc0a310750c0b441b51d3528b17eb85` and A `81b5e11f3c6063486a7cadc6c3d4c6ea50e85bb2` checkouts/HEADs remain unchanged.
+
+The existing 24 ordered tasks, their statuses/frontiers/acceptance criteria, 125 components and 466 previous evidence records remain intact; the single new catalog evidence ID is `ordinary-main-compatibility-two-source-epochs-20261119`. Existing COMPLETE statuses retain only their historical scopes. This milestone does not complete all eight phases or the overall goal. Actual Native build/resource or toolchain admission, legal/statutory meaning or release authority, model training/inference/convergence, and immutable remote readback remain pending.
+
+The next full-goal Phase 1 priority is the three existing Native Lean tests in `tests/integration/logic/backends/test_kernel_backends.py`, under a fresh admission through the existing Native/resource owners. No Native execution is currently selected. Separately, the A V3 admitted build followed immediately by a same-process/native-thread direct physical join remains pending; that owner scope reuses the existing single Native child and original V5 CLI result-writing/seal lifecycle. Historical qualification scopes remain separate.
+
 ## Historical Source variant software evidence, 2026-11-18
 
 This entry preserves software evidence from the captured Source variants. It does not qualify the merged publication tree or current-main runtime. The recorded cohorts retain their separate populations, pins, failures and custody epochs; their case counts are not added. Existing Main histories, catalog records and all 24 programme task IDs, statuses, frontiers and acceptance criteria remain unchanged.

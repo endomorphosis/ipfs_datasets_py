@@ -10299,7 +10299,8 @@
       "evidence_ids": [
         "legal-uscode-local-release-replay-source-private45-20261111",
         "hf-wire-producer-closure-private103-source-20261111",
-        "reviewed-physical-three-cache-crosswalk-private114-source-20261111"
+        "reviewed-physical-three-cache-crosswalk-private114-source-20261111",
+        "ordinary-main-compatibility-two-source-epochs-20261119"
       ],
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_corpus_graph_exchange.md",
       "id": "legal-release-coordinator",
@@ -10735,7 +10736,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-11-16T12:09:57.732654+00:00",
+  "last_updated_at_utc": "2026-11-19T02:51:13.457601+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -16712,6 +16713,110 @@
       "root": "datasets_repository",
       "scope": "One genuine canonical14ce/1f0 whole owning67/15 run, Source255/Git8 exact and full original closure/own16MiB durable release. Real tiny authored bounded updates only. Preserves RED6four failures/two positives/retained claim and wrapper KeyError separately. No pooled135/45, general controller/noChild/UNKNOWN, retained/pretrained fitting, legal/Lean/corpus authority.",
       "status": "canonical_whole67_source_scoped_software_qualified_normal_publication_pending"
+    },
+    {
+      "id": "ordinary-main-compatibility-two-source-epochs-20261119",
+      "root": "artifact_workspace",
+      "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/ordinary1690-two-source-epochs-qualified-scope-aggregate-v01.json",
+      "observed_bytes": 35069,
+      "observed_sha256": "76ea1a82d4b2a1e7bec2e71c5f6519605f4f796078956ac2f56dca067c63213f",
+      "required_for_catalog_check": false,
+      "status": "ordinary_software_qualified_exact_two_source_epochs_native_pending",
+      "recorded_at_utc": "2026-11-19T02:51:13.457601+00:00",
+      "scope": "The exact original ordinary Phase 1 (478 cases), A (820) and R (392) identities have 1,690 passes, 0 failures, 0 errors and 0 skips across two recorded materialized-subset Source epochs: 1,648 cases at 4,116 rows and 42 cases at 4,117 rows. The 28 successful runs retain closed custody and 84 verified Source snapshots. The 14 failed or incomplete attempts remain separate. These observations apply to the exact recorded bytes and subsets; they are not a single-epoch whole 1,690 rerun or a whole Main tree attestation. Native/compiler/resource admission, legal/release authority, model training/convergence and overall goal completion remain pending.",
+      "evidence_availability": "Hash-pinned evidence is retained privately under /tmp; these paths are neither public nor a portable published proof bundle. No raw runtime archive, database, checkpoint, dataset or model payload is added by this documentation change.",
+      "qualified_postimages": [
+        {
+          "repository": "A",
+          "repo_relative_path": "ipfs_accelerate_py/agent_supervisor/rescue/repair_candidate_owners.py",
+          "bytes": 460947,
+          "sha256": "2e05f6f7d8c3835e0e8538445037205cae3aa1e5b7a96dc02893f9363625c047"
+        },
+        {
+          "repository": "A",
+          "repo_relative_path": "test/api/test_agent_supervisor_productive_owner_v3.py",
+          "bytes": 445718,
+          "sha256": "a2a51cf667570d9a676c7bb3b6b889913dda71c0457e1cba7d5d1aa1de4d4338"
+        },
+        {
+          "repository": "R",
+          "repo_relative_path": "tests/unit/logic/autoformal/test_corpus_release_cli.py",
+          "bytes": 173608,
+          "sha256": "0920a2cb57a30a9ebb5da387c7448140636eb7f8ea80cdbdedfd546b5481dee3"
+        }
+      ],
+      "case_crosswalk": {
+        "bytes": 401587,
+        "mode": "0400",
+        "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/ordinary1690-two-epoch-actual-case-crosswalk-v01.json",
+        "sha256": "45901be81414ecb57211c06189d5da5769768442b91d31f9188751ab3c60295b"
+      },
+      "failure_timeout_history": {
+        "bytes": 7608,
+        "mode": "0400",
+        "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/ordinary1690-owned-failure-timeout-history-index-v01.json",
+        "sha256": "9933ee26c4729605fc4849ab83ce5e82a328e799824236c9e4765f1cbe140122"
+      },
+      "source_epochs": [
+        {
+          "manifest": {
+            "bytes": 1926229,
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/source-epoch-after-R-direct-test-helper-correction-v05.json",
+            "sha256": "914f47242828776dfcba6fdf07f28142f3ea2a30fcae2dd5200367c97efd8ab2"
+          },
+          "qualified_case_scopes": {
+            "A": 820,
+            "Phase1": 478,
+            "R01_R10": 350
+          },
+          "rows": 4116,
+          "total_cases": 1648
+        },
+        {
+          "manifest": {
+            "bytes": 1926708,
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/source-epoch-after-R11-consumer-fixture-v06.json",
+            "sha256": "066cf040a6368deb73bc8e61fea1415ace4480f1670a78be02c8b77e3b9560af"
+          },
+          "qualified_case_scopes": {
+            "R11_positive1": 1,
+            "R11_remainder17": 17,
+            "R12A": 12,
+            "R12_exact_singletons": 12
+          },
+          "rows": 4117,
+          "total_cases": 42
+        }
+      ],
+      "selected_roster_case_counts": {
+        "Phase1": 478,
+        "A": 820,
+        "R": 392
+      },
+      "successful_closed_runs": 28,
+      "verified_Source_snapshots": 84,
+      "preserved_failed_or_incomplete_attempts": 14,
+      "sampled_descendants_verified_gone": 67,
+      "published_Main_bases": {
+        "R": "c7d698c5a3c2c85968c3348cac7a144d8454207f",
+        "A": "534a5362996fa4bf4fb453fbc09fe896fea35c7c"
+      },
+      "original_canonical_HEADs_preserved": {
+        "R": "3f1691d59cc0a310750c0b441b51d3528b17eb85",
+        "A": "81b5e11f3c6063486a7cadc6c3d4c6ea50e85bb2"
+      },
+      "single_epoch_whole1690_rerun": false,
+      "whole_Main_tree_attestation": false,
+      "Native_build_or_resource_grant": false,
+      "legal_statutory_meaning_or_release_authority": false,
+      "model_training_inference_or_convergence": false,
+      "all_eight_phases_or_goal_complete": false,
+      "aggregate_construction_Source_body_reads": 0,
+      "pending_next_priority": {
+        "Phase_1": "Three existing Native Lean tests in tests/integration/logic/backends/test_kernel_backends.py under fresh existing-owner admission.",
+        "A_V3_physical_join": "Separate pending same-process/native-thread admitted build plus explicit direct physical join, through the existing single child and V5 result/seal lifecycle.",
+        "Native_execution_currently_selected": false
+      }
     }
   ]
 }
