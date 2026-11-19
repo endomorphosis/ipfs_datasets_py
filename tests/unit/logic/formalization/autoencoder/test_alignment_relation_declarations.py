@@ -924,3 +924,50 @@ def test_reviewed_v4_coherently_rehashed_foreign_scope_still_fails_complete_repl
     with pytest.raises(ValueError, match='complete replay'):
         subject.validate_reviewed_relation_declaration_v4(prepared,
             expected_preparation_sha256=lane._digest(prepared), **reviewed_pairs_v4['preparation_inputs'])
+
+
+def test_reviewed_v4_statutory_pair_relabel_refuses_genuine_fictional_endpoints(reviewed_pairs_v4):
+    case = reviewed_pairs_v4
+    inputs = deepcopy(case['preparation_inputs'])
+    prepared = subject.prepare_reviewed_relation_declaration_v4(**inputs)
+    assert prepared == case['preparation']
+    assert prepared['endpoint_admission_version'] == 'v3'
+    assert prepared['semantic_label_admission'] is prepared['actual_fit_authorized'] is False
+    assert not {'objective_positive_mask', 'objective_permitted_negative_mask',
+                'production_contrastive_mask'}.intersection(prepared)
+    endpoints = deepcopy(inputs['endpoint_admissions'])
+    assert endpoints and all(entry['report']['provenance_kind'] == 'fictional_fixture'
+        and entry['report']['training_mask'] == entry['report']['evaluation_gold_mask'] == 0
+        for entry in endpoints.values())
+    assert inputs['body']['provenance_kind'] == 'fictional_fixture'
+
+    # Retag only the pair ledger. Its body/dependency commitments must agree,
+    # while the genuine fictional V3 endpoint reports and replay inputs stay exact.
+    old_body_sha256 = inputs['expected_body_sha256']
+    body = inputs['body']
+    body['provenance_kind'] = 'statutory'
+    inputs['expected_body_sha256'] = lane._digest(body)
+    ledger_id = body['ledger_id']
+    artifact_pins = {row['artifact_id']: row['artifact_sha256']
+        for row in inputs['dependency_manifest']['artifacts']}
+    assert artifact_pins[ledger_id] == old_body_sha256
+    artifact_pins[ledger_id] = inputs['expected_body_sha256']
+    dependencies = subject._reviewed_owners('v4')[2]
+    artifacts = [{'artifact_id': identity, 'artifact_sha256': digest,
+                  'dependency_pins': {kind: [] for kind in dependencies.PIN_KINDS}}
+        for identity, digest in artifact_pins.items()]
+    manifest = dependencies.build_dependency_manifest(artifacts,
+        [{'dependent_id': ledger_id, 'dependency_id': identity}
+         for identity in artifact_pins if identity != ledger_id],
+        expected_artifact_ids=list(artifact_pins))
+    inputs.update(dependency_manifest=manifest,
+                  expected_manifest_sha256=manifest['manifest_sha256'])
+
+    # Preparation must refuse before returning any label-bearing artifact;
+    # do not fabricate statutory reviews or call the mask/training owners.
+    produced = []
+    with pytest.raises(ValueError, match='^endpoint and pair provenance differ$'):
+        produced.append(subject.prepare_reviewed_relation_declaration_v4(**inputs))
+    assert produced == []
+    assert inputs['endpoint_admissions'] == endpoints
+    assert case['preparation_inputs']['body']['provenance_kind'] == 'fictional_fixture'

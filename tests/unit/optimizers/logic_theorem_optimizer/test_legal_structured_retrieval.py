@@ -1111,3 +1111,189 @@ def test_ranked_v3_selection_preserves_complete_population_and_closing_custody(r
         assert bool(forwards) == (damage == "outer-trust-drift")
     finally:
         hook.remove()
+
+
+@pytest.fixture
+def aggregate_v4_software_case(monkeypatch):
+    """Actual fictional V3 admissions; no model, ranking or pair labels consumed."""
+    import builtins
+    import importlib.util
+    from pathlib import Path
+    original_import = builtins.__import__
+    attempted = []
+    def no_torch(name, *args, **kwargs):
+        if name.split(".", 1)[0] == "torch":
+            attempted.append(name)
+            pytest.fail("direct aggregate consumer software must not import Torch")
+        return original_import(name, *args, **kwargs)
+    monkeypatch.setattr(builtins, "__import__", no_torch)
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_span_consumer_binding as bound
+    root = Path(structured.joint.codec.__file__).resolve().parents[3]
+    modules = []
+    for name, path in (
+            ("_aggregate_v4_existing_declaration_fixture", root / "tests/unit/logic/formalization/autoencoder/test_alignment_relation_declarations.py"),
+            ("_aggregate_v4_existing_consumer_fixture", Path(__file__).with_name("test_legal_span_consumer_binding.py"))):
+        spec = importlib.util.spec_from_file_location(name, path)
+        assert spec is not None and spec.loader is not None
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        modules.append(module)
+    declarations, helper = modules
+    def complete_v3_fixture(**options):
+        return declarations.reviewed_pair_fixture_v3(include_definition=True, **options)
+    # Reuse its two genuinely namespace-separated V3 endpoint admissions only.
+    # prepare=False skips combined V4 pair preparation/review. Authored vector
+    # declarations and pair labels are never consumed by this context contract.
+    material = declarations.reviewed_pair_fixture_v4(
+        fixture_factory=complete_v3_fixture, prepare=False)
+    inputs = material["preparation_inputs"]
+    admissions = inputs["endpoint_admissions"]
+    identities = sorted(admissions)
+    assert len(identities) == 2 and len(inputs["body"]["context_set"]) == 2
+    unit_sets = [{unit["unit_id"] for unit in admissions[key]["report"]["units"]} for key in identities]
+    assert len(unit_sets[0]) == len(unit_sets[1]) == 3 and unit_sets[0].isdisjoint(unit_sets[1])
+    query = {"id": "fixture:aggregate-unseen-query",
+        "source_text": "Unseen lighthouse operators may archive weather messages after a storm."}
+    split = helper.splits.LegalIRSplitManifest.from_mapping(inputs["split_manifest"])
+    example = helper.splits.LegalIRSplitExample.from_sample(dict(sample_id=query["id"],
+        text=query["source_text"], statute_family="fixture:aggregate-query-family",
+        lineage_group_id="fixture:aggregate-query-lineage"))
+    manifest = helper.splits.LegalIRSplitManifest(examples=(*split.examples, example),
+        assignments={**split.assignments, query["id"]: "holdout"},
+        config_digest=helper.source_digest("fictional aggregate software split policy"),
+        metadata={"fixture_only": True}).to_dict()
+    components = []
+    for identity in identities:
+        entry = admissions[identity]
+        by_unit = {}
+        for endpoint in inputs["body"]["formal_endpoints"]:
+            if endpoint["admission_id"] == identity:
+                by_unit.setdefault(endpoint["unit_id"], endpoint["split_sample_id"])
+        units = entry["report"]["units"]
+        assert set(by_unit) == {unit["unit_id"] for unit in units}
+        rows = [{"id": by_unit[unit["unit_id"]], "unit_id": unit["unit_id"],
+            "source_text": unit["source_text"], "canonical_ir": copy.deepcopy(unit["canonical_ir"])} for unit in units]
+        # Existing helper supplies only exact row/split/exposure/digest sidecars;
+        # its legacy eligibility records are not V3 reviews and are not forwarded.
+        rows, sidecars = helper.case(rows=rows, operation="training", partition="train")
+        replay = dict(zip(("preparation", "registry", "policy", "reviews"), entry["args"]), **entry["kwargs"])
+        binding = bound.prepare_reviewed_source_span_consumer_binding_v3(rows,
+            expected_rows_sha256=sidecars["expected_rows_sha256"], split_manifest=manifest,
+            expected_split_manifest_sha256=helper.digest(manifest), admission_inputs=replay,
+            expected_admission_inputs_sha256=bound.reviewed_admission_inputs_sha256(replay),
+            exposure_records=sidecars["exposure_records"], expected_exposure_sha256=sidecars["expected_exposure_sha256"],
+            operation="training", allow_fictional_fixture=True)
+        assert binding.receipt()["status"] == "ready"
+        assert binding.receipt()["training_mask"] == binding.receipt()["evaluation_gold_mask"] == 0
+        components.append(dict(admission_id=identity, binding=binding, training_rows=rows,
+            admission_inputs=replay, exposure_records=sidecars["exposure_records"]))
+    chosen = next(row for row in components[0]["training_rows"] if any(
+        use["use_unit_id"] == row["unit_id"] for use in row["canonical_ir"]["definition_uses"]))
+    union = [{"admission_id": item["admission_id"], "rows": item["training_rows"]} for item in components]
+    selections = [{"id": query["id"], "source_sha256": helper.source_digest(query["source_text"]),
+        "index_sha256": helper.digest(union),
+        "retrieved_refs": [{"admission_id": identities[0], "id": chosen["id"]}]}]
+    return dict(bound=bound, helper=helper, components=components, split_manifest=manifest,
+        query_rows=[query], retrieval_rows=selections, chosen=chosen, torch_attempts=attempted)
+
+
+def _consume_aggregate_v4_software(case, consumer, **overrides):
+    options = {name: case[name] for name in (
+        "components", "split_manifest", "query_rows", "retrieval_rows")}
+    options.update(schema=structured.AGGREGATE_CONTEXT_V4_SCHEMA,
+        expected_query_rows_sha256=case["helper"].digest(options["query_rows"]),
+        expected_retrieval_rows_sha256=case["helper"].digest(options["retrieval_rows"]), consumer=consumer)
+    options.update(overrides)
+    return structured.consume_reviewed_contexts_v4(**options)
+
+
+def test_aggregate_v4_keeps_complete_component_custody_without_numerical_execution(aggregate_v4_software_case):
+    case = aggregate_v4_software_case
+    components = case["components"]
+    identities = [item["admission_id"] for item in components]
+    all_ids = [row["id"] for item in components for row in item["training_rows"]]
+    assert len(all_ids) == len(set(all_ids)) == 6
+    calls, sentinel = [], object()
+    def inspect(payload):
+        calls.append(copy.deepcopy(payload))
+        return sentinel
+    assert _consume_aggregate_v4_software(case, inspect) is sentinel
+    assert len(calls) == 1 and case["torch_attempts"] == []
+    payload = calls[0]
+    assert [item["admission_id"] for item in payload["component_receipts"]] == identities
+    assert payload["training_index_sha256"] == case["helper"].digest([
+        {"admission_id": item["admission_id"], "rows": item["training_rows"]} for item in components])
+    examples = payload["rows"][0]["examples"]
+    assert {row["admission_id"] for row in examples} == {identities[0]}
+    expected_units = {case["chosen"]["unit_id"]} | {use["definition_unit_id"]
+        for use in case["chosen"]["canonical_ir"]["definition_uses"]
+        if use["use_unit_id"] == case["chosen"]["unit_id"]}
+    assert {row["unit_id"] for row in examples} == expected_units
+    for row in examples:
+        original = next(item for item in components[0]["training_rows"] if item["id"] == row["id"])
+        assert row["canonical_ir"] == original["canonical_ir"] and len(row["canonical_ir"]) == 9
+        assert row["source_text"] == original["source_text"]
+    for key in ("query_target_access", "inference_context_permission_verified", "legal_applicability_established",
+                "proof_authority", "corpus_admitted", "training_executed", "ranking_authenticated"):
+        assert payload[key] is False
+    for item in components:
+        assert all(item["binding"].receipt()[key] is False for key in (
+            "proof_authority", "lean_corpus_authority", "corpus_admitted", "training_executed"))
+
+
+@pytest.mark.parametrize("during_callback", [False, True])
+def test_aggregate_v4_replays_unselected_component_source_before_and_after_dispatch(
+        aggregate_v4_software_case, during_callback):
+    case = aggregate_v4_software_case
+    unselected = case["components"][1]
+    assert all(ref["admission_id"] != unselected["admission_id"]
+        for selection in case["retrieval_rows"] for ref in selection["retrieved_refs"])
+    unit = unselected["training_rows"][1]["unit_id"]
+    def change_current_source():
+        unselected["admission_inputs"]["preparation_inputs"]["source_inputs"][unit]["raw_bytes"] += b" changed current source"
+    calls = []
+    def change_after_dispatch(payload):
+        calls.append(payload)
+        change_current_source()
+    if not during_callback:
+        change_current_source()
+    with pytest.raises(ValueError):
+        _consume_aggregate_v4_software(case, change_after_dispatch)
+    assert len(calls) == int(during_callback)
+    assert case["torch_attempts"] == []
+
+
+def test_aggregate_v4_rejects_freshly_committed_foreign_component_reference(aggregate_v4_software_case):
+    case = aggregate_v4_software_case
+    ref = case["retrieval_rows"][0]["retrieved_refs"][0]
+    original_id = ref["id"]
+    ref["admission_id"] = case["components"][1]["admission_id"]
+    assert original_id not in {row["id"] for row in case["components"][1]["training_rows"]}
+    calls = []
+    # _consume computes the new exact outer selection digest, so this is an
+    # admitted-component membership refusal, not an old-digest mismatch.
+    with pytest.raises(ValueError, match="outside its admitted component"):
+        _consume_aggregate_v4_software(case, calls.append)
+    assert calls == []
+
+
+def test_aggregate_v4_refuses_callback_removal_from_complete_train_union(aggregate_v4_software_case):
+    case = aggregate_v4_software_case
+    calls = []
+    def remove_unselected(payload):
+        calls.append(payload)
+        case["components"].pop()
+    with pytest.raises(ValueError, match="aggregate context inputs changed during dispatch"):
+        _consume_aggregate_v4_software(case, remove_unselected)
+    assert len(calls) == 1
+
+
+def test_aggregate_v4_checks_complete_context_byte_bound_without_truncation(aggregate_v4_software_case):
+    case = aggregate_v4_software_case
+    payload = _consume_aggregate_v4_software(case, lambda result: result)
+    complete_bytes = len(case["bound"]._preflight(payload["rows"][0]))
+    assert 2 <= complete_bytes <= structured.MAX_REVIEWED_CONTEXT_BYTES
+    calls = []
+    with pytest.raises(ValueError, match="complete aggregate context exceeds byte allowance"):
+        _consume_aggregate_v4_software(case, calls.append, max_context_bytes=complete_bytes - 1)
+    assert calls == []
