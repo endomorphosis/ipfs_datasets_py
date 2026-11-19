@@ -4893,89 +4893,14 @@ def test_whole_norm_definition_application_installed_lean_checks_all30_and_origi
                 c["preparation"], c["preservation"], c["graph"], c["admission"], *c["args"], **rejected)
 
     if instance_identity_profile == "reviewed-source-use/v1":
-        # Same signed source/IR cohort, not a consumer-to-Native authority join.
-        consumer, consumer_fixture, rows, consumer_options = reviewed_whole_norm_consumer_case_v3(c)
-        units = c["admission"]["units"]
-        declarations = c["case"]["declaration"]["units"]
-        identifiers = [unit["unit_id"] for unit in units]
-        assert len(identifiers) == len(set(identifiers)) == 3
-        assert [unit["unit_id"] for unit in declarations] == identifiers
-        assert [row["unit_id"] for row in rows] == identifiers
-        assert c["graph"]["counts"]["units"] == len(c["graph"]["unit_records"]) == len(rows)
-        assert len(c["graph"]["ast_records"]) == len(rows)
-        assert [json.loads(row["ast_json"]) for row in c["graph"]["ast_records"]] == [
-            row["canonical_ir"] for row in rows]
-        full_fields = {"profile", "typed_expression", "argument_roles", "assumptions",
-            "governing_context", "interpretation_id", "source_binding", "definition_uses", "cross_references"}
-        for row, unit, declared in zip(rows, units, declarations, strict=True):
-            assert set(row["canonical_ir"]) == full_fields
-            assert row["source_text"] == unit["source_text"]
-            assert row["canonical_ir"] == unit["canonical_ir"]
-            assert row["canonical_ir"]["source_binding"]["source_version_cid"] == declared["source_version"]["record_cid"]
-            assert row["canonical_ir"]["source_binding"]["occurrence_cid"] == declared["occurrence"]["record_cid"]
+        # Actual Native receipt bindings stay in this build-bearing test.
         assert receipt["reviewed_admission_sha256"] == manifest["reviewed_admission_sha256"] == c["admission_sha"]
         assert receipt["reviewed_graph_sha256"] == manifest["reviewed_graph_sha256"] == c["graph_sha"]
         assert retained["admission_sha256"] == c["admission_sha"]
         assert retained["graph_sha256"] == c["graph_sha"]
-        replay = consumer_options["admission_inputs"]
-        assert replay["preparation"] is c["args"][0]
-        assert replay["preparation"] is not c["preparation"]
-        replay_sha = consumer.reviewed_admission_inputs_sha256(replay)
-        original_admission_sha = c["owner"].norm_content_adjudication_sha256(c["admission"])
-        assert original_admission_sha == c["admission_sha"]
-        assert c["admission"]["fixture_only"] is True
-        assert c["admission"]["provenance_kind"] == "fictional_fixture"
-        assert c["admission"]["training_mask"] == c["admission"]["evaluation_gold_mask"] == 0
-
-        # A different admitted complete target, with fresh outer commitments,
-        # cannot be attached to this unchanged unit/source and signed replay.
-        wrong_rows = deepcopy(rows)
-        wrong_rows[0]["canonical_ir"] = deepcopy(rows[1]["canonical_ir"])
-        assert wrong_rows[0]["canonical_ir"] != rows[0]["canonical_ir"]
-        _, _, wrong_rows, wrong_options = reviewed_whole_norm_consumer_case_v3(c, rows=wrong_rows)
-        assert wrong_rows[0]["unit_id"] == rows[0]["unit_id"]
-        assert wrong_rows[0]["source_text"] == rows[0]["source_text"]
-        assert wrong_options["expected_rows_sha256"] == consumer_fixture.digest(wrong_rows)
-        assert wrong_options["expected_exposure_sha256"] == consumer_fixture.digest(wrong_options["exposure_records"])
-        assert wrong_options["expected_admission_inputs_sha256"] == replay_sha
-        rejected_calls = []
-        with pytest.raises(consumer.SourceSpanConsumerBindingError, match="complete row target differs from reviewed typed target"):
-            wrong_binding = consumer.prepare_reviewed_source_span_consumer_binding_v3(wrong_rows, **wrong_options)
-            consumer.consume_reviewed_source_span_binding_v3(wrong_binding, wrong_rows,
-                **consumer_fixture.reviewed_validation_inputs(wrong_options), consumer=rejected_calls.append)
-        assert rejected_calls == []
-        assert consumer.reviewed_admission_inputs_sha256(replay) == replay_sha
-
-        binding = consumer.prepare_reviewed_source_span_consumer_binding_v3(rows, **consumer_options)
-        bound_receipt = binding.receipt()
-        assert bound_receipt["schema"] == consumer.REVIEWED_V3_SCHEMA
-        assert bound_receipt["profile"] == consumer.REVIEWED_V3_PROFILE
-        assert bound_receipt["status"] == "ready" and bound_receipt["semantic_admission_replayed"] is True
-        assert bound_receipt["row_count"] == bound_receipt["ready_row_count"] == len(units)
-        assert bound_receipt["blocked_row_count"] == bound_receipt["rows_discarded"] == 0
-        assert bound_receipt["declaration_sha256"] == receipt["declaration_sha256"] == c["admission"]["declaration_sha256"]
-        assert bound_receipt["admission_inputs_sha256"] == replay_sha
-        assert bound_receipt["training_mask"] == bound_receipt["evaluation_gold_mask"] == 0
-        assert all(bound_receipt[key] is False for key in (
-            "proof_authority", "lean_corpus_authority", "corpus_admitted", "training_executed"))
-        calls, sentinel = [], object()
-        def inspect_complete_same_units(detached):
-            assert detached is not rows and detached == rows
-            assert [row["unit_id"] for row in detached] == identifiers
-            for offered, original in zip(detached, rows, strict=True):
-                assert offered is not original
-                assert offered["canonical_ir"] is not original["canonical_ir"]
-                assert set(offered["canonical_ir"]) == full_fields
-            calls.append(deepcopy(detached))
-            return sentinel
-        assert consumer.consume_reviewed_source_span_binding_v3(binding, rows,
-            **consumer_fixture.reviewed_validation_inputs(consumer_options), consumer=inspect_complete_same_units) is sentinel
-        assert calls == [rows]
-        assert consumer.validate_reviewed_source_span_consumer_binding_v3(binding, rows,
-            **consumer_fixture.reviewed_validation_inputs(consumer_options)) == bound_receipt == binding.receipt()
-        assert consumer.reviewed_admission_inputs_sha256(replay) == replay_sha
-        assert c["owner"].norm_content_adjudication_sha256(c["admission"]) == original_admission_sha
+        assert receipt["declaration_sha256"] == manifest["declaration_sha256"] == c["admission"]["declaration_sha256"]
         assert receipt["statutory_meaning_proved"] is False and not any(receipt["authority"].values())
+        reviewed_whole_norm_consumer_checks_v3(c)
 
 
 @pytest.mark.parametrize("instance_identity_profile", [None, "reviewed-source-use/v1"], ids=["default", "source-use"])
@@ -5767,3 +5692,115 @@ def reviewed_whole_norm_consumer_case_v3(control, *, rows=None):
         expected_admission_inputs_sha256=consumer.reviewed_admission_inputs_sha256(replay),
         allow_fictional_fixture=True)
     return consumer, fixture, rows, options
+
+
+def reviewed_whole_norm_consumer_checks_v3(c):
+    """Same-unit engineering callback checks; no Native handle or build required."""
+    consumer, consumer_fixture, rows, consumer_options = reviewed_whole_norm_consumer_case_v3(c)
+    units = c["admission"]["units"]
+    declarations = c["case"]["declaration"]["units"]
+    identifiers = [unit["unit_id"] for unit in units]
+    assert len(identifiers) == len(set(identifiers)) == 3
+    assert [unit["unit_id"] for unit in declarations] == identifiers
+    assert [row["unit_id"] for row in rows] == identifiers
+    assert c["graph"]["counts"]["units"] == len(c["graph"]["unit_records"]) == len(rows)
+    assert len(c["graph"]["ast_records"]) == len(rows)
+    assert [json.loads(row["ast_json"]) for row in c["graph"]["ast_records"]] == [
+        row["canonical_ir"] for row in rows]
+    full_fields = {"profile", "typed_expression", "argument_roles", "assumptions",
+        "governing_context", "interpretation_id", "source_binding", "definition_uses", "cross_references"}
+    for row, unit, declared in zip(rows, units, declarations, strict=True):
+        assert set(row["canonical_ir"]) == full_fields
+        assert row["source_text"] == unit["source_text"]
+        assert row["canonical_ir"] == unit["canonical_ir"]
+        assert row["canonical_ir"]["source_binding"]["source_version_cid"] == declared["source_version"]["record_cid"]
+        assert row["canonical_ir"]["source_binding"]["occurrence_cid"] == declared["occurrence"]["record_cid"]
+    replay = consumer_options["admission_inputs"]
+    assert replay["preparation"] is c["args"][0]
+    assert replay["preparation"] is not c["preparation"]
+    replay_sha = consumer.reviewed_admission_inputs_sha256(replay)
+    original_admission_sha = c["owner"].norm_content_adjudication_sha256(c["admission"])
+    assert original_admission_sha == c["admission_sha"]
+    assert c["admission"]["fixture_only"] is True
+    assert c["admission"]["provenance_kind"] == "fictional_fixture"
+    assert c["admission"]["training_mask"] == c["admission"]["evaluation_gold_mask"] == 0
+
+    # A different admitted complete target, with fresh outer commitments,
+    # cannot be attached to this unchanged unit/source and signed replay.
+    wrong_rows = deepcopy(rows)
+    wrong_rows[0]["canonical_ir"] = deepcopy(rows[1]["canonical_ir"])
+    assert wrong_rows[0]["canonical_ir"] != rows[0]["canonical_ir"]
+    _, _, wrong_rows, wrong_options = reviewed_whole_norm_consumer_case_v3(c, rows=wrong_rows)
+    assert wrong_rows[0]["unit_id"] == rows[0]["unit_id"]
+    assert wrong_rows[0]["source_text"] == rows[0]["source_text"]
+    assert wrong_options["expected_rows_sha256"] == consumer_fixture.digest(wrong_rows)
+    assert wrong_options["expected_exposure_sha256"] == consumer_fixture.digest(wrong_options["exposure_records"])
+    assert wrong_options["expected_admission_inputs_sha256"] == replay_sha
+    rejected_calls = []
+    with pytest.raises(consumer.SourceSpanConsumerBindingError, match="complete row target differs from reviewed typed target"):
+        wrong_binding = consumer.prepare_reviewed_source_span_consumer_binding_v3(wrong_rows, **wrong_options)
+        consumer.consume_reviewed_source_span_binding_v3(wrong_binding, wrong_rows,
+            **consumer_fixture.reviewed_validation_inputs(wrong_options), consumer=rejected_calls.append)
+    assert rejected_calls == []
+    assert consumer.reviewed_admission_inputs_sha256(replay) == replay_sha
+
+    binding = consumer.prepare_reviewed_source_span_consumer_binding_v3(rows, **consumer_options)
+    bound_receipt = binding.receipt()
+    assert bound_receipt["schema"] == consumer.REVIEWED_V3_SCHEMA
+    assert bound_receipt["profile"] == consumer.REVIEWED_V3_PROFILE
+    assert bound_receipt["status"] == "ready" and bound_receipt["semantic_admission_replayed"] is True
+    assert bound_receipt["row_count"] == bound_receipt["ready_row_count"] == len(units)
+    assert bound_receipt["blocked_row_count"] == bound_receipt["rows_discarded"] == 0
+    assert bound_receipt["declaration_sha256"] == c["admission"]["declaration_sha256"]
+    assert bound_receipt["admission_inputs_sha256"] == replay_sha
+    assert bound_receipt["training_mask"] == bound_receipt["evaluation_gold_mask"] == 0
+    assert all(bound_receipt[key] is False for key in (
+        "proof_authority", "lean_corpus_authority", "corpus_admitted", "training_executed"))
+    calls, sentinel = [], object()
+    def inspect_complete_same_units(detached):
+        assert detached is not rows and detached == rows
+        assert [row["unit_id"] for row in detached] == identifiers
+        for offered, original in zip(detached, rows, strict=True):
+            assert offered is not original
+            assert offered["canonical_ir"] is not original["canonical_ir"]
+            assert set(offered["canonical_ir"]) == full_fields
+        calls.append(deepcopy(detached))
+        return sentinel
+    assert consumer.consume_reviewed_source_span_binding_v3(binding, rows,
+        **consumer_fixture.reviewed_validation_inputs(consumer_options), consumer=inspect_complete_same_units) is sentinel
+    assert calls == [rows]
+    assert consumer.validate_reviewed_source_span_consumer_binding_v3(binding, rows,
+        **consumer_fixture.reviewed_validation_inputs(consumer_options)) == bound_receipt == binding.receipt()
+    assert consumer.reviewed_admission_inputs_sha256(replay) == replay_sha
+    assert c["owner"].norm_content_adjudication_sha256(c["admission"]) == original_admission_sha
+
+
+def test_whole_norm_source_use_preparation_reaches_current_consumer_without_native_execution(
+        reviewed_native_control_v3):
+    """Pure source-use preparation and consumer custody; no installed-Lake fixture."""
+    c = dict(reviewed_native_control_v3)
+    c = c["shared_helper"].reviewed_definition_realization_fresh_case(c, "repeated-body")
+    identity = {"instance_identity_profile": "reviewed-source-use/v1"}
+    application = {"definition_application_profile": "whole-norm-definition-expansion/v1"}
+    c["preservation"] = c["shared"].prepare_reviewed_norm_preservation_corpus_v3(
+        c["graph"], c["admission"], *c["args"], expected_graph_sha256=c["graph_sha"],
+        expected_admission_sha256=c["admission_sha"], toolchain=TOOLCHAIN, **identity, **c["kwargs"])
+    c["preparation"] = c["shared"].prepare_reviewed_definition_realization_corpus_v1(
+        c["preservation"], c["graph"], c["admission"], *c["args"],
+        expected_preservation_sha256=c["shared"].reviewed_preservation_corpus_sha256(c["preservation"]),
+        expected_graph_sha256=c["graph_sha"], expected_admission_sha256=c["admission_sha"],
+        toolchain=TOOLCHAIN, **identity, **application, **c["kwargs"])
+    manifest = c["preparation"].to_dict()
+    assert manifest["selection"]["body_typed_node"]["kind"] == "and"
+    assert len(manifest["preservation_obligations"]) == 30
+    assert len(manifest["definition_application_obligations"]) == 4
+    assert len(manifest["definition_applications"]) == 2
+    assert manifest["upstream_manifest"] == c["preservation"].to_dict()
+    for row in manifest["definition_applications"]:
+        assert row["original_typed_expression"] != row["expanded_typed_expression"]
+        assert row["target_typed_paths"]
+    assert manifest["preparation_only"] is True
+    assert manifest["proof_status"] == manifest["lean_compilation_status"] == "not_executed"
+    assert manifest["training_mask"] == manifest["evaluation_gold_mask"] == 0
+    assert manifest["semantic_use_eligible"] is False and not any(manifest["authority"].values())
+    reviewed_whole_norm_consumer_checks_v3(c)
