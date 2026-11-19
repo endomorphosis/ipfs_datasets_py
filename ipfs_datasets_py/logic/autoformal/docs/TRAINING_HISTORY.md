@@ -1,5 +1,11 @@
 # Training and experiment history
 
+## Native resource admission repair — 2026-11-19
+
+Retain the real version-only Native failure, the separate Native1 pass and the later **three-case Native pass on Source 4,123**. Native3 closed eight resource claims; its cache control used three real commands, while reuse/mismatches and two software version reissues added none. The quoted-source case was a precompiler refusal, not another compiler proof; installed libraries/runtime remain explicitly trusted.
+
+The owning file passed **89/89 on separate Source 4,127** after retained 81/89 and 82/89 attempts, dependency-subset hydration and the staticmethod-only test correction. Owner `5fcddd98` and test `98e953e4` stayed unchanged. See the [current handoff](HANDOFF.md#native-resource-admission-repair-separate-owning-and-native-scopes--2026-11-19) and [single catalog entry](work_catalog.json) `native-resource-composition-repair-20261119` for the hash-pinned private index and receipts. These scopes are not pooled into the earlier 1,690 cases. The full eight-phase goal, statutory/admission, model/convergence and release gates remain pending.
+
 ## Ordinary Main compatibility at two recorded Source epochs — 2026-11-19
 
 The exact ordinary Phase 1 (478 cases), A (820) and R (392) rosters recorded **1,690 passes, 0 failures, 0 errors and 0 skips**. Two Source epochs account for 1,648 and 42 cases, respectively, across declared subsets of 4,116 and 4,117 rows. All 28 successful runs closed their original custody; 84 Source snapshots were verified. The 14 failed or incomplete attempts remain separate, with no extra passing-case credit. This is not a single-epoch whole 1,690 rerun or whole Main tree attestation.

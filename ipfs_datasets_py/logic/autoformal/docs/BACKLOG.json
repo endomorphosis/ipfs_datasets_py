@@ -11569,6 +11569,53 @@
         "programme_status_frontier_acceptance_criteria_changed": false,
         "historical_completed_statuses": "Existing COMPLETE statuses retain their original recorded scopes; they do not complete all eight phases or Native, legal or model goals.",
         "next_action_pending": "The next full-goal Phase 1 priority is the three existing Native Lean tests in tests/integration/logic/backends/test_kernel_backends.py, under fresh admission through the existing Native/resource owners. No Native execution is currently selected. The A V3 admitted build followed by a same-process/native-thread direct physical join remains a separate pending owner scope, reusing its existing single child and original V5 CLI result-writing/seal lifecycle."
+      },
+      "native_resource_composition_repair_20261119": {
+        "evidence_id": "native-resource-composition-repair-20261119",
+        "recorded_at_utc": "2026-11-19T04:16:49.041834+00:00",
+        "qualification_index": {
+          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/resource-admission-repair-owning89-and-Native3-qualification-index-v01.json",
+          "bytes": 5373,
+          "sha256": "e4e1dc980d14e67840f5e577a95f68c50b972df0f2a43a008c8b47a000a16426"
+        },
+        "recorded_scopes": {
+          "owning89": {
+            "passed": 89,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0,
+            "functions": 38,
+            "Source_rows": 4127,
+            "Source_epoch_sha256": "041770b3eae63809bc375abfc0daf70e6d32f40ced8731d227b854612af33d02"
+          },
+          "Native3": {
+            "passed": 3,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0,
+            "Source_rows": 4123,
+            "Source_epoch_sha256": "d0d9822a26df3a9faee0e1a7acbc8e2406d967a17d441ebdfe943608c7ccf1be",
+            "resource_acquisitions_and_releases": 8
+          },
+          "Native1_earlier": "One separate pass at Source4118; five released claims; no pooled case credit."
+        },
+        "existing_owner_postimage": {
+          "bytes": 19115,
+          "relative_path": "ipfs_datasets_py/logic/backends/resource_admission.py",
+          "sha256": "5fcddd981835a7fa618c202f8de4c52a41777af74aae8a7f65fb4cb8b275edc9"
+        },
+        "owning_test_postimage": {
+          "bytes": 40882,
+          "relative_path": "tests/unit/logic/backends/test_resource_admission.py",
+          "sha256": "98e953e4811b87229187319367db1f65cacab8523d288d8c239b476242db5eac"
+        },
+        "preserved_failures": "Version-only Native failure4877ed59; owning81P8F/e52febc2 then82P7F/facce41a; separate predispatch failures retain no test credit.",
+        "input_repairs": "Five Main-identical dependencies and a staticmethod-only test-spy correction, followed by four fixed-point TLC dependencies; production5fc and test98e9 unchanged for final owning run.",
+        "scope": "Existing resource-admission repair: whole owning89 passed at Source4127/041770b3; three selected Native cases passed at separate Source4123/d0d982. Native1 at Source4118 remains its own earlier observation. Exact proposition/type/axiom-policy, sampled lifecycle and disk-cache controls only; quoted-source outcome is precompiler refusal and two backend-version mutations are software reissues with no new Native commands. Preserve prior version-only failure and owning81P8F/82P7F attempts. No transfer to a common Source tree, the earlier1690 two-epoch result, statutory meaning/admission, model convergence or release authority.",
+        "next_action_pending": "Continue the existing full eight-phase goal through its current owners: authenticated statutory source/edition/meaning, reviewed admission, model evidence/convergence and corpus/release/immutable-readback gates remain pending. The A V3 admitted same-process/native-thread build plus direct physical join retains its separate selection and evidence obligations. These recorded fixture/proof controls do not complete the full goal or authorize new execution.",
+        "task_status_frontier_acceptance_criteria_changed": false,
+        "goal_full8_active": true,
+        "execution_authorized_by_this_progress": false
       }
     },
     {

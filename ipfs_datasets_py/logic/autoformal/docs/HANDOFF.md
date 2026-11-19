@@ -1,5 +1,19 @@
 # Current handoff
 
+## Native resource admission repair: separate owning and Native scopes — 2026-11-19
+
+The original selected Native case failed after a real Lean 4.34.1 version command returned zero without SDK native-lifecycle evidence; no proof compilation was reached. That Source 4,117 failure and separate predispatch input failures remain retained without passing-case credit.
+
+The existing resource-admission owner, postimage `5fcddd98`, composes the SDK's exact bounded owner on default native Linux runs. It preserves default probing, the absolute deadline and independent cancellation, retains the resource lease until fresh process/workspace cleanup confirmation, and keeps the original SDK error primary if lease release also fails. Process `4434f571` is unchanged; no new runner or controller was added.
+
+A separate Native1 pass on Source 4,118 accepted the exact positive proposition with no axioms, refused a wrong-type compilation and rejected unapproved axioms. All five resource claims released. The later three-case Native cohort passed on Source 4,123 (`d0d9822a`) with eight acquisitions/releases, zero recoveries and stable Source/eight DATA snapshots. Its cache control used three real commands: one version probe and two compiles. Disk roundtrip and exact-context reuse passed; reuse/mismatch checks issued no new commands. Both backend-version mutation controls are software receipt reissues, not additional Native versions. The quoted-source outcome was malformed/accepted-false at the precompiler policy boundary, not a successful quoted-goal compile proof. Installed libraries/runtime remain explicitly trusted, not fully authenticated containment or statutory meaning.
+
+The whole owning file subsequently passed **89 cases across 38 functions, with zero failures/errors/skips**, on separate Source 4,127 (`041770b3`); all three snapshots and original SDK cleanup closed. Preserve its earlier 81-pass/eight-failure and 82-pass/seven-failure attempts. Missing subset imports and one staticmethod test-spy binding caused those failures. Five Main-identical dependencies and the staticmethod-only correction were followed by four fixed-point TLC dependencies; owner `5fcddd98` and test `98e953e4` stayed unchanged for the final run.
+
+The [catalog](work_catalog.json) evidence `native-resource-composition-repair-20261119` points to the private retained 5,373-byte qualification index, SHA256 `e4e1dc980d14e67840f5e577a95f68c50b972df0f2a43a008c8b47a000a16426`, with exact raw/JUnit/failure links. It is not public or portable published proof; no raw payload is copied into these guides. Native3 remains qualified at Source 4,123, not transferred to the later owning epoch. Native1, Native3, owning89 and the older two-epoch 1,690-case result keep separate scopes and are not pooled.
+
+All 24 task statuses/frontiers and existing histories remain intact. Continue the existing full eight-phase goal: statutory source/edition/meaning, reviewed admission, model evidence/convergence, release and immutable-readback gates remain pending. The separate A V3 admitted same-process/native-thread physical join retains its own selection/evidence obligations. These selected fixture/proof controls do not complete the whole goal or authorize new execution.
+
 ## Ordinary Main compatibility at two recorded Source epochs — 2026-11-19
 
 The exact selected ordinary Phase 1 (478 cases), A (820) and R (392) identities have **1,690 passes, 0 failures, 0 errors and 0 skips** across two recorded Source epochs. The observations apply to the exact recorded bytes and declared materialized subsets. They do not constitute a single-epoch whole 1,690 rerun or a whole Main tree attestation. The observed Main bases are R `c7d698c5a3c2c85968c3348cac7a144d8454207f` and A `534a5362996fa4bf4fb453fbc09fe896fea35c7c` plus the three exact postimages below.

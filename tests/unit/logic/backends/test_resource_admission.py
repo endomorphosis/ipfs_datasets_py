@@ -647,3 +647,293 @@ def test_real_tool_timeout_stops_process_and_cleans_workspace_before_release(own
     assert result.workspace_cleaned and not result.ok
     assert result.pid is not None and not Path(f"/proc/{result.pid}").exists()
     assert_idle(scheduler)
+
+
+@pytest.mark.skipif(not sys.platform.startswith("linux"), reason="owned native observations require Linux")
+def test_default_native_admission_returns_actual_lifecycle_before_lease_release(owner, tmp_path, monkeypatch):
+    scheduler, _, _ = owner
+    observations = []
+    original_retry = lifecycle.NativeToolCleanupHandle.retry_cleanup
+    original_release = scheduler.release
+
+    def retry(handle):
+        value = original_retry(handle)
+        observations.append(value)
+        return value
+
+    def release(*args, **kwargs):
+        assert observations and observations[-1].cleanup_confirmed
+        assert not list((tmp_path / "runs").glob("logic-tool-*"))
+        return original_release(*args, **kwargs)
+
+    monkeypatch.setattr(lifecycle.NativeToolCleanupHandle, "retry_cleanup", retry)
+    monkeypatch.setattr(scheduler, "release", release)
+    runner = admission.ResourceAdmittedToolRunner(scheduler=scheduler, workspace_root=tmp_path / "runs")
+    result = runner.run(lifecycle.ToolRunRequest(
+        argv=(sys.executable, "-c", "print('actual-owned-native')"),
+        limits=lifecycle.ToolRunLimits(memory_bytes=128 * MIB, timeout_seconds=2),
+    ))
+    assert result.ok and result.stdout.strip() == "actual-owned-native"
+    assert result.pid is not None
+    assert result.native_lifecycle is observations[-1]
+    assert result.native_lifecycle.cleanup_confirmed and result.workspace_cleaned
+    assert_idle(scheduler)
+
+
+@pytest.mark.skipif(not sys.platform.startswith("linux"), reason="owned native observations require Linux")
+def test_default_native_composition_preserves_executable_probe(owner, tmp_path):
+    executable = Path(sys.executable)
+    runner = admission.ResourceAdmittedToolRunner(scheduler=owner[0],
+        workspace_root=tmp_path / "runs", base_environment={"PATH": str(executable.parent)})
+    result = runner.run(lifecycle.ToolRunRequest(
+        argv=(executable.name, "-c", "print('resolved-default')"),
+        limits=lifecycle.ToolRunLimits(memory_bytes=128 * MIB, timeout_seconds=2),
+    ))
+    assert result.ok and result.stdout.strip() == "resolved-default"
+    assert result.native_lifecycle is not None and result.native_lifecycle.cleanup_confirmed
+    assert_idle(owner[0])
+
+
+@pytest.mark.skipif(not sys.platform.startswith("linux"), reason="owned native observations require Linux")
+def test_default_native_workspace_preparation_keeps_absolute_deadline(owner, tmp_path, monkeypatch):
+    clock = [100.0]
+    original_write = lifecycle.BoundedToolRunner._write_inputs
+
+    def delayed_write(*args, **kwargs):
+        clock[0] += 2
+        return original_write(*args, **kwargs)
+
+    monkeypatch.setattr(admission, "time", SimpleNamespace(monotonic=lambda: clock[0]))
+    monkeypatch.setattr(lifecycle.BoundedToolRunner, "_write_inputs", staticmethod(delayed_write))
+    runner = admission.ResourceAdmittedToolRunner(scheduler=owner[0], workspace_root=tmp_path / "runs")
+    result = runner.run(lifecycle.ToolRunRequest(
+        argv=(sys.executable, "-c", "raise AssertionError('deadline allowed native launch')"),
+        limits=lifecycle.ToolRunLimits(memory_bytes=128 * MIB, timeout_seconds=1),
+    ))
+    assert result.timed_out and not result.cancelled and not result.ok
+    assert result.termination_reason == "timeout"
+    assert result.error == "native execution exceeded its shared deadline"
+    assert result.pid is None and result.native_lifecycle is None
+    assert result.workspace_cleaned and not list((tmp_path / "runs").glob("logic-tool-*"))
+    assert_idle(owner[0])
+
+
+@pytest.mark.skipif(not sys.platform.startswith("linux"), reason="owned native observations require Linux")
+def test_default_native_composition_preserves_caller_cancellation(owner, tmp_path, monkeypatch):
+    ready = threading.Event()
+    token = lifecycle.CancellationToken()
+    original_attach = lifecycle.NativeToolCleanupHandle.attach_process
+
+    def attached(handle, process):
+        original_attach(handle, process)
+        ready.set()
+
+    monkeypatch.setattr(lifecycle.NativeToolCleanupHandle, "attach_process", attached)
+    runner = admission.ResourceAdmittedToolRunner(scheduler=owner[0], workspace_root=tmp_path / "runs")
+    results, errors = [], []
+
+    def run():
+        try:
+            results.append(runner.run(lifecycle.ToolRunRequest(
+                argv=(sys.executable, "-c", "import time; time.sleep(30)"),
+                limits=lifecycle.ToolRunLimits(memory_bytes=128 * MIB, timeout_seconds=2,
+                    termination_grace_seconds=0.1),
+            ), cancellation=token))
+        except BaseException as error:
+            errors.append(error)
+
+    worker = threading.Thread(target=run)
+    worker.start()
+    try:
+        until(ready.is_set)
+        token.cancel()
+        worker.join(3)
+        assert not worker.is_alive() and not errors and len(results) == 1
+        result = results[0]
+        assert result.cancelled and not result.timed_out and not result.ok
+        assert result.termination_reason == "cancelled"
+        assert result.native_lifecycle is not None and result.native_lifecycle.cleanup_confirmed
+        assert result.workspace_cleaned
+    finally:
+        token.cancel()
+        worker.join(3)
+    assert_idle(owner[0])
+
+
+def test_injected_executor_keeps_unowned_semantics_and_cannot_opt_into_native_ownership(owner, tmp_path):
+    recorder = Recorder()
+    runner = make_runner(tmp_path, owner, recorder)
+    result = runner.run(request())
+    assert result.ok and result.native_lifecycle is None and len(recorder.calls) == 1
+    with pytest.raises(lifecycle.ToolProcessError, match="exact native Linux bounded runner"):
+        runner.run(replace(request(), owned_process_observation=True))
+    assert len(recorder.calls) == 1
+    assert not list((tmp_path / "runs").glob("logic-tool-*"))
+    assert_idle(owner[0])
+
+
+@pytest.mark.skipif(not sys.platform.startswith("linux"), reason="owned native observations require Linux")
+@pytest.mark.parametrize("retry_failure", ["ordinary", "interrupt", "hostile"])
+@pytest.mark.parametrize("release_fails", [False, True])
+def test_unresolved_native_cleanup_retains_renewed_lease_and_original_sdk_error(
+    owner, tmp_path, monkeypatch, retry_failure, release_fails
+):
+    scheduler, _, _ = owner
+    blocked = threading.Event()
+    blocked.set()
+    callback_calls, handles, original_errors, observations, errors, releases, renewals = [], [], [], [], [], [], []
+    original_retry = lifecycle.NativeToolCleanupHandle.retry_cleanup
+    original_run = lifecycle.BoundedToolRunner.run
+    original_release = scheduler.release
+    original_renew = scheduler.renew
+    release_error = OSError("controlled lease-release failure")
+
+    class HostileRetryError(BaseException):
+        def __str__(self):
+            callback_calls.append("__str__")
+            raise AssertionError("cleanup reporting invoked an untrusted exception")
+
+    def retry(handle):
+        handles.append(handle)
+        if blocked.is_set():
+            if retry_failure == "interrupt":
+                raise KeyboardInterrupt()
+            if retry_failure == "hostile":
+                raise HostileRetryError()
+            raise OSError("controlled cleanup retry failure")
+        value = original_retry(handle)
+        observations.append(value)
+        return value
+
+    def run_bounded(plain, *args, **kwargs):
+        assert type(plain) is lifecycle.BoundedToolRunner
+        try:
+            return original_run(plain, *args, **kwargs)
+        except lifecycle.OwnedToolCleanupError as error:
+            original_errors.append(error)
+            raise
+
+    def renew(*args, **kwargs):
+        renewals.append((args, kwargs))
+        return original_renew(*args, **kwargs)
+
+    def release(*args, **kwargs):
+        releases.append((args, kwargs))
+        assert observations and observations[-1].cleanup_confirmed
+        if release_fails:
+            raise release_error
+        return original_release(*args, **kwargs)
+
+    monkeypatch.setattr(lifecycle.NativeToolCleanupHandle, "retry_cleanup", retry)
+    monkeypatch.setattr(lifecycle.BoundedToolRunner, "run", run_bounded)
+    monkeypatch.setattr(scheduler, "renew", renew)
+    monkeypatch.setattr(scheduler, "release", release)
+    runner = admission.ResourceAdmittedToolRunner(scheduler=scheduler, workspace_root=tmp_path / "runs")
+
+    def run():
+        try:
+            runner.run(lifecycle.ToolRunRequest(
+                argv=(sys.executable, "-c", "print('actual-cleanup-owner')"),
+                limits=lifecycle.ToolRunLimits(memory_bytes=128 * MIB, timeout_seconds=2,
+                    termination_grace_seconds=0.1),
+            ))
+        except BaseException as error:
+            errors.append(error)
+
+    worker = threading.Thread(target=run)
+    worker.start()
+    try:
+        until(lambda: original_errors and len(renewals) >= 2)
+        assert worker.is_alive() and not errors and not releases
+        assert scheduler.snapshot()["active_lease_count"] == 1
+        handle = original_errors[0].cleanup_handle
+        assert all(value is handle for value in handles)
+        assert handle._workspace.is_dir() and not handle._temporary._finalizer.alive
+        assert not callback_calls
+        blocked.clear()
+        worker.join(3)
+        assert not worker.is_alive() and len(errors) == 1 and len(original_errors) == 1
+        assert errors[0] is original_errors[0]
+        assert observations and observations[-1].cleanup_confirmed
+        assert len(releases) == 1 and not handle._workspace.exists()
+        assert not callback_calls
+        if release_fails:
+            assert errors[0].__cause__ is release_error
+            assert scheduler.snapshot()["active_lease_count"] == 1
+        else:
+            assert_idle(scheduler)
+    finally:
+        blocked.clear()
+        worker.join(3)
+        # Rescue the genuine SDK owner even when an old-owner RED or an
+        # assertion interrupted this test before its guardian could finish.
+        for handle in {id(value): value for value in handles}.values():
+            assert original_retry(handle).cleanup_confirmed
+        # A failed release is a failed release, never reported as empty claims.
+        # Release remembered arguments only after actual handle cleanup.
+        for args, kwargs in releases:
+            original_release(*args, **kwargs)
+    assert_idle(scheduler)
+
+
+def test_local_deadline_does_not_erase_independent_resource_failure(owner, tmp_path, monkeypatch):
+    runner = make_runner(tmp_path, owner, Recorder())
+    signal = admission._Cancellation(None)
+    signal.deadline = 1.0
+    monkeypatch.setattr(admission, "time", SimpleNamespace(monotonic=lambda: 2.0))
+    failed = runner._failure(request(), 0.0, "independent resource failure")
+    failed = replace(failed, cancelled=True, termination_reason="resource_exhausted")
+    result = runner._mark_stopped(failed, signal, 1.0)
+    assert result.timed_out and not result.cancelled and result.resource_exhausted
+    assert result.error == "independent resource failure"
+    assert result.termination_reason == "resource_exhausted"
+
+
+@pytest.mark.skipif(not sys.platform.startswith("linux"), reason="owned native observations require Linux")
+def test_native_lease_cancellation_is_not_erased_by_simultaneous_local_deadline(owner, tmp_path, monkeypatch):
+    scheduler, _, _ = owner
+    ready = threading.Event()
+    clock = [100.0]
+    original_attach = lifecycle.NativeToolCleanupHandle.attach_process
+
+    def attached(handle, process):
+        original_attach(handle, process)
+        ready.set()
+
+    monkeypatch.setattr(admission, "time", SimpleNamespace(monotonic=lambda: clock[0]))
+    monkeypatch.setattr(lifecycle.NativeToolCleanupHandle, "attach_process", attached)
+    results, errors = [], []
+    with scheduler.acquire("orchestration", cpu_slots=1, memory_mb=256,
+                           child_process_slots=1, timeout=0) as parent:
+        runner = admission.ResourceAdmittedToolRunner(parent_lease=parent,
+            workspace_root=tmp_path / "runs")
+
+        def run():
+            try:
+                results.append(runner.run(lifecycle.ToolRunRequest(
+                    argv=(sys.executable, "-c", "import time; time.sleep(30)"),
+                    limits=lifecycle.ToolRunLimits(memory_bytes=128 * MIB, timeout_seconds=2,
+                        termination_grace_seconds=0.1),
+                )))
+            except BaseException as error:
+                errors.append(error)
+
+        worker = threading.Thread(target=run)
+        worker.start()
+        try:
+            until(ready.is_set)
+            parent.cancel()
+            clock[0] = 103.0
+            worker.join(3)
+            assert not worker.is_alive() and not errors and len(results) == 1
+            result = results[0]
+            assert result.timed_out and result.cancelled and not result.ok
+            assert result.termination_reason == "cancelled"
+            assert result.native_lifecycle is not None and result.native_lifecycle.cleanup_confirmed
+            assert result.workspace_cleaned and not parent.released
+            assert scheduler.snapshot()["active_lease_count"] == 1
+        finally:
+            parent.cancel()
+            clock[0] = 103.0
+            worker.join(3)
+    assert_idle(scheduler)

@@ -6215,7 +6215,8 @@
         "legal-proof-cache-json-context-source-install-20261111",
         "legal-proof-formal-content-private103-20261111",
         "legal-proof-formal-content-source-installed-20261111",
-        "cache-native-version-coherence-20261115"
+        "cache-native-version-coherence-20261115",
+        "native-resource-composition-repair-20261119"
       ],
       "exact_formal_content_identity": {
         "canonical_postimages_installed": true,
@@ -10736,7 +10737,7 @@
       "successor_evidence_id": "parent-shared-native-20261020-01"
     }
   ],
-  "last_updated_at_utc": "2026-11-19T02:51:13.457601+00:00",
+  "last_updated_at_utc": "2026-11-19T04:16:49.041834+00:00",
   "limits": [
     "Selected current owners and selected evidence references; a curated navigation catalog, not an exhaustive audit or a second task board.",
     "Recorded hashes are historical observations. Check validates explicit paths/APIs, not numerical qualification.",
@@ -16817,6 +16818,42 @@
         "A_V3_physical_join": "Separate pending same-process/native-thread admitted build plus explicit direct physical join, through the existing single child and V5 result/seal lifecycle.",
         "Native_execution_currently_selected": false
       }
+    },
+    {
+      "id": "native-resource-composition-repair-20261119",
+      "root": "artifact_workspace",
+      "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/resource-admission-repair-owning89-and-Native3-qualification-index-v01.json",
+      "observed_bytes": 5373,
+      "observed_sha256": "e4e1dc980d14e67840f5e577a95f68c50b972df0f2a43a008c8b47a000a16426",
+      "required_for_catalog_check": false,
+      "status": "recorded_owning89_and_Native3_qualified_at_separate_Source_epochs",
+      "recorded_at_utc": "2026-11-19T04:16:49.041834+00:00",
+      "scope": "Existing resource-admission repair: whole owning89 passed at Source4127/041770b3; three selected Native cases passed at separate Source4123/d0d982. Native1 at Source4118 remains its own earlier observation. Exact proposition/type/axiom-policy, sampled lifecycle and disk-cache controls only; quoted-source outcome is precompiler refusal and two backend-version mutations are software reissues with no new Native commands. Preserve prior version-only failure and owning81P8F/82P7F attempts. No transfer to a common Source tree, the earlier1690 two-epoch result, statutory meaning/admission, model convergence or release authority.",
+      "recorded_Source_epochs": {
+        "owning89": {
+          "rows": 4127,
+          "sha256": "041770b3eae63809bc375abfc0daf70e6d32f40ced8731d227b854612af33d02"
+        },
+        "Native3": {
+          "rows": 4123,
+          "sha256": "d0d9822a26df3a9faee0e1a7acbc8e2406d967a17d441ebdfe943608c7ccf1be"
+        }
+      },
+      "existing_owner_postimage": {
+        "bytes": 19115,
+        "relative_path": "ipfs_datasets_py/logic/backends/resource_admission.py",
+        "sha256": "5fcddd981835a7fa618c202f8de4c52a41777af74aae8a7f65fb4cb8b275edc9"
+      },
+      "owning_test_postimage": {
+        "bytes": 40882,
+        "relative_path": "tests/unit/logic/backends/test_resource_admission.py",
+        "sha256": "98e953e4811b87229187319367db1f65cacab8523d288d8c239b476242db5eac"
+      },
+      "actual_effects": "Native1: exact positive proposition/no axioms; wrong-type and unapproved-axiom cases refused; five claims released. Native3: eight acquisitions/releases, zero recoveries; V3 disk roundtrip/exact reuse passed with three actual commands (version + two compiles), zero new commands for reuse/mismatch or two software backend-version reissues. Quoted source malformed/acceptedFalse before compilation, not an additional compiler proof.",
+      "custody": "All recorded Source and eight Native DATA snapshots stable in Native3; final owning4127x3 stable; original SDK/resource/process/readers/workspaces closed and no live handles.",
+      "trust_and_authority_limits": "Configured installed libraries/runtime remain explicitly trusted; stable DATA hashes and sampled lifecycle are not full runtime/containment authentication. Fictional fixture only; statutory/source/model meaning, admission/release and full-goal completion remain unqualified.",
+      "evidence_availability": "Exact raw/compact/JUnit/failure receipts remain privately retained under /tmp and hash-linked by this index; not public or portable published proof. No raw report/archive/database/model payload is copied here.",
+      "next_action_pending": "Continue the existing full eight-phase goal through its current owners: authenticated statutory source/edition/meaning, reviewed admission, model evidence/convergence and corpus/release/immutable-readback gates remain pending. The A V3 admitted same-process/native-thread build plus direct physical join retains its separate selection and evidence obligations. These recorded fixture/proof controls do not complete the full goal or authorize new execution."
     }
   ]
 }

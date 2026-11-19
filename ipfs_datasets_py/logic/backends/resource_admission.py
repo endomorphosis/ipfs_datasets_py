@@ -35,6 +35,8 @@ class _Cancellation:
         self.operation = operation
         self.cancelled = False
         self.ambient_kind = ""
+        self.deadline: float | None = None
+        self.local_deadline_expired = False
 
     def is_set(self) -> bool:
         # Always observe the ambient scope, even if the explicit token is set:
@@ -47,7 +49,9 @@ class _Cancellation:
             except ProofOperationInterrupted as error:
                 self.ambient_kind = error.kind
         self.cancelled = process._is_cancelled(self.signal) or self.cancelled
-        return self.cancelled or bool(self.ambient_kind)
+        if self.deadline is not None and time.monotonic() >= self.deadline:
+            self.local_deadline_expired = True
+        return self.cancelled or bool(self.ambient_kind) or self.local_deadline_expired
 
 
 class ResourceAdmittedToolRunner(BoundedToolRunner):
@@ -56,7 +60,9 @@ class ResourceAdmittedToolRunner(BoundedToolRunner):
     Supply ``parent_lease`` to allocate a child inside an existing envelope, or
     ``scheduler`` to select an explicit pool. With neither, execution resolves
     the default shared scheduler. Construction and executable discovery never
-    create scheduler state. Injected executors on this class still receive
+    create scheduler state. Default native Linux runs compose the exact bounded
+    owner for authenticated process and workspace observations. Injected executors
+    on this class still receive
     admission; callers that already manage admission can inject a plain
     ``BoundedToolRunner`` into a backend instead.
 
@@ -137,6 +143,19 @@ class ResourceAdmittedToolRunner(BoundedToolRunner):
         if not (timed_out or cancelled):
             return result
         reason = "cancelled" if cancelled else "timeout"
+        if signal.local_deadline_expired and not cancelled:
+            # The bounded owner sees our absolute deadline as a stop signal;
+            # keep its local timeout distinct from caller cancellation.
+            result = replace(result, cancelled=False,
+                termination_reason=("timeout" if result.termination_reason in ("", "cancelled")
+                                    else result.termination_reason),
+                error=("native execution exceeded its shared deadline"
+                       if not result.resource_exhausted and result.error in (
+                           "cancelled before process start",
+                           "operation stopped during workspace inspection",
+                           "operation stopped before process start",
+                           "cancelled during native execution",
+                       ) else result.error))
         return replace(result, timed_out=result.timed_out or timed_out,
             cancelled=result.cancelled or cancelled,
             termination_reason=result.termination_reason or reason,
@@ -180,6 +199,10 @@ class ResourceAdmittedToolRunner(BoundedToolRunner):
         deadline = started + request.limits.timeout_seconds
         if operation is not None:
             deadline = min(deadline, operation.deadline)
+        owned_native = (self._default_executor and request.runtime is ToolRuntime.NATIVE
+                        and process.sys.platform.startswith("linux"))
+        if owned_native:
+            signal.deadline = deadline
 
         def refused(message: str, *, timed_out: bool = False,
                     cancelled: bool = False) -> ToolRunResult:
@@ -234,21 +257,69 @@ class ResourceAdmittedToolRunner(BoundedToolRunner):
                                cancelled=cancelled or not timed_out)
             except (ResourceSchedulerError, OSError, ValueError) as error:
                 return refused(f"resource admission failed: {type(error).__name__}: {error}")
-            with lease:
-                combined = lease.combined_cancellation_signal(signal)
-                timed_out, cancelled = self._stop_flags(signal, deadline, combined)
-                if timed_out or cancelled:
-                    result = refused("operation stopped after resource admission")
-                else:
-                    remaining = deadline - time.monotonic()
-                    if remaining <= 0:
-                        result = refused("deadline exhausted during admission", timed_out=True)
+            native_cleanup_error = None
+            try:
+                with lease:
+                    combined = lease.combined_cancellation_signal(signal)
+                    timed_out, cancelled = self._stop_flags(signal, deadline, combined)
+                    if timed_out or cancelled:
+                        result = refused("operation stopped after resource admission")
                     else:
-                        bounded = replace(request, limits=self._remaining_limits(request.limits, remaining, signal))
-                        result = super().run(bounded, cancellation=combined)
-                # BoundedToolRunner has collected outputs and removed the
-                # workspace before returning. Keep all actual lifecycle flags.
-                result = self._mark_stopped(result, signal, deadline, combined)
+                        remaining = deadline - time.monotonic()
+                        if remaining <= 0:
+                            result = refused("deadline exhausted during admission", timed_out=True)
+                        else:
+                            bounded = replace(request, limits=self._remaining_limits(request.limits, remaining, signal))
+                            if owned_native:
+                                # The process owner intentionally refuses subclasses for
+                                # owned observations. Compose its exact native owner while
+                                # retaining this admission, executor, and absolute stop.
+                                native = BoundedToolRunner(executor=self._executor,
+                                    workspace_root=self._workspace_root,
+                                    base_environment=self._base_environment,
+                                    executable_roots=self._executable_roots)
+                                native._default_executor = self._default_executor
+                                bounded = replace(bounded, owned_process_observation=True)
+                                try:
+                                    result = native.run(bounded, cancellation=combined)
+                                except process.OwnedToolCleanupError as error:
+                                    native_cleanup_error = error
+                                    # Never unwind the admitted lease on unresolved native
+                                    # custody, including interruption of a cleanup retry.
+                                    # The actual handle retains process/workspace evidence;
+                                    # only its fresh complete confirmation permits release.
+                                    while True:
+                                        try:
+                                            lease.renew()
+                                        except BaseException:
+                                            pass
+                                        confirmed = False
+                                        try:
+                                            observation = error.cleanup_handle.retry_cleanup()
+                                            confirmed = observation.cleanup_confirmed is True
+                                        except BaseException:
+                                            pass
+                                        if confirmed:
+                                            raise
+                                        try:
+                                            time.sleep(0.01)
+                                        except BaseException:
+                                            pass
+                            else:
+                                result = super().run(bounded, cancellation=combined)
+                    # BoundedToolRunner has collected outputs and removed the
+                    # workspace before returning. Keep all actual lifecycle flags.
+                    if owned_native and lease.cancelled:
+                        # A lease revocation remains cancellation even when the
+                        # absolute local deadline expires in the same interval.
+                        signal.cancelled = True
+                    result = self._mark_stopped(result, signal, deadline, combined)
+            except BaseException as release_error:
+                if native_cleanup_error is not None and release_error is not native_cleanup_error:
+                    # Cleanup is confirmed, but lease release itself may fail.
+                    # Keep both failures and the original SDK exception identity.
+                    raise native_cleanup_error from release_error
+                raise
             # A released lease deliberately polls as cancelled. Never consult
             # that lease signal here; only captured caller/ambient state remains.
             result = self._mark_stopped(result, signal, deadline)
