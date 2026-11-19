@@ -11489,7 +11489,7 @@
       "latest_incremental_native_audit": "artifacts/legal-corpus-incremental-lean-20261013-01/native-benchmark-04/independent-native-audit.json",
       "native_build_receipt": "artifacts/legal-corpus-shared-lean-20261013-01/native-smoke-02/native-positive/build-receipt.json",
       "priority": "P1",
-      "remaining_scope": "Actual reviewed statutory corpus builds and domain obligations, broader profile coverage, independently established legal/source correspondence and coherent released toolchain closure. Authored conditional witnesses do not finish the statutory pilot.",
+      "remaining_scope": "Actual reviewed statutory corpus builds and domain obligations, broader profile coverage, independently established legal/source correspondence and coherent released toolchain closure. Authored conditional witnesses do not finish the statutory pilot. Local code commit 5135b951de81ffa388d21d84290ae5bf99f0ea1c on local branch codex/lir14-same-unit-consumer-regression records an unexecuted same-three-unit/full-nine-field-IR consumer regression (test9b888ce7; receipt81e3025c), with a resealed wrong-target control, one inspection callback and no extra Native build. Original42018 remains raw-held/unverified after the SDK MappingProxyType/dict-guard mismatch (checkpoint45e7fa69); prepared helper/operator remain unselected; the human-terminal read-only probe is pending, while the normal ENOTTY attach and actual sudo -n authentication-required refusal are closed. No new PASS, Source closure or statutory/model/corpus/gold qualification is recorded.",
       "reuse_owners": [
         "native Lake gates",
         "build manifests",
