@@ -6666,7 +6666,8 @@
         "consume_reviewed_contexts_v3",
         "build_reviewed_rich_context_candidates_v3",
         "validate_reviewed_rich_context_candidates_v3",
-        "prepare_reviewed_ranked_training_context_v3"
+        "prepare_reviewed_ranked_training_context_v3",
+        "consume_reviewed_contexts_v4"
       ],
       "compatibility_dependency": false,
       "diagnostic_source_boundary_20261115": {
@@ -6684,13 +6685,14 @@
         "reviewed-retrieval-qualified-source-delivery-20261109",
         "reviewed-retrieval-public-tree-qualification-20261109",
         "reviewed-mixed-rich-context-20261111",
-        "reviewed-mixed-heldout-context-20261111"
+        "reviewed-mixed-heldout-context-20261111",
+        "reviewed-v4-provenance-and-aggregate-software-20261119"
       ],
       "existing_tasks": [
         "LIR-20"
       ],
       "id": "reviewed-rich-retrieval-context",
-      "notes": "Exact nine-file source delivery matches the complete 294-case qualification. Unknown pairs/analogies do not become automatic negatives; candidate context grants no decoder or legal authority. Historical 225/287 cohorts, failed requests and unrelated runtime changes retain their own scopes. All137 executed clean-checkout product buffers match selected public index; three private dependency deltas were excluded and freshly qualified separately. Current V3 direct TRAIN context has a separate focused qualification; full-file timeout is retained and no whole-file or ranked/numerical qualification follows. V3 heldout authorization, pair-ledger integration and decoder transport remain separate. Explicit mixed-sort heldout context now has a separate focused software qualification with complete TRAIN targets and current two-component review/dependency replay; no configured model, ranking-quality or statutory result follows.",
+      "notes": "Exact nine-file source delivery matches the complete 294-case qualification. Unknown pairs/analogies do not become automatic negatives; candidate context grants no decoder or legal authority. Historical 225/287 cohorts, failed requests and unrelated runtime changes retain their own scopes. All137 executed clean-checkout product buffers match selected public index; three private dependency deltas were excluded and freshly qualified separately. Current V3 direct TRAIN context has a separate focused qualification; full-file timeout is retained and no whole-file or ranked/numerical qualification follows. V3 heldout authorization, pair-ledger integration and decoder transport remain separate. Explicit mixed-sort heldout context now has a separate focused software qualification with complete TRAIN targets and current two-component review/dependency replay; no configured model, ranking-quality or statutory result follows. A separate seven-case ordinary cohort includes six direct aggregate-consumer controls over two complete V3 TRAIN components, including unselected-source and callback replay, fresh admission-qualified references and complete byte bounds. Root 6ea6cb/fc30d1/4ba0f2; evidence reviewed-v4-provenance-and-aggregate-software-20261119. Tested structured file 75176/a8ee0be2 on new Source 4131/5c95b300; no guarded fixture Torch import or ranking/model/heldout/Native/legal/gold/corpus qualification. Canonical local CODE COMMIT `63a0cb95363c030a0650400f0e00432ac3489d8f` (parent `832f43ef88de26975386a32dcf88830534001ce9`) records the two tested files; the ordinary result remains bound to its earlier dirty Source epoch.",
       "owner_module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_structured_retrieval",
       "ownership_role": "existing_single_owner",
       "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_structured_retrieval.py",
@@ -6771,7 +6773,8 @@
         "reviewed-retrieval-full-current-worktree-qualification-20261109",
         "reviewed-retrieval-qualified-source-delivery-20261109",
         "reviewed-retrieval-public-tree-qualification-20261109",
-        "reviewed-v3-native384-composed-integration-20261111"
+        "reviewed-v3-native384-composed-integration-20261111",
+        "reviewed-v4-provenance-and-aggregate-software-20261119"
       ],
       "existing_tasks": [
         "LIR-17",
@@ -6789,7 +6792,7 @@
         "trainer_checkpoint_current_index_integration_pending": true,
         "whole_owning_file_qualified": false
       },
-      "notes": "Exact nine-file source delivery matches the complete 294-case qualification. Unknown pairs/analogies do not become automatic negatives; candidate context grants no decoder or legal authority. Historical 225/287 cohorts, failed requests and unrelated runtime changes retain their own scopes. All137 executed clean-checkout product buffers match selected public index; three private dependency deltas were excluded and freshly qualified separately.",
+      "notes": "Exact nine-file source delivery matches the complete 294-case qualification. Unknown pairs/analogies do not become automatic negatives; candidate context grants no decoder or legal authority. Historical 225/287 cohorts, failed requests and unrelated runtime changes retain their own scopes. All137 executed clean-checkout product buffers match selected public index; three private dependency deltas were excluded and freshly qualified separately. The separate seven-case ordinary cohort includes one coherent statutory-ledger retag refusal against genuine fictional V3 endpoints; Root 6ea6cb/fc30d1/4ba0f2, evidence reviewed-v4-provenance-and-aggregate-software-20261119. Tested declaration-owning file 61464/5f62c074 on new Source 4131/5c95b300; no real statutory review, pair-label/model/numerical/Native/gold/corpus authority is inferred. Canonical local CODE COMMIT `63a0cb95363c030a0650400f0e00432ac3489d8f` (parent `832f43ef88de26975386a32dcf88830534001ce9`) records the two tested files; the ordinary result remains bound to its earlier dirty Source epoch.",
       "owner_module": "ipfs_datasets_py.logic.formalization.autoencoder.alignment_relation_declarations",
       "ownership_role": "existing_single_owner",
       "path": "ipfs_datasets_py/logic/formalization/autoencoder/alignment_relation_declarations.py",
@@ -16882,6 +16885,27 @@
       "trust_and_authority_limits": "Fictional engineering masks0; no Native/compiler/model execution,statutory/source-meaning review,gold,corpus/release or training/convergence authority. Current strongest Native coupling remains unrun in this successor scope.",
       "evidence_availability": "Private retained compact receipt links full report7998243/d37f38e2648a03bf2a774d4cb64bbfd8092e41626d3be1c9c5d2becd1c3885e4,JUnit450/66ba240f90c825257d71fd56081586cf09ec7615553f87c8cc3811b0adba20df and genuine roster422/5a2ae942be8103223c2b9c549b2b575a4c2693f7a5ec28d9a06b55ccea0c33fc. No raw payload copied; not portable published proof.",
       "next_action_pending": "Retain original42018 custody/refusal history and independent human-terminal read-only probe status; no Native rerun or repair authority follows from this ordinary pass. Preserve all existing statutory/source,review,model,gold,live-parent and corpus/release gates."
+    },
+    {
+      "id": "reviewed-v4-provenance-and-aggregate-software-20261119",
+      "root": "artifact_workspace",
+      "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/seven-case-normal-ordinary-controls-v01/selected-seven-case-ordinary-output-v01/closed-seven-ordinary-phase4-result-v01.json",
+      "required_for_catalog_check": false,
+      "observed_bytes": 10116,
+      "observed_sha256": "b1a9363f49f11ee2fbea3f74fe1aad268dffa1350653c3de9d8b425e0726f27d",
+      "status": "seven_ordinary_provenance_and_direct_aggregate_consumer_cases_qualified",
+      "scope": "Seven unique ordinary software cases, zero failures/errors/skips: one coherent fictional-to-statutory pair-ledger retag refusal and six direct aggregate-context controls. Runtime R HEAD ebab0edfa5b5630a3acd8ad7e133447a51d49252 / A HEAD 534a5362996fa4bf4fb453fbc09fe896fea35c7c with dirty declaration61464/5f62c074 and structured75176/a8ee0be2, new Source4131 epoch 5c95b300192b068ea1806d48932c525f4bc79b37a06babb8b9c8f581c94338e8. Canonical local CODE COMMIT `63a0cb95363c030a0650400f0e00432ac3489d8f` (parent `832f43ef88de26975386a32dcf88830534001ce9`) records the two tested files; the ordinary result remains bound to its earlier dirty Source epoch.",
+      "recorded_Source_epochs": {
+        "ordinary7": {
+          "rows": 4131,
+          "sha256": "5c95b300192b068ea1806d48932c525f4bc79b37a06babb8b9c8f581c94338e8"
+        }
+      },
+      "actual_effects": "SDK collection0.5259105982258916s/run37.79718234715983s; JUnit suite37.463s. Two genuine V3 components/all six TRAIN rows, one selected component; unselected current-source before/after callback, fresh foreign qualified-ref, committed-union removal and complete-byte-bound refusals. No Torch import attempt observed in guarded aggregate fixture path; not whole-process kernel-containment evidence.",
+      "custody": "All four4131-entry full9 maps exact e6ba88b818f65c5b5a8d4ec0d11b1bca214754e1fd1d3502e1b4fd5956f7acc9; both SDK returncodes0, no cancellation/timeout/resource exhaustion/truncation; leaders reaped/readers joined/workspaces removed and ordinary Source leases closed under sampled lifecycle. Original Native42018 remains untouched/unpolled/raw-held/unverified; no Source closure or authority transfers to it.",
+      "trust_and_authority_limits": "Ordinary fictional software only. No reviewed numerical fit/masks, model allocation, runtime vector computation, convergence/heldout quality, Native proof, statutory meaning, real gold or corpus/release authority. No Source epoch adoption or transfer from prior ordinary1/ab58 or historical numerical/Native scopes.",
+      "evidence_availability": "Compact10116/b1a9363f49f11ee2fbea3f74fe1aad268dffa1350653c3de9d8b425e0726f27d links fullactual8019255/d22c9b0c4bc824e3a48544de73802d6d1532136b54981db6344fc21a7aece835, JUnit1644/9c97061e0515f5c85bbe10c50bf7cdcaae9d9fb1c726295eab37b1d4d5e29157 and genuine roster2175/0a331305b5ee8f11f25e6d40ae61d59d4006ef611a5ded6b1ad538bc42c6b773. Private/tmp retained receipts are not portable published proof; no raw payload copied. Failed canonical commit receipt424340/87a3cb6ca0d445212ea7a7ce600467a4e5691afe9534cea238e71e02b1a85689 at /tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/canonical-local-seven-ordinary-tested-files-commit-v01/actual-canonical-two-tested-files-commit-receipt-v01.json remains retained; WRITE was never acquired and no Git mutation occurred.",
+      "next_action_pending": "Existing numerical/resource, statutory review, model, gold, live-parent and corpus/release gates remain. Canonical local CODE COMMIT `63a0cb95363c030a0650400f0e00432ac3489d8f` (parent `832f43ef88de26975386a32dcf88830534001ce9`) records the two tested files; the ordinary result remains bound to its earlier dirty Source epoch. No retry, Source overwrite, mask admission or original Native recovery is authorized by this record."
     }
   ]
 }
