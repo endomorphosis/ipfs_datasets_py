@@ -263,8 +263,9 @@ def expand_idle_process_capacity(state_path, expected_policy_sha256, total_child
 
     The default is a read-only plan. Applying requires an entirely idle existing
     scheduler, known native PID headroom and healthy native proof telemetry.
-    Only the child-process capacity changes. History, reservations, pressure
-    thresholds and every other policy field are preserved. Old policy bindings
+    Only the child-process capacity changes. A validated selected expansion
+    overlay is retired when the idle base policy is rebound. Other history,
+    reservations, pressure thresholds and policy fields stay unchanged. Old policy bindings
     subsequently refuse; callers must deliberately bind a new facade/spec.
     """
     _need(type(apply) is bool, "apply must be an explicit bool")
@@ -276,7 +277,12 @@ def expand_idle_process_capacity(state_path, expected_policy_sha256, total_child
         raw, observed = _read(facade.state_path)
         _need(observed == state, "native capacity snapshot changed")
         policy = deepcopy(state["config"])
-        _need(total_child_process_slots > policy["total_child_process_slots"], "capacity must strictly increase")
+        overlay_key = "child_process_capacity"
+        overlay_present = overlay_key in state
+        overlay = deepcopy(state[overlay_key]) if overlay_present else None
+        effective_capacity = facade._effective_child_process_capacity(state)
+        _need(total_child_process_slots > effective_capacity,
+              "capacity must strictly exceed effective capacity")
         policy["total_child_process_slots"] = total_child_process_slots
         try:
             config = native.ResourceSchedulerConfig(state_path=facade.state_path, **deepcopy(policy))
@@ -284,10 +290,15 @@ def expand_idle_process_capacity(state_path, expected_policy_sha256, total_child
         except (TypeError, ValueError) as error:
             raise ExistingResourceSchedulerError("expanded native typed configuration is invalid") from error
         _need(config.persisted_dict() == policy, "expanded policy cannot be normalized")
-        preserved = {key: value for key, value in state.items() if key != "config"}
+        preserved = {key: value for key, value in state.items()
+                     if key not in {"config", overlay_key}}
         report = dict(schema="native-idle-process-capacity-plan/v1", applied=False,
             previous_policy_sha256=expected_policy_sha256, next_policy_sha256=policy_sha256(policy),
             previous_process_slots=state["config"]["total_child_process_slots"],
+            previous_effective_process_slots=effective_capacity,
+            child_capacity_metadata_migration=dict(state_key=overlay_key, previous_metadata=overlay,
+                retirement_planned=overlay_present, retired=False),
+            preserved_control_scope="all_top_level_state_except_config_and_selected_child_capacity_metadata",
             requested_process_slots=total_child_process_slots, next_policy=policy,
             preserved_control_sha256=policy_sha256(preserved),
             lease_count=len(state["leases"]), waiter_count=len(state["waiters"]),
@@ -325,9 +336,12 @@ def expand_idle_process_capacity(state_path, expected_policy_sha256, total_child
         if apply:
             successor = deepcopy(previous)
             successor["config"] = policy
+            if overlay_present:
+                del successor[overlay_key]
             _need({key: value for key, value in successor.items() if key != "config"} == preserved,
                   "native control history must remain unchanged")
             facade._persist_locked_state(raw, successor)
+            report["child_capacity_metadata_migration"]["retired"] = overlay_present
             report.update(applied=True, status="applied_requires_explicit_policy_rebind")
         return report
 

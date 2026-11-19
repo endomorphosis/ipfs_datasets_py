@@ -2622,12 +2622,44 @@ def _reviewed_builtin_gpt2_causal_buffers(model, *, initialize=False):
     return sorted(names)
 
 
-def _reviewed_builtin_llama_rotary_buffers(model, *, initialize=False, _family="llama"):
-    """Reconstruct only the built-in default RoPE's two float32 buffers.
+def _reviewed_builtin_default_rotary_parameters(config, *, _family):
+    """Keep the two reviewed built-in default-RoPE configuration layouts closed."""
+    import transformers
+    legacy = transformers.__version__ == "4.52.1"
+    if legacy:
+        # This installed implementation reads these fields directly. Do not
+        # invent newer config attributes or silently admit a scaling recipe.
+        scaling = getattr(config, "rope_scaling", False)
+        default_scaling = (scaling is None or
+            type(scaling) is dict and (scaling == {"rope_type": "default"} or
+                scaling == {"type": "default", "rope_type": "default"}))
+        partial = getattr(config, "partial_rotary_factor", 1.0)
+        if (hasattr(config, "rope_parameters") or not default_scaling or
+                type(partial) not in (int, float) or partial != 1.0):
+            raise TrainingJobValidationError("unsupported installed default rotary configuration")
+        rope = {"rope_type": "default", "rope_theta": getattr(config, "rope_theta", None)}
+        if _family == "qwen2" and (config.use_sliding_window is not False or hasattr(config, "layer_types")):
+            raise TrainingJobValidationError("fixed full-attention legacy Qwen2 rotary recipe required")
+    else:
+        if not hasattr(config, "rope_parameters"):
+            raise TrainingJobValidationError("unsupported installed rotary configuration version")
+        rope = config.rope_parameters
+        if _family == "qwen2" and (config.use_sliding_window is not False or
+                config.layer_types != ["full_attention"] * config.num_hidden_layers):
+            raise TrainingJobValidationError("fixed full-attention Qwen2 rotary recipe required")
+    if (type(rope) is not dict or set(rope) != {"rope_type", "rope_theta"} or
+            rope["rope_type"] != "default" or type(rope["rope_theta"]) not in (int, float) or
+            not math.isfinite(rope["rope_theta"]) or rope["rope_theta"] <= 0):
+        raise TrainingJobValidationError("fixed finite default Llama rotary recipe required")
+    return rope, legacy
 
-    These deterministic values are absent from checkpoints and destroyed by
-    to_empty. BF16 applies to parameters, never to this position recipe. Unknown
-    registration, scaling or mutable/dynamic RoPE profiles remain unsupported.
+
+def _reviewed_builtin_llama_rotary_buffers(model, *, initialize=False, _family="llama"):
+    """Validate/reconstruct the two deterministic default-RoPE tensor attributes.
+
+    Newer built-ins register both tensors. Transformers 4.52.1 registers only
+    inv_freq and keeps original_inv_freq as a plain tensor. Preserve that exact
+    layout; neither checkpoint absence nor a plain attribute grants mutability.
     """
     import torch
     if _family == "llama":
@@ -2643,22 +2675,18 @@ def _reviewed_builtin_llama_rotary_buffers(model, *, initialize=False, _family="
     config = model.config
     dim = (getattr(config, "head_dim", None) or config.hidden_size // config.num_attention_heads) if _family == "qwen2" else config.head_dim
     positions = config.max_position_embeddings
-    if _family == "qwen2" and (config.use_sliding_window is not False or
-            config.layer_types != ["full_attention"] * config.num_hidden_layers):
-        raise TrainingJobValidationError("fixed full-attention Qwen2 rotary recipe required")
-    rope = config.rope_parameters
+    rope, legacy = _reviewed_builtin_default_rotary_parameters(config, _family=_family)
     if (type(dim) is not int or not 2 <= dim <= 65536 or dim % 2 or
-            type(positions) is not int or not 1 <= positions <= 65536 or
-            type(rope) is not dict or set(rope) != {"rope_type", "rope_theta"} or
-            rope["rope_type"] != "default" or type(rope["rope_theta"]) not in (int, float) or
-            not math.isfinite(rope["rope_theta"]) or rope["rope_theta"] <= 0):
+            type(positions) is not int or not 1 <= positions <= 65536):
         raise TrainingJobValidationError("fixed finite default Llama rotary recipe required")
     with torch.random.fork_rng(devices=[]):
         with torch.device("meta"):
             reference = LlamaRotaryEmbedding(config)
     expected = {"inv_freq", "original_inv_freq"}
-    if (set(reference._non_persistent_buffers_set) != expected or
-            set(reference._buffers) != expected or reference.attention_scaling != 1.0):
+    registered_expected = {"inv_freq"} if legacy else expected
+    if (set(reference._non_persistent_buffers_set) != registered_expected or
+            set(reference._buffers) != registered_expected or reference.attention_scaling != 1.0 or
+            legacy and "original_inv_freq" not in vars(reference)):
         raise TrainingJobValidationError("unsupported built-in Llama rotary constructor")
     modules = dict(model.named_modules())
     rotary = modules.get("model.rotary_emb")
@@ -2671,14 +2699,25 @@ def _reviewed_builtin_llama_rotary_buffers(model, *, initialize=False, _family="
     names = []
     for module_name, module in modules.items():
         registered = set(module._non_persistent_buffers_set)
-        if registered != (expected if module_name == "model.rotary_emb" else set()):
+        if registered != (registered_expected if module_name == "model.rotary_emb" else set()):
             raise TrainingJobValidationError("unknown or missing Llama nonpersistent buffers")
-        for name in sorted(registered):
-            value, witness = module._buffers.get(name), reference._buffers[name]
+        if module_name != "model.rotary_emb":
+            continue
+        if legacy and (set(module._buffers) != registered_expected or
+                "original_inv_freq" not in vars(module)):
+            raise TrainingJobValidationError("built-in Llama rotary tensor registration differs")
+        for name in sorted(expected):
+            value, witness = getattr(module, name, None), getattr(reference, name, None)
             if (not torch.is_tensor(value) or tuple(value.shape) != (dim // 2,) or
                     value.dtype != torch.float32 or value.device.type not in {"meta", "cpu", "cuda"} or
-                    tuple(witness.shape) != (dim // 2,) or witness.dtype != torch.float32 or witness.device.type != "meta"):
+                    not torch.is_tensor(witness) or tuple(witness.shape) != (dim // 2,) or
+                    witness.dtype != torch.float32 or witness.device.type != "meta"):
                 raise TrainingJobValidationError("built-in Llama rotary buffer schema differs")
+            # Module.to_empty moves registered buffers, leaving this installed
+            # plain meta attribute behind. Reconstruct only this known recipe.
+            if initialize and legacy and name == "original_inv_freq" and value.device.type == "meta":
+                value = torch.empty((dim // 2,), dtype=torch.float32, device="cpu")
+                setattr(module, name, value)
             if value.device.type != "meta":
                 exact = 1.0 / (rope["rope_theta"] ** (torch.arange(0, dim, 2, dtype=torch.float32, device=value.device) / dim))
                 if initialize:
@@ -2849,6 +2888,17 @@ class TorchReviewedDecoderBackend:
                 "buffer_schema": [{"name": name, "shape": list(value.shape), "dtype": str(value.dtype),
                                    "device": str(value.device)} for name, value in self.model.named_buffers()],
                 "optimizer_groups": groups, "torch_version": str(self._torch().__version__)}
+        rotary = dict(self.model.named_modules()).get("model.rotary_emb")
+        if (rotary is not None and "original_inv_freq" not in rotary._buffers and
+                ((type(self.model).__module__, type(self.model).__qualname__) ==
+                    ("transformers.models.llama.modeling_llama", "LlamaForCausalLM") or
+                 self.model_profile is not None and (type(self.model).__module__, type(self.model).__qualname__) ==
+                    ("transformers.models.qwen2.modeling_qwen2", "Qwen2ForCausalLM"))):
+            value = rotary.original_inv_freq
+            configuration["deterministic_plain_tensor_state"] = [{
+                "name": "model.rotary_emb.original_inv_freq", "shape": list(value.shape),
+                "dtype": str(value.dtype), "device": str(value.device),
+                "recipe": "validated-built-in-default-rotary/v1"}]
         if self.model_profile is not None:
             configuration.update(schema="torch-complete-reviewed-decoder-configuration/v3",
                 model_profile=self.model_profile, checkpoint_state_byte_limit=self._checkpoint_byte_limit(),
@@ -3386,6 +3436,10 @@ class TorchReviewedDecoderBackend:
         if qwen2_model:
             _reviewed_builtin_qwen2_rotary_buffers(model_owner)
         llama_buffers = tuple((value, value.detach().clone()) for _, value in model_owner.named_buffers()) if projected_model else ()
+        rotary = dict(model_owner.named_modules()).get("model.rotary_emb") if projected_model else None
+        plain_rotary = ((rotary, "original_inv_freq", rotary.original_inv_freq,
+                         rotary.original_inv_freq.detach().clone()),) if (
+            rotary is not None and "original_inv_freq" not in rotary._buffers) else ()
         parameters = tuple(model_owner.parameters())
         model_state, optimizer_state = self._model_state(), optimizer_owner.state_dict()
         self._finite_state(model_state)
@@ -3406,6 +3460,8 @@ class TorchReviewedDecoderBackend:
         def owner_identity():
             return (id(self.model), id(self.optimizer), tuple(id(value) for value in model_owner.parameters()),
                     tuple((name, id(value)) for name, value in model_owner.named_buffers()),
+                    tuple((name, id(getattr(module, name, None)), name in module._buffers)
+                          for module, name, original, saved in plain_rotary),
                     tuple(id(module) for module in model_owner.modules()),
                     tuple(tuple(id(value) for value in group["params"])
                           for group in optimizer_owner.param_groups))
@@ -3418,7 +3474,11 @@ class TorchReviewedDecoderBackend:
             input_offset = 1 if chatml else 0
             framed_sources = {}
             if cached_llama:
-                from transformers.cache_utils import DynamicCache, DynamicLayer
+                import transformers
+                from transformers.cache_utils import DynamicCache
+                legacy_cache = transformers.__version__ == "4.52.1"
+                if not legacy_cache:
+                    from transformers.cache_utils import DynamicLayer
                 cache_layers = configuration["model_config"]["num_hidden_layers"]
                 cache_heads = configuration["model_config"]["num_key_value_heads"]
                 cache_dim = configuration["model_config"].get("head_dim")
@@ -3430,6 +3490,24 @@ class TorchReviewedDecoderBackend:
                     raise TrainingJobValidationError("bounded full-attention cached Llama configuration required")
 
                 def check_cache(value, expected_tokens):
+                    if legacy_cache:
+                        # Exact 4.52.1 DynamicCache uses two owned tensor lists.
+                        # Empty/skipped/partial layers or replaced caches fail.
+                        if (type(value) is not DynamicCache or
+                                type(value.key_cache) is not list or type(value.value_cache) is not list or
+                                type(value._seen_tokens) is not int or value._seen_tokens != expected_tokens or
+                                getattr(value, "offloading", False) is not False or hasattr(value, "layers") or
+                                not 0 <= expected_tokens <= self.max_sequence_tokens or
+                                len(value.key_cache) != (cache_layers if expected_tokens else 0) or
+                                len(value.value_cache) != len(value.key_cache)):
+                            raise TrainingJobValidationError("closed owned legacy cached Llama state required")
+                        for key, val in zip(value.key_cache, value.value_cache):
+                            if any(not torch.is_tensor(item) or item.device != device or
+                                    item.dtype != torch.bfloat16 or
+                                    tuple(item.shape) != (1, cache_heads, expected_tokens, cache_dim)
+                                    for item in (key, val)):
+                                raise TrainingJobValidationError("cached Llama source/prefix tensor shape differs")
+                        return
                     # Never accept a caller cache, replacement producer object,
                     # offloading, sliding layer or a partial source/prefix.
                     if (type(value) is not DynamicCache or value.offloading is not False or
@@ -3537,7 +3615,7 @@ class TorchReviewedDecoderBackend:
                     generated = [bos]
                     generation_started = time.monotonic() if max_generation_seconds is not None else None
                     if cached_llama:
-                        cache = DynamicCache(config=model_owner.config)
+                        cache = DynamicCache() if legacy_cache else DynamicCache(config=model_owner.config)
                         check_cache(cache, 0)
                     reason, outcome, candidate, text = "output_limit_without_eos", "incomplete", None, None
                     for _ in range(max_output_tokens - 1):
@@ -3631,6 +3709,14 @@ class TorchReviewedDecoderBackend:
                     with torch.no_grad():
                         for value, saved in llama_buffers:
                             value.copy_(saved)
+                        for module, name, original, saved in plain_rotary:
+                            if name in module._buffers or name in module._parameters:
+                                # Undo a callback's changed registration through
+                                # Module's public API, restoring the original
+                                # plain binding before other independent state.
+                                delattr(module, name)
+                            setattr(module, name, original)
+                            original.copy_(saved)
                         for parameter, original, saved, requires_grad in gradients:
                             parameter.requires_grad_(requires_grad)
                             if original is not None:
@@ -3651,6 +3737,8 @@ class TorchReviewedDecoderBackend:
             restored = (self._same(self._model_state(), model_state)
                 and self._same(optimizer_owner.state_dict(), optimizer_state)
                 and self._same(self._optimizer_steps, optimizer_steps)
+                and all(getattr(module, name, None) is original and name not in module._buffers
+                        and self._same(original, saved) for module, name, original, saved in plain_rotary)
                 and all(parameter.grad is original and parameter.requires_grad is requires_grad
                         and (original is None or self._same(original, saved))
                         for parameter, original, saved, requires_grad in gradients)
@@ -4617,10 +4705,9 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
             layers = dimension("num_hidden_layers", 128)
             head_dim = width//heads if qwen2_profile else dimension("head_dim")
             positions = dimension("max_position_embeddings")
-            rope = config.rope_parameters
+            rope, _ = _reviewed_builtin_default_rotary_parameters(config, _family="qwen2" if qwen2_profile else "llama")
             if (width % heads or heads % kv_heads or head_dim != width // heads or head_dim % 2 or
-                    (config.use_sliding_window is not False or config.layer_types != ["full_attention"]*layers if qwen2_profile
-                     else config.attention_bias is not False or config.mlp_bias is not False) or
+                    (False if qwen2_profile else config.attention_bias is not False or config.mlp_bias is not False) or
                     type(config.tie_word_embeddings) is not bool or recipe["max_sequence_tokens"] > positions or
                     type(rope) is not dict or set(rope) != {"rope_type", "rope_theta"} or rope["rope_type"] != "default" or
                     type(rope["rope_theta"]) not in (int, float) or not math.isfinite(rope["rope_theta"]) or rope["rope_theta"] <= 0):
@@ -4644,10 +4731,10 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
             if llama_profile:
                 model.bfloat16()
                 for name in ("inv_freq", "original_inv_freq"):
-                    value = model.model.rotary_emb._buffers.get(name)
+                    value = getattr(model.model.rotary_emb, name, None)
                     if not torch.is_tensor(value):
                         raise TrainingJobValidationError("known Llama rotary buffers required on meta")
-                    model.model.rotary_emb._buffers[name] = value.float()
+                    setattr(model.model.rotary_emb, name, value.float())
             else:
                 model.float()
         rotary_buffers = _reviewed_builtin_qwen2_rotary_buffers if qwen2_profile else _reviewed_builtin_llama_rotary_buffers
@@ -4657,7 +4744,9 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
         if (any(name not in state_names and name not in causal_buffer_names for name, _ in model.named_buffers())
                 or recipe["model_type"] not in {"gpt2", "llama", "qwen2"} and any(module._non_persistent_buffers_set for module in model.modules())):
             raise TrainingJobValidationError("local decoder nonpersistent buffers cannot be restored from paired checkpoint")
-        tensors = {id(value): value for value in (*model.parameters(), *model.buffers())}
+        plain_rotary_tensors = (() if not llama_profile or "original_inv_freq" in model.model.rotary_emb._buffers
+            else (model.model.rotary_emb.original_inv_freq,))
+        tensors = {id(value): value for value in (*model.parameters(), *model.buffers(), *plain_rotary_tensors)}
         model_bytes = sum(value.numel() * value.element_size() for value in tensors.values())
         if not 0 < model_bytes <= max_model_bytes or any(value.device.type != "meta" for value in tensors.values()):
             raise TrainingJobValidationError("meta model tensor bytes exceed admitted local model bound")
@@ -4668,7 +4757,9 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
             raise TrainingJobValidationError("materialized GPT2 causal buffer population differs from meta construction")
         if llama_profile and rotary_buffers(model, initialize=True) != causal_buffer_names:
             raise TrainingJobValidationError("materialized Llama rotary buffer population differs from meta construction")
-        cpu_tensors = {id(value): value for value in (*model.parameters(), *model.buffers())}
+        plain_rotary_tensors = (() if not llama_profile or "original_inv_freq" in model.model.rotary_emb._buffers
+            else (model.model.rotary_emb.original_inv_freq,))
+        cpu_tensors = {id(value): value for value in (*model.parameters(), *model.buffers(), *plain_rotary_tensors)}
         cpu_model_bytes = sum(value.numel() * value.element_size() for value in cpu_tensors.values())
         if not 0 < cpu_model_bytes <= max_model_bytes:
             raise TrainingJobValidationError("materialized tied model tensor bytes exceed admitted local model bound")
@@ -4717,7 +4808,8 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
             "supported_profile": {"model_types": ["qwen2" if qwen2_profile else "llama"] if llama_profile else ["t5", "gpt2"], "device": "cpu", "dtype": parameter_dtype,
                 "attention": "eager", "experts": "eager", "max_model_bytes": state_limit},
             "automatic_old_source_checkpoint_migration": False,
-            "reconstructed_deterministic_nonpersistent_buffers": causal_buffer_names,
+            "reconstructed_deterministic_nonpersistent_buffers": [name for name in causal_buffer_names
+                if name in dict(model.named_buffers())],
             "tokenizer_constructor_option_order": ["bos_token", "eos_token", "unk_token", "pad_token",
                 "model_max_length", "clean_up_tokenization_spaces"]}
         current()
@@ -4725,6 +4817,9 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
             raise TrainingJobValidationError("loaded decoder pair changed after final policy guard")
         receipt["guard_calls"] = dict(guards)
         if llama_profile:
+            plain_names = [name for name in causal_buffer_names if name not in dict(model.named_buffers())]
+            if plain_names:
+                receipt["reconstructed_deterministic_plain_tensor_attributes"] = plain_names
             receipt["runtime_profile"] = _runtime_profile
             receipt["deterministic_buffer_dtype"] = "float32"
         if admission_profile is not None:

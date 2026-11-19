@@ -19,6 +19,7 @@ PID for the original owner.
 from __future__ import annotations
 
 import contextvars
+import hashlib
 import json
 import math
 import marshal
@@ -53,6 +54,9 @@ DEFAULT_MEMORY_ENV = "IPFS_DATASETS_RESOURCE_MEMORY_MB"
 DEFAULT_GPU_MEMORY_ENV = "IPFS_DATASETS_RESOURCE_GPU_MEMORY_MB"
 DEFAULT_UNIFIED_MEMORY_ENV = "IPFS_DATASETS_RESOURCE_UNIFIED_MEMORY_MB"
 DEFAULT_CHILD_PROCESS_ENV = "IPFS_DATASETS_RESOURCE_CHILD_PROCESS_SLOTS"
+_CHILD_CAPACITY_KEY = "child_process_capacity"
+_CHILD_CAPACITY_SCHEMA = "legal-ir-child-process-capacity/v1"
+_MAX_EXPANDED_CHILD_PROCESS_SLOTS = 2**31 - 1
 DEFAULT_PROOF_RECOVERY_ENV = "IPFS_DATASETS_PROOF_RESOURCE_RECOVERY"
 DEFAULT_PROOF_PROFILE_ENV = "IPFS_DATASETS_PROOF_RESOURCE_PROFILE"
 LOCAL_BENCHMARK_PROOF_PROFILE = "local-benchmark@1"
@@ -1203,6 +1207,103 @@ class GlobalResourceScheduler:
             },
         }
 
+    @staticmethod
+    def _child_capacity_digest(value: Mapping[str, Any]) -> str:
+        """A consistency seal, never an authentication signature or lease grant."""
+        raw = json.dumps(value, sort_keys=True, separators=(",", ":"),
+                         allow_nan=False).encode("utf-8")
+        return hashlib.sha256(raw).hexdigest()
+
+    def _effective_child_process_capacity(self, state: Mapping[str, Any]) -> int:
+        """Read the explicit expansion while leaving legacy persisted policy intact."""
+        base = self.config.total_child_process_slots
+        if _CHILD_CAPACITY_KEY not in state:
+            return base
+        metadata = state[_CHILD_CAPACITY_KEY]
+        fields = {"schema", "base_config_sha256", "base_total_child_process_slots",
+                  "total_child_process_slots", "capacity_sha256"}
+        if type(metadata) is not dict or set(metadata) != fields:
+            raise ResourceConfigurationError("invalid child-process capacity metadata")
+        if (type(metadata["schema"]) is not str
+                or metadata["schema"] != _CHILD_CAPACITY_SCHEMA
+                or type(metadata["base_total_child_process_slots"]) is not int
+                or metadata["base_total_child_process_slots"] != base
+                or type(metadata["total_child_process_slots"]) is not int
+                or not base < metadata["total_child_process_slots"] <= _MAX_EXPANDED_CHILD_PROCESS_SLOTS):
+            raise ResourceConfigurationError("invalid monotone child-process capacity")
+        expected_config = self._child_capacity_digest(self.config.persisted_dict())
+        if (type(metadata["base_config_sha256"]) is not str
+                or metadata["base_config_sha256"] != expected_config):
+            raise ResourceConfigurationError("child-process capacity base policy differs")
+        body = {key: metadata[key] for key in fields if key != "capacity_sha256"}
+        if (type(metadata["capacity_sha256"]) is not str
+                or metadata["capacity_sha256"] != self._child_capacity_digest(body)):
+            raise ResourceConfigurationError("child-process capacity consistency seal differs")
+        return metadata["total_child_process_slots"]
+
+    def expand_child_process_capacity(self, *, expected_current: int, new_total: int) -> Dict[str, Any]:
+        """CAS one explicitly authorized monotone expansion in this same namespace.
+
+        The legacy persisted config remains unchanged, so already-running older
+        facades can still renew, poll and release their original leases. Their
+        admission view stays conservative. No lease envelope, waiter, recovery
+        counter or other resource policy is changed by this operation.
+        """
+        if (type(expected_current) is not int or type(new_total) is not int
+                or not 0 < expected_current < new_total <= _MAX_EXPANDED_CHILD_PROCESS_SLOTS):
+            raise ResourceConfigurationError("positive integer monotone child-capacity expansion required")
+        with self._locked_state() as state:
+            previous = self._effective_child_process_capacity(state)
+            if previous != expected_current:
+                raise ResourceConfigurationError("child-process capacity CAS differs")
+            proof_check = None
+            if self.config.proof_safety_enabled:
+                # Reuse the existing administrative producer/code pin. Expanding
+                # a busy namespace must not silently omit the idle API's host
+                # safety gate, nor consume grants or rewrite pressure history.
+                from .existing_resource_scheduler import (
+                    ExistingResourceSchedulerError, _native_capacity_host,
+                )
+                try:
+                    host, proof_digest = _native_capacity_host(self.config)
+                except (ExistingResourceSchedulerError, OSError, ValueError) as error:
+                    raise ResourceConfigurationError("child-capacity native telemetry unavailable") from error
+                if type(host) is not ProofHostResources:
+                    raise ResourceConfigurationError("native proof host observation required")
+                pid_demand = PROOF_PID_HEADROOM_TASKS + PROOF_PID_TASKS_PER_PROCESS * new_total
+                if (type(host.available_pid_tasks) is not int
+                        or host.available_pid_tasks < pid_demand):
+                    raise ResourceConfigurationError("native PID headroom insufficient for expanded capacity")
+                memory_required = self.config.proof_memory_headroom_mb + self._root_usage(state)[1]
+                if (type(host.available_memory_mb) not in (int, float)
+                        or not math.isfinite(host.available_memory_mb)
+                        or host.available_memory_mb < memory_required):
+                    raise ResourceConfigurationError("native memory headroom insufficient for active capacity expansion")
+                for observed, threshold in (
+                    (host.memory_stall_percent, self.config.proof_memory_stall_percent),
+                    (host.cpu_stall_percent, self.config.proof_cpu_stall_percent),
+                    (host.io_stall_percent, self.config.proof_io_stall_percent),
+                ):
+                    if (type(observed) not in (int, float) or not math.isfinite(observed)
+                            or not 0 <= observed < threshold):
+                        raise ResourceConfigurationError("native proof pressure holds capacity expansion")
+                proof_check = {"proof_source_sha256": proof_digest,
+                               "pid_tasks_required": pid_demand,
+                               "available_pid_tasks": host.available_pid_tasks,
+                               "memory_mb_required": memory_required,
+                               "available_memory_mb": host.available_memory_mb,
+                               "memory_stall_percent": host.memory_stall_percent,
+                               "cpu_stall_percent": host.cpu_stall_percent,
+                               "io_stall_percent": host.io_stall_percent}
+            body = {"schema": _CHILD_CAPACITY_SCHEMA,
+                    "base_config_sha256": self._child_capacity_digest(self.config.persisted_dict()),
+                    "base_total_child_process_slots": self.config.total_child_process_slots,
+                    "total_child_process_slots": new_total}
+            metadata = {**body, "capacity_sha256": self._child_capacity_digest(body)}
+            state[_CHILD_CAPACITY_KEY] = metadata
+            return {**metadata, "previous_total_child_process_slots": previous,
+                    "state_path": str(self.state_path), "proof_safety_check": proof_check}
+
     @contextmanager
     def _locked_state(
         self, *, persist: bool = True, allow_reconfigure: bool = False,
@@ -1393,6 +1494,7 @@ class GlobalResourceScheduler:
         stored.setdefault("proof_recovery_grants", 4)
         if stored == expected:
             self._validate_recovery_state(state)
+            self._effective_child_process_capacity(state)
             state["config"] = expected
             return
         if not allow_reconfigure:
@@ -1715,7 +1817,7 @@ class GlobalResourceScheduler:
             return False
         if (
             used_child_process_slots + int(waiter.get("child_process_slots", 0))
-            > self.config.total_child_process_slots
+            > self._effective_child_process_capacity(state)
         ):
             return False
         requested_gpu = int(waiter.get("gpu_memory_mb", 0))
@@ -2105,7 +2207,9 @@ class GlobalResourceScheduler:
                 raise ResourceUnavailableError(
                     "unified memory request exceeds configured unified-memory capacity"
                 )
-            if child_process_slots > self.config.total_child_process_slots:
+            with self._locked_state(persist=False) as capacity_state:
+                child_capacity = self._effective_child_process_capacity(capacity_state)
+            if child_process_slots > child_capacity:
                 raise ResourceUnavailableError(
                     "child-process request exceeds configured process capacity"
                 )
@@ -2635,6 +2739,7 @@ class GlobalResourceScheduler:
 
         with self._locked_state() as state:
             self._recover_stale_locked(state, time.time())
+            child_capacity = self._effective_child_process_capacity(state)
             (
                 cpu,
                 memory,
@@ -2692,7 +2797,7 @@ class GlobalResourceScheduler:
                     ),
                     "reserved_gpu_memory_mb": self.config.reserved_gpu_memory_mb,
                     "unified_memory_mb": self.config.total_unified_memory_mb,
-                    "child_process_slots": self.config.total_child_process_slots,
+                    "child_process_slots": child_capacity,
                 },
                 "allocated": {"cpu_slots": cpu, "memory_mb": memory},
                 "allocated_gpu_memory_mb": gpu_memory,
@@ -2715,8 +2820,7 @@ class GlobalResourceScheduler:
                         if self.config.total_unified_memory_mb is None
                         else self.config.total_unified_memory_mb - unified_memory
                     ),
-                    "child_process_slots": self.config.total_child_process_slots
-                    - child_process_slots,
+                    "child_process_slots": child_capacity - child_process_slots,
                 },
                 "active_lease_count": len(state["leases"]),
                 "active_root_lease_count": len(state["leases"]) - active_children,
@@ -2737,7 +2841,7 @@ class GlobalResourceScheduler:
                         self.config.total_unified_memory_mb is not None
                         and unified_memory >= self.config.total_unified_memory_mb
                     )
-                    or child_process_slots >= self.config.total_child_process_slots
+                    or child_process_slots >= child_capacity
                     or bool(state["waiters"]),
                     "cpu_saturated": cpu >= self.config.total_cpu_slots,
                     "memory_saturated": memory
@@ -2754,7 +2858,7 @@ class GlobalResourceScheduler:
                         else unified_memory >= self.config.total_unified_memory_mb
                     ),
                     "child_process_slots_saturated": child_process_slots
-                    >= self.config.total_child_process_slots,
+                    >= child_capacity,
                     "events_total": int(metrics["saturation_events_total"]),
                 },
                 "wait_time_seconds": {
@@ -2787,7 +2891,7 @@ class GlobalResourceScheduler:
 
         scheduler_snapshot = self.snapshot()
         effective_child_limit = (
-            self.config.total_child_process_slots
+            scheduler_snapshot["capacity"]["child_process_slots"]
             if child_process_limit is None
             else child_process_limit
         )

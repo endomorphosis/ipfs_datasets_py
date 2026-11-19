@@ -1861,7 +1861,7 @@
         "Reuse the existing intake-v2, wire join-v3 and explicitly compatible downstream owners to reconcile the observed law-card alias/file-selection drift. Preserve the homogeneous five-string envelope and family discriminator where actual selected tables conform; metadata-only intake/join qualification does not supply current Hub authentication, table conformance or viewer readback. Hand producer/publication changes to LIR-21; retain separate law/span/entity revision namespaces and family denominators."
       ],
       "priority": "P0",
-      "remaining_scope": "Raw-row coordinate/cache/paired/context/join transport is published. Bind selected physical rows/editions and preserve distinct original-input and retained eligibility contracts through their existing owners. Add bounded, independently pinned full-report publication/readback before treating a small exchange reference as portable evidence. The supplied-text API cannot recover removed upstream bytes. Capture selectors in new production and reconcile historical producer-occurrence decisions. Select actual reviewer trust and collect authenticated source/context evidence and decisions under the available compatible domain. Applying reviewed decisions and semantic qualification require separately versioned records. Keep native paragraph, parent-field, normalized and rendered coordinate profiles distinct; larger corpus transports need separate qualification.",
+      "remaining_scope": "Raw-row coordinate/cache/paired/context/join transport is published. Bind selected physical rows/editions and preserve distinct original-input and retained eligibility contracts through their existing owners. Add bounded, independently pinned full-report publication/readback before treating a small exchange reference as portable evidence. The supplied-text API cannot recover removed upstream bytes. Capture selectors in new production and reconcile historical producer-occurrence decisions. Select actual reviewer trust and collect authenticated source/context evidence and decisions under the available compatible domain. Applying reviewed decisions and semantic qualification require separately versioned records. Keep native paragraph, parent-field, normalized and rendered coordinate profiles distinct; larger corpus transports need separate qualification. Current2026-11-19 fromraw source-only P/A/independentcompleteV is mechanically qualified on Source4166/ad788 with42retainedfiles/148132089B and418pendinggroups,0authenticatedEvidence/reviews,authorityfalse/masks0; see grouped evidence same-namespace-capacity-and-whole-norm-native-20261119. This supersedes the earlier current-data-generation pending cutoff only: statutory source/edition/meaning review, §101-inclusive population and typed Native/model/gold/corpus admission remain open.",
       "retained_readiness_crosswalk_available": {
         "bytes": 10320,
         "path": "/home/barberb/lift_coding/artifacts/legal-corpus-graph-readiness-20261015-01/crosswalk-01/manifest.json",
@@ -11509,7 +11509,7 @@
       "latest_incremental_native_audit": "artifacts/legal-corpus-incremental-lean-20261013-01/native-benchmark-04/independent-native-audit.json",
       "native_build_receipt": "artifacts/legal-corpus-shared-lean-20261013-01/native-smoke-02/native-positive/build-receipt.json",
       "priority": "P1",
-      "remaining_scope": "Actual reviewed statutory corpus builds and domain obligations, broader profile coverage, independently established legal/source correspondence and coherent released toolchain closure. Authored conditional witnesses do not finish the statutory pilot. Local code commit 5135b951de81ffa388d21d84290ae5bf99f0ea1c on local branch codex/lir14-same-unit-consumer-regression records an unexecuted same-three-unit/full-nine-field-IR consumer regression (test9b888ce7; receipt81e3025c), with a resealed wrong-target control, one inspection callback and no extra Native build. Original42018 remains raw-held/unverified after the SDK MappingProxyType/dict-guard mismatch (checkpoint45e7fa69); prepared helper/operator remain unselected; the human-terminal read-only probe is pending, while the normal ENOTTY attach and actual sudo -n authentication-required refusal are closed. No new PASS, Source closure or statutory/model/corpus/gold qualification is recorded. Separately, the factored ordinary source-use preparation/consumer node collected once and passed once with zero failures/errors/skips (Root748b15/bd7bdb; receipt8124/c09d65a9; code commit 34eba72e839a06dd7c7639eb37faf4631e39d3f3, test340694/19bb4e18). Runtime R ebab0edf plus that dirty test, A534a5362 and Sourceab58972d retained all four4127 full9 maps and closed ordinary custody. The30 declared obligations are preparation only. Original42018 and strongest Native coupling remain unverified; statutory/source, Native, model, gold and corpus/release gates remain open.",
+      "remaining_scope": "Actual reviewed statutory corpus builds and domain obligations, broader profile coverage, independently established legal/source correspondence and coherent released toolchain closure. Authored conditional witnesses do not finish the statutory pilot. Historical code5135b951/test9b888ce7 was an unexecuted consumer proposal; the separately factored test19bb4e18/code34eba72e subsequently had one ordinary preparation/consumer pass under Sourceab58972d. Original42018 later closed its actual Source/resource custody after same-parent raw Mapping correction, but its wrong-basename collector retained an emptyZIP and exited1; keep that failure and7860 retention errors. A separately corrected caller now has one unchanged whole-norm[source-use] Native pass on originalSource4127/041770b3, with93 retained members,10 compiledmodules and30 conditionaltheorems with empty observed axiom dependencies; authorityfalse and masks0. This does not run the later factored consumer callback or establish statutory/model/gold/corpus authority. Separately, existingresourceowner7a0dac2d/test4af66862 passed43 cases (12old+31new) on Source4162/0936, then its public same-namespace capacityCAS applied effective16-to-32 while retaining base16/CPU16/memory99688 and safety/history. The older2c006 facade was also observed working/renewing/releasing with this overlay in the correctedNative run. Operating limits are adjustable under userauthorization through existingowners with actual admission, custody and allcharges retained. The firstfour69attempts remain closedfailures; the later reviewedworker61118/test0e315 now has21new+69existing disjointsoftwarecases allPASS0FES on Source4166/0658. Smallinstalled4.52CPU compatibility/retention is qualified, nottrainingcampaign/pretrainedquality/legalmeaning/convergence. Separately, current fromraw Source4166/ad788 preparation/assessment/completevalidation retained42files/148132089B in619.366s:418requests/subjects/dependencyManifests,7pages,6688questions(3762sourceSlots+2926deferred); all418groups pending,0authenticatedEvidence/reviews,authorityfalse/masks0 and §101absent. Existingresource followup47 passed on Source4166/0830 with helperb2b/testaf7; no actualproduction idleadmin expansion is inferred. Reallegal/source/edition/meaning reviews, §101-inclusivepilot, training/convergence and the full eight-phase goal remain open.",
       "reuse_owners": [
         "native Lake gates",
         "build manifests",
@@ -11636,6 +11636,115 @@
         "task_status_frontier_acceptance_criteria_changed": false,
         "goal_full8_active": true,
         "execution_authorized_by_this_progress": false
+      },
+      "current_capacity_and_whole_norm_native_20261119": {
+        "evidence_id": "same-namespace-capacity-and-whole-norm-native-20261119",
+        "status": "qualified_separate_engineering_scopes_only",
+        "resource_owning_cases": 43,
+        "resource_existing_cases": 12,
+        "resource_new_cases": 31,
+        "resource_owner_sha256": "7a0dac2d13b4be7775e278054e1a57808f5629d3c58952164b91514e6e2ae2d3",
+        "resource_test_sha256": "4af66862a02e5eff20b36b270e8621d30d460bf0357edc9e57eda380f8cc12c8",
+        "resource_Source_epoch": "0936ffa07a096135c966faad3a4937c4d5daf72426119b72070e69dd5e506b96",
+        "base_child_slots": 16,
+        "effective_child_slots": 32,
+        "same_namespace_user_authorized_transition": true,
+        "old_facade_observed_compatible": true,
+        "Native_cases": 1,
+        "Native_Source_epoch": "041770b3eae63809bc375abfc0daf70e6d32f40ced8731d227b854612af33d02",
+        "packet_members": 93,
+        "ZIP_bytes": 5369131,
+        "compiled_modules": 10,
+        "conditional_theorems": 30,
+        "all30_axiom_dependencies_empty": true,
+        "original42018_status": "closed_wrapper_collector_failure_not_fullpacket",
+        "training_mask": 0,
+        "evaluation_gold_mask": 0,
+        "legal_model_corpus_release_or_task_completion_authority": false,
+        "private_evidence_index": {
+          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/qualified-resource-capacity-and-whole-norm-native-four-guide-proposal-v03/milestone-evidence-index-v03.json",
+          "bytes": 22229,
+          "sha256": "e2bf3dbe51e72bc579fd3e836340c8daceb8b746d5e31825e3960ca1c223bb41",
+          "mode": "0400"
+        },
+        "current_installed_worker_software": {
+          "status": "qualified_current_installed_layout_software_only",
+          "Source_rows": 4166,
+          "Source_epoch": "0658fcc4b7b65c0f34baadba0444a29d3b7ffa2f6dfcccb925f89c12efa809d7",
+          "worker_bytes": 324102,
+          "worker_sha256": "61118cfe12beb302efb4af775101396502016b2557f52ccfc3d62c20efcdbdce",
+          "worker_test_bytes": 522254,
+          "worker_test_sha256": "0e315083a8aed3d9ca3d990965577a21ed0250dd5b7ce032ddfd9c10ca5f2368",
+          "evaluator_bytes": 117664,
+          "evaluator_sha256": "d14a2dd8fc0d794cf586ad8318648a99fd2fafd51a3797e354201c088c918832",
+          "eval_test_bytes": 236164,
+          "eval_test_sha256": "ea7bfd2f902abbaa24152c3baea0410495e496a95b5388275df8163e53c9aeee",
+          "installed_Transformers_version": "4.52.1",
+          "focused_backend_cases": 21,
+          "focused_backend_functions": 6,
+          "existing_retention_cases": 69,
+          "existing_retention_functions": 12,
+          "disjoint_software_case_union": 90,
+          "union_verified_from_actual_raw_JUnit_class_case_pairs": true,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "focused21_collect_seconds": 1.50101698609069,
+          "focused21_run_seconds": 7.663986884988844,
+          "retention69_collect_seconds": 0.6775782811455429,
+          "retention69_run_seconds": 47.860262111760676,
+          "focused21_compact": {
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/current-worker-installed-rotary-compatibility-proposal-v01/focused21-managed-ordinary-output-v01/compact-current-worker-installed-layout-focused21-green-closed-v01.json",
+            "bytes": 11570,
+            "sha256": "78d0b324f3e0272256a90454350518fd7ee23ecc7c7d6a6ed8d5ea6ddac4892b"
+          },
+          "focused21_full_report": {
+            "bytes": 8113784,
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/current-worker-installed-rotary-compatibility-proposal-v01/focused21-managed-ordinary-output-v01/complete-current-worker-focused21-managed-collect-run-report.json",
+            "sha256": "b11a20d5ee31d9424b8dc5a0851c3ce00dc946b94e445e104ee4992ecba1e682"
+          },
+          "retention69_compact": {
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/current69-retention-owningtest-callerdata-v01/selected-current69-managed-output-v05/closed-current69-installed-worker-retention-GREEN-v01.json",
+            "bytes": 18983,
+            "sha256": "85ed50aadff8769ee4556b26e868500ae373da7f1a17b40b7a3c471569bebfb8"
+          },
+          "retention69_full_report": {
+            "bytes": 8221887,
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/current69-retention-owningtest-callerdata-v01/selected-current69-managed-output-v05/complete-current69-managed-collect-run-report.json",
+            "sha256": "295f232035cfc676dd636cd389e46116a9d1e440a23c3cd9e335e7675ce9b2e3"
+          },
+          "actual21_raw_JUnit": {
+            "bytes": 5063,
+            "logical_name": "junit.xml",
+            "origin": "actual ToolRunResult.output_files bytes; not to_dict decoded text",
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/current-worker-installed-rotary-compatibility-proposal-v01/focused21-managed-ordinary-output-v01/run.output.0.bin",
+            "sha256": "86ed8bc45e32358cfa639f326aab61dd546345cf932706541a4aa67768409101"
+          },
+          "actual69_raw_JUnit": {
+            "bytes": 15275,
+            "full9_after_readback": {
+              "st_ctime_ns": "1795114238954549137",
+              "st_dev": "66306",
+              "st_gid": "1000",
+              "st_ino": "68953447",
+              "st_mode": "33024",
+              "st_mtime_ns": "1795114238954549137",
+              "st_nlink": "1",
+              "st_size": "15275",
+              "st_uid": "1000"
+            },
+            "logical_name": "junit.xml",
+            "origin": "actual ToolRunResult.output_files bytes; not to_dict decoded text",
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/current69-retention-owningtest-callerdata-v01/selected-current69-managed-output-v05/run.output.0.bin",
+            "sha256": "e1ece1c61c6c59a4e3e560375f006298e02532f99cccb9536a923c4e4f0263cd"
+          },
+          "Source_resource_and_SDK_closed": true,
+          "Root_independent_actual_result_readback_accepted": true,
+          "actual_numerical_scope": "Small authored localCPU Llama/Qwen2 model compatibility, genuine sourceconditionedgeneration/checkpoints/retention metadata; no trainingcampaign/pretrainedassets or learnedquality claim.",
+          "actual_product_state_scope": "StrictdefaultRoPE/config/layout; preserveplainoriginal_inv_freq versusregisteredinv_freq, explicitplainstatefingerprint, generationvalue/identity/registration/gradient restoration incloriginalcallbackexception, metaCPU reconstruction and completeownedlegacycache.",
+          "pretrained_model_quality_training_convergence_statutory_Lean_gold_corpus_or_programme_authority": false,
+          "no_automatic_checkpoint_or_Source_epoch_migration": true
+        }
       }
     },
     {

@@ -6205,7 +6205,7 @@ def _reviewed_chatml_llama_fixture(*, model_profile="builtin-llama-bfloat16/v1",
     model = Model(config).to(device="cpu", dtype=torch.bfloat16)
     rope = Rotary(config)
     for name in ("inv_freq", "original_inv_freq"):
-        model.model.rotary_emb._buffers[name] = rope._buffers[name].detach().clone()
+        setattr(model.model.rotary_emb, name, getattr(rope, name).detach().clone())
     with torch.no_grad():
         for parameter in model.parameters(): parameter.normal_(0, .05)
         if qwen2:
@@ -7833,3 +7833,175 @@ def test_aggregate_v4_public_fast_tokenizer_factory_complete_context_budget_by_t
         mapping_sha256="96e2847bb5d6ba940dd9a5e3fec599a0204b4a22f6d4c4fd6ad4d250e8d4be14",rows=observed,
         model_weights_loaded=False,model_inference=False,training=False,
         actual_pretrained_capacity_or_quality=False),indent=2)+"\n")
+
+
+@pytest.mark.parametrize("model_profile", ["builtin-llama-bfloat16/v1", "builtin-qwen2-bfloat16/v1"])
+def test_reviewed_builtin_rotary_installed_layout_binds_checkpoint_recipe(model_profile):
+    fixture = _reviewed_chatml_llama_fixture(model_profile=model_profile)
+    torch, backend = fixture.torch, fixture.backend
+    rotary = backend.model.model.rotary_emb
+    original = rotary.original_inv_freq
+    registered = set(rotary._buffers)
+    nonpersistent = set(rotary._non_persistent_buffers_set)
+    configuration = backend._configuration()
+    if "original_inv_freq" not in registered:
+        assert configuration["deterministic_plain_tensor_state"] == [{
+            "name": "model.rotary_emb.original_inv_freq", "shape": list(original.shape),
+            "dtype": "torch.float32", "device": "cpu",
+            "recipe": "validated-built-in-default-rotary/v1"}]
+        assert "original_inv_freq" in vars(rotary)
+    else:
+        assert "deterministic_plain_tensor_state" not in configuration
+    before = backend.snapshot_checkpoint()
+    with torch.no_grad():
+        next(backend.model.parameters()).add_(0.125)
+    backend.restore_checkpoint(before["model_state"], before["optimizer_state"])
+    assert backend.snapshot_checkpoint() == before
+    assert rotary.original_inv_freq is original
+    assert set(rotary._buffers) == registered and set(rotary._non_persistent_buffers_set) == nonpersistent
+    assert all(value.dtype == torch.float32 for value in (rotary.inv_freq, rotary.original_inv_freq))
+
+
+@pytest.mark.parametrize("model_profile", ["builtin-llama-bfloat16/v1", "builtin-qwen2-bfloat16/v1"])
+@pytest.mark.parametrize("damage", ["original_value", "registration", "scaled_rope"])
+def test_reviewed_builtin_rotary_rejects_unreviewed_state_and_recipe(model_profile, damage):
+    fixture = _reviewed_chatml_llama_fixture(model_profile=model_profile)
+    torch, backend = fixture.torch, fixture.backend
+    rotary = backend.model.model.rotary_emb
+    backend.identity()  # The actual unchanged installed recipe must pass first.
+    if damage == "original_value":
+        with torch.no_grad():
+            rotary.original_inv_freq.add_(0.125)
+    elif damage == "registration":
+        value = rotary.original_inv_freq
+        if "original_inv_freq" in rotary._buffers:
+            del rotary._buffers["original_inv_freq"]
+            rotary._non_persistent_buffers_set.discard("original_inv_freq")
+            rotary.original_inv_freq = value
+        else:
+            delattr(rotary, "original_inv_freq")
+            rotary.register_buffer("original_inv_freq", value, persistent=False)
+    elif hasattr(backend.model.config, "rope_parameters"):
+        backend.model.config.rope_parameters = {"rope_type": "linear", "rope_theta": 10000.0}
+    else:
+        backend.model.config.rope_scaling = {"rope_type": "linear", "factor": 2.0}
+    with pytest.raises(worker.TrainingJobValidationError, match="rotary|nonpersistent"):
+        backend.identity()
+
+
+def test_reviewed_builtin_qwen2_legacy_sliding_attention_remains_refused():
+    fixture = _reviewed_chatml_llama_fixture(model_profile="builtin-qwen2-bfloat16/v1")
+    backend = fixture.backend
+    backend.identity()
+    backend.model.config.use_sliding_window = True
+    with pytest.raises(worker.TrainingJobValidationError, match="full-attention"):
+        backend.identity()
+
+
+@pytest.mark.parametrize("model_profile", ["builtin-llama-bfloat16/v1", "builtin-qwen2-bfloat16/v1"])
+@pytest.mark.parametrize("damage", ["original_value", "equal_value_rebinding", "callback_exception", "registration"])
+def test_reviewed_builtin_rotary_generation_restores_tensor_value_and_binding(model_profile, damage):
+    fixture = _reviewed_chatml_llama_fixture(model_profile=model_profile)
+    torch, backend = fixture.torch, fixture.backend
+    row = _reviewed_local_loader_source_record(backend.tokenizer)
+    rotary = backend.model.model.rotary_emb
+    original = rotary.original_inv_freq
+    saved = original.detach().clone()
+    registered = dict(rotary._buffers)
+    nonpersistent = set(rotary._non_persistent_buffers_set)
+    before = backend.snapshot_checkpoint()
+    denied = PermissionError("original rotary callback denial")
+    ran = []
+    gradients = [(parameter, parameter.grad) for parameter in backend.model.parameters()]
+    def damage_after_forward(module, arguments, output):
+        ran.append(True)
+        if damage == "registration":
+            delattr(rotary, "original_inv_freq")
+            rotary.register_buffer("original_inv_freq", original.detach().clone(), persistent=False)
+            gradients[0][0].grad = torch.ones_like(gradients[0][0])
+        elif damage == "equal_value_rebinding":
+            rotary.original_inv_freq = original.detach().clone()
+        else:
+            with torch.no_grad():
+                original.add_(0.125)
+        if damage == "callback_exception":
+            raise denied
+    hook = backend.model.register_forward_hook(damage_after_forward)
+    try:
+        expected = PermissionError if damage == "callback_exception" else worker.TrainingJobValidationError
+        with pytest.raises(expected) as caught:
+            backend.generate_batch([row], max_output_tokens=3, execution_guard=lambda: None,
+                generation_profile=("builtin-qwen2-dynamic-kv/v1" if model_profile == "builtin-qwen2-bfloat16/v1"
+                                    else "builtin-llama-dynamic-kv/v1"))
+        if damage == "callback_exception":
+            assert caught.value is denied
+        elif damage == "equal_value_rebinding":
+            assert "identity changed" in str(caught.value)
+        elif damage == "registration":
+            assert "nonpersistent buffers" in str(caught.value) or "registration differs" in str(caught.value)
+        else:
+            assert "rotary buffer values differ" in str(caught.value)
+    finally:
+        hook.remove()
+    assert ran == [True]
+    assert rotary.original_inv_freq is original and torch.equal(original, saved)
+    assert all(parameter.grad is original_grad for parameter, original_grad in gradients)
+    assert set(rotary._buffers) == set(registered) and all(rotary._buffers[name] is value for name, value in registered.items())
+    assert set(rotary._non_persistent_buffers_set) == nonpersistent
+    assert backend.snapshot_checkpoint() == before
+
+
+@pytest.mark.parametrize("model_profile", ["builtin-llama-bfloat16/v1", "builtin-qwen2-bfloat16/v1"])
+def test_reviewed_builtin_rotary_meta_materialization_preserves_real_storage_kind(model_profile):
+    import torch
+    if model_profile == "builtin-qwen2-bfloat16/v1":
+        from transformers import Qwen2Config as Config, Qwen2ForCausalLM as Model
+        validate = worker._reviewed_builtin_qwen2_rotary_buffers
+    else:
+        from transformers import LlamaConfig as Config, LlamaForCausalLM as Model
+        validate = worker._reviewed_builtin_llama_rotary_buffers
+    config = Config(vocab_size=16, hidden_size=8, intermediate_size=16, num_hidden_layers=1,
+        num_attention_heads=2, num_key_value_heads=1, max_position_embeddings=32,
+        **({"use_sliding_window": False} if model_profile == "builtin-qwen2-bfloat16/v1" else {}))
+    config._attn_implementation = "eager"
+    with torch.device("meta"):
+        model = Model(config)
+    rotary = model.model.rotary_emb
+    registered = set(rotary._buffers)
+    nonpersistent = set(rotary._non_persistent_buffers_set)
+    names = validate(model)
+    model.to_empty(device="cpu")
+    if "original_inv_freq" not in registered:
+        assert rotary.original_inv_freq.device.type == "meta"
+    assert validate(model, initialize=True) == names
+    assert set(rotary._buffers) == registered and set(rotary._non_persistent_buffers_set) == nonpersistent
+    assert rotary.inv_freq.device.type == rotary.original_inv_freq.device.type == "cpu"
+    assert rotary.inv_freq.dtype == rotary.original_inv_freq.dtype == torch.float32
+    assert torch.equal(rotary.inv_freq, rotary.original_inv_freq)
+
+
+@pytest.mark.parametrize("damage", ["missing_layer", "cache_replacement"])
+def test_reviewed_builtin_legacy_dynamic_cache_requires_complete_owned_layers(damage):
+    fixture = _reviewed_chatml_llama_fixture()
+    backend = fixture.backend
+    before = backend.snapshot_checkpoint()
+    row = _reviewed_local_loader_source_record(backend.tokenizer)
+    ran = []
+    def damage_cache(module, arguments, output):
+        ran.append(True)
+        cache = output.past_key_values
+        if damage == "cache_replacement":
+            output.past_key_values = type(cache)()
+        elif hasattr(cache, "key_cache"):
+            cache.key_cache.pop()
+            cache.value_cache.pop()
+        else:
+            cache.layers.pop()
+    hook = backend.model.register_forward_hook(damage_cache)
+    try:
+        with pytest.raises(worker.TrainingJobValidationError, match="cached Llama|owned cache"):
+            backend.generate_batch([row], max_output_tokens=3, execution_guard=lambda: None,
+                generation_profile="builtin-llama-dynamic-kv/v1")
+    finally:
+        hook.remove()
+    assert ran == [True] and backend.snapshot_checkpoint() == before

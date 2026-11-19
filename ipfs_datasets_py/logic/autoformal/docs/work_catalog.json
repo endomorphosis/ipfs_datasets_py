@@ -1153,10 +1153,11 @@
         "reviewed-native-admitted-parent-source-regressions-20261111",
         "mixed-renderer-preservation-20261111",
         "reviewed-definition-realization-source-use-20261115",
-        "source-use-whole-norm-pure-consumer-20261119"
+        "source-use-whole-norm-pure-consumer-20261119",
+        "same-namespace-capacity-and-whole-norm-native-20261119"
       ],
       "id": "definition-use-native",
-      "notes": "Existing owner contains separate official V2 and parent V1 preparation/build/receipt routes. Original migration compiler fixtures remain synthetic. Two authored FOL/TDFOL parent projects now qualify actual Lean4.34.1 execution and observed custody; pending review and explicit premises remain, without statutory admission or source-to-model equivalence. The separate parent shared-native profile adds four aggregate APIs. Its main cohort qualifies 16 cases (11 new and five existing regressions); a separate actual cohort contains two authored FOL/TDFOL aggregate projects, each with nine modules, 15 executed inputs and six unique conditional theorem observations. Child reviews remain pending in the actual cohort; complete assumptions and contributor lineage survive. No parent incremental cache, source meaning, model, training or statutory admission is qualified. Separate authored complete-norm/bound-definition profile: 42 pure cases/126 phases and two actual Lean4.34.1 cases/six phases. Nine files/six modules preserve the unchanged norm and explicit definition/membership premises; preservation is an alias identity. Namespace-scoped qualification; statutory reviews, source binding and training/gold remain pending. First actual attempt retained separately with its 192-MiB storage reservation. The explicit parent-literal complete-norm route reuses its separately source-pinned authored engineering qualification; no default consumer, full-package, semantic or corpus admission is inferred. The existing parent-bound norm/definition native extension adopts source6e6dd821/test02acd69 with unchanged preparer014dc6/renderer5c. Its retained original R32pure/96 and separate R2actual-native/6phase cohorts retain their own 197-source generation and six observed commands (four ordinary probes and two owned builds). The separately accepted current-public4case/12phase pure compatibility check on the completed c59 snapshot contains one genuine membership-mode validation, two synthetic handoffs and a request-pin refusal. The later8b6 graph change has a separate source-only compatibility review; the combined new generation remains unmeasured. It supplies no new actual native execution or global registration. The separate §7214 mixed renderer profile is now available with focused pure and compiler qualification; parent-source/corpus native integration and substantive legal review remain pending. The explicit parent-nomination graph custody route is indexed under the existing graph adapter and has a separate focused custody qualification; null governing decisions, explicit premises and zero masks remain. Separate 2026-11-16 whole-norm application scopes are recorded in whole_norm_definition_expansion_20261116: Native2 is actual conditional installed-Lean engineering; S100/I21 are authored software only. Existing evidence IDs and historical source epochs remain unchanged. Local unexecuted source-use consumer regression: code commit 5135b951de81ffa388d21d84290ae5bf99f0ea1c on local branch codex/lir14-same-unit-consumer-regression contains only test338620/9b888ce7 (receipt81e3025c). Same three admitted units/full nine-field IR, validly resealed wrong-target refusal and one detached callback add no Native build or handle-authority join. Original42018 remains raw-held/unverified by checkpoint45e7fa69 after the wrapper dict guard rejected actual SDK MappingProxyType; helper/operator are unselected; the human-terminal read-only probe is pending, while the normal ENOTTY attach and actual sudo -n authentication-required refusal are closed. No current qualification/status promotion or new evidence is claimed. Separately qualified ordinary preparation/consumer case: one collection and one PASS/0F/0E/0skip, Root748b15/bd7bdb, evidence source-use-whole-norm-pure-consumer-20261119. Code commit 34eba72e839a06dd7c7639eb37faf4631e39d3f3 records test340694/19bb4e18; runtime R ebab0edf plus dirty test, A534a5362/Sourceab58972d, four stable4127 full9 maps and ordinary custody closed. Same three units/full nine-field IR and swapped-target/one-callback checks only;30 declared obligations are not proofs. No strongest-Native, model, statutory, gold or corpus/release qualification; original42018 remains held/unverified.",
+      "notes": "Existing owner contains separate official V2 and parent V1 preparation/build/receipt routes. Original migration compiler fixtures remain synthetic. Two authored FOL/TDFOL parent projects now qualify actual Lean4.34.1 execution and observed custody; pending review and explicit premises remain, without statutory admission or source-to-model equivalence. The separate parent shared-native profile adds four aggregate APIs. Its main cohort qualifies 16 cases (11 new and five existing regressions); a separate actual cohort contains two authored FOL/TDFOL aggregate projects, each with nine modules, 15 executed inputs and six unique conditional theorem observations. Child reviews remain pending in the actual cohort; complete assumptions and contributor lineage survive. No parent incremental cache, source meaning, model, training or statutory admission is qualified. Separate authored complete-norm/bound-definition profile: 42 pure cases/126 phases and two actual Lean4.34.1 cases/six phases. Nine files/six modules preserve the unchanged norm and explicit definition/membership premises; preservation is an alias identity. Namespace-scoped qualification; statutory reviews, source binding and training/gold remain pending. First actual attempt retained separately with its 192-MiB storage reservation. The explicit parent-literal complete-norm route reuses its separately source-pinned authored engineering qualification; no default consumer, full-package, semantic or corpus admission is inferred. The existing parent-bound norm/definition native extension adopts source6e6dd821/test02acd69 with unchanged preparer014dc6/renderer5c. Its retained original R32pure/96 and separate R2actual-native/6phase cohorts retain their own 197-source generation and six observed commands (four ordinary probes and two owned builds). The separately accepted current-public4case/12phase pure compatibility check on the completed c59 snapshot contains one genuine membership-mode validation, two synthetic handoffs and a request-pin refusal. The later8b6 graph change has a separate source-only compatibility review; the combined new generation remains unmeasured. It supplies no new actual native execution or global registration. The separate §7214 mixed renderer profile is now available with focused pure and compiler qualification; parent-source/corpus native integration and substantive legal review remain pending. The explicit parent-nomination graph custody route is indexed under the existing graph adapter and has a separate focused custody qualification; null governing decisions, explicit premises and zero masks remain. Separate 2026-11-16 whole-norm application scopes are recorded in whole_norm_definition_expansion_20261116: Native2 is actual conditional installed-Lean engineering; S100/I21 are authored software only. Existing evidence IDs and historical source epochs remain unchanged. Local unexecuted source-use consumer regression: code commit 5135b951de81ffa388d21d84290ae5bf99f0ea1c on local branch codex/lir14-same-unit-consumer-regression contains only test338620/9b888ce7 (receipt81e3025c). Same three admitted units/full nine-field IR, validly resealed wrong-target refusal and one detached callback add no Native build or handle-authority join. Original42018 remains raw-held/unverified by checkpoint45e7fa69 after the wrapper dict guard rejected actual SDK MappingProxyType; helper/operator are unselected; the human-terminal read-only probe is pending, while the normal ENOTTY attach and actual sudo -n authentication-required refusal are closed. No current qualification/status promotion or new evidence is claimed. Separately qualified ordinary preparation/consumer case: one collection and one PASS/0F/0E/0skip, Root748b15/bd7bdb, evidence source-use-whole-norm-pure-consumer-20261119. Code commit 34eba72e839a06dd7c7639eb37faf4631e39d3f3 records test340694/19bb4e18; runtime R ebab0edf plus dirty test, A534a5362/Sourceab58972d, four stable4127 full9 maps and ordinary custody closed. Same three units/full nine-field IR and swapped-target/one-callback checks only;30 declared obligations are not proofs. No strongest-Native, model, statutory, gold or corpus/release qualification; original42018 remains held/unverified. Superseding current2026-11-19 evidence same-namespace-capacity-and-whole-norm-native-20261119: original42018 is now closed after actual raw retention and public lease release, but its emptyZIP collector transport remains failed; earlier held/probe-pending clauses above describe their historical cutoffs. A corrected old-source whole-norm[source-use] Native case now passed with93 retained members/10 compiledmodules/30 conditionalempty-axiom theorems, allauthorityfalse/masks0. Existing scheduler owner7a0d/test4af has separate43-case Source4162 qualification and an authorized same-namespace base16/effective32 transition; old2c facade compatibility was observed in the correctedNative run. No Sourceepoch pooling, factoredconsumer Native result, statutory/model/training/gold/corpus/task completion is inferred; the firstfour69attempts retain their failed/zero-bodyPASS scopes; a later currentworker61118/test0e315 has21+69 disjointsoftwarePASS on Source4166/0658, while currentSource4166/ad788 source-only P/A/completeV now separately qualifies42retainedfiles/148132089B with418pendinggroups and allauthorityfalse/masks0. Resource followup47 on0830/helperb2b/testaf7 is separate; none of these scopes joins the later factored consumer to this originalNative packet.",
       "original_admitted_parent_bridge_20261111": {
         "actual_native_parent_positive_qualified": false,
         "apis": [
@@ -1571,6 +1572,37 @@
           }
         },
         "statutory_meaning_gold_corpus_release_model_training_or_convergence_authority": false
+      },
+      "current_capacity_and_whole_norm_native_20261119": {
+        "evidence_id": "same-namespace-capacity-and-whole-norm-native-20261119",
+        "status": "qualified_separate_engineering_scopes_only",
+        "resource_owning_cases": 43,
+        "resource_existing_cases": 12,
+        "resource_new_cases": 31,
+        "resource_owner_sha256": "7a0dac2d13b4be7775e278054e1a57808f5629d3c58952164b91514e6e2ae2d3",
+        "resource_test_sha256": "4af66862a02e5eff20b36b270e8621d30d460bf0357edc9e57eda380f8cc12c8",
+        "resource_Source_epoch": "0936ffa07a096135c966faad3a4937c4d5daf72426119b72070e69dd5e506b96",
+        "base_child_slots": 16,
+        "effective_child_slots": 32,
+        "same_namespace_user_authorized_transition": true,
+        "old_facade_observed_compatible": true,
+        "Native_cases": 1,
+        "Native_Source_epoch": "041770b3eae63809bc375abfc0daf70e6d32f40ced8731d227b854612af33d02",
+        "packet_members": 93,
+        "ZIP_bytes": 5369131,
+        "compiled_modules": 10,
+        "conditional_theorems": 30,
+        "all30_axiom_dependencies_empty": true,
+        "original42018_status": "closed_wrapper_collector_failure_not_fullpacket",
+        "training_mask": 0,
+        "evaluation_gold_mask": 0,
+        "legal_model_corpus_release_or_task_completion_authority": false,
+        "private_evidence_index": {
+          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/qualified-resource-capacity-and-whole-norm-native-four-guide-proposal-v03/milestone-evidence-index-v03.json",
+          "bytes": 22229,
+          "sha256": "e2bf3dbe51e72bc579fd3e836340c8daceb8b746d5e31825e3960ca1c223bb41",
+          "mode": "0400"
+        }
       }
     },
     {
@@ -9826,7 +9858,8 @@
         "reviewed-retention-and-mixed-admission-canonical-20261111",
         "reviewed-mixed-consumer-evaluator-canonical331-20261111",
         "reviewed-mixed-heldout-context-20261111",
-        "mixed-source-retention-canonical169-20261111"
+        "mixed-source-retention-canonical169-20261111",
+        "same-namespace-capacity-and-whole-norm-native-20261119"
       ],
       "id": "reviewed-evaluation-and-retention",
       "live_context_policy_exit_20261115": {
@@ -9847,7 +9880,7 @@
         "profile": "unreviewed-complete-norm-candidate-syntax/v3",
         "source_only_passes": 324
       },
-      "notes": "Existing evaluator retains complete nine-field targets, fixed-panel provenance, errors and abstentions. Exact qualified source generation is recorded in the evidence. Explicit mixed-sort heldout context now has a separate focused software qualification with complete TRAIN targets and current two-component review/dependency replay; no configured model, ranking-quality or statutory result follows. The historical-body-tested profiled-retention evaluator/test pair is now available canonically through a separate Source-only installation. Its original54 bodies passed but operational owner returned1;8952 recorded24MiB retained without durable release. Current integration and test support remain UNVERIFIED. CI selectors/weights are configuration only, without current-case, Native, model or hosted qualification; see the nested profiled_generation_v3_retention_20261114 scope.",
+      "notes": "Existing evaluator retains complete nine-field targets, fixed-panel provenance, errors and abstentions. Exact qualified source generation is recorded in the evidence. Explicit mixed-sort heldout context now has a separate focused software qualification with complete TRAIN targets and current two-component review/dependency replay; no configured model, ranking-quality or statutory result follows. The historical-body-tested profiled-retention evaluator/test pair is now available canonically through a separate Source-only installation. Its original54 bodies passed but operational owner returned1;8952 recorded24MiB retained without durable release. Current integration and test support remain UNVERIFIED. CI selectors/weights are configuration only, without current-case, Native, model or hosted qualification; see the nested profiled_generation_v3_retention_20261114 scope. Current2026-11-19 installed-layout followthrough is software-verified on worker324102/61118cfe +owningtest522254/0e315083, evaluator d14a/ea7 unchanged, actualSource4166/0658:21newbackend+69existingretention=90disjointcases/18functions, allPASS0FES with normalrawJUnit/SDK/ownedresource/Sourceclosure and Rootindependentreadback. Strictactualplain-vs-bufferRoPE/config, statefingerprint/callbackrestoration/meta-materialization/legacycache and source-producer-retention contracts only; installed4.52tinyCPU, notpretrainedquality/trainingcampaign/convergence/meaning/Native/gold/corpusauthority. Preserve allfour earlier69failures (preexecplaceholder, lazyprovider, original_inv_freqfixture69E, productrope_parameters/layer_types69E), their zero-bodyPASS cutoffs and allhistorical54 operational/storagefailures. Earlier UNVERIFIED-current flags in the historical 2026-11-14 scope describe that cutoff; the separate currentsoftware qualification does not retroactively complete its originalclaim/release.",
       "original_parent_typed_structure_audit": {
         "actual_pretrained_path_run": false,
         "default_parent_schema": "reviewed-source-evaluation-parent/v1",
@@ -10094,6 +10127,84 @@
         "source_only_passes": 233,
         "supervisor_adoption_qualified": false,
         "trusted_runtime_only": true
+      },
+      "current_installed_layout_software_20261119": {
+        "status": "qualified_current_installed_layout_software_only",
+        "Source_rows": 4166,
+        "Source_epoch": "0658fcc4b7b65c0f34baadba0444a29d3b7ffa2f6dfcccb925f89c12efa809d7",
+        "worker_bytes": 324102,
+        "worker_sha256": "61118cfe12beb302efb4af775101396502016b2557f52ccfc3d62c20efcdbdce",
+        "worker_test_bytes": 522254,
+        "worker_test_sha256": "0e315083a8aed3d9ca3d990965577a21ed0250dd5b7ce032ddfd9c10ca5f2368",
+        "evaluator_bytes": 117664,
+        "evaluator_sha256": "d14a2dd8fc0d794cf586ad8318648a99fd2fafd51a3797e354201c088c918832",
+        "eval_test_bytes": 236164,
+        "eval_test_sha256": "ea7bfd2f902abbaa24152c3baea0410495e496a95b5388275df8163e53c9aeee",
+        "installed_Transformers_version": "4.52.1",
+        "focused_backend_cases": 21,
+        "focused_backend_functions": 6,
+        "existing_retention_cases": 69,
+        "existing_retention_functions": 12,
+        "disjoint_software_case_union": 90,
+        "union_verified_from_actual_raw_JUnit_class_case_pairs": true,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "focused21_collect_seconds": 1.50101698609069,
+        "focused21_run_seconds": 7.663986884988844,
+        "retention69_collect_seconds": 0.6775782811455429,
+        "retention69_run_seconds": 47.860262111760676,
+        "focused21_compact": {
+          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/current-worker-installed-rotary-compatibility-proposal-v01/focused21-managed-ordinary-output-v01/compact-current-worker-installed-layout-focused21-green-closed-v01.json",
+          "bytes": 11570,
+          "sha256": "78d0b324f3e0272256a90454350518fd7ee23ecc7c7d6a6ed8d5ea6ddac4892b"
+        },
+        "focused21_full_report": {
+          "bytes": 8113784,
+          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/current-worker-installed-rotary-compatibility-proposal-v01/focused21-managed-ordinary-output-v01/complete-current-worker-focused21-managed-collect-run-report.json",
+          "sha256": "b11a20d5ee31d9424b8dc5a0851c3ce00dc946b94e445e104ee4992ecba1e682"
+        },
+        "retention69_compact": {
+          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/current69-retention-owningtest-callerdata-v01/selected-current69-managed-output-v05/closed-current69-installed-worker-retention-GREEN-v01.json",
+          "bytes": 18983,
+          "sha256": "85ed50aadff8769ee4556b26e868500ae373da7f1a17b40b7a3c471569bebfb8"
+        },
+        "retention69_full_report": {
+          "bytes": 8221887,
+          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/current69-retention-owningtest-callerdata-v01/selected-current69-managed-output-v05/complete-current69-managed-collect-run-report.json",
+          "sha256": "295f232035cfc676dd636cd389e46116a9d1e440a23c3cd9e335e7675ce9b2e3"
+        },
+        "actual21_raw_JUnit": {
+          "bytes": 5063,
+          "logical_name": "junit.xml",
+          "origin": "actual ToolRunResult.output_files bytes; not to_dict decoded text",
+          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/current-worker-installed-rotary-compatibility-proposal-v01/focused21-managed-ordinary-output-v01/run.output.0.bin",
+          "sha256": "86ed8bc45e32358cfa639f326aab61dd546345cf932706541a4aa67768409101"
+        },
+        "actual69_raw_JUnit": {
+          "bytes": 15275,
+          "full9_after_readback": {
+            "st_ctime_ns": "1795114238954549137",
+            "st_dev": "66306",
+            "st_gid": "1000",
+            "st_ino": "68953447",
+            "st_mode": "33024",
+            "st_mtime_ns": "1795114238954549137",
+            "st_nlink": "1",
+            "st_size": "15275",
+            "st_uid": "1000"
+          },
+          "logical_name": "junit.xml",
+          "origin": "actual ToolRunResult.output_files bytes; not to_dict decoded text",
+          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/current69-retention-owningtest-callerdata-v01/selected-current69-managed-output-v05/run.output.0.bin",
+          "sha256": "e1ece1c61c6c59a4e3e560375f006298e02532f99cccb9536a923c4e4f0263cd"
+        },
+        "Source_resource_and_SDK_closed": true,
+        "Root_independent_actual_result_readback_accepted": true,
+        "actual_numerical_scope": "Small authored localCPU Llama/Qwen2 model compatibility, genuine sourceconditionedgeneration/checkpoints/retention metadata; no trainingcampaign/pretrainedassets or learnedquality claim.",
+        "actual_product_state_scope": "StrictdefaultRoPE/config/layout; preserveplainoriginal_inv_freq versusregisteredinv_freq, explicitplainstatefingerprint, generationvalue/identity/registration/gradient restoration incloriginalcallbackexception, metaCPU reconstruction and completeownedlegacycache.",
+        "pretrained_model_quality_training_convergence_statutory_Lean_gold_corpus_or_programme_authority": false,
+        "no_automatic_checkpoint_or_Source_epoch_migration": true
       }
     },
     {
@@ -10691,10 +10802,11 @@
       ],
       "compatibility_dependency": false,
       "evidence_ids": [
-        "current-complete-source-review-validator-software-20261119"
+        "current-complete-source-review-validator-software-20261119",
+        "same-namespace-capacity-and-whole-norm-native-20261119"
       ],
       "id": "complete-source-context-evidence-review",
-      "notes": "Existing modern complete parent/official source-context owner, indexed after detecting it was absent while the legacy delegate was listed. Uses current official custody-v2 dependencies. Nine source/context declaration slots and seven deferred semantic/proof questions; synthetic evidence, all-authority-false software tests only. Current original-data regeneration, independent production reviews, Native AST and statutory/corpus admission remain pending. No new implementation or replacement legacy delegate.",
+      "notes": "Existing modern complete parent/official source-context owner, indexed after detecting it was absent while the legacy delegate was listed. Uses current official custody-v2 dependencies. Nine source/context declaration slots and seven deferred semantic/proof questions; synthetic evidence, all-authority-false software tests only. Current canonical fromraw preparation, assessment and independent complete-assessment validation now finished in619.366s on Source4166/ad788 with all42outputs/148132089B retained and genuine SDK/resource/Source closure. It preserves418requests/subjects/dependencyManifests/7pages and6688questions(3762sourceSlots+2926deferred); all418groups remainpending, authenticatedEvidence0/reviews0/authorityfalse/masks0 and §101absent. Earlier38output uppercaseID refusal and staleindex predispatch failure remain retained. Independent production reviews, Native AST and statutory/corpus admission remain pending. No new implementation or replacement legacy delegate.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.corpus_source_review",
       "ownership_role": "existing_single_owner",
       "path": "ipfs_datasets_py/logic/autoformal/corpus_source_review.py",
@@ -16972,6 +17084,335 @@
         "coarse_parent_IO_upper_bytes": 69377326750
       },
       "evidence_availability": "Private retained /tmp receipts and raw bytes are not portable published evidence. Earlier results and preparation failures remain separate; do not pool counts."
+    },
+    {
+      "id": "same-namespace-capacity-and-whole-norm-native-20261119",
+      "root": "artifact_workspace",
+      "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/qualified-resource-capacity-and-whole-norm-native-four-guide-proposal-v03/milestone-evidence-index-v03.json",
+      "required_for_catalog_check": false,
+      "observed_bytes": 22229,
+      "observed_sha256": "e2bf3dbe51e72bc579fd3e836340c8daceb8b746d5e31825e3960ca1c223bb41",
+      "status": "qualified_separate_resource43_47_capacity32_conditionalNative1_sourceOnlyReplay_and_current90software_scopes",
+      "task_ids": [
+        "LIR-02",
+        "LIR-03",
+        "LIR-14"
+      ],
+      "scope": "Separate existingresourceengineering, authoredconditionalNative, currentfromraw source-onlyreplay, andcurrentinstalledlayout21+69software; allsourceepochs and four69failures preserved.",
+      "actual_resource_scope": {
+        "Source_rows": 4162,
+        "Source_epoch": "0936ffa07a096135c966faad3a4937c4d5daf72426119b72070e69dd5e506b96",
+        "passed": 43,
+        "old_cases": 12,
+        "new_cases": 31,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "owner_sha256": "7a0dac2d13b4be7775e278054e1a57808f5629d3c58952164b91514e6e2ae2d3",
+        "owning_test_sha256": "4af66862a02e5eff20b36b270e8621d30d460bf0357edc9e57eda380f8cc12c8",
+        "Source_resource_and_SDK_closed": true
+      },
+      "actual_capacity_scope": {
+        "state_path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase2-whole-norm-source-use-onebuild-preparation-v01/selected-whole-norm-source-use-Native-output-v01/native-resource-scheduler.json",
+        "base_child_process_slots": 16,
+        "effective_child_process_slots": 32,
+        "total_cpu_slots": 16,
+        "total_memory_mb": 99688,
+        "public_API": "GlobalResourceScheduler.expand_child_process_capacity(expected_current=16,new_total=32)",
+        "API_calls": 1,
+        "base_policy_and_all_other_state_preserved": true,
+        "proof_PID_tasks_required": 544,
+        "proof_available_PID_tasks": 336258,
+        "proof_memory_mb_required": 24922,
+        "proof_available_memory_mb": 114254,
+        "proof_pressure_percent": {
+          "memory": 0.0,
+          "CPU": 0.0,
+          "IO": 0.0
+        },
+        "source_read_body_charges_retained": true,
+        "new_namespace_or_borrowed_original_capability": false
+      },
+      "actual_Native_scope": {
+        "epoch_rows": 4127,
+        "epoch_sha256": "041770b3eae63809bc375abfc0daf70e6d32f40ced8731d227b854612af33d02",
+        "source_scheduler_sha256": "2c00683202b4a783b5050329caa24a411f83788010baba86d9380123bae7d083",
+        "pytest_node": "tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py::test_whole_norm_definition_application_installed_lean_checks_all30_and_original_models[source-use]",
+        "actual_JUnit_passes": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "packet_files": 93,
+        "ZIP_bytes": 5369131,
+        "ZIP_sha256": "56152cc10d65e279882be018a8d3554b7dd8f5e39080e3e289b80216f31752ad",
+        "raw_packet_bytes": 5352107,
+        "compiled_modules": 10,
+        "conditional_theorems": 30,
+        "all30_axiom_dependencies_empty": true,
+        "old_facade_work_renew_release_with_same_base16_effective32": true,
+        "same_object_consumer_callback_executed": false,
+        "Source_closed": true,
+        "resource_cleanup_confirmed": true,
+        "all_authority_flags_false": true,
+        "training_mask": 0,
+        "evaluation_gold_mask": 0,
+        "installed_libraries_and_runtime_explicitly_trusted": true
+      },
+      "original42018_failure_retained": {
+        "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase2-whole-norm-source-use-onebuild-preparation-v01/selected-whole-norm-source-use-Native-output-v01/compact-original42018-terminal-closure-and-collector-diagnostic-v01.json",
+        "bytes": 16669,
+        "sha256": "0645b3efec436db8d9e1dd2a628013e004e74d11b25113e3c030f84581c10ac7"
+      },
+      "availability_and_limits": "Private/tmp optionalnavigation, notportablepublishedproof. All471priorrecords/tasks preserved. Latercurrent90disjointsoftwarecases passed on0658 without retroactivefailure/epochpromotion; SourceReview418groups pending/authorityfalse/masks0; Native1old4127 andRaw42ad788 separate. No pretrainedquality/trainingcampaign/convergence/statutorymeaning/gold/corpus/release/programmeauthority.",
+      "actual_resource_followup47_scope": {
+        "actual_cases": 47,
+        "original_cases": 12,
+        "capacity_cases": 31,
+        "idle_admin_interop_cases": 4,
+        "helper_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/existing_resource_scheduler.py",
+        "helper_bytes": 25411,
+        "helper_sha256": "b2b8022a1d1a10676fd809862ff1db069387c0619cadcb6731e37345e0a20114",
+        "owning_test_bytes": 34123,
+        "owning_test_sha256": "af723acfd2853f4161ff489a93ec0950885956ae384b81e4fa4903fb5f304afe",
+        "Source_rows": 4166,
+        "Source_epoch": "0830938b32dc2d95b488a107e8d2f4a494ff75c78534d151a8cb9a1723b8097a",
+        "Source_resource_and_SDK_closed": true,
+        "actual_production_idle_admin_expansion": false,
+        "old43_scope_preserved_separately": true
+      },
+      "actual_current_source_review_replay_scope": {
+        "full_report": {
+          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/LIR03-full-managed-raw-replay-parent-operator-v01/selected-full-raw-replay-output-v04-index4166/complete-parent-report.json",
+          "bytes": 80043,
+          "sha256": "9e47becd815c7c18d368a752adf3de7518f3f791ac624f73342d8cfea82c10cd"
+        },
+        "closed_compact": {
+          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/LIR03-full-managed-raw-replay-parent-operator-v01/selected-full-raw-replay-output-v04-index4166/closed-current-source-only-replay-v01.json",
+          "bytes": 31918,
+          "sha256": "07ec97ef3b9d20aaee6534ffbec751d2c12a8d8b874c0bb4f86e0b4214eb0be3"
+        },
+        "Source_epoch": {
+          "bytes": 2460544,
+          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/same-namespace-child-capacity-expansion-preparation-v01/paired-newR-A-source-epoch-4166-retention-lazy-providers-v01.json",
+          "rows": 4166,
+          "sha256": "ad788f8cd9bac0d74fba62b03d5f23c66738e2ff0d2973bbed1d77e714fbe826"
+        },
+        "elapsed_seconds": 619.366456087213,
+        "raw_file_count": 42,
+        "raw_total_bytes": 148132089,
+        "preparation_counts": {
+          "active_source_context_slots": 3762,
+          "deferred_semantic_proof_questions": 2926,
+          "dependency_manifests": 418,
+          "pages": 7,
+          "question_count": 6688,
+          "requests": 418,
+          "subjects": 418,
+          "unit_kinds": {
+            "exact_declared_markup_statute_block_opportunity": 10,
+            "original_parent_partition_piece": 280,
+            "original_unresolved_surface_reference": 128
+          }
+        },
+        "assessment_counts": {
+          "authenticated_evidence": 0,
+          "deferred_questions": 2926,
+          "groups": 418,
+          "pending_groups": 418,
+          "source_evidence_prerequisites_under_selected_trust": 0
+        },
+        "validation": {
+          "Native_Lean_model_training_statutory_gold_authority": false,
+          "assessment_refs": {
+            "manifest": {
+              "bytes": 165168,
+              "path": "outputs/assessment-manifest.json",
+              "sha256": "2d31cf2504c9c0c108b14dbf6f55bda8d693dc9681c3bdceb45168643c06f0a4"
+            },
+            "pages": {
+              "bytes": 114501,
+              "path": "outputs/assessment-pages.jsonl",
+              "sha256": "b95e3e144fc884ccf2763d0718f01617b1c1c1d7f0a96058fae7571e6a4692f4"
+            },
+            "records": {
+              "bytes": 1908060,
+              "path": "outputs/assessment-records.jsonl",
+              "sha256": "247d36c40c08114dbbd1b4f496c69032132c9c813d1bb31ebb065d6d3d3d4b58"
+            }
+          },
+          "authenticated_evidence": 0,
+          "evaluation_time_is_caller_declared_not_attested_wall_clock": "2026-11-19T18:10:53Z",
+          "fresh_request_count": 418,
+          "independent_complete_assessment_validator_return_matches_retained": true,
+          "reviews_supplied": 0
+        },
+        "all42_raw_bytes_retained_and_rehashed": true,
+        "Source_resource_and_SDK_closed": true,
+        "original_row_record_cache_pins_preserved": true,
+        "section101_absent_from_original_population": true,
+        "training_mask": 0,
+        "evaluation_gold_mask": 0,
+        "all_authority_false": true,
+        "scope": "Current canonical source-only real-input regeneration and independent complete assessment validation; no legal/model/Lean/gold/training/convergence qualification"
+      },
+      "retention69_failed_attempts": {
+        "all_actual_resources_and_Source_closed": true,
+        "attempt01": "SDK workspace-placeholder preexecution refusal;0cases",
+        "attempt02": "missing requested lazyprovider duringcollection;0cases",
+        "attempt03": "exact69collected then69setupERROR: original_inv_freq absentfrom registeredbuffers",
+        "attempt04": "fixtureonlysetattr correction then69setupERROR:36Llama rope_parameters/33Qwen2 layer_types absent",
+        "body_passes": 0,
+        "closed_receipts": [
+          {
+            "bytes": 2921,
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/current69-retention-owningtest-callerdata-v01/selected-current69-managed-output-v01/closed-first-current69-preexecution-refusal-v01.json",
+            "sha256": "a82973727958c59f5485f936d6d252c84de1e044e22bf2887f69dd929f90d5a6"
+          },
+          {
+            "bytes": 9454,
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/current69-retention-owningtest-callerdata-v01/selected-current69-managed-output-v02/closed-current69-attempt02-collection-refusal-v01.json",
+            "sha256": "53bc1dcbb7fc229e82b38609ae7a2994565b0e4adc448f714881aacc81255f8a"
+          },
+          {
+            "bytes": 18485,
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/current69-retention-owningtest-callerdata-v01/selected-current69-managed-output-v03/closed-current69-attempt03-fixture-setup-failure-v01.json",
+            "sha256": "f1e35c9a0b5ceba8edd46db4ca4d02e1970ae9ca00abb6f35324963e9073063c"
+          },
+          {
+            "bytes": 18884,
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/current69-retention-owningtest-callerdata-v01/selected-current69-managed-output-v04/closed-current69-attempt04-installed-layout-product-setup-failure-v01.json",
+            "sha256": "96130c1eee56ea3a7ca228a89ea92fb635eb0507471e2c43333c5635f2fbebf0"
+          }
+        ],
+        "GREEN_in_first_four_attempts": false,
+        "first_four_prove_product_fix_or_GREEN": false,
+        "scope": "ONLY the firstfour closedfailedattempts; the later fifth69PASS is separately scoped to61118/0e315/0658. No retroactivefailurepromotion."
+      },
+      "preserved_fullraw_refusals": [
+        {
+          "kind": "initial partial-output refusal",
+          "full_report": {
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/LIR03-full-managed-raw-replay-parent-operator-v01/selected-full-raw-replay-output-v01/complete-parent-report.json",
+            "bytes": 19368,
+            "sha256": "1ebd93ebd328990dd8644eac3bdd04162f102ab3d52e9897861f514698fadf45"
+          },
+          "dispatches": 1,
+          "retained_outputs": {
+            "actual_mapping_unchanged": true,
+            "all_actual_entries_retained": true,
+            "bytes": 3414,
+            "count": 3,
+            "readback": true
+          },
+          "Source_closed": true
+        },
+        {
+          "kind": "uppercase diagnostic identifier refused after retaining38actual outputs",
+          "full_report": {
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/LIR03-full-managed-raw-replay-parent-operator-v01/selected-full-raw-replay-output-v02-leaf128/complete-parent-report.json",
+            "bytes": 66029,
+            "sha256": "eebd0b2492463986022d3166904f1a3b52c0412b5483416aed975a0a242ce930"
+          },
+          "dispatches": 1,
+          "retained_outputs": {
+            "actual_mapping_unchanged": true,
+            "all_actual_entries_retained": true,
+            "bytes": 145940675,
+            "count": 38,
+            "readback": true
+          },
+          "Source_closed": true
+        },
+        {
+          "kind": "stale protected-index metadata refused beforedispatch",
+          "full_report": {
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/LIR03-full-managed-raw-replay-parent-operator-v01/selected-full-raw-replay-output-v03-lowercase/complete-parent-report.json",
+            "bytes": 4550,
+            "sha256": "b3e311645c33ec2de53b390b76176940264db7d305f549b756b9325f8ad67554"
+          },
+          "dispatches": 0,
+          "retained_outputs": {},
+          "Source_closed": true
+        }
+      ],
+      "current_installed_worker_software": {
+        "status": "qualified_current_installed_layout_software_only",
+        "Source_rows": 4166,
+        "Source_epoch": "0658fcc4b7b65c0f34baadba0444a29d3b7ffa2f6dfcccb925f89c12efa809d7",
+        "worker_bytes": 324102,
+        "worker_sha256": "61118cfe12beb302efb4af775101396502016b2557f52ccfc3d62c20efcdbdce",
+        "worker_test_bytes": 522254,
+        "worker_test_sha256": "0e315083a8aed3d9ca3d990965577a21ed0250dd5b7ce032ddfd9c10ca5f2368",
+        "evaluator_bytes": 117664,
+        "evaluator_sha256": "d14a2dd8fc0d794cf586ad8318648a99fd2fafd51a3797e354201c088c918832",
+        "eval_test_bytes": 236164,
+        "eval_test_sha256": "ea7bfd2f902abbaa24152c3baea0410495e496a95b5388275df8163e53c9aeee",
+        "installed_Transformers_version": "4.52.1",
+        "focused_backend_cases": 21,
+        "focused_backend_functions": 6,
+        "existing_retention_cases": 69,
+        "existing_retention_functions": 12,
+        "disjoint_software_case_union": 90,
+        "union_verified_from_actual_raw_JUnit_class_case_pairs": true,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "focused21_collect_seconds": 1.50101698609069,
+        "focused21_run_seconds": 7.663986884988844,
+        "retention69_collect_seconds": 0.6775782811455429,
+        "retention69_run_seconds": 47.860262111760676,
+        "focused21_compact": {
+          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/current-worker-installed-rotary-compatibility-proposal-v01/focused21-managed-ordinary-output-v01/compact-current-worker-installed-layout-focused21-green-closed-v01.json",
+          "bytes": 11570,
+          "sha256": "78d0b324f3e0272256a90454350518fd7ee23ecc7c7d6a6ed8d5ea6ddac4892b"
+        },
+        "focused21_full_report": {
+          "bytes": 8113784,
+          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/current-worker-installed-rotary-compatibility-proposal-v01/focused21-managed-ordinary-output-v01/complete-current-worker-focused21-managed-collect-run-report.json",
+          "sha256": "b11a20d5ee31d9424b8dc5a0851c3ce00dc946b94e445e104ee4992ecba1e682"
+        },
+        "retention69_compact": {
+          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/current69-retention-owningtest-callerdata-v01/selected-current69-managed-output-v05/closed-current69-installed-worker-retention-GREEN-v01.json",
+          "bytes": 18983,
+          "sha256": "85ed50aadff8769ee4556b26e868500ae373da7f1a17b40b7a3c471569bebfb8"
+        },
+        "retention69_full_report": {
+          "bytes": 8221887,
+          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/current69-retention-owningtest-callerdata-v01/selected-current69-managed-output-v05/complete-current69-managed-collect-run-report.json",
+          "sha256": "295f232035cfc676dd636cd389e46116a9d1e440a23c3cd9e335e7675ce9b2e3"
+        },
+        "actual21_raw_JUnit": {
+          "bytes": 5063,
+          "logical_name": "junit.xml",
+          "origin": "actual ToolRunResult.output_files bytes; not to_dict decoded text",
+          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/current-worker-installed-rotary-compatibility-proposal-v01/focused21-managed-ordinary-output-v01/run.output.0.bin",
+          "sha256": "86ed8bc45e32358cfa639f326aab61dd546345cf932706541a4aa67768409101"
+        },
+        "actual69_raw_JUnit": {
+          "bytes": 15275,
+          "full9_after_readback": {
+            "st_ctime_ns": "1795114238954549137",
+            "st_dev": "66306",
+            "st_gid": "1000",
+            "st_ino": "68953447",
+            "st_mode": "33024",
+            "st_mtime_ns": "1795114238954549137",
+            "st_nlink": "1",
+            "st_size": "15275",
+            "st_uid": "1000"
+          },
+          "logical_name": "junit.xml",
+          "origin": "actual ToolRunResult.output_files bytes; not to_dict decoded text",
+          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/current69-retention-owningtest-callerdata-v01/selected-current69-managed-output-v05/run.output.0.bin",
+          "sha256": "e1ece1c61c6c59a4e3e560375f006298e02532f99cccb9536a923c4e4f0263cd"
+        },
+        "Source_resource_and_SDK_closed": true,
+        "Root_independent_actual_result_readback_accepted": true,
+        "actual_numerical_scope": "Small authored localCPU Llama/Qwen2 model compatibility, genuine sourceconditionedgeneration/checkpoints/retention metadata; no trainingcampaign/pretrainedassets or learnedquality claim.",
+        "actual_product_state_scope": "StrictdefaultRoPE/config/layout; preserveplainoriginal_inv_freq versusregisteredinv_freq, explicitplainstatefingerprint, generationvalue/identity/registration/gradient restoration incloriginalcallbackexception, metaCPU reconstruction and completeownedlegacycache.",
+        "pretrained_model_quality_training_convergence_statutory_Lean_gold_corpus_or_programme_authority": false,
+        "no_automatic_checkpoint_or_Source_epoch_migration": true
+      }
     }
   ]
 }
