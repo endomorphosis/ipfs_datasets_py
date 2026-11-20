@@ -1842,12 +1842,17 @@ def _reviewed_definition_realization_lean(selection, units, native, module):
 def _reviewed_definition_realization_project(preservation, graph, admission, replay, owners, pins,
         commitment, expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain, *,
         instance_identity_profile=None, definition_application_profile=None,
-        physical_context=None, physical_context_owner_sha256=None):
+        physical_context=None, physical_context_owner_sha256=None, physical_bridge_version=1):
     profile = _reviewed_definition_realization_profile(instance_identity_profile, **_reviewed_definition_application_kwargs(definition_application_profile))
     if physical_context is not None:
-        if instance_identity_profile is not None or definition_application_profile is not None:
-            _fail("physical realization selected profiles require a separately closed bridge")
-        profile = REVIEWED_PHYSICAL_REALIZATION_PROFILE
+        if physical_bridge_version == 2:
+            _reviewed_physical_realization_policy_v2()
+            _reviewed_joint_physical_profiles_v2(instance_identity_profile, definition_application_profile)
+            profile = REVIEWED_PHYSICAL_REALIZATION_PROFILE_V2
+        else:
+            if instance_identity_profile is not None or definition_application_profile is not None:
+                _fail("physical realization selected profiles require a separately closed bridge")
+            profile = REVIEWED_PHYSICAL_REALIZATION_PROFILE
     native = owners[2]
     manifest, files = preservation.to_dict(), dict(preservation.files)
     if (manifest["schema"] != REVIEWED_MIXED_PRESERVATION_SCHEMA
@@ -1862,6 +1867,8 @@ def _reviewed_definition_realization_project(preservation, graph, admission, rep
     physical_binding = {} if physical_context is None else {
         "physical_context": physical_context, "physical_context_owner_sha256": physical_context_owner_sha256,
         "physical_context_sha256": _sha(canonical_dag_json_bytes(physical_context))}
+    if physical_context is not None and physical_bridge_version == 2:
+        physical_binding["physical_bridge_version"] = 2
     if physical_context is not None:
         identity_input.update(physical_context_sha256=physical_binding["physical_context_sha256"],
             physical_context_owner_sha256=physical_context_owner_sha256)
@@ -1922,7 +1929,8 @@ def _reviewed_definition_realization_project(preservation, graph, admission, rep
     imports = {**manifest["module_imports"], module: [row["instance_module"] for row in manifest["units"]],
         root: [REVIEWED_MIXED_PRESERVATION_ROOT, module]}
     result_manifest = contracts.seal_record({**bindings,
-        "schema": REVIEWED_DEFINITION_REALIZATION_SCHEMA if physical_context is None else REVIEWED_PHYSICAL_REALIZATION_SCHEMA, "profile": profile,
+        "schema": (REVIEWED_DEFINITION_REALIZATION_SCHEMA if physical_context is None else
+            REVIEWED_PHYSICAL_REALIZATION_SCHEMA_V2 if physical_bridge_version == 2 else REVIEWED_PHYSICAL_REALIZATION_SCHEMA), "profile": profile,
         "toolchain": toolchain, "target": "legal", "expected_modules": modules, "module_imports": imports,
         "units": manifest["units"], "preservation_obligations": obligations,
         "realization_obligations": additions, "file_sha256": {name: _sha(value.encode("utf-8")) for name, value in sorted(files.items())},
@@ -1991,8 +1999,12 @@ def _reviewed_definition_realization_callbacks(owners, *, definition_application
 def _reviewed_definition_realization_operation(preservation, graph, admission, args, kwargs, *,
         expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain, offered=None,
         instance_identity_profile=None, definition_application_profile=None,
-        physical_request_raw=None, expected_physical_request_sha256=None):
+        physical_request_raw=None, expected_physical_request_sha256=None, physical_bridge_version=1):
     import inspect
+    if type(physical_bridge_version) is not int or physical_bridge_version not in (1, 2):
+        _fail("explicit supported physical bridge version required")
+    if physical_bridge_version == 2 and physical_request_raw is None:
+        _fail("physical bridge V2 requires its original request")
     _reviewed_definition_realization_policy(**({"instance_identity_profile": instance_identity_profile} if instance_identity_profile is not None else {}), **_reviewed_definition_application_kwargs(definition_application_profile))
     for value, label in ((expected_preservation_sha256, "expected_preservation_sha256"),
             (expected_graph_sha256, "expected_graph_sha256"), (expected_admission_sha256, "expected_admission_sha256")):
@@ -2011,14 +2023,25 @@ def _reviewed_definition_realization_operation(preservation, graph, admission, a
         contracts.require_sha256(expected_physical_request_sha256, "physical request SHA256")
         if _sha(physical_request_raw) != expected_physical_request_sha256:
             _fail("original physical request differs from independent pin")
-        if instance_identity_profile is not None or definition_application_profile is not None:
-            _fail("physical realization selected profiles require a separately closed bridge")
-        _reviewed_physical_realization_policy()
-        physical_callback = physical_owner._release_callback_states_v3((
-            physical_owner.validate_reviewed_physical_realization_context_v1,
-            _reviewed_physical_realization_policy,
-            prepare_reviewed_physical_definition_realization_corpus_v1,
-            validate_reviewed_physical_definition_realization_corpus_v1, contracts.load_json_bytes))
+        if physical_bridge_version == 2:
+            _reviewed_joint_physical_profiles_v2(instance_identity_profile, definition_application_profile)
+            physical_validator_name = "validate_reviewed_physical_realization_context_v2"
+            physical_shared_names = ("_reviewed_physical_realization_policy_v2",
+                "prepare_reviewed_physical_definition_realization_corpus_v2",
+                "validate_reviewed_physical_definition_realization_corpus_v2",
+                "_reviewed_joint_physical_profiles_v2")
+        else:
+            if instance_identity_profile is not None or definition_application_profile is not None:
+                _fail("physical realization selected profiles require a separately closed bridge")
+            physical_validator_name = "validate_reviewed_physical_realization_context_v1"
+            physical_shared_names = ("_reviewed_physical_realization_policy",
+                "prepare_reviewed_physical_definition_realization_corpus_v1",
+                "validate_reviewed_physical_definition_realization_corpus_v1")
+        globals()[physical_shared_names[0]]()
+        def physical_callbacks():
+            return (getattr(physical_owner, physical_validator_name),
+                *(globals()[name] for name in physical_shared_names), contracts.load_json_bytes)
+        physical_callback = physical_owner._release_callback_states_v3(physical_callbacks())
         physical_owner_pin = _sha(Path(physical_owner.__file__).read_bytes())
     elif expected_physical_request_sha256 is not None:
         _fail("physical context cannot be supplied without its original request")
@@ -2036,6 +2059,8 @@ def _reviewed_definition_realization_operation(preservation, graph, admission, a
         if physical_owner is not None:
             original.update(physical_request_raw=physical_request_raw,
                 expected_physical_request_sha256=expected_physical_request_sha256)
+            if physical_bridge_version == 2:
+                original["physical_bridge_version"] = 2
         return original
     detached, commitment = norm._snapshot(original_inputs())
     upstream = ReviewedPreservationCorpusPreparation(detached["preservation"]["manifest_json"],
@@ -2049,12 +2074,10 @@ def _reviewed_definition_realization_operation(preservation, graph, admission, a
 
     def fence():
         if physical_owner is not None:
-            _reviewed_physical_realization_policy()
-            physical_owner._release_callback_fence_v3((
-                physical_owner.validate_reviewed_physical_realization_context_v1,
-                _reviewed_physical_realization_policy,
-                prepare_reviewed_physical_definition_realization_corpus_v1,
-                validate_reviewed_physical_definition_realization_corpus_v1, contracts.load_json_bytes), physical_callback)
+            globals()[physical_shared_names[0]]()
+            physical_owner._release_callback_fence_v3(physical_callbacks(), physical_callback)
+            if physical_bridge_version == 2:
+                _reviewed_joint_physical_profiles_v2(instance_identity_profile, definition_application_profile)
             if _sha(Path(physical_owner.__file__).read_bytes()) != physical_owner_pin:
                 _fail("physical realization evidence owner changed during operation")
         if (norm._snapshot(original_inputs())[1] != commitment or norm._snapshot(detached)[1] != commitment
@@ -2067,7 +2090,7 @@ def _reviewed_definition_realization_operation(preservation, graph, admission, a
     fence()
     physical_context = None
     if physical_owner is not None:
-        physical_context = physical_owner.validate_reviewed_physical_realization_context_v1(
+        physical_context = getattr(physical_owner, physical_validator_name)(
             physical_request_raw, expected_request_sha256=expected_physical_request_sha256)
         fence()
         opening_context_raw = canonical_dag_json_bytes(physical_context)
@@ -2081,6 +2104,10 @@ def _reviewed_definition_realization_operation(preservation, graph, admission, a
                 ("declaration_sha256", detached["admission"]["declaration_sha256"])):
             if physical_context[field] != expected:
                 _fail("physical request belongs to another complete realization component: " + field)
+        if physical_bridge_version == 2:
+            if (physical_context.get("instance_identity_profile") != instance_identity_profile
+                    or physical_context.get("definition_application_profile") != definition_application_profile):
+                _fail("physical context belongs to another selected realization profile")
         declaration = detached["kwargs"]["preparation_inputs"]["declaration"]
         if (physical_context["cross_references"] != declaration["cross_references"]
                 or physical_context["ordered_unit_ids"] != [unit["unit_id"] for unit in declaration["units"]]):
@@ -2099,7 +2126,8 @@ def _reviewed_definition_realization_operation(preservation, graph, admission, a
     result = _reviewed_definition_realization_project(upstream, detached["graph"], detached["admission"],
         bound.arguments, owners, pins, commitment, expected_preservation_sha256, expected_graph_sha256,
         expected_admission_sha256, toolchain,
-        **({"physical_context": physical_context, "physical_context_owner_sha256": physical_owner_pin} if physical_context is not None else {}),
+        **({"physical_context": physical_context, "physical_context_owner_sha256": physical_owner_pin,
+            "physical_bridge_version": physical_bridge_version} if physical_context is not None else {}),
         **({"instance_identity_profile": instance_identity_profile} if instance_identity_profile is not None else {}),
         **_reviewed_definition_application_kwargs(definition_application_profile))
     result_envelope = _reviewed_preservation_offered(result)
@@ -2124,7 +2152,7 @@ def _reviewed_definition_realization_operation(preservation, graph, admission, a
     # There is no result-visible serialization or callback after that fence.
     closed_result = ReviewedPreservationCorpusPreparation(frozen_manifest_json, frozen_files)
     if physical_owner is not None:
-        closed_context = physical_owner.validate_reviewed_physical_realization_context_v1(
+        closed_context = getattr(physical_owner, physical_validator_name)(
             physical_request_raw, expected_request_sha256=expected_physical_request_sha256)
         if canonical_dag_json_bytes(closed_context) != opening_context_raw:
             _fail("complete physical evidence generation changed during realization")
@@ -2907,3 +2935,70 @@ def validate_reviewed_physical_definition_realization_corpus_v1(preparation, pre
 __all__ += ["REVIEWED_PHYSICAL_REALIZATION_SCHEMA", "REVIEWED_PHYSICAL_REALIZATION_PROFILE",
     "prepare_reviewed_physical_definition_realization_corpus_v1",
     "validate_reviewed_physical_definition_realization_corpus_v1"]
+
+
+
+REVIEWED_PHYSICAL_REALIZATION_SCHEMA_V2 = "legal-reviewed-physical-definition-realization-preparation/v2"
+REVIEWED_PHYSICAL_REALIZATION_PROFILE_V2 = "reviewed-source-use-whole-norm-definition-physical-evidence-realization/v2"
+
+
+def _reviewed_joint_physical_profiles_v2(instance_identity_profile, definition_application_profile):
+    if (type(instance_identity_profile) is not str or instance_identity_profile != "reviewed-source-use/v1"
+            or type(definition_application_profile) is not str
+            or definition_application_profile != "whole-norm-definition-expansion/v1"):
+        _fail("explicit joint source-use whole-norm physical bridge required")
+    _reviewed_definition_realization_policy(instance_identity_profile=instance_identity_profile,
+        definition_application_profile=definition_application_profile)
+
+
+def _reviewed_physical_realization_policy_v2():
+    _reviewed_physical_realization_policy()
+    if (REVIEWED_PHYSICAL_REALIZATION_SCHEMA_V2, REVIEWED_PHYSICAL_REALIZATION_PROFILE_V2) != (
+            "legal-reviewed-physical-definition-realization-preparation/v2",
+            "reviewed-source-use-whole-norm-definition-physical-evidence-realization/v2"):
+        _fail("closed joint physical realization V2 profile required")
+    _reviewed_joint_physical_profiles_v2("reviewed-source-use/v1", "whole-norm-definition-expansion/v1")
+
+
+def prepare_reviewed_physical_definition_realization_corpus_v2(preservation, graph, admission, *args,
+        physical_request_raw, expected_physical_request_sha256,
+        expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain,
+        instance_identity_profile, definition_application_profile, **kwargs):
+    """Construct the complete, source-bound conditional project with physical evidence.
+
+    The physical request contains upstream preservation, not this derived project,
+    and confers no Native, legal, training, corpus or release authority.
+    """
+    _reviewed_physical_realization_policy_v2()
+    _reviewed_joint_physical_profiles_v2(instance_identity_profile, definition_application_profile)
+    return _reviewed_definition_realization_operation(preservation, graph, admission, args, kwargs,
+        expected_preservation_sha256=expected_preservation_sha256,
+        expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
+        toolchain=toolchain, physical_request_raw=physical_request_raw,
+        expected_physical_request_sha256=expected_physical_request_sha256,
+        physical_bridge_version=2, instance_identity_profile=instance_identity_profile,
+        definition_application_profile=definition_application_profile)
+
+
+def validate_reviewed_physical_definition_realization_corpus_v2(preparation, preservation, graph, admission, *args,
+        physical_request_raw, expected_physical_request_sha256, expected_realization_sha256,
+        expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain,
+        instance_identity_profile, definition_application_profile, **kwargs):
+    """Independently regenerate every source, review, physical and project binding."""
+    _reviewed_physical_realization_policy_v2()
+    _reviewed_joint_physical_profiles_v2(instance_identity_profile, definition_application_profile)
+    contracts.require_sha256(expected_realization_sha256, "physical realization preparation SHA256")
+    if reviewed_preservation_corpus_sha256(preparation) != expected_realization_sha256:
+        _fail("complete physical realization preparation differs from independent pin")
+    return _reviewed_definition_realization_operation(preservation, graph, admission, args, kwargs,
+        expected_preservation_sha256=expected_preservation_sha256,
+        expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
+        toolchain=toolchain, offered=preparation, physical_request_raw=physical_request_raw,
+        expected_physical_request_sha256=expected_physical_request_sha256,
+        physical_bridge_version=2, instance_identity_profile=instance_identity_profile,
+        definition_application_profile=definition_application_profile)
+
+
+__all__ += ["REVIEWED_PHYSICAL_REALIZATION_SCHEMA_V2", "REVIEWED_PHYSICAL_REALIZATION_PROFILE_V2",
+    "prepare_reviewed_physical_definition_realization_corpus_v2",
+    "validate_reviewed_physical_definition_realization_corpus_v2"]

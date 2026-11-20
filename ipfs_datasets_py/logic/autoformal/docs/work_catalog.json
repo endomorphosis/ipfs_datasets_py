@@ -978,48 +978,7 @@
       "status": "focused_tests_qualified"
     },
     {
-      "apis": [
-        "validate_definition_use_native_v2",
-        "build_definition_use_native_v2",
-        "validate_parent_definition_use_native_v1",
-        "build_parent_definition_use_native_v1",
-        "parent_compilation_receipt_sha256",
-        "parent_shared_preparation_sha256",
-        "validate_parent_shared_definition_use_native_v1",
-        "build_parent_shared_definition_use_native_v1",
-        "parent_shared_compilation_receipt_sha256",
-        "validate_bound_norm_definition_native_v1",
-        "build_bound_norm_definition_native_v1",
-        "bound_norm_definition_compilation_receipt_sha256",
-        "validate_parent_norm_native_v1",
-        "build_parent_norm_native_v1",
-        "parent_norm_compilation_receipt_sha256",
-        "validate_parent_bound_norm_definition_native_v1",
-        "build_parent_bound_norm_definition_native_v1",
-        "parent_bound_norm_definition_compilation_receipt_sha256",
-        "validate_reviewed_norm_preservation_native_v2",
-        "build_reviewed_norm_preservation_native_v2",
-        "reviewed_norm_preservation_receipt_bytes_v2",
-        "reviewed_norm_preservation_packet_sha256_v2",
-        "validate_reviewed_norm_preservation_native_receipt_v2",
-        "load_reviewed_norm_preservation_native_v2",
-        "validate_reviewed_norm_preservation_native_v3",
-        "build_reviewed_norm_preservation_native_v3",
-        "reviewed_norm_preservation_receipt_bytes_v3",
-        "reviewed_norm_preservation_packet_sha256_v3",
-        "validate_reviewed_norm_preservation_native_receipt_v3",
-        "load_reviewed_norm_preservation_native_v3",
-        "build_verified_reviewed_norm_preservation_native_v3",
-        "load_verified_reviewed_norm_preservation_native_v3",
-        "validate_reviewed_definition_realization_native_v1",
-        "build_reviewed_definition_realization_native_v1",
-        "reviewed_definition_realization_receipt_bytes_v1",
-        "reviewed_definition_realization_packet_sha256_v1",
-        "validate_reviewed_definition_realization_native_receipt_v1",
-        "load_reviewed_definition_realization_native_v1",
-        "build_verified_reviewed_definition_realization_native_v1",
-        "load_verified_reviewed_definition_realization_native_v1"
-      ],
+      "apis": ["validate_definition_use_native_v2", "build_definition_use_native_v2", "validate_parent_definition_use_native_v1", "build_parent_definition_use_native_v1", "parent_compilation_receipt_sha256", "parent_shared_preparation_sha256", "validate_parent_shared_definition_use_native_v1", "build_parent_shared_definition_use_native_v1", "parent_shared_compilation_receipt_sha256", "validate_bound_norm_definition_native_v1", "build_bound_norm_definition_native_v1", "bound_norm_definition_compilation_receipt_sha256", "validate_parent_norm_native_v1", "build_parent_norm_native_v1", "parent_norm_compilation_receipt_sha256", "validate_parent_bound_norm_definition_native_v1", "build_parent_bound_norm_definition_native_v1", "parent_bound_norm_definition_compilation_receipt_sha256", "validate_reviewed_norm_preservation_native_v2", "build_reviewed_norm_preservation_native_v2", "reviewed_norm_preservation_receipt_bytes_v2", "reviewed_norm_preservation_packet_sha256_v2", "validate_reviewed_norm_preservation_native_receipt_v2", "load_reviewed_norm_preservation_native_v2", "validate_reviewed_norm_preservation_native_v3", "build_reviewed_norm_preservation_native_v3", "reviewed_norm_preservation_receipt_bytes_v3", "reviewed_norm_preservation_packet_sha256_v3", "validate_reviewed_norm_preservation_native_receipt_v3", "load_reviewed_norm_preservation_native_v3", "build_verified_reviewed_norm_preservation_native_v3", "load_verified_reviewed_norm_preservation_native_v3", "validate_reviewed_definition_realization_native_v1", "build_reviewed_definition_realization_native_v1", "reviewed_definition_realization_receipt_bytes_v1", "reviewed_definition_realization_packet_sha256_v1", "validate_reviewed_definition_realization_native_receipt_v1", "load_reviewed_definition_realization_native_v1", "build_verified_reviewed_definition_realization_native_v1", "load_verified_reviewed_definition_realization_native_v1", "validate_reviewed_physical_definition_realization_native_v2", "build_reviewed_physical_definition_realization_native_v2", "build_verified_reviewed_physical_definition_realization_native_v2", "load_reviewed_physical_definition_realization_native_v2", "load_verified_reviewed_physical_definition_realization_native_v2", "validate_reviewed_physical_definition_realization_native_receipt_v2", "reviewed_physical_definition_realization_packet_sha256_v2", "reviewed_physical_definition_realization_receipt_bytes_v2"],
       "bound_norm_profile_v1": {
         "evaluation_gold_mask": 0,
         "evidence_id": "bound-norm-corpus-engineering-20261023-01",
@@ -1140,24 +1099,9 @@
         "source_pinned_scopes_only": true,
         "whole_suite_statutory_model_corpus_or_release_authority": false
       },
-      "evidence_ids": [
-        "parent-use-native-handoff",
-        "autoformal-source-migration-20261019-01",
-        "parent-native-genuine-20261020-01",
-        "parent-shared-native-20261020-01",
-        "bound-norm-corpus-engineering-20261023-01",
-        "parent-complete-authored-norm-native-qualified-20261024-01",
-        "parent-bound-norm-definition-native-integration-qualified-20261025-01",
-        "parent-bound-norm-native-public-pure-compatibility-20261025-01",
-        "genuine-parent420-retention-integration-20261110",
-        "reviewed-native-admitted-parent-source-regressions-20261111",
-        "mixed-renderer-preservation-20261111",
-        "reviewed-definition-realization-source-use-20261115",
-        "source-use-whole-norm-pure-consumer-20261119",
-        "same-namespace-capacity-and-whole-norm-native-20261119"
-      ],
+      "evidence_ids": ["parent-use-native-handoff", "autoformal-source-migration-20261019-01", "parent-native-genuine-20261020-01", "parent-shared-native-20261020-01", "bound-norm-corpus-engineering-20261023-01", "parent-complete-authored-norm-native-qualified-20261024-01", "parent-bound-norm-definition-native-integration-qualified-20261025-01", "parent-bound-norm-native-public-pure-compatibility-20261025-01", "genuine-parent420-retention-integration-20261110", "reviewed-native-admitted-parent-source-regressions-20261111", "mixed-renderer-preservation-20261111", "reviewed-definition-realization-source-use-20261115", "source-use-whole-norm-pure-consumer-20261119", "same-namespace-capacity-and-whole-norm-native-20261119", "physical-definition-realization-bridge-ordinary-software-Native-pending-20261120"],
       "id": "definition-use-native",
-      "notes": "Existing owner contains separate official V2 and parent V1 preparation/build/receipt routes. Original migration compiler fixtures remain synthetic. Two authored FOL/TDFOL parent projects now qualify actual Lean4.34.1 execution and observed custody; pending review and explicit premises remain, without statutory admission or source-to-model equivalence. The separate parent shared-native profile adds four aggregate APIs. Its main cohort qualifies 16 cases (11 new and five existing regressions); a separate actual cohort contains two authored FOL/TDFOL aggregate projects, each with nine modules, 15 executed inputs and six unique conditional theorem observations. Child reviews remain pending in the actual cohort; complete assumptions and contributor lineage survive. No parent incremental cache, source meaning, model, training or statutory admission is qualified. Separate authored complete-norm/bound-definition profile: 42 pure cases/126 phases and two actual Lean4.34.1 cases/six phases. Nine files/six modules preserve the unchanged norm and explicit definition/membership premises; preservation is an alias identity. Namespace-scoped qualification; statutory reviews, source binding and training/gold remain pending. First actual attempt retained separately with its 192-MiB storage reservation. The explicit parent-literal complete-norm route reuses its separately source-pinned authored engineering qualification; no default consumer, full-package, semantic or corpus admission is inferred. The existing parent-bound norm/definition native extension adopts source6e6dd821/test02acd69 with unchanged preparer014dc6/renderer5c. Its retained original R32pure/96 and separate R2actual-native/6phase cohorts retain their own 197-source generation and six observed commands (four ordinary probes and two owned builds). The separately accepted current-public4case/12phase pure compatibility check on the completed c59 snapshot contains one genuine membership-mode validation, two synthetic handoffs and a request-pin refusal. The later8b6 graph change has a separate source-only compatibility review; the combined new generation remains unmeasured. It supplies no new actual native execution or global registration. The separate §7214 mixed renderer profile is now available with focused pure and compiler qualification; parent-source/corpus native integration and substantive legal review remain pending. The explicit parent-nomination graph custody route is indexed under the existing graph adapter and has a separate focused custody qualification; null governing decisions, explicit premises and zero masks remain. Separate 2026-11-16 whole-norm application scopes are recorded in whole_norm_definition_expansion_20261116: Native2 is actual conditional installed-Lean engineering; S100/I21 are authored software only. Existing evidence IDs and historical source epochs remain unchanged. Local unexecuted source-use consumer regression: code commit 5135b951de81ffa388d21d84290ae5bf99f0ea1c on local branch codex/lir14-same-unit-consumer-regression contains only test338620/9b888ce7 (receipt81e3025c). Same three admitted units/full nine-field IR, validly resealed wrong-target refusal and one detached callback add no Native build or handle-authority join. Original42018 remains raw-held/unverified by checkpoint45e7fa69 after the wrapper dict guard rejected actual SDK MappingProxyType; helper/operator are unselected; the human-terminal read-only probe is pending, while the normal ENOTTY attach and actual sudo -n authentication-required refusal are closed. No current qualification/status promotion or new evidence is claimed. Separately qualified ordinary preparation/consumer case: one collection and one PASS/0F/0E/0skip, Root748b15/bd7bdb, evidence source-use-whole-norm-pure-consumer-20261119. Code commit 34eba72e839a06dd7c7639eb37faf4631e39d3f3 records test340694/19bb4e18; runtime R ebab0edf plus dirty test, A534a5362/Sourceab58972d, four stable4127 full9 maps and ordinary custody closed. Same three units/full nine-field IR and swapped-target/one-callback checks only;30 declared obligations are not proofs. No strongest-Native, model, statutory, gold or corpus/release qualification; original42018 remains held/unverified. Superseding current2026-11-19 evidence same-namespace-capacity-and-whole-norm-native-20261119: original42018 is now closed after actual raw retention and public lease release, but its emptyZIP collector transport remains failed; earlier held/probe-pending clauses above describe their historical cutoffs. A corrected old-source whole-norm[source-use] Native case now passed with93 retained members/10 compiledmodules/30 conditionalempty-axiom theorems, allauthorityfalse/masks0. Existing scheduler owner7a0d/test4af has separate43-case Source4162 qualification and an authorized same-namespace base16/effective32 transition; old2c facade compatibility was observed in the correctedNative run. No Sourceepoch pooling, factoredconsumer Native result, statutory/model/training/gold/corpus/task completion is inferred; the firstfour69attempts retain their failed/zero-bodyPASS scopes; a later currentworker61118/test0e315 has21+69 disjointsoftwarePASS on Source4166/0658, while currentSource4166/ad788 source-only P/A/completeV now separately qualifies42retainedfiles/148132089B with418pendinggroups and allauthorityfalse/masks0. Resource followup47 on0830/helperb2b/testaf7 is separate; none of these scopes joins the later factored consumer to this originalNative packet.",
+      "notes": "Existing owner contains separate official V2 and parent V1 preparation/build/receipt routes. Original migration compiler fixtures remain synthetic. Two authored FOL/TDFOL parent projects now qualify actual Lean4.34.1 execution and observed custody; pending review and explicit premises remain, without statutory admission or source-to-model equivalence. The separate parent shared-native profile adds four aggregate APIs. Its main cohort qualifies 16 cases (11 new and five existing regressions); a separate actual cohort contains two authored FOL/TDFOL aggregate projects, each with nine modules, 15 executed inputs and six unique conditional theorem observations. Child reviews remain pending in the actual cohort; complete assumptions and contributor lineage survive. No parent incremental cache, source meaning, model, training or statutory admission is qualified. Separate authored complete-norm/bound-definition profile: 42 pure cases/126 phases and two actual Lean4.34.1 cases/six phases. Nine files/six modules preserve the unchanged norm and explicit definition/membership premises; preservation is an alias identity. Namespace-scoped qualification; statutory reviews, source binding and training/gold remain pending. First actual attempt retained separately with its 192-MiB storage reservation. The explicit parent-literal complete-norm route reuses its separately source-pinned authored engineering qualification; no default consumer, full-package, semantic or corpus admission is inferred. The existing parent-bound norm/definition native extension adopts source6e6dd821/test02acd69 with unchanged preparer014dc6/renderer5c. Its retained original R32pure/96 and separate R2actual-native/6phase cohorts retain their own 197-source generation and six observed commands (four ordinary probes and two owned builds). The separately accepted current-public4case/12phase pure compatibility check on the completed c59 snapshot contains one genuine membership-mode validation, two synthetic handoffs and a request-pin refusal. The later8b6 graph change has a separate source-only compatibility review; the combined new generation remains unmeasured. It supplies no new actual native execution or global registration. The separate §7214 mixed renderer profile is now available with focused pure and compiler qualification; parent-source/corpus native integration and substantive legal review remain pending. The explicit parent-nomination graph custody route is indexed under the existing graph adapter and has a separate focused custody qualification; null governing decisions, explicit premises and zero masks remain. Separate 2026-11-16 whole-norm application scopes are recorded in whole_norm_definition_expansion_20261116: Native2 is actual conditional installed-Lean engineering; S100/I21 are authored software only. Existing evidence IDs and historical source epochs remain unchanged. Local unexecuted source-use consumer regression: code commit 5135b951de81ffa388d21d84290ae5bf99f0ea1c on local branch codex/lir14-same-unit-consumer-regression contains only test338620/9b888ce7 (receipt81e3025c). Same three admitted units/full nine-field IR, validly resealed wrong-target refusal and one detached callback add no Native build or handle-authority join. Original42018 remains raw-held/unverified by checkpoint45e7fa69 after the wrapper dict guard rejected actual SDK MappingProxyType; helper/operator are unselected; the human-terminal read-only probe is pending, while the normal ENOTTY attach and actual sudo -n authentication-required refusal are closed. No current qualification/status promotion or new evidence is claimed. Separately qualified ordinary preparation/consumer case: one collection and one PASS/0F/0E/0skip, Root748b15/bd7bdb, evidence source-use-whole-norm-pure-consumer-20261119. Code commit 34eba72e839a06dd7c7639eb37faf4631e39d3f3 records test340694/19bb4e18; runtime R ebab0edf plus dirty test, A534a5362/Sourceab58972d, four stable4127 full9 maps and ordinary custody closed. Same three units/full nine-field IR and swapped-target/one-callback checks only;30 declared obligations are not proofs. No strongest-Native, model, statutory, gold or corpus/release qualification; original42018 remains held/unverified. Superseding current2026-11-19 evidence same-namespace-capacity-and-whole-norm-native-20261119: original42018 is now closed after actual raw retention and public lease release, but its emptyZIP collector transport remains failed; earlier held/probe-pending clauses above describe their historical cutoffs. A corrected old-source whole-norm[source-use] Native case now passed with93 retained members/10 compiledmodules/30 conditionalempty-axiom theorems, allauthorityfalse/masks0. Existing scheduler owner7a0d/test4af has separate43-case Source4162 qualification and an authorized same-namespace base16/effective32 transition; old2c facade compatibility was observed in the correctedNative run. No Sourceepoch pooling, factoredconsumer Native result, statutory/model/training/gold/corpus/task completion is inferred; the firstfour69attempts retain their failed/zero-bodyPASS scopes; a later currentworker61118/test0e315 has21+69 disjointsoftwarePASS on Source4166/0658, while currentSource4166/ad788 source-only P/A/completeV now separately qualifies42retainedfiles/148132089B with418pendinggroups and allauthorityfalse/masks0. Resource followup47 on0830/helperb2b/testaf7 is separate; none of these scopes joins the later factored consumer to this originalNative packet.\n\n2026-11-20 existing physical bridge: A protocol 4/R internal live 5 retains each owner's existing opaque factory; the original A parent handle is passed directly to the physical facade. A and R have distinct opaque classes/factories. Separate selected A25 controls passed at 4cb7 and R32 controls at e139; preserve R31 CPU240 cutoff,30P1F,focused plain-fixture1 and actual pure-SDK fsizeRED. Native5 explicitly bounds physical file128 MiB/workspace256 MiB with legacy limits preserved. Collector53902 failed at metadata classification; a separate56-module isolated startup observation is preparation evidence only, with no repaired-collector pass yet. Actual Native build/packet/facade replay remains PENDING. No statutory/model/training/convergence/gold/corpus or task-completion authority.",
       "original_admitted_parent_bridge_20261111": {
         "actual_native_parent_positive_qualified": false,
         "apis": [
@@ -1603,25 +1547,11 @@
           "sha256": "e2bf3dbe51e72bc579fd3e836340c8daceb8b746d5e31825e3960ca1c223bb41",
           "mode": "0400"
         }
-      }
+      },
+      "physical_definition_realization_bridge_20261120": {"evidence_id": "physical-definition-realization-bridge-ordinary-software-Native-pending-20261120", "evidence_index": {"path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/physical-definition-realization-bridge-four-guide-proposal-v02/physical-definition-realization-bridge-evidence-index-v02.json", "bytes": 32191, "sha256": "9e7b7b535cd30456926e1aa2231d5756aea7fa5bcb41df19b3e78bb37b329338"}, "status": "selected_ordinary_software_qualified_actual_Native_PENDING", "A_ordinary_cases": 25, "A_Source_epoch": "4cb7b26b08dc428264d8681f3a6b13f6dd9d25656bbed2b89b07155212548538", "R_ordinary_cases": 32, "R_Source_epoch": "e13951d5af86367283ca16f4698fce39e9ffa541dd3fd9a3b2bb70577eaea493", "actual_Native": "PENDING", "protocol_A4_to_internal_native5_not_flag_alias": true, "all_authority_false": true, "training_mask": 0, "evaluation_gold_mask": 0, "each_owner_retains_its_existing_opaque_factory": true, "A_and_R_opaque_classes_and_factories_are_distinct": true, "original_A_parent_handle_passed_directly_to_physical_facade": true, "preparation_collector": "ordinary_metadata_failure_a709_then_startup56_observation42d3_only", "repaired_collector_pass_observed": false}
     },
     {
-      "apis": [
-        "prepare_shared_definition_corpus",
-        "build_shared_definition_corpus",
-        "prepare_parent_shared_definition_use_corpus_v1",
-        "validate_parent_shared_definition_use_corpus_v1",
-        "load_parent_shared_definition_use_corpus_v1",
-        "write_parent_shared_definition_use_corpus_v1",
-        "ReviewedPreservationCorpusPreparation",
-        "prepare_reviewed_norm_preservation_corpus_v2",
-        "validate_reviewed_norm_preservation_corpus_v2",
-        "reviewed_preservation_corpus_sha256",
-        "prepare_reviewed_norm_preservation_corpus_v3",
-        "validate_reviewed_norm_preservation_corpus_v3",
-        "prepare_reviewed_definition_realization_corpus_v1",
-        "validate_reviewed_definition_realization_corpus_v1"
-      ],
+      "apis": ["prepare_shared_definition_corpus", "build_shared_definition_corpus", "prepare_parent_shared_definition_use_corpus_v1", "validate_parent_shared_definition_use_corpus_v1", "load_parent_shared_definition_use_corpus_v1", "write_parent_shared_definition_use_corpus_v1", "ReviewedPreservationCorpusPreparation", "prepare_reviewed_norm_preservation_corpus_v2", "validate_reviewed_norm_preservation_corpus_v2", "reviewed_preservation_corpus_sha256", "prepare_reviewed_norm_preservation_corpus_v3", "validate_reviewed_norm_preservation_corpus_v3", "prepare_reviewed_definition_realization_corpus_v1", "validate_reviewed_definition_realization_corpus_v1", "prepare_reviewed_physical_definition_realization_corpus_v2", "validate_reviewed_physical_definition_realization_corpus_v2"],
       "compatibility_dependency": false,
       "current_selected_reviewed_corpus_scopes_20261114": {
         "canonical_source_publication": true,
@@ -1636,18 +1566,9 @@
         "source_pinned_scopes_only": true,
         "whole_suite_statutory_model_corpus_or_release_authority": false
       },
-      "evidence_ids": [
-        "legal-ir-architecture-review-20261020-01",
-        "parent-shared-preparation-20261020-01",
-        "parent-shared-physical-close-20261020-01",
-        "parent-shared-native-20261020-01",
-        "genuine-parent420-retention-integration-20261110",
-        "mixed-renderer-preservation-20261111",
-        "reviewed-source-use-bindings-20261115",
-        "reviewed-definition-realization-source-use-20261115"
-      ],
+      "evidence_ids": ["legal-ir-architecture-review-20261020-01", "parent-shared-preparation-20261020-01", "parent-shared-physical-close-20261020-01", "parent-shared-native-20261020-01", "genuine-parent420-retention-integration-20261110", "mixed-renderer-preservation-20261111", "reviewed-source-use-bindings-20261115", "reviewed-definition-realization-source-use-20261115", "physical-definition-realization-bridge-ordinary-software-Native-pending-20261120"],
       "id": "shared-corpus",
-      "notes": "Legacy shared preparation/build remains available. The distinct exact-parent-definition-use-module-sharing/v1 preparation/validation/load/write profile is qualified by28 main cases plus two separately reused physical-source controls. Complete child commitments, separate review outcomes, exact source-bound donor identity and contributor ordinals survive sharing. Closing physical replay is sequential, not an atomic snapshot. This preparation cohort supplies no aggregate build result; the separate native owner now has qualified aggregate controls and two authored builds. Parent incremental caching, model training and statutory meaning remain separate. Retain the separate architecture review; do not fabricate paragraph_indices or norm_record. Separate 2026-11-16 whole-norm application scopes are recorded in whole_norm_definition_expansion_20261116: Native2 is actual conditional installed-Lean engineering; S100/I21 are authored software only. Existing evidence IDs and historical source epochs remain unchanged.",
+      "notes": "Legacy shared preparation/build remains available. The distinct exact-parent-definition-use-module-sharing/v1 preparation/validation/load/write profile is qualified by28 main cases plus two separately reused physical-source controls. Complete child commitments, separate review outcomes, exact source-bound donor identity and contributor ordinals survive sharing. Closing physical replay is sequential, not an atomic snapshot. This preparation cohort supplies no aggregate build result; the separate native owner now has qualified aggregate controls and two authored builds. Parent incremental caching, model training and statutory meaning remain separate. Retain the separate architecture review; do not fabricate paragraph_indices or norm_record. Separate 2026-11-16 whole-norm application scopes are recorded in whole_norm_definition_expansion_20261116: Native2 is actual conditional installed-Lean engineering; S100/I21 are authored software only. Existing evidence IDs and historical source epochs remain unchanged.\n\n2026-11-20 existing physical bridge: A protocol 4/R internal live 5 retains each owner's existing opaque factory; the original A parent handle is passed directly to the physical facade. A and R have distinct opaque classes/factories. Separate selected A25 controls passed at 4cb7 and R32 controls at e139; preserve R31 CPU240 cutoff,30P1F,focused plain-fixture1 and actual pure-SDK fsizeRED. Native5 explicitly bounds physical file128 MiB/workspace256 MiB with legacy limits preserved. Collector53902 failed at metadata classification; a separate56-module isolated startup observation is preparation evidence only, with no repaired-collector pass yet. Actual Native build/packet/facade replay remains PENDING. No statutory/model/training/convergence/gold/corpus or task-completion authority.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.legal_corpus_shared_lake",
       "ownership_role": "existing_single_owner",
       "path": "ipfs_datasets_py/logic/autoformal/legal_corpus_shared_lake.py",
@@ -1801,7 +1722,8 @@
           }
         },
         "statutory_meaning_gold_corpus_release_model_training_or_convergence_authority": false
-      }
+      },
+      "physical_definition_realization_bridge_20261120": {"evidence_id": "physical-definition-realization-bridge-ordinary-software-Native-pending-20261120", "evidence_index": {"path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/physical-definition-realization-bridge-four-guide-proposal-v02/physical-definition-realization-bridge-evidence-index-v02.json", "bytes": 32191, "sha256": "9e7b7b535cd30456926e1aa2231d5756aea7fa5bcb41df19b3e78bb37b329338"}, "status": "selected_ordinary_software_qualified_actual_Native_PENDING", "A_ordinary_cases": 25, "A_Source_epoch": "4cb7b26b08dc428264d8681f3a6b13f6dd9d25656bbed2b89b07155212548538", "R_ordinary_cases": 32, "R_Source_epoch": "e13951d5af86367283ca16f4698fce39e9ffa541dd3fd9a3b2bb70577eaea493", "actual_Native": "PENDING", "protocol_A4_to_internal_native5_not_flag_alias": true, "all_authority_false": true, "training_mask": 0, "evaluation_gold_mask": 0, "each_owner_retains_its_existing_opaque_factory": true, "A_and_R_opaque_classes_and_factories_are_distinct": true, "original_A_parent_handle_passed_directly_to_physical_facade": true, "preparation_collector": "ordinary_metadata_failure_a709_then_startup56_observation42d3_only", "repaired_collector_pass_observed": false}
     },
     {
       "apis": [
@@ -10403,21 +10325,9 @@
       "status": "focused_tests_qualified"
     },
     {
-      "apis": [
-        "publish_referenced_artifact",
-        "seal_coordinator_receipt",
-        "coordinator_commit_sha256",
-        "select_model_manager_status",
-        "validate_uscode_release_closure_v1",
-        "validate_uscode_release_closure_v2"
-      ],
+      "apis": ["publish_referenced_artifact", "seal_coordinator_receipt", "coordinator_commit_sha256", "select_model_manager_status", "validate_uscode_release_closure_v1", "validate_uscode_release_closure_v2", "validate_uscode_release_closure_v4", "validate_reviewed_physical_realization_context_v2"],
       "compatibility_dependency": false,
-      "evidence_ids": [
-        "legal-uscode-local-release-replay-source-private45-20261111",
-        "hf-wire-producer-closure-private103-source-20261111",
-        "reviewed-physical-three-cache-crosswalk-private114-source-20261111",
-        "ordinary-main-compatibility-two-source-epochs-20261119"
-      ],
+      "evidence_ids": ["legal-uscode-local-release-replay-source-private45-20261111", "hf-wire-producer-closure-private103-source-20261111", "reviewed-physical-three-cache-crosswalk-private114-source-20261111", "ordinary-main-compatibility-two-source-epochs-20261119", "physical-definition-realization-bridge-ordinary-software-Native-pending-20261120"],
       "guide": "ipfs_datasets_py/logic/autoformal/docs/guides/legal_corpus_graph_exchange.md",
       "id": "legal-release-coordinator",
       "local_replay_scope": {
@@ -10432,7 +10342,7 @@
         "release_ready": false,
         "unchanged_private_cases": 25
       },
-      "notes": "Existing coordinator explicitv2 replays signed dependency-bound physical law/coordinate/cache/entity-to-complete-reviewed-graph correspondence, with heldfile/sourcegeneration custody and exact populations. Source4 installed/closed afterprivate114, plus2separate normalcanonical read-only CLI observations. v1default/prefix unchanged. Original admitted Native parent/retainedpositivepacket/immutableHubreadback/realstatutoryreview remain unresolved; no task completion or model/corpus promotion. Separately audited current-source Release21 software scope is recorded in release21_realization_consumer_20261116. Historical private45/103/114, R56, optional Native, Hub and legal/corpus blockers retain their original outcomes; no release-ready or task-completion flag is promoted.",
+      "notes": "Existing coordinator explicitv2 replays signed dependency-bound physical law/coordinate/cache/entity-to-complete-reviewed-graph correspondence, with heldfile/sourcegeneration custody and exact populations. Source4 installed/closed afterprivate114, plus2separate normalcanonical read-only CLI observations. v1default/prefix unchanged. Original admitted Native parent/retainedpositivepacket/immutableHubreadback/realstatutoryreview remain unresolved; no task completion or model/corpus promotion. Separately audited current-source Release21 software scope is recorded in release21_realization_consumer_20261116. Historical private45/103/114, R56, optional Native, Hub and legal/corpus blockers retain their original outcomes; no release-ready or task-completion flag is promoted.\n\n2026-11-20 existing physical bridge: A protocol 4/R internal live 5 retains each owner's existing opaque factory; the original A parent handle is passed directly to the physical facade. A and R have distinct opaque classes/factories. Separate selected A25 controls passed at 4cb7 and R32 controls at e139; preserve R31 CPU240 cutoff,30P1F,focused plain-fixture1 and actual pure-SDK fsizeRED. Native5 explicitly bounds physical file128 MiB/workspace256 MiB with legacy limits preserved. Collector53902 failed at metadata classification; a separate56-module isolated startup observation is preparation evidence only, with no repaired-collector pass yet. Actual Native build/packet/facade replay remains PENDING. No statutory/model/training/convergence/gold/corpus or task-completion authority.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.legal_release_coordinator_v1",
       "ownership_role": "existing_single_owner",
       "owning_tests": [
@@ -10530,7 +10440,8 @@
         "release_ready": false,
         "unrelated_helper_V1_deselected": 63
       },
-      "status": "implementation_present"
+      "status": "implementation_present",
+      "physical_definition_realization_bridge_20261120": {"evidence_id": "physical-definition-realization-bridge-ordinary-software-Native-pending-20261120", "evidence_index": {"path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/physical-definition-realization-bridge-four-guide-proposal-v02/physical-definition-realization-bridge-evidence-index-v02.json", "bytes": 32191, "sha256": "9e7b7b535cd30456926e1aa2231d5756aea7fa5bcb41df19b3e78bb37b329338"}, "status": "selected_ordinary_software_qualified_actual_Native_PENDING", "A_ordinary_cases": 25, "A_Source_epoch": "4cb7b26b08dc428264d8681f3a6b13f6dd9d25656bbed2b89b07155212548538", "R_ordinary_cases": 32, "R_Source_epoch": "e13951d5af86367283ca16f4698fce39e9ffa541dd3fd9a3b2bb70577eaea493", "actual_Native": "PENDING", "protocol_A4_to_internal_native5_not_flag_alias": true, "all_authority_false": true, "training_mask": 0, "evaluation_gold_mask": 0, "each_owner_retains_its_existing_opaque_factory": true, "A_and_R_opaque_classes_and_factories_are_distinct": true, "original_A_parent_handle_passed_directly_to_physical_facade": true, "preparation_collector": "ordinary_metadata_failure_a709_then_startup56_observation42d3_only", "repaired_collector_pass_observed": false}
     },
     {
       "apis": [
@@ -17457,6 +17368,7 @@
         "LIR-06"
       ],
       "scope": "Existing source-review official-occurrence v2 owner; entire153-case software file plus distinct same33cf epoch3document4occurrence real pending source P/A/V. All4groups pending,0reviews/authorityfalse/masks0. Preserve472prior records and all failures/earlier epochs. No422union, statutory meaning, native AST, Native Lean, model/training/convergence, corpus/release or task-completion authority."
-    }
+    },
+    {"id": "physical-definition-realization-bridge-ordinary-software-Native-pending-20261120", "root": "artifact_workspace", "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/physical-definition-realization-bridge-four-guide-proposal-v02/physical-definition-realization-bridge-evidence-index-v02.json", "observed_bytes": 32191, "observed_sha256": "9e7b7b535cd30456926e1aa2231d5756aea7fa5bcb41df19b3e78bb37b329338", "required_for_catalog_check": false, "status": "Root_authenticated_selected_A25_and_R32_ordinary_software_actual_Native_PENDING", "task_ids": ["LIR-03", "LIR-14"], "scope": "2026-11-20 existing physical bridge: A protocol 4/R internal live 5 retains each owner's existing opaque factory; the original A parent handle is passed directly to the physical facade. A and R have distinct opaque classes/factories. Separate selected A25 controls passed at 4cb7 and R32 controls at e139; preserve R31 CPU240 cutoff,30P1F,focused plain-fixture1 and actual pure-SDK fsizeRED. Native5 explicitly bounds physical file128 MiB/workspace256 MiB with legacy limits preserved. Collector53902 failed at metadata classification; a separate56-module isolated startup observation is preparation evidence only, with no repaired-collector pass yet. Actual Native build/packet/facade replay remains PENDING. No statutory/model/training/convergence/gold/corpus or task-completion authority.", "no_new_task_component_controller_or_architecture": true, "earlier_473_records_preserved": true, "actual_Native": "PENDING"}
   ]
 }

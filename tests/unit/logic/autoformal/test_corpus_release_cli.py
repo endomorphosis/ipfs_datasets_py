@@ -2859,3 +2859,262 @@ def test_explicit_direct_and_chunk_domains_refuse_each_others_original_request(
         validator(raw, expected_request_sha256=hashlib.sha256(raw).hexdigest())
     assert _physical_wire(request["pins"]) == before
     assert request["native"] is None
+
+
+def reviewed_physical_whole_norm_control_v2(material):
+    """Build one fresh three-unit physical source-use/whole-norm fixture.
+
+    Existing fictional reviews, source rows and crosswalk remain unchanged.
+    No prior request or Native observation is reclassified as this new domain.
+    """
+    from copy import deepcopy
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_shared_lake as shared
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as wire
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    from tests.unit.logic.autoformal import test_legal_corpus_shared_lake as shared_fixture
+
+    original_request, original_control = _physical_closure_request(material,
+        reviewed_version=3, native_transport="direct-packet/v1", return_control=True)
+    original_raw = wire.encode_parent_replay_value_v1(original_request)
+    control = dict(original_control)
+    profiles = dict(instance_identity_profile="reviewed-source-use/v1",
+        definition_application_profile="whole-norm-definition-expansion/v1")
+    upstream = shared.prepare_reviewed_norm_preservation_corpus_v3(
+        control["graph"], control["admission"], *control["args"],
+        expected_graph_sha256=control["graph_sha"],
+        expected_admission_sha256=control["admission_sha"], toolchain=shared_fixture.TOOLCHAIN,
+        instance_identity_profile=profiles["instance_identity_profile"], **control["kwargs"])
+    upstream_sha = shared.reviewed_preservation_corpus_sha256(upstream)
+    request = deepcopy(original_request)
+    request.update(schema=release.CLOSURE_REQUEST_SCHEMA_V4, profile=release.CLOSURE_PROFILE_V4)
+    request["pins"]["preservation"] = upstream_sha
+    for row in request["artifacts"]:
+        if row["artifact_id"] == request["component"]["preservation"]:
+            row["payload"] = wire.encode_parent_replay_value_v1(dict(
+                manifest_json=upstream.manifest_json, files=[list(pair) for pair in upstream.files]))
+        elif row["artifact_id"] == request["component"]["replay"]:
+            replay = wire.decode_parent_replay_value_v1(row["payload"],
+                expected_payload_sha256=row["sha256"])
+            replay.update(profiles)
+            row["payload"] = wire.encode_parent_replay_value_v1(replay)
+        else:
+            continue
+        row.update(bytes=len(row["payload"]), sha256=hashlib.sha256(row["payload"]).hexdigest())
+    assert wire.encode_parent_replay_value_v1(original_request) == original_raw
+    assert original_control["preparation"] is not upstream
+    raw = wire.encode_parent_replay_value_v1(request,
+        max_bytes=release.MAX_CLOSURE_REQUEST_BYTES_V3)
+    options = dict(physical_request_raw=raw,
+        expected_physical_request_sha256=hashlib.sha256(raw).hexdigest(),
+        expected_preservation_sha256=upstream_sha,
+        expected_graph_sha256=control["graph_sha"], expected_admission_sha256=control["admission_sha"],
+        toolchain=shared_fixture.TOOLCHAIN, **profiles, **control["kwargs"])
+    realization = shared.prepare_reviewed_physical_definition_realization_corpus_v2(
+        upstream, control["graph"], control["admission"], *control["args"], **options)
+    control.update(preservation=upstream, preparation=realization,
+        physical_request=request, physical_request_raw=raw,
+        physical_request_sha256=options["expected_physical_request_sha256"],
+        physical_options=options, realization_sha=shared.reviewed_preservation_corpus_sha256(realization))
+    return control
+
+
+@pytest.fixture(scope="module")
+def physical_source_use_whole_norm_control_v2(physical_closure_material_v3):
+    return reviewed_physical_whole_norm_control_v2(physical_closure_material_v3)
+
+
+def test_physical_v4_complete_source_use_whole_norm_project_is_independently_replayed(
+        physical_source_use_whole_norm_control_v2):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_shared_lake as shared
+    c = physical_source_use_whole_norm_control_v2
+    report = release.validate_uscode_release_closure_v4(c["physical_request_raw"],
+        expected_request_sha256=c["physical_request_sha256"])
+    assert report["local_source_cache_entity_bindings_verified"] is True
+    assert report["independent_reviewed_crosswalk_verified"] is True
+    assert report["native_receipt_replayed"] is False
+    assert report["reviewed_version"] == 4
+    assert report["physical_crosswalk"]["counts"]["reviewed_units"] == 3
+    context = release.validate_reviewed_physical_realization_context_v2(c["physical_request_raw"],
+        expected_request_sha256=c["physical_request_sha256"])
+    manifest = c["preparation"].to_dict()
+    assert manifest["schema"] == shared.REVIEWED_PHYSICAL_REALIZATION_SCHEMA_V2
+    assert manifest["profile"] == shared.REVIEWED_PHYSICAL_REALIZATION_PROFILE_V2
+    assert manifest["physical_context"] == context
+    assert manifest["physical_bridge_version"] == 2
+    assert context["preservation_sha256"] == shared.reviewed_preservation_corpus_sha256(c["preservation"])
+    assert context["declaration_sha256"] == c["admission"]["declaration_sha256"]
+    assert context["ordered_unit_ids"] == [u["unit_id"] for u in c["admission"]["units"]]
+    assert context["cross_references"] == c["kwargs"]["preparation_inputs"]["declaration"]["cross_references"]
+    assert len(manifest["units"]) == 3
+    assert len(manifest["definition_applications"]) == 2
+    assert manifest["support_profile"]["conditional_whole_norm_obligations"] is True
+    assert manifest["support_profile"]["source_definition_premise_required"] is True
+    assert all(value is False for value in manifest["authority"].values())
+    assert context["training_mask"] == context["evaluation_gold_mask"] == 0
+    assert shared.validate_reviewed_physical_definition_realization_corpus_v2(
+        c["preparation"], c["preservation"], c["graph"], c["admission"], *c["args"],
+        expected_realization_sha256=c["realization_sha"], **c["physical_options"]) == c["preparation"]
+
+
+@pytest.mark.parametrize("field,value", [
+    ("instance_identity_profile", None),
+    ("instance_identity_profile", "reviewed-source-use/v999"),
+    ("definition_application_profile", None),
+    ("definition_application_profile", "whole-norm-definition-expansion/v999"),
+])
+def test_physical_v2_joint_profiles_refuse_without_legacy_fallback(
+        physical_source_use_whole_norm_control_v2, field, value):
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_shared_lake as shared
+    c = physical_source_use_whole_norm_control_v2
+    options = dict(c["physical_options"], **{field: value})
+    with pytest.raises(ValueError, match="joint source-use whole-norm physical bridge"):
+        shared.prepare_reviewed_physical_definition_realization_corpus_v2(
+            c["preservation"], c["graph"], c["admission"], *c["args"], **options)
+
+
+@pytest.mark.parametrize("target", ["physical", "upstream", "realization", "admission", "graph"])
+def test_physical_v2_requires_every_independent_input_commitment(
+        physical_source_use_whole_norm_control_v2, target):
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_shared_lake as shared
+    c = physical_source_use_whole_norm_control_v2
+    fields = dict(physical="expected_physical_request_sha256", upstream="expected_preservation_sha256",
+        realization="expected_realization_sha256", admission="expected_admission_sha256", graph="expected_graph_sha256")
+    options = dict(c["physical_options"], expected_realization_sha256=c["realization_sha"])
+    options[fields[target]] = "0" * 64
+    with pytest.raises(ValueError):
+        shared.validate_reviewed_physical_definition_realization_corpus_v2(
+            c["preparation"], c["preservation"], c["graph"], c["admission"], *c["args"], **options)
+
+
+def test_physical_v4_cannot_borrow_native_or_legacy_wire_authority(physical_source_use_whole_norm_control_v2):
+    from copy import deepcopy
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as wire
+    c = physical_source_use_whole_norm_control_v2
+    with pytest.raises(ValueError):
+        release.validate_uscode_release_closure_direct_v3(c["physical_request_raw"],
+            expected_request_sha256=c["physical_request_sha256"])
+    request = deepcopy(c["physical_request"])
+    request["native"] = {}
+    raw = wire.encode_parent_replay_value_v1(request, max_bytes=release.MAX_CLOSURE_REQUEST_BYTES_V3)
+    with pytest.raises(ValueError, match="cannot acquire Native authority"):
+        release.validate_uscode_release_closure_v4(raw,
+            expected_request_sha256=hashlib.sha256(raw).hexdigest())
+
+
+def test_physical_v4_observer_sees_one_closed_source_only_generation(physical_source_use_whole_norm_control_v2):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    c = physical_source_use_whole_norm_control_v2
+    seen = []
+    def observe(context):
+        assert context["reviewed_version"] == 4
+        assert context["native"] is None
+        assert context["instance_identity_profile"] == "reviewed-source-use/v1"
+        assert context["definition_application_profile"] == "whole-norm-definition-expansion/v1"
+        seen.append(release._physical_replay_context_snapshot(context))
+    report = release._validate_uscode_release_physical_closure(c["physical_request_raw"],
+        expected_request_sha256=c["physical_request_sha256"], reviewed_version=4,
+        _native_transport="direct-packet/v1", _observe_checked_context=observe)
+    assert len(seen) == 1
+    assert report["original_native_parent_custody_verified"] is False
+
+
+@pytest.mark.parametrize("profile_field", ["instance_identity_profile", "definition_application_profile"])
+def test_physical_v4_snapshot_refuses_changed_selected_profile(physical_source_use_whole_norm_control_v2, profile_field):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    c = physical_source_use_whole_norm_control_v2
+    def mutate(context):
+        context[profile_field] += ":changed"
+    with pytest.raises(ValueError, match="physical V4 context|observer|profile"):
+        release._validate_uscode_release_physical_closure(c["physical_request_raw"],
+            expected_request_sha256=c["physical_request_sha256"], reviewed_version=4,
+            _native_transport="direct-packet/v1", _observe_checked_context=mutate)
+
+
+def test_physical_v4_observer_exception_identity_survives_complete_closure(physical_source_use_whole_norm_control_v2):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    c = physical_source_use_whole_norm_control_v2
+    expected = RuntimeError("unchanged physical V4 observer")
+    def observe(context):
+        assert context["native"] is None
+        raise expected
+    with pytest.raises(RuntimeError) as caught:
+        release._validate_uscode_release_physical_closure(c["physical_request_raw"],
+            expected_request_sha256=c["physical_request_sha256"], reviewed_version=4,
+            _native_transport="direct-packet/v1", _observe_checked_context=observe)
+    assert caught.value is expected
+
+
+@pytest.mark.parametrize("callback_raises", [False, True])
+def test_physical_v4_closing_custody_refuses_equal_byte_law_replacement(
+        physical_source_use_whole_norm_control_v2, callback_raises):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    c = physical_source_use_whole_norm_control_v2
+    path = Path(c["physical_request"]["physical_inputs"]["law_path"])
+    original = path.read_bytes()
+    observed = []
+    def observe(context):
+        assert context["native"] is None
+        observed.append(True)
+        replacement = path.with_name(path.name + ".replacement")
+        replacement.write_bytes(original)
+        os.replace(replacement, path)
+        if callback_raises:
+            raise RuntimeError("observer after physical replacement")
+    with pytest.raises(ValueError):
+        release._validate_uscode_release_physical_closure(c["physical_request_raw"],
+            expected_request_sha256=c["physical_request_sha256"], reviewed_version=4,
+            _native_transport="direct-packet/v1", _observe_checked_context=observe)
+    assert observed == [True]
+    assert path.read_bytes() == original
+
+
+def test_physical_v2_cannot_substitute_healthy_upstream_for_whole_norm_realization(
+        physical_source_use_whole_norm_control_v2):
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_shared_lake as shared
+    c = physical_source_use_whole_norm_control_v2
+    # This is a valid source-use preservation object with its genuine digest,
+    # not a bad hash or malformed project. It contains no realization proof.
+    valid_upstream_sha = shared.reviewed_preservation_corpus_sha256(c["preservation"])
+    with pytest.raises(ValueError, match="differs from complete current"):
+        shared.validate_reviewed_physical_definition_realization_corpus_v2(
+            c["preservation"], c["preservation"], c["graph"], c["admission"], *c["args"],
+            expected_realization_sha256=valid_upstream_sha, **c["physical_options"])
+
+
+@pytest.mark.parametrize("field", ["instance_identity_profile", "definition_application_profile"])
+def test_physical_v4_replay_cannot_smuggle_selection_into_admission_kwargs(
+        physical_source_use_whole_norm_control_v2, field):
+    from copy import deepcopy
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as wire
+    c = physical_source_use_whole_norm_control_v2
+    request = deepcopy(c["physical_request"])
+    row = next(row for row in request["artifacts"] if row["artifact_id"] == request["component"]["replay"])
+    replay = wire.decode_parent_replay_value_v1(row["payload"], expected_payload_sha256=row["sha256"])
+    replay["admission_kwargs"][field] = replay[field]
+    row["payload"] = wire.encode_parent_replay_value_v1(replay)
+    row.update(bytes=len(row["payload"]), sha256=hashlib.sha256(row["payload"]).hexdigest())
+    raw = wire.encode_parent_replay_value_v1(request, max_bytes=release.MAX_CLOSURE_REQUEST_BYTES_V3)
+    with pytest.raises((ValueError, TypeError)):
+        release.validate_uscode_release_closure_v4(raw, expected_request_sha256=hashlib.sha256(raw).hexdigest())
+
+
+def test_physical_v2_closes_joint_profile_callable_after_project_generation(
+        physical_source_use_whole_norm_control_v2, monkeypatch):
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_shared_lake as shared
+    c = physical_source_use_whole_norm_control_v2
+    original = shared._reviewed_definition_realization_project
+    calls = []
+    def project(*args, **kwargs):
+        result = original(*args, **kwargs)
+        calls.append(True)
+        monkeypatch.setattr(shared, "_reviewed_joint_physical_profiles_v2", lambda *a: None)
+        return result
+    monkeypatch.setattr(shared, "_reviewed_definition_realization_project", project)
+    with pytest.raises(ValueError, match="callback|producer|changed"):
+        shared.validate_reviewed_physical_definition_realization_corpus_v2(
+            c["preparation"], c["preservation"], c["graph"], c["admission"], *c["args"],
+            expected_realization_sha256=c["realization_sha"], **c["physical_options"])
+    assert calls == [True]

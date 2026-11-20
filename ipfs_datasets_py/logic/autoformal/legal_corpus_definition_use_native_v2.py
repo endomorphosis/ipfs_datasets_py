@@ -596,6 +596,7 @@ def _build_validated_native(preparation, validated, *, replay,
           "complete bounded native module population required")
     _need(1 <= len(checked.files) <= maximum_files, "complete bounded native file population required")
     reviewed_type = (type(checked) is getattr(owners[4], "ReviewedPreservationCorpusPreparation", None))
+    physical_realization = False
     if reviewed_type:
         # Freeze both closed domains. Mutable public aliases cannot give a V3
         # project the original V2 receipt profile (or the converse).
@@ -613,23 +614,38 @@ def _build_validated_native(preparation, validated, *, replay,
                 ("legal-reviewed-definition-realization-native-build/v1",
                  "replayed-reviewed-definition-realization-native-build/v1"),
         }
-        if selected_identity:
-            reviewed_domains = {(schema, source_profile + "+reviewed-source-use/v1"):
-                (schema_out, native_profile + "+reviewed-source-use/v1")
-                for (schema, source_profile), (schema_out, native_profile) in reviewed_domains.items()}
+        physical_realization = manifest.get("schema") == "legal-reviewed-physical-definition-realization-preparation/v2"
+        if physical_realization:
+            _reviewed_physical_definition_realization_native_policy(owners[4],
+                **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
             _reviewed_source_use_manifest(manifest, instance_identity_profile)
-            _need(receipt_binding.get("instance_identity_profile") == instance_identity_profile,
-                  "explicit source-use receipt identity selection required")
-        if selected_application:
-            _need(manifest.get("schema") == "legal-reviewed-definition-realization-preparation/v1",
-                  "definition application requires its explicit realization project")
-            reviewed_domains = {(schema, source_profile + "+whole-norm-definition-expansion/v1"):
-                (schema_out, native_profile + "+whole-norm-definition-expansion/v1")
-                for (schema, source_profile), (schema_out, native_profile) in reviewed_domains.items()
-                if schema == "legal-reviewed-definition-realization-preparation/v1"}
             _reviewed_definition_application_manifest(manifest, definition_application_profile)
-            _need(receipt_binding.get("definition_application_profile") == definition_application_profile,
-                  "explicit whole-norm receipt application selection required")
+            _need(receipt_binding.get("instance_identity_profile") == instance_identity_profile
+                  and receipt_binding.get("definition_application_profile") == definition_application_profile,
+                  "physical realization receipt requires both selected profiles")
+            reviewed_domains = {("legal-reviewed-physical-definition-realization-preparation/v2",
+                "reviewed-source-use-whole-norm-definition-physical-evidence-realization/v2"):
+                ("legal-reviewed-physical-definition-realization-native-build/v2",
+                 _reviewed_realization_domain("replayed-reviewed-physical-definition-realization-native-build/v2",
+                    instance_identity_profile, definition_application_profile))}
+        else:
+            if selected_identity:
+                reviewed_domains = {(schema, source_profile + "+reviewed-source-use/v1"):
+                    (schema_out, native_profile + "+reviewed-source-use/v1")
+                    for (schema, source_profile), (schema_out, native_profile) in reviewed_domains.items()}
+                _reviewed_source_use_manifest(manifest, instance_identity_profile)
+                _need(receipt_binding.get("instance_identity_profile") == instance_identity_profile,
+                      "explicit source-use receipt identity selection required")
+            if selected_application:
+                _need(manifest.get("schema") == "legal-reviewed-definition-realization-preparation/v1",
+                      "definition application requires its explicit realization project")
+                reviewed_domains = {(schema, source_profile + "+whole-norm-definition-expansion/v1"):
+                    (schema_out, native_profile + "+whole-norm-definition-expansion/v1")
+                    for (schema, source_profile), (schema_out, native_profile) in reviewed_domains.items()
+                    if schema == "legal-reviewed-definition-realization-preparation/v1"}
+                _reviewed_definition_application_manifest(manifest, definition_application_profile)
+                _need(receipt_binding.get("definition_application_profile") == definition_application_profile,
+                      "explicit whole-norm receipt application selection required")
         reviewed_domain = (manifest.get("schema"), manifest.get("profile"))
         _need(reviewed_domain in reviewed_domains
               and (build_schema, profile) == reviewed_domains[reviewed_domain],
@@ -661,8 +677,10 @@ def _build_validated_native(preparation, validated, *, replay,
         environment={"ELAN_TOOLCHAIN": toolchain, "LEAN_NUM_THREADS": "1"},
         limits=process.ToolRunLimits(
             timeout_seconds=timeout_seconds, cpu_seconds=timeout_seconds,
-            resident_memory_bytes=2 * 1024**3, max_output_bytes=MAX_CAPTURE_BYTES,
-            max_input_bytes=MAX_PROJECT_BYTES, max_workspace_bytes=128 * MAX_RECORD_BYTES,
+            resident_memory_bytes=2 * 1024**3, max_output_bytes=64 * 1024**2 if physical_realization else MAX_CAPTURE_BYTES,
+            max_input_bytes=128 * 1024**2 if physical_realization else MAX_PROJECT_BYTES,
+            max_workspace_bytes=256 * 1024**2 if physical_realization else 128 * MAX_RECORD_BYTES,
+            max_file_bytes=128 * 1024**2 if physical_realization else None,
             max_output_files=len(output_paths)))
     runner = process.BoundedToolRunner()
     if execution_observer is not None:
@@ -741,14 +759,14 @@ def _build_validated_native(preparation, validated, *, replay,
     logs = {"stdout.txt": run.stdout.encode("utf-8"),
             "stderr.txt": run.stderr.encode("utf-8"),
             "runner-error.txt": run.error.encode("utf-8")}
-    _need(all(len(raw) <= 3 * MAX_CAPTURE_BYTES for raw in logs.values()),
+    _need(all(len(raw) <= (8 * 1024**2 if physical_realization else 3 * MAX_CAPTURE_BYTES) for raw in logs.values()),
           "bounded native process observations required")
     previews = {name: raw[:MAX_LOG_PREVIEW_BYTES].decode("utf-8", errors="replace").replace("\x00", "\\u0000")
                 for name, raw in logs.items()}
     reviewed_execution = {}
     if reviewed_type:
         try:
-            reviewed_execution["reviewed_execution_evidence"] = _reviewed_native_execution_projection(invocation, run, process)
+            reviewed_execution["reviewed_execution_evidence"] = _reviewed_native_execution_projection(invocation, run, process, physical_realization=physical_realization)
             reviewed_execution["reviewed_execution_projection_error"] = None
         except (ValueError, TypeError, KeyError, OSError, UnicodeError, RecursionError) as error:
             passed = False
@@ -2175,12 +2193,22 @@ def _reviewed_preservation_native_manifest(manifest, shared, *, instance_identit
 def _reviewed_preservation_native_operation(preparation, graph, admission, args, kwargs, *,
         expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256,
         toolchain, operation=None, reviewed_version=2, instance_identity_profile=None, definition_application_profile=None, realization_preservation=None,
-        expected_upstream_preservation_sha256=None):
-    _need(type(reviewed_version) is int and reviewed_version in (2, 3, 4),
+        expected_upstream_preservation_sha256=None, physical_request_raw=None, expected_physical_request_sha256=None):
+    _need(type(reviewed_version) is int and reviewed_version in (2, 3, 4, 5),
           "explicit closed reviewed native version required")
     _reviewed_definition_application_kwargs(definition_application_profile)
-    _need(definition_application_profile is None or reviewed_version == 4,
+    _need(definition_application_profile is None or reviewed_version in (4, 5),
           "whole-norm application requires the explicit realization native domain")
+    _need(reviewed_version == 5 or physical_request_raw is expected_physical_request_sha256 is None,
+          "physical request requires the explicit physical realization native domain")
+    if reviewed_version == 5:
+        return _reviewed_physical_definition_realization_native_operation(preparation, realization_preservation,
+            graph, admission, args, kwargs, expected_realization_sha256=expected_preservation_sha256,
+            expected_preservation_sha256=expected_upstream_preservation_sha256,
+            expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
+            toolchain=toolchain, operation=operation, physical_request_raw=physical_request_raw,
+            expected_physical_request_sha256=expected_physical_request_sha256,
+            **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
     if reviewed_version == 4:
         return _reviewed_definition_realization_native_operation(preparation, realization_preservation,
             graph, admission, args, kwargs, expected_realization_sha256=expected_preservation_sha256,
@@ -2428,12 +2456,13 @@ def _reviewed_native_lifecycle_from_dict(value, process):
     return result
 
 
-def _reviewed_native_execution_projection(invocation, run, process):
+def _reviewed_native_execution_projection(invocation, run, process, *, physical_realization=False):
     """Pure, lossless sidecar identities; binary artifacts are never text-decoded.
 
     Capturing a result records its supplied interface and lifecycle. This is not
     independent execution attestation or a persisted-receipt qualification.
     """
+    _need(type(physical_realization) is bool, "closed physical projection domain required")
     from dataclasses import fields
     from types import MappingProxyType
     _need(type(invocation) is process.ToolRunRequest and type(run) is process.ToolRunResult,
@@ -2452,7 +2481,7 @@ def _reviewed_native_execution_projection(invocation, run, process):
     _need(all(type(getattr(run, name)) is str for name in ("stdout", "stderr", "error")),
           "ordinary raw diagnostic text required")
     _bound_tree({"sources": dict(invocation.input_files), "outputs": dict(run.output_files),
-                 "stdout": run.stdout, "stderr": run.stderr, "error": run.error}, MAX_INPUT_BYTES, allow_bytes=True)
+                 "stdout": run.stdout, "stderr": run.stderr, "error": run.error}, (128 * 1024**2 if physical_realization else MAX_INPUT_BYTES), allow_bytes=True)
     def byte_ref(raw):
         _need(type(raw) is bytes, "raw sidecar bytes required")
         return {"bytes": len(raw), "sha256": _sha(raw)}
@@ -2469,7 +2498,7 @@ def _reviewed_native_execution_projection(invocation, run, process):
           "complete raw projected output population bound exceeded")
     logs = {name: getattr(run, attr).encode("utf-8") for name, attr in
             (("stdout.txt", "stdout"), ("stderr.txt", "stderr"), ("runner-error.txt", "error"))}
-    _need(all(len(raw) <= 3 * MAX_CAPTURE_BYTES for raw in logs.values()), "complete raw diagnostic bound exceeded")
+    _need(all(len(raw) <= (8 * 1024**2 if physical_realization else 3 * MAX_CAPTURE_BYTES) for raw in logs.values()), "complete raw diagnostic bound exceeded")
     lifecycle = None
     if run.native_lifecycle is not None:
         _need(type(run.native_lifecycle) is process.NativeToolLifecycleObservation, "typed native lifecycle required")
@@ -2490,16 +2519,17 @@ def _reviewed_native_execution_projection(invocation, run, process):
     return result
 
 
-def _reviewed_native_execution_from_projection(value, *, sources, outputs, logs, process):
+def _reviewed_native_execution_from_projection(value, *, sources, outputs, logs, process, physical_realization=False):
     """Reconstruct ordinary typed metadata and raw bytes, with no tool execution.
 
     The future persisted loader must still bind full current project semantics,
     independently trusted receipt/owner evidence, strict proof reports and all
     producer/toolchain/closure identities. This helper grants none of those.
     """
+    _need(type(physical_realization) is bool, "closed physical projection domain required")
     from dataclasses import fields
     _bound_tree({"projection": value, "sources": sources, "outputs": outputs, "logs": logs},
-                MAX_INPUT_BYTES, allow_bytes=True)
+                (128 * 1024**2 if physical_realization else MAX_INPUT_BYTES), allow_bytes=True)
     _bound_tree(value, MAX_RECORD_BYTES)
     _need(type(value) is dict and set(value) == {"schema", "invocation", "result", "raw_logs", "output_file_refs"}
           and value["schema"] == _REVIEWED_EXECUTION_SCHEMA, "closed reviewed execution projection required")
@@ -2557,7 +2587,7 @@ def _reviewed_native_execution_from_projection(value, *, sources, outputs, logs,
         native_lifecycle=_reviewed_native_lifecycle_from_dict(metadata["native_lifecycle"], process),
         stdout=texts["stdout.txt"], stderr=texts["stderr.txt"], error=texts["runner-error.txt"], output_files=outputs)
     result = process.ToolRunResult(**record)
-    _need(_reviewed_native_execution_projection(request, result, process) == value,
+    _need(_reviewed_native_execution_projection(request, result, process, physical_realization=physical_realization) == value,
           "complete original execution projection differs after typed raw reconstruction")
     return request, result
 
@@ -3034,7 +3064,7 @@ def _live_check_module_bindings(snapshot, *, skip=()):
 def _live_success_guard(owners=None, *, reviewed_version=2):
     """Fence code identity, not caller-provided success booleans or callbacks."""
     global _LIVE_MODULE_BINDINGS, _LIVE_REVIEW_BINDINGS, _LIVE_MIXED_REVIEW_BINDINGS
-    _need(type(reviewed_version) is int and reviewed_version in (2, 3, 4),
+    _need(type(reviewed_version) is int and reviewed_version in (2, 3, 4, 5),
           "explicit closed live guard version required")
     for name, state in _LIVE_NATIVE_FUNCTIONS:
         _need(_live_callable_matches(globals().get(name), state),
@@ -3106,7 +3136,7 @@ def _live_success_guard(owners=None, *, reviewed_version=2):
 def _live_postrun_persistence_trusted(owners, *, reviewed_version=2):
     """Allow evidence retention only through still-original remaining owners."""
     try:
-        _need(type(reviewed_version) is int and reviewed_version in (2, 3, 4), "closed live persistence version required")
+        _need(type(reviewed_version) is int and reviewed_version in (2, 3, 4, 5), "closed live persistence version required")
         bindings = _LIVE_REVIEW_BINDINGS if reviewed_version == 2 else _LIVE_MIXED_REVIEW_BINDINGS
         for name, state in _LIVE_NATIVE_FUNCTIONS:
             _need(_live_callable_matches(globals().get(name), state),
@@ -3161,7 +3191,8 @@ def _live_freeze_inputs(value):
 
 
 def _live_original_inputs(preparation, graph, admission, args, kwargs, *,
-        realization_preservation=None, expected_upstream_preservation_sha256=None, definition_application_profile=None):
+        realization_preservation=None, expected_upstream_preservation_sha256=None, definition_application_profile=None,
+        physical_request_raw=None, expected_physical_request_sha256=None):
     original = (_reviewed_preservation_native_document(preparation), graph, admission, args, kwargs)
     if realization_preservation is not None:
         _pin(expected_upstream_preservation_sha256, "complete original realization upstream")
@@ -3169,6 +3200,14 @@ def _live_original_inputs(preparation, graph, admission, args, kwargs, *,
                     expected_upstream_preservation_sha256)
     if _reviewed_definition_application_kwargs(definition_application_profile):
         original = (*original, definition_application_profile)
+    _need((physical_request_raw is None) == (expected_physical_request_sha256 is None),
+          "physical request bytes and independent pin must be paired")
+    if physical_request_raw is not None:
+        _pin(expected_physical_request_sha256, "complete original physical request")
+        _need(type(physical_request_raw) is bytes and 0 < len(physical_request_raw) <= MAX_INPUT_BYTES
+              and _sha(physical_request_raw) == expected_physical_request_sha256,
+              "complete original physical request bytes differ")
+        original = (*original, physical_request_raw, expected_physical_request_sha256)
     return _live_freeze_inputs(original)
 
 
@@ -3193,9 +3232,9 @@ def _live_read_persisted_packet(output, checked, receipt, transport, *, reviewed
             descriptor = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=root_fd)
             with os.fdopen(descriptor, "rb") as source:
                 before = os.fstat(source.fileno())
-                _need(stat.S_ISREG(before.st_mode) and before.st_size <= 3 * MAX_CAPTURE_BYTES,
+                _need(stat.S_ISREG(before.st_mode) and before.st_size <= (8 * 1024**2 if reviewed_version == 5 else 3 * MAX_CAPTURE_BYTES),
                       "bounded ordinary live success packet file required")
-                raw = source.read(3 * MAX_CAPTURE_BYTES + 1)
+                raw = source.read((8 * 1024**2 if reviewed_version == 5 else 3 * MAX_CAPTURE_BYTES) + 1)
                 after = os.fstat(source.fileno())
                 current = os.stat(name, dir_fd=root_fd, follow_symlinks=False)
                 _need(transport._stable_stat(before) == transport._stable_stat(after)
@@ -3214,7 +3253,7 @@ def _live_read_persisted_packet(output, checked, receipt, transport, *, reviewed
     finally:
         os.close(root_fd)
     packet = tuple(sorted(contents.items()))
-    _reviewed_retained_packet(packet)
+    (_reviewed_physical_retained_packet_v2 if reviewed_version == 5 else _reviewed_retained_packet)(packet)
     _need(contents["build-receipt.json"] == _live_success_domain(reviewed_version, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))[9](receipt, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)),
           "persisted live success receipt differs from original returned receipt")
     return packet
@@ -3222,10 +3261,14 @@ def _live_read_persisted_packet(output, checked, receipt, transport, *, reviewed
 
 def _live_handle_entry(handle, *, reviewed_version=2, instance_identity_profile=None, definition_application_profile=None):
     _reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)
-    _need(type(reviewed_version) is int and reviewed_version in (2, 3, 4),
+    _need(type(reviewed_version) is int and reviewed_version in (2, 3, 4, 5),
           "explicit closed live handle version required")
-    _need(definition_application_profile is None or reviewed_version == 4,
+    _need(definition_application_profile is None or reviewed_version in (4, 5),
           "whole-norm application requires an explicit realization live handle")
+    if reviewed_version == 5:
+        _need(instance_identity_profile == "reviewed-source-use/v1"
+              and definition_application_profile == "whole-norm-definition-expansion/v1",
+              "physical live handle requires fixed joint source-use whole-norm profiles")
     # This check intentionally precedes every owner import and preparation read.
     _need(type(handle) is _LIVE_HANDLE_CLASS
           and VerifiedReviewedPreservationNativeSuccess is _LIVE_HANDLE_CLASS
@@ -3248,15 +3291,25 @@ def _live_handle_entry(handle, *, reviewed_version=2, instance_identity_profile=
 def _live_success_domain(reviewed_version, *, instance_identity_profile=None, definition_application_profile=None):
     """Select one closed literal domain after the independent callable fence."""
     _reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)
-    _need(type(reviewed_version) is int and reviewed_version in (2, 3, 4),
+    _need(type(reviewed_version) is int and reviewed_version in (2, 3, 4, 5),
           "explicit closed live success version required")
     _need(type(PARENT_FALSE_FLAGS) is dict and set(PARENT_FALSE_FLAGS) == _REVIEWED_MIXED_FALSE_KEYS
           and all(value is False for value in PARENT_FALSE_FLAGS.values())
           and type(AUTHORITY) is dict and set(AUTHORITY) == _REVIEWED_MIXED_AUTHORITY_KEYS
           and all(value is False for value in AUTHORITY.values()),
           "live success cannot widen its closed false-authority policy")
-    _need(definition_application_profile is None or reviewed_version == 4,
+    _need(definition_application_profile is None or reviewed_version in (4, 5),
           "whole-norm application requires the explicit realization live domain")
+    if reviewed_version == 5:
+        _reviewed_physical_definition_realization_native_policy(instance_identity_profile=instance_identity_profile, definition_application_profile=definition_application_profile)
+        return (REVIEWED_PHYSICAL_DEFINITION_REALIZATION_BUILD_SCHEMA,
+            _reviewed_realization_domain(REVIEWED_PHYSICAL_DEFINITION_REALIZATION_NATIVE_PROFILE, instance_identity_profile, definition_application_profile),
+            REVIEWED_PHYSICAL_DEFINITION_REALIZATION_LIVE_SUCCESS_SCHEMA,
+            _reviewed_realization_domain(REVIEWED_PHYSICAL_DEFINITION_REALIZATION_LIVE_SUCCESS_PROFILE, instance_identity_profile, definition_application_profile),
+            _reviewed_physical_definition_realization_receipt_binding, _reviewed_physical_definition_realization_native_pins,
+            reviewed_physical_definition_realization_packet_sha256_v2, _reviewed_physical_definition_realization_load_adapter,
+            _reviewed_physical_definition_realization_validate_adapter, reviewed_physical_definition_realization_receipt_bytes_v2,
+            _reviewed_definition_realization_scope(definition_application_profile))
     if reviewed_version == 4:
         _reviewed_definition_realization_native_policy(**_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
         return (REVIEWED_DEFINITION_REALIZATION_BUILD_SCHEMA, _reviewed_realization_domain(REVIEWED_DEFINITION_REALIZATION_NATIVE_PROFILE, instance_identity_profile, definition_application_profile),
@@ -3294,7 +3347,7 @@ def _live_success_domain(reviewed_version, *, instance_identity_profile=None, de
 
 def _live_review_components(owners, reviewed_version):
     """Retain the existing V2 owners and the explicit V3 legacy-alias closure."""
-    _need(type(reviewed_version) is int and reviewed_version in (2, 3, 4),
+    _need(type(reviewed_version) is int and reviewed_version in (2, 3, 4, 5),
           "explicit closed live review version required")
     if reviewed_version == 2:
         graph, admission, preservation = owners[4]._reviewed_preservation_owners()
@@ -3318,7 +3371,8 @@ def _live_review_components(owners, reviewed_version):
 def _build_verified_reviewed_norm_preservation_native(preparation, graph, admission, *args,
         _live_integrity_state, reviewed_version, expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256,
         toolchain, lake_executable, output_directory, timeout_seconds=60, cancellation=None, instance_identity_profile=None, definition_application_profile=None,
-        realization_preservation=None, expected_upstream_preservation_sha256=None, **kwargs):
+        realization_preservation=None, expected_upstream_preservation_sha256=None,
+        physical_request_raw=None, expected_physical_request_sha256=None, **kwargs):
     """Issue an opaque handle after one fresh default native build and replay.
 
     Existing Source/native/storage admission remains with the original caller.
@@ -3326,9 +3380,14 @@ def _build_verified_reviewed_norm_preservation_native(preparation, graph, admiss
     No fixture executor, runner, toolchain or persistence injection is accepted.
     """
 
-    domain_arguments = ({} if reviewed_version != 4 else {
+    _need(reviewed_version == 5 or physical_request_raw is expected_physical_request_sha256 is None,
+          "physical request requires the explicit physical realization live domain")
+    domain_arguments = ({} if reviewed_version not in (4, 5) else {
         "realization_preservation": realization_preservation,
         "expected_upstream_preservation_sha256": expected_upstream_preservation_sha256})
+    if reviewed_version == 5:
+        domain_arguments.update(physical_request_raw=physical_request_raw,
+            expected_physical_request_sha256=expected_physical_request_sha256)
     (integrity_function, integrity_code, integrity_defaults,
      integrity_keywords, persistence_state) = _live_integrity_state
 
@@ -3402,7 +3461,7 @@ def _build_verified_reviewed_norm_preservation_native(preparation, graph, admiss
                   and type(values["run"]) is process.ToolRunResult,
                   "same original live success native invocation/result required")
             observed["projection"] = _wire(_reviewed_native_execution_projection(
-                invocation, values["run"], process), MAX_RECEIPT_BYTES)
+                invocation, values["run"], process, physical_realization=reviewed_version == 5), MAX_RECEIPT_BYTES)
 
     def execute(checked, replay, custody):
         integrity_fence(owners)
@@ -3493,16 +3552,22 @@ def _build_verified_reviewed_norm_preservation_native(preparation, graph, admiss
 def _load_verified_reviewed_norm_preservation_native(handle, packet_files, preparation, graph, admission, *args,
         _live_integrity_state, reviewed_version, expected_receipt_sha256, expected_packet_sha256, expected_binary_sha256,
         expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain, instance_identity_profile=None, definition_application_profile=None,
-        realization_preservation=None, expected_upstream_preservation_sha256=None, **kwargs):
+        realization_preservation=None, expected_upstream_preservation_sha256=None,
+        physical_request_raw=None, expected_physical_request_sha256=None, **kwargs):
     """Join this process's live issuance to exact bytes and current review state.
 
     Reads invoke no compiler, executable, cleanup action or historical PID probe.
     Parent admitted-success custody, legal admission and release remain absent.
     """
 
-    domain_arguments = ({} if reviewed_version != 4 else {
+    _need(reviewed_version == 5 or physical_request_raw is expected_physical_request_sha256 is None,
+          "physical request requires the explicit physical realization live domain")
+    domain_arguments = ({} if reviewed_version not in (4, 5) else {
         "realization_preservation": realization_preservation,
         "expected_upstream_preservation_sha256": expected_upstream_preservation_sha256})
+    if reviewed_version == 5:
+        domain_arguments.update(physical_request_raw=physical_request_raw,
+            expected_physical_request_sha256=expected_physical_request_sha256)
     (integrity_function, integrity_code, integrity_defaults,
      integrity_keywords, persistence_state) = _live_integrity_state
 
@@ -3534,7 +3599,7 @@ def _load_verified_reviewed_norm_preservation_native(handle, packet_files, prepa
     (build_schema, native_profile, live_schema, live_profile, receipt_binding, pin_reader,
      packet_hasher, retained_loader, validator, formatter, receipt_scope) = domain
     authority_snapshot = dict(AUTHORITY)
-    contents, _ = _reviewed_retained_packet(packet_files)
+    contents, _ = (_reviewed_physical_retained_packet_v2 if reviewed_version == 5 else _reviewed_retained_packet)(packet_files)
     packet = tuple(sorted(contents.items()))
     _need(packet == entry[2], "exact issued live success packet required")
     original = _live_original_inputs(preparation, graph, admission, args, kwargs, **domain_arguments,
@@ -3573,7 +3638,7 @@ def _load_verified_reviewed_norm_preservation_native(handle, packet_files, prepa
     _need(_live_original_inputs(checked, graph, admission, args, kwargs, **domain_arguments,
         **_reviewed_definition_application_kwargs(definition_application_profile)) == original,
           "exact issued live success regenerated project required")
-    binding = receipt_binding(checked.to_dict(), admission, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)) if reviewed_version in (3, 4) else {}
+    binding = receipt_binding(checked.to_dict(), admission, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)) if reviewed_version in (3, 4, 5) else {}
     fence()
     result = owners[1].contracts.seal_record({
         **{key: value for key, value in replay.items() if key not in {"schema", "profile", "record_cid", "cid_scope"}},
@@ -3885,7 +3950,8 @@ def _validate_reviewed_native_retained_domain(
         packet_files, expected_receipt_sha256, expected_packet_sha256, expected_binary_sha256,
         expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256,
         toolchain, observation_profile=_REVIEWED_REPLAY_ACTUAL, instance_identity_profile=None, definition_application_profile=None, reviewed_version=3,
-        realization_preservation=None, expected_upstream_preservation_sha256=None, **kwargs):
+        realization_preservation=None, expected_upstream_preservation_sha256=None,
+        physical_request_raw=None, expected_physical_request_sha256=None, **kwargs):
     """Replay the complete retained V3 mixed aggregate and current inputs without Lean.
 
     The caller owns physical acquisition and independently trusted receipt,
@@ -3894,13 +3960,18 @@ def _validate_reviewed_native_retained_domain(
     kernel or authorize release/cache/native/statutory admission. The missing
     original-success adapter remains an explicit prerequisite in every result.
     """
-    _need(type(reviewed_version) is int and reviewed_version in (3, 4), "closed retained native domain required")
+    _need(type(reviewed_version) is int and reviewed_version in (3, 4, 5), "closed retained native domain required")
     _reviewed_definition_application_kwargs(definition_application_profile)
-    _need(definition_application_profile is None or reviewed_version == 4,
+    _need(definition_application_profile is None or reviewed_version in (4, 5),
           "whole-norm application requires the explicit realization retained domain")
+    _need(reviewed_version == 5 or physical_request_raw is expected_physical_request_sha256 is None,
+          "physical request requires the explicit physical realization retained domain")
     domain_arguments = ({} if reviewed_version == 3 else {
         "realization_preservation": realization_preservation,
         "expected_upstream_preservation_sha256": expected_upstream_preservation_sha256})
+    if reviewed_version == 5:
+        domain_arguments.update(physical_request_raw=physical_request_raw,
+            expected_physical_request_sha256=expected_physical_request_sha256)
     if reviewed_version == 3:
         domain_policy = _reviewed_mixed_native_policy
         build_schema, replay_schema, replay_profile = (REVIEWED_MIXED_PRESERVATION_BUILD_SCHEMA,
@@ -3909,6 +3980,16 @@ def _validate_reviewed_native_retained_domain(
         validator, formatter = validate_reviewed_norm_preservation_native_v3, reviewed_norm_preservation_receipt_bytes_v3
         receipt_binding, pin_reader, receipt_scope = (_reviewed_mixed_preservation_receipt_binding,
             _reviewed_mixed_preservation_native_pins, _REVIEWED_MIXED_SCOPE)
+    elif reviewed_version == 5:
+        domain_policy = _reviewed_physical_definition_realization_native_policy
+        build_schema, replay_schema, replay_profile = (REVIEWED_PHYSICAL_DEFINITION_REALIZATION_BUILD_SCHEMA,
+            REVIEWED_PHYSICAL_DEFINITION_REALIZATION_RECEIPT_REPLAY_SCHEMA,
+            REVIEWED_PHYSICAL_DEFINITION_REALIZATION_RECEIPT_REPLAY_PROFILE)
+        replay_profile = _reviewed_realization_domain(replay_profile, instance_identity_profile, definition_application_profile)
+        validator, formatter = (_reviewed_physical_definition_realization_validate_adapter,
+            reviewed_physical_definition_realization_receipt_bytes_v2)
+        receipt_binding, pin_reader, receipt_scope = (_reviewed_physical_definition_realization_receipt_binding,
+            _reviewed_physical_definition_realization_native_pins, _reviewed_definition_realization_scope(definition_application_profile))
     else:
         domain_policy = _reviewed_definition_realization_native_policy
         build_schema, replay_schema, replay_profile = (REVIEWED_DEFINITION_REALIZATION_BUILD_SCHEMA,
@@ -3922,7 +4003,7 @@ def _validate_reviewed_native_retained_domain(
                          (expected_packet_sha256, "whole retained reviewed packet")):
         _pin(value, label)
     _bound_tree(expected_binary_sha256, MAX_RECORD_BYTES)
-    contents, inventory = _reviewed_retained_packet(packet_files)
+    contents, inventory = (_reviewed_physical_retained_packet_v2 if reviewed_version == 5 else _reviewed_retained_packet)(packet_files)
     _need(_sha(_wire(inventory, MAX_RECORD_BYTES)) == expected_packet_sha256,
           "independent complete retained packet commitment differs")
     _need(type(receipt_raw) is bytes and 0 < len(receipt_raw) <= MAX_RECEIPT_BYTES
@@ -3999,11 +4080,11 @@ def _validate_reviewed_native_retained_domain(
     outputs = {**sources, **{name: contents["compiled/" + name.removeprefix(".lake/build/lib/lean/")]
                             for name in artifacts}}
     logs = {name: contents[name] for name in ("stdout.txt", "stderr.txt", "runner-error.txt")}
-    _need(all(len(raw) <= MAX_CAPTURE_BYTES for raw in outputs.values())
-          and all(len(raw) <= 3 * MAX_CAPTURE_BYTES for raw in logs.values()),
+    _need(all(len(raw) <= (8 * 1024**2 if reviewed_version == 5 else MAX_CAPTURE_BYTES) for raw in outputs.values())
+          and all(len(raw) <= (8 * 1024**2 if reviewed_version == 5 else 3 * MAX_CAPTURE_BYTES) for raw in logs.values()),
           "complete retained mixed outputs and diagnostics exceed original capture bounds")
     invocation, run = _reviewed_native_execution_from_projection(receipt["reviewed_execution_evidence"],
-        sources=sources, outputs=outputs, logs=logs, process=process)
+        sources=sources, outputs=outputs, logs=logs, process=process, physical_realization=reviewed_version == 5)
     expected_interface = ("synthetic-unit-boundary/v1" if observation_profile == _REVIEWED_REPLAY_FICTIONAL
                           else process.BOUNDED_TOOL_RUNNER_VERSION)
     _need(run.interface_version == expected_interface and run.runtime is process.ToolRuntime.NATIVE
@@ -4024,8 +4105,10 @@ def _validate_reviewed_native_retained_domain(
     _need(type(timeout) in (int, float) and math.isfinite(timeout) and 0 < timeout <= 60,
           "original bounded compiler timeout required")
     expected_limits = process.ToolRunLimits(timeout_seconds=timeout, cpu_seconds=timeout,
-        resident_memory_bytes=2 * 1024**3, max_output_bytes=MAX_CAPTURE_BYTES,
-        max_input_bytes=MAX_PROJECT_BYTES, max_workspace_bytes=128 * MAX_RECORD_BYTES,
+        resident_memory_bytes=2 * 1024**3, max_output_bytes=64 * 1024**2 if reviewed_version == 5 else MAX_CAPTURE_BYTES,
+        max_input_bytes=128 * 1024**2 if reviewed_version == 5 else MAX_PROJECT_BYTES,
+        max_workspace_bytes=256 * 1024**2 if reviewed_version == 5 else 128 * MAX_RECORD_BYTES,
+        max_file_bytes=128 * 1024**2 if reviewed_version == 5 else None,
         max_output_files=len(outputs))
     _need(all(getattr(invocation.limits, f.name) == getattr(expected_limits, f.name)
               and type(getattr(invocation.limits, f.name)) is type(getattr(expected_limits, f.name))
@@ -4075,7 +4158,7 @@ def _validate_reviewed_native_retained_domain(
           "retained-packet validator changed during replay")
     domain_policy(**_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
     return contracts.seal_record({**dict(PARENT_FALSE_FLAGS),
-        **(receipt_binding(manifest, admission, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)) if reviewed_version == 4 else {}), "schema": replay_schema,
+        **(receipt_binding(manifest, admission, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)) if reviewed_version in (4, 5) else {}), "schema": replay_schema,
         "profile": replay_profile, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile), "observation_profile": observation_profile,
         "retained_receipt_sha256": expected_receipt_sha256, "retained_packet_sha256": expected_packet_sha256,
         "preparation_sha256": expected_preservation_sha256, "graph_sha256": expected_graph_sha256,
@@ -4592,6 +4675,418 @@ __all__ += ["REVIEWED_DEFINITION_REALIZATION_BUILD_SCHEMA", "REVIEWED_DEFINITION
     "build_verified_reviewed_definition_realization_native_v1", "load_verified_reviewed_definition_realization_native_v1"]
 
 
+def _reviewed_physical_retained_packet_v2(packet_files):
+    _need(type(packet_files) in (tuple, list)
+          and 1 <= len(packet_files) <= 2 * MAX_REVIEWED_PRESERVATION_FILES
+              + MAX_REVIEWED_PRESERVATION_MODULES + 5,
+          "bounded complete reviewed-native byte packet required")
+    pairs, names = [], []
+    for item in packet_files:
+        _need(type(item) in (tuple, list) and len(item) == 2,
+              "exact retained path/raw-byte pairs required")
+        name, raw = item
+        _need(type(name) is str and 0 < len(name) <= 512
+              and re.fullmatch(r"[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*", name)
+              and all(part not in (".", "..") for part in name.split("/"))
+              and type(raw) is bytes, "closed retained paths and complete raw bytes required")
+        names.append(name); pairs.append([name, raw])
+    _need(names == sorted(set(names)), "sorted unique complete retained byte paths required")
+    _need(all(len(raw) <= 8 * 1024**2 for _name, raw in pairs)
+          and sum(len(raw) for _name, raw in pairs) <= 48 * 1024**2,
+          "complete physical native packet byte envelope exceeded")
+    _bound_tree(pairs, 64 * 1024**2, allow_bytes=True)
+    inventory = [{"path": name, "bytes": len(raw), "sha256": _sha(raw)} for name, raw in pairs]
+    return dict(pairs), inventory
+
+REVIEWED_PHYSICAL_DEFINITION_REALIZATION_BUILD_SCHEMA = "legal-reviewed-physical-definition-realization-native-build/v2"
+REVIEWED_PHYSICAL_DEFINITION_REALIZATION_NATIVE_PROFILE = "replayed-reviewed-physical-definition-realization-native-build/v2"
+REVIEWED_PHYSICAL_DEFINITION_REALIZATION_RECEIPT_REPLAY_SCHEMA = "legal-reviewed-physical-definition-realization-receipt-replay/v2"
+REVIEWED_PHYSICAL_DEFINITION_REALIZATION_RECEIPT_REPLAY_PROFILE = "current-reviewed-physical-definition-realization-retained-observation/v2"
+REVIEWED_PHYSICAL_DEFINITION_REALIZATION_LIVE_SUCCESS_SCHEMA = "legal-reviewed-physical-definition-realization-live-success/v2"
+REVIEWED_PHYSICAL_DEFINITION_REALIZATION_LIVE_SUCCESS_PROFILE = "current-reviewed-physical-definition-realization-live-native-owner-success/v2"
+_PHYSICAL_REALIZATION_BINDINGS_V2 = frozenset({"physical_context", "physical_context_owner_sha256", "physical_context_sha256", "physical_bridge_version"})
+_REVIEWED_PHYSICAL_DEFINITION_REALIZATION_BINDINGS = _REVIEWED_DEFINITION_REALIZATION_BINDINGS
+_REVIEWED_PHYSICAL_DEFINITION_REALIZATION_OPERATION_PINS = None
+
+
+def _reviewed_physical_definition_realization_native_policy(shared=None, *, instance_identity_profile=None, definition_application_profile=None):
+    _reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)
+    _reviewed_mixed_native_policy(shared, **_reviewed_source_use_kwargs(instance_identity_profile))
+    _need((REVIEWED_PHYSICAL_DEFINITION_REALIZATION_BUILD_SCHEMA, REVIEWED_PHYSICAL_DEFINITION_REALIZATION_NATIVE_PROFILE,
+           REVIEWED_PHYSICAL_DEFINITION_REALIZATION_RECEIPT_REPLAY_SCHEMA, REVIEWED_PHYSICAL_DEFINITION_REALIZATION_RECEIPT_REPLAY_PROFILE,
+           REVIEWED_PHYSICAL_DEFINITION_REALIZATION_LIVE_SUCCESS_SCHEMA, REVIEWED_PHYSICAL_DEFINITION_REALIZATION_LIVE_SUCCESS_PROFILE) == (
+        "legal-reviewed-physical-definition-realization-native-build/v2", "replayed-reviewed-physical-definition-realization-native-build/v2",
+        "legal-reviewed-physical-definition-realization-receipt-replay/v2", "current-reviewed-physical-definition-realization-retained-observation/v2",
+        "legal-reviewed-physical-definition-realization-live-success/v2", "current-reviewed-physical-definition-realization-live-native-owner-success/v2"),
+        "closed realization native, retained and live profiles cannot alias another domain")
+    _need(instance_identity_profile == "reviewed-source-use/v1"
+          and definition_application_profile == "whole-norm-definition-expansion/v1",
+          "physical realization requires fixed joint source-use whole-norm profiles")
+    if shared is not None:
+        _need((shared.REVIEWED_PHYSICAL_REALIZATION_SCHEMA_V2, shared.REVIEWED_PHYSICAL_REALIZATION_PROFILE_V2,
+               shared.REVIEWED_DEFINITION_REALIZATION_ROOT) == (
+            "legal-reviewed-physical-definition-realization-preparation/v2",
+            "reviewed-source-use-whole-norm-definition-physical-evidence-realization/v2",
+            "LegalReviewedDefinitionRealization"), "exact current physical realization source profile required")
+        shared._reviewed_physical_realization_policy_v2()
+        shared._reviewed_joint_physical_profiles_v2(instance_identity_profile, definition_application_profile)
+        shared._reviewed_definition_realization_policy(instance_identity_profile=instance_identity_profile, definition_application_profile=definition_application_profile)
+
+
+def _reviewed_physical_definition_realization_native_pins(owners, manifest, *, instance_identity_profile="reviewed-source-use/v1", definition_application_profile="whole-norm-definition-expansion/v1"):
+    global _REVIEWED_PHYSICAL_DEFINITION_REALIZATION_OPERATION_PINS
+    shared = owners[4]
+    _reviewed_physical_definition_realization_native_policy(shared, instance_identity_profile=instance_identity_profile, definition_application_profile=definition_application_profile)
+    _reviewed_physical_definition_realization_native_manifest(manifest, shared, instance_identity_profile=instance_identity_profile, definition_application_profile=definition_application_profile)
+    pins = _observed_producer_pins(owners, manifest)
+    current = shared._reviewed_preservation_pins(shared._reviewed_mixed_preservation_owners())
+    from . import legal_release_coordinator_v1 as physical_owner
+    physical_pin = _sha(Path(physical_owner.__file__).read_bytes())
+    _need(physical_pin == manifest["physical_context_owner_sha256"], "physical context owner differs from current Source")
+    current = {**current, str(Path(physical_owner.__file__).resolve()): physical_pin}
+    for path, expected in current.items():
+        _need(path not in pins or pins[path] == expected, "physical realization native producer pin collision")
+        pins[path] = expected
+    if _REVIEWED_PHYSICAL_DEFINITION_REALIZATION_OPERATION_PINS is None:
+        _REVIEWED_PHYSICAL_DEFINITION_REALIZATION_OPERATION_PINS = dict(pins)
+    _need(pins == _REVIEWED_PHYSICAL_DEFINITION_REALIZATION_OPERATION_PINS,
+          "physical realization native operation owners changed since first use")
+    return pins
+
+
+def _reviewed_physical_definition_realization_native_manifest(manifest, shared, *, instance_identity_profile="reviewed-source-use/v1", definition_application_profile="whole-norm-definition-expansion/v1"):
+    _reviewed_physical_definition_realization_native_policy(shared, instance_identity_profile=instance_identity_profile, definition_application_profile=definition_application_profile)
+    _reviewed_source_use_manifest(manifest, instance_identity_profile)
+    _need(instance_identity_profile is not None or "instance_identity_profile" not in manifest,
+          "legacy realization cannot acquire source-use identity")
+    _need(manifest.get("schema") == shared.REVIEWED_PHYSICAL_REALIZATION_SCHEMA_V2
+          and manifest.get("profile") == shared.REVIEWED_PHYSICAL_REALIZATION_PROFILE_V2,
+          "exact reviewed definition realization preparation required")
+    application = _reviewed_definition_application_manifest(manifest, definition_application_profile)
+    upstream = _reviewed_mixed_preservation_native_manifest(manifest["upstream_manifest"], shared,
+        **_reviewed_source_use_kwargs(instance_identity_profile))
+    for key in ("units", "reviewed_graph_sha256", "reviewed_admission_sha256", "declaration_sha256"):
+        _need(manifest[key] == upstream[key], "complete original reviewed realization binding differs: " + key)
+    selection = manifest["selection"]
+    units = manifest["units"]
+    if instance_identity_profile is not None:
+        _need(selection.get("instance_identity_profile") == instance_identity_profile
+              and selection.get("source_use_bindings") == [{"unit_id": unit["unit_id"],
+                  "source_use_binding": unit["source_use_binding"],
+                  "source_use_binding_sha256": unit["source_use_binding_sha256"]} for unit in units],
+              "realization selection must bind every exact ordered physical source use")
+    else:
+        _need(not any(key in selection for key in ("instance_identity_profile", "source_use_bindings")),
+              "legacy realization selection cannot acquire source-use identity")
+    definitions = [unit for unit in units if unit["kind"] == "definition"]
+    _need(len(definitions) == 1 and selection["definition_unit_id"] == definitions[0]["unit_id"]
+          and selection["definition_instance_module"] == definitions[0]["instance_module"],
+          "one exact original definition instance required")
+    extra = [name for name in manifest["expected_modules"] if name not in upstream["expected_modules"]]
+    _need(len(extra) == 2 and extra[1] == "LegalReviewedDefinitionRealization"
+          and re.fullmatch(r"LegalReviewedDefinitionRealization\.Instance[0-9a-f]{64}", extra[0]),
+          "one exact realization instance and distinct realization root required")
+    instance, root = extra
+    identity_payload = {"profile": shared.REVIEWED_PHYSICAL_REALIZATION_PROFILE_V2,
+        "upstream_preservation_sha256": manifest["reviewed_preservation_sha256"], "selection": selection}
+    if application:
+        shared._reviewed_definition_application_rows(application["definition_applications"], selection, units,
+            definition_application_profile=definition_application_profile)
+        identity_payload["definition_applications"] = application["definition_applications"]
+    context = manifest.get("physical_context")
+    _need(type(context) is dict and context.get("schema") == "legal-reviewed-physical-realization-context/v2"
+          and context.get("profile") == "source-use-whole-norm-physical-crosswalk-evidence-only/v1"
+          and context.get("instance_identity_profile") == instance_identity_profile
+          and context.get("definition_application_profile") == definition_application_profile
+          and manifest.get("physical_bridge_version") == 2
+          and _sha(_wire(context, MAX_RECORD_BYTES)) == manifest.get("physical_context_sha256"),
+          "complete explicit physical2 context binding required")
+    _pin(manifest.get("physical_context_owner_sha256"), "physical context owner")
+    identity_payload.update(physical_context_sha256=manifest["physical_context_sha256"],
+        physical_context_owner_sha256=manifest["physical_context_owner_sha256"])
+    identity = _sha(_wire(identity_payload, MAX_RECORD_BYTES))
+    _need(instance == "LegalReviewedDefinitionRealization.Instance" + identity,
+          "exact explicitly selected realization theorem identity required")
+    _need(manifest["expected_modules"] == upstream["expected_modules"] + extra
+          and len(set(manifest["expected_modules"])) == len(manifest["expected_modules"]) <= 11,
+          "complete original and new realization module population required")
+    wanted_imports = dict(upstream["module_imports"])
+    wanted_imports[instance] = [unit["instance_module"] for unit in units]
+    wanted_imports[root] = ["LegalReviewedMixedNormPreservation", instance]
+    _need(manifest["module_imports"] == wanted_imports,
+          "exact original sub-DAG and realization import closure required")
+    occurrences = selection["occurrences"]
+    _need(type(occurrences) is list and 1 <= len(occurrences) <= MAX_REVIEWED_PRESERVATION_THEOREMS
+          and all(type(row["ordinal"]) is int for row in occurrences)
+          and [row["ordinal"] for row in occurrences] == list(range(len(occurrences)))
+          and set(row["unit_id"] for row in occurrences) == set(unit["unit_id"] for unit in units if unit["kind"] == "norm")
+          and all(row["definition_use_record_cid"] in upstream["definition_use_record_cids"] for row in occurrences),
+          "every exact reviewed head occurrence and physical norm use required")
+    suffixes = ["definition_body_source_exact", "definition_realized"]
+    for ordinal in range(len(occurrences)):
+        suffixes.extend(("occurrence_" + str(ordinal) + "_source_exact", "occurrence_" + str(ordinal) + "_matches_body"))
+    suffixes.extend("unit_" + str(ordinal) + "_preservation_under_realization" for ordinal in range(len(units)))
+    application_suffixes = [name for unit in units if unit["kind"] == "norm"
+        for name in ("unit_" + str(unit["ordinal"]) + "_expansion_source_exact",
+                     "unit_" + str(unit["ordinal"]) + "_whole_norm_definition_expansion")] if application else []
+    if application:
+        _need(application["definition_application_obligations"] == [instance + "." + name for name in application_suffixes],
+              "exact ordered whole-norm application obligations required")
+        suffixes.extend(application_suffixes)
+    new = [instance + "." + suffix for suffix in suffixes]
+    _need(manifest["realization_obligations"] == new
+          and manifest["preservation_obligations"] == upstream["preservation_obligations"] + new
+          and len(set(manifest["preservation_obligations"])) == len(manifest["preservation_obligations"]) <= 40
+          and [row["theorem"] for row in manifest["theorem_bindings"]] == new,
+          "exact complete source-equality, realization, occurrence and child obligations required")
+    support = manifest["support_profile"]
+    application_support = {"conditional_whole_norm_obligations", "source_definition_premise_required", "original_atom_interpretations_unchanged"}
+    _need((all(support.get(key) is True for key in application_support) if application
+           else not application_support.intersection(support)),
+          "exact conditional application support scope required")
+    _need(support["cross_unit_definition_application_proved"] is False
+          and support["implicit_namespace_coercion"] is False and support["opaque_modal_rewrite"] is False
+          and support["single_binder_quantifier_nodes_only"] is True
+          and (support["max_units"], support["max_files"], support["max_modules"], support["max_obligations"],
+               support["max_project_utf8_bytes"]) == (8, 78, 11, 40, 8 * 1024**2)
+          and manifest["preparation_only"] is True and manifest["proof_status"] == "not_executed"
+          and manifest["lean_compilation_status"] == "not_executed" and manifest["semantic_use_eligible"] is False
+          and type(manifest["training_mask"]) is int and manifest["training_mask"] == 0
+          and type(manifest["evaluation_gold_mask"]) is int and manifest["evaluation_gold_mask"] == 0,
+          "realization preparation cannot claim native, semantic or corpus authority")
+    return manifest
+
+
+def _reviewed_physical_definition_realization_receipt_binding(manifest, admission, *, instance_identity_profile="reviewed-source-use/v1", definition_application_profile="whole-norm-definition-expansion/v1"):
+    _reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)
+    _reviewed_source_use_manifest(manifest, instance_identity_profile)
+    _need(instance_identity_profile is not None or "instance_identity_profile" not in manifest,
+          "legacy realization receipt cannot acquire source-use identity")
+    application = _reviewed_definition_application_manifest(manifest, definition_application_profile)
+    upstream = manifest["upstream_manifest"]
+    binding = {key: manifest[key] for key in _REVIEWED_PHYSICAL_DEFINITION_REALIZATION_BINDINGS
+               if key in manifest}
+    binding.update({key: manifest[key] for key in _PHYSICAL_REALIZATION_BINDINGS_V2})
+    binding.update({key: upstream[key] for key in ("provenance_kind", "scope_record_cid",
+        "interpretation_record_cid", "definition_use_record_cids")})
+    return binding | application | _reviewed_realization_kwargs(instance_identity_profile, definition_application_profile) | {"preservation_only": False, "constructed_model_only": definition_application_profile is None,
+        "cross_unit_definition_application_proved": False, "statutory_meaning_proved": False,
+        "release_ready": False, "full_formal_corpus_consistency_verified": False,
+        "generic_lean_v3_receipt_substituted": False,
+        "formal_assumptions": admission["formal_assumptions"], "formal_assumptions_proved": False}
+
+
+def _reviewed_physical_definition_realization_native_operation(preparation, preservation, graph, admission, args, kwargs, *,
+        expected_realization_sha256, expected_preservation_sha256, expected_graph_sha256,
+        expected_admission_sha256, toolchain, physical_request_raw, expected_physical_request_sha256, operation=None, instance_identity_profile="reviewed-source-use/v1", definition_application_profile="whole-norm-definition-expansion/v1"):
+    _reviewed_physical_definition_realization_native_policy(instance_identity_profile=instance_identity_profile, definition_application_profile=definition_application_profile)
+    _pin(expected_physical_request_sha256, "complete physical realization request")
+    _need(type(physical_request_raw) is bytes and 0 < len(physical_request_raw) <= MAX_INPUT_BYTES
+          and _sha(physical_request_raw) == expected_physical_request_sha256,
+          "complete original physical realization request bytes differ")
+    document = _reviewed_preservation_native_document(preparation)
+    upstream_document = _reviewed_preservation_native_document(preservation)
+    for value, label in ((expected_realization_sha256, "complete realization preparation"),
+            (expected_preservation_sha256, "complete original V3 preservation"),
+            (expected_graph_sha256, "complete reviewed graph"), (expected_admission_sha256, "complete reviewed admission")):
+        _pin(value, label)
+    _need(_sha(_wire(document, MAX_PREPARATION_BYTES)) == expected_realization_sha256
+          and _sha(_wire(upstream_document, MAX_PREPARATION_BYTES)) == expected_preservation_sha256,
+          "independent realization or upstream preservation envelope differs")
+    _need(type(toolchain) is str and len(toolchain) <= 128 and _TOOLCHAIN.fullmatch(toolchain)
+          and len(args) == 4 and type(kwargs) is dict, "complete pinned realization replay inputs required")
+    original = dict(graph=graph, admission=admission, args=list(args), kwargs=kwargs,
+        expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
+        toolchain=toolchain, physical_request_raw=physical_request_raw,
+        expected_physical_request_sha256=expected_physical_request_sha256)
+    if instance_identity_profile is not None:
+        original["instance_identity_profile"] = instance_identity_profile
+    if definition_application_profile is not None:
+        original["definition_application_profile"] = definition_application_profile
+    _bound_tree({"preparation": document, "preservation": upstream_document, **original}, MAX_INPUT_BYTES, allow_bytes=True)
+    owners = _owners(); shared = owners[4]
+    _reviewed_physical_definition_realization_native_policy(shared, instance_identity_profile=instance_identity_profile, definition_application_profile=definition_application_profile)
+    _need(type(preparation) is type(preservation) is shared.ReviewedPreservationCorpusPreparation,
+          "exact canonical realization and upstream preparation types required")
+    reviewer = shared._reviewed_mixed_preservation_owners()[1]
+    detached, commitment = reviewer.norm._snapshot(original)
+    _, project_pin = reviewer.norm._snapshot(document)
+    _, upstream_pin = reviewer.norm._snapshot(upstream_document)
+    callbacks = tuple((name, _live_callable_state(globals()[name])) for name in (
+        "_reviewed_physical_definition_realization_native_policy", "_reviewed_mixed_native_policy",
+        "_reviewed_physical_definition_realization_native_manifest", "_reviewed_physical_definition_realization_native_operation",
+        "_reviewed_preservation_native_document", "_reviewed_physical_definition_realization_native_pins",
+        "_reviewed_physical_definition_realization_receipt_binding", "_reviewed_source_use_kwargs",
+        "_reviewed_source_use_domain", "_reviewed_source_use_manifest",
+        "_reviewed_definition_application_kwargs", "_reviewed_realization_kwargs",
+        "_reviewed_realization_domain", "_reviewed_definition_application_manifest",
+        "_reviewed_definition_realization_scope"))
+    shared_callbacks = tuple((name, _live_callable_state(getattr(shared, name))) for name in (
+        "validate_reviewed_physical_definition_realization_corpus_v2", "_reviewed_physical_realization_policy_v2",
+        "_reviewed_joint_physical_profiles_v2", "_reviewed_definition_realization_policy",
+        "_reviewed_mixed_preservation_policy", "_reviewed_preservation_pins",
+        *(("_reviewed_definition_application_rows", "_reviewed_definition_application_expression") if definition_application_profile is not None else ())))
+    application_contract_callbacks = (tuple((name, _live_callable_state(getattr(shared.contracts, name)))
+        for name in ("require_text", "require_int")) if definition_application_profile is not None else ())
+
+    def fence():
+        _reviewed_physical_definition_realization_native_policy(shared, instance_identity_profile=instance_identity_profile, definition_application_profile=definition_application_profile)
+        _need(all(_live_callable_matches(globals().get(name), state) for name, state in callbacks)
+              and all(_live_callable_matches(getattr(shared, name), state) for name, state in shared_callbacks)
+              and all(_live_callable_matches(getattr(shared.contracts, name), state)
+                      for name, state in application_contract_callbacks)
+              and reviewer.norm._snapshot(original)[1] == commitment
+              and reviewer.norm._snapshot(detached)[1] == commitment
+              and reviewer.norm._snapshot(_reviewed_preservation_native_document(preparation))[1] == project_pin
+              and reviewer.norm._snapshot(_reviewed_preservation_native_document(preservation))[1] == upstream_pin,
+              "realization native source, upstream, callbacks or current observations changed")
+
+    def replay():
+        fence()
+        checked = shared.validate_reviewed_physical_definition_realization_corpus_v2(preparation, preservation,
+            detached["graph"], detached["admission"], *detached["args"],
+            expected_realization_sha256=expected_realization_sha256,
+            expected_preservation_sha256=expected_preservation_sha256,
+            expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
+            toolchain=toolchain, physical_request_raw=detached["physical_request_raw"],
+            expected_physical_request_sha256=detached["expected_physical_request_sha256"], **detached["kwargs"], instance_identity_profile=instance_identity_profile, definition_application_profile=definition_application_profile)
+        _need(_reviewed_preservation_native_document(checked) == document,
+              "current complete realization regeneration differs")
+        _reviewed_physical_definition_realization_native_manifest(checked.to_dict(), shared, instance_identity_profile=instance_identity_profile, definition_application_profile=definition_application_profile)
+        _reviewed_physical_definition_realization_native_pins(owners, checked.to_dict(), instance_identity_profile=instance_identity_profile, definition_application_profile=definition_application_profile)
+        fence()
+        return checked
+    checked = replay()
+    if operation is None:
+        return checked
+    error = None
+
+    def custody(stage, values):
+        nonlocal error
+        try:
+            fence()
+            _reviewed_physical_definition_realization_native_pins(owners, checked.to_dict(), instance_identity_profile=instance_identity_profile, definition_application_profile=definition_application_profile)
+        except (ValueError, TypeError, KeyError, OSError, UnicodeError, RecursionError) as failure:
+            if stage in ("snapshot", "toolchain", "after_persistence"):
+                raise
+            error = {"type": type(failure).__name__, "message": str(failure)[:2048]}
+        return error if stage == "before_persistence" else None
+    result = operation(checked, replay, custody)
+    fence()
+    return result
+
+
+def validate_reviewed_physical_definition_realization_native_v2(preparation, preservation, graph, admission, *args,
+        expected_realization_sha256, expected_preservation_sha256, expected_graph_sha256,
+        expected_admission_sha256, toolchain, physical_request_raw, expected_physical_request_sha256, instance_identity_profile, definition_application_profile, **kwargs):
+    """Replay complete current source/review and both exact project envelopes."""
+    return _reviewed_physical_definition_realization_native_operation(preparation, preservation, graph, admission, args, kwargs,
+        expected_realization_sha256=expected_realization_sha256, expected_preservation_sha256=expected_preservation_sha256,
+        expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
+        toolchain=toolchain, physical_request_raw=physical_request_raw,
+        expected_physical_request_sha256=expected_physical_request_sha256, instance_identity_profile=instance_identity_profile, definition_application_profile=definition_application_profile)
+
+
+def build_reviewed_physical_definition_realization_native_v2(preparation, preservation, graph, admission, *args,
+        expected_realization_sha256, expected_preservation_sha256, expected_graph_sha256,
+        expected_admission_sha256, toolchain, lake_executable, output_directory,
+        physical_request_raw, expected_physical_request_sha256, timeout_seconds=60, cancellation=None, instance_identity_profile, definition_application_profile, **kwargs):
+    """Check all constructed-model obligations through the existing native runner."""
+    _reviewed_physical_definition_realization_native_policy(instance_identity_profile=instance_identity_profile, definition_application_profile=definition_application_profile)
+    _need(type(timeout_seconds) in (int, float) and math.isfinite(timeout_seconds)
+          and 0 < timeout_seconds <= 60, "finite compiler timeout in (0,60] required")
+    def execute(checked, replay, custody):
+        return _build_validated_native(preparation, checked, replay=replay,
+            expected_preparation_sha256=expected_realization_sha256, toolchain=toolchain,
+            lake_executable=lake_executable, output_directory=output_directory,
+            timeout_seconds=timeout_seconds, cancellation=cancellation,
+            build_schema=REVIEWED_PHYSICAL_DEFINITION_REALIZATION_BUILD_SCHEMA,
+            profile=_reviewed_realization_domain(REVIEWED_PHYSICAL_DEFINITION_REALIZATION_NATIVE_PROFILE, instance_identity_profile, definition_application_profile),
+            flags=dict(PARENT_FALSE_FLAGS),
+            receipt_binding=lambda manifest: _reviewed_physical_definition_realization_receipt_binding(manifest, admission, instance_identity_profile=instance_identity_profile, definition_application_profile=definition_application_profile),
+            maximum_files=MAX_REVIEWED_PRESERVATION_FILES, maximum_modules=MAX_REVIEWED_PRESERVATION_MODULES,
+            maximum_theorems=MAX_REVIEWED_PRESERVATION_THEOREMS,
+            producer_pin_reader=(_reviewed_physical_definition_realization_native_pins if not _reviewed_realization_kwargs(instance_identity_profile, definition_application_profile) else
+                lambda owners, manifest: _reviewed_physical_definition_realization_native_pins(owners, manifest, instance_identity_profile=instance_identity_profile, definition_application_profile=definition_application_profile)),
+            preparation_document_reader=_reviewed_preservation_native_document,
+            closing_custody_guard=custody, receipt_scope=_reviewed_definition_realization_scope(definition_application_profile),
+            frozen_authority=dict(AUTHORITY), instance_identity_profile=instance_identity_profile, definition_application_profile=definition_application_profile)
+    return _reviewed_physical_definition_realization_native_operation(preparation, preservation, graph, admission, args, kwargs,
+        expected_realization_sha256=expected_realization_sha256, expected_preservation_sha256=expected_preservation_sha256,
+        expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
+        toolchain=toolchain, operation=execute, physical_request_raw=physical_request_raw,
+        expected_physical_request_sha256=expected_physical_request_sha256, instance_identity_profile=instance_identity_profile, definition_application_profile=definition_application_profile)
+
+
+def reviewed_physical_definition_realization_receipt_bytes_v2(receipt, *, instance_identity_profile="reviewed-source-use/v1", definition_application_profile="whole-norm-definition-expansion/v1"):
+    _reviewed_physical_definition_realization_native_policy(instance_identity_profile=instance_identity_profile, definition_application_profile=definition_application_profile)
+    fields = (_REVIEWED_DEFINITION_REALIZATION_CORE_FIELDS | _PHYSICAL_REALIZATION_BINDINGS_V2) | (frozenset({"instance_identity_profile"}) if instance_identity_profile is not None else frozenset())
+    fields |= (frozenset({"definition_application_profile", "definition_applications", "definition_application_obligations"})
+               if definition_application_profile is not None else frozenset())
+    _need(type(receipt) is dict and set(receipt) == fields
+          and receipt.get("schema") == REVIEWED_PHYSICAL_DEFINITION_REALIZATION_BUILD_SCHEMA
+          and receipt.get("profile") == _reviewed_realization_domain(REVIEWED_PHYSICAL_DEFINITION_REALIZATION_NATIVE_PROFILE, instance_identity_profile, definition_application_profile)
+          and (instance_identity_profile is None or receipt.get("instance_identity_profile") == instance_identity_profile),
+          "exact complete realization native receipt required")
+    _reviewed_source_use_manifest(receipt, instance_identity_profile)
+    _reviewed_definition_application_manifest(receipt, definition_application_profile)
+    _need(receipt["constructed_model_only"] is (definition_application_profile is None),
+          "exact conditional versus constructed-model receipt scope required")
+    return _wire(receipt, MAX_RECEIPT_BYTES)
+
+
+def reviewed_physical_definition_realization_packet_sha256_v2(packet_files, *, instance_identity_profile="reviewed-source-use/v1", definition_application_profile="whole-norm-definition-expansion/v1"):
+    _reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)
+    contents, inventory = _reviewed_physical_retained_packet_v2(packet_files)
+    return _sha(_wire(inventory, MAX_RECORD_BYTES))
+
+
+def _reviewed_physical_definition_realization_validate_adapter(preparation, graph, admission, *args,
+        expected_preservation_sha256, realization_preservation, expected_upstream_preservation_sha256, physical_request_raw, expected_physical_request_sha256, instance_identity_profile="reviewed-source-use/v1", definition_application_profile="whole-norm-definition-expansion/v1", **kwargs):
+    return validate_reviewed_physical_definition_realization_native_v2(preparation, realization_preservation, graph, admission,
+        *args, expected_realization_sha256=expected_preservation_sha256,
+        expected_preservation_sha256=expected_upstream_preservation_sha256, physical_request_raw=physical_request_raw,
+        expected_physical_request_sha256=expected_physical_request_sha256, **kwargs,
+        instance_identity_profile=instance_identity_profile, definition_application_profile=definition_application_profile)
+
+
+def _reviewed_physical_definition_realization_load_adapter(packet_files, preparation, graph, admission, *args,
+        expected_preservation_sha256, realization_preservation, expected_upstream_preservation_sha256, physical_request_raw, expected_physical_request_sha256, instance_identity_profile="reviewed-source-use/v1", definition_application_profile="whole-norm-definition-expansion/v1", **kwargs):
+    return load_reviewed_physical_definition_realization_native_v2(packet_files, preparation, realization_preservation, graph, admission,
+        *args, expected_realization_sha256=expected_preservation_sha256,
+        expected_preservation_sha256=expected_upstream_preservation_sha256, physical_request_raw=physical_request_raw,
+        expected_physical_request_sha256=expected_physical_request_sha256, **kwargs,
+        instance_identity_profile=instance_identity_profile, definition_application_profile=definition_application_profile)
+
+
+def validate_reviewed_physical_definition_realization_native_receipt_v2(receipt_raw, preparation, preservation, graph, admission, *args,
+        packet_files, expected_receipt_sha256, expected_packet_sha256, expected_binary_sha256,
+        expected_realization_sha256, expected_preservation_sha256, expected_graph_sha256,
+        expected_admission_sha256, toolchain, physical_request_raw, expected_physical_request_sha256, observation_profile=_REVIEWED_REPLAY_ACTUAL, instance_identity_profile, definition_application_profile, **kwargs):
+    """Replay this separate retained domain, without new native execution."""
+    _reviewed_physical_definition_realization_native_policy(instance_identity_profile=instance_identity_profile, definition_application_profile=definition_application_profile)
+    return _validate_reviewed_native_retained_domain(receipt_raw, preparation, graph, admission, *args,
+        reviewed_version=5, realization_preservation=preservation, physical_request_raw=physical_request_raw,
+        expected_physical_request_sha256=expected_physical_request_sha256,
+        expected_upstream_preservation_sha256=expected_preservation_sha256,
+        packet_files=packet_files, expected_receipt_sha256=expected_receipt_sha256,
+        expected_packet_sha256=expected_packet_sha256, expected_binary_sha256=expected_binary_sha256,
+        expected_preservation_sha256=expected_realization_sha256, expected_graph_sha256=expected_graph_sha256,
+        expected_admission_sha256=expected_admission_sha256, toolchain=toolchain,
+        observation_profile=observation_profile, **kwargs, instance_identity_profile=instance_identity_profile, definition_application_profile=definition_application_profile)
+
+
+def load_reviewed_physical_definition_realization_native_v2(packet_files, preparation, preservation, graph, admission, *args, physical_request_raw, expected_physical_request_sha256, instance_identity_profile, definition_application_profile, **kwargs):
+    _reviewed_physical_definition_realization_native_policy(instance_identity_profile=instance_identity_profile, definition_application_profile=definition_application_profile)
+    contents, _ = _reviewed_physical_retained_packet_v2(packet_files)
+    _need("build-receipt.json" in contents, "original complete realization native receipt required")
+    return validate_reviewed_physical_definition_realization_native_receipt_v2(contents["build-receipt.json"],
+        preparation, preservation, graph, admission, *args, packet_files=packet_files,
+        physical_request_raw=physical_request_raw, expected_physical_request_sha256=expected_physical_request_sha256, **kwargs,
+        instance_identity_profile=instance_identity_profile, definition_application_profile=definition_application_profile)
+
+__all__ += ['_reviewed_physical_definition_realization_native_policy', '_reviewed_physical_definition_realization_native_pins', '_reviewed_physical_definition_realization_native_manifest', '_reviewed_physical_definition_realization_receipt_binding', '_reviewed_physical_definition_realization_native_operation', 'validate_reviewed_physical_definition_realization_native_v2', 'build_reviewed_physical_definition_realization_native_v2', 'reviewed_physical_definition_realization_receipt_bytes_v2', 'reviewed_physical_definition_realization_packet_sha256_v2', '_reviewed_physical_definition_realization_validate_adapter', '_reviewed_physical_definition_realization_load_adapter', 'validate_reviewed_physical_definition_realization_native_receipt_v2', 'load_reviewed_physical_definition_realization_native_v2', 'build_verified_reviewed_physical_definition_realization_native_v2', 'load_verified_reviewed_physical_definition_realization_native_v2']
+
 # Capture callable objects AND code/default bindings at import completion. The
 # existing public profiles remain unchanged and never consult these guards.
 _LIVE_NATIVE_FUNCTIONS = tuple((name, _live_callable_state(value))
@@ -4912,6 +5407,89 @@ def _bind_live_success_independent_guard_v1():
             integrity(reviewed_version=4)
             return result
 
+    def build_verified_reviewed_physical_definition_realization_native_v2(preparation, preservation, graph, admission, *args,
+                expected_realization_sha256, expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256,
+                toolchain, lake_executable, output_directory, physical_request_raw, expected_physical_request_sha256, timeout_seconds=60, cancellation=None, instance_identity_profile, definition_application_profile, **kwargs):
+            """Issue this explicit reviewed domain through the shared original live engine."""
+            _reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)
+            _need(type(timeout_seconds) in (int, float) and math.isfinite(timeout_seconds)
+                  and 0 < timeout_seconds <= 60, "finite compiler timeout in (0,60] required")
+            if (entry_guard.__code__ is not entry_code
+                    or entry_guard.__defaults__ is not entry_defaults
+                    or guarded.__code__ is not guard_code
+                    or guarded.__defaults__ is not guard_defaults
+                    or set(guarded.__kwdefaults__ or {}) != {key for key, _ in guard_keywords}
+                    or not all((guarded.__kwdefaults__ or {})[key] is value
+                               for key, value in guard_keywords)):
+                raise ValueError("live success callable bindings changed: independent guard")
+            if "_live_integrity_state" in kwargs:
+                raise ValueError("private live integrity hook cannot be supplied")
+            entry_guard(5)
+            result = original_build_core(
+                preparation, graph, admission, *args, _live_integrity_state=integrity_state, reviewed_version=5,
+                expected_preservation_sha256=expected_realization_sha256,
+                realization_preservation=preservation, expected_upstream_preservation_sha256=expected_preservation_sha256,
+                physical_request_raw=physical_request_raw, expected_physical_request_sha256=expected_physical_request_sha256,
+                expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
+                toolchain=toolchain, lake_executable=lake_executable, output_directory=output_directory,
+                timeout_seconds=timeout_seconds, cancellation=cancellation, **kwargs,
+                **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
+            try:
+                if (integrity.__code__ is not integrity_state[1]
+                        or integrity.__defaults__ is not integrity_state[2]
+                        or set(integrity.__kwdefaults__ or {}) != {key for key, _ in integrity_state[3]}
+                        or not all((integrity.__kwdefaults__ or {})[key] is value
+                                   for key, value in integrity_state[3])):
+                    raise ValueError("live success callable bindings changed: captured public integrity")
+                integrity(reviewed_version=5)
+            except BaseException:
+                if type(result) is issued_handle_class:
+                    issued_handles.pop(result, None)
+                raise
+            return result
+
+    def load_verified_reviewed_physical_definition_realization_native_v2(handle, packet_files, preparation, preservation, graph, admission, *args,
+                expected_receipt_sha256, expected_packet_sha256, expected_binary_sha256,
+                expected_realization_sha256, expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain, physical_request_raw, expected_physical_request_sha256, instance_identity_profile, definition_application_profile, **kwargs):
+            """Join this explicit domain's original live issuance without new execution."""
+            _reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)
+            if (globals().get("_live_handle_entry") is not original_handle_entry
+                    or original_handle_entry.__code__ is not handle_code
+                    or original_handle_entry.__defaults__ is not handle_defaults
+                    or set(original_handle_entry.__kwdefaults__ or {}) != {key for key, _ in handle_keywords}
+                    or not all((original_handle_entry.__kwdefaults__ or {})[key] is value
+                               for key, value in handle_keywords)):
+                raise ValueError("live success callable bindings changed: independent _live_handle_entry")
+            original_handle_entry(handle, reviewed_version=5, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
+            if (entry_guard.__code__ is not entry_code
+                    or entry_guard.__defaults__ is not entry_defaults
+                    or guarded.__code__ is not guard_code
+                    or guarded.__defaults__ is not guard_defaults
+                    or set(guarded.__kwdefaults__ or {}) != {key for key, _ in guard_keywords}
+                    or not all((guarded.__kwdefaults__ or {})[key] is value
+                               for key, value in guard_keywords)):
+                raise ValueError("live success callable bindings changed: independent guard")
+            if "_live_integrity_state" in kwargs:
+                raise ValueError("private live integrity hook cannot be supplied")
+            entry_guard(5)
+            result = original_load_core(
+                handle, packet_files, preparation, graph, admission, *args, _live_integrity_state=integrity_state, reviewed_version=5,
+                expected_receipt_sha256=expected_receipt_sha256, expected_packet_sha256=expected_packet_sha256,
+                expected_binary_sha256=expected_binary_sha256,
+                expected_preservation_sha256=expected_realization_sha256,
+                realization_preservation=preservation, expected_upstream_preservation_sha256=expected_preservation_sha256,
+                physical_request_raw=physical_request_raw, expected_physical_request_sha256=expected_physical_request_sha256,
+                expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
+                toolchain=toolchain, **kwargs, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
+            if (integrity.__code__ is not integrity_state[1]
+                    or integrity.__defaults__ is not integrity_state[2]
+                    or set(integrity.__kwdefaults__ or {}) != {key for key, _ in integrity_state[3]}
+                    or not all((integrity.__kwdefaults__ or {})[key] is value
+                               for key, value in integrity_state[3])):
+                raise ValueError("live success callable bindings changed: captured public integrity")
+            integrity(reviewed_version=5)
+            return result
+
     functions = {name: value for name, value in tuple(globals().items())
                  if type(value) is function_type and value.__module__ == __name__}
     functions.update(_live_success_guard=guarded, _live_entry_guard=entry_guard,
@@ -4921,18 +5499,23 @@ def _bind_live_success_independent_guard_v1():
         build_verified_reviewed_norm_preservation_native_v3=build_verified_reviewed_norm_preservation_native_v3,
         load_verified_reviewed_norm_preservation_native_v3=load_verified_reviewed_norm_preservation_native_v3,
         build_verified_reviewed_definition_realization_native_v1=build_verified_reviewed_definition_realization_native_v1,
-        load_verified_reviewed_definition_realization_native_v1=load_verified_reviewed_definition_realization_native_v1)
+        load_verified_reviewed_definition_realization_native_v1=load_verified_reviewed_definition_realization_native_v1,
+        build_verified_reviewed_physical_definition_realization_native_v2=build_verified_reviewed_physical_definition_realization_native_v2,
+        load_verified_reviewed_physical_definition_realization_native_v2=load_verified_reviewed_physical_definition_realization_native_v2)
     states = tuple((name, _live_callable_state(value)) for name, value in functions.items())
     return (guarded, entry_guard, integrity, build_verified_reviewed_norm_preservation_native_v2,
             load_verified_reviewed_norm_preservation_native_v2,
             build_verified_reviewed_norm_preservation_native_v3,
             load_verified_reviewed_norm_preservation_native_v3,
             build_verified_reviewed_definition_realization_native_v1,
-            load_verified_reviewed_definition_realization_native_v1, states)
+            load_verified_reviewed_definition_realization_native_v1,
+            build_verified_reviewed_physical_definition_realization_native_v2,
+            load_verified_reviewed_physical_definition_realization_native_v2, states)
 
 
 (_live_success_guard, _live_entry_guard, _live_integrity_checker, build_verified_reviewed_norm_preservation_native_v2,
  load_verified_reviewed_norm_preservation_native_v2, build_verified_reviewed_norm_preservation_native_v3,
  load_verified_reviewed_norm_preservation_native_v3,
  build_verified_reviewed_definition_realization_native_v1, load_verified_reviewed_definition_realization_native_v1,
+ build_verified_reviewed_physical_definition_realization_native_v2, load_verified_reviewed_physical_definition_realization_native_v2,
  _LIVE_NATIVE_FUNCTIONS) = _bind_live_success_independent_guard_v1()

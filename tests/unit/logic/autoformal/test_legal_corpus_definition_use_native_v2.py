@@ -5804,3 +5804,215 @@ def test_whole_norm_source_use_preparation_reaches_current_consumer_without_nati
     assert manifest["training_mask"] == manifest["evaluation_gold_mask"] == 0
     assert manifest["semantic_use_eligible"] is False and not any(manifest["authority"].values())
     reviewed_whole_norm_consumer_checks_v3(c)
+
+
+# PhysicalV2 is an additive domain. These ordinary tests prepare and replay
+# authored fictional data only; the opt-in installed case below is separate.
+@pytest.fixture(scope="module")
+def reviewed_physical_realization_native_control_v2(tmp_path_factory):
+    path = Path(__file__).with_name("test_corpus_release_cli.py")
+    spec = importlib.util.spec_from_file_location("_physical_realization_native_release_fixture_v2", path)
+    helper = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(helper)
+    directory = tmp_path_factory.mktemp("physical-realization-native-v2")
+    material = helper._direct_physical_source_material(directory / "material", reviewed_version=3)
+    return helper.reviewed_physical_whole_norm_control_v2(material)
+
+
+def reviewed_physical_realization_native_options_v2(c):
+    return dict(c["physical_options"], expected_realization_sha256=c["realization_sha"])
+
+
+def test_reviewed_physical_realization_native_replays_both_envelopes_and_same_unit_consumer(
+        reviewed_physical_realization_native_control_v2):
+    c = reviewed_physical_realization_native_control_v2
+    options = reviewed_physical_realization_native_options_v2(c)
+    checked = native.validate_reviewed_physical_definition_realization_native_v2(
+        c["preparation"], c["preservation"], c["graph"], c["admission"], *c["args"], **options)
+    assert checked == c["preparation"]
+    manifest, upstream = checked.to_dict(), c["preservation"].to_dict()
+    assert manifest["schema"] == "legal-reviewed-physical-definition-realization-preparation/v2"
+    assert manifest["profile"] == "reviewed-source-use-whole-norm-definition-physical-evidence-realization/v2"
+    assert manifest["upstream_manifest"] == upstream
+    assert set(upstream["preservation_obligations"]) < set(manifest["preservation_obligations"])
+    assert manifest["physical_context"]["physical_request_sha256"] == c["physical_request_sha256"]
+    assert manifest["physical_bridge_version"] == 2
+    assert manifest["training_mask"] == manifest["evaluation_gold_mask"] == 0
+    assert manifest["preparation_only"] is True and manifest["lean_compilation_status"] == "not_executed"
+    assert all(value is False for value in manifest["authority"].values())
+    # The existing fresh wrong-target zero-callback control and exactly one
+    # detached same-unit consumer run on the ORIGINAL signed replay, not Lean.
+    reviewed_whole_norm_consumer_checks_v3(c)
+
+
+@pytest.mark.parametrize("name,value", [("instance_identity_profile", None),
+    ("definition_application_profile", None), ("instance_identity_profile", "borrowed-source-use")])
+def test_reviewed_physical_realization_native_refuses_profile_downgrade_before_execution(
+        reviewed_physical_realization_native_control_v2, name, value):
+    c = reviewed_physical_realization_native_control_v2
+    options = reviewed_physical_realization_native_options_v2(c); options[name] = value
+    with pytest.raises(ValueError):
+        native.validate_reviewed_physical_definition_realization_native_v2(
+            c["preparation"], c["preservation"], c["graph"], c["admission"], *c["args"], **options)
+
+
+def test_reviewed_physical_realization_native_refuses_complete_plain_project_in_physical_domain(
+        reviewed_physical_realization_native_control_v2, reviewed_native_control_v3):
+    c = reviewed_physical_realization_native_control_v2
+    shared = c["shared"]
+    # The old plain domain intentionally excludes physical external dependencies.
+    # Build its positive baseline from the existing genuine nonphysical fixture;
+    # never strip or re-sign the physical component's declaration to fit it.
+    plain_control = dict(reviewed_native_control_v3)
+    plain_control = plain_control["shared_helper"].reviewed_definition_realization_fresh_case(
+        plain_control, "repeated-body")
+    profiles = dict(instance_identity_profile="reviewed-source-use/v1",
+        definition_application_profile="whole-norm-definition-expansion/v1")
+    plain_control["preservation"] = shared.prepare_reviewed_norm_preservation_corpus_v3(
+        plain_control["graph"], plain_control["admission"], *plain_control["args"],
+        expected_graph_sha256=plain_control["graph_sha"],
+        expected_admission_sha256=plain_control["admission_sha"], toolchain=TOOLCHAIN,
+        instance_identity_profile=profiles["instance_identity_profile"], **plain_control["kwargs"])
+    plain_control["preparation"] = shared.prepare_reviewed_definition_realization_corpus_v1(
+        plain_control["preservation"], plain_control["graph"], plain_control["admission"], *plain_control["args"],
+        expected_preservation_sha256=shared.reviewed_preservation_corpus_sha256(plain_control["preservation"]),
+        expected_graph_sha256=plain_control["graph_sha"],
+        expected_admission_sha256=plain_control["admission_sha"], toolchain=TOOLCHAIN,
+        **profiles, **plain_control["kwargs"])
+    plain = plain_control["preparation"]
+    assert native.validate_reviewed_definition_realization_native_v1(
+        plain, plain_control["preservation"], plain_control["graph"], plain_control["admission"],
+        *plain_control["args"], **reviewed_realization_native_arguments_v1(plain_control), **profiles) == plain
+    assert plain.to_dict()["schema"] == "legal-reviewed-definition-realization-preparation/v1"
+    assert plain.to_dict()["reviewed_admission_sha256"] == plain_control["admission_sha"]
+    assert plain_control["admission_sha"] != c["admission_sha"]
+    # A complete, positively replayed plain project still cannot replace the
+    # physical component's current source-bound whole-norm regeneration.
+    options = reviewed_physical_realization_native_options_v2(c)
+    options["expected_realization_sha256"] = shared.reviewed_preservation_corpus_sha256(plain)
+    with pytest.raises(ValueError,
+            match="realization differs from complete current source and preservation regeneration"):
+        native.validate_reviewed_physical_definition_realization_native_v2(
+            plain, c["preservation"], c["graph"], c["admission"], *c["args"], **options)
+    assert shared.reviewed_preservation_corpus_sha256(c["preparation"]) == c["realization_sha"]
+
+
+@pytest.mark.parametrize("mutation", ["physical_bytes", "physical_pin", "upstream_pin"])
+def test_reviewed_physical_realization_native_refuses_crossed_original_input_pins(
+        reviewed_physical_realization_native_control_v2, mutation):
+    c = reviewed_physical_realization_native_control_v2
+    options = reviewed_physical_realization_native_options_v2(c)
+    if mutation == "physical_bytes":
+        options["physical_request_raw"] += b" "
+    else:
+        options["expected_physical_request_sha256" if mutation == "physical_pin" else "expected_preservation_sha256"] = "0" * 64
+    with pytest.raises(ValueError):
+        native.validate_reviewed_physical_definition_realization_native_v2(
+            c["preparation"], c["preservation"], c["graph"], c["admission"], *c["args"], **options)
+
+
+def test_reviewed_physical_realization_unissued_handle_precedes_owner_lookup(
+        reviewed_physical_realization_native_control_v2, monkeypatch):
+    c = reviewed_physical_realization_native_control_v2
+    calls = []
+    with monkeypatch.context() as patch:
+        patch.setattr(native, "_owners", lambda: calls.append(True))
+        with pytest.raises(ValueError, match="not issued by this process and native thread"):
+            native.load_verified_reviewed_physical_definition_realization_native_v2(
+                object(), (), c["preparation"], c["preservation"], c["graph"], c["admission"], *c["args"],
+                expected_receipt_sha256="0" * 64, expected_packet_sha256="0" * 64,
+                expected_binary_sha256={}, **reviewed_physical_realization_native_options_v2(c))
+    assert calls == []
+
+
+def test_reviewed_physical_retained_byte_envelope_keeps_legacy_packet_contract_separate():
+    # Opaque bytes are shape-only; this test supplies no valid receipt, proof,
+    # compiler observation, current review or success handle.
+    block = b"x" * (8 * 1024**2)
+    packet = [("compiled/one.olean", block), ("compiled/two.olean", block)]
+    assert len(native._reviewed_physical_retained_packet_v2(packet)[0]) == 2
+    assert native._reviewed_retained_packet(packet)[0] == dict(packet)
+    legacy_only = [("compiled/legacy.olean", block + b"x")]
+    assert native._reviewed_retained_packet(legacy_only)[0] == dict(legacy_only)
+    with pytest.raises(ValueError, match="packet byte envelope"):
+        native._reviewed_physical_retained_packet_v2(legacy_only)
+    too_many = [("compiled/part" + str(i) + ".olean", block) for i in range(7)]
+    with pytest.raises(ValueError, match="packet byte envelope"):
+        native._reviewed_physical_retained_packet_v2(too_many)
+
+
+def test_reviewed_physical_definition_realization_installed_native_uses_one_original_live_factory(
+        bound_norm_installed_lake, reviewed_physical_realization_native_control_v2, tmp_path):
+    # The installed fixture owns the explicit Native opt-in; ordinary selections
+    # of the other tests never request/probe/build an installed toolchain.
+    executable, binary_pins = bound_norm_installed_lake
+    c = reviewed_physical_realization_native_control_v2
+    options = reviewed_physical_realization_native_options_v2(c)
+    output = tmp_path / "actual-physical-whole-norm-definition-realization"
+    handle = native.build_verified_reviewed_physical_definition_realization_native_v2(
+        c["preparation"], c["preservation"], c["graph"], c["admission"], *c["args"],
+        **options, lake_executable=str(executable), output_directory=output, timeout_seconds=60)
+    packet = reviewed_live_success_packet_v2(output)
+    receipt = json.loads(dict(packet)["build-receipt.json"])
+    result = native.load_verified_reviewed_physical_definition_realization_native_v2(
+        handle, packet, c["preparation"], c["preservation"], c["graph"], c["admission"], *c["args"],
+        **options, expected_receipt_sha256=hashlib.sha256(dict(packet)["build-receipt.json"]).hexdigest(),
+        expected_packet_sha256=native.reviewed_physical_definition_realization_packet_sha256_v2(packet),
+        expected_binary_sha256=binary_pins)
+    assert receipt["binary_sha256"] == binary_pins
+    assert result["live_native_success_authenticated"] is result["native_execution_authenticated"] is True
+    assert result["original_admitted_parent_custody_authenticated"] is result["original_success_authenticated"] is False
+    assert result["training_mask"] == result["evaluation_gold_mask"] == 0
+    assert all(value is False for value in result["authority"].values())
+    assert receipt["physical_context"] == c["preparation"].to_dict()["physical_context"]
+    assert len(receipt["conditional_theorems"]) == len(c["preparation"].to_dict()["preservation_obligations"])
+    reviewed_whole_norm_consumer_checks_v3(c)
+
+
+def test_physical_native_workspace_and_file_caps_keep_exact_declared_compiler_argv():
+    """Evaluate ACTUAL production DTO expressions; never probe/launch a tool."""
+    import ast
+    import inspect
+    import textwrap
+    import sys
+    if sys.platform != "linux":
+        pytest.skip("Linux prlimit argv contract only; no foreign-platform qualification")
+    process = native._owners()[3]
+    try:
+        prlimit_path = process._linux_prlimit_path()
+    except process.ToolProcessError:
+        pytest.skip("owner-selected Linux prlimit helper unavailable")
+    argv = ("/pinned-argument-only/lake", "--offline", "--no-cache", "build", "legal")
+
+    def production_limits(function, bindings):
+        tree = ast.parse(textwrap.dedent(inspect.getsource(function)))
+        calls = [node for node in ast.walk(tree) if isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name)
+            and node.func.value.id == "process" and node.func.attr == "ToolRunLimits"]
+        assert len(calls) == 1
+        expression = calls[0]
+        # Only the real DTO construction and its ordinary len(path-population)
+        # call run; no surrounding preparer, installed-toolchain or runner code.
+        assert not expression.args and all(keyword.arg is not None for keyword in expression.keywords)
+        for call in (node for node in ast.walk(expression) if isinstance(node, ast.Call)):
+            assert call is expression or isinstance(call.func, ast.Name) and call.func.id == "len"
+        namespace = {"__builtins__": {}, "process": process, "len": len,
+            "MAX_CAPTURE_BYTES": native.MAX_CAPTURE_BYTES, "MAX_PROJECT_BYTES": native.MAX_PROJECT_BYTES,
+            "MAX_RECORD_BYTES": native.MAX_RECORD_BYTES, **bindings}
+        return eval(compile(ast.Expression(expression), "<actual-native-limit-constructor-only>", "eval"), namespace)
+
+    selected = production_limits(native._build_validated_native,
+        {"physical_realization": True, "timeout_seconds": 60, "output_paths": ("diagnostic-only",)})
+    legacy = production_limits(native._build_validated_native,
+        {"physical_realization": False, "timeout_seconds": 60, "output_paths": ("diagnostic-only",)})
+    expected = [prlimit_path, "--core=0:0", "--fsize=134217728:134217728", "--cpu=60:60", "--", *argv]
+    assert selected.max_file_bytes == 128 * 1024**2
+    assert selected.max_workspace_bytes == 256 * 1024**2
+    assert legacy.max_file_bytes is None and legacy.max_workspace_bytes == 128 * 1024**2
+    assert process._linux_resource_argv(argv, selected) == expected
+    assert process._linux_resource_argv(argv, legacy) == expected
+    for version in (3, 4, 5):
+        retained = production_limits(native._validate_reviewed_native_retained_domain,
+            {"reviewed_version": version, "timeout": 60, "outputs": {"diagnostic-only": b""}})
+        assert retained == (selected if version == 5 else legacy)
+        assert process._linux_resource_argv(argv, retained) == expected
