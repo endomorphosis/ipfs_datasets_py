@@ -10798,15 +10798,20 @@
         "prepare_source_review_requests",
         "validate_source_review_requests",
         "assess_source_review_groups",
-        "validate_source_review_assessment"
+        "validate_source_review_assessment",
+        "prepare_official_source_review_requests_v2",
+        "validate_official_source_review_requests_v2",
+        "assess_official_source_review_groups_v2",
+        "validate_official_source_review_assessment_v2"
       ],
       "compatibility_dependency": false,
       "evidence_ids": [
         "current-complete-source-review-validator-software-20261119",
-        "same-namespace-capacity-and-whole-norm-native-20261119"
+        "same-namespace-capacity-and-whole-norm-native-20261119",
+        "official-source-occurrence-pending-pilot-and-owning153-20261120"
       ],
       "id": "complete-source-context-evidence-review",
-      "notes": "Existing modern complete parent/official source-context owner, indexed after detecting it was absent while the legacy delegate was listed. Uses current official custody-v2 dependencies. Nine source/context declaration slots and seven deferred semantic/proof questions; synthetic evidence, all-authority-false software tests only. Current canonical fromraw preparation, assessment and independent complete-assessment validation now finished in619.366s on Source4166/ad788 with all42outputs/148132089B retained and genuine SDK/resource/Source closure. It preserves418requests/subjects/dependencyManifests/7pages and6688questions(3762sourceSlots+2926deferred); all418groups remainpending, authenticatedEvidence0/reviews0/authorityfalse/masks0 and §101absent. Earlier38output uppercaseID refusal and staleindex predispatch failure remain retained. Independent production reviews, Native AST and statutory/corpus admission remain pending. No new implementation or replacement legacy delegate.",
+      "notes": "Existing modern complete parent/official source-context owner, indexed after detecting it was absent while the legacy delegate was listed. Uses current official custody-v2 dependencies. Nine source/context declaration slots and seven deferred semantic/proof questions; synthetic evidence, all-authority-false software tests only. Current canonical fromraw preparation, assessment and independent complete-assessment validation now finished in619.366s on Source4166/ad788 with all42outputs/148132089B retained and genuine SDK/resource/Source closure. It preserves418requests/subjects/dependencyManifests/7pages and6688questions(3762sourceSlots+2926deferred); all418groups remainpending, authenticatedEvidence0/reviews0/authorityfalse/masks0 and §101absent. Earlier38output uppercaseID refusal and staleindex predispatch failure remain retained. Independent production reviews, Native AST and statutory/corpus admission remain pending. That earlier418-group cohort added no implementation and did not replace the legacy delegate. Separate2026-11-20 additive official-source-occurrence v2 APIs are qualified atowner66620/eca8f8aa+test63920/5ef75007, Source4166/33cface9: complete153software cases(133retained+20new),0FES, plus actual3document/4distinctoccurrence pending §101/§7213/§7214 P/A/independentV on the same epoch. All4groups pending,0authenticatedEvidence/reviews,64questions(36active+28deferred),6rawoutputs222332B,false authority/eligibility and masks0; governingedition/applicabilitynull and candidate references unselected/no acceptedAST. Root independently accepted exact153case accounting and all6rawpilot outputs. Original94stdout/CPUcutoff,144P9F fixture,pilotv03/v04 refusals and separatev05/8d4 success retain their scopes. Existing126component and24task statuses remain unchanged; native AST/legal/model/corpus/full-goal gates remain open.",
       "owner_module": "ipfs_datasets_py.logic.autoformal.corpus_source_review",
       "ownership_role": "existing_single_owner",
       "path": "ipfs_datasets_py/logic/autoformal/corpus_source_review.py",
@@ -10814,7 +10819,31 @@
       "status": "implementation_present",
       "owning_tests": [
         "tests/unit/logic/autoformal/test_corpus_source_review.py"
-      ]
+      ],
+      "official_occurrence_pending_v2_20261120": {
+        "evidence_id": "official-source-occurrence-pending-pilot-and-owning153-20261120",
+        "profile": "official-source-occurrence-context-evidence-review/v2",
+        "Source_rows": 4166,
+        "Source_epoch": "33cface908d67660eebee522866f2c36dbfdc4f53d945982507e621f10bd5e0b",
+        "software_cases": 153,
+        "retained_cases": 133,
+        "new_official_occurrence_cases": 20,
+        "real_source_documents": 3,
+        "original_source_occurrences": 4,
+        "pending_groups": 4,
+        "authenticated_evidence": 0,
+        "supplied_reviews": 0,
+        "governing_edition_selected": null,
+        "applicability_selected": null,
+        "native_AST_legal_model_or_corpus_authority": false,
+        "training_and_evaluation_gold_masks": 0,
+        "Root_readback_accepted": true,
+        "private_grouped_evidence": {
+          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/official-source-occurrence-four-guide-proposal-v01/official-source-occurrence-evidence-index-v01.json",
+          "bytes": 16956,
+          "sha256": "841078dbea7e22831a917b66d3cfbd2a9f04a5ea8c454440369157101f1ff7d2"
+        }
+      }
     }
   ],
   "entry_point": "ipfs_datasets_py/logic/autoformal/README.md",
@@ -17413,6 +17442,21 @@
         "pretrained_model_quality_training_convergence_statutory_Lean_gold_corpus_or_programme_authority": false,
         "no_automatic_checkpoint_or_Source_epoch_migration": true
       }
+    },
+    {
+      "id": "official-source-occurrence-pending-pilot-and-owning153-20261120",
+      "root": "artifact_workspace",
+      "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/official-source-occurrence-four-guide-proposal-v01/official-source-occurrence-evidence-index-v01.json",
+      "observed_bytes": 16956,
+      "observed_sha256": "841078dbea7e22831a917b66d3cfbd2a9f04a5ea8c454440369157101f1ff7d2",
+      "required_for_catalog_check": false,
+      "status": "Root_readback_accepted_exact_whole153_software_and_same_epoch_real_pending_source_PAV",
+      "task_ids": [
+        "LIR-02",
+        "LIR-05",
+        "LIR-06"
+      ],
+      "scope": "Existing source-review official-occurrence v2 owner; entire153-case software file plus distinct same33cf epoch3document4occurrence real pending source P/A/V. All4groups pending,0reviews/authorityfalse/masks0. Preserve472prior records and all failures/earlier epochs. No422union, statutory meaning, native AST, Native Lean, model/training/convergence, corpus/release or task-completion authority."
     }
   ]
 }

@@ -1861,7 +1861,7 @@
         "Reuse the existing intake-v2, wire join-v3 and explicitly compatible downstream owners to reconcile the observed law-card alias/file-selection drift. Preserve the homogeneous five-string envelope and family discriminator where actual selected tables conform; metadata-only intake/join qualification does not supply current Hub authentication, table conformance or viewer readback. Hand producer/publication changes to LIR-21; retain separate law/span/entity revision namespaces and family denominators."
       ],
       "priority": "P0",
-      "remaining_scope": "Raw-row coordinate/cache/paired/context/join transport is published. Bind selected physical rows/editions and preserve distinct original-input and retained eligibility contracts through their existing owners. Add bounded, independently pinned full-report publication/readback before treating a small exchange reference as portable evidence. The supplied-text API cannot recover removed upstream bytes. Capture selectors in new production and reconcile historical producer-occurrence decisions. Select actual reviewer trust and collect authenticated source/context evidence and decisions under the available compatible domain. Applying reviewed decisions and semantic qualification require separately versioned records. Keep native paragraph, parent-field, normalized and rendered coordinate profiles distinct; larger corpus transports need separate qualification. Current2026-11-19 fromraw source-only P/A/independentcompleteV is mechanically qualified on Source4166/ad788 with42retainedfiles/148132089B and418pendinggroups,0authenticatedEvidence/reviews,authorityfalse/masks0; see grouped evidence same-namespace-capacity-and-whole-norm-native-20261119. This supersedes the earlier current-data-generation pending cutoff only: statutory source/edition/meaning review, §101-inclusive population and typed Native/model/gold/corpus admission remain open.",
+      "remaining_scope": "Raw-row coordinate/cache/paired/context/join transport is published. Bind selected physical rows/editions and preserve distinct original-input and retained eligibility contracts through their existing owners. Add bounded, independently pinned full-report publication/readback before treating a small exchange reference as portable evidence. The supplied-text API cannot recover removed upstream bytes. Capture selectors in new production and reconcile historical producer-occurrence decisions. Select actual reviewer trust and collect authenticated source/context evidence and decisions under the available compatible domain. Applying reviewed decisions and semantic qualification require separately versioned records. Keep native paragraph, parent-field, normalized and rendered coordinate profiles distinct; larger corpus transports need separate qualification. Current2026-11-19 fromraw source-only P/A/independentcompleteV is mechanically qualified on Source4166/ad788 with42retainedfiles/148132089B and418pendinggroups,0authenticatedEvidence/reviews,authorityfalse/masks0; see grouped evidence same-namespace-capacity-and-whole-norm-native-20261119. This supersedes the earlier current-data-generation pending cutoff only: statutory source/edition/meaning review, independently reviewed §101-inclusive pilot and typed Native/model/gold/corpus admission remain open. The separate2026-11-20 official-occurrence mode now mechanically prepares and independently validates the §101/§7213/§7214 pending source roster (3documents/4distinctoccurrences), atSource33cface9; edition/applicability and semantic/native/model/gold/corpus gates remain unresolved.",
       "retained_readiness_crosswalk_available": {
         "bytes": 10320,
         "path": "/home/barberb/lift_coding/artifacts/legal-corpus-graph-readiness-20261015-01/crosswalk-01/manifest.json",
@@ -1924,6 +1924,30 @@
           "coarse_parent_IO_upper_bytes": 69377326750
         },
         "next": "Bind current originals, caller resources, output retention and declared time/unavailable trust, then regenerate through existing canonical owners; no old artifact repin."
+      },
+      "official_occurrence_pending_source_20261120": {
+        "evidence_id": "official-source-occurrence-pending-pilot-and-owning153-20261120",
+        "profile": "official-source-occurrence-context-evidence-review/v2",
+        "Source_rows": 4166,
+        "Source_epoch": "33cface908d67660eebee522866f2c36dbfdc4f53d945982507e621f10bd5e0b",
+        "software_cases": 153,
+        "retained_cases": 133,
+        "new_official_occurrence_cases": 20,
+        "real_source_documents": 3,
+        "original_source_occurrences": 4,
+        "pending_groups": 4,
+        "authenticated_evidence": 0,
+        "supplied_reviews": 0,
+        "governing_edition_selected": null,
+        "applicability_selected": null,
+        "native_AST_legal_model_or_corpus_authority": false,
+        "training_and_evaluation_gold_masks": 0,
+        "Root_readback_accepted": true,
+        "private_grouped_evidence": {
+          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/official-source-occurrence-four-guide-proposal-v01/official-source-occurrence-evidence-index-v01.json",
+          "bytes": 16956,
+          "sha256": "841078dbea7e22831a917b66d3cfbd2a9f04a5ea8c454440369157101f1ff7d2"
+        }
       }
     },
     {
@@ -3514,7 +3538,32 @@
           }
         ]
       },
-      "title": "Select connected statutory pilot"
+      "title": "Select connected statutory pilot",
+      "remaining_scope": "The separate §101/§7213/§7214 pending source roster now has three complete documents and four distinct nominated occurrences, with complete current preparation/assessment/independent-validation evidence. Actual governing edition/applicability, independent legal interpretation and use reviews, admitted definitions/native ASTs and the original20–40 connected-provision pilot remain pending. Two §7214 interpretation references do not count as two statutory uses.",
+      "official_occurrence_pending_source_20261120": {
+        "evidence_id": "official-source-occurrence-pending-pilot-and-owning153-20261120",
+        "profile": "official-source-occurrence-context-evidence-review/v2",
+        "Source_rows": 4166,
+        "Source_epoch": "33cface908d67660eebee522866f2c36dbfdc4f53d945982507e621f10bd5e0b",
+        "software_cases": 153,
+        "retained_cases": 133,
+        "new_official_occurrence_cases": 20,
+        "real_source_documents": 3,
+        "original_source_occurrences": 4,
+        "pending_groups": 4,
+        "authenticated_evidence": 0,
+        "supplied_reviews": 0,
+        "governing_edition_selected": null,
+        "applicability_selected": null,
+        "native_AST_legal_model_or_corpus_authority": false,
+        "training_and_evaluation_gold_masks": 0,
+        "Root_readback_accepted": true,
+        "private_grouped_evidence": {
+          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/official-source-occurrence-four-guide-proposal-v01/official-source-occurrence-evidence-index-v01.json",
+          "bytes": 16956,
+          "sha256": "841078dbea7e22831a917b66d3cfbd2a9f04a5ea8c454440369157101f1ff7d2"
+        }
+      }
     },
     {
       "acceptance_criteria": [
@@ -5111,7 +5160,7 @@
       },
       "priority": "P0",
       "production_reviews_supplied": 0,
-      "remaining_scope": "Supply actual source/adjudication/application/revision trust and signed decisions. Bounded exact-root candidate answer history and conditional current projection are available; authoritative head/global completeness/fork governance, preparation/source migrations and downstream cross-generation invalidation remain unqualified. Add structured independently reviewed governing-source/version/occurrence/applicability bindings, then candidate-blind connected statutory meanings, scoped term/entity/definition/reference graphs, reviewed training/evaluation masks and native Lean admission. Answer-reference revisions supply no physical source decisions or legal gold.",
+      "remaining_scope": "Supply actual source/adjudication/application/revision trust and signed decisions. Bounded exact-root candidate answer history and conditional current projection are available; authoritative head/global completeness/fork governance, preparation/source migrations and downstream cross-generation invalidation remain unqualified. Add structured independently reviewed governing-source/version/occurrence/applicability bindings, then candidate-blind connected statutory meanings, scoped term/entity/definition/reference graphs, reviewed training/evaluation masks and native Lean admission. Answer-reference revisions supply no physical source decisions or legal gold. Current official-occurrence v2 intake supplies a mechanically qualified3document/4occurrence §101-inclusive pending review population with source/context declarations and deferred questions intact; it supplies no independent statutory reviews or governing decisions.",
       "retained_readiness_crosswalk_available": {
         "bytes": 10320,
         "path": "/home/barberb/lift_coding/artifacts/legal-corpus-graph-readiness-20261015-01/crosswalk-01/manifest.json",
@@ -5150,7 +5199,31 @@
           }
         ]
       },
-      "title": "Complete source interpretation reviews"
+      "title": "Complete source interpretation reviews",
+      "official_occurrence_pending_source_20261120": {
+        "evidence_id": "official-source-occurrence-pending-pilot-and-owning153-20261120",
+        "profile": "official-source-occurrence-context-evidence-review/v2",
+        "Source_rows": 4166,
+        "Source_epoch": "33cface908d67660eebee522866f2c36dbfdc4f53d945982507e621f10bd5e0b",
+        "software_cases": 153,
+        "retained_cases": 133,
+        "new_official_occurrence_cases": 20,
+        "real_source_documents": 3,
+        "original_source_occurrences": 4,
+        "pending_groups": 4,
+        "authenticated_evidence": 0,
+        "supplied_reviews": 0,
+        "governing_edition_selected": null,
+        "applicability_selected": null,
+        "native_AST_legal_model_or_corpus_authority": false,
+        "training_and_evaluation_gold_masks": 0,
+        "Root_readback_accepted": true,
+        "private_grouped_evidence": {
+          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/official-source-occurrence-four-guide-proposal-v01/official-source-occurrence-evidence-index-v01.json",
+          "bytes": 16956,
+          "sha256": "841078dbea7e22831a917b66d3cfbd2a9f04a5ea8c454440369157101f1ff7d2"
+        }
+      }
     },
     {
       "acceptance_criteria": [

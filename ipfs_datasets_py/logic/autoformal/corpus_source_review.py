@@ -501,10 +501,10 @@ def _build_subject(request, manifest, review_owner):
         "dependency_artifacts": artifacts, "view": "candidate", **FALSE_FLAGS, **base.UNSELECTED})
 
 
-def _subject(subject, manifest):
+def _subject(subject, manifest, *, schema=SUBJECT_SCHEMA, profile=PROFILE):
     """Fixed private validator, invoked only after complete batch regeneration."""
-    checked = contracts.validate_record(subject, schema=SUBJECT_SCHEMA, fields=SUBJECT_FIELDS)
-    if checked["profile"] != PROFILE or checked["graph_id"] != checked["review_request_cid"]:
+    checked = contracts.validate_record(subject, schema=schema, fields=SUBJECT_FIELDS)
+    if checked["profile"] != profile or checked["graph_id"] != checked["review_request_cid"]:
         _fail("source-only compatibility binding differs")
     slots, deferred = checked["context_slot_ids"], checked["deferred_review_slot_ids"]
     if (type(slots) is not list or len(slots) != ACTIVE_SLOT_COUNT or type(deferred) is not list or len(deferred) != 7
@@ -520,7 +520,7 @@ def _subject(subject, manifest):
         _fail("source-review declared dependency closure differs")
 
 
-def _detach_preparation(preparation, bounds):
+def _detach_preparation(preparation, bounds, *, official=False):
     contracts.require_keys(preparation, PREPARATION_KEYS, "complete source-review preparation")
     result = {"manifest": None}
     total = 0
@@ -535,8 +535,11 @@ def _detach_preparation(preparation, bounds):
             total += len(raw) + 1
             value = json.loads(raw)
             if group != "dependency_manifests":
-                schema, fields = {"manifest": (MANIFEST_SCHEMA, MANIFEST_FIELDS), "pages": (PAGE_SCHEMA, PAGE_FIELDS),
-                    "requests": (REQUEST_SCHEMA, REQUEST_FIELDS), "subjects": (SUBJECT_SCHEMA, SUBJECT_FIELDS)}[group]
+                schemas = ({"manifest": (OFFICIAL_MANIFEST_SCHEMA, MANIFEST_FIELDS), "pages": (PAGE_SCHEMA, PAGE_FIELDS),
+                    "requests": (OFFICIAL_REQUEST_SCHEMA, OFFICIAL_REQUEST_FIELDS), "subjects": (OFFICIAL_SUBJECT_SCHEMA, SUBJECT_FIELDS)}
+                    if official else {"manifest": (MANIFEST_SCHEMA, MANIFEST_FIELDS), "pages": (PAGE_SCHEMA, PAGE_FIELDS),
+                    "requests": (REQUEST_SCHEMA, REQUEST_FIELDS), "subjects": (SUBJECT_SCHEMA, SUBJECT_FIELDS)})
+                schema, fields = schemas[group]
                 value = contracts.validate_record(value, schema=schema, fields=fields)
             detached.append(value)
         result[group] = detached[0] if group == "manifest" else detached
@@ -684,11 +687,14 @@ def assess_source_review_groups(preparation, registry, policy, review_groups, *,
     return result
 
 
-def _detach_assessment(report, bounds):
+def _detach_assessment(report, bounds, *, official=False):
     contracts.require_keys(report, {"manifest", "pages", "records"}, "complete source-review assessment")
     result, total = {}, 0
     specs = {"manifest": (GROUP_MANIFEST_SCHEMA, GROUP_MANIFEST_FIELDS),
              "pages": (GROUP_PAGE_SCHEMA, GROUP_PAGE_FIELDS), "records": (GROUP_SCHEMA, GROUP_FIELDS)}
+    if official:
+        specs = {"manifest": (OFFICIAL_GROUP_MANIFEST_SCHEMA, GROUP_MANIFEST_FIELDS),
+                 "pages": (GROUP_PAGE_SCHEMA, GROUP_PAGE_FIELDS), "records": (OFFICIAL_GROUP_SCHEMA, GROUP_FIELDS)}
     for group, (schema, fields) in specs.items():
         values = [report[group]] if group == "manifest" else report[group]
         cap = bounds["max_pages"] if group == "pages" else bounds["max_requests"]
@@ -716,5 +722,272 @@ def validate_source_review_assessment(report, *args, **kwargs):
     return expected
 
 
+# Explicit sibling intake: original official occurrences have no Parquet parent.
+# These are source/context review subjects, never native-AST or meaning reviews.
+OFFICIAL_PROFILE = "official-source-occurrence-context-evidence-review/v2"
+OFFICIAL_MANIFEST_SCHEMA = "legal-corpus-official-source-review-manifest/v2"
+OFFICIAL_REQUEST_SCHEMA = "legal-corpus-official-source-review-request/v2"
+OFFICIAL_SUBJECT_SCHEMA = "legal-corpus-official-source-review-subject/v2"
+OFFICIAL_GROUP_SCHEMA = "legal-corpus-official-source-review-group-assessment/v2"
+OFFICIAL_GROUP_MANIFEST_SCHEMA = "legal-corpus-official-source-review-group-manifest/v2"
+OFFICIAL_ASSESSMENT_SCHEMA = "legal-corpus-official-source-context-review-assessment/v2"
+OFFICIAL_REQUEST_FIELDS = (REQUEST_FIELDS - {
+    "parent_index", "parent_record_cid", "source_role_cid", "comparison_record_cids",
+    "original_unit_binding", "original_context_binding",
+}) | {"source_version", "source_occurrence", "context_declaration", "retained_unit_label",
+       "unanswered_question_ids", "pending_interpretations", "governing_edition", "applicability"}
+
+
+def _official_pins(owners):
+    from . import corpus_source
+    result = _pins(owners)
+    path = Path(corpus_source.__file__).resolve()
+    result[str(path)] = _sha(path.read_bytes())
+    return result
+
+
+def _official_inputs(document_inputs, occurrence_inputs, pending_interpretations, bounds,
+        expected_document_population_sha256, expected_occurrence_population_sha256,
+        expected_pending_interpretations_sha256):
+    from . import corpus_source
+    if type(document_inputs) is not list or not 1 <= len(document_inputs) <= 10:
+        _fail("complete bounded official document population required")
+    if type(occurrence_inputs) is not list or not 1 <= len(occurrence_inputs) <= bounds["max_requests"]:
+        _fail("complete bounded official occurrence population required")
+    # Bound and detach every non-byte input before validation or retention.
+    documents, bindings, by_version, total = [], [], {}, 0
+    fields = {"source_version", "raw_bytes", "extracted_text", "expected_raw_sha256", "expected_extracted_sha256"}
+    for original in document_inputs:
+        contracts.require_keys(original, fields, "original official source input")
+        raw = original["raw_bytes"]
+        if type(raw) is not bytes or len(raw) > bounds["max_total_input_bytes"] - total:
+            _fail("original official raw bytes exceed complete input bound")
+        total += len(raw)
+        metadata = base._plain({k: v for k, v in original.items() if k != "raw_bytes"},
+            bounds["max_total_input_bytes"] - total)
+        total += len(metadata)
+        item = json.loads(metadata)
+        item["raw_bytes"] = raw
+        version = corpus_source.validate_source_version(item["source_version"],
+            expected_raw_sha256=item["expected_raw_sha256"], extracted_text=item["extracted_text"],
+            expected_extracted_sha256=item["expected_extracted_sha256"], raw_bytes=raw)
+        if version["record_cid"] in by_version:
+            _fail("duplicate official source version in declared population")
+        by_version[version["record_cid"]] = item
+        documents.append(item)
+        bindings.append({k: item[k] for k in fields - {"raw_bytes", "extracted_text"}})
+    for expected in (expected_document_population_sha256, expected_occurrence_population_sha256,
+                     expected_pending_interpretations_sha256):
+        contracts.require_sha256(expected, "independent official input population SHA256")
+    if _digest(bindings) != expected_document_population_sha256:
+        _fail("independent complete official document population differs")
+    raw = base._plain(occurrence_inputs, bounds["max_total_input_bytes"] - total)
+    total += len(raw)
+    occurrences = json.loads(raw)
+    raw = base._plain(pending_interpretations, bounds["max_total_input_bytes"] - total)
+    candidates = json.loads(raw)
+    if type(candidates) is not list or _digest(candidates) != expected_pending_interpretations_sha256:
+        _fail("independent complete unselected interpretation inventory differs")
+    candidate_ids = set()
+    for candidate in candidates:
+        contracts.require_keys(candidate, {"alternative_id", "typed_expression_sha256"}, "unselected interpretation reference")
+        identity = candidate["alternative_id"]
+        if type(identity) is not str or not identity or identity in candidate_ids:
+            _fail("distinct opaque unselected interpretation references required")
+        candidate_ids.add(identity)
+        contracts.require_sha256(candidate["typed_expression_sha256"], "unselected typed expression SHA256")
+    if _digest(occurrences) != expected_occurrence_population_sha256:
+        _fail("independent complete official occurrence population differs")
+    seen, physical, used_versions = set(), set(), set()
+    for item in occurrences:
+        contracts.require_keys(item, {"source_occurrence", "context", "retained_unit_label", "unanswered_question_ids"},
+            "original official occurrence/context input")
+        if type(item["retained_unit_label"]) is not str or not item["retained_unit_label"].strip():
+            _fail("retained occurrence label required; labels assert no legal role")
+        questions = item["unanswered_question_ids"]
+        if type(questions) is not list or any(type(q) is not str or not q for q in questions) or len(set(questions)) != len(questions):
+            _fail("complete distinct original unanswered question IDs required")
+        occurrence = item["source_occurrence"]
+        version_id = occurrence.get("source_version_cid") if type(occurrence) is dict else None
+        if version_id not in by_version:
+            _fail("official occurrence has no independently supplied original source")
+        document = by_version[version_id]
+        checked = corpus_source.validate_source_occurrence(occurrence, source_version=document["source_version"],
+            expected_raw_sha256=document["expected_raw_sha256"], extracted_text=document["extracted_text"],
+            expected_extracted_sha256=document["expected_extracted_sha256"])
+        corpus_source.validate_context_declaration(item["context"], source_occurrence=checked,
+            expected_occurrence_cid=checked["record_cid"])
+        if checked["record_cid"] in seen:
+            _fail("duplicate physical official occurrence cannot create another statutory use")
+        physical_key = (document["expected_raw_sha256"], document["expected_extracted_sha256"],
+            checked["start_utf8"], checked["end_utf8"])
+        if physical_key in physical:
+            _fail("source-version repackaging cannot duplicate a physical official occurrence")
+        physical.add(physical_key)
+        seen.add(checked["record_cid"])
+        used_versions.add(version_id)
+    if used_versions != set(by_version):
+        _fail("declared official source population contains an unrepresented source")
+    return documents, occurrences, candidates, by_version
+
+
+def prepare_official_source_review_requests_v2(*, document_inputs, occurrence_inputs,
+        expected_document_population_sha256, expected_occurrence_population_sha256,
+        pending_interpretations, expected_pending_interpretations_sha256, limits=None):
+    """Prepare every exact official occurrence without inventing a parent or meaning."""
+    bounds = _limits(limits)
+    owners = _owners()
+    producer_pins = _official_pins(owners)
+    documents, occurrences, candidates, by_version = _official_inputs(document_inputs, occurrence_inputs,
+        pending_interpretations, bounds, expected_document_population_sha256,
+        expected_occurrence_population_sha256, expected_pending_interpretations_sha256)
+    input_bindings = {"official_documents": {
+        str(i): {"raw_sha256": _digest({k: d[k] for k in ("source_version", "expected_raw_sha256", "expected_extracted_sha256")})}
+        for i, d in enumerate(documents)},
+        "official_occurrences": {"complete": {"raw_sha256": expected_occurrence_population_sha256}},
+        "pending_interpretations": {"complete": {"raw_sha256": expected_pending_interpretations_sha256}}}
+    requests, subjects, manifests, inventory = [], [], [], []
+    retained = 0
+    for ordinal, item in enumerate(occurrences):
+        occurrence, context = item["source_occurrence"], item["context"]
+        version = by_version[occurrence["source_version_cid"]]["source_version"]
+        originals = {"source_version": version, "source_occurrence": occurrence, "context_declaration": context}
+        source_binding = _digest(originals)
+        unit_id = _digest({"profile": OFFICIAL_PROFILE, "source_binding_sha256": source_binding,
+            "retained_input": item, "input_bindings": input_bindings})
+        questions = _questions(unit_id)
+        request = contracts.seal_record({"schema": OFFICIAL_REQUEST_SCHEMA, "profile": OFFICIAL_PROFILE,
+            "queue_ordinal": ordinal, "review_unit_id": unit_id, "unit_kind": "original_official_source_occurrence",
+            "source_observation_id": item["retained_unit_label"], "source_version_cid": version["record_cid"],
+            "source_occurrence_cid": occurrence["record_cid"], "context_cid": context["record_cid"],
+            **originals, "retained_unit_label": item["retained_unit_label"],
+            "unanswered_question_ids": item["unanswered_question_ids"], "pending_interpretations": candidates,
+            "governing_edition": None, "applicability": None,
+            "related_source_records": [{"record_cid": r["record_cid"], "sha256": _digest(r), "schema": r["schema"]}
+                for r in originals.values()],
+            "review_scope_id": "official-source-review-scope:sha256:" + _digest({"profile": OFFICIAL_PROFILE,
+                "source_version_cid": version["record_cid"], "source_binding_sha256": source_binding}),
+            "review_questions": questions,
+            "context_slot_ids": [q["slot_id"] for q in questions if q["assessment_scope"] == "source_context_evidence_declaration"],
+            "deferred_review_slot_ids": [q["slot_id"] for q in questions if q["assessment_scope"] != "source_context_evidence_declaration"],
+            "source_binding_sha256": source_binding, "questions_sha256": _digest(questions), "input_bindings": input_bindings,
+            "status": "pending_independent_source_and_context_evidence_review", "view": "candidate", **FALSE_FLAGS, **base.UNSELECTED})
+        manifest = _dependency_manifest(request, producer_pins, owners[2])
+        subject = _build_subject(request, manifest, owners[3])
+        subject = {k: v for k, v in subject.items() if k not in {"record_cid", "cid_scope"}}
+        subject.update(schema=OFFICIAL_SUBJECT_SCHEMA, profile=OFFICIAL_PROFILE)
+        subject["hash_recipes"]["scope_id"] = "exact official occurrence review scope; no governing legal scope inferred"
+        subject = contracts.seal_record(subject)
+        for record in (request, subject, manifest):
+            retained += len(base._plain(record,
+                min(contracts.MAX_RECORD_BYTES, bounds["max_collection_bytes"] - retained))) + 1
+        requests.append(request); subjects.append(subject); manifests.append(manifest)
+        inventory.append({"ordinal": ordinal, "request_cid": request["record_cid"], "request_sha256": _digest(request),
+            "subject_cid": subject["record_cid"], "subject_sha256": _digest(subject),
+            "dependency_manifest_sha256": manifest["manifest_sha256"]})
+    pages, refs = _pages(inventory, bounds)
+    manifest = contracts.seal_record({"schema": OFFICIAL_MANIFEST_SCHEMA, "profile": OFFICIAL_PROFILE, "limits": bounds,
+        "input_bindings": input_bindings, "producer_pins": producer_pins, "page_refs": refs,
+        "counts": {"requests": len(requests), "subjects": len(subjects), "dependency_manifests": len(manifests),
+            "pages": len(pages), "question_count": len(requests) * 16,
+            "active_source_context_slots": len(requests) * 9, "deferred_semantic_proof_questions": len(requests) * 7,
+            "unit_kinds": {"original_official_source_occurrence": len(requests)}},
+        "population_complete": True, "coverage_scope": "all_declared_original_official_occurrences_and_complete_original_sources_only",
+        "view": "candidate", **FALSE_FLAGS, **base.UNSELECTED})
+    result = {"manifest": manifest, "pages": pages, "requests": requests, "subjects": subjects, "dependency_manifests": manifests}
+    _detach_preparation(result, bounds, official=True)
+    if _official_pins(owners) != producer_pins:
+        _fail("official source-review producers changed during preparation")
+    return result
+
+
+def validate_official_source_review_requests_v2(preparation, **inputs):
+    detached = _detach_preparation(preparation, _limits(inputs.get("limits")), official=True)
+    expected = prepare_official_source_review_requests_v2(**inputs)
+    _equal_components(detached, expected)
+    if _official_pins(_owners()) != expected["manifest"]["producer_pins"]:
+        _fail("official source-review producers changed during final preparation comparison")
+    return expected
+
+
+def _official_subject(subject, manifest):
+    return _subject(subject, manifest, schema=OFFICIAL_SUBJECT_SCHEMA, profile=OFFICIAL_PROFILE)
+
+
+def assess_official_source_review_groups_v2(preparation, registry, policy, review_groups, *,
+        expected_preparation_manifest_sha256, expected_registry_sha256, expected_policy_sha256,
+        expected_review_group_pins, at_time_utc, **inputs):
+    """Reuse the fixed review engine; authenticated source evidence grants no meaning."""
+    contracts.require_sha256(expected_preparation_manifest_sha256, "complete official preparation root SHA256")
+    bounds = _limits(inputs.get("limits"))
+    detached = _detach_preparation(preparation, bounds, official=True)
+    if _digest(detached["manifest"]) != expected_preparation_manifest_sha256:
+        _fail("independent complete official preparation root differs")
+    trust = []
+    for value, expected in ((registry, expected_registry_sha256), (policy, expected_policy_sha256)):
+        contracts.require_sha256(expected, "selected official source-review trust SHA256")
+        raw = base._plain(value, 8 * 1024**2)
+        if _sha(raw) != expected:
+            _fail("independent official source-review trust input differs")
+        trust.append(json.loads(raw))
+    registry, policy = trust
+    pins = json.loads(base._plain(expected_review_group_pins, contracts.MAX_RECORD_BYTES))
+    owners = _owners(); review_owner = owners[3]
+    review_owner._trust(registry, policy, expected_registry_sha256, expected_policy_sha256, action=ACTION, audience=AUDIENCE)
+    review_owner._time(at_time_utc)
+    groups = _review_groups(review_groups, pins, detached["subjects"], review_owner, bounds)
+    checked = validate_official_source_review_requests_v2(detached, **inputs)
+    domain = review_owner._ReviewDomain(OFFICIAL_SUBJECT_SCHEMA, CLAIM_SCHEMA, ACTION, AUDIENCE,
+        OFFICIAL_ASSESSMENT_SCHEMA, _official_subject, ACTIVE_SLOT_COUNT)
+    records, inventory, retained = [], [], 0
+    for ordinal, (request, subject, manifest, group, pin) in enumerate(zip(checked["requests"], checked["subjects"],
+            checked["dependency_manifests"], groups, pins, strict=True)):
+        assessment = review_owner._assess_reviews(subject, registry, policy, group["reviews"], manifest, domain=domain,
+            expected_subject_sha256=_digest(subject), expected_registry_sha256=expected_registry_sha256,
+            expected_policy_sha256=expected_policy_sha256, expected_reviews_sha256=pin["reviews_sha256"],
+            expected_manifest_sha256=manifest["manifest_sha256"], at_time_utc=at_time_utc,
+            observed_artifact_sha256s=group["observed_artifact_sha256s"], observed_pins=group["observed_pins"],
+            evidence_artifacts=group["evidence_artifacts"])
+        assessment["coverage_scope"] = "exact_original_official_occurrence_nine_source_declarations_only_no_native_AST_or_meaning"
+        assessment.pop("assessment_sha256")
+        assessment["assessment_sha256"] = review_owner.digest(assessment)
+        record = contracts.seal_record({"schema": OFFICIAL_GROUP_SCHEMA, "queue_ordinal": ordinal,
+            "review_request_cid": request["record_cid"], "subject_sha256": _digest(subject), "assessment": assessment,
+            "deferred_review_slot_ids": request["deferred_review_slot_ids"], "deferred_questions_remain_pending": True,
+            "view": "candidate", **FALSE_FLAGS, **base.UNSELECTED})
+        raw = base._plain(record,
+            min(contracts.MAX_RECORD_BYTES, bounds["max_collection_bytes"] - retained))
+        retained += len(raw) + 1
+        records.append(record)
+        inventory.append({"ordinal": ordinal, "record_cid": record["record_cid"],
+            "sha256": _sha(raw), "request_cid": request["record_cid"]})
+    pages, refs = _pages(inventory, bounds, assessment=True)
+    manifest = contracts.seal_record({"schema": OFFICIAL_GROUP_MANIFEST_SCHEMA, "profile": OFFICIAL_PROFILE,
+        "preparation_manifest_cid": checked["manifest"]["record_cid"], "preparation_manifest_sha256": expected_preparation_manifest_sha256,
+        "registry_sha256": expected_registry_sha256, "policy_sha256": expected_policy_sha256,
+        "review_group_pins": pins, "evaluation_time_utc": at_time_utc,
+        "producer_pins": checked["manifest"]["producer_pins"], "page_refs": refs,
+        "counts": {"groups": len(records), "authenticated_evidence": sum(r["assessment"]["authenticated_evidence_count"] for r in records),
+            "pending_groups": sum(r["assessment"]["evidence_assessment_status"] == "pending" for r in records),
+            "source_evidence_prerequisites_under_selected_trust": sum(r["assessment"]["review_prerequisites_satisfied_under_selected_trust"] for r in records),
+            "deferred_questions": len(records) * 7}, "view": "candidate", **FALSE_FLAGS, **base.UNSELECTED})
+    result = {"manifest": manifest, "pages": pages, "records": records}
+    _detach_assessment(result, bounds, official=True)
+    if _official_pins(owners) != checked["manifest"]["producer_pins"]:
+        _fail("official source-review producers changed during grouped authentication")
+    return result
+
+
+def validate_official_source_review_assessment_v2(report, *args, **kwargs):
+    detached = _detach_assessment(report, _limits(kwargs.get("limits")), official=True)
+    expected = assess_official_source_review_groups_v2(*args, **kwargs)
+    _equal_components(detached, expected)
+    if _official_pins(_owners()) != expected["manifest"]["producer_pins"]:
+        _fail("official source-review producers changed during final assessment comparison")
+    return expected
+
+
 __all__ = ["prepare_source_review_requests", "validate_source_review_requests",
-           "assess_source_review_groups", "validate_source_review_assessment"]
+           "assess_source_review_groups", "validate_source_review_assessment",
+           "prepare_official_source_review_requests_v2", "validate_official_source_review_requests_v2",
+           "assess_official_source_review_groups_v2", "validate_official_source_review_assessment_v2"]

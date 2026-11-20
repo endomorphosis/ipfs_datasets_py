@@ -965,3 +965,271 @@ print('inert public import verified')
     )
     assert result.returncode == 0, result.stdout + result.stderr
     assert result.stdout.strip() == "inert public import verified"
+
+
+def official_occurrence_case():
+    """Authored source transport only; no fictional statement is reviewed law."""
+    from ipfs_datasets_py.logic.autoformal import corpus_source
+    documents, occurrences = [], []
+    for index, text in enumerate(("Scope 雪. Definition.", "First distinct use.", "Second distinct use.")):
+        raw = ("<html><body>" + text + "</body></html>").encode()
+        version = corpus_source.build_source_version(source_id=f"fixture:official:{index}",
+            release_id="fixture:unselected-edition", edition="authored", provision_id=f"fixture:provision:{index}",
+            raw_bytes=raw, expected_raw_sha256=sha(raw), extracted_text=text,
+            expected_extracted_sha256=sha(text.encode()), extraction_profile="authored-fixture-view/v1",
+            normalization_profile="authored-fixture-UTF8/v1", media_type="text/html")
+        documents.append(dict(source_version=version, raw_bytes=raw, extracted_text=text,
+            expected_raw_sha256=sha(raw), expected_extracted_sha256=sha(text.encode())))
+        intervals = [(0, 8), (9, len(text))] if index == 0 else [(0, len(text))]
+        for ordinal, (start, end) in enumerate(intervals):
+            occurrence = corpus_source.build_source_occurrence(version, expected_raw_sha256=sha(raw),
+                extracted_text=text, expected_extracted_sha256=sha(text.encode()), start_char=start, end_char=end,
+                start_utf8=len(text[:start].encode()), end_utf8=len(text[:end].encode()))
+            context = corpus_source.build_context_declaration(occurrence, expected_occurrence_cid=occurrence["record_cid"],
+                availability="required_unavailable", reason="Authored pending source transport; no governing context reviewed.",
+                context_references=[{"record_kind": "source_version", "record_cid": version["record_cid"],
+                    "purpose": "complete source retained; legal attachment unresolved"}], missing_requirements=["authority", "definition"])
+            occurrences.append(dict(source_occurrence=occurrence, context=context,
+                retained_unit_label=f"fixture-unit:{index}:{ordinal}", unanswered_question_ids=["authority_edition", "scope_applicability"]))
+    candidates = [{"alternative_id": "fixture:interpretation:a", "typed_expression_sha256": "a" * 64},
+                  {"alternative_id": "fixture:interpretation:b", "typed_expression_sha256": "b" * 64}]
+    arguments = dict(document_inputs=documents, occurrence_inputs=occurrences, pending_interpretations=candidates)
+    repin_official_inputs(arguments)
+    return arguments
+
+
+def repin_official_inputs(arguments):
+    projection = [{k: row[k] for k in ("source_version", "expected_raw_sha256", "expected_extracted_sha256")}
+        for row in arguments["document_inputs"]]
+    arguments.update(expected_document_population_sha256=sha(canonical(projection)),
+        expected_occurrence_population_sha256=sha(canonical(arguments["occurrence_inputs"])),
+        expected_pending_interpretations_sha256=sha(canonical(arguments["pending_interpretations"])))
+
+
+def official_pending_assessment(owner, arguments):
+    preparation = owner.prepare_official_source_review_requests_v2(**arguments)
+    registry = {"schema": trust_owner.REGISTRY_SCHEMA, "mode": "unavailable", "process_id": "fixture:official-source-review",
+        "generation": 1, "revocation_generation": 1, "valid_from_utc": START, "valid_until_utc": END,
+        "keys": [], "revoked_principals": []}
+    policy = {"schema": trust_owner.POLICY_SCHEMA, "mode": "unavailable", "policy_id": "fixture:official-source-policy",
+        "process_id": registry["process_id"], "registry_sha256": sha(canonical(registry)), "action": owner.ACTION,
+        "audience": owner.AUDIENCE, "required_roles": list(trust_owner.ROLES), "valid_from_utc": START,
+        "valid_until_utc": END, "max_review_age_seconds": 86400}
+    groups = [{"request_cid": request["record_cid"], "reviews": [], "evidence_artifacts": {},
+        "observed_artifact_sha256s": {artifact["artifact_id"]: None for artifact in manifest["artifacts"]},
+        "observed_pins": {kind: {pin["key"]: None for artifact in manifest["artifacts"]
+            for pin in artifact["dependency_pins"][kind]} for kind in dependencies.PIN_KINDS}}
+        for request, manifest in zip(preparation["requests"], preparation["dependency_manifests"], strict=True)]
+    kwargs = dict(arguments, expected_preparation_manifest_sha256=sha(canonical(preparation["manifest"])),
+        expected_registry_sha256=sha(canonical(registry)), expected_policy_sha256=sha(canonical(policy)),
+        expected_review_group_pins=group_pins(groups), at_time_utc=NOW)
+    assessment = owner.assess_official_source_review_groups_v2(preparation, registry, policy, groups, **kwargs)
+    return preparation, registry, policy, groups, kwargs, assessment
+
+
+def test_official_occurrences_complete_pending_assessment_needs_no_parent_or_native_AST(owner):
+    arguments = official_occurrence_case()
+    preparation, registry, policy, groups, kwargs, assessment = official_pending_assessment(owner, arguments)
+    validated = owner.validate_official_source_review_assessment_v2(assessment, preparation, registry, policy, groups, **kwargs)
+    assert validated == assessment
+    assert preparation["manifest"]["counts"]["requests"] == 4
+    assert len({row["source_version_cid"] for row in preparation["requests"]}) == 3
+    assert all("parent_record_cid" not in row for row in preparation["requests"])
+    assert all(row["governing_edition"] is None and row["applicability"] is None for row in preparation["requests"])
+    assert all(row["pending_interpretations"] == arguments["pending_interpretations"] for row in preparation["requests"])
+    assert assessment["manifest"]["counts"]["groups"] == assessment["manifest"]["counts"]["pending_groups"] == 4
+    assert assessment["manifest"]["counts"]["authenticated_evidence"] == 0
+    for row in [preparation["manifest"], *preparation["requests"], *preparation["subjects"], assessment["manifest"], *assessment["records"]]:
+        assert all(row[key] is False for key in owner.FALSE_FLAGS)
+    assert all("no native AST" in row["hash_recipes"]["ast_sha256"] for row in preparation["subjects"])
+    # Caller mutations cannot rewrite already prepared source/context inputs.
+    arguments["occurrence_inputs"][0]["context"]["missing_requirements"].clear()
+    assert preparation["requests"][0]["context_declaration"]["missing_requirements"]
+
+
+@pytest.mark.parametrize("damage", ["raw", "context_target", "shifted_utf8", "omission", "document_order",
+    "missing_source", "duplicate_occurrence", "repackaged_occurrence", "candidate_authority"])
+def test_official_occurrence_input_mutations_cannot_create_complete_review_population(owner, damage):
+    arguments = official_occurrence_case()
+    if damage == "raw":
+        arguments["document_inputs"][0]["raw_bytes"] += b"changed"
+    elif damage == "context_target":
+        arguments["occurrence_inputs"][0]["context"] = deepcopy(arguments["occurrence_inputs"][2]["context"])
+        repin_official_inputs(arguments)
+    elif damage == "shifted_utf8":
+        item = arguments["occurrence_inputs"][0]
+        item["source_occurrence"]["start_utf8"] += 1
+        item["source_occurrence"] = reseal(item["source_occurrence"])
+        repin_official_inputs(arguments)
+    elif damage == "omission":
+        arguments["occurrence_inputs"].pop()
+    elif damage == "document_order":
+        arguments["document_inputs"].reverse()
+    elif damage == "missing_source":
+        arguments["document_inputs"].pop()
+        repin_official_inputs(arguments)
+    elif damage == "duplicate_occurrence":
+        arguments["occurrence_inputs"].append(deepcopy(arguments["occurrence_inputs"][0]))
+        repin_official_inputs(arguments)
+    elif damage == "repackaged_occurrence":
+        document = deepcopy(arguments["document_inputs"][0])
+        document["source_version"]["source_id"] += ":repackaged"
+        document["source_version"] = reseal(document["source_version"])
+        item = deepcopy(arguments["occurrence_inputs"][0])
+        item["source_occurrence"]["source_version_cid"] = document["source_version"]["record_cid"]
+        item["source_occurrence"] = reseal(item["source_occurrence"])
+        item["context"]["source_occurrence_cid"] = item["source_occurrence"]["record_cid"]
+        item["context"] = reseal(item["context"])
+        arguments["document_inputs"].append(document)
+        arguments["occurrence_inputs"].append(item)
+        repin_official_inputs(arguments)
+    else:
+        arguments["pending_interpretations"][0]["selected"] = True
+        repin_official_inputs(arguments)
+    with pytest.raises((contracts.CorpusContractError, ValueError)):
+        owner.prepare_official_source_review_requests_v2(**arguments)
+
+
+@pytest.mark.parametrize("damage", ["authority", "membership", "pending"])
+def test_resealed_official_assessments_require_independent_complete_pending_replay(owner, damage):
+    preparation, registry, policy, groups, kwargs, assessment = official_pending_assessment(owner, official_occurrence_case())
+    offered = deepcopy(assessment)
+    if damage == "membership":
+        offered["records"].pop()
+    elif damage == "authority":
+        row = offered["records"][0]
+        row["source_review_completed"] = True
+        offered["records"][0] = reseal(row)
+    else:
+        row = offered["records"][0]
+        row["deferred_questions_remain_pending"] = False
+        offered["records"][0] = reseal(row)
+    with pytest.raises((contracts.CorpusContractError, ValueError)):
+        owner.validate_official_source_review_assessment_v2(offered, preparation, registry, policy, groups, **kwargs)
+
+
+def test_official_preparation_binds_producers_before_original_source_validation(owner, monkeypatch):
+    arguments = official_occurrence_case()
+    original_inputs = owner._official_inputs
+    original_pins = owner._official_pins(owner._owners())
+    state = {"validated": False}
+
+    def validate_then_drift(*args, **kwargs):
+        result = original_inputs(*args, **kwargs)
+        state["validated"] = True
+        return result
+
+    def observe_pins(_owners):
+        result = dict(original_pins)
+        if state["validated"]:
+            result[next(iter(result))] = "0" * 64
+        return result
+
+    monkeypatch.setattr(owner, "_official_inputs", validate_then_drift)
+    monkeypatch.setattr(owner, "_official_pins", observe_pins)
+    with pytest.raises(contracts.CorpusContractError, match="producers changed during preparation"):
+        owner.prepare_official_source_review_requests_v2(**arguments)
+    assert state["validated"] is True
+    assert {"prepare_official_source_review_requests_v2", "validate_official_source_review_requests_v2",
+        "assess_official_source_review_groups_v2", "validate_official_source_review_assessment_v2"} <= set(owner.__all__)
+
+
+@pytest.mark.parametrize("stage", ["preparation", "assessment"])
+def test_official_validators_fence_producer_drift_after_complete_comparison(owner, monkeypatch, stage):
+    arguments = official_occurrence_case()
+    preparation, registry, policy, groups, kwargs, assessment = official_pending_assessment(owner, arguments)
+    original_equal = owner._equal_components
+    original_pins = owner._official_pins(owner._owners())
+    state = {"compared": False}
+
+    def equal_then_drift(actual, expected):
+        original_equal(actual, expected)
+        if ("requests" if stage == "preparation" else "records") in actual:
+            state["compared"] = True
+
+    def observe_pins(_owners):
+        result = dict(original_pins)
+        if state["compared"]:
+            result[next(iter(result))] = "0" * 64
+        return result
+
+    monkeypatch.setattr(owner, "_equal_components", equal_then_drift)
+    monkeypatch.setattr(owner, "_official_pins", observe_pins)
+    with pytest.raises(contracts.CorpusContractError, match="producers changed during final " + stage + " comparison"):
+        if stage == "preparation":
+            owner.validate_official_source_review_requests_v2(preparation, **arguments)
+        else:
+            owner.validate_official_source_review_assessment_v2(assessment, preparation, registry, policy, groups, **kwargs)
+    assert state["compared"] is True
+
+
+@pytest.mark.parametrize("kind", ["str_subclass", "equality_object"])
+def test_official_assessment_independent_preparation_pin_is_exact_before_review_work(owner, monkeypatch, kind):
+    preparation, registry, policy, groups, kwargs, _ = official_pending_assessment(owner, official_occurrence_case())
+
+    class EqualString(str):
+        def __eq__(self, other):
+            return True
+
+        def __ne__(self, other):
+            return False
+
+    class EqualObject:
+        def __eq__(self, other):
+            return True
+
+        def __ne__(self, other):
+            return False
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("malformed independent pin reached preparation or review work")
+
+    kwargs["expected_preparation_manifest_sha256"] = EqualString("a" * 64) if kind == "str_subclass" else EqualObject()
+    monkeypatch.setattr(owner, "_detach_preparation", forbidden)
+    monkeypatch.setattr(owner, "_owners", forbidden)
+    with pytest.raises(contracts.CorpusContractError):
+        owner.assess_official_source_review_groups_v2(preparation, registry, policy, groups, **kwargs)
+
+
+def test_official_preparation_stops_at_first_exhausted_output_before_later_requests(owner, monkeypatch):
+    arguments = official_occurrence_case()
+    original_manifest = owner._dependency_manifest
+    calls = []
+
+    def one_manifest_only(*args, **kwargs):
+        calls.append(args[0]["queue_ordinal"])
+        if len(calls) > 1:
+            raise AssertionError("preparation built another group after its retained-byte budget was exhausted")
+        return original_manifest(*args, **kwargs)
+
+    monkeypatch.setattr(owner, "_dependency_manifest", one_manifest_only)
+    with pytest.raises(contracts.CorpusContractError):
+        owner.prepare_official_source_review_requests_v2(**arguments, limits={"max_collection_bytes": 1})
+    assert calls == [0]
+
+
+def test_official_assessment_stops_at_first_excess_output_before_later_review_groups(owner, monkeypatch):
+    arguments = official_occurrence_case()
+    baseline = owner.prepare_official_source_review_requests_v2(**arguments)
+    # The complete preparation fits. A large first review diagnostic exceeds
+    # that same collection bound while staying inside the per-record bound.
+    bound = len(canonical(baseline)) + 8192
+    assert 2 * bound < contracts.MAX_RECORD_BYTES
+    arguments["limits"] = {"max_collection_bytes": bound}
+    preparation, registry, policy, groups, kwargs, _ = official_pending_assessment(owner, arguments)
+    review_owner = owner._owners()[3]
+    original_review = review_owner._assess_reviews
+    calls = []
+
+    def one_large_review_only(*args, **options):
+        calls.append(args[0]["review_request_cid"])
+        if len(calls) > 1:
+            raise AssertionError("assessment evaluated another group after its retained-byte budget was exhausted")
+        result = original_review(*args, **options)
+        result["diagnostics"] = {"bounded_output_pressure": "x" * (2 * bound)}
+        return result
+
+    monkeypatch.setattr(review_owner, "_assess_reviews", one_large_review_only)
+    with pytest.raises(contracts.CorpusContractError):
+        owner.assess_official_source_review_groups_v2(preparation, registry, policy, groups, **kwargs)
+    assert calls == [preparation["requests"][0]["record_cid"]]
