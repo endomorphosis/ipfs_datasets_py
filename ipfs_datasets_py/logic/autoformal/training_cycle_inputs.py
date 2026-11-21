@@ -925,7 +925,9 @@ def _stage_reviewed_cycle_inputs(registry, *, transition_kind, parent_artifact, 
                    "fresh ordinary output directory in existing canonical parent required")
 
     modules = (sys.modules[__name__], consumer, admission, splits)
-    if multiple:
+    # Mixed V4 retains the dependency owner during an inactive withdrawal:
+    # its producer identity belongs to the lineage, not active row presence.
+    if multiple or _admission_version == "v3":
         modules += (dependencies,)
     def implementation():
         return {str(Path(module.__file__).resolve()): hashlib.sha256(Path(module.__file__).read_bytes()).hexdigest()
@@ -1968,14 +1970,17 @@ def prepare_reviewed_decoder_context_generation_inputs(source_arguments, *, sour
     from ...optimizers.logic_theorem_optimizer import autoencoder_training_worker as worker
 
     _reviewed_decoder_need(context_budget_profile is None or type(context_budget_profile) is str
-        and context_budget_profile == worker.REVIEWED_QWEN2_CONTEXT_BUDGET_PROFILE,
+        and context_budget_profile in {worker.REVIEWED_QWEN2_CONTEXT_BUDGET_PROFILE,
+            worker.REVIEWED_QWEN2_EXPANDED_CONTEXT_BUDGET_PROFILE},
         "explicit supported context budget profile required")
-    context_token_limit = (worker.REVIEWED_QWEN2_CONTEXT_MAX_TOKENS if context_budget_profile is not None
-                           else worker.REVIEWED_GENERATION_CONTEXT_MAX_TOKENS)
+    context_token_limit = (worker.REVIEWED_QWEN2_EXPANDED_CONTEXT_MAX_TOKENS
+        if context_budget_profile == worker.REVIEWED_QWEN2_EXPANDED_CONTEXT_BUDGET_PROFILE else
+        worker.REVIEWED_QWEN2_CONTEXT_MAX_TOKENS if context_budget_profile is not None
+        else worker.REVIEWED_GENERATION_CONTEXT_MAX_TOKENS)
     _reviewed_decoder_need(type(context_transport) is str and context_transport in {"plain_json_v1", "shared_json_v1", "shared_json_v2", "shared_json_v3"},
         "explicit supported rich context DATA transport required")
-    _reviewed_decoder_need(context_transport != "shared_json_v3" or context_budget_profile is None,
-        "key-layout DATA requires the unchanged default context budget")
+    # Both lossless wires use the exact named budget checked above; None
+    # retains the unchanged generic context limit and every codec bound.
     shared = context_transport in {"shared_json_v1", "shared_json_v2", "shared_json_v3"}
     shorttag = context_transport == "shared_json_v2"
     keylayout = context_transport == "shared_json_v3"
@@ -2318,3 +2323,219 @@ def unpack_reviewed_context_json_v3(value):
                            "key-layout table is not the canonical reachable representation")
     _reviewed_decoder_need(_reviewed_wire(value) == raw, "key-layout input changed during unpacking")
     return restored
+
+
+REVIEWED_MIXED_DECODER_CONTINUATION_PROFILE = "reviewed-mixed-cycle-stage-continuation/v1"
+REVIEWED_MIXED_DECODER_CONTINUATION_SCHEMA = "reviewed-mixed-decoder-stage-ancestry/v1"
+
+
+def prepare_reviewed_mixed_decoder_continuation_v4(registry, *, admission_profile,
+        stage_artifact, expected_stage_sha256, parent_training_binding,
+        expected_parent_training_binding_sha256, current_training_binding,
+        expected_current_training_binding_sha256, split_config,
+        expected_split_config_sha256):
+    """Replay bounded V4 stage ancestry; never load a numerical checkpoint.
+
+    Both bindings come from the checkpoint/complete-input owners. This helper
+    authenticates their staged source history, not historical positive authority
+    or removal of retired information from already-trained parameters. The
+    current training population still requires the ordinary fresh V4 preparation.
+    """
+    import hashlib
+    from ...optimizers.logic_theorem_optimizer import legal_span_consumer_binding as consumer
+    from ...optimizers.logic_theorem_optimizer import legal_ir_eval_splits as splits
+
+    need = _reviewed_decoder_need
+    need(type(admission_profile) is str and admission_profile == REVIEWED_MIXED_ADMISSION_PROFILE,
+         "explicit same-domain V4 continuation profile required")
+    previous = _reviewed_copy(parent_training_binding, expected_parent_training_binding_sha256)
+    current = _reviewed_copy(current_training_binding, expected_current_training_binding_sha256)
+    config = _reviewed_copy(split_config, expected_split_config_sha256)
+    for binding in (previous, current):
+        need(type(binding) is dict
+             and binding.get("schema") == "reviewed-decoder-training-input-receipt/v4"
+             and binding.get("profile") == REVIEWED_MIXED_DECODER_INPUT_PROFILE
+             and binding.get("admission_profile") == admission_profile
+             and binding.get("target_codec") == REVIEWED_DECODER_TARGET_CODEC
+             and binding.get("source_profile") == REVIEWED_DECODER_SOURCE_PROFILE
+             and binding.get("source_context_profile") == REVIEWED_COMPONENT_DECODER_CONTEXT_PROFILE
+             and binding.get("current_reviewed_training_permitted") is True
+             and type(binding.get("record_count")) is int and 0 < binding["record_count"] <= MAX_REVIEWED_CYCLE_ROWS,
+             "same-domain complete V4 training bindings required for continuation")
+        for field in ("stage_artifact_sha256", "rows_sha256", "split_manifest_sha256", "history_sha256",
+                      "split_config_sha256", "admission_inputs_sha256", "exposure_sha256", "source_contexts_sha256"):
+            _reviewed_sha(binding.get(field))
+        need(binding["split_config_sha256"] == expected_split_config_sha256,
+             "continuation split configuration changed")
+    need(set(previous) == set(current),
+         "historical continuation binding must retain the complete current receipt field set")
+    evolving = {"record_count", "training_record_ids", "row_commitments", "selection_context_sha256",
+        "current_admission_custody", "stage_artifact_sha256", "rows_sha256", "split_manifest_sha256",
+        "history_sha256", "history_guard", "component_split_guard", "admission_inputs_sha256",
+        "admission_assessment_sha256", "exposure_sha256", "source_contexts_sha256",
+        "prepared_records_sha256", "current_consumer_receipt"}
+    need(all(_reviewed_wire(previous[field]) == _reviewed_wire(current[field])
+             for field in set(current) - evolving),
+         "continuation complete receipt policy, provenance or producer identity changed")
+    need(previous["stage_artifact_sha256"] != current["stage_artifact_sha256"],
+         "changed binding requires an explicit successor stage")
+    for field in ("tokenizer_contract", "max_source_tokens", "max_target_tokens", "implementation"):
+        need(_reviewed_wire(previous.get(field)) == _reviewed_wire(current.get(field)),
+             "continuation tokenizer, complete budgets or producer Source changed")
+    need(current["stage_artifact_sha256"] == expected_stage_sha256,
+         "current continuation binding names a different stage")
+
+    observed, total_bytes, cache = [], 0, {}
+    def read_raw(reference):
+        nonlocal total_bytes
+        reference = _reviewed_copy(reference)
+        _reviewed_ref(reference)
+        key = _reviewed_wire(reference)
+        if key not in cache:
+            raw = _reviewed_read(registry, reference)
+            total_bytes += len(raw)
+            need(total_bytes <= MAX_REVIEWED_STAGE_BYTES,
+                 "unsupported continuation artifact byte capacity")
+            cache[key] = raw
+            observed.append((reference, raw))
+        return cache[key]
+
+    def read(reference):
+        return _reviewed_json(read_raw(reference))
+
+    selected = _reviewed_copy(stage_artifact)
+    need(_reviewed_ref(selected)["sha256"] == expected_stage_sha256,
+         "independent continuation stage commitment differs")
+    chain, seen = [], set()
+    while True:
+        need(len(chain) < MAX_REVIEWED_HISTORY and selected["sha256"] not in seen,
+             "unsupported continuation ancestry depth or cycle")
+        seen.add(selected["sha256"])
+        stage = read(selected)
+        _reviewed_closed(stage, _reviewed_cycle_fields("v3"), "continuation V4 stage")
+        need(_reviewed_cycle_format(stage, admission_version="v3"),
+             "continuation ancestry crosses the V4 admission domain")
+        _reviewed_lineage(stage["checkpoint_lineage"])
+        rows = read(stage["rows_artifact"])
+        history = read(stage["history_artifact"])
+        manifest = read(stage["split_manifest_artifact"])
+        need(type(rows) is list and len(rows) <= MAX_REVIEWED_CYCLE_ROWS,
+             "bounded continuation stage rows required")
+        for row in rows:
+            _reviewed_closed(row, {"id", "unit_id", "source_text", "canonical_ir"}, "continuation historical row")
+        kind = stage["transition_kind"]
+        need(kind in {"bootstrap", "successor", "withdrawal"}, "unsupported continuation stage kind")
+        if kind == "withdrawal":
+            need(not rows and stage["consumer_receipt"] == _reviewed_na_consumer()
+                 and stage["admission_assessment_artifact"] is None and stage["admission_transport_artifact"] is None,
+                 "continuation withdrawal must remain empty and non-positive")
+        else:
+            need(rows and stage["withdrawal_provenance"] is None,
+                 "positive continuation ancestor must retain complete rows")
+            _reviewed_component_parent_memberships(stage["consumer_receipt"], rows, consumer, admission_version="v3")
+        chain.append((selected, stage, rows, history, manifest))
+        if selected["sha256"] == previous["stage_artifact_sha256"]:
+            break
+        need(kind != "bootstrap" and stage["parent_artifact"] is not None,
+             "trained parent stage is not an ancestor of the current population")
+        selected = _reviewed_copy(stage["parent_artifact"])
+
+    need(len(chain) >= 2 and chain[0][1]["transition_kind"] == "successor",
+         "changed training population requires a positive successor, never withdrawal")
+    lineage, implementation = chain[-1][1]["checkpoint_lineage"], chain[-1][1]["implementation"]
+    replayed = []
+    parent_entry = None
+    for reference, stage, rows, history, manifest in reversed(chain):
+        need(stage["checkpoint_lineage"] == lineage and stage["implementation"] == implementation,
+             "continuation declared lineage or staged producer Source changed")
+        withdrawal = stage["transition_kind"] == "withdrawal"
+        if parent_entry is None:
+            need(not withdrawal, "trained parent binding cannot be a withdrawal")
+            replay_history = history
+            if history.get("scope_kind") == "declared_genesis":
+                need(stage["transition_kind"] == "bootstrap" and history.get("parent_history_artifact") is None
+                     and history.get("split_manifests") == [{"manifest": manifest,
+                         "sha256": stage["split_manifest_artifact"]["sha256"]}],
+                     "continuation ancestor genesis history differs")
+                replay_history = dict(history, split_manifests=[])
+            guarded, records, guard = _reviewed_history(replay_history, manifest, rows, config, None, splits)
+        else:
+            parent_ref, parent_stage, parent_rows, parent_history, parent_records = parent_entry
+            need(stage["parent_artifact"] == parent_ref
+                 and history.get("parent_history_artifact") == parent_stage["history_artifact"],
+                 "continuation parent stage/history reference differs")
+            guarded, records, guard = _reviewed_history(history, manifest, rows, config,
+                parent_history, splits, withdrawal=withdrawal)
+            _reviewed_transition(stage["transition"], parent_rows, rows, records, parent_records, registry)
+            for kind in ("corrected", "superseded", "revoked"):
+                for item in stage["transition"][kind]:
+                    read_raw(item["reason_ref"])
+            if withdrawal:
+                need(not any(stage["transition"][key] for key in ("retained", "added", "corrected")),
+                     "continuation withdrawal contains a positive transition")
+                _reviewed_withdrawal(stage["withdrawal_provenance"],
+                    hashlib.sha256(_reviewed_wire(stage["withdrawal_provenance"])).hexdigest(),
+                    parent_ref, stage["transition"], stage["history_artifact"]["sha256"], lineage)
+            else:
+                retained = set(stage["transition"]["retained"])
+                need(not any(row["id"] in parent_records and row["id"] not in retained for row in rows),
+                     "unsupported_historical_id_reactivation")
+                if retained:
+                    need(parent_rows, "withdrawn examples require fresh revision IDs and current admission")
+                    old_members = _reviewed_component_parent_memberships(parent_stage["consumer_receipt"],
+                        parent_rows, consumer, admission_version="v3")
+                    new_members = _reviewed_component_parent_memberships(stage["consumer_receipt"], rows,
+                        consumer, admission_version="v3")
+                    need(all(old_members[key] == new_members[key] for key in retained),
+                         "retained continuation component identity changed")
+        need(guarded == history and guard == stage["history_guard"],
+             "continuation cumulative source/split history differs from canonical replay")
+        parent_entry = (reference, stage, rows, history, records)
+        replayed.append({"stage": reference, "transition_kind": stage["transition_kind"],
+            "rows_sha256": stage["rows_artifact"]["sha256"], "history_sha256": stage["history_artifact"]["sha256"],
+            "split_manifest_sha256": stage["split_manifest_artifact"]["sha256"], "record_count": len(rows)})
+
+    for binding, entry in ((previous, chain[-1]), (current, chain[0])):
+        reference, stage, rows, _, _ = entry
+        need(binding["record_count"] == len(rows)
+             and binding.get("training_record_ids") == [row["id"] for row in rows],
+             "continuation binding row population differs")
+        need(binding["stage_artifact_sha256"] == reference["sha256"]
+             and binding["rows_sha256"] == stage["rows_artifact"]["sha256"]
+             and binding["history_sha256"] == stage["history_artifact"]["sha256"]
+             and binding["split_manifest_sha256"] == stage["split_manifest_artifact"]["sha256"],
+             "continuation binding staged history/population commitments differ")
+        need(binding["history_guard"] == stage["history_guard"],
+             "continuation binding canonical history guard differs")
+        _reviewed_component_parent_memberships(binding["current_consumer_receipt"], rows,
+            consumer, admission_version="v3")
+        commitments = binding.get("row_commitments")
+        need(type(commitments) is list and len(commitments) == len(rows),
+             "continuation binding full row commitments are required")
+        for offered, row in zip(commitments, rows, strict=True):
+            _reviewed_closed(offered, {"id", "unit_id", "source_text_sha256", "source_wire_sha256",
+                "canonical_ir_sha256", "source_tokens_sha256", "target_tokens_sha256", "target_identities"},
+                "complete continuation row commitment")
+            for field in ("source_text_sha256", "source_wire_sha256", "canonical_ir_sha256",
+                          "source_tokens_sha256", "target_tokens_sha256"):
+                _reviewed_sha(offered[field])
+            need(offered["id"] == row["id"] and offered["unit_id"] == row["unit_id"]
+                 and offered["source_text_sha256"] == hashlib.sha256(row["source_text"].encode()).hexdigest()
+                 and offered["canonical_ir_sha256"] == hashlib.sha256(_reviewed_wire(row["canonical_ir"])).hexdigest()
+                 and offered["target_identities"] == _reviewed_decoder_target_identities(row["canonical_ir"]),
+                 "continuation binding historical full-target/source commitments differ")
+    for reference, raw in observed:
+        need(_reviewed_read(registry, reference) == raw,
+             "continuation registry artifacts changed during final ancestry closure")
+    need(_reviewed_wire(parent_training_binding) == _reviewed_wire(previous)
+         and _reviewed_wire(current_training_binding) == _reviewed_wire(current),
+         "continuation training bindings changed during ancestry replay")
+    return {"schema": REVIEWED_MIXED_DECODER_CONTINUATION_SCHEMA,
+        "profile": REVIEWED_MIXED_DECODER_CONTINUATION_PROFILE,
+        "parent_training_binding_sha256": expected_parent_training_binding_sha256,
+        "current_training_binding_sha256": expected_current_training_binding_sha256,
+        "ancestor_stage": chain[-1][0], "successor_stage": chain[0][0],
+        "stage_chain": replayed, "staged_artifact_bytes_observed": total_bytes,
+        "current_training_authority_supplied_by_complete_preparation": True,
+        "historical_positive_authority_replayed": False, "weights_or_optimizer_loaded": False,
+        "retired_information_unlearned": False, "qualified": False, "corpus_admitted": False}

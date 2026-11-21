@@ -3055,3 +3055,115 @@ def test_reviewed_parent_candidate_audit_final_input_check_after_late_context_wr
             inference._check_parent_audit_inputs(request, reference, candidate=True)
     else:
         inference._check_parent_audit_inputs(request, reference, candidate=False)
+
+
+# Explicit source-conditioned Qwen budgets are request DATA.  These controls use
+# the existing closed request fixtures; they do not load a model or authorize it.
+@pytest.mark.parametrize("transport", ["shared_json_v2", "shared_json_v3"])
+@pytest.mark.parametrize("budget", [8192, 16384])
+def test_reviewed_inference_Qwen2_explicit_context_profile_request(tmp_path, monkeypatch, transport, budget):
+    import builtins
+    worker, consumer, value, write = _reviewed_Qwen2_request_data(tmp_path, rich=True)
+    profile = f"qwen2-full-context-{budget}/v1"
+    value["generation_policy"]["context_budget_profile"] = profile
+    value["training_context"].update(transport=transport, context_budget_profile=profile)
+    original = builtins.__import__
+    def no_native(name, *args, **kwargs):
+        if name.split(".", 1)[0] in {"torch", "transformers", "tokenizers"}:
+            pytest.fail("frontend request DATA imported a native model")
+        return original(name, *args, **kwargs)
+    monkeypatch.setattr(builtins, "__import__", no_native)
+    reference = write()
+    loaded, raw, request = inference._read_reviewed_evaluation_request(reference)
+    assert asdict(loaded) == reference and request == value == worker._parse_json(raw)
+    assert request["training_context"]["profile"] == consumer.REVIEWED_V3_HELDOUT_CONTEXT_PROFILE
+    assert not Path(value["output_directory"]).exists()
+
+
+@pytest.mark.parametrize("damage", ["request-profile-mismatch", "generation-profile-mismatch", "unknown-profile",
+    "boolean-profile", "aggregate-profile", "v1-transport", "uncommitted-target", "missing-budget"])
+def test_reviewed_inference_Qwen2_expanded_request_still_binds_closed_context(tmp_path, damage):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_structured_retrieval as structured
+    _, consumer, value, write = _reviewed_Qwen2_request_data(tmp_path, rich=True)
+    value["generation_policy"]["context_budget_profile"] = "qwen2-full-context-16384/v1"
+    value["training_context"].update(transport="shared_json_v3", context_budget_profile="qwen2-full-context-16384/v1")
+    if damage == "request-profile-mismatch": value["training_context"]["context_budget_profile"] = "qwen2-full-context-8192/v1"
+    elif damage == "generation-profile-mismatch": value["generation_policy"]["context_budget_profile"] = "qwen2-full-context-8192/v1"
+    elif damage == "unknown-profile": value["training_context"]["context_budget_profile"] = "qwen2-full-context-16384/v2"
+    elif damage == "boolean-profile": value["training_context"]["context_budget_profile"] = True
+    elif damage == "aggregate-profile": value["training_context"]["profile"] = structured.AGGREGATE_CONTEXT_V4_PROFILE
+    elif damage == "v1-transport": value["training_context"]["transport"] = "shared_json_v1"
+    elif damage == "uncommitted-target": value["training_context"]["target_json"] = {"shall": "leak"}
+    else: value["training_context"].pop("context_budget_profile")
+    with pytest.raises(ValueError): inference._read_reviewed_evaluation_request(write())
+    assert not Path(value["output_directory"]).exists()
+
+
+def _reviewed_frontend_selected_shared_policy(budget, transport):
+    from ipfs_datasets_py.logic.autoformal import training_cycle_inputs as inputs
+    context = {"transport": transport}
+    policy = {"schema": "reviewed-decoder-rich-context-use-policy/v2", "context_transport": transport,
+        "shared_context_schema": inputs.REVIEWED_SHARED_CONTEXT_JSON_SCHEMA_V3 if transport == "shared_json_v3" else inputs.REVIEWED_SHARED_CONTEXT_JSON_SCHEMA_V2,
+        "max_expanded_context_bytes": inputs.REVIEWED_SHARED_CONTEXT_MAX_EXPANDED_BYTES,
+        "max_context_bytes": 16384, "max_context_tokens": budget}
+    if budget != 4096:
+        context["context_budget_profile"] = policy["context_budget_profile"] = f"qwen2-full-context-{budget}/v1"
+        policy["schema"] = "reviewed-decoder-rich-context-use-policy/v3"
+    return context, policy
+
+
+@pytest.mark.parametrize("budget,transport", [(4096, "shared_json_v3"), (8192, "shared_json_v2"),
+    (8192, "shared_json_v3"), (16384, "shared_json_v2"), (16384, "shared_json_v3")])
+def test_reviewed_inference_selected_shared_context_policy_keeps_numeric_and_codec_identity(budget, transport):
+    context, policy = _reviewed_frontend_selected_shared_policy(budget, transport)
+    assert inference._check_reviewed_context_transport_policy(context, policy) is None
+    assert policy["max_context_tokens"] == budget and policy["max_context_bytes"] == 16384
+
+
+@pytest.mark.parametrize("damage", ["old-codec", "transport-mismatch", "old-token-cap", "boolean-token-cap",
+    "expanded-byte-cap", "wire-byte-cap", "profile-mismatch", "unknown-request-profile", "schema-downgrade", "implicit-profile"])
+def test_reviewed_inference_expanded_shared_policy_refuses_mismatched_commitments(damage):
+    from ipfs_datasets_py.logic.autoformal import training_cycle_inputs as inputs
+    context, policy = _reviewed_frontend_selected_shared_policy(16384, "shared_json_v3")
+    if damage == "old-codec": policy["shared_context_schema"] = inputs.REVIEWED_SHARED_CONTEXT_JSON_SCHEMA_V2
+    elif damage == "transport-mismatch": policy["context_transport"] = "shared_json_v2"
+    elif damage == "old-token-cap": policy["max_context_tokens"] = 8192
+    elif damage == "boolean-token-cap": policy["max_context_tokens"] = True
+    elif damage == "expanded-byte-cap": policy["max_expanded_context_bytes"] += 1
+    elif damage == "wire-byte-cap": policy["max_context_bytes"] += 1
+    elif damage == "profile-mismatch": policy["context_budget_profile"] = "qwen2-full-context-8192/v1"
+    elif damage == "unknown-request-profile": context["context_budget_profile"] = "qwen2-full-context-16384/v2"
+    elif damage == "schema-downgrade": policy["schema"] = "reviewed-decoder-rich-context-use-policy/v2"
+    else: context.pop("context_budget_profile")
+    with pytest.raises(ValueError): inference._check_reviewed_context_transport_policy(context, policy)
+
+
+@pytest.mark.parametrize("kind", ["load", "producer"])
+@pytest.mark.parametrize("budget", [8192, 16384])
+def test_reviewed_inference_Qwen2_current_parent_policy_preserves_explicit_generation_profile(tmp_path, kind, budget):
+    worker, request, policy = _reviewed_Qwen2_parent_policy_data(tmp_path, kind)
+    request["generation_policy"]["context_budget_profile"] = f"qwen2-full-context-{budget}/v1"
+    if kind == "producer": policy["generation_policy"] = json.loads(worker._json_bytes(request["generation_policy"]))
+    assert inference._check_reviewed_generation_policy(request, policy) is None
+    if kind == "producer":
+        policy["generation_policy"]["context_budget_profile"] = f"qwen2-full-context-{16384 if budget == 8192 else 8192}/v1"
+        with pytest.raises(ValueError): inference._check_reviewed_generation_policy(request, policy)
+
+
+@pytest.mark.parametrize("damage", [None, "legacy-domain", "aggregate-profile"])
+def test_reviewed_inference_generic_v3_transport_remains_single_component_request(tmp_path, damage):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_structured_retrieval as structured
+    _, consumer, value, write = _reviewed_mixed_rich_request_data(tmp_path)
+    value["training_context"]["transport"] = "shared_json_v3"
+    if damage == "legacy-domain":
+        value["schema"] = "reviewed-source-evaluation-request/v2"
+        value.pop("admission_profile")
+        value["heldout_evaluation_purpose"] = consumer.REVIEWED_HELDOUT_CONTEXT_PURPOSE
+        value["training_context"]["profile"] = consumer.REVIEWED_HELDOUT_CONTEXT_PROFILE
+    elif damage == "aggregate-profile": value["training_context"]["profile"] = structured.AGGREGATE_CONTEXT_V4_PROFILE
+    if damage is None:
+        _, _, request = inference._read_reviewed_evaluation_request(write())
+        assert request == value and "context_budget_profile" not in request["training_context"]
+    else:
+        with pytest.raises(ValueError): inference._read_reviewed_evaluation_request(write())
+    assert not Path(value["output_directory"]).exists()

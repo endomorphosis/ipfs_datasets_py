@@ -6597,17 +6597,19 @@ def test_reviewed_profiled_generation_policy_rejects_closed_data_before_native_i
         worker._reviewed_decoder_generation_policy(value)
 
 
-def _reviewed_profiled_source_fixture(tmp_path, *, model_profile="builtin-llama-bfloat16/v1"):
+def _reviewed_profiled_source_fixture(tmp_path, *, model_profile="builtin-llama-bfloat16/v1",
+        max_sequence_tokens=4096):
     from types import SimpleNamespace
+    assert type(max_sequence_tokens) is int and max_sequence_tokens in (4096,32768)
     base=_reviewed_mixed_source_producer_fixture(tmp_path)
-    native=_reviewed_chatml_llama_fixture(model_profile=model_profile);backend=native.backend
-    backend.max_sequence_tokens=4096;backend.model.config.max_position_embeddings=4096
+    native=_reviewed_chatml_llama_fixture(model_profile=model_profile,context_tokens=max_sequence_tokens);backend=native.backend
+    backend.max_sequence_tokens=max_sequence_tokens;backend.model.config.max_position_embeddings=max_sequence_tokens
     if model_profile=="builtin-qwen2-bfloat16/v1":
         from transformers.models.qwen2.modeling_qwen2 import Qwen2RotaryEmbedding as Rotary
     else:
         from transformers.models.llama.modeling_llama import LlamaRotaryEmbedding as Rotary
     backend.model.model.rotary_emb=Rotary(backend.model.config)
-    native.frontend.model_max_length=4096;native.frontend.init_kwargs["model_max_length"]=4096
+    native.frontend.model_max_length=max_sequence_tokens;native.frontend.init_kwargs["model_max_length"]=max_sequence_tokens
     checkpoint=backend.snapshot_checkpoint();directory=tmp_path/'profiled-assets';directory.mkdir()
     def artifact(name,raw):
         return worker.CheckpointArtifact.from_dict(_complete_reviewed_artifact(directory/name,raw))
@@ -7287,12 +7289,14 @@ def test_reviewed_Qwen2_native_context_budget_preserves_original_early_denial(mo
     assert caught.value is denied
 
 
+@pytest.mark.parametrize("context_transport",["shared_json_v2","shared_json_v3"])
 @pytest.mark.parametrize("mode",["accepted","context_too_large","source_too_small"])
-def test_reviewed_Qwen2_complete_context_budget_is_explicit_and_lossless(mode):
+def test_reviewed_Qwen2_complete_context_budget_is_explicit_and_lossless(mode,context_transport,*,
+        context_budget_profile="qwen2-full-context-8192/v1",accepted_text_bytes=5000,source_budget=12288):
     from ipfs_datasets_py.logic.autoformal import training_cycle_inputs as inputs
     fixture=_reviewed_chatml_llama_fixture(model_profile="builtin-qwen2-bfloat16/v1");tokenizer=fixture.backend.tokenizer
     row=_reviewed_local_loader_source_record(tokenizer);source=json.loads(row["source_wire"])
-    text="z"*(8500 if mode=="context_too_large"else 5000)
+    text="z"*(8500 if mode=="context_too_large"else accepted_text_bytes)
     context={"permitted":[],"retrieved":[{"id":"fixture:complete-data-text","content":{"fictional_complete_text":text}}]}
     arguments=[dict(id=row["id"],source_text=source["source_text"],context=context)]
     contexts=dict(profile="reviewed-source-selection-context/v2",selection_context=source["selection_context"],
@@ -7300,20 +7304,23 @@ def test_reviewed_Qwen2_complete_context_budget_is_explicit_and_lossless(mode):
     digest=lambda x:hashlib.sha256(inputs._reviewed_wire(x)).hexdigest()
     options=dict(source_contexts=contexts,expected_source_contexts_sha256=digest(contexts),
         expected_context_records_sha256=digest([dict(id=row["id"],context=context)]),tokenizer=tokenizer,
-        max_source_tokens=4096 if mode=="source_too_small"else 12288,context_transport="shared_json_v2")
+        max_source_tokens=4096 if mode=="source_too_small"else source_budget,context_transport=context_transport)
     with pytest.raises(inputs.ReviewedDecoderInputValidationError,match="token"):
         inputs.prepare_reviewed_decoder_context_generation_inputs(arguments,**options)
-    options["context_budget_profile"]="qwen2-full-context-8192/v1"
+    options["context_budget_profile"]=context_budget_profile
     if mode!="accepted":
         with pytest.raises(inputs.ReviewedDecoderInputValidationError,match="token"):
             inputs.prepare_reviewed_decoder_context_generation_inputs(arguments,**options)
         return
     prepared=inputs.prepare_reviewed_decoder_context_generation_inputs(arguments,**options);receipt=prepared["receipt"]
     assert receipt["schema"]=="reviewed-decoder-context-generation-input-receipt/v2"
-    assert receipt["max_context_tokens"]==8192 and receipt["context_budget_profile"]==options["context_budget_profile"]
-    assert 4096<receipt["row_commitments"][0]["context_tokens_including_bos_eos"]<=8192
+    expected_limit=16384 if context_budget_profile=="qwen2-full-context-16384/v1"else 8192
+    assert receipt["max_context_tokens"]==expected_limit and receipt["context_budget_profile"]==options["context_budget_profile"]
+    assert 4096<receipt["row_commitments"][0]["context_tokens_including_bos_eos"]<=expected_limit
     decoded=json.loads(prepared["records"][0]["source_wire"])
-    assert inputs.unpack_reviewed_context_json_v2(decoded["context"])==context
+    unpack=(inputs.unpack_reviewed_context_json_v3 if context_transport=="shared_json_v3"
+            else inputs.unpack_reviewed_context_json_v2)
+    assert inputs._reviewed_wire(unpack(decoded["context"]))==inputs._reviewed_wire(context)
     assert not receipt["target_access_performed"]and not receipt["context_use_permission_verified"]and not receipt["backend_execution_authorized"]
 
 
@@ -8005,3 +8012,1366 @@ def test_reviewed_builtin_legacy_dynamic_cache_requires_complete_owned_layers(da
     finally:
         hook.remove()
     assert ran == [True] and backend.snapshot_checkpoint() == before
+
+
+@pytest.mark.parametrize("context_mode", ["rich", "aggregate"], ids=["single-rich", "aggregate"])
+def test_reviewed_qwen2_complete_rich_shared_v3_factory_accepts_after_v2_baseline(
+        tmp_path, monkeypatch, context_mode):
+    """Both explicit lossless factories preserve the original owned pair."""
+    fixture = _reviewed_qwen2_complete_rich_producer_fixture(tmp_path,context_mode)
+    owned, runtime, kwargs = fixture.owned, fixture.runtime, fixture.kwargs
+    backend, tokenizer, torch = fixture.backend, fixture.tokenizer, fixture.torch
+    references, reference_wire = fixture.references, fixture.reference_wire
+    context_sha, seen_context_policies = fixture.context_sha, fixture.seen_context_policies
+    calls = {"generation": 0, "forward": 0}
+
+    def forbidden_generation(*args, **options):
+        calls["generation"] += 1
+        pytest.fail("paired factory construction dispatched decoder generation")
+
+    def forbidden_forward(*args, **options):
+        calls["forward"] += 1
+        pytest.fail("paired factory construction forwarded the Qwen2 model")
+
+    monkeypatch.setattr(backend, "generate_batch", forbidden_generation)
+    hook = backend.model.register_forward_pre_hook(forbidden_forward, with_kwargs=True)
+    before = backend.snapshot_checkpoint()
+    rng = torch.get_rng_state().clone()
+    module_modes = tuple((module, module.training) for module in backend.model.modules())
+    gradients = tuple((parameter, parameter.grad,
+        None if parameter.grad is None else parameter.grad.detach().clone())
+        for parameter in backend.model.parameters())
+    try:
+        baseline = worker.make_reviewed_decoder_source_producer_v3(
+            runtime, **kwargs, context_transport="shared_json_v2")
+        baseline_observation = baseline.observation()
+        assert baseline_observation["calls"] == 0
+        assert all(baseline_observation["factory_preflight"].values())
+        assert baseline_observation["input_commitment"]["context_transport"] == "shared_json_v2"
+        assert "shared_json_v2" in seen_context_policies
+        assert before == backend.snapshot_checkpoint()
+
+        # Only transport changes: this is desired-success reproduction, not
+        # an expectedraises test which could turn the current guard into PASS.
+        desired = worker.make_reviewed_decoder_source_producer_v3(
+            runtime, **kwargs, context_transport="shared_json_v3")
+        desired_observation = desired.observation()
+        assert desired_observation["calls"] == 0
+        assert all(desired_observation["factory_preflight"].values())
+        assert desired_observation["input_commitment"]["context_transport"] == "shared_json_v3"
+        assert desired_observation["input_commitment"]["context_inputs_sha256"] == context_sha
+        assert "shared_json_v3" in seen_context_policies
+        assert desired.input_profile_id != baseline.input_profile_id
+    finally:
+        hook.remove()
+        assert calls == {"generation": 0, "forward": 0}
+        assert before == backend.snapshot_checkpoint()
+        assert backend.restored_checkpoint_matches(
+            owned.checkpoint["model_state"], owned.checkpoint["optimizer_state"])
+        assert torch.equal(torch.get_rng_state(), rng)
+        assert all(module.training is mode for module, mode in module_modes)
+        assert all(parameter.grad is original and
+            (original is None or torch.equal(original, saved))
+            for parameter, original, saved in gradients)
+        assert worker._json_bytes(references) == reference_wire
+
+
+
+@pytest.mark.parametrize("context_budget_profile",["qwen2-full-context-8192/v1","qwen2-full-context-16384/v1"])
+def test_reviewed_Qwen2_shared_v3_native_generation_preserves_full_context_and_capacity(context_budget_profile):
+    """Real tiny Qwen2 forward after complete V3 and positional preflight.
+
+    The authored byte tokenizer and untrained model establish transport and
+    state behavior only. No EOS, legal meaning or generation quality is assumed.
+    """
+    from ipfs_datasets_py.logic.autoformal import training_cycle_inputs as inputs
+    context_limit=16384 if context_budget_profile=="qwen2-full-context-16384/v1"else 8192
+    fixture = _reviewed_chatml_llama_fixture(
+        model_profile="builtin-qwen2-bfloat16/v1", context_tokens=context_limit)
+    backend, tokenizer, torch = fixture.backend, fixture.backend.tokenizer, fixture.torch
+    original = _reviewed_local_loader_source_record(tokenizer)
+    source = json.loads(original["source_wire"])
+    context = {"permitted": [], "retrieved": [{"id": "fixture:complete-data-text",
+        "content": {"fictional_complete_text": "z" * (9000 if context_limit==16384 else 5000)}}]}
+    arguments = [dict(id=original["id"], source_text=source["source_text"], context=context)]
+    source_contexts = dict(profile="reviewed-source-selection-context/v2",
+        selection_context=source["selection_context"], rows=[dict(id=original["id"],
+            unit_id=original["unit_id"], governing_context=source["governing_context"],
+            source_binding=source["source_binding"])])
+    digest = lambda value: hashlib.sha256(inputs._reviewed_wire(value)).hexdigest()
+    prepared = inputs.prepare_reviewed_decoder_context_generation_inputs(arguments,
+        source_contexts=source_contexts, expected_source_contexts_sha256=digest(source_contexts),
+        expected_context_records_sha256=digest([dict(id=original["id"], context=context)]),
+        tokenizer=tokenizer, max_source_tokens=32768 if context_limit==16384 else 12288, context_transport="shared_json_v3",
+        context_budget_profile=context_budget_profile)
+    record = prepared["records"][0]
+    decoded = json.loads(record["source_wire"])
+    assert decoded["source_text"] == source["source_text"]
+    assert decoded["profile"] == worker.REVIEWED_GENERATION_SHARED_CONTEXT_SOURCE_PROFILE_V3
+    assert inputs._reviewed_wire(inputs.unpack_reviewed_context_json_v3(decoded["context"])) == inputs._reviewed_wire(context)
+    assert 4096 < prepared["receipt"]["row_commitments"][0]["context_tokens_including_bos_eos"] <= context_limit
+    assert not prepared["receipt"]["target_access_performed"]
+    assert not prepared["receipt"]["context_use_permission_verified"]
+    assert not prepared["receipt"]["backend_execution_authorized"]
+    frame = _reviewed_chatml_native_test_frame(fixture.frontend, record["source_wire"])
+    assert len(frame) + 1 <= backend.max_sequence_tokens == context_limit
+    options = dict(execution_guard=lambda: None,
+        generation_profile="builtin-qwen2-dynamic-kv/v1",
+        conditioning_profile="qwen2-chatml-complete-legal-ir/v1")
+    forwards, argmaxes = [], []
+    def observe_input(model, args, kwargs):
+        assert "labels" not in kwargs and "decoder_input_ids" not in kwargs
+        forwards.append(kwargs["input_ids"].detach().cpu().tolist())
+    def observe_output(model, args, output):
+        argmaxes.append(int(output.logits[0, -1].argmax()))
+    pre = backend.model.register_forward_pre_hook(observe_input, with_kwargs=True)
+    post = backend.model.register_forward_hook(observe_output)
+    before = backend.snapshot_checkpoint()
+    rng = torch.get_rng_state().clone()
+    modes = tuple((module, module.training) for module in backend.model.modules())
+    gradients = tuple((parameter, parameter.grad,
+        None if parameter.grad is None else parameter.grad.detach().clone(), parameter.requires_grad)
+        for parameter in backend.model.parameters())
+    try:
+        # None keeps the generic4096 limit even on a real Qwen2 backend.
+        with pytest.raises(worker.TrainingJobValidationError, match="complete context exceeds fixed token sub-bound"):
+            backend.generate_batch([record], max_output_tokens=2, **options)
+        assert forwards == [] and argmaxes == []
+        # Full requested output, not a possible early EOS, determines capacity.
+        overflow = backend.max_sequence_tokens - len(frame) + 2
+        with pytest.raises(worker.TrainingJobValidationError, match="full generation budget exceeds actual decoder context"):
+            backend.generate_batch([record], max_output_tokens=overflow, **options,
+                context_budget_profile=context_budget_profile)
+        assert forwards == [] and argmaxes == []
+        result = backend.generate_batch([record], max_output_tokens=2, **options,
+            context_budget_profile=context_budget_profile)
+        assert forwards == [[frame]] and len(argmaxes) == 1
+        assert len(result) == 1 and result[0]["generated_token_ids"] == [tokenizer.bos_token_id, argmaxes[0]]
+        assert result[0]["outcome"] in {"incomplete", "abstained"}
+    finally:
+        pre.remove(); post.remove()
+        assert before == backend.snapshot_checkpoint()
+        assert torch.equal(torch.get_rng_state(), rng)
+        assert all(module.training is mode for module, mode in modes)
+        assert all(parameter.grad is gradient and parameter.requires_grad is required and
+            (gradient is None or torch.equal(gradient, saved))
+            for parameter, gradient, saved, required in gradients)
+
+
+def _reviewed_qwen2_complete_rich_producer_fixture(tmp_path,context_mode,*,max_sequence_tokens=4096):
+    """Original signed populations and the exact owned tiny Qwen2 pair."""
+    from copy import deepcopy
+    from types import SimpleNamespace
+    from tests.unit.optimizers.logic_theorem_optimizer import test_legal_ir_evaluation_artifacts as evaluation
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_span_consumer_binding as consumer
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_structured_retrieval as structured
+
+    if context_mode == "aggregate":
+        _helper, query, _payload = evaluation._aggregate_v4_heldout_case()
+        context = query["reviewed_training_context"]
+        profile = structured.AGGREGATE_CONTEXT_V4_PROFILE
+        context_commitment = _aggregate_v4_context_commitment_fixture(context, profile)
+    else:
+        _helper, query, _populations, _replays, _components = evaluation._rich_v3_heldout_case()
+        context = query["reviewed_training_context"]
+        profile = consumer.REVIEWED_V3_HELDOUT_CONTEXT_PROFILE
+        context_commitment = {
+            "schema": "reviewed-decoder-rich-context-inputs/v1", "profile": profile,
+            "binding_receipt_sha256": evaluation._producer_digest(context["binding"].receipt()),
+            "training_rows_sha256": evaluation._producer_digest(context["training_rows"]),
+            "split_manifest_sha256": evaluation._producer_digest(context["split_manifest"]),
+            "admission_inputs_sha256": consumer.reviewed_admission_inputs_sha256(context["admission_inputs"]),
+            "exposure_records_sha256": evaluation._producer_digest(context["exposure_records"]),
+            "query_rows_sha256": evaluation._producer_digest(context["query_rows"]),
+            "retrieval_rows_sha256": evaluation._producer_digest(context["retrieval_rows"]),
+        }
+
+    references = deepcopy(query["rows"])
+    source_contexts = {
+        "profile": "reviewed-source-selection-context/v2",
+        "selection_context": {
+            "schema": "caller-known-interpretation-selection/v1",
+            "interpretation_id": references[0]["canonical_ir"]["interpretation_id"],
+            "selection_mode": "identifier_only",
+        },
+        "rows": [{"id": row["id"], "unit_id": row["unit_id"],
+            "governing_context": deepcopy(row["canonical_ir"]["governing_context"]),
+            "source_binding": deepcopy(row["canonical_ir"]["source_binding"])} for row in references],
+    }
+    reference_wire = worker._json_bytes(references)
+    context_sha = evaluation._producer_digest(context_commitment)
+    qwen_path = tmp_path / "owned-qwen"
+    qwen_path.mkdir()
+    owned = _reviewed_profiled_source_fixture(qwen_path, model_profile="builtin-qwen2-bfloat16/v1",
+        max_sequence_tokens=max_sequence_tokens)
+    backend, tokenizer, torch = owned.backend, owned.backend.tokenizer, owned.native.torch
+    query_admission = deepcopy(query["admission_inputs"])
+    seen_context_policies = []
+
+    def fresh_query():
+        return deepcopy(query_admission)
+
+    def fresh_context():
+        # Preserve the original issued binding objects and every complete
+        # source/definition/split/exposure row. Do not re-sign or reduce them.
+        return context
+
+    def allow_context(value):
+        assert value["context_profile"] == profile
+        assert value["operation"] == "heldout_evaluation"
+        assert value["training_requested"] is False and value["heldout_requested"] is True
+        assert value["context_inputs_sha256"] == context_sha
+        assert value["context_transport"] in {"shared_json_v2", "shared_json_v3"}
+        seen_context_policies.append(value["context_transport"])
+
+    runtime = worker.ReviewedDecoderRuntime(owned.runtime.registry, backend, tokenizer,
+        fresh_query, owned.runtime.execution_guard, owned.runtime.asset_policy_guard)
+    kwargs = dict(
+        binding=query["binding"], rows=references,
+        split_manifest=deepcopy(query["split_manifest"]),
+        exposure_records=deepcopy(query["exposure_records"]),
+        source_contexts=source_contexts,
+        expected_source_contexts_sha256=evaluation._producer_digest(source_contexts),
+        expected_admission_inputs_sha256=consumer.reviewed_admission_inputs_sha256(fresh_query()),
+        backend_identity=backend.identity(), assets=owned.options["assets"],
+        model_checkpoint=owned.options["model_checkpoint"],
+        optimizer_checkpoint=owned.options["optimizer_checkpoint"],
+        max_source_tokens=65536, max_output_tokens=3, allow_heldout_evaluation=True,
+        context_profile=profile, current_context_inputs_provider=fresh_context,
+        expected_context_inputs_sha256=context_sha, context_policy_guard=allow_context,
+        generation_policy=_reviewed_Qwen2_generation_policy(),
+    )
+    return SimpleNamespace(owned=owned,query=query,context=context,profile=profile,
+        references=references,reference_wire=reference_wire,context_sha=context_sha,
+        seen_context_policies=seen_context_policies,runtime=runtime,kwargs=kwargs,
+        backend=backend,tokenizer=tokenizer,torch=torch,evaluation=evaluation)
+
+
+
+@pytest.mark.parametrize("context_mode",["rich","aggregate"],ids=["single-rich","aggregate"])
+def test_reviewed_Qwen2_full_three_query_shared_v3_producer_evaluation(tmp_path,monkeypatch,context_mode,*,context_budget_profile=None):
+    """Whole signed population, actual admitted evaluator and real Qwen2 forwards.
+
+    Fixed global full-IR capacity is independent of query references. Natural
+    untrained outputs, incomplete results and EOS abstentions remain unchanged.
+    """
+    from collections import Counter
+    from copy import deepcopy
+    from ipfs_datasets_py.logic.autoformal import training_cycle_inputs as inputs
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_span_consumer_binding as consumer
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_structured_retrieval as structured
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_semantic_metrics import _complete_norm_payload_shape
+    output_cap = 16384  # Predeclared global cap, never derived from query targets.
+    fixture = _reviewed_qwen2_complete_rich_producer_fixture(tmp_path,context_mode,max_sequence_tokens=32768)
+    backend,tokenizer,torch = fixture.backend,fixture.tokenizer,fixture.torch
+    options = dict(fixture.kwargs,max_output_tokens=output_cap)
+    if context_budget_profile is None:
+        context_budget_profile=("qwen2-full-context-16384/v1"if context_mode=="aggregate"else "qwen2-full-context-8192/v1")
+    context_limit=16384 if context_budget_profile=="qwen2-full-context-16384/v1"else 8192
+    options["generation_policy"] = dict(options["generation_policy"],max_generation_seconds=30.0,
+        context_budget_profile=context_budget_profile)
+    assert len(fixture.references)==3
+    review = consumer.validate_reviewed_source_span_consumer_binding_v3(options["binding"],options["rows"],
+        split_manifest=options["split_manifest"],admission_inputs=fixture.runtime.current_admission_provider(),
+        exposure_records=options["exposure_records"])
+    context = fixture.context
+    digest = lambda value: hashlib.sha256(inputs._reviewed_wire(value)).hexdigest()
+    committed = dict(expected_query_rows_sha256=digest(context["query_rows"]),
+        expected_retrieval_rows_sha256=digest(context["retrieval_rows"]),consumer=lambda complete:complete,
+        max_context_bytes=inputs.REVIEWED_SHARED_CONTEXT_MAX_EXPANDED_BYTES,
+        heldout_evaluation=review["heldout_evaluation"])
+    if context_mode=="aggregate":
+        payload = structured.consume_reviewed_contexts_v4(**context,**committed)
+        assert payload["examples_are_complete"] is True
+    else:
+        payload = structured._consume_reviewed_contexts(context["binding"],context["training_rows"],
+            split_manifest=context["split_manifest"],admission_inputs=context["admission_inputs"],
+            exposure_records=context["exposure_records"],query_rows=context["query_rows"],
+            retrieval_rows=context["retrieval_rows"],_admission_version="v3",**committed)
+    expected_contexts = {row["id"]:dict(permitted=[],retrieved=[dict(id=example["id"],content=example)
+        for example in row["examples"]]) for row in payload["rows"]}
+    assert list(expected_contexts)==[row["id"] for row in fixture.references]
+    # Full permitted TRAIN targets: exact nine-field JSON+token roundtrip and
+    # all target identity facets. These bytes never become a generated prefix.
+    target_views=[]
+    for row in payload["rows"]:
+        for example in row["examples"]:
+            target=example["canonical_ir"];wire=inputs._reviewed_wire(target).decode("utf-8")
+            assert _complete_norm_payload_shape(target)
+            ids=[tokenizer.bos_token_id,*tokenizer.encode(wire),tokenizer.eos_token_id]
+            decoded_target=tokenizer.decode(ids[1:-1]);assert decoded_target==wire
+            restored=json.loads(decoded_target)
+            assert inputs._reviewed_wire(restored)==inputs._reviewed_wire(target)
+            assert inputs._reviewed_decoder_target_identities(restored)==inputs._reviewed_decoder_target_identities(target)
+            target_views.append(dict(query_id=row["id"],example_id=example["id"],
+                canonical_target_sha256=digest(target),complete_tokens_including_bos_eos=len(ids)))
+    assert target_views
+    arguments=[dict(id=row["id"],source_text=row["source_text"],context=expected_contexts[row["id"]])
+        for row in fixture.references]
+    empty=[dict(argument,context=dict(permitted=[],retrieved=[])) for argument in arguments]
+    base=inputs.prepare_reviewed_decoder_generation_inputs(empty,source_contexts=options["source_contexts"],
+        expected_source_contexts_sha256=options["expected_source_contexts_sha256"],tokenizer=tokenizer,
+        max_source_tokens=options["max_source_tokens"])
+    measurements=[];expected_records=[];capacity_failures=[]
+    query_ids={row[key] for row in fixture.references for key in("id","unit_id")}
+    forbidden={digest(row["canonical_ir"]) for row in fixture.references}
+    forbidden.update(digest(row["canonical_ir"]["typed_expression"]) for row in fixture.references)
+    def screen(value):
+        if type(value) is str:assert value not in query_ids
+        elif type(value) in(dict,list):
+            assert digest(value) not in forbidden
+            for child in(list(value)+list(value.values()) if type(value)is dict else value):screen(child)
+    for row in base["records"]:
+        logical=expected_contexts[row["id"]];screen(logical)
+        try:
+            source=json.loads(row["source_wire"]);source.update(
+                profile=worker.REVIEWED_GENERATION_SHARED_CONTEXT_SOURCE_PROFILE_V3,
+                context=inputs.pack_reviewed_context_json_v3(logical))
+            context_wire=worker._reviewed_generation_context_wire(source,query_ids)
+            assert inputs._reviewed_wire(inputs.unpack_reviewed_context_json_v3(source["context"]))==inputs._reviewed_wire(logical)
+            wire=inputs._reviewed_wire(source).decode("utf-8")
+            ids=[tokenizer.bos_token_id,*tokenizer.encode(wire),tokenizer.eos_token_id]
+            assert tokenizer.decode(ids[1:-1])==wire
+            frame=_reviewed_chatml_native_test_frame(fixture.owned.native.frontend,wire)
+            item=dict(id=row["id"],unit_id=row["unit_id"],complete_context_tokens=len(tokenizer.encode(context_wire))+2,
+                complete_source_without_TRAIN_context_tokens=len(row["source_token_ids"]),
+                complete_context_examples=len(logical["retrieved"]),
+                complete_source_tokens=len(ids),native_ChatML_tokens=len(frame),full_output_cap=output_cap,
+                reserved_model_positions=len(frame)+output_cap-1,model_position_limit=32768,
+                complete_context_sha256=digest(logical),context_wire_bytes=len(context_wire.encode("utf-8")),
+                frame_token_ids=frame)
+            expected_records.append(dict(id=row["id"],unit_id=row["unit_id"],source_wire=wire,source_token_ids=ids))
+            measurements.append(item)
+            if item["complete_context_tokens"]>context_limit or len(ids)>options["max_source_tokens"] or item["reserved_model_positions"]>32768:
+                capacity_failures.append(dict(id=row["id"],reason="complete_context_source_or_full_output_capacity",measurement=item))
+        except (ValueError,TypeError,UnicodeError,OverflowError) as error:
+            capacity_failures.append(dict(id=row["id"],reason=type(error).__name__,message=str(error)))
+    for target in target_views:
+        if target["complete_tokens_including_bos_eos"]>output_cap:
+            capacity_failures.append(dict(reason="complete_permitted_TRAIN_target_exceeds_global_output_cap",target=target))
+    preflight=dict(schema="authored-Qwen2-complete-three-query-capacity/v1",mode=context_mode,
+        queries=measurements,permitted_TRAIN_target_views=target_views,global_output_cap=output_cap,
+        context_budget_profile=context_budget_profile,active_context_token_limit=context_limit,
+        failures=capacity_failures,query_target_body_or_length_used_for_limits_or_generated_prefix=False,
+        source_known_query_facts_from_independently_bound_fixture=True,
+        model_config_positions=backend.model.config.max_position_embeddings,
+        backend_positions=backend.max_sequence_tokens,tokenizer_positions=fixture.owned.native.frontend.model_max_length,
+        full_context_inputs_sha256=fixture.context_sha,complete_context_payload_sha256=digest(payload))
+    assert preflight["model_config_positions"]==preflight["backend_positions"]==preflight["tokenizer_positions"]==32768
+    (tmp_path/"complete-capacity-before-forward.json").write_bytes(worker._json_bytes(preflight))
+    calls=[];forwards=[];active=[-1]
+    original_generate=backend.generate_batch
+    def observe_generate(records,**generation_options):
+        assert forwards==[] and len(records)==3 and records==expected_records
+        assert generation_options["max_output_tokens"]==output_cap
+        assert generation_options["context_budget_profile"]==context_budget_profile
+        assert generation_options["conditioning_profile"]=="qwen2-chatml-complete-legal-ir/v1"
+        assert generation_options["generation_profile"]=="builtin-qwen2-dynamic-kv/v1"
+        assert generation_options["max_generation_seconds"]==30.0
+        calls.append(dict(records=deepcopy(records),options={key:generation_options[key]for key in
+            ("max_output_tokens","context_budget_profile","conditioning_profile","generation_profile","max_generation_seconds")}))
+        return original_generate(records,**generation_options)
+    monkeypatch.setattr(backend,"generate_batch",observe_generate)
+    def observe_forward(model,args,kwargs):
+        assert capacity_failures==[]
+        assert "labels" not in kwargs and "decoder_input_ids" not in kwargs
+        ids=kwargs["input_ids"].detach().cpu().tolist();assert len(ids)==1
+        if len(ids[0])>1:
+            active[0]+=1;assert ids[0]==measurements[active[0]]["frame_token_ids"]
+        else:assert active[0]>=0 and len(ids[0])==1
+        positions=kwargs["position_ids"].detach().cpu().tolist()[0]
+        forwards.append(dict(query_index=active[0],input_token_ids=ids[0],
+            position_ids=positions,attention_mask_tokens=kwargs["attention_mask"].shape[1],
+            labels_present=False,decoder_input_ids_present=False))
+    hook=backend.model.register_forward_pre_hook(observe_forward,with_kwargs=True)
+    before=backend.snapshot_checkpoint();rng=torch.get_rng_state().clone()
+    modes=tuple((module,module.training)for module in backend.model.modules())
+    gradients=tuple((p,p.grad,None if p.grad is None else p.grad.detach().clone(),p.requires_grad)for p in backend.model.parameters())
+    producer=None;artifact=None;error_record=None
+    try:
+        if any(item["reason"]=="complete_permitted_TRAIN_target_exceeds_global_output_cap" for item in capacity_failures):
+            pytest.fail("Experiment refuses unrepresentable full permitted TRAIN target under predeclared cap: "+json.dumps(capacity_failures,sort_keys=True))
+        producer=worker.make_reviewed_decoder_source_producer_v3(fixture.runtime,**options,context_transport="shared_json_v3")
+        declarations=dict(encoder=dict(id="fixture:declared-encoder-not-used-by-decoder",sha256="1"*64),
+            decoder=dict(id=options["backend_identity"]["backend_id"],sha256=options["model_checkpoint"].sha256))
+        artifact=producer.evaluate(compiler_commit="fixture:Qwen2-complete-signed-rich-aggregate",
+            checkpoint_declarations=declarations)
+        observation=producer.observation();comparison=fixture.evaluation._producer_payload(artifact)
+        if capacity_failures:
+            assert forwards==[]
+            pytest.fail("Complete original three-query batch refused active capacity: "+json.dumps(capacity_failures,sort_keys=True))
+        assert len(calls)==1 and active[0]==2
+        outputs=observation["last_call"]["raw_generation_outputs"]
+        assert len(outputs)==3 and [row["id"]for row in outputs]==[row["id"]for row in fixture.references]
+        assert len(forwards)==sum(len(row["generated_token_ids"])-1 for row in outputs)
+        for index,row in enumerate(outputs):
+            trace=[item for item in forwards if item["query_index"]==index]
+            frame=measurements[index]["frame_token_ids"]
+            assert len(trace)==len(row["generated_token_ids"])-1 and trace[0]["input_token_ids"]==frame
+            for step,item in enumerate(trace):
+                expected_positions=list(range(len(frame)))if step==0 else[len(frame)+step-1]
+                assert item["position_ids"]==expected_positions and item["attention_mask_tokens"]==len(frame)+step
+                if step:assert item["input_token_ids"]==[row["generated_token_ids"][step]]
+            if row["generated_token_ids"]==[tokenizer.bos_token_id,tokenizer.eos_token_id]:
+                assert row["outcome"]=="abstained" and row["reason"]=="empty_output" and row["candidate"]is None
+            if row["outcome"]=="complete":assert _complete_norm_payload_shape(row["candidate"])
+        assert comparison["comparison"]["outcome_counts"]["error"]==0
+        assert comparison["heldout_generalization_established"]is False and comparison["corpus_admitted"]is False
+        assert artifact.to_dict()["metrics"]["complete_norm_payload"]["denominator"]==3
+        assert observation["last_call"]["entry_pair_match"] and observation["last_call"]["exit_pair_match"]
+        assert observation["training_or_restore_performed"]is False
+    except BaseException as error:
+        error_record=dict(type=type(error).__name__,message=str(error));raise
+    finally:
+        hook.remove()
+        restored=(before==backend.snapshot_checkpoint()and backend.restored_checkpoint_matches(
+            fixture.owned.checkpoint["model_state"],fixture.owned.checkpoint["optimizer_state"]))
+        assert restored and torch.equal(torch.get_rng_state(),rng)
+        assert all(module.training is mode for module,mode in modes)
+        assert all(p.grad is gradient and p.requires_grad is required and
+            (gradient is None or torch.equal(gradient,saved))for p,gradient,saved,required in gradients)
+        assert worker._json_bytes(fixture.references)==fixture.reference_wire
+        observation=None if producer is None else producer.observation()
+        raw_outputs=((observation or{}).get("last_call")or{}).get("raw_generation_outputs")
+        disposition_counts=None if raw_outputs is None else dict(Counter(row["outcome"]for row in raw_outputs))
+        witness=dict(schema="observed-authored-Qwen2-full-three-query-evaluation/v1",mode=context_mode,
+            capacity=preflight,complete_original_TRAIN_contexts=expected_contexts,
+            actual_generation_calls=calls,actual_forward_records=forwards,
+            observed_disposition_counts=disposition_counts,raw_generation_outputs_available=raw_outputs is not None,
+            observation=observation,artifact=None if artifact is None else artifact.to_dict(),
+            error=error_record,pair_RNG_modes_gradients_and_references_restored=restored,
+            pretrained_quality=False,training_campaign=False,teacher_forcing=False,gold_or_corpus_authority=False,
+            learned_legal_meaning=False,convergence=False)
+        (tmp_path/"full-three-query-evaluation-witness.json").write_bytes(worker._json_bytes(witness))
+
+
+@pytest.mark.parametrize("context_transport",["shared_json_v2","shared_json_v3"])
+def test_reviewed_Qwen2_expanded_context_input_profile_retains_complete_over8192_data(context_transport):
+    test_reviewed_Qwen2_complete_context_budget_is_explicit_and_lossless("accepted",context_transport,
+        context_budget_profile="qwen2-full-context-16384/v1",accepted_text_bytes=9000,source_budget=32768)
+
+
+@pytest.mark.parametrize("profile",["qwen2-full-context-8192/v1","qwen2-full-context-16384/v1","qwen2-full-context-16384/v2"])
+def test_reviewed_Qwen2_two_named_context_profiles_are_closed_before_native_import(monkeypatch,profile):
+    import builtins
+    value=_reviewed_Qwen2_generation_policy();value["context_budget_profile"]=profile
+    original=builtins.__import__
+    def no_native(name,*args,**kwargs):
+        if name.split(".",1)[0]in("torch","transformers","tokenizers"):pytest.fail("profile DATA imported native runtime")
+        return original(name,*args,**kwargs)
+    monkeypatch.setattr(builtins,"__import__",no_native)
+    if profile.endswith("/v2"):
+        with pytest.raises(worker.TrainingJobValidationError,match="generation policy"):
+            worker._reviewed_decoder_generation_policy(value)
+    else:assert worker._reviewed_decoder_generation_policy(value)==value
+
+
+def test_reviewed_Qwen2_old_aggregate_context_capacity_keeps_original_primary_and_unknown_outputs(tmp_path,monkeypatch):
+    # Reaches the genuine full evaluator under the OLD8192 policy. Its actual
+    # complete-context refusal must survive finally reporting with no outputs.
+    with pytest.raises(pytest.fail.Exception,match="Complete original three-query batch refused active capacity"):
+        test_reviewed_Qwen2_full_three_query_shared_v3_producer_evaluation(tmp_path,monkeypatch,"aggregate",
+            context_budget_profile="qwen2-full-context-8192/v1")
+    witness=json.loads((tmp_path/"full-three-query-evaluation-witness.json").read_bytes())
+    assert witness["actual_forward_records"]==[] and witness["actual_generation_calls"]==[]
+    assert witness["observed_disposition_counts"]is None and witness["raw_generation_outputs_available"]is False
+    assert witness["error"]["type"]=="Failed" and "Complete original three-query batch refused active capacity"in witness["error"]["message"]
+    assert witness["pair_RNG_modes_gradients_and_references_restored"]is True
+
+
+def _reviewed_profiled_qwen2_training_state_fixture(tmp_path):
+    """Tiny real CPU BF16 Qwen2; no pretrained weights or model download."""
+    from transformers import Qwen2Config, Qwen2ForCausalLM
+    local = tmp_path / "tokenizer-fixture"
+    local.mkdir()
+    # Reuse the existing fast tokenizer through the T5 fixture, whose rotary
+    # setup is independent of the installed Qwen2 default-RoPE representation.
+    token_fixture = _reviewed_local_loader_hf_fixture(local)
+    torch = token_fixture.torch
+    tokenizer = token_fixture.backend.tokenizer
+    torch.manual_seed(1729)
+    config = Qwen2Config(vocab_size=tokenizer.vocab_size + 8, hidden_size=8,
+        intermediate_size=16, num_hidden_layers=1, num_attention_heads=2,
+        num_key_value_heads=1, max_position_embeddings=16384,
+        attention_dropout=0.0, use_sliding_window=False, tie_word_embeddings=True,
+        bos_token_id=tokenizer.bos_token_id, eos_token_id=tokenizer.eos_token_id,
+        pad_token_id=259, dtype="bfloat16")
+    config._attn_implementation = "eager"
+    model = Qwen2ForCausalLM(config).to(device="cpu", dtype=torch.bfloat16)
+    # Match the existing native fixture: BF16 parameters with FP32 RoPE state.
+    from transformers.models.qwen2.modeling_qwen2 import Qwen2RotaryEmbedding
+    rope = Qwen2RotaryEmbedding(config)
+    for name in ("inv_freq", "original_inv_freq"):
+        setattr(model.model.rotary_emb, name, getattr(rope, name).detach().clone())
+    worker._reviewed_builtin_qwen2_rotary_buffers(model, initialize=True)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=.001, foreach=False)
+    backend = worker.TorchReviewedDecoderBackend(model, optimizer, tokenizer,
+        architecture="causal_lm", max_sequence_tokens=16384, pretrained=False,
+        model_profile="builtin-qwen2-bfloat16/v1")
+    job_root = tmp_path / "mixed-worker"
+    job_root.mkdir()
+    return _reviewed_mixed_worker_fixture(job_root, backend=backend,
+        tokenizer=tokenizer, two_components=False)
+
+
+def test_reviewed_mixed_Qwen2_training_executor_uses_profiled_checkpoint_bound(tmp_path, monkeypatch):
+    fixture = _reviewed_profiled_qwen2_training_state_fixture(tmp_path)
+    backend = fixture.runtime.backend
+    expected = 2 * 1024**3
+    assert backend._checkpoint_byte_limit() == expected
+    original = worker._reviewed_decoder_artifact
+    old_default = worker.MAX_REVIEWED_DECODER_STATE_BYTES
+    numeric_paths = {fixture.payload[key]["path"] for key in
+        ("model_artifact", "base_model_checkpoint", "base_optimizer_checkpoint")}
+    seen = []
+    def authenticate(reference, *, limit=old_default, load=True):
+        if reference.path in numeric_paths or Path(reference.path).name in {
+                "model.checkpoint", "optimizer.checkpoint"}:
+            seen.append((Path(reference.path).name, limit, load))
+            assert limit == expected, "numerical state lost its authenticated Qwen2 profile bound"
+        return original(reference, limit=limit, load=load)
+    monkeypatch.setattr(worker, "_reviewed_decoder_artifact", authenticate)
+    # Exercise the snapshot boundary without allocating a half-gigabyte test
+    # payload. The actual profiled backend keeps its independently checked cap.
+    monkeypatch.setattr(worker, "MAX_REVIEWED_DECODER_STATE_BYTES", 1)
+    result = worker.execute_training_job(worker.TrainingJobSpec.from_dict(fixture.payload),
+        reviewed_runtime=fixture.runtime)
+    assert result["backend_train_batch_calls"] == result["backend_reported_optimizer_steps"] == 1
+    assert result["worker_progress"]["optimizer_steps"] == 1
+    assert {name for name, limit, load in seen} >= {"model.checkpoint", "optimizer.checkpoint"}
+    assert len(seen) >= 6
+    assert result["complete_training_binding"]["production_training_eligible"] is False
+    assert result["convergence_proved"] is result["promotion_performed"] is False
+
+
+def test_reviewed_mixed_custom_backend_cannot_claim_Qwen2_checkpoint_headroom(tmp_path, monkeypatch):
+    backend = _CompleteReviewedSGDBackend()
+    backend.model_profile = "builtin-qwen2-bfloat16/v1"
+    backend._checkpoint_byte_limit = lambda: 2 * 1024**3
+    fixture = _reviewed_mixed_worker_fixture(tmp_path, backend=backend, two_components=False)
+    original = worker._reviewed_decoder_artifact
+    expected = worker.MAX_REVIEWED_DECODER_STATE_BYTES
+    numeric_paths = {fixture.payload[key]["path"] for key in
+        ("model_artifact", "base_model_checkpoint", "base_optimizer_checkpoint")}
+    seen = []
+    def authenticate(reference, *, limit=expected, load=True):
+        if reference.path in numeric_paths or Path(reference.path).name in {
+                "model.checkpoint", "optimizer.checkpoint"}:
+            seen.append(limit)
+            assert limit == expected
+        return original(reference, limit=limit, load=load)
+    monkeypatch.setattr(worker, "_reviewed_decoder_artifact", authenticate)
+    result = worker.execute_training_job(worker.TrainingJobSpec.from_dict(fixture.payload),
+        reviewed_runtime=fixture.runtime)
+    assert result["worker_progress"]["optimizer_steps"] == 1
+    assert seen and set(seen) == {512 * 1024**2}
+
+
+
+# Opt-in staged-population continuation: real signed fictional V4 data and the
+# existing analytic/Torch numerical fixtures; never model/permission stand-ins.
+def _mixed_continuation_bind_stage(fixture, tmp_path, label, parent_ref, *, kind='growth'):
+    from tests.unit.logic import test_autoformal_campaign_training_inputs as campaign
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_eval_splits as splits
+    data, inputs = fixture.data, fixture.inputs
+    parent = campaign._reviewed_doc(data.registry, parent_ref)
+    previous_history = campaign._reviewed_doc(data.registry, parent['history_artifact'])
+    previous_rows = campaign._reviewed_doc(data.registry, parent['rows_artifact'])
+    if kind == 'withdrawal':
+        options = campaign._reviewed_withdrawal_options(data, data.deepcopy(data.options), data.registry,
+            parent_ref, tmp_path / (label + '-stage'))
+        options.update(successor_components=None, expected_successor_components_sha256=None)
+        stage = inputs.stage_reviewed_mixed_cycle_inputs_v4(data.registry, **options)
+        return stage
+    if kind in {'growth', 'corrected', 'superseded', 'readmission'}:
+        old_ids = {row['id'] for row in data.rows}
+        campaign._reviewed_mixed_cycle_second_component(data)
+        rows = data.options['successor_rows']
+        if kind != 'growth':
+            rows = [row for row in rows if row['id'] not in old_ids]
+            selected_ids = {row['id'] for row in rows}
+            components = [component for component in data.options['successor_components']
+                          if set(component['row_ids']) <= selected_ids]
+            component_ids = {component['component_id'] for component in components}
+            data.options['successor_components'] = components
+            data.options['admission_inputs'] = {key: value for key, value in data.options['admission_inputs'].items()
+                                               if key in component_ids}
+            data.options['exposure_records'] = [row for row in data.options['exposure_records'] if row['id'] in selected_ids]
+            contexts = data.kwargs['source_contexts']
+            contexts['rows'] = [row for row in contexts['rows'] if row['id'] in selected_ids]
+            contexts['component_selection_contexts'] = {key: value for key, value in contexts['component_selection_contexts'].items()
+                                                       if key in component_ids}
+    else:
+        assert kind == 'retained'
+        rows = data.options['successor_rows']
+    history = data.deepcopy(previous_history)
+    history.update(scope_kind='complete_declared_history', parent_history_artifact=parent['history_artifact'])
+    known = {row['id'] for row in history['records']}
+    for row in rows:
+        if row['id'] not in known:
+            example = splits.LegalIRSplitExample.from_sample(row)
+            history['records'].append({'id': row['id'], 'source_text': row['source_text'],
+                'source_sha256': data.fixtures.source_digest(row['source_text']),
+                'split_example': example.to_dict(), 'assignment': 'train'})
+            known.add(row['id'])
+    manifest = splits.LegalIRSplitManifest(
+        examples=tuple(splits.LegalIRSplitExample.from_mapping(row['split_example']) for row in history['records']),
+        assignments={row['id']: row['assignment'] for row in history['records']},
+        config_digest=splits.LegalIREvalSplitConfig(**data.options['split_config']).digest).to_dict()
+    changes = {'schema': 'reviewed-example-cycle-transition/v1', 'retained': [], 'added': [],
+               'corrected': [], 'superseded': [], 'revoked': []}
+    if kind == 'growth':
+        prior_ids = {row['id'] for row in previous_rows}
+        changes['retained'] = [row['id'] for row in previous_rows]
+        changes['added'] = [row['id'] for row in rows if row['id'] not in prior_ids]
+    elif kind in {'corrected', 'superseded'}:
+        assert len(previous_rows) == len(rows) == 3
+        reason = campaign._reviewed_reason(data.registry, tmp_path)
+        changes[kind] = [{'parent_id': old['id'], 'successor_id': new['id'], 'reason_ref': reason}
+                         for old, new in zip(previous_rows, rows, strict=True)]
+    elif kind == 'readmission':
+        assert not previous_rows
+        changes['added'] = [row['id'] for row in rows]
+    else:
+        changes['retained'] = [row['id'] for row in rows]
+    data.options.update(transition_kind='successor', parent_artifact=parent_ref,
+        expected_parent_sha256=parent_ref['sha256'], successor_rows=rows,
+        expected_successor_rows_sha256=data.fixtures.digest(rows), split_manifest=manifest,
+        history=history, transition=changes, allow_bootstrap=False, output_directory=tmp_path / (label + '-stage'))
+    campaign._reviewed_mixed_cycle_rebind(data)
+    stage = inputs.stage_reviewed_mixed_cycle_inputs_v4(data.registry, **data.options)
+    fixture.payload.update(stage_artifact=stage,
+        exposure_artifact=_complete_reviewed_artifact(tmp_path / (label + '-exposure.json'), worker._json_bytes(data.options['exposure_records'])),
+        source_contexts_artifact=_complete_reviewed_artifact(tmp_path / (label + '-contexts.json'), worker._json_bytes(data.kwargs['source_contexts'])),
+        expected_admission_inputs_sha256=data.kwargs['expected_admission_inputs_sha256'])
+    return stage
+
+
+def _mixed_continuation_execute(fixture, tmp_path, label, *, parent=None, steps=1, enabled=True, backend=None, **changes):
+    backend = backend if backend is not None else _CompleteReviewedSGDBackend()
+    payload = dict(fixture.payload, output_directory=str(tmp_path / label), max_steps=steps, max_seconds=3600)
+    if enabled:
+        payload['continuation_profile'] = worker.REVIEWED_MIXED_DECODER_CONTINUATION_PROFILE
+    if parent is not None:
+        payload.update(base_model_checkpoint=parent['model_checkpoint'], base_optimizer_checkpoint=parent['optimizer_checkpoint'],
+                       parent_checkpoint_artifact=parent['candidate'])
+    payload.update(changes)
+    spec = worker.TrainingJobSpec.from_dict(payload)
+    runtime = replace(fixture.runtime, backend=backend, tokenizer=getattr(backend, 'tokenizer', fixture.runtime.tokenizer))
+    return worker.execute_training_job(spec, reviewed_runtime=runtime), backend
+
+
+def _mixed_continuation_put(fixture, tmp_path, label, document):
+    raw = worker._json_bytes(document)
+    reference = _complete_reviewed_artifact(tmp_path / (label + '.json'), raw)
+    stored = fixture.data.registry.stage_artifact(reference['path'], reference['sha256'])
+    return dict(stored, path=str(fixture.data.registry.artifact_path(stored)))
+
+
+def test_reviewed_mixed_continuation_legacy_serialization_is_unchanged_without_opt_in(tmp_path):
+    fixture = _reviewed_mixed_worker_fixture(tmp_path, two_components=False)
+    spec = worker.TrainingJobSpec.from_dict(fixture.payload)
+    assert 'continuation_profile' not in spec.to_dict()
+    result, _ = _mixed_continuation_execute(fixture, tmp_path, 'legacy', enabled=False)
+    checkpoint = json.loads(Path(result['candidate']['path']).read_bytes())
+    assert checkpoint['schema'] == worker.REVIEWED_DECODER_CHECKPOINT_SCHEMA
+    assert set(checkpoint) == {'schema', 'checkpoint_lineage_id', 'base_version_id', 'backend_identity', 'assets',
+        'training_binding', 'model_state', 'optimizer_state', 'progress', 'batch_size', 'seed',
+        'parent_checkpoint_sha256', 'producer_pins', 'token_budgets', 'qualified', 'promotion_performed'}
+    assert not {'continuation_profile', 'optimizer_step_offset', 'stage_continuation'} & set(result)
+
+
+@pytest.mark.parametrize('value', [True, 'unknown', 'reviewed-cycle-checkpoint-lineage/v1'])
+def test_reviewed_mixed_continuation_is_explicit_and_v9_stays_closed(tmp_path, value):
+    fixture = _reviewed_mixed_worker_fixture(tmp_path, two_components=False)
+    with pytest.raises(worker.TrainingJobValidationError, match='continuation profile'):
+        worker.TrainingJobSpec.from_dict(dict(fixture.payload, continuation_profile=value))
+    legacy = dict(fixture.old.payload, continuation_profile='reviewed-mixed-cycle-stage-continuation/v1')
+    with pytest.raises(worker.TrainingJobValidationError):
+        worker.TrainingJobSpec.from_dict(legacy)
+
+
+def test_reviewed_mixed_continuation_three_to_six_replays_every_current_row_from_zero(tmp_path):
+    from tests.unit.logic import test_autoformal_campaign_training_inputs as campaign
+    fixture = _reviewed_mixed_worker_fixture(tmp_path, two_components=False)
+    first, _ = _mixed_continuation_execute(fixture, tmp_path, 'parent-three', steps=3, enabled=False)
+    old_stage = fixture.payload['stage_artifact']
+    successor = _mixed_continuation_bind_stage(fixture, tmp_path, 'six', old_stage)
+    next_job, backend = _mixed_continuation_execute(fixture, tmp_path, 'successor-six', parent=first, steps=6)
+    assert next_job['initial_progress'] == {'epochs_completed': 0, 'row_cursor': 0, 'optimizer_steps': 3}
+    assert next_job['optimizer_step_offset'] == 3
+    assert next_job['worker_progress'] == {'epochs_completed': 1, 'row_cursor': 0, 'optimizer_steps': 9}
+    assert next_job['backend_reported_optimizer_steps'] == backend.steps == 9
+    assert next_job['backend_train_batch_calls'] == len(backend.seen) == 6
+    assert {row['id'] for batch in backend.seen for row in batch} == set(next_job['complete_training_binding']['training_record_ids'])
+    assert next_job['stage_transition_performed'] is next_job['changed_population_initial_cursor_zero'] is True
+    checkpoint = json.loads(Path(next_job['candidate']['path']).read_bytes())
+    assert checkpoint['schema'] == worker.REVIEWED_DECODER_CONTINUATION_CHECKPOINT_SCHEMA
+    assert checkpoint['optimizer_step_offset'] == 3 and checkpoint['parent_checkpoint_sha256'] == first['candidate']['sha256']
+    proof = checkpoint['stage_continuation']['stage_ancestry']
+    assert proof['ancestor_stage'] == old_stage and proof['successor_stage'] == successor
+    current = campaign._reviewed_doc(fixture.data.registry, successor)
+    history = campaign._reviewed_doc(fixture.data.registry, current['history_artifact'])
+    assert len(history['records']) == 6
+    assert checkpoint['stage_continuation']['parent_checkpoint_artifact'] == first['candidate']
+    assert proof['retired_information_unlearned'] is False
+
+
+@pytest.mark.parametrize('kind', ['corrected', 'superseded'])
+def test_reviewed_mixed_continuation_same_size_revisions_never_reuse_retired_rows(tmp_path, kind):
+    fixture = _reviewed_mixed_worker_fixture(tmp_path, two_components=False)
+    first, _ = _mixed_continuation_execute(fixture, tmp_path, 'parent-three', steps=3, enabled=False)
+    previous_ids = set(first['complete_training_binding']['training_record_ids'])
+    _mixed_continuation_bind_stage(fixture, tmp_path, kind, fixture.payload['stage_artifact'], kind=kind)
+    result, backend = _mixed_continuation_execute(fixture, tmp_path, 'corrected-three', parent=first, steps=3)
+    actual = [row for batch in backend.seen for row in batch]
+    assert len(actual) == 3 and not previous_ids & {row['id'] for row in actual}
+    assert result['initial_progress'] == {'epochs_completed': 0, 'row_cursor': 0, 'optimizer_steps': 3}
+    assert result['worker_progress'] == {'epochs_completed': 1, 'row_cursor': 0, 'optimizer_steps': 6}
+    assert result['optimizer_step_offset'] == 3
+
+
+def test_reviewed_mixed_continuation_withdrawal_readmission_keeps_bounded_history(tmp_path):
+    fixture = _reviewed_mixed_worker_fixture(tmp_path, two_components=False)
+    first, _ = _mixed_continuation_execute(fixture, tmp_path, 'parent-three', steps=3, enabled=False)
+    from tests.unit.logic import test_autoformal_campaign_training_inputs as campaign
+    initial_stage = campaign._reviewed_doc(fixture.data.registry, fixture.payload['stage_artifact'])
+    retired = _mixed_continuation_bind_stage(fixture, tmp_path, 'withdrawn', fixture.payload['stage_artifact'], kind='withdrawal')
+    readmitted = _mixed_continuation_bind_stage(fixture, tmp_path, 'readmitted', retired, kind='readmission')
+    stages = [initial_stage, campaign._reviewed_doc(fixture.data.registry, retired),
+              campaign._reviewed_doc(fixture.data.registry, readmitted)]
+    assert all(stage['checkpoint_lineage'] == initial_stage['checkpoint_lineage'] for stage in stages)
+    assert all(stage['implementation'] == initial_stage['implementation'] for stage in stages)
+    assert sum(Path(key).name == 'legal_graph_dependencies.py' for key in initial_stage['implementation']) == 1
+    result, backend = _mixed_continuation_execute(fixture, tmp_path, 'readmitted-three', parent=first, steps=3)
+    assert result['optimizer_step_offset'] == 3 and result['worker_progress']['optimizer_steps'] == 6
+    chain = result['stage_continuation']['stage_ancestry']['stage_chain']
+    assert [row['transition_kind'] for row in chain] == ['bootstrap', 'withdrawal', 'successor']
+    assert [row['record_count'] for row in chain] == [3, 0, 3]
+    assert len(backend.seen) == 3
+    assert not set(first['complete_training_binding']['training_record_ids']) & {row['id'] for batch in backend.seen for row in batch}
+
+
+def test_reviewed_mixed_continuation_repeated_stage_changes_keep_global_offset_chain(tmp_path):
+    fixture = _reviewed_mixed_worker_fixture(tmp_path, two_components=False)
+    first, _ = _mixed_continuation_execute(fixture, tmp_path, 'parent', steps=3, enabled=False)
+    successor = _mixed_continuation_bind_stage(fixture, tmp_path, 'six', fixture.payload['stage_artifact'])
+    second, _ = _mixed_continuation_execute(fixture, tmp_path, 'six-complete', parent=first, steps=6)
+    _mixed_continuation_bind_stage(fixture, tmp_path, 'retained-six', successor, kind='retained')
+    third, backend = _mixed_continuation_execute(fixture, tmp_path, 'third-stage', parent=second)
+    assert third['optimizer_step_offset'] == 9 and backend.steps == 10
+    assert third['initial_progress'] == {'epochs_completed': 0, 'row_cursor': 0, 'optimizer_steps': 9}
+    assert third['worker_progress'] == {'epochs_completed': 0, 'row_cursor': 1, 'optimizer_steps': 10}
+    assert third['stage_continuation']['parent_checkpoint_artifact'] == second['candidate']
+
+
+def test_reviewed_mixed_continuation_split_updates_equal_uninterrupted_adam_and_rng(tmp_path):
+    torch, original, _ = _torch_reviewed_backend_fixture(context_limit=65536)
+    fixture = _reviewed_mixed_worker_fixture(tmp_path, backend=original, tokenizer=original.tokenizer, two_components=False)
+    first, _ = _mixed_continuation_execute(fixture, tmp_path, 'torch-parent', backend=original, steps=3, enabled=False)
+    _mixed_continuation_bind_stage(fixture, tmp_path, 'torch-six', fixture.payload['stage_artifact'])
+    _, whole_backend, _ = _torch_reviewed_backend_fixture(context_limit=65536)
+    whole, _ = _mixed_continuation_execute(fixture, tmp_path, 'torch-whole', parent=first, steps=6, backend=whole_backend)
+    _, left_backend, _ = _torch_reviewed_backend_fixture(context_limit=65536)
+    left, _ = _mixed_continuation_execute(fixture, tmp_path, 'torch-left', parent=first, steps=3, backend=left_backend)
+    _, right_backend, _ = _torch_reviewed_backend_fixture(context_limit=65536)
+    right, _ = _mixed_continuation_execute(fixture, tmp_path, 'torch-right', parent=left, steps=3, backend=right_backend)
+    pair = tuple(Path(whole[key]['path']).read_bytes() for key in ('model_checkpoint', 'optimizer_checkpoint'))
+    assert right_backend.restored_checkpoint_matches(*pair) is True
+    assert right_backend.optimizer.state and right_backend._optimizer_steps == 9
+    assert whole['backend_reported_metrics'] == left['backend_reported_metrics'] + right['backend_reported_metrics']
+    assert whole['worker_progress'] == right['worker_progress'] == {'epochs_completed': 1, 'row_cursor': 0, 'optimizer_steps': 9}
+    assert right['initial_progress'] == left['worker_progress']
+    assert right['optimizer_step_offset'] == 3
+
+
+@pytest.mark.parametrize('damage', ['unrelated', 'history', 'domain', 'empty', 'source', 'batch', 'seed', 'asset',
+    'omitted_binding_field', 'binding_policy', 'row_identity'])
+def test_reviewed_mixed_continuation_damage_refuses_before_inspect_restore_or_output(tmp_path, monkeypatch, damage):
+    from tests.unit.logic import test_autoformal_campaign_training_inputs as campaign
+    fixture = _reviewed_mixed_worker_fixture(tmp_path, two_components=False)
+    initial = fixture.data.deepcopy(fixture.data.options)
+    first, _ = _mixed_continuation_execute(fixture, tmp_path, 'parent', steps=3, enabled=False)
+    old_stage = fixture.payload['stage_artifact']
+    if damage == 'empty':
+        fixture.payload['stage_artifact'] = _mixed_continuation_bind_stage(fixture, tmp_path, 'empty', old_stage, kind='withdrawal')
+    elif damage == 'unrelated':
+        initial['history']['scope_id'] += ':unrelated'
+        initial['expected_history_sha256'] = fixture.data.fixtures.digest(initial['history'])
+        initial['output_directory'] = tmp_path / 'unrelated-stage'
+        fixture.payload['stage_artifact'] = fixture.inputs.stage_reviewed_mixed_cycle_inputs_v4(fixture.data.registry, **initial)
+    else:
+        _mixed_continuation_bind_stage(fixture, tmp_path, 'six', old_stage)
+    changes = {}
+    if damage == 'history':
+        stage = campaign._reviewed_doc(fixture.data.registry, fixture.payload['stage_artifact'])
+        history = campaign._reviewed_doc(fixture.data.registry, stage['history_artifact'])
+        history['records'][0]['source_text'] += ' tampered'
+        stage['history_artifact'] = _mixed_continuation_put(fixture, tmp_path, 'damaged-history', history)
+        fixture.payload['stage_artifact'] = _mixed_continuation_put(fixture, tmp_path, 'damaged-stage', stage)
+    elif damage == 'domain':
+        document = json.loads(Path(first['candidate']['path']).read_bytes())
+        document['training_binding']['schema'] = 'reviewed-decoder-training-input-receipt/v3'
+        first = dict(first, candidate=_complete_reviewed_artifact(tmp_path / 'wrong-domain-parent.json', worker._json_bytes(document)))
+    elif damage in {'omitted_binding_field', 'binding_policy', 'row_identity'}:
+        document = json.loads(Path(first['candidate']['path']).read_bytes())
+        binding = document['training_binding']
+        if damage == 'omitted_binding_field':
+            binding.pop('source_context_independently_authenticated')
+        elif damage == 'binding_policy':
+            binding['proof_authority'] = True
+        else:
+            binding['row_commitments'][0]['target_identities']['governing_context_sha256'] = '0'*64
+        first = dict(first, candidate=_complete_reviewed_artifact(tmp_path / 'damaged-binding-parent.json', worker._json_bytes(document)))
+    elif damage == 'source':
+        changes['expected_source_sha256'] = dict(fixture.payload['expected_source_sha256'], inputs='0'*64)
+    elif damage == 'batch':
+        changes['batch_size'] = 2
+    elif damage == 'seed':
+        changes['seed'] = fixture.payload['seed'] + 1
+    elif damage == 'asset':
+        raw = Path(fixture.payload['tokenizer_artifact']['path']).read_bytes()
+        changes['tokenizer_artifact'] = _complete_reviewed_artifact(tmp_path / 'different-tokenizer-path.json', raw)
+    backend = _CompleteReviewedSGDBackend()
+    monkeypatch.setattr(backend, 'inspect_checkpoint', lambda *a: pytest.fail('invalid continuation reached inspection'))
+    monkeypatch.setattr(backend, 'restore_checkpoint', lambda *a: pytest.fail('invalid continuation reached restoration'))
+    output = tmp_path / 'must-not-exist'
+    with pytest.raises((ValueError, worker.TrainingJobValidationError)):
+        _mixed_continuation_execute(fixture, tmp_path, output.name, parent=first, backend=backend, **changes)
+    assert backend.restores == backend.calls == 0 and not output.exists()
+
+
+@pytest.mark.parametrize('damage', ['offset', 'proof', 'downgrade'])
+def test_reviewed_mixed_continuation_persisted_offset_and_proof_cannot_be_retagged(tmp_path, monkeypatch, damage):
+    fixture = _reviewed_mixed_worker_fixture(tmp_path, two_components=False)
+    first, _ = _mixed_continuation_execute(fixture, tmp_path, 'parent', steps=3, enabled=False)
+    _mixed_continuation_bind_stage(fixture, tmp_path, 'six', fixture.payload['stage_artifact'])
+    transitioned, _ = _mixed_continuation_execute(fixture, tmp_path, 'first-successor-update', parent=first)
+    document = json.loads(Path(transitioned['candidate']['path']).read_bytes())
+    if damage == 'offset':
+        document['optimizer_step_offset'] = 2
+        document['stage_continuation']['global_optimizer_step_offset'] = 2
+        document['progress']['row_cursor'] = 2
+    elif damage == 'proof':
+        document['stage_continuation']['stage_ancestry']['stage_chain'].pop(0)
+    changed = dict(transitioned, candidate=_complete_reviewed_artifact(tmp_path / 'retagged-parent.json', worker._json_bytes(document)))
+    backend = _CompleteReviewedSGDBackend()
+    monkeypatch.setattr(backend, 'inspect_checkpoint', lambda *a: pytest.fail('retagged offset reached inspection'))
+    with pytest.raises((ValueError, worker.TrainingJobValidationError)):
+        _mixed_continuation_execute(fixture, tmp_path, 'retagged-output', parent=changed, backend=backend, enabled=damage != 'downgrade')
+    assert backend.calls == backend.restores == 0 and not (tmp_path / 'retagged-output').exists()
+
+
+
+def test_reviewed_mixed_continuation_changed_stage_stays_closed_without_opt_in(tmp_path, monkeypatch):
+    fixture = _reviewed_mixed_worker_fixture(tmp_path, two_components=False)
+    first, _ = _mixed_continuation_execute(fixture, tmp_path, 'parent', steps=3, enabled=False)
+    _mixed_continuation_bind_stage(fixture, tmp_path, 'six', fixture.payload['stage_artifact'])
+    backend = _CompleteReviewedSGDBackend()
+    monkeypatch.setattr(backend, 'inspect_checkpoint', lambda *a: pytest.fail('implicit changed stage reached inspection'))
+    with pytest.raises(worker.TrainingJobValidationError, match='exact-resume identities differ'):
+        _mixed_continuation_execute(fixture, tmp_path, 'implicit-change', parent=first, backend=backend, enabled=False)
+    assert backend.calls == backend.restores == 0 and not (tmp_path / 'implicit-change').exists()
+
+
+def test_reviewed_mixed_continuation_partial_final_batches_keep_global_steps(tmp_path):
+    fixture = _reviewed_mixed_worker_fixture(tmp_path, batch_size=2, two_components=False)
+    first, _ = _mixed_continuation_execute(fixture, tmp_path, 'batch-two-parent', steps=2, enabled=False)
+    assert first['worker_progress'] == {'epochs_completed': 1, 'row_cursor': 0, 'optimizer_steps': 2}
+    _mixed_continuation_bind_stage(fixture, tmp_path, 'batch-two-six', fixture.payload['stage_artifact'])
+    result, backend = _mixed_continuation_execute(fixture, tmp_path, 'batch-two-current', parent=first, steps=3)
+    assert result['optimizer_step_offset'] == 2
+    assert result['initial_progress'] == {'epochs_completed': 0, 'row_cursor': 0, 'optimizer_steps': 2}
+    assert result['worker_progress'] == {'epochs_completed': 1, 'row_cursor': 0, 'optimizer_steps': 5}
+    assert [len(batch) for batch in backend.seen] == [2, 2, 2]
+    assert {row['id'] for batch in backend.seen for row in batch} == set(result['complete_training_binding']['training_record_ids'])
+
+
+@pytest.mark.parametrize('mutation', ['source', 'backend'])
+def test_reviewed_mixed_continuation_registry_replay_closes_source_and_backend_before_inspect(tmp_path, monkeypatch, mutation):
+    import sys
+    fixture = _reviewed_mixed_worker_fixture(tmp_path, two_components=False)
+    first, _ = _mixed_continuation_execute(fixture, tmp_path, 'callback-parent', steps=3, enabled=False)
+    _mixed_continuation_bind_stage(fixture, tmp_path, 'callback-six', fixture.payload['stage_artifact'])
+    backend = _CompleteReviewedSGDBackend()
+    frozen_source = dict(fixture.payload['expected_source_sha256'])
+    observed_source = dict(frozen_source)
+    original_identity = backend.identity
+    changed = {'fired': False}
+    def identity():
+        value = original_identity()
+        if changed['fired'] and mutation == 'backend':
+            value['checkpoint_format'] += ':changed-by-registry'
+        return value
+    monkeypatch.setattr(backend, 'identity', identity)
+    monkeypatch.setattr(worker, '_reviewed_decoder_source_pins', lambda **kwargs: dict(observed_source))
+    original_read = fixture.data.registry.read_artifact
+    def read_with_mutation(*args, **kwargs):
+        raw = original_read(*args, **kwargs)
+        frame = sys._getframe()
+        try:
+            while frame is not None and frame.f_code.co_name != 'replay_continuation':
+                frame = frame.f_back
+            if frame is not None and not changed['fired']:
+                changed['fired'] = True
+                if mutation == 'source':
+                    observed_source['inputs'] = '0' * 64
+        finally:
+            del frame
+        return raw
+    monkeypatch.setattr(fixture.data.registry, 'read_artifact', read_with_mutation)
+    monkeypatch.setattr(backend, 'inspect_checkpoint', lambda *args: pytest.fail('callback mutation reached inspection'))
+    monkeypatch.setattr(backend, 'restore_checkpoint', lambda *args: pytest.fail('callback mutation reached restoration'))
+    monkeypatch.setattr(backend, 'train_batch', lambda *args: pytest.fail('callback mutation reached training'))
+    with pytest.raises(worker.TrainingJobValidationError, match='during continuation replay'):
+        _mixed_continuation_execute(fixture, tmp_path, 'callback-must-not-exist', parent=first, backend=backend)
+    assert changed['fired'] and backend.restores == backend.calls == 0
+    assert not (tmp_path / 'callback-must-not-exist').exists()
+
+
+@pytest.mark.parametrize('when', ['after_restore', 'after_first_update'])
+def test_reviewed_mixed_continuation_rechecks_archived_parent_after_numeric_callbacks(tmp_path, monkeypatch, when):
+    fixture = _reviewed_mixed_worker_fixture(tmp_path, two_components=False)
+    first, _ = _mixed_continuation_execute(fixture, tmp_path, 'archive-parent', steps=3, enabled=False)
+    _mixed_continuation_bind_stage(fixture, tmp_path, 'archive-six', fixture.payload['stage_artifact'])
+    transitioned, _ = _mixed_continuation_execute(fixture, tmp_path, 'archive-first-current', parent=first)
+    archived = Path(first['candidate']['path'])
+    original_archive = archived.read_bytes()
+    backend = _CompleteReviewedSGDBackend()
+    changed = {'fired': False}
+    def damage_archive():
+        assert not changed['fired']
+        changed['fired'] = True
+        archived.write_bytes(original_archive + b'\n')
+    if when == 'after_restore':
+        original_restore = backend.restore_checkpoint
+        def restore_then_damage(*args):
+            original_restore(*args)
+            damage_archive()
+        monkeypatch.setattr(backend, 'restore_checkpoint', restore_then_damage)
+    else:
+        backend.after_update = damage_archive
+    output = tmp_path / 'archive-refused-output'
+    with pytest.raises(worker.TrainingJobValidationError):
+        _mixed_continuation_execute(fixture, tmp_path, output.name, parent=transitioned, backend=backend, steps=2)
+    completed = int(when == 'after_first_update')
+    assert changed['fired'] and backend.restores == 1 and backend.calls == completed
+    assert backend.steps == 4 + completed
+    failure = json.loads((output / 'failure.json').read_bytes())
+    assert failure['completed_backend_calls'] == completed
+    assert failure['backend_restore_attempts'] == failure['completed_backend_restore_calls'] == 1
+    assert failure['worker_progress'] == {'epochs_completed': 0, 'row_cursor': 1 + completed, 'optimizer_steps': 4 + completed}
+    assert failure['partial_output_preserved'] is failure['caller_owned_backend_may_have_changed'] is True
+    assert failure['qualified'] is failure['promotion_performed'] is False
+    assert sorted(item.name for item in output.iterdir()) == ['failure.json']
+    if completed:
+        assert backend.weights != json.loads(Path(transitioned['model_checkpoint']['path']).read_bytes())['weights']
+
+
+def test_reviewed_mixed_continuation_changed_stage_parent_nonzero_cursor_starts_current_population_at_zero(tmp_path):
+    fixture = _reviewed_mixed_worker_fixture(tmp_path, two_components=False)
+    first, _ = _mixed_continuation_execute(fixture, tmp_path, 'partial-parent', steps=1, enabled=False)
+    assert first['worker_progress'] == {'epochs_completed': 0, 'row_cursor': 1, 'optimizer_steps': 1}
+    _mixed_continuation_bind_stage(fixture, tmp_path, 'partial-parent-six', fixture.payload['stage_artifact'])
+    result, backend = _mixed_continuation_execute(fixture, tmp_path, 'partial-parent-current', parent=first, steps=6)
+    assert result['optimizer_step_offset'] == 1
+    assert result['initial_progress'] == {'epochs_completed': 0, 'row_cursor': 0, 'optimizer_steps': 1}
+    assert result['worker_progress'] == {'epochs_completed': 1, 'row_cursor': 0, 'optimizer_steps': 7}
+    assert backend.steps == 7 and len(backend.seen) == 6
+    seen = [row['id'] for batch in backend.seen for row in batch]
+    assert len(seen) == len(set(seen)) == 6
+    assert set(seen) == set(result['complete_training_binding']['training_record_ids'])
+
+
+# Exact archived originals, compressed DATA; no download or old-artifact retag.
+_SOURCE_EPOCH_ORIGINAL_WORKER_ZLIB_BASE64 = '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'
+_SOURCE_EPOCH_ORIGINAL_INPUTS_ZLIB_BASE64 = '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'
+
+
+# Explicit Source-epoch derivative tests. The retained 31 continuation cases
+# above remain literal bytes. Archived module bodies are fixture DATA and are
+# executed only by the normal test owner when these tests are actually selected.
+def _source_epoch_migration_real_torch_fixture(tmp_path, monkeypatch):
+    import base64
+    import importlib.util
+    import sys
+    import zlib
+    from copy import deepcopy
+    from types import SimpleNamespace
+    from ipfs_datasets_py.logic import autoformal
+    from ipfs_datasets_py.logic.autoformal import training_cycle_inputs as current_inputs
+    from ipfs_datasets_py.optimizers import logic_theorem_optimizer as optimizer_package
+    from tests.unit.logic import test_autoformal_campaign_training_inputs as campaign
+
+    current_worker = worker
+    old_root = tmp_path / 'archived-original-source'
+    old_root.mkdir()
+    archived = {}
+    for key, encoded, expected in (
+        ('worker', _SOURCE_EPOCH_ORIGINAL_WORKER_ZLIB_BASE64, current_worker.REVIEWED_DECODER_SOURCE_EPOCH_OLD_WORKER),
+        ('inputs', _SOURCE_EPOCH_ORIGINAL_INPUTS_ZLIB_BASE64, current_worker.REVIEWED_DECODER_SOURCE_EPOCH_OLD_INPUTS)):
+        raw = zlib.decompress(base64.b64decode(encoded))
+        assert hashlib.sha256(raw).hexdigest() == expected
+        archived[key] = _complete_reviewed_artifact(old_root / (key + '.py'), raw)
+
+    def load_original(name, reference, patch):
+        description = importlib.util.spec_from_file_location(name, reference['path'])
+        module = importlib.util.module_from_spec(description)
+        patch.setitem(sys.modules, name, module)
+        description.loader.exec_module(module)
+        return module
+
+    # Only the two established canonical module slots are temporarily rebound.
+    # Parent attributes and helper globals are restored by this local context.
+    with monkeypatch.context() as patch:
+        original_inputs = load_original(current_inputs.__name__, archived['inputs'], patch)
+        patch.setattr(autoformal, 'training_cycle_inputs', original_inputs)
+        original = load_original(current_worker.__name__, archived['worker'], patch)
+        patch.setattr(optimizer_package, 'autoencoder_training_worker', original)
+        patch.setitem(globals(), 'worker', original)
+        for name, value in list(vars(campaign).items()):
+            if value is current_inputs:
+                patch.setattr(campaign, name, original_inputs)
+        asset_root = tmp_path / 'old-assets'
+        asset_root.mkdir()
+        local = _reviewed_local_loader_hf_fixture(asset_root, max_sequence_tokens=4096,
+            fixed_json_schema_subwords=True, fixed_typed_schema_subwords=True)
+        # The shared loader fixture deliberately zeroes every model parameter
+        # for EOS-abstention tests. Resetting Adam on that tied, all-zero T5
+        # cannot create nonzero moments. This migration fixture instead starts
+        # from genuine seeded T5 weights before its two actual V4 updates.
+        # The migration itself never resets model, optimizer, or RNG state.
+        torch = local.torch
+        with torch.random.fork_rng(devices=[]):
+            torch.manual_seed(1701)
+            pristine_model = local.model_class(deepcopy(local.backend.model.config)).to(
+                device='cpu', dtype=torch.float32)
+            local.backend.model.load_state_dict(pristine_model.state_dict(), strict=True)
+        del pristine_model
+        assert any(bool(parameter.detach().ne(0).any())
+            for parameter in local.backend.model.parameters())
+        local.backend.optimizer = torch.optim.AdamW(local.backend.model.parameters(), lr=.001,
+            betas=(.9,.999), eps=1e-8, weight_decay=.01, amsgrad=False, maximize=False,
+            foreach=False, capturable=False, differentiable=False, fused=False)
+        local.backend._optimizer_steps = 0
+        job_root = tmp_path / 'old-job'
+        job_root.mkdir()
+        mixed = _reviewed_mixed_worker_fixture(job_root, backend=local.backend,
+            tokenizer=local.backend.tokenizer, two_components=False)
+        payload = mixed.payload
+        payload.update(tokenizer_artifact=original.asdict(local.options['tokenizer_artifact']),
+            license_artifact=original.asdict(local.options['license_artifact']),
+            backend_artifacts=[original.asdict(local.options[key]) for key in
+                ('recipe_artifact','model_config_artifact')], max_source_tokens=2048,
+            max_target_tokens=2048, max_steps=2, max_seconds=3600)
+        pristine = json.loads(Path(payload['parent_checkpoint_artifact']['path']).read_bytes())
+        pristine.update(assets=[payload[key] for key in ('model_artifact','tokenizer_artifact','license_artifact')]
+            + payload['backend_artifacts'], token_budgets={'max_source_tokens':2048,'max_target_tokens':2048,
+                'tokenizer_contract':original_inputs._reviewed_decoder_tokenizer_contract(local.backend.tokenizer)})
+        payload['parent_checkpoint_artifact'] = _complete_reviewed_artifact(job_root/'matched-pristine.json',
+            original._json_bytes(pristine))
+        original_spec = original.TrainingJobSpec.from_dict(payload)
+        prior = original.execute_training_job(original_spec, reviewed_runtime=mixed.runtime)
+        assert prior['worker_progress'] == {'epochs_completed':0,'row_cursor':2,'optimizer_steps':2}
+        assert local.backend.optimizer.state
+        assert any(bool(value['exp_avg'].ne(0).any()) for value in local.backend.optimizer.state.values())
+        expected_model = deepcopy(local.backend._model_state())
+        expected_optimizer = deepcopy(local.backend.optimizer.state_dict())
+        expected_rng = torch.get_rng_state().clone()
+        old_configuration = local.backend._configuration()
+        old_pipeline = local.backend.tokenizer.pipeline_serialization()
+        original_source5 = original._reviewed_decoder_source_pins(admission_profile=original_spec.admission_profile)
+
+    assert worker is current_worker
+    target_root = tmp_path/'current-assets'
+    target_root.mkdir()
+    target = _reviewed_local_loader_hf_fixture(target_root, max_sequence_tokens=4096,
+        fixed_json_schema_subwords=True, fixed_typed_schema_subwords=True)
+    current_source5 = worker._reviewed_decoder_source_pins(admission_profile=original_spec.admission_profile)
+    def artifact(name, value, raw=False):
+        return worker.CheckpointArtifact.from_dict(_complete_reviewed_artifact(tmp_path/name,
+            value if raw else worker._json_bytes(value)))
+    old_config_ref = artifact('old-full-backend-configuration.json',old_configuration)
+    old_pipeline_ref = artifact('old-actual-full-pipeline.json',old_pipeline,raw=True)
+    current_configuration = target.backend._configuration()
+    current_config_ref = artifact('current-full-backend-configuration.json',current_configuration)
+    current_refs = {key:_complete_reviewed_artifact(tmp_path/('held-current-'+key+'.py'),Path(path).read_bytes())
+        for key,path in (('worker',worker.__file__),('inputs',current_inputs.__file__))}
+    # Source proof requires the actual maintained physical origin, not a copy.
+    current_refs = {key:{**value,'path':path} for (key,path),value in zip(
+        (('worker',worker.__file__),('inputs',current_inputs.__file__)),current_refs.values())}
+    current_payload = dict(original_spec.to_dict(), output_directory=str(tmp_path/'next-current-update'),
+        parent_checkpoint_artifact=prior['candidate'], base_model_checkpoint=prior['model_checkpoint'],
+        base_optimizer_checkpoint=prior['optimizer_checkpoint'], backend_identity=target.backend.identity(),
+        expected_source_sha256=current_source5, max_steps=1,
+        continuation_profile=worker.REVIEWED_MIXED_DECODER_CONTINUATION_PROFILE)
+    spec = worker.TrainingJobSpec.from_dict(current_payload)
+    dependency_modules = {'torch':'torch','torch_native':'torch._C','torch_serialization':'torch.serialization',
+        'torch_optimizer_base':'torch.optim.optimizer','model_class':type(target.backend.model).__module__,
+        'model_config_class':type(target.backend.model.config).__module__,
+        'optimizer_class':type(target.backend.optimizer).__module__,
+        'transformers_modeling_utils':'transformers.modeling_utils'}
+    dependencies = {role:{'path':str(Path(sys.modules[name].__file__)),
+        'bytes':Path(sys.modules[name].__file__).stat().st_size,
+        'sha256':hashlib.sha256(Path(sys.modules[name].__file__).read_bytes()).hexdigest()}
+        for role,name in dependency_modules.items()}
+    snapshot = {'schema':'reviewed-decoder-migration-dependency-snapshot/v1',
+        'association_scope':'declared-current-cohort-before-Source-transition-not-historical-execution-attestation/v1',
+        'old_checkpoint_manifest_sha256':prior['candidate']['sha256'],
+        'old_configuration_sha256':old_config_ref.sha256,'old_tokenizer_pipeline_sha256':old_pipeline_ref.sha256,
+        'old_source_sha256':original_source5,'implementation':dependencies}
+    dependency_ref = artifact('declared-current-dependency-cohort.json',snapshot)
+    contract = {'schema':worker.REVIEWED_DECODER_SOURCE_EPOCH_CONTRACT_SCHEMA,
+        'profile':worker.REVIEWED_DECODER_SOURCE_EPOCH_PROFILE,
+        'old_checkpoint_manifest_sha256':prior['candidate']['sha256'],
+        'old_configuration_sha256':old_config_ref.sha256,
+        'current_configuration_sha256':current_config_ref.sha256,
+        'old_tokenizer_pipeline_sha256':old_pipeline_ref.sha256,
+        'old_source_sha256':original_source5,'current_source_sha256':current_source5,
+        'old_source_artifacts':archived,'current_source_artifacts':current_refs,
+        'dependency_snapshot_artifact':worker.asdict(dependency_ref)}
+    contract_ref = artifact('explicit-source-epoch-contract.json',contract)
+    options = {key:worker.CheckpointArtifact.from_dict(original.asdict(local.options[key])) for key in
+        ('recipe_artifact','model_config_artifact','tokenizer_artifact','license_artifact')}
+    options.update(registry=mixed.runtime.registry,current_admission_provider=mixed.runtime.current_admission_provider,
+        execution_guard=lambda:None,asset_policy_guard=lambda policy:None,
+        old_configuration_artifact=old_config_ref,old_tokenizer_pipeline_artifact=old_pipeline_ref,
+        current_configuration_artifact=current_config_ref,compatibility_contract_artifact=contract_ref,
+        output_directory=str(tmp_path/'source-epoch-derivative'),max_model_bytes=64*1024**2)
+    originals = {key:Path(prior[key]['path']).read_bytes() for key in
+        ('candidate','model_checkpoint','optimizer_checkpoint')}
+    return SimpleNamespace(spec=spec,options=options,artifact=artifact,contract=contract,
+        snapshot=snapshot,current_configuration=current_configuration,target=target,prior=prior,
+        expected_model=expected_model,expected_optimizer=expected_optimizer,expected_rng=expected_rng,
+        originals=originals,mixed=mixed)
+
+
+def test_reviewed_source_epoch_migration_preserves_actual_model_Adam_steps_RNG_and_continues(tmp_path,monkeypatch):
+    fixture = _source_epoch_migration_real_torch_fixture(tmp_path,monkeypatch)
+    runtime,result = worker.migrate_local_reviewed_decoder_source_epoch_v3(fixture.spec,**fixture.options)
+    backend,torch = runtime.backend,fixture.target.torch
+    assert backend._same(backend._model_state(),fixture.expected_model)
+    assert backend._same(backend.optimizer.state_dict(),fixture.expected_optimizer)
+    assert backend._optimizer_steps == 2 and torch.equal(torch.get_rng_state(),fixture.expected_rng)
+    assert backend.optimizer.state and result['worker_progress'] == fixture.prior['worker_progress']
+    load = result['ordinary_current_loader']
+    assert load['matched_pair'] and load['checkpoint_restored'] and load['optimizer_steps'] == 2
+    assert load['automatic_old_source_checkpoint_migration'] is False
+    assert all(result[key] is False for key in ('training_performed','promotion_performed',
+        'qualified','resource_granted','historical_dependency_execution_requalified'))
+    receipt = json.loads(Path(result['migration_receipt']['path']).read_bytes())
+    assert receipt['old_checkpoint_manifest'] == fixture.prior['candidate']
+    assert receipt['historical_dependency_execution_requalified'] is False
+    assert receipt['model_Adam_steps_RNG_and_progress_preserved'] is True
+    assert all(Path(fixture.prior[key]['path']).read_bytes()==raw for key,raw in fixture.originals.items())
+    assert result['model_checkpoint']['sha256'] != fixture.prior['model_checkpoint']['sha256']
+    assert result['optimizer_checkpoint']['sha256'] != fixture.prior['optimizer_checkpoint']['sha256']
+    next_spec = worker.TrainingJobSpec.from_dict(result['next_job_spec'])
+    next_result = worker.execute_training_job(next_spec,reviewed_runtime=runtime)
+    assert next_result['worker_progress'] == {'epochs_completed':1,'row_cursor':0,'optimizer_steps':3}
+    manifest = json.loads(Path(next_result['candidate']['path']).read_bytes())
+    assert manifest['source_epoch_migration'] == result['migration_receipt']
+    assert manifest['schema'] == worker.REVIEWED_DECODER_SOURCE_EPOCH_CHECKPOINT_SCHEMA
+    assert next_result['promotion_performed'] is next_result['convergence_proved'] is False
+
+
+@pytest.mark.parametrize('damage',['architecture','learning_rate','tokenizer','source_contract',
+    'mismatched_half','pipeline_tamper','dependency_scope','missing_dependency'])
+def test_reviewed_source_epoch_migration_refuses_unsupported_semantics_and_unbound_evidence(tmp_path,monkeypatch,damage):
+    from copy import deepcopy
+    fixture = _source_epoch_migration_real_torch_fixture(tmp_path,monkeypatch)
+    options,contract = dict(fixture.options),deepcopy(fixture.contract)
+    payload = fixture.spec.to_dict()
+    if damage in {'architecture','learning_rate','tokenizer'}:
+        configuration = deepcopy(fixture.current_configuration)
+        if damage == 'architecture': configuration['architecture'] = 'causal_lm'
+        elif damage == 'learning_rate': configuration['optimizer_groups'][0]['lr'] = .002
+        else: configuration['tokenizer']['pipeline_sha256'] = '0'*64
+        reference = fixture.artifact('different-current-configuration.json',configuration)
+        options['current_configuration_artifact'] = reference
+        contract['current_configuration_sha256'] = reference.sha256
+        payload['backend_identity'] = worker._reviewed_epoch_backend_identity(configuration,
+            contract['current_source_sha256']['worker'])
+    elif damage == 'source_contract':
+        contract['old_source_sha256']['worker'] = '0'*64
+    elif damage == 'mismatched_half':
+        payload['base_optimizer_checkpoint'] = worker.asdict(fixture.target.options['optimizer_checkpoint'])
+    elif damage == 'pipeline_tamper':
+        path = Path(options['old_tokenizer_pipeline_artifact'].path)
+        path.write_bytes(path.read_bytes()+b' ')
+    elif damage in {'dependency_scope','missing_dependency'}:
+        snapshot = deepcopy(fixture.snapshot)
+        if damage == 'dependency_scope': snapshot['association_scope'] = 'historical-execution-is-equivalent'
+        else: del snapshot['implementation']['torch_native']
+        reference = fixture.artifact('invalid-dependency-cohort.json',snapshot)
+        contract['dependency_snapshot_artifact'] = worker.asdict(reference)
+    if damage not in {'mismatched_half','pipeline_tamper'}:
+        options['compatibility_contract_artifact'] = fixture.artifact('invalid-source-epoch-contract.json',contract)
+    before_rng = fixture.target.torch.get_rng_state().clone()
+    with pytest.raises((worker.TrainingJobValidationError,ValueError)):
+        worker.migrate_local_reviewed_decoder_source_epoch_v3(worker.TrainingJobSpec.from_dict(payload),**options)
+    assert fixture.target.torch.equal(fixture.target.torch.get_rng_state(),before_rng)
+    assert not Path(options['output_directory']).exists()
+    assert all(Path(fixture.prior[key]['path']).read_bytes()==raw for key,raw in fixture.originals.items())
+
+
+def test_reviewed_source_epoch_migration_receipt_tamper_refuses_before_training_or_output(tmp_path,monkeypatch):
+    fixture = _source_epoch_migration_real_torch_fixture(tmp_path,monkeypatch)
+    runtime,result = worker.migrate_local_reviewed_decoder_source_epoch_v3(fixture.spec,**fixture.options)
+    receipt_path = Path(result['migration_receipt']['path'])
+    receipt = json.loads(receipt_path.read_bytes())
+    receipt['original_progress']['optimizer_steps'] += 1
+    receipt_path.write_bytes(worker._json_bytes(receipt))
+    monkeypatch.setattr(runtime.backend,'inspect_checkpoint',lambda *a,**k:pytest.fail('tamper reached inspect'))
+    monkeypatch.setattr(runtime.backend,'train_batch',lambda *a,**k:pytest.fail('tamper reached update'))
+    spec = worker.TrainingJobSpec.from_dict(result['next_job_spec'])
+    with pytest.raises(worker.TrainingJobValidationError):
+        worker.execute_training_job(spec,reviewed_runtime=runtime)
+    assert not Path(spec.output_directory).exists()
+
+
+def test_reviewed_source_epoch_migration_leaves_ordinary_old_pair_refusal_strict(tmp_path,monkeypatch):
+    fixture = _source_epoch_migration_real_torch_fixture(tmp_path,monkeypatch)
+    options = {key:value for key,value in fixture.options.items() if key in {
+        'registry','current_admission_provider','execution_guard','asset_policy_guard',
+        'recipe_artifact','model_config_artifact','tokenizer_artifact','license_artifact','max_model_bytes'}}
+    before = fixture.target.torch.get_rng_state().clone()
+    with pytest.raises(worker.TrainingJobValidationError):
+        worker.load_local_reviewed_decoder_runtime_v3(admission_profile=fixture.spec.admission_profile,
+            **options,model_checkpoint=fixture.spec.base_model_checkpoint,
+            optimizer_checkpoint=fixture.spec.base_optimizer_checkpoint,
+            expected_backend_identity=worker._thaw(fixture.spec.backend_identity),
+            expected_source_sha256=worker._thaw(fixture.spec.expected_source_sha256),
+            expected_admission_inputs_sha256=fixture.spec.expected_admission_inputs_sha256)
+    assert fixture.target.torch.equal(fixture.target.torch.get_rng_state(),before)
+    assert not Path(fixture.options['output_directory']).exists()
+
+
+def test_reviewed_source_epoch_migration_late_archive_tamper_retains_unpromoted_partial_failure(tmp_path,monkeypatch):
+    fixture = _source_epoch_migration_real_torch_fixture(tmp_path,monkeypatch)
+    original_write = worker._write_exclusive
+    fired = []
+    def write_and_mutate(path,raw):
+        result = original_write(path,raw)
+        if Path(path).name == 'model.checkpoint' and not fired:
+            fired.append(True)
+            archive = Path(fixture.options['old_tokenizer_pipeline_artifact'].path)
+            archive.write_bytes(archive.read_bytes()+b' ')
+        return result
+    monkeypatch.setattr(worker,'_write_exclusive',write_and_mutate)
+    before = fixture.target.torch.get_rng_state().clone()
+    with pytest.raises(worker.TrainingJobValidationError):
+        worker.migrate_local_reviewed_decoder_source_epoch_v3(fixture.spec,**fixture.options)
+    output = Path(fixture.options['output_directory'])
+    assert fired == [True] and (output/'model.checkpoint').is_file()
+    assert not (output/'receipt.json').exists()
+    failure = json.loads((output/'failure.json').read_bytes())
+    assert failure['partial_output_preserved'] is True
+    assert failure['qualified'] is failure['promotion_performed'] is failure['old_artifacts_rewritten'] is False
+    assert fixture.target.torch.equal(fixture.target.torch.get_rng_state(),before)
+    assert all(Path(fixture.prior[key]['path']).read_bytes()==raw for key,raw in fixture.originals.items())
+
+
+def test_reviewed_source_epoch_migration_final_callback_cannot_change_live_derivative_state(tmp_path,monkeypatch):
+    fixture = _source_epoch_migration_real_torch_fixture(tmp_path,monkeypatch)
+    ordinary_loader = worker.load_local_reviewed_decoder_runtime_v3
+    loaded = []
+    def capture_ordinary(*args,**kwargs):
+        result = ordinary_loader(*args,**kwargs)
+        loaded.append(result[0])
+        return result
+    monkeypatch.setattr(worker,'load_local_reviewed_decoder_runtime_v3',capture_ordinary)
+    mutated = []
+    def final_guard():
+        if loaded and not mutated:
+            with fixture.target.torch.no_grad():
+                next(loaded[0].backend.model.parameters()).add_(1)
+            mutated.append(True)
+    options = dict(fixture.options,execution_guard=final_guard)
+    before = fixture.target.torch.get_rng_state().clone()
+    with pytest.raises(worker.TrainingJobValidationError,match='live derivative pair changed'):
+        worker.migrate_local_reviewed_decoder_source_epoch_v3(fixture.spec,**options)
+    assert mutated == [True]
+    output = Path(options['output_directory'])
+    assert (output/'failure.json').is_file() and not (output/'receipt.json').exists()
+    assert fixture.target.torch.equal(fixture.target.torch.get_rng_state(),before)
+
+
+@pytest.mark.parametrize('damage', ['none', 'old_append_only_epoch', 'producer_condition', 'tokenizer_contract'])
+def test_reviewed_source_epoch_withdrawal_owner_input_projection_is_narrow(damage):
+    import base64
+    import zlib
+    from ipfs_datasets_py.logic.autoformal import training_cycle_inputs as inputs
+    original = zlib.decompress(base64.b64decode(_SOURCE_EPOCH_ORIGINAL_INPUTS_ZLIB_BASE64))
+    current = Path(inputs.__file__).read_bytes()
+    if damage == 'old_append_only_epoch':
+        current = current.replace(
+            b'    # Mixed V4 retains the dependency owner during an inactive withdrawal:\n'
+            b'    # its producer identity belongs to the lineage, not active row presence.\n'
+            b'    if multiple or _admission_version == "v3":\n',
+            b'    if multiple:\n', 1)
+    elif damage == 'producer_condition':
+        current = current.replace(b'    if multiple or _admission_version == "v3":\n',
+            b'    if multiple or True:\n', 1)
+    elif damage == 'tokenizer_contract':
+        current = current.replace(b'def _reviewed_decoder_tokenizer_contract(tokenizer):\n',
+            b'def _reviewed_decoder_tokenizer_contract(tokenizer, *, unsupported=True):\n', 1)
+    if damage != 'none':
+        with pytest.raises(worker.TrainingJobValidationError, match='explicit source-epoch migration'):
+            worker._reviewed_epoch_input_source_projection(original,current)
+        return
+    proof = worker._reviewed_epoch_input_source_projection(original,current)
+    assert proof == {
+        'rule':'exact-mixed-V4-withdrawal-producer-inventory-only/v1',
+        'old_inputs_sha256':'9ec206c08aeef9924f7a21475b4b065376c48c5bac185c43c7911f119a319d31',
+        'current_inputs_sha256':'a6883078a59ca6e3a5ae9a5fc69da5b43d1d513a3701a1d9dfe2c38b714d7049',
+        'normalized_continuation_inputs_sha256':'3e424c487eeea8e7123bcd51f514004b188751976e1bd3b91b5b39cc0ae3cfa8',
+        'original_prefix_bytes':len(original)}
+
+
+@pytest.mark.parametrize('damage', ['dependency_hash', 'dependency_omitted', 'lineage'])
+def test_reviewed_mixed_continuation_withdrawal_ancestry_retains_exact_producer_and_lineage_guards(tmp_path, damage):
+    from tests.unit.logic import test_autoformal_campaign_training_inputs as campaign
+    fixture = _reviewed_mixed_worker_fixture(tmp_path, two_components=False)
+    first, _ = _mixed_continuation_execute(fixture, tmp_path, 'original-three', steps=3, enabled=False)
+    retired = _mixed_continuation_bind_stage(fixture, tmp_path, 'retired',
+        fixture.payload['stage_artifact'], kind='withdrawal')
+    current = _mixed_continuation_bind_stage(fixture, tmp_path, 'readmitted', retired, kind='readmission')
+    # The worker consumes the freshly sealed job artifact after readmission
+    # filters the contexts. The helper's earlier six-row commitment is stale.
+    contexts = json.loads(worker._reviewed_decoder_artifact(worker.CheckpointArtifact.from_dict(
+        fixture.payload['source_contexts_artifact'])))
+    prepared = fixture.inputs.prepare_reviewed_mixed_decoder_training_inputs_v4(fixture.data.registry,
+        **dict(fixture.data.kwargs, tokenizer=fixture.runtime.tokenizer,
+            source_contexts=contexts,
+            expected_source_contexts_sha256=fixture.payload['source_contexts_artifact']['sha256'],
+            stage_artifact=current, expected_stage_sha256=current['sha256'],
+            max_source_tokens=fixture.payload['max_source_tokens'], max_target_tokens=fixture.payload['max_target_tokens']))
+    archived = campaign._reviewed_doc(fixture.data.registry, retired)
+    dependencies = [key for key in archived['implementation'] if Path(key).name == 'legal_graph_dependencies.py']
+    assert len(dependencies) == 1
+    if damage == 'dependency_hash':
+        archived['implementation'][dependencies[0]] = '0' * 64
+    elif damage == 'dependency_omitted':
+        del archived['implementation'][dependencies[0]]
+    else:
+        # A well-formed actual artifact reference changes only declared lineage;
+        # the input owner never opens this numerical artifact as a checkpoint.
+        archived['checkpoint_lineage']['base_checkpoint'] = dict(fixture.payload['model_artifact'])
+    damaged_retired = _mixed_continuation_put(fixture, tmp_path, 'damaged-retirement', archived)
+    descendant = campaign._reviewed_doc(fixture.data.registry, current)
+    descendant['parent_artifact'] = damaged_retired
+    damaged_current = _mixed_continuation_put(fixture, tmp_path, 'damaged-readmission', descendant)
+    current_binding = fixture.data.deepcopy(prepared['receipt'])
+    current_binding['stage_artifact_sha256'] = damaged_current['sha256']
+    previous_binding = first['complete_training_binding']
+    with pytest.raises(fixture.inputs.ReviewedDecoderInputValidationError,
+            match='continuation declared lineage or staged producer Source changed'):
+        fixture.inputs.prepare_reviewed_mixed_decoder_continuation_v4(fixture.data.registry,
+            admission_profile=fixture.payload['admission_profile'], stage_artifact=damaged_current,
+            expected_stage_sha256=damaged_current['sha256'], parent_training_binding=previous_binding,
+            expected_parent_training_binding_sha256=fixture.data.fixtures.digest(previous_binding),
+            current_training_binding=current_binding,
+            expected_current_training_binding_sha256=fixture.data.fixtures.digest(current_binding),
+            split_config=fixture.payload['split_config'],
+            expected_split_config_sha256=fixture.payload['expected_split_config_sha256'])

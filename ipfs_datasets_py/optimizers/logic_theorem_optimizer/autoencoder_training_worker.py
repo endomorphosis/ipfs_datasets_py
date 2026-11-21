@@ -648,6 +648,9 @@ REVIEWED_MIXED_DECODER_SCHEMA_VERSION = "autoencoder-training-job-v10-reviewed-m
 REVIEWED_MIXED_ADMISSION_PROFILE = "complete-reviewed-mixed-sort-norm-admission/v3"
 REVIEWED_MIXED_DECODER_RECEIPT_SCHEMA = "reviewed-mixed-legal-ir-decoder-worker-receipt/v1"
 REVIEWED_DECODER_CHECKPOINT_SCHEMA = "reviewed-legal-ir-decoder-checkpoint/v1"
+REVIEWED_DECODER_CONTINUATION_CHECKPOINT_SCHEMA = "reviewed-legal-ir-decoder-checkpoint/v2"
+REVIEWED_MIXED_DECODER_CONTINUATION_PROFILE = "reviewed-mixed-cycle-stage-continuation/v1"
+REVIEWED_DECODER_STAGE_CONTINUATION_SCHEMA = "reviewed-decoder-stage-continuation/v1"
 REVIEWED_DECODER_RECEIPT_SCHEMA = "reviewed-legal-ir-decoder-worker-receipt/v1"
 REVIEWED_DECODER_SOURCE_NAMES = frozenset({"worker", "inputs", "consumer", "admission", "splits"})
 MAX_REVIEWED_DECODER_STATE_BYTES = MAX_CHECKPOINT_BYTES
@@ -792,11 +795,21 @@ class ReviewedMixedDecoderTrainingJobSpec(ReviewedDecoderTrainingJobSpec):
     """
     admission_profile: str = field(kw_only=True)
     schema_version: str = REVIEWED_MIXED_DECODER_SCHEMA_VERSION
+    continuation_profile: str | None = field(default=None, kw_only=True)
 
     def __post_init__(self) -> None:
         if self.admission_profile != REVIEWED_MIXED_ADMISSION_PROFILE:
             raise TrainingJobValidationError("explicit mixed-sort admission V3 profile required")
+        if self.continuation_profile is not None and (type(self.continuation_profile) is not str
+                or self.continuation_profile != REVIEWED_MIXED_DECODER_CONTINUATION_PROFILE):
+            raise TrainingJobValidationError("explicit mixed decoder continuation profile required")
         super().__post_init__()
+
+    def to_dict(self) -> dict[str, Any]:
+        value = super().to_dict()
+        if self.continuation_profile is None:
+            value.pop("continuation_profile")
+        return value
 
 
 @dataclass(frozen=True)
@@ -883,6 +896,164 @@ def _reviewed_decoder_artifact(reference: CheckpointArtifact, *, limit: int = MA
         os.close(descriptor)
 
 
+def _reviewed_mixed_decoder_continuation_state(spec, registry, parent_reference, parent, current_binding, *, migration_backend=None):
+    """Validate opt-in staged continuation before any checkpoint inspection.
+
+    Optimizer steps remain global. Epoch/cursor are local to the complete
+    currently eligible population; a changed stage always starts both at zero.
+    Historical transition parents are immutable metadata, never fresh positive
+    authority and never a migration across producer Source versions.
+    """
+    from ...logic.autoformal import training_cycle_inputs as inputs
+    def need(condition, message):
+        if not condition:
+            raise TrainingJobValidationError(message)
+    need(type(spec) is ReviewedMixedDecoderTrainingJobSpec
+         and spec.continuation_profile == REVIEWED_MIXED_DECODER_CONTINUATION_PROFILE,
+         "explicit mixed decoder continuation profile required")
+    need(inputs.REVIEWED_MIXED_DECODER_CONTINUATION_PROFILE == spec.continuation_profile,
+         "worker and input continuation profiles differ")
+    common = {"schema", "checkpoint_lineage_id", "base_version_id", "backend_identity", "assets",
+        "training_binding", "model_state", "optimizer_state", "progress", "batch_size", "seed",
+        "parent_checkpoint_sha256", "producer_pins", "token_budgets", "qualified", "promotion_performed"}
+    identity = _thaw(spec.backend_identity)
+    assets = [asdict(item) for item in (spec.model_artifact, spec.tokenizer_artifact,
+        spec.license_artifact, *spec.backend_artifacts)]
+    pins = _thaw(spec.expected_source_sha256)
+    budgets = {"max_source_tokens": spec.max_source_tokens, "max_target_tokens": spec.max_target_tokens,
+               "tokenizer_contract": current_binding["tokenizer_contract"]}
+    observed, seen, total_bytes = [], set(), 0
+    epoch_migrations = {}
+
+    def read_manifest(reference):
+        nonlocal total_bytes
+        raw = _reviewed_decoder_artifact(CheckpointArtifact.from_dict(reference))
+        total_bytes += len(raw)
+        need(total_bytes <= inputs.MAX_REVIEWED_STAGE_BYTES, "continuation checkpoint metadata byte capacity exceeded")
+        observed.append((reference, raw))
+        return _parse_json(raw)
+
+    def ancestry(previous, current, stage):
+        try:
+            return inputs.prepare_reviewed_mixed_decoder_continuation_v4(registry,
+                admission_profile=spec.admission_profile, stage_artifact=stage,
+                expected_stage_sha256=current["stage_artifact_sha256"],
+                parent_training_binding=previous,
+                expected_parent_training_binding_sha256=_digest(_json_bytes(previous)),
+                current_training_binding=current,
+                expected_current_training_binding_sha256=_digest(_json_bytes(current)),
+                split_config=_thaw(spec.split_config), expected_split_config_sha256=spec.expected_split_config_sha256)
+        except inputs.ReviewedDecoderInputValidationError as error:
+            raise TrainingJobValidationError("reviewed decoder continuation ancestry differs") from error
+
+    def validate(document, reference, *, outer=False, depth=0):
+        need(depth < inputs.MAX_REVIEWED_HISTORY and reference["sha256"] not in seen,
+             "continuation checkpoint metadata depth or cycle exceeded")
+        seen.add(reference["sha256"])
+        migrated = type(document) is dict and document.get("schema") == REVIEWED_DECODER_SOURCE_EPOCH_CHECKPOINT_SCHEMA
+        revised = migrated or (type(document) is dict and document.get("schema") == REVIEWED_DECODER_CONTINUATION_CHECKPOINT_SCHEMA)
+        expected = common | ({"continuation_profile", "optimizer_step_offset", "stage_continuation"} if revised else set())
+        if migrated:
+            expected.add("source_epoch_migration")
+        need(type(document) is dict and set(document) == expected
+             and document["schema"] in {REVIEWED_DECODER_CHECKPOINT_SCHEMA, REVIEWED_DECODER_CONTINUATION_CHECKPOINT_SCHEMA, REVIEWED_DECODER_SOURCE_EPOCH_CHECKPOINT_SCHEMA},
+             "closed complete reviewed decoder continuation checkpoint required")
+        need(document["checkpoint_lineage_id"] == spec.checkpoint_lineage_id
+             and document["base_version_id"] == spec.base_version_id
+             and document["backend_identity"] == identity and document["assets"] == assets
+             and document["producer_pins"] == pins and document["token_budgets"] == budgets
+             and type(document["batch_size"]) is int and document["batch_size"] == spec.batch_size
+             and type(document["seed"]) is int and document["seed"] == spec.seed
+             and document["qualified"] is False and document["promotion_performed"] is False,
+             "reviewed decoder continuation numerical identities differ")
+        for field in ("model_state", "optimizer_state"):
+            CheckpointArtifact.from_dict(document[field])
+        if outer:
+            need(document["model_state"] == asdict(spec.base_model_checkpoint)
+                 and document["optimizer_state"] == asdict(spec.base_optimizer_checkpoint),
+                 "reviewed decoder continuation numerical pair differs")
+        progress = document["progress"]
+        need(type(progress) is dict and set(progress) == {"epochs_completed", "row_cursor", "optimizer_steps"}
+             and all(type(value) is int and 0 <= value <= 10**9 for value in progress.values()),
+             "reviewed decoder continuation progress is invalid")
+        offset = document["optimizer_step_offset"] if revised else 0
+        need(type(offset) is int and 0 <= offset <= progress["optimizer_steps"],
+             "reviewed decoder continuation optimizer-step offset is invalid")
+        if revised:
+            need(document["continuation_profile"] == spec.continuation_profile,
+                 "reviewed decoder checkpoint continuation profile differs")
+        binding = document["training_binding"]
+        if binding is None:
+            need(offset == 0 and progress == {"epochs_completed": 0, "row_cursor": 0, "optimizer_steps": 0}
+                 and (not revised or document["stage_continuation"] is None),
+                 "only a pristine numerical parent may omit its complete training binding")
+        else:
+            need(type(binding) is dict and binding.get("schema") == "reviewed-decoder-training-input-receipt/v4"
+                 and binding.get("profile") == inputs.REVIEWED_MIXED_DECODER_INPUT_PROFILE
+                 and binding.get("admission_profile") == spec.admission_profile
+                 and type(binding.get("record_count")) is int and 0 < binding["record_count"] <= inputs.MAX_REVIEWED_CYCLE_ROWS,
+                 "progressed continuation parent must retain a same-domain V4 training binding")
+            count = binding["record_count"]
+            need(progress["row_cursor"] < count and progress["row_cursor"] % spec.batch_size == 0
+                 and progress["optimizer_steps"] == offset + progress["epochs_completed"] * math.ceil(count/spec.batch_size)
+                     + progress["row_cursor"] // spec.batch_size,
+                 "reviewed decoder continuation global/local progress differs")
+        if migrated:
+            migration_ref = asdict(CheckpointArtifact.from_dict(document["source_epoch_migration"]))
+            if migration_ref["sha256"] not in epoch_migrations:
+                epoch_migrations[migration_ref["sha256"]] = _reviewed_epoch_validate_receipt(
+                    migration_ref, migration_backend, expected_spec=spec)
+            migration = epoch_migrations[migration_ref["sha256"]]
+            need(progress["optimizer_steps"] >= migration["original_progress"]["optimizer_steps"],
+                 "source-epoch migration cannot rewind global optimizer steps")
+        transition = document["stage_continuation"] if revised else None
+        if transition is None:
+            need(offset == 0, "nonzero optimizer-step offset requires its authenticated stage continuation")
+        else:
+            fields = {"schema", "parent_checkpoint_artifact", "parent_training_binding_sha256",
+                "current_training_binding_sha256", "global_optimizer_step_offset", "stage_ancestry"}
+            need(type(transition) is dict and set(transition) == fields
+                 and transition["schema"] == REVIEWED_DECODER_STAGE_CONTINUATION_SCHEMA
+                 and binding is not None and type(transition["global_optimizer_step_offset"]) is int
+                 and transition["global_optimizer_step_offset"] == offset
+                 and transition["current_training_binding_sha256"] == _digest(_json_bytes(binding)),
+                 "closed persisted decoder stage continuation differs")
+            prior_ref = asdict(CheckpointArtifact.from_dict(transition["parent_checkpoint_artifact"]))
+            prior = read_manifest(prior_ref)
+            validate(prior, prior_ref, depth=depth+1)
+            need(prior["training_binding"] is not None and offset == prior["progress"]["optimizer_steps"]
+                 and transition["parent_training_binding_sha256"] == _digest(_json_bytes(prior["training_binding"])),
+                 "persisted optimizer-step offset is not bound to its actual historical checkpoint")
+            proof = transition["stage_ancestry"]
+            need(type(proof) is dict and "successor_stage" in proof,
+                 "persisted stage continuation ancestry is absent")
+            replay = ancestry(prior["training_binding"], binding, proof["successor_stage"])
+            need(_json_bytes(replay) == _json_bytes(proof), "persisted decoder stage ancestry changed")
+        return offset
+
+    parent_reference = asdict(parent_reference) if type(parent_reference) is CheckpointArtifact else parent_reference
+    parent_offset = validate(parent, parent_reference, outer=True)
+    progress = dict(parent["progress"])
+    transition = parent.get("stage_continuation")
+    changed = parent["training_binding"] is not None and _json_bytes(parent["training_binding"]) != _json_bytes(current_binding)
+    if changed:
+        need(progress["optimizer_steps"] > 0, "changed-stage continuation requires a progressed numerical parent")
+        proof = ancestry(parent["training_binding"], current_binding, asdict(spec.stage_artifact))
+        parent_offset = progress["optimizer_steps"]
+        progress = {"epochs_completed": 0, "row_cursor": 0, "optimizer_steps": parent_offset}
+        transition = {"schema": REVIEWED_DECODER_STAGE_CONTINUATION_SCHEMA,
+            "parent_checkpoint_artifact": parent_reference,
+            "parent_training_binding_sha256": _digest(_json_bytes(parent["training_binding"])),
+            "current_training_binding_sha256": _digest(_json_bytes(current_binding)),
+            "global_optimizer_step_offset": parent_offset, "stage_ancestry": proof}
+    for reference, raw in observed:
+        need(_reviewed_decoder_artifact(CheckpointArtifact.from_dict(reference)) == raw,
+             "continuation historical checkpoint metadata changed")
+    return {"progress": progress, "optimizer_step_offset": parent_offset,
+        "stage_continuation": transition, "stage_transition_performed": changed,
+        "source_epoch_migration": parent.get("source_epoch_migration")}
+
+
 def _execute_reviewed_decoder_job(spec: ReviewedDecoderTrainingJobSpec, runtime: ReviewedDecoderRuntime,
                                   job_file_sha256: str | None) -> dict[str, Any]:
     """Consume full current-reviewed targets via one declared numerical backend.
@@ -897,6 +1068,8 @@ def _execute_reviewed_decoder_job(spec: ReviewedDecoderTrainingJobSpec, runtime:
     if type(runtime) is not ReviewedDecoderRuntime:
         raise TrainingJobValidationError("explicit reviewed decoder runtime required before model work")
     prepared = None
+    continuation_replay = None
+    checkpoint_limit = MAX_REVIEWED_DECODER_STATE_BYTES
     mixed = type(spec) is ReviewedMixedDecoderTrainingJobSpec
     admission_profile = spec.admission_profile if mixed else None
     guard_calls = {"execution": 0, "asset_policy": 0, "current_admission": 0}
@@ -910,7 +1083,7 @@ def _execute_reviewed_decoder_job(spec: ReviewedDecoderTrainingJobSpec, runtime:
         raise TrainingJobValidationError("exact canonical reviewed exposure/context artifacts required")
 
     def current():
-        nonlocal prepared
+        nonlocal prepared, checkpoint_limit
         runtime.execution_guard()
         guard_calls["execution"] += 1
         if _reviewed_decoder_source_pins(admission_profile=admission_profile) != source_pins:
@@ -921,8 +1094,16 @@ def _execute_reviewed_decoder_job(spec: ReviewedDecoderTrainingJobSpec, runtime:
         guard_calls["asset_policy"] += 1
         if _parse_json(_json_bytes(runtime.backend.identity())) != identity:
             raise TrainingJobValidationError("declared reviewed decoder backend identity differs")
+        # The explicitly profiled numerical backend already authenticates its
+        # model type and CPU/BF16 storage before selecting the larger bound.
+        # Ordinary and caller-defined backends retain the legacy state bound.
+        checkpoint_limit = (TorchReviewedDecoderBackend._checkpoint_byte_limit(runtime.backend)
+            if type(runtime.backend) is TorchReviewedDecoderBackend
+            else MAX_REVIEWED_DECODER_STATE_BYTES)
         for item in assets:
-            _reviewed_decoder_artifact(item, limit=MAX_CHECKPOINT_BYTES, load=False)
+            numeric_asset = item is spec.model_artifact or item in spec.backend_artifacts
+            _reviewed_decoder_artifact(item,
+                limit=checkpoint_limit if numeric_asset else MAX_CHECKPOINT_BYTES, load=False)
         if (_reviewed_decoder_artifact(spec.exposure_artifact) != exposure_raw or
                 _reviewed_decoder_artifact(spec.source_contexts_artifact) != contexts_raw):
             raise TrainingJobValidationError("reviewed decoder context/exposure changed")
@@ -965,6 +1146,15 @@ def _execute_reviewed_decoder_job(spec: ReviewedDecoderTrainingJobSpec, runtime:
             prepared = value
         elif _json_bytes(value) != _json_bytes(prepared):
             raise TrainingJobValidationError("current reviewed decoder inputs changed before publication")
+        if continuation_replay is not None:
+            continuation_replay(value["receipt"])
+            # Registry replay and backend identity are caller-owned callbacks.
+            # Close their effects before inspection/restoration or another
+            # update: Source pins are the final callback-free observation.
+            if _parse_json(_json_bytes(runtime.backend.identity())) != identity:
+                raise TrainingJobValidationError("reviewed decoder backend identity changed during continuation replay")
+            if _reviewed_decoder_source_pins(admission_profile=admission_profile) != source_pins:
+                raise TrainingJobValidationError("reviewed decoder producer changed during continuation replay")
         return value
 
     # All rows, legal-use/split/context/codec/budget constraints are checked
@@ -980,33 +1170,55 @@ def _execute_reviewed_decoder_job(spec: ReviewedDecoderTrainingJobSpec, runtime:
     if _digest(_json_bytes(validation_rows)) != validation_sha:
         raise TrainingJobValidationError("backend mutated complete preflight records")
     current()
-    model_raw = _reviewed_decoder_artifact(spec.base_model_checkpoint)
-    optimizer_raw = _reviewed_decoder_artifact(spec.base_optimizer_checkpoint)
+    model_raw = _reviewed_decoder_artifact(spec.base_model_checkpoint, limit=checkpoint_limit)
+    optimizer_raw = _reviewed_decoder_artifact(spec.base_optimizer_checkpoint, limit=checkpoint_limit)
     parent = None
+    continuation_enabled = mixed and spec.continuation_profile is not None
+    optimizer_step_offset, stage_continuation, continuation_state = 0, None, None
+    source_epoch_migration = None
     progress = {"epochs_completed": 0, "row_cursor": 0, "optimizer_steps": 0}
     if spec.parent_checkpoint_artifact is not None:
-        parent = _parse_json(_reviewed_decoder_artifact(spec.parent_checkpoint_artifact))
-        expected_fields = {"schema", "checkpoint_lineage_id", "base_version_id", "backend_identity", "assets",
-            "training_binding", "model_state", "optimizer_state", "progress", "batch_size", "seed",
-            "parent_checkpoint_sha256", "producer_pins", "token_budgets", "qualified", "promotion_performed"}
-        if type(parent) is not dict or set(parent) != expected_fields or parent["schema"] != REVIEWED_DECODER_CHECKPOINT_SCHEMA:
-            raise TrainingJobValidationError("closed complete reviewed decoder parent checkpoint required")
-        if (parent["checkpoint_lineage_id"] != spec.checkpoint_lineage_id or parent["base_version_id"] != spec.base_version_id or
-                parent["backend_identity"] != identity or parent["assets"] != [asdict(item) for item in assets] or
-                parent["model_state"] != asdict(spec.base_model_checkpoint) or
-                parent["optimizer_state"] != asdict(spec.base_optimizer_checkpoint) or
-                (parent["training_binding"] != data["receipt"] and not (parent["training_binding"] is None and
-                    parent["progress"] == {"epochs_completed": 0, "row_cursor": 0, "optimizer_steps": 0})) or
-                parent["token_budgets"] != {"max_source_tokens": spec.max_source_tokens, "max_target_tokens": spec.max_target_tokens,
-                    "tokenizer_contract": data["receipt"]["tokenizer_contract"]} or parent["batch_size"] != spec.batch_size or
-                parent["seed"] != spec.seed or parent["producer_pins"] != source_pins or
-                parent["qualified"] is not False or parent["promotion_performed"] is not False):
-            raise TrainingJobValidationError("reviewed decoder exact-resume identities differ")
-        progress = dict(parent["progress"])
+        parent_raw = _reviewed_decoder_artifact(spec.parent_checkpoint_artifact)
+        parent = _parse_json(parent_raw)
+        if continuation_enabled:
+            continuation_state = _reviewed_mixed_decoder_continuation_state(spec, runtime.registry,
+                spec.parent_checkpoint_artifact, parent, data["receipt"], migration_backend=runtime.backend)
+            progress = dict(continuation_state["progress"])
+            optimizer_step_offset = continuation_state["optimizer_step_offset"]
+            stage_continuation = continuation_state["stage_continuation"]
+            source_epoch_migration = continuation_state["source_epoch_migration"]
+            frozen_continuation = _json_bytes(continuation_state)
+            def replay_continuation(binding):
+                observed = _reviewed_decoder_artifact(spec.parent_checkpoint_artifact)
+                if observed != parent_raw:
+                    raise TrainingJobValidationError("continuation parent checkpoint metadata changed")
+                current_state = _reviewed_mixed_decoder_continuation_state(spec, runtime.registry,
+                    spec.parent_checkpoint_artifact, _parse_json(observed), binding, migration_backend=runtime.backend)
+                if _json_bytes(current_state) != frozen_continuation:
+                    raise TrainingJobValidationError("continuation ancestry or offset changed before publication")
+            continuation_replay = replay_continuation
+        else:
+            expected_fields = {"schema", "checkpoint_lineage_id", "base_version_id", "backend_identity", "assets",
+                "training_binding", "model_state", "optimizer_state", "progress", "batch_size", "seed",
+                "parent_checkpoint_sha256", "producer_pins", "token_budgets", "qualified", "promotion_performed"}
+            if type(parent) is not dict or set(parent) != expected_fields or parent["schema"] != REVIEWED_DECODER_CHECKPOINT_SCHEMA:
+                raise TrainingJobValidationError("closed complete reviewed decoder parent checkpoint required")
+            if (parent["checkpoint_lineage_id"] != spec.checkpoint_lineage_id or parent["base_version_id"] != spec.base_version_id or
+                    parent["backend_identity"] != identity or parent["assets"] != [asdict(item) for item in assets] or
+                    parent["model_state"] != asdict(spec.base_model_checkpoint) or
+                    parent["optimizer_state"] != asdict(spec.base_optimizer_checkpoint) or
+                    (parent["training_binding"] != data["receipt"] and not (parent["training_binding"] is None and
+                        parent["progress"] == {"epochs_completed": 0, "row_cursor": 0, "optimizer_steps": 0})) or
+                    parent["token_budgets"] != {"max_source_tokens": spec.max_source_tokens, "max_target_tokens": spec.max_target_tokens,
+                        "tokenizer_contract": data["receipt"]["tokenizer_contract"]} or parent["batch_size"] != spec.batch_size or
+                    parent["seed"] != spec.seed or parent["producer_pins"] != source_pins or
+                    parent["qualified"] is not False or parent["promotion_performed"] is not False):
+                raise TrainingJobValidationError("reviewed decoder exact-resume identities differ")
+            progress = dict(parent["progress"])
     if (set(progress) != {"epochs_completed", "row_cursor", "optimizer_steps"} or
             any(type(value) is not int or not 0 <= value <= 10**9 for value in progress.values()) or
             progress["row_cursor"] >= len(records) or progress["row_cursor"] % spec.batch_size or
-            progress["optimizer_steps"] != progress["epochs_completed"] * math.ceil(len(records) / spec.batch_size) +
+            progress["optimizer_steps"] != optimizer_step_offset + progress["epochs_completed"] * math.ceil(len(records) / spec.batch_size) +
                 progress["row_cursor"] // spec.batch_size):
         raise TrainingJobValidationError("reviewed decoder step/cursor identity differs")
     # Reserve capacity for the complete requested update window before any
@@ -1076,22 +1288,22 @@ def _execute_reviewed_decoder_job(spec: ReviewedDecoderTrainingJobSpec, runtime:
         current()
         snapshot = runtime.backend.snapshot_checkpoint()
         if type(snapshot) is not dict or set(snapshot) != {"model_state", "optimizer_state"} or any(
-                type(snapshot[key]) is not bytes or not 0 < len(snapshot[key]) <= MAX_REVIEWED_DECODER_STATE_BYTES
+                type(snapshot[key]) is not bytes or not 0 < len(snapshot[key]) <= checkpoint_limit
                 for key in snapshot):
             raise TrainingJobValidationError("bounded actual model and optimizer checkpoint bytes required")
         snapshot_info = runtime.backend.inspect_checkpoint(snapshot["model_state"], snapshot["optimizer_state"])
         if snapshot_info != {"optimizer_steps": progress["optimizer_steps"]} or type(snapshot_info.get("optimizer_steps")) is not int:
             raise TrainingJobValidationError("exported backend optimizer step differs")
         current()
-        if (_reviewed_decoder_artifact(spec.base_model_checkpoint) != model_raw or
-                _reviewed_decoder_artifact(spec.base_optimizer_checkpoint) != optimizer_raw):
+        if (_reviewed_decoder_artifact(spec.base_model_checkpoint, limit=checkpoint_limit) != model_raw or
+                _reviewed_decoder_artifact(spec.base_optimizer_checkpoint, limit=checkpoint_limit) != optimizer_raw):
             raise TrainingJobValidationError("base model/optimizer checkpoint changed during update")
         if spec.parent_checkpoint_artifact is not None:
             _reviewed_decoder_artifact(spec.parent_checkpoint_artifact)
         model = _write_exclusive(output / "model.checkpoint", snapshot["model_state"])
         optimizer = _write_exclusive(output / "optimizer.checkpoint", snapshot["optimizer_state"])
         for item in (model, optimizer):
-            _reviewed_decoder_artifact(CheckpointArtifact.from_dict(item))
+            _reviewed_decoder_artifact(CheckpointArtifact.from_dict(item), limit=checkpoint_limit)
         checkpoint = {"schema": REVIEWED_DECODER_CHECKPOINT_SCHEMA, "checkpoint_lineage_id": spec.checkpoint_lineage_id,
             "base_version_id": spec.base_version_id, "backend_identity": identity,
             "assets": [asdict(item) for item in assets], "training_binding": data["receipt"],
@@ -1101,6 +1313,13 @@ def _execute_reviewed_decoder_job(spec: ReviewedDecoderTrainingJobSpec, runtime:
                 "tokenizer_contract": data["receipt"]["tokenizer_contract"]},
             "parent_checkpoint_sha256": spec.parent_checkpoint_artifact.sha256 if spec.parent_checkpoint_artifact else None,
             "producer_pins": source_pins, "qualified": False, "promotion_performed": False}
+        if continuation_enabled:
+            checkpoint.update(schema=REVIEWED_DECODER_CONTINUATION_CHECKPOINT_SCHEMA,
+                continuation_profile=spec.continuation_profile, optimizer_step_offset=optimizer_step_offset,
+                stage_continuation=stage_continuation)
+            if source_epoch_migration is not None:
+                checkpoint.update(schema=REVIEWED_DECODER_SOURCE_EPOCH_CHECKPOINT_SCHEMA,
+                    source_epoch_migration=source_epoch_migration)
         current()
         checkpoint_ref = _write_exclusive(output / "reviewed-decoder-checkpoint.json", _json_bytes(checkpoint))
         _reviewed_decoder_artifact(CheckpointArtifact.from_dict(checkpoint_ref))
@@ -1132,6 +1351,15 @@ def _execute_reviewed_decoder_job(spec: ReviewedDecoderTrainingJobSpec, runtime:
             "qualified": False, "admitted": False, "promotion_performed": False,
             "corpus_admitted": False, "registry_modified": False, "downloads_performed": False,
             "legacy_projection_sample_conversion_performed": False}
+        if continuation_enabled:
+            receipt.update(continuation_profile=spec.continuation_profile,
+                checkpoint_schema=REVIEWED_DECODER_CONTINUATION_CHECKPOINT_SCHEMA,
+                optimizer_step_offset=optimizer_step_offset, stage_continuation=stage_continuation,
+                stage_transition_performed=continuation_state["stage_transition_performed"],
+                changed_population_initial_cursor_zero=continuation_state["stage_transition_performed"])
+        if source_epoch_migration is not None:
+            receipt["source_epoch_migration"] = source_epoch_migration
+            receipt["checkpoint_schema"] = REVIEWED_DECODER_SOURCE_EPOCH_CHECKPOINT_SCHEMA
         if mixed:
             receipt["admission_profile"] = admission_profile
         _write_exclusive(output / "receipt.json", _json_bytes(receipt))
@@ -2162,6 +2390,7 @@ def execute_training_job_file(path: str | Path, expected_sha256: str, *,
 
 
 __all__ = ["ReviewedMixedDecoderTrainingJobSpec", "REVIEWED_MIXED_DECODER_SCHEMA_VERSION",
+           "REVIEWED_MIXED_DECODER_CONTINUATION_PROFILE", "REVIEWED_DECODER_CONTINUATION_CHECKPOINT_SCHEMA",
            "REVIEWED_MIXED_ADMISSION_PROFILE", "ReviewedDecoderTrainingJobSpec", "ReviewedDecoderRuntime", "REVIEWED_DECODER_SCHEMA_VERSION", "BRIDGE_NAMES", "CheckpointArtifact", "ModelVariant", "SampleRecord", "TrainingConfig",
            "TrainingJobSpec", "TrainingJobValidationError", "execute_training_job", "execute_training_job_file",
            "verify_corpus_job_inputs"]
@@ -2467,6 +2696,8 @@ REVIEWED_QWEN2_CONTEXT_BUDGET_PROFILE = "qwen2-full-context-8192/v1"
 REVIEWED_QWEN2_FIELD_LAYOUTS_PROFILE = "qwen2-chatml-field-layouts/v1"
 _REVIEWED_QWEN2_CHATML_PROFILES = frozenset({"qwen2-chatml-complete-legal-ir/v1", REVIEWED_QWEN2_FIELD_LAYOUTS_PROFILE})
 REVIEWED_QWEN2_CONTEXT_MAX_TOKENS = 8192
+REVIEWED_QWEN2_EXPANDED_CONTEXT_BUDGET_PROFILE = "qwen2-full-context-16384/v1"
+REVIEWED_QWEN2_EXPANDED_CONTEXT_MAX_TOKENS = 16384
 
 
 def _reviewed_generation_context_wire(source, query_identifiers):
@@ -3341,11 +3572,14 @@ class TorchReviewedDecoderBackend:
                 ({"raw-source-bos/v1", "chatml-complete-legal-ir/v1"} | _REVIEWED_QWEN2_CHATML_PROFILES)):
             raise TrainingJobValidationError("closed explicit conditioning profile required")
         if context_budget_profile is not None and (type(context_budget_profile) is not str or
-                context_budget_profile != REVIEWED_QWEN2_CONTEXT_BUDGET_PROFILE or
+                context_budget_profile not in {REVIEWED_QWEN2_CONTEXT_BUDGET_PROFILE,
+                    REVIEWED_QWEN2_EXPANDED_CONTEXT_BUDGET_PROFILE} or
                 conditioning_profile not in _REVIEWED_QWEN2_CHATML_PROFILES):
             raise TrainingJobValidationError("explicit matching Qwen2 context budget profile required")
-        context_token_limit = (REVIEWED_QWEN2_CONTEXT_MAX_TOKENS if context_budget_profile is not None
-                               else REVIEWED_GENERATION_CONTEXT_MAX_TOKENS)
+        context_token_limit = (REVIEWED_QWEN2_EXPANDED_CONTEXT_MAX_TOKENS
+            if context_budget_profile == REVIEWED_QWEN2_EXPANDED_CONTEXT_BUDGET_PROFILE else
+            REVIEWED_QWEN2_CONTEXT_MAX_TOKENS if context_budget_profile is not None
+            else REVIEWED_GENERATION_CONTEXT_MAX_TOKENS)
         if max_generation_seconds is not None:
             try:
                 valid_duration = (type(max_generation_seconds) in (int, float)
@@ -3396,19 +3630,16 @@ class TorchReviewedDecoderBackend:
             raise TrainingJobValidationError("bounded ordinary generation records required") from error
         owned = _parse_json(original_raw)
 
-        # A direct low-level caller must not combine the new DATA transport
-        # with a larger context profile. Check detached bounded records before
-        # importing Torch or touching model/optimizer state. Existing v2 Qwen
-        # transport remains eligible under its separate explicit contract.
+        # The named budget already requires exact Qwen2 conditioning above.
+        # Check detached JSON before native imports for either lossless wire;
+        # exact owned-model, expanded-context and full ChatML/output capacity
+        # checks below remain mandatory before any forward.
         if context_budget_profile is not None:
             for row in owned:
                 try:
                     source = _parse_json(row["source_wire"].encode("utf-8"))
                 except (ValueError, UnicodeError) as error:
                     raise TrainingJobValidationError("canonical source-only generation JSON required") from error
-                if (type(source) is dict
-                        and source.get("profile") == REVIEWED_GENERATION_SHARED_CONTEXT_SOURCE_PROFILE_V3):
-                    raise TrainingJobValidationError("key-layout DATA requires the unchanged default context budget")
         torch = self._torch()
 
         # Capture numeric state without checkpoint reserialization. Restoration
@@ -3762,7 +3993,7 @@ def _reviewed_decoder_generation_policy(value):
             value["schema"] != ("reviewed-decoder-generation-policy/v2" if qwen2 else "reviewed-decoder-generation-policy/v1") or
             type(value["generation_profile"]) is not str or value["generation_profile"] != ("builtin-qwen2-dynamic-kv/v1" if qwen2 else "builtin-llama-dynamic-kv/v1") or
             type(value["conditioning_profile"]) is not str or value["conditioning_profile"] not in (_REVIEWED_QWEN2_CHATML_PROFILES if qwen2 else {"chatml-complete-legal-ir/v1"}) or
-            qwen2 and (type(value["context_budget_profile"]) is not str or value["context_budget_profile"] != REVIEWED_QWEN2_CONTEXT_BUDGET_PROFILE)):
+            qwen2 and (type(value["context_budget_profile"]) is not str or value["context_budget_profile"] not in {REVIEWED_QWEN2_CONTEXT_BUDGET_PROFILE, REVIEWED_QWEN2_EXPANDED_CONTEXT_BUDGET_PROFILE})):
         raise TrainingJobValidationError("closed explicit generation policy required")
     seconds = value["max_generation_seconds"]
     try:
@@ -3851,7 +4082,9 @@ def _make_reviewed_decoder_source_producer(runtime, *, binding, rows, split_mani
     need(_admission_version in {"v2", "v3"}, "closed reviewed producer admission domain required")
     generation_copy = None if generation_policy is None else _reviewed_decoder_generation_policy(generation_policy)
     qwen2_generation = generation_copy is not None and generation_copy["schema"] == "reviewed-decoder-generation-policy/v2"
-    context_token_limit = REVIEWED_QWEN2_CONTEXT_MAX_TOKENS if qwen2_generation else REVIEWED_GENERATION_CONTEXT_MAX_TOKENS
+    context_token_limit = (REVIEWED_QWEN2_EXPANDED_CONTEXT_MAX_TOKENS if qwen2_generation
+        and generation_copy["context_budget_profile"] == REVIEWED_QWEN2_EXPANDED_CONTEXT_BUDGET_PROFILE
+        else REVIEWED_QWEN2_CONTEXT_MAX_TOKENS if qwen2_generation else REVIEWED_GENERATION_CONTEXT_MAX_TOKENS)
     state_byte_limit = 2*1024**3 if qwen2_generation else MAX_CHECKPOINT_BYTES
     need(generation_copy is None or _admission_version == "v3", "explicit generation policy requires admission V3")
     need(consumer._reviewed_binding_version(binding) == _admission_version,
@@ -3925,8 +4158,8 @@ def _make_reviewed_decoder_source_producer(runtime, *, binding, rows, split_mani
     need(type(context_transport) is str and context_transport in {"plain_json_v1", "shared_json_v1", "shared_json_v2", "shared_json_v3"},
          "explicit supported admitted context transport required")
     shared_context = context_transport in {"shared_json_v1", "shared_json_v2", "shared_json_v3"}
-    need(not qwen2_generation or context_profile is None or context_transport == "shared_json_v2",
-         "Qwen2 reviewed rich context requires explicit lossless shared_json_v2 transport")
+    need(not qwen2_generation or context_profile is None or context_transport in {"shared_json_v2", "shared_json_v3"},
+         "Qwen2 reviewed rich context requires explicit lossless shared_json_v2 or shared_json_v3 transport")
     shared_schema = (inputs.REVIEWED_SHARED_CONTEXT_JSON_SCHEMA_V3 if context_transport == "shared_json_v3" else
                      inputs.REVIEWED_SHARED_CONTEXT_JSON_SCHEMA_V2 if context_transport == "shared_json_v2"
                      else inputs.REVIEWED_SHARED_CONTEXT_JSON_SCHEMA)
@@ -4171,7 +4404,7 @@ def _make_reviewed_decoder_source_producer(runtime, *, binding, rows, split_mani
                 shared_context_schema=shared_schema)
         if qwen2_generation:
             policy_commitment.update(schema="reviewed-decoder-rich-context-use-policy/v3",
-                context_budget_profile=REVIEWED_QWEN2_CONTEXT_BUDGET_PROFILE)
+                context_budget_profile=generation_copy["context_budget_profile"])
         if rich_heldout:
             policy_commitment.update(
                 heldout_dependency_group_sha256=context_state["payload"]["heldout_dependency_group_sha256"],
@@ -4322,7 +4555,7 @@ def _make_reviewed_decoder_source_producer(runtime, *, binding, rows, split_mani
                     expected_context_records_sha256=context_state["population_sha256"],
                     tokenizer=tokenizer, max_source_tokens=max_source_tokens,
                     **({"context_transport": context_transport} if shared_context else {}),
-                    **({"context_budget_profile": REVIEWED_QWEN2_CONTEXT_BUDGET_PROFILE} if qwen2_generation else {}))
+                    **({"context_budget_profile": generation_copy["context_budget_profile"]} if qwen2_generation else {}))
             else:
                 prepared = inputs.prepare_reviewed_decoder_generation_inputs(arguments,
                     source_contexts=copy_json(contexts_copy), expected_source_contexts_sha256=expected_source_contexts_sha256,
@@ -4478,7 +4711,8 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
         execution_guard, asset_policy_guard, recipe_artifact, model_config_artifact,
         tokenizer_artifact, license_artifact, model_checkpoint, optimizer_checkpoint,
         expected_backend_identity, expected_source_sha256,
-        expected_admission_inputs_sha256, max_model_bytes, _admission_version, _runtime_profile):
+        expected_admission_inputs_sha256, max_model_bytes, _admission_version, _runtime_profile,
+        _source_epoch_migration=None):
     """Load an explicitly profiled built-in CPU decoder and paired state.
 
     The caller owns live execution, license/asset policy and current admission.
@@ -4526,6 +4760,9 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
         "max_model_bytes": max_model_bytes, "device": "cpu", "dtype": parameter_dtype,
         "load_requested": True, "restore_requested": True, "training_requested": False,
         "downloads_requested": False, "resource_grant_requested": False}
+    if _source_epoch_migration is not None:
+        policy["source_epoch_migration_requested"] = True
+        policy["source_epoch_migration_profile"] = REVIEWED_DECODER_SOURCE_EPOCH_PROFILE
     if llama_profile:
         policy["runtime_profile"] = _runtime_profile
     if admission_profile is not None:
@@ -4783,6 +5020,9 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
         if backend.identity() != identity:
             raise TrainingJobValidationError("local constructed decoder backend identity differs")
         current()
+        if _source_epoch_migration is not None:
+            model_raw, optimizer_raw = _reviewed_epoch_restore(backend, model_raw, optimizer_raw,
+                _source_epoch_migration, registry, current_admission_provider, current)
         backend.restore_checkpoint(model_raw, optimizer_raw, execution_guard=current)
         current()
         if not backend.restored_checkpoint_matches(model_raw, optimizer_raw):
@@ -4812,6 +5052,8 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
                 if name in dict(model.named_buffers())],
             "tokenizer_constructor_option_order": ["bos_token", "eos_token", "unk_token", "pad_token",
                 "model_max_length", "clean_up_tokenization_spaces"]}
+        if _source_epoch_migration is not None:
+            receipt["explicit_source_epoch_migration_performed"] = True
         current()
         if backend.identity() != identity or not backend.restored_checkpoint_matches(model_raw, optimizer_raw):
             raise TrainingJobValidationError("loaded decoder pair changed after final policy guard")
@@ -4832,3 +5074,696 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
 
 
 __all__ += ["load_local_reviewed_decoder_runtime", "load_local_reviewed_decoder_runtime_v3"]
+
+# Explicit same-semantics Source transition. Default loaders and numerical
+# methods retain their strict configuration equality and original behavior.
+REVIEWED_DECODER_SOURCE_EPOCH_PROFILE = "3ff2e73c-to-reviewed-continuation-withdrawal-owner/v2"
+REVIEWED_DECODER_SOURCE_EPOCH_CONTRACT_SCHEMA = "reviewed-decoder-source-epoch-compatibility/v1"
+REVIEWED_DECODER_SOURCE_EPOCH_RECEIPT_SCHEMA = "reviewed-decoder-source-epoch-migration/v1"
+REVIEWED_DECODER_SOURCE_EPOCH_CHECKPOINT_SCHEMA = "reviewed-legal-ir-decoder-checkpoint/v3"
+REVIEWED_DECODER_SOURCE_EPOCH_OLD_WORKER = "3ff2e73ce45604dd86e477b865116dd34bac123ce9fa602d7766adc3fb9fe29c"
+REVIEWED_DECODER_SOURCE_EPOCH_OLD_INPUTS = "9ec206c08aeef9924f7a21475b4b065376c48c5bac185c43c7911f119a319d31"
+REVIEWED_DECODER_SOURCE_EPOCH_CURRENT_INPUTS = "a6883078a59ca6e3a5ae9a5fc69da5b43d1d513a3701a1d9dfe2c38b714d7049"
+
+def _reviewed_epoch_need(condition, message):
+    if not condition:
+        raise TrainingJobValidationError("explicit source-epoch migration: " + message)
+
+def _reviewed_epoch_document(reference, *, limit=MAX_CHECKPOINT_BYTES):
+    raw = _reviewed_decoder_artifact(CheckpointArtifact.from_dict(reference), limit=limit)
+    value = _parse_json(raw)
+    _reviewed_epoch_need(_json_bytes(value) == raw, "canonical complete metadata required")
+    return value, raw
+
+def _reviewed_epoch_code(module_code, name):
+    import types
+    values = [item for item in module_code.co_consts
+              if isinstance(item, types.CodeType) and item.co_name == name]
+    _reviewed_epoch_need(len(values) == 1, "unique maintained definition required: " + name)
+    return values[0]
+
+def _reviewed_epoch_input_source_projection(old_source, current_source):
+    """Authenticate precisely the selected V4 inventory repair, not a waiver.
+
+    Reverse its one exact byte span, recover the complete already selected
+    continuation-only input body, then recover the original old source prefix.
+    No tokenizer, numerical, ancestry equality or cache-mode delta is allowed.
+    """
+    _reviewed_epoch_need(type(old_source) is bytes and type(current_source) is bytes
+        and _digest(old_source) == REVIEWED_DECODER_SOURCE_EPOCH_OLD_INPUTS
+        and _digest(current_source) == REVIEWED_DECODER_SOURCE_EPOCH_CURRENT_INPUTS,
+        "unsupported explicit withdrawal-owner input epoch")
+    old_span = b'    modules = (sys.modules[__name__], consumer, admission, splits)\n    if multiple:\n        modules += (dependencies,)\n'
+    new_span = b'    modules = (sys.modules[__name__], consumer, admission, splits)\n    # Mixed V4 retains the dependency owner during an inactive withdrawal:\n    # its producer identity belongs to the lineage, not active row presence.\n    if multiple or _admission_version == "v3":\n        modules += (dependencies,)\n'
+    _reviewed_epoch_need(current_source.count(new_span) == 1,
+        "exact mixed V4 producer-inventory repair is absent or duplicated")
+    normalized = current_source.replace(new_span, old_span, 1)
+    _reviewed_epoch_need(_digest(normalized) == "3e424c487eeea8e7123bcd51f514004b188751976e1bd3b91b5b39cc0ae3cfa8"
+        and normalized.startswith(old_source),
+        "unrelated input behavior or maintained old prefix changed")
+    return {"rule":"exact-mixed-V4-withdrawal-producer-inventory-only/v1",
+        "old_inputs_sha256":_digest(old_source),"current_inputs_sha256":_digest(current_source),
+        "normalized_continuation_inputs_sha256":_digest(normalized),
+        "original_prefix_bytes":len(old_source)}
+
+
+def _reviewed_epoch_sources(contract, old_manifest, spec):
+    """Compute the supported source difference; never execute archived source."""
+    import ast
+    from ...logic.autoformal import training_cycle_inputs as inputs
+    required = {"schema", "profile", "old_checkpoint_manifest_sha256",
+        "old_configuration_sha256", "old_tokenizer_pipeline_sha256",
+        "current_configuration_sha256", "old_source_sha256", "current_source_sha256",
+        "old_source_artifacts", "current_source_artifacts", "dependency_snapshot_artifact"}
+    _reviewed_epoch_need(type(contract) is dict and set(contract) == required
+        and contract["schema"] == REVIEWED_DECODER_SOURCE_EPOCH_CONTRACT_SCHEMA
+        and contract["profile"] == REVIEWED_DECODER_SOURCE_EPOCH_PROFILE,
+        "closed supported compatibility contract required")
+    _reviewed_epoch_need(contract["old_checkpoint_manifest_sha256"] == spec.parent_checkpoint_artifact.sha256
+        and contract["old_source_sha256"] == old_manifest["producer_pins"]
+        and contract["current_source_sha256"] == _thaw(spec.expected_source_sha256)
+        and set(contract["old_source_sha256"]) == REVIEWED_DECODER_SOURCE_NAMES
+        and set(contract["current_source_sha256"]) == REVIEWED_DECODER_SOURCE_NAMES,
+        "both exact Source5 bindings required")
+    old_pins, current_pins = contract["old_source_sha256"], contract["current_source_sha256"]
+    _reviewed_epoch_need(old_pins["worker"] == REVIEWED_DECODER_SOURCE_EPOCH_OLD_WORKER
+        and old_pins["inputs"] == REVIEWED_DECODER_SOURCE_EPOCH_OLD_INPUTS
+        and current_pins["inputs"] == REVIEWED_DECODER_SOURCE_EPOCH_CURRENT_INPUTS
+        and all(old_pins[key] == current_pins[key] for key in ("consumer", "admission", "splits"))
+        and _reviewed_decoder_source_pins(admission_profile=spec.admission_profile) == current_pins,
+        "unsupported source epoch or changed common producer")
+    old_refs, new_refs = contract["old_source_artifacts"], contract["current_source_artifacts"]
+    _reviewed_epoch_need(type(old_refs) is type(new_refs) is dict
+        and set(old_refs) == set(new_refs) == {"worker", "inputs"},
+        "both maintained worker/input source bodies required")
+    old_bytes, new_bytes = {}, {}
+    for key in ("worker", "inputs"):
+        old_bytes[key] = _reviewed_decoder_artifact(CheckpointArtifact.from_dict(old_refs[key]), limit=2*1024**2)
+        new_bytes[key] = _reviewed_decoder_artifact(CheckpointArtifact.from_dict(new_refs[key]), limit=2*1024**2)
+        _reviewed_epoch_need(_digest(old_bytes[key]) == old_pins[key]
+            and _digest(new_bytes[key]) == current_pins[key], "source body commitment differs")
+    _reviewed_epoch_need(Path(new_refs["worker"]["path"]) == Path(__file__)
+        and Path(new_refs["inputs"]["path"]) == Path(inputs.__file__),
+        "current physical source origins differ")
+    input_projection = _reviewed_epoch_input_source_projection(old_bytes["inputs"], new_bytes["inputs"])
+    # The first profile deliberately refuses the separate parsed-cache epoch,
+    # including a supposedly disabled flag: no semantic projection is assumed.
+    controls = {"ReviewedMixedDecoderTrainingJobSpec", "_execute_reviewed_decoder_job",
+                "_load_local_reviewed_decoder_runtime"}
+    continuation = {"_reviewed_mixed_decoder_continuation_state"}
+    constants = {"REVIEWED_DECODER_CONTINUATION_CHECKPOINT_SCHEMA",
+        "REVIEWED_MIXED_DECODER_CONTINUATION_PROFILE", "REVIEWED_DECODER_STAGE_CONTINUATION_SCHEMA"}
+    def projection(raw, *, current):
+        result, names = [], set()
+        for node in ast.parse(raw).body:
+            if isinstance(node, (ast.FunctionDef, ast.ClassDef)):
+                _reviewed_epoch_need(node.name not in names, "duplicate top-level definition")
+                names.add(node.name)
+                if node.name in controls:
+                    continue
+                if current and (node.name in continuation or node.name.startswith("_reviewed_epoch_")
+                                or node.name == "migrate_local_reviewed_decoder_source_epoch_v3"):
+                    continue
+            if isinstance(node, ast.Assign) and all(isinstance(t, ast.Name) for t in node.targets):
+                keys = {target.id for target in node.targets}
+                if keys == {"__all__"}:
+                    _reviewed_epoch_need(isinstance(node.value, (ast.List, ast.Tuple))
+                        and all(isinstance(v, ast.Constant) and type(v.value) is str for v in node.value.elts),
+                        "nonliteral export mutation unsupported")
+                    continue
+                if current and all(key in constants or key.startswith("REVIEWED_DECODER_SOURCE_EPOCH_") for key in keys):
+                    _reviewed_epoch_need(isinstance(node.value, ast.Constant) and type(node.value.value) is str,
+                        "nonliteral compatibility constant unsupported")
+                    continue
+            if isinstance(node, ast.AugAssign) and isinstance(node.target, ast.Name) and node.target.id == "__all__":
+                _reviewed_epoch_need(isinstance(node.value, (ast.List, ast.Tuple))
+                    and all(isinstance(v, ast.Constant) and type(v.value) is str for v in node.value.elts),
+                    "nonliteral export update unsupported")
+                continue
+            result.append(ast.dump(node, include_attributes=False))
+        return result
+    _reviewed_epoch_need(projection(old_bytes["worker"], current=False)
+        == projection(new_bytes["worker"], current=True),
+        "numerical/tokenizer methods, globals, imports or unrelated definitions changed")
+    return {"old_worker": old_bytes["worker"], "current_worker": new_bytes["worker"],
+        "old_inputs": old_bytes["inputs"], "current_inputs": new_bytes["inputs"],
+        "projection_sha256": _digest(_json_bytes({
+            "worker_projection":projection(old_bytes["worker"], current=False),
+            "input_projection":input_projection}))}
+
+def _reviewed_epoch_pipeline(raw):
+    value = _parse_json(raw)
+    fields = {"schema", "kind", "backend", "frontend", "implementation", "transport"}
+    _reviewed_epoch_need(type(value) is dict and set(value) == fields
+        and value["schema"] == "reviewed-decoder-tokenizer-pipeline/v1"
+        and value["kind"] == "huggingface_fast" and _json_bytes(value) == raw
+        and type(value["implementation"]) is list
+        and value["transport"] == {"body_only": True, "padding": False, "truncation": False},
+        "actual complete maintained fast-tokenizer pipeline snapshot required")
+    ids = value["frontend"]["wrapper_special_ids"]
+    _reviewed_epoch_need(type(ids) is dict and set(ids) == {"bos_token_id", "eos_token_id", "vocab_size"}
+        and all(type(item) is int for item in ids.values()), "complete tokenizer ID domain required")
+    token_contract = {"schema": "reviewed-decoder-tokenizer-contract/v2", **ids,
+        "pipeline_kind": "huggingface_fast", "pipeline_sha256": _digest(raw), "pipeline_bytes": len(raw)}
+    model = value["backend"]["serialization"]["model"]
+    vocabulary = {"model_type": model.get("type"), "vocab": model["vocab"],
+                  "added_tokens": value["backend"]["serialization"]["added_tokens"]}
+    binding = {"tokenizer_id": "reviewed-tokenizer:huggingface_fast:" + _digest(_json_bytes({
+        "kind": value["kind"], "implementation": value["implementation"], "transport": value["transport"]})),
+        "vocabulary_sha256": "sha256:" + _digest(_json_bytes(vocabulary)),
+        "configuration_sha256": "sha256:" + _digest(raw), **ids}
+    return value, token_contract, binding
+
+def _reviewed_epoch_pipeline_proof(old_raw, current_raw, sources, old_pins, current_pins):
+    """Only the authenticated maintained-file/code-location provenance may differ."""
+    import marshal
+    old, old_contract, old_binding = _reviewed_epoch_pipeline(old_raw)
+    current, current_contract, current_binding = _reviewed_epoch_pipeline(current_raw)
+    proofs = []
+    projected = []
+    method_names = {"encode", "decode", "pipeline_serialization", "binding_metadata", "_fast_backend"}
+    for pipeline, raw_source, pins, live in ((old, sources["old_worker"], old_pins, False),
+                                           (current, sources["current_worker"], current_pins, True)):
+        body = _parse_json(_json_bytes(pipeline))
+        worker_rows = [row for row in body["implementation"] if row.get("sha256") == pins["worker"]]
+        _reviewed_epoch_need(len(worker_rows) == 1, "unique actual worker implementation row required")
+        row = worker_rows[0]
+        _reviewed_epoch_need(set(row) == {"path", "bytes", "sha256"}
+            and row["bytes"] == len(raw_source), "worker implementation bytes differ")
+        if live:
+            _reviewed_epoch_need(row["path"] == str(Path(__file__)), "current tokenizer origin was retagged")
+        compiled = compile(raw_source, row["path"], "exec", dont_inherit=True, optimize=0)
+        cls = _reviewed_epoch_code(compiled, "ReviewedPretrainedTokenizer")
+        methods = body["frontend"]["wrapper_methods"]
+        _reviewed_epoch_need(type(methods) is dict and set(methods) == method_names,
+            "complete maintained wrapper method identity required")
+        method_hashes = {}
+        for name in sorted(method_names):
+            code = _reviewed_epoch_code(cls, name)
+            digest = _digest(marshal.dumps(code, 2))
+            offered = methods[name]
+            _reviewed_epoch_need(type(offered) is dict and offered.get("code_sha256") == digest
+                and offered.get("module") == __name__
+                and offered.get("qualname") == "ReviewedPretrainedTokenizer." + name
+                and offered.get("kind") == "python_code", "stored wrapper code differs from exact maintained source")
+            if live:
+                _reviewed_epoch_need(_digest(marshal.dumps(getattr(ReviewedPretrainedTokenizer, name).__code__, 2)) == digest,
+                    "loaded wrapper code differs from current source")
+            method_hashes[name] = digest
+            offered["code_sha256"] = "authenticated-maintained-code-location"
+        body["implementation"].remove(row)
+        projected.append(body)
+        proofs.append({"worker_origin": row, "wrapper_method_code_sha256": method_hashes})
+    _reviewed_epoch_need(_json_bytes(projected[0]) == _json_bytes(projected[1]),
+        "tokenizer backend/vocabulary/frontend/dependency/transport semantics changed")
+    return {"old_contract": old_contract, "current_contract": current_contract,
+        "old_binding": old_binding, "current_binding": current_binding, "method_proofs": proofs}
+
+def _reviewed_epoch_dependencies(reference, old_manifest, old_config_sha, old_pipeline_sha, backend):
+    """Authenticate an explicit frozen pre-adoption dependency snapshot.
+
+    This covers a fixed declared runtime set, not transitive-library attestation.
+    Absence is a refusal; a caller boolean never substitutes for file identities.
+    """
+    import sys
+    snapshot, _ = _reviewed_epoch_document(reference, limit=1024**2)
+    fields = {"schema", "association_scope", "old_checkpoint_manifest_sha256", "old_configuration_sha256",
+              "old_tokenizer_pipeline_sha256", "old_source_sha256", "implementation"}
+    _reviewed_epoch_need(type(snapshot) is dict and set(snapshot) == fields
+        and snapshot["schema"] == "reviewed-decoder-migration-dependency-snapshot/v1"
+        and snapshot["association_scope"] == "declared-current-cohort-before-Source-transition-not-historical-execution-attestation/v1"
+        and snapshot["old_checkpoint_manifest_sha256"] == old_manifest["artifact_sha256"]
+        and snapshot["old_configuration_sha256"] == old_config_sha
+        and snapshot["old_tokenizer_pipeline_sha256"] == old_pipeline_sha
+        and snapshot["old_source_sha256"] == old_manifest["producer_pins"],
+        "frozen dependency snapshot does not bind the actual old pair/configuration")
+    modules = {"torch": "torch", "torch_native": "torch._C", "torch_serialization": "torch.serialization",
+        "torch_optimizer_base": "torch.optim.optimizer", "model_class": type(backend.model).__module__,
+        "model_config_class": type(backend.model.config).__module__, "optimizer_class": type(backend.optimizer).__module__,
+        "transformers_modeling_utils": "transformers.modeling_utils"}
+    rows = snapshot["implementation"]
+    _reviewed_epoch_need(type(rows) is dict and set(rows) == set(modules)
+        and sum(row["bytes"] for row in rows.values()) <= 64*1024**2,
+        "complete bounded declared dependency set required")
+    for role, module_name in modules.items():
+        module = sys.modules.get(module_name)
+        _reviewed_epoch_need(module is not None and rows[role]["path"] == str(Path(module.__file__)),
+            "declared runtime dependency origin differs: " + role)
+        _reviewed_decoder_artifact(CheckpointArtifact.from_dict(rows[role]), limit=16*1024**2, load=False)
+    return snapshot
+
+def _reviewed_epoch_prepare_binding(spec, registry, tokenizer, current_admission_provider):
+    from ...logic.autoformal import training_cycle_inputs as inputs
+    exposure_raw = _reviewed_decoder_artifact(spec.exposure_artifact)
+    contexts_raw = _reviewed_decoder_artifact(spec.source_contexts_artifact)
+    exposure, contexts = _parse_json(exposure_raw), _parse_json(contexts_raw)
+    _reviewed_epoch_need(_json_bytes(exposure) == exposure_raw and _json_bytes(contexts) == contexts_raw,
+        "exact canonical exposure/context inputs required")
+    admission = current_admission_provider()
+    return inputs.prepare_reviewed_mixed_decoder_training_inputs_v4(registry,
+        admission_profile=spec.admission_profile, stage_artifact=asdict(spec.stage_artifact),
+        expected_stage_sha256=spec.stage_artifact.sha256, current_admission_inputs=admission,
+        expected_admission_inputs_sha256=spec.expected_admission_inputs_sha256,
+        exposure_records=exposure, expected_exposure_sha256=spec.exposure_artifact.sha256,
+        source_contexts=contexts, expected_source_contexts_sha256=spec.source_contexts_artifact.sha256,
+        split_config=_thaw(spec.split_config), expected_split_config_sha256=spec.expected_split_config_sha256,
+        tokenizer=tokenizer, max_source_tokens=spec.max_source_tokens,
+        max_target_tokens=spec.max_target_tokens, allow_fictional_fixture=spec.allow_fictional_fixture)
+
+def _reviewed_epoch_authenticate_assets(spec, backend):
+    limit = backend._checkpoint_byte_limit()
+    for item in (spec.model_artifact,spec.tokenizer_artifact,spec.license_artifact,*spec.backend_artifacts):
+        _reviewed_decoder_artifact(item,limit=(limit if item is spec.model_artifact
+            or item in spec.backend_artifacts else MAX_CHECKPOINT_BYTES),load=False)
+
+def _reviewed_epoch_binding_proof(old, current, contract):
+    _reviewed_epoch_need(type(old) is type(current) is dict and set(old) == set(current)
+        and old.get("schema") == current.get("schema") == "reviewed-decoder-training-input-receipt/v4",
+        "same complete V4 binding field set required")
+    for field in set(old) - {"implementation", "tokenizer_contract"}:
+        _reviewed_epoch_need(_json_bytes(old[field]) == _json_bytes(current[field]),
+            "population, tokens, policy, provenance or admission changed: " + field)
+    old_impl, current_impl = dict(old["implementation"]), dict(current["implementation"])
+    old_input = [key for key,value in old_impl.items() if value == contract["old_source_sha256"]["inputs"]]
+    current_input = [key for key,value in current_impl.items() if value == contract["current_source_sha256"]["inputs"]]
+    _reviewed_epoch_need(len(old_input) == len(current_input) == 1, "unique maintained input producer identity required")
+    old_impl.pop(old_input[0]);current_impl.pop(current_input[0])
+    _reviewed_epoch_need(old_impl == current_impl, "unchanged input dependencies differ")
+
+def _reviewed_epoch_backend_identity(configuration, worker_sha):
+    return {"backend_id": "torch-complete-reviewed-decoder/v2:" + _digest(_json_bytes(configuration)),
+        "implementation_sha256": worker_sha, "checkpoint_format": "torch-weights-only-complete-reviewed-state-pair/v2",
+        "target_codec": "complete-reviewed-norm-json/v2", "source_conditioned": True,
+        "pretrained": configuration["pretrained_declaration"]}
+
+def _reviewed_epoch_old_pair(backend, model_raw, optimizer_raw, configuration, optimizer_steps):
+    import io
+    torch = backend._torch()
+    _reviewed_epoch_need(all(type(raw) is bytes and 0 < len(raw) <= backend._checkpoint_byte_limit()
+        for raw in (model_raw, optimizer_raw)), "bounded actual old pair required")
+    model = torch.load(io.BytesIO(model_raw), map_location="cpu", weights_only=True)
+    optimizer = torch.load(io.BytesIO(optimizer_raw), map_location="cpu", weights_only=True)
+    signature = _digest(_json_bytes(configuration))
+    _reviewed_epoch_need(type(model) is dict
+        and set(model) == {"schema", "configuration_sha256", "state", "state_metadata"}
+        and model["schema"] == "torch-reviewed-model-state/v2" and model["configuration_sha256"] == signature
+        and type(model["state"]) is dict and type(model["state_metadata"]) is dict
+        and type(optimizer) is dict
+        and set(optimizer) == {"schema", "configuration_sha256", "state", "optimizer_steps", "cpu_rng", "device_rng"}
+        and optimizer["schema"] == "torch-reviewed-optimizer-state/v1" and optimizer["configuration_sha256"] == signature
+        and type(optimizer["state"]) is dict
+        and type(optimizer["optimizer_steps"]) is int and optimizer["optimizer_steps"] == optimizer_steps
+        and model["state_metadata"] == backend._model_state()["state_metadata"],
+        "old halves, configuration, metadata or global step do not match")
+    backend._finite_state(model);backend._finite_state(optimizer)
+    _reviewed_epoch_need(torch.is_tensor(optimizer["cpu_rng"]) and optimizer["cpu_rng"].dtype == torch.uint8
+        and optimizer["cpu_rng"].ndim == 1 and 0 < optimizer["cpu_rng"].numel() <= 1024**2
+        and optimizer["device_rng"] is None and next(backend.model.parameters()).device.type == "cpu",
+        "complete CPU RNG and CPU-only profile required")
+    return model, optimizer
+
+def _reviewed_epoch_pair_equal(backend, old_model, old_optimizer, current_model, current_optimizer):
+    return (backend._same(old_model["state"], current_model["state"])
+        and backend._same(old_model["state_metadata"], current_model["state_metadata"])
+        and backend._same(old_optimizer["state"], current_optimizer["state"])
+        and old_optimizer["optimizer_steps"] == current_optimizer["optimizer_steps"]
+        and backend._same(old_optimizer["cpu_rng"], current_optimizer["cpu_rng"])
+        and backend._same(old_optimizer["device_rng"], current_optimizer["device_rng"]))
+
+
+
+def _reviewed_epoch_context(spec, old_configuration_artifact, old_tokenizer_pipeline_artifact,
+                            current_configuration_artifact, compatibility_contract_artifact):
+    _reviewed_epoch_need(type(spec) is ReviewedMixedDecoderTrainingJobSpec
+        and spec.continuation_profile == REVIEWED_MIXED_DECODER_CONTINUATION_PROFILE,
+        "explicit mixed continuation job is required")
+    contract_ref = asdict(compatibility_contract_artifact)
+    contract, _ = _reviewed_epoch_document(contract_ref, limit=2*1024**2)
+    _reviewed_epoch_need(type(contract) is dict and {"old_configuration_sha256",
+        "current_configuration_sha256", "old_tokenizer_pipeline_sha256"} <= set(contract),
+        "complete source compatibility contract required")
+    old, old_raw = _reviewed_epoch_document(asdict(spec.parent_checkpoint_artifact), limit=4*1024**2)
+    fields = {"schema", "checkpoint_lineage_id", "base_version_id", "backend_identity", "assets",
+        "training_binding", "model_state", "optimizer_state", "progress", "batch_size", "seed",
+        "parent_checkpoint_sha256", "producer_pins", "token_budgets", "qualified", "promotion_performed"}
+    _reviewed_epoch_need(type(old) is dict and set(old) == fields
+        and old["schema"] == REVIEWED_DECODER_CHECKPOINT_SCHEMA
+        and old["qualified"] is False and old["promotion_performed"] is False,
+        "first migration profile requires the complete original V1 manifest")
+    _reviewed_epoch_need(old["model_state"] == asdict(spec.base_model_checkpoint)
+        and old["optimizer_state"] == asdict(spec.base_optimizer_checkpoint)
+        and old["checkpoint_lineage_id"] == spec.checkpoint_lineage_id
+        and old["base_version_id"] == spec.base_version_id
+        and type(old["batch_size"]) is int and old["batch_size"] == spec.batch_size
+        and type(old["seed"]) is int and old["seed"] == spec.seed
+        and old["assets"] == [asdict(item) for item in (spec.model_artifact,
+            spec.tokenizer_artifact, spec.license_artifact, *spec.backend_artifacts)],
+        "exact old numerical halves/lineage/assets/batch/seed required")
+    binding, progress = old["training_binding"], old["progress"]
+    _reviewed_epoch_need(type(binding) is dict and binding.get("schema") == "reviewed-decoder-training-input-receipt/v4"
+        and binding.get("admission_profile") == spec.admission_profile
+        and type(binding.get("record_count")) is int and 0 < binding["record_count"] <= 128
+        and binding.get("stage_artifact_sha256") == spec.stage_artifact.sha256,
+        "same nonempty original population and complete V4 binding required")
+    _reviewed_epoch_need(type(progress) is dict
+        and set(progress) == {"epochs_completed", "row_cursor", "optimizer_steps"}
+        and all(type(value) is int and 0 <= value <= 10**9 for value in progress.values())
+        and progress["optimizer_steps"] > 0 and progress["row_cursor"] < binding["record_count"]
+        and progress["row_cursor"] % spec.batch_size == 0
+        and progress["optimizer_steps"] == progress["epochs_completed"] * math.ceil(binding["record_count"]/spec.batch_size)
+            + progress["row_cursor"]//spec.batch_size,
+        "progressed original global/local counters required")
+    old_config, old_config_raw = _reviewed_epoch_document(asdict(old_configuration_artifact), limit=4*1024**2)
+    current_config, current_config_raw = _reviewed_epoch_document(asdict(current_configuration_artifact), limit=4*1024**2)
+    old_pipeline_raw = _reviewed_decoder_artifact(old_tokenizer_pipeline_artifact,
+        limit=MAX_REVIEWED_TOKENIZER_PIPELINE_BYTES)
+    _, token_contract, token_binding = _reviewed_epoch_pipeline(old_pipeline_raw)
+    _reviewed_epoch_need(contract["old_configuration_sha256"] == _digest(old_config_raw)
+        and contract["current_configuration_sha256"] == _digest(current_config_raw)
+        and contract["old_tokenizer_pipeline_sha256"] == _digest(old_pipeline_raw),
+        "configuration or actual old pipeline capture differs")
+    sources = _reviewed_epoch_sources(contract, old, spec)
+    _reviewed_epoch_need(old_config.get("device") == current_config.get("device") == "cpu"
+        and old_config.get("tokenizer") == token_contract and old_config.get("tokenizer_binding") == token_binding
+        and old["backend_identity"] == _reviewed_epoch_backend_identity(old_config, contract["old_source_sha256"]["worker"])
+        and _thaw(spec.backend_identity) == _reviewed_epoch_backend_identity(current_config, contract["current_source_sha256"]["worker"]),
+        "old and current complete configurations/identities are not authenticated")
+    _reviewed_epoch_need(old["token_budgets"] == {"max_source_tokens": spec.max_source_tokens,
+        "max_target_tokens": spec.max_target_tokens, "tokenizer_contract": token_contract}
+        and binding.get("tokenizer_contract") == token_contract,
+        "old complete tokenizer contract or budgets differ")
+    _reviewed_epoch_need(set(old_config) == set(current_config)
+        and all(_json_bytes(old_config[key]) == _json_bytes(current_config[key])
+                for key in old_config if key not in {"tokenizer", "tokenizer_binding"}),
+        "architecture/parameter/buffer/dependency versions/optimizer settings changed")
+    return {"spec": spec, "old_manifest": old, "old_manifest_raw": old_raw,
+        "old_configuration": old_config, "current_configuration": current_config,
+        "old_pipeline_raw": old_pipeline_raw, "contract": contract, "sources": sources,
+        "old_configuration_artifact": asdict(old_configuration_artifact),
+        "old_pipeline_artifact": asdict(old_tokenizer_pipeline_artifact),
+        "current_configuration_artifact": asdict(current_configuration_artifact),
+        "source_contract_artifact": contract_ref}
+
+def _reviewed_epoch_restore(backend, model_raw, optimizer_raw, context, registry,
+                            current_admission_provider, current):
+    """Real state transfer, followed by ordinary current-format verification."""
+    from collections import OrderedDict
+    _reviewed_epoch_need(type(backend) is TorchReviewedDecoderBackend,
+        "exact maintained Torch backend required")
+    spec = context["spec"]
+    # Even the private loader path recomputes the complete artifact-bound proof;
+    # an arbitrary context dictionary is never a mismatch-acceptance switch.
+    checked = _reviewed_epoch_context(spec,
+        CheckpointArtifact.from_dict(context["old_configuration_artifact"]),
+        CheckpointArtifact.from_dict(context["old_pipeline_artifact"]),
+        CheckpointArtifact.from_dict(context["current_configuration_artifact"]),
+        CheckpointArtifact.from_dict(context["source_contract_artifact"]))
+    context.clear()
+    context.update(checked)
+    current()
+    _reviewed_epoch_need(_json_bytes(backend._configuration()) == _json_bytes(context["current_configuration"]),
+        "constructed current configuration differs")
+    _reviewed_epoch_authenticate_assets(spec,backend)
+    current_raw = backend.tokenizer.pipeline_serialization()
+    proof = _reviewed_epoch_pipeline_proof(context["old_pipeline_raw"], current_raw,
+        context["sources"], context["contract"]["old_source_sha256"],
+        context["contract"]["current_source_sha256"])
+    _reviewed_epoch_need(proof["current_contract"] == context["current_configuration"]["tokenizer"]
+        and proof["current_binding"] == context["current_configuration"]["tokenizer_binding"],
+        "actual current pipeline differs from configuration")
+    snapshot = _reviewed_epoch_dependencies(context["contract"]["dependency_snapshot_artifact"],
+        {**context["old_manifest"], "artifact_sha256": spec.parent_checkpoint_artifact.sha256},
+        context["contract"]["old_configuration_sha256"],
+        context["contract"]["old_tokenizer_pipeline_sha256"], backend)
+    prepared = _reviewed_epoch_prepare_binding(spec, registry, backend.tokenizer, current_admission_provider)
+    _reviewed_epoch_binding_proof(context["old_manifest"]["training_binding"],
+        prepared["receipt"], context["contract"])
+    _reviewed_epoch_need(prepared["receipt"]["tokenizer_contract"] == proof["current_contract"],
+        "ordinary current input preparation differs from current pipeline")
+    current()
+    model, optimizer = _reviewed_epoch_old_pair(backend, model_raw, optimizer_raw,
+        context["old_configuration"], context["old_manifest"]["progress"]["optimizer_steps"])
+    state = OrderedDict(model["state"])
+    state._metadata = model["state_metadata"]
+    backend.model.load_state_dict(state, strict=True)
+    current()
+    backend.optimizer.load_state_dict(optimizer["state"])
+    current()
+    backend._torch().set_rng_state(optimizer["cpu_rng"])
+    backend._optimizer_steps = optimizer["optimizer_steps"]
+    current()
+    live_model = backend._model_state()
+    live_optimizer = {"state": backend.optimizer.state_dict(), "optimizer_steps": backend._optimizer_steps,
+        "cpu_rng": backend._torch().get_rng_state(), "device_rng": None}
+    _reviewed_epoch_need(_reviewed_epoch_pair_equal(backend, model, optimizer, live_model, live_optimizer),
+        "actual model/Adam/RNG transfer was not bit preserving")
+    derivative = backend.snapshot_checkpoint()
+    verified_model, verified_optimizer = backend._load_pair(derivative["model_state"], derivative["optimizer_state"])
+    _reviewed_epoch_need(_reviewed_epoch_pair_equal(backend, model, optimizer, verified_model, verified_optimizer),
+        "actual current-format derivative changed numerical state")
+    current()
+    _reviewed_epoch_need(backend.tokenizer.pipeline_serialization() == current_raw
+        and _reviewed_epoch_dependencies(context["contract"]["dependency_snapshot_artifact"],
+            {**context["old_manifest"], "artifact_sha256": spec.parent_checkpoint_artifact.sha256},
+            context["contract"]["old_configuration_sha256"],
+            context["contract"]["old_tokenizer_pipeline_sha256"], backend) == snapshot,
+        "pipeline/current dependency cohort changed during state transfer")
+    context["current_pipeline_raw"] = current_raw
+    context["current_training_binding"] = prepared["receipt"]
+    context["pipeline_proof"] = proof
+    context["derivative_pair"] = derivative
+    context["dependency_scope"] = "declared_current_cohort_before_after_Source_transition_not_historical_execution_attestation"
+    return derivative["model_state"], derivative["optimizer_state"]
+
+def _reviewed_epoch_receipt_spec(receipt, old_manifest, backend):
+    """Build only the immutable fields used to revalidate migration provenance."""
+    spec_fields = receipt["target_job_spec"]
+    spec = ReviewedMixedDecoderTrainingJobSpec.from_dict(spec_fields)
+    _reviewed_epoch_need(type(backend) is TorchReviewedDecoderBackend
+        and backend.identity() == _thaw(spec.backend_identity),
+        "migration receipt requires its actual current backend")
+    return spec
+
+def _reviewed_epoch_validate_receipt(reference, backend, *, expected_spec=None):
+    """Recompute source/semantic proof and compare BOTH actual initial pairs.
+
+    This is deliberately bounded correctness work, not a cache or resource grant.
+    Current candidate updates may differ; the frozen initial derivative remains
+    the numerical witness for the Source transition.
+    """
+    receipt, _ = _reviewed_epoch_document(reference, limit=8*1024**2)
+    fields = {"schema", "profile", "old_checkpoint_manifest", "old_configuration_artifact",
+        "old_pipeline_artifact", "current_configuration_artifact", "source_contract_artifact",
+        "current_pipeline_artifact", "derivative_model_checkpoint", "derivative_optimizer_checkpoint",
+        "target_job_spec", "migrated_training_binding", "original_progress", "pipeline_proof",
+        "source_projection_sha256", "dependency_scope", "historical_dependency_execution_requalified",
+        "model_Adam_steps_RNG_and_progress_preserved", "qualified", "promotion_performed",
+        "legal_meaning_verified", "convergence_proved", "corpus_admitted"}
+    _reviewed_epoch_need(type(receipt) is dict and set(receipt) == fields
+        and receipt["schema"] == REVIEWED_DECODER_SOURCE_EPOCH_RECEIPT_SCHEMA
+        and receipt["profile"] == REVIEWED_DECODER_SOURCE_EPOCH_PROFILE
+        and receipt["dependency_scope"] == "declared_current_cohort_before_after_Source_transition_not_historical_execution_attestation"
+        and receipt["historical_dependency_execution_requalified"] is False
+        and receipt["model_Adam_steps_RNG_and_progress_preserved"] is True
+        and all(receipt[key] is False for key in ("qualified", "promotion_performed",
+                "legal_meaning_verified", "convergence_proved", "corpus_admitted")),
+        "closed non-authorizing migration receipt required")
+    spec = _reviewed_epoch_receipt_spec(receipt, None, backend)
+    _reviewed_epoch_need(asdict(spec.parent_checkpoint_artifact) == receipt["old_checkpoint_manifest"],
+        "old manifest reference was replaced")
+    if expected_spec is not None:
+        _reviewed_epoch_need(spec.checkpoint_lineage_id == expected_spec.checkpoint_lineage_id
+            and spec.base_version_id == expected_spec.base_version_id
+            and spec.batch_size == expected_spec.batch_size and spec.seed == expected_spec.seed
+            and spec.backend_identity == expected_spec.backend_identity
+            and spec.expected_source_sha256 == expected_spec.expected_source_sha256
+            and [asdict(item) for item in (spec.model_artifact,spec.tokenizer_artifact,spec.license_artifact,*spec.backend_artifacts)]
+                == [asdict(item) for item in (expected_spec.model_artifact,expected_spec.tokenizer_artifact,expected_spec.license_artifact,*expected_spec.backend_artifacts)],
+            "migration lineage/backend/assets/batch/seed differs")
+    context = _reviewed_epoch_context(spec,
+        CheckpointArtifact.from_dict(receipt["old_configuration_artifact"]),
+        CheckpointArtifact.from_dict(receipt["old_pipeline_artifact"]),
+        CheckpointArtifact.from_dict(receipt["current_configuration_artifact"]),
+        CheckpointArtifact.from_dict(receipt["source_contract_artifact"]))
+    _reviewed_epoch_authenticate_assets(spec,backend)
+    current_raw = _reviewed_decoder_artifact(CheckpointArtifact.from_dict(receipt["current_pipeline_artifact"]),
+        limit=MAX_REVIEWED_TOKENIZER_PIPELINE_BYTES)
+    _reviewed_epoch_need(current_raw == backend.tokenizer.pipeline_serialization(),
+        "current pipeline changed after migration")
+    proof = _reviewed_epoch_pipeline_proof(context["old_pipeline_raw"], current_raw, context["sources"],
+        context["contract"]["old_source_sha256"], context["contract"]["current_source_sha256"])
+    _reviewed_epoch_need(proof == receipt["pipeline_proof"]
+        and receipt["source_projection_sha256"] == context["sources"]["projection_sha256"]
+        and receipt["original_progress"] == context["old_manifest"]["progress"],
+        "migration proof or original global/local progress changed")
+    _reviewed_epoch_binding_proof(context["old_manifest"]["training_binding"],
+        receipt["migrated_training_binding"], context["contract"])
+    _reviewed_epoch_need(receipt["migrated_training_binding"]["tokenizer_contract"] == proof["current_contract"],
+        "migrated binding pipeline differs")
+    _reviewed_epoch_dependencies(context["contract"]["dependency_snapshot_artifact"],
+        {**context["old_manifest"],"artifact_sha256":spec.parent_checkpoint_artifact.sha256},
+        context["contract"]["old_configuration_sha256"],
+        context["contract"]["old_tokenizer_pipeline_sha256"], backend)
+    limit = backend._checkpoint_byte_limit()
+    old_model, old_optimizer = _reviewed_epoch_old_pair(backend,
+        _reviewed_decoder_artifact(spec.base_model_checkpoint, limit=limit),
+        _reviewed_decoder_artifact(spec.base_optimizer_checkpoint, limit=limit),
+        context["old_configuration"], context["old_manifest"]["progress"]["optimizer_steps"])
+    current_model, current_optimizer = backend._load_pair(
+        _reviewed_decoder_artifact(CheckpointArtifact.from_dict(receipt["derivative_model_checkpoint"]), limit=limit),
+        _reviewed_decoder_artifact(CheckpointArtifact.from_dict(receipt["derivative_optimizer_checkpoint"]), limit=limit))
+    _reviewed_epoch_need(_reviewed_epoch_pair_equal(backend,old_model,old_optimizer,current_model,current_optimizer),
+        "old/initial-derivative numerical halves, Adam or RNG differ")
+    return receipt
+
+def migrate_local_reviewed_decoder_source_epoch_v3(spec, *, registry, current_admission_provider,
+        execution_guard, asset_policy_guard, recipe_artifact, model_config_artifact,
+        tokenizer_artifact, license_artifact, old_configuration_artifact,
+        old_tokenizer_pipeline_artifact, current_configuration_artifact,
+        compatibility_contract_artifact, output_directory, max_model_bytes,
+        runtime_profile="builtin-t5-gpt2-float32/v1"):
+    """Explicitly migrate one progressed V1 pair to the qualified current epoch.
+
+    Actual old pipeline and current dependency-cohort snapshots must be captured
+    BEFORE Source adoption. No fresh vendor import, fitting, counter/RNG reset,
+    old-artifact rewrite, promotion or historical dependency requalification.
+    The caller retains existing execution/resource/asset/admission ownership.
+    """
+    import gc
+    import stat
+    _reviewed_epoch_need(all(callable(value) for value in
+        (current_admission_provider,execution_guard,asset_policy_guard)), "existing live guards required")
+    _reviewed_epoch_need(type(spec) is ReviewedMixedDecoderTrainingJobSpec
+        and tokenizer_artifact == spec.tokenizer_artifact and license_artifact == spec.license_artifact
+        and recipe_artifact in spec.backend_artifacts and model_config_artifact in spec.backend_artifacts
+        and recipe_artifact != model_config_artifact,
+        "loader recipe/configuration/tokenizer/license must be the exact declared old assets")
+    execution_guard()
+    policy = {"schema":"reviewed-decoder-source-epoch-migration-policy/v1",
+        "target_job_spec":spec.to_dict(), "old_configuration":asdict(old_configuration_artifact),
+        "old_pipeline":asdict(old_tokenizer_pipeline_artifact),
+        "current_configuration":asdict(current_configuration_artifact),
+        "source_contract":asdict(compatibility_contract_artifact),
+        "migration_requested":True, "training_requested":False,"downloads_requested":False,
+        "resource_grant_requested":False,"promotion_requested":False}
+    asset_policy_guard(_parse_json(_json_bytes(policy)))
+    context = _reviewed_epoch_context(spec,old_configuration_artifact,old_tokenizer_pipeline_artifact,
+        current_configuration_artifact,compatibility_contract_artifact)
+    output = Path(output_directory)
+    _reviewed_epoch_need(output.is_absolute() and not os.path.lexists(output)
+        and output.parent.resolve(strict=True)==output.parent
+        and output != Path(spec.output_directory)
+        and all(stat.S_ISDIR(parent.lstat().st_mode) for parent in output.parents),
+        "distinct fresh ordinary migration output directory required")
+    import torch
+    entry_rng = torch.get_rng_state().clone()
+    succeeded = False
+    try:
+        runtime, internal_receipt = _load_local_reviewed_decoder_runtime(
+            registry=registry,current_admission_provider=current_admission_provider,
+            execution_guard=execution_guard,asset_policy_guard=asset_policy_guard,
+            recipe_artifact=recipe_artifact,model_config_artifact=model_config_artifact,
+            tokenizer_artifact=tokenizer_artifact,license_artifact=license_artifact,
+            model_checkpoint=spec.base_model_checkpoint,optimizer_checkpoint=spec.base_optimizer_checkpoint,
+            expected_backend_identity=_thaw(spec.backend_identity),
+            expected_source_sha256=_thaw(spec.expected_source_sha256),
+            expected_admission_inputs_sha256=spec.expected_admission_inputs_sha256,
+            max_model_bytes=max_model_bytes,_admission_version="v3",_runtime_profile=runtime_profile,
+            _source_epoch_migration=context)
+        execution_guard()
+        _reviewed_epoch_need(runtime.backend.restored_checkpoint_matches(
+            context["derivative_pair"]["model_state"],context["derivative_pair"]["optimizer_state"]),
+            "current pair changed before publication")
+        output.mkdir(mode=0o700,exist_ok=False)
+        model = _write_exclusive(output/"model.checkpoint",context["derivative_pair"]["model_state"])
+        optimizer = _write_exclusive(output/"optimizer.checkpoint",context["derivative_pair"]["optimizer_state"])
+        pipeline = _write_exclusive(output/"current-tokenizer-pipeline.json",context["current_pipeline_raw"])
+        receipt = {"schema":REVIEWED_DECODER_SOURCE_EPOCH_RECEIPT_SCHEMA,
+            "profile":REVIEWED_DECODER_SOURCE_EPOCH_PROFILE,
+            "old_checkpoint_manifest":asdict(spec.parent_checkpoint_artifact),
+            "old_configuration_artifact":context["old_configuration_artifact"],
+            "old_pipeline_artifact":context["old_pipeline_artifact"],
+            "current_configuration_artifact":context["current_configuration_artifact"],
+            "source_contract_artifact":context["source_contract_artifact"],
+            "current_pipeline_artifact":pipeline,"derivative_model_checkpoint":model,
+            "derivative_optimizer_checkpoint":optimizer,"target_job_spec":spec.to_dict(),
+            "migrated_training_binding":context["current_training_binding"],
+            "original_progress":context["old_manifest"]["progress"],
+            "pipeline_proof":context["pipeline_proof"],
+            "source_projection_sha256":context["sources"]["projection_sha256"],
+            "dependency_scope":context["dependency_scope"],
+            "historical_dependency_execution_requalified":False,
+            "model_Adam_steps_RNG_and_progress_preserved":True,
+            "qualified":False,"promotion_performed":False,"legal_meaning_verified":False,
+            "convergence_proved":False,"corpus_admitted":False}
+        receipt_ref = _write_exclusive(output/"source-epoch-migration.json",_json_bytes(receipt))
+        original = context["old_manifest"]
+        manifest = {**original,"schema":REVIEWED_DECODER_SOURCE_EPOCH_CHECKPOINT_SCHEMA,
+            "backend_identity":_thaw(spec.backend_identity),
+            "producer_pins":_thaw(spec.expected_source_sha256),
+            "training_binding":context["current_training_binding"],
+            "model_state":model,"optimizer_state":optimizer,
+            "token_budgets":{"max_source_tokens":spec.max_source_tokens,"max_target_tokens":spec.max_target_tokens,
+                "tokenizer_contract":context["current_training_binding"]["tokenizer_contract"]},
+            "parent_checkpoint_sha256":spec.parent_checkpoint_artifact.sha256,
+            "continuation_profile":spec.continuation_profile,"optimizer_step_offset":0,
+            "stage_continuation":None,"source_epoch_migration":receipt_ref}
+        manifest_ref = _write_exclusive(output/"reviewed-decoder-checkpoint.json",_json_bytes(manifest))
+        # Drop the first live model before the genuinely ordinary current loader
+        # constructs another. It sees only current-format derivative artifacts.
+        del runtime
+        context.pop("derivative_pair")
+        gc.collect()
+        runtime, load_receipt = load_local_reviewed_decoder_runtime_v3(
+            admission_profile=spec.admission_profile,registry=registry,
+            current_admission_provider=current_admission_provider,execution_guard=execution_guard,
+            asset_policy_guard=asset_policy_guard,recipe_artifact=recipe_artifact,
+            model_config_artifact=model_config_artifact,tokenizer_artifact=tokenizer_artifact,
+            license_artifact=license_artifact,model_checkpoint=CheckpointArtifact.from_dict(model),
+            optimizer_checkpoint=CheckpointArtifact.from_dict(optimizer),
+            expected_backend_identity=_thaw(spec.backend_identity),
+            expected_source_sha256=_thaw(spec.expected_source_sha256),
+            expected_admission_inputs_sha256=spec.expected_admission_inputs_sha256,
+            max_model_bytes=max_model_bytes,runtime_profile=runtime_profile)
+        _reviewed_epoch_validate_receipt(receipt_ref,runtime.backend,expected_spec=spec)
+        prepared = _reviewed_epoch_prepare_binding(spec,registry,runtime.tokenizer,current_admission_provider)
+        _reviewed_epoch_need(prepared["receipt"] == context["current_training_binding"],
+            "ordinary current admission/input binding changed after derivative reload")
+        new_spec = spec.to_dict()
+        new_spec.update(parent_checkpoint_artifact=manifest_ref,
+            base_model_checkpoint=model,base_optimizer_checkpoint=optimizer)
+        result = {"schema":"reviewed-decoder-source-epoch-migration-operation/v1",
+            "migration_receipt":receipt_ref,"candidate":manifest_ref,
+            "model_checkpoint":model,"optimizer_checkpoint":optimizer,"next_job_spec":new_spec,
+            "worker_progress":dict(original["progress"]),"ordinary_current_loader":load_receipt,
+            "qualified":False,"promotion_performed":False,"training_performed":False,
+            "resource_granted":False,"historical_dependency_execution_requalified":False}
+        execution_guard()
+        _reviewed_epoch_validate_receipt(receipt_ref,runtime.backend,expected_spec=spec)
+        _reviewed_epoch_need(runtime.backend.restored_checkpoint_matches(
+            _reviewed_decoder_artifact(CheckpointArtifact.from_dict(model),limit=runtime.backend._checkpoint_byte_limit()),
+            _reviewed_decoder_artifact(CheckpointArtifact.from_dict(optimizer),limit=runtime.backend._checkpoint_byte_limit())),
+            "live derivative pair changed during final callback/provenance validation")
+        _reviewed_epoch_need(runtime.backend.identity()==_thaw(spec.backend_identity)
+            and _reviewed_decoder_source_pins(admission_profile=spec.admission_profile)==_thaw(spec.expected_source_sha256),
+            "current backend or Source changed before migration publication")
+        _write_exclusive(output/"receipt.json",_json_bytes(result))
+        directory_fd=os.open(output,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW)
+        try:os.fsync(directory_fd)
+        finally:os.close(directory_fd)
+        succeeded=True
+        return runtime,result
+    except BaseException as error:
+        if output.exists():
+            try:_write_exclusive(output/"failure.json",_json_bytes({
+                "schema":"reviewed-decoder-source-epoch-migration-failure/v1",
+                "error_type":type(error).__name__,"partial_output_preserved":True,
+                "old_artifacts_rewritten":False,"qualified":False,"promotion_performed":False}))
+            except BaseException as publication_error:
+                error.add_note("failed to retain migration failure metadata: "+type(publication_error).__name__)
+        raise
+    finally:
+        if not succeeded:torch.set_rng_state(entry_rng)
+
+__all__ += ["migrate_local_reviewed_decoder_source_epoch_v3", "REVIEWED_DECODER_SOURCE_EPOCH_PROFILE",
+            "REVIEWED_DECODER_SOURCE_EPOCH_CONTRACT_SCHEMA", "REVIEWED_DECODER_SOURCE_EPOCH_CHECKPOINT_SCHEMA"]

@@ -43,6 +43,9 @@ MAX_LEDGER_BYTES = 16 * 1024 * 1024
 MAX_RESERVATIONS = 4096
 MAX_CHILDREN_PER_RESERVATION = 16
 MAX_EXTERNAL_CHARGES = 128
+# Explicit ledger waits may cover several full named-root censuses. This
+# ceiling does not extend the original resource-operation deadline.
+MAX_LEDGER_LOCK_TIMEOUT_SECONDS = 600
 # The same exact-root census observed 1,359,805 entries on 2026-10-02. Increase
 # only the finite scan bound; path/identity checks and accounting stay unchanged.
 MAX_INVENTORY_ENTRIES = 4_000_000
@@ -524,7 +527,7 @@ def _bounded_cleanup_failure_observation(stage, error, lock_path, *, origin_owne
                    and 0 <= offered[k] < 2**63 for k in names):
             return result
         timeout, started, deadline, observed = (offered[k] for k in names)
-        if not (timeout <= 60 and started <= deadline <= observed
+        if not (timeout <= MAX_LEDGER_LOCK_TIMEOUT_SECONDS and started <= deadline <= observed
                 and deadline - started <= timeout + 1e-6):
             return result
         # Origin and contents are bound at the exact original _locked raise.
@@ -579,7 +582,7 @@ class DaemonResourceReservation:
         if ledger_lock_timeout_seconds is not None and (
                 type(ledger_lock_timeout_seconds) not in (int, float)
                 or not math.isfinite(ledger_lock_timeout_seconds)
-                or not 0 <= ledger_lock_timeout_seconds <= 60):
+                or not 0 <= ledger_lock_timeout_seconds <= MAX_LEDGER_LOCK_TIMEOUT_SECONDS):
             raise DaemonResourceError("invalid ledger_lock_timeout_seconds")
         # Disk bookkeeping serializes short updates even when host capacity
         # admission is fail-fast. Existing callers retain their old deadline.

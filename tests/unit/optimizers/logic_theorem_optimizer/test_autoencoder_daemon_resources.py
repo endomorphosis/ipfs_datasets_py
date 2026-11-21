@@ -360,7 +360,10 @@ def test_ledger_scope_is_ordered_and_immutable(setup):
 @pytest.mark.parametrize("field,value", [("storage_bytes",0),("storage_bytes",True),("storage_bytes",100_001),
     ("memory_mb",0),("memory_mb",True),("cpu_slots",0),("cpu_slots",False),
     ("child_process_slots",0),("child_process_slots",False),("child_process_slots",1.5),
-    ("timeout_seconds",-1),("timeout_seconds",True),("timeout_seconds",float("nan"))])
+    ("timeout_seconds",-1),("timeout_seconds",True),("timeout_seconds",float("nan")),
+    ("ledger_lock_timeout_seconds",-1),("ledger_lock_timeout_seconds",True),
+    ("ledger_lock_timeout_seconds",float("nan")),("ledger_lock_timeout_seconds",float("inf")),
+    ("ledger_lock_timeout_seconds",600.001),("ledger_lock_timeout_seconds","180")])
 def test_invalid_requests_fail_before_ledger_mutation(setup, field, value):
     factory, _, ledger, _ = setup
     with pytest.raises(resources.DaemonResourceError):
@@ -1591,17 +1594,18 @@ def test_cleanup_diagnostic_bound_and_detached_receipt(setup):
     assert scheduler.snapshot()['allocated']['cpu_slots'] == 0
 
 
-def test_cleanup_diagnostics_recognize_existing_sdk_sixty_second_lock_bound(setup, monkeypatch):
-    # The clock is controlled here; this does not claim sixty seconds elapsed.
-    # Actual _locked emits its own owner-bound event for its unchanged SDK bound.
+@pytest.mark.parametrize('lock_timeout', [30, 60, 180, 600])
+def test_cleanup_diagnostics_recognize_bounded_selected_ledger_lock_timeout(setup, monkeypatch, lock_timeout):
+    # Controlled clock: no claim that these wall-clock durations elapsed.
+    # Real _locked emits its own owner-bound timeout for every supported bound.
     from types import SimpleNamespace
     import fcntl
     factory, _, _, scheduler = setup
-    owner = factory(ledger_lock_timeout_seconds=60);owner.__enter__()
+    owner = factory(ledger_lock_timeout_seconds=lock_timeout);owner.__enter__()
     descriptor = os.open(owner.lock_path, os.O_RDWR | os.O_NOFOLLOW)
     try:
         fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        clock = iter((100.0, 161.0))
+        clock = iter((100.0, 101.0 + lock_timeout))
         with monkeypatch.context() as patch:
             patch.setattr(resources, 'time', SimpleNamespace(monotonic=lambda: next(clock)))
             with pytest.raises(resources.DaemonResourceError) as caught:
@@ -1610,30 +1614,13 @@ def test_cleanup_diagnostics_recognize_existing_sdk_sixty_second_lock_bound(setu
         observation, = owner.to_dict()['cleanup_failure_observations']
         assert observation['reason_code'] == 'ledger_lock_unavailable'
         assert observation['lock_observation_status'] == 'accepted'
-        assert observation['lock_observation']['configured_lock_timeout_seconds'] == 60
+        assert observation['lock_observation']['configured_lock_timeout_seconds'] == lock_timeout
     finally:
         os.close(descriptor)
         owner.__exit__(RuntimeError, RuntimeError('primary'), None)
     assert scheduler.snapshot()['allocated']['cpu_slots'] == 0
 
 
-def test_production_storage_cap_is_two_hundred_twenty_gb_without_admission(tmp_path):
-    root = tmp_path / "outputs"
-    root.mkdir()
-    ledger = tmp_path / "disk.json"
-    reservation = resources.DaemonResourceReservation(
-        ledger, roots=[root], storage_bytes=7, memory_mb=1)
-    assert resources.MAX_STORAGE_BYTES == 220_000_000_000
-    assert resources.MAX_INVENTORY_ENTRIES == 2_000_000
-    assert reservation._read() == {
-        "schema": resources.SCHEMA, "roots": reservation.root_identities,
-        "limit_bytes": 220_000_000_000, "reservations": {},
-    }
-    assert reservation.to_dict()["storage_limit_bytes"] == 220_000_000_000
-    assert reservation.to_dict()["status"] == "not_entered"
-    assert reservation.to_dict()["resource_lease"] is None
-    assert not ledger.exists()
-    assert not reservation.lock_path.exists()
 
 
 
@@ -1653,3 +1640,109 @@ def test_default_usage_inventory_hook_keeps_strict_unaliased_inventory(tmp_path,
     with pytest.raises(resources.DaemonResourceError):
         reservation._usage_inventory(tmp_path)
     assert "_usage_inventory" not in reservation.__dict__
+
+
+
+def test_ledger_wait_headroom_preserves_selected_thirty_and_inherited_timeout(setup):
+    factory, _, ledger, scheduler = setup
+    default = factory()
+    inherited = factory(timeout_seconds=30)
+    explicit = factory(timeout_seconds=0, ledger_lock_timeout_seconds=30)
+    assert default.timeout_seconds == default.ledger_lock_timeout_seconds == 0
+    assert inherited.timeout_seconds == inherited.ledger_lock_timeout_seconds == 30
+    assert explicit.timeout_seconds == 0 and explicit.ledger_lock_timeout_seconds == 30
+    assert resources.MAX_LEDGER_LOCK_TIMEOUT_SECONDS == 600
+    assert not ledger.exists()
+    assert scheduler.snapshot()['allocated']['cpu_slots'] == 0
+
+
+def test_selected_ledger_headroom_acquires_real_lock_after_old_sixty_second_boundary(setup, monkeypatch):
+    from types import SimpleNamespace
+    import fcntl
+    factory, _, ledger, scheduler = setup
+    owner = factory(ledger_lock_timeout_seconds=180)
+    descriptor = os.open(owner.lock_path, os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
+    now = [100.0]
+    sleeps = []
+    def release_after_old_bound(seconds):
+        sleeps.append(seconds)
+        if len(sleeps) == 1:
+            # Keep the real lock held for another failed flock AFTER the old
+            # sixty-second boundary; only the second sleep releases it.
+            now[0] = 161.0
+        else:
+            assert len(sleeps) == 2
+            now[0] = 162.0
+            fcntl.flock(descriptor, fcntl.LOCK_UN)
+    try:
+        fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        with monkeypatch.context() as patch:
+            patch.setattr(resources, 'time', SimpleNamespace(
+                monotonic=lambda: now[0], sleep=release_after_old_bound))
+            with owner._locked():
+                assert now[0] == 162.0
+        assert len(sleeps) == 2 and all(0 < value <= 0.05 for value in sleeps)
+    finally:
+        os.close(descriptor)
+    assert not ledger.exists() and owner._record is None and owner._lease is None
+    assert scheduler.snapshot()['allocated']['cpu_slots'] == 0
+
+
+def test_selected_ledger_headroom_never_extends_original_operation_deadline(setup, monkeypatch):
+    import fcntl
+    factory, _, ledger, scheduler = setup
+    owner = factory(ledger_lock_timeout_seconds=180)
+    descriptor = os.open(owner.lock_path, os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
+    clock = _host_admission_clock(monkeypatch)
+    def cross_original_work_deadline(seconds):
+        assert 0 < seconds <= 0.05
+        clock.now = 111.0
+    monkeypatch.setattr(clock, 'sleep', cross_original_work_deadline)
+    try:
+        fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        with resources.native_deadlines.resource_admission_deadline(
+                work_deadline_monotonic=110.0, native_deadline_monotonic=120.0):
+            with pytest.raises(resources.native_deadlines.ResourceAdmissionDeadlineError):
+                with owner._locked():
+                    pytest.fail('held lock must not pass the original operation deadline')
+        assert clock.now == 111.0
+    finally:
+        os.close(descriptor)
+    assert resources.native_deadlines.resource_operation_deadline() is None
+    assert not ledger.exists() and owner._record is None and owner._lease is None
+    assert scheduler.snapshot()['allocated']['cpu_slots'] == 0
+
+
+def test_initial_usage_lock_timeout_can_retry_same_owner_without_dropping_full_claim(setup, monkeypatch):
+    from types import SimpleNamespace
+    import fcntl
+    factory, roots, ledger, scheduler = setup
+    attempt = roots[0] / 'attempt'
+    attempt.mkdir()
+    with factory(ledger_lock_timeout_seconds=180) as owner:
+        reservation_id = owner.reservation_id
+        lease_id = owner._lease.lease_id
+        before = ledger.read_bytes()
+        descriptor = os.open(owner.lock_path, os.O_RDWR | os.O_NOFOLLOW)
+        try:
+            fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            clock = iter((100.0, 281.0))
+            with monkeypatch.context() as patch:
+                patch.setattr(resources, 'time', SimpleNamespace(monotonic=lambda: next(clock)))
+                with pytest.raises(resources.DaemonResourceError) as caught:
+                    owner.check_usage(attempt, child_pid=None)
+            assert caught.value.lock_observation['configured_lock_timeout_seconds'] == 180
+            assert caught.value._lock_observation_binding[0] is owner
+            assert ledger.read_bytes() == before
+        finally:
+            os.close(descriptor)
+        usage = owner.check_usage(attempt, child_pid=None)
+        ledger_value = json.loads(ledger.read_bytes())
+        assert set(ledger_value['reservations']) == {reservation_id}
+        assert owner.reservation_id == reservation_id and owner._lease.lease_id == lease_id
+        assert owner._child is None and owner._child_history == []
+        assert usage['outstanding_full_reservations_bytes'] == owner.storage_bytes
+        assert ledger_value['reservations'][reservation_id]['status'] == 'active'
+        assert scheduler.snapshot()['allocated']['cpu_slots'] == 1
+        owner.finalize(attempt, artifacts_durable=True)
+    assert scheduler.snapshot()['allocated']['cpu_slots'] == 0

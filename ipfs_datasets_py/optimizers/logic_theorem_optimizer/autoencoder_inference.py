@@ -522,13 +522,16 @@ def _read_reviewed_evaluation_request(request_artifact):
         base_context_fields = {"profile", *artifacts, *digests}
         if qwen2:
             base_context_fields.add("context_budget_profile")
-            if (type(context) is not dict or context.get("context_budget_profile") != worker.REVIEWED_QWEN2_CONTEXT_BUDGET_PROFILE or
-                    context.get("transport") != "shared_json_v2"):
+            if (type(context) is not dict or type(context.get("context_budget_profile")) is not str or
+                    context["context_budget_profile"] not in {worker.REVIEWED_QWEN2_CONTEXT_BUDGET_PROFILE,
+                        worker.REVIEWED_QWEN2_EXPANDED_CONTEXT_BUDGET_PROFILE} or
+                    context["context_budget_profile"] != policy["context_budget_profile"] or
+                    context.get("transport") not in ("shared_json_v2", "shared_json_v3")):
                 raise ValueError("explicit Qwen2 lossless complete-context budget required")
         shared_transport = (type(context) is dict and "transport" in context)
         if (type(context) is not dict
                 or set(context) != (base_context_fields | {"transport"} if shared_transport else base_context_fields)
-                or (shared_transport and (not mixed_admission or context["transport"] not in ("shared_json_v1", "shared_json_v2")))
+                or (shared_transport and (not mixed_admission or context["transport"] not in ("shared_json_v1", "shared_json_v2", "shared_json_v3")))
                 or context["profile"] != (consumer.REVIEWED_V3_HELDOUT_CONTEXT_PROFILE if mixed_admission
                                           else consumer.REVIEWED_HELDOUT_CONTEXT_PROFILE)
                 or any(type(context[name]) is not str or re.fullmatch(r"[0-9a-f]{64}", context[name]) is None
@@ -1028,22 +1031,27 @@ def _check_reviewed_context_transport_policy(context, policy):
         from ...logic.autoformal import training_cycle_inputs as inputs
         from . import autoencoder_training_worker as worker
         qwen2 = "context_budget_profile" in context
-        if (qwen2 and (context["context_budget_profile"] != worker.REVIEWED_QWEN2_CONTEXT_BUDGET_PROFILE or
-                       context["transport"] != "shared_json_v2" or
+        if (qwen2 and (type(context["context_budget_profile"]) is not str or
+                       context["context_budget_profile"] not in {worker.REVIEWED_QWEN2_CONTEXT_BUDGET_PROFILE,
+                           worker.REVIEWED_QWEN2_EXPANDED_CONTEXT_BUDGET_PROFILE} or
+                       context["transport"] not in ("shared_json_v2", "shared_json_v3") or
                        policy.get("context_budget_profile") != context["context_budget_profile"])):
             raise ValueError("Qwen2 context budget differs from the pinned request")
         if not qwen2 and "context_budget_profile" in policy:
             raise ValueError("context budget requires explicit request opt-in")
-        if (context["transport"] not in ("shared_json_v1", "shared_json_v2")
+        if (context["transport"] not in ("shared_json_v1", "shared_json_v2", "shared_json_v3")
                 or policy.get("schema") != ("reviewed-decoder-rich-context-use-policy/v3" if qwen2 else "reviewed-decoder-rich-context-use-policy/v2")
                 or policy.get("context_transport") != context["transport"]
                 or policy.get("max_expanded_context_bytes") != inputs.REVIEWED_SHARED_CONTEXT_MAX_EXPANDED_BYTES
                 or type(policy.get("max_expanded_context_bytes")) is not int
-                or policy.get("shared_context_schema") != (inputs.REVIEWED_SHARED_CONTEXT_JSON_SCHEMA_V2
+                or policy.get("shared_context_schema") != (inputs.REVIEWED_SHARED_CONTEXT_JSON_SCHEMA_V3
+                    if context["transport"] == "shared_json_v3" else inputs.REVIEWED_SHARED_CONTEXT_JSON_SCHEMA_V2
                     if context["transport"] == "shared_json_v2" else inputs.REVIEWED_SHARED_CONTEXT_JSON_SCHEMA)
                 or policy.get("max_context_bytes") != worker.REVIEWED_GENERATION_CONTEXT_MAX_BYTES
                 or type(policy.get("max_context_bytes")) is not int
-                or policy.get("max_context_tokens") != (worker.REVIEWED_QWEN2_CONTEXT_MAX_TOKENS if qwen2 else worker.REVIEWED_GENERATION_CONTEXT_MAX_TOKENS)
+                or policy.get("max_context_tokens") != (worker.REVIEWED_QWEN2_EXPANDED_CONTEXT_MAX_TOKENS
+                    if qwen2 and context["context_budget_profile"] == worker.REVIEWED_QWEN2_EXPANDED_CONTEXT_BUDGET_PROFILE
+                    else worker.REVIEWED_QWEN2_CONTEXT_MAX_TOKENS if qwen2 else worker.REVIEWED_GENERATION_CONTEXT_MAX_TOKENS)
                 or type(policy.get("max_context_tokens")) is not int):
             raise ValueError("shared context transport policy differs from the pinned request")
     elif any(name in policy for name in ("context_transport", "max_expanded_context_bytes", "shared_context_schema")):
