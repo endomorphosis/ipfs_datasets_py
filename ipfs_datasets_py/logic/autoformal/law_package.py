@@ -1257,6 +1257,8 @@ def assemble_law_package(stitch_dir: str | Path, spans: str | Path) -> dict[str,
                     term_ids=[doc_id],
                 ))
                 continue
+            if str(info["path"]) in files:
+                raise LawPackageError("document module path collision: " + str(info["path"]))
             section = law_module(target_id)
             source = render_document_module(info, section)
             files[str(info["path"])] = source

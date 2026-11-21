@@ -574,3 +574,26 @@ def test_unicode_documents_remain_distinct_in_package_files_and_manifest(law: di
         assert f"namespace {row['module']}" in source
         assert row["sha256"] == hashlib.sha256(source.encode("utf-8")).hexdigest()
     assert assembled["admitted"] is False and assembled["formalized"] is False
+
+
+def test_distinct_legacy_ascii_document_ids_refuse_same_package_path(law: dict) -> None:
+    from ipfs_datasets_py.logic.autoformal.law_package import document_module
+
+    digest = hashlib.sha256("法律甲".encode("utf-8")).hexdigest()
+    ids = ["Unicode.H" + digest, "Unicode_H" + digest]
+    # Legacy naming is unchanged: distinguish the document identities by
+    # refusing their shared package path, rather than silently replacing one.
+    infos = [document_module(value) for value in ids]
+    assert infos[0]["module"] == infos[1]["module"]
+    assert infos[0]["path"] == infos[1]["path"]
+    path = law["stitch"] / "logic-occurrences.parquet"
+    table = pq.read_table(path)
+    rows = table.to_pylist() + [
+        _occurrence(document_id=value, document_label=value,
+                    entity_id=f"{value}:section:1", hit_kind="label",
+                    legal_id="usc:us:1:1", section_label="1", surface="1")
+        for value in ids
+    ]
+    _write(path, rows, table.schema)
+    with pytest.raises(LawPackageError, match="document module path collision"):
+        assemble_law_package(law["stitch"], law["spans"])
