@@ -10300,3 +10300,575 @@ def test_train_resume_epoch_late_denial_preserves_originals_and_unpromoted_parti
     assert failure['partial_output_preserved'] is True and failure['old_artifacts_rewritten'] is False
     assert failure['qualified'] is failure['promotion_performed'] is False
     assert all(Path(fixture.prior[name]['path']).read_bytes() == raw for name,raw in fixture.originals.items())
+
+
+# Exact fictional TRAIN-only rows retained by original TRAIN14; no held-out
+# targets. The original artifact is 21907 bytes, SHA256
+# 596429fd312e86647d3387f830a4f8c3bc35172ca7b1cd64f0f29f546c836621.
+_DIGEST_OMITTED_ACTUAL_TRAIN_ROWS_JSON = '[{"canonical_ir":{"argument_roles":[{"roles":["officer"],"symbol":"CoveredOfficer"},{"roles":["officer"],"symbol":"AppointedByBoard"}],"assumptions":[],"cross_references":[],"definition_uses":[{"applicability":"governing","defined_predicate":"CoveredOfficer","definition_unit_id":"fixture:mixed-act-v1/unit-1","evidence_refs":[{"artifact_id":"fixture:reviewed-process-evidence","sha256":"0b615d48c2dccad89db514054a793e966e582dcb7180e055f85678d9d26f5086"}],"interpretation_id":"fixture:mixed-act-v1/selected-interpretation","target_typed_paths":["/root/arguments/0/arguments/0"],"use_occurrence_cid":"baguqeeraspsmmgi7rz74uwbolgtvhnjz2llvqld36jwcf2526l6eejw7ogoq","use_unit_id":"fixture:mixed-act-v1/unit-2"},{"applicability":"governing","defined_predicate":"CoveredOfficer","definition_unit_id":"fixture:mixed-act-v1/unit-1","evidence_refs":[{"artifact_id":"fixture:reviewed-process-evidence","sha256":"0b615d48c2dccad89db514054a793e966e582dcb7180e055f85678d9d26f5086"}],"interpretation_id":"fixture:mixed-act-v1/selected-interpretation","target_typed_paths":["/root/arguments/0/arguments/0/arguments/0/arguments/0/arguments/0/arguments/0","/root/arguments/0/arguments/0/arguments/0/arguments/0/arguments/0/arguments/1"],"use_occurrence_cid":"baguqeera7sbnrtwgmqegsigv7mc6v6eit3ugb2pl425jgjduxgvsrwsslcma","use_unit_id":"fixture:mixed-act-v1/unit-3"}],"governing_context":{"governing_edition":"fictional-edition-1","instrument_id":"fixture:mixed-act-v1","jurisdiction":"fictional-jurisdiction","legal_as_of_utc":"2026-10-15T12:03:00Z","valid_from_utc":"2026-10-01T00:00:00Z","valid_until_utc":"2026-11-01T00:00:00Z"},"interpretation_id":"fixture:mixed-act-v1/selected-interpretation","profile":"authored-object-relational-deontic/v1","source_binding":{"document_revision":"fixture:mixed-act-v1/revision-1","occurrence_cid":"baguqeera4yau6cgen6bv75aarclm6jt2dkus5evyjmkfglq77o7cjriybeva","source_version_cid":"baguqeeratx4l7gz2yxhj2k5hk6mektowhevpagt4iwlijvbphszbxwzg7oka"},"typed_expression":{"content_digest":"d72a08d25be06eedc1403b78e851e8bb6dda9ee2c45309e4c32fd79eded1a83e","expression_id":"fixture:expression","family":{"interface":"LogicIdentityNamespaces@1","namespace":"family","schema_version":"logic-identity-namespaces/v1","value":"tdfol","version":"1.0.0"},"interface":"TypedExpression@1","metadata":{},"profile":{"interface":"LogicIdentityNamespaces@1","namespace":"profile","schema_version":"logic-identity-namespaces/v1","value":"tdfol_default","version":"1.0.0"},"root":{"arguments":[{"arguments":[{"arguments":[{"arguments":[],"binders":[],"kind":"variable","metadata":{},"node_id":"fixture:node:2","schema_version":"syntax-logic-node/v1","sort":{"arguments":[],"kind":"atomic","name":"Object","schema_version":"syntax-logic-sort/v1"},"symbol":"officer"}],"binders":[],"kind":"predicate","metadata":{},"node_id":"fixture:node:1","schema_version":"syntax-logic-node/v1","sort":{"arguments":[],"kind":"bool","name":"Bool","schema_version":"syntax-logic-sort/v1"},"symbol":"CoveredOfficer"},{"arguments":[{"arguments":[],"binders":[],"kind":"variable","metadata":{},"node_id":"fixture:node:4","schema_version":"syntax-logic-node/v1","sort":{"arguments":[],"kind":"atomic","name":"Object","schema_version":"syntax-logic-sort/v1"},"symbol":"officer"}],"binders":[],"kind":"predicate","metadata":{},"node_id":"fixture:node:3","schema_version":"syntax-logic-node/v1","sort":{"arguments":[],"kind":"bool","name":"Bool","schema_version":"syntax-logic-sort/v1"},"symbol":"AppointedByBoard"}],"binders":[],"kind":"iff","metadata":{},"node_id":"fixture:node:5","schema_version":"syntax-logic-node/v1","sort":{"arguments":[],"kind":"bool","name":"Bool","schema_version":"syntax-logic-sort/v1"},"symbol":""}],"binders":[{"name":"officer","schema_version":"syntax-binder/v1","sort":{"arguments":[],"kind":"atomic","name":"Object","schema_version":"syntax-logic-sort/v1"}}],"kind":"forall","metadata":{},"node_id":"fixture:node:6","schema_version":"syntax-logic-node/v1","sort":{"arguments":[],"kind":"bool","name":"Bool","schema_version":"syntax-logic-sort/v1"},"symbol":""},"schema_version":"syntax-typed-expression/v1","signature":{"family":{"interface":"LogicIdentityNamespaces@1","namespace":"family","schema_version":"logic-identity-namespaces/v1","value":"tdfol","version":"1.0.0"},"features":[],"interface":"LogicSignature@1","metadata":{},"profile":{"interface":"LogicIdentityNamespaces@1","namespace":"profile","schema_version":"logic-identity-namespaces/v1","value":"tdfol_default","version":"1.0.0"},"schema_version":"syntax-logic-signature/v1","signature_id":"fixture:signature","sorts":[{"arguments":[],"kind":"bool","name":"Bool","schema_version":"syntax-logic-sort/v1"},{"arguments":[],"kind":"atomic","name":"Object","schema_version":"syntax-logic-sort/v1"}],"symbols":[{"domain":[{"arguments":[],"kind":"atomic","name":"Object","schema_version":"syntax-logic-sort/v1"}],"kind":"predicate","metadata":{},"name":"CoveredOfficer","range":{"arguments":[],"kind":"bool","name":"Bool","schema_version":"syntax-logic-sort/v1"},"schema_version":"syntax-symbol-declaration/v1"},{"domain":[{"arguments":[],"kind":"atomic","name":"Object","schema_version":"syntax-logic-sort/v1"}],"kind":"predicate","metadata":{},"name":"AppointedByBoard","range":{"arguments":[],"kind":"bool","name":"Bool","schema_version":"syntax-logic-sort/v1"},"schema_version":"syntax-symbol-declaration/v1"}]}}},"id":"reviewed:fixture:mixed-act-v1/unit-1","source_text":"For this fictional Act, a covered officer means an officer appointed by the Board. Caf\\u00e9.","unit_id":"fixture:mixed-act-v1/unit-1"},{"canonical_ir":{"argument_roles":[{"roles":["officer"],"symbol":"CoveredOfficer"},{"roles":["officer"],"symbol":"Excused"},{"roles":["officer"],"symbol":"FilesReport"}],"assumptions":[],"cross_references":[],"definition_uses":[{"applicability":"governing","defined_predicate":"CoveredOfficer","definition_unit_id":"fixture:mixed-act-v1/unit-1","evidence_refs":[{"artifact_id":"fixture:reviewed-process-evidence","sha256":"0b615d48c2dccad89db514054a793e966e582dcb7180e055f85678d9d26f5086"}],"interpretation_id":"fixture:mixed-act-v1/selected-interpretation","target_typed_paths":["/root/arguments/0/arguments/0"],"use_occurrence_cid":"baguqeeraspsmmgi7rz74uwbolgtvhnjz2llvqld36jwcf2526l6eejw7ogoq","use_unit_id":"fixture:mixed-act-v1/unit-2"}],"governing_context":{"governing_edition":"fictional-edition-1","instrument_id":"fixture:mixed-act-v1","jurisdiction":"fictional-jurisdiction","legal_as_of_utc":"2026-10-15T12:03:00Z","valid_from_utc":"2026-10-01T00:00:00Z","valid_until_utc":"2026-11-01T00:00:00Z"},"interpretation_id":"fixture:mixed-act-v1/selected-interpretation","profile":"authored-object-relational-deontic/v1","source_binding":{"document_revision":"fixture:mixed-act-v1/revision-1","occurrence_cid":"baguqeeraspsmmgi7rz74uwbolgtvhnjz2llvqld36jwcf2526l6eejw7ogoq","source_version_cid":"baguqeera76h6foirdop7np677cr6f25nl6xkzgvzjbqhstyc3m6iv57a6mca"},"typed_expression":{"content_digest":"bf1648a1fb7fab9299ebe80b200da5f61ecb515374af81d83a9b4c7503130c7d","expression_id":"fixture:expression","family":{"interface":"LogicIdentityNamespaces@1","namespace":"family","schema_version":"logic-identity-namespaces/v1","value":"tdfol","version":"1.0.0"},"interface":"TypedExpression@1","metadata":{},"profile":{"interface":"LogicIdentityNamespaces@1","namespace":"profile","schema_version":"logic-identity-namespaces/v1","value":"tdfol_default","version":"1.0.0"},"root":{"arguments":[{"arguments":[{"arguments":[{"arguments":[],"binders":[],"kind":"variable","metadata":{},"node_id":"fixture:node:2","schema_version":"syntax-logic-node/v1","sort":{"arguments":[],"kind":"atomic","name":"Object","schema_version":"syntax-logic-sort/v1"},"symbol":"officer"}],"binders":[],"kind":"predicate","metadata":{},"node_id":"fixture:node:1","schema_version":"syntax-logic-node/v1","sort":{"arguments":[],"kind":"bool","name":"Bool","schema_version":"syntax-logic-sort/v1"},"symbol":"CoveredOfficer"},{"arguments":[{"arguments":[{"arguments":[{"arguments":[],"binders":[],"kind":"variable","metadata":{},"node_id":"fixture:node:5","schema_version":"syntax-logic-node/v1","sort":{"arguments":[],"kind":"atomic","name":"Object","schema_version":"syntax-logic-sort/v1"},"symbol":"officer"}],"binders":[],"kind":"predicate","metadata":{},"node_id":"fixture:node:4","schema_version":"syntax-logic-node/v1","sort":{"arguments":[],"kind":"bool","name":"Bool","schema_version":"syntax-logic-sort/v1"},"symbol":"Excused"}],"binders":[],"kind":"not","metadata":{},"node_id":"fixture:node:3","schema_version":"syntax-logic-node/v1","sort":{"arguments":[],"kind":"bool","name":"Bool","schema_version":"syntax-logic-sort/v1"},"symbol":""},{"arguments":[],"binders":[],"extension":{"children":[{"arguments":[{"arguments":[],"binders":[],"kind":"variable","metadata":{},"node_id":"fixture:node:7","schema_version":"syntax-logic-node/v1","sort":{"arguments":[],"kind":"atomic","name":"Object","schema_version":"syntax-logic-sort/v1"},"symbol":"officer"}],"binders":[],"kind":"predicate","metadata":{},"node_id":"fixture:node:6","schema_version":"syntax-logic-node/v1","sort":{"arguments":[],"kind":"bool","name":"Bool","schema_version":"syntax-logic-sort/v1"},"symbol":"FilesReport"}],"family":{"interface":"LogicIdentityNamespaces@1","namespace":"family","schema_version":"logic-identity-namespaces/v1","value":"tdfol","version":"1.0.0"},"features":["legacy.classic_letter","legacy.obligation"],"interface":"LogicExtensionNode@1","metadata":{},"node_id":"fixture:node:8:ext","payload":{"kind":"obligation","letter":"O","resolution":"deontic","schema_version":"legacy.deontic/v1"},"payload_schema":"legacy.deontic/v1","profile":{"interface":"LogicIdentityNamespaces@1","namespace":"profile","schema_version":"logic-identity-namespaces/v1","value":"tdfol_default","version":"1.0.0"},"schema_version":"syntax-logic-extension-node/v1"},"kind":"extension","metadata":{},"node_id":"fixture:node:8","schema_version":"syntax-logic-node/v1","sort":{"arguments":[],"kind":"bool","name":"Bool","schema_version":"syntax-logic-sort/v1"},"symbol":""}],"binders":[],"kind":"implies","metadata":{},"node_id":"fixture:node:9","schema_version":"syntax-logic-node/v1","sort":{"arguments":[],"kind":"bool","name":"Bool","schema_version":"syntax-logic-sort/v1"},"symbol":""}],"binders":[],"kind":"implies","metadata":{},"node_id":"fixture:node:10","schema_version":"syntax-logic-node/v1","sort":{"arguments":[],"kind":"bool","name":"Bool","schema_version":"syntax-logic-sort/v1"},"symbol":""}],"binders":[{"name":"officer","schema_version":"syntax-binder/v1","sort":{"arguments":[],"kind":"atomic","name":"Object","schema_version":"syntax-logic-sort/v1"}}],"kind":"forall","metadata":{},"node_id":"fixture:node:11","schema_version":"syntax-logic-node/v1","sort":{"arguments":[],"kind":"bool","name":"Bool","schema_version":"syntax-logic-sort/v1"},"symbol":""},"schema_version":"syntax-typed-expression/v1","signature":{"family":{"interface":"LogicIdentityNamespaces@1","namespace":"family","schema_version":"logic-identity-namespaces/v1","value":"tdfol","version":"1.0.0"},"features":[],"interface":"LogicSignature@1","metadata":{},"profile":{"interface":"LogicIdentityNamespaces@1","namespace":"profile","schema_version":"logic-identity-namespaces/v1","value":"tdfol_default","version":"1.0.0"},"schema_version":"syntax-logic-signature/v1","signature_id":"fixture:signature","sorts":[{"arguments":[],"kind":"bool","name":"Bool","schema_version":"syntax-logic-sort/v1"},{"arguments":[],"kind":"atomic","name":"Object","schema_version":"syntax-logic-sort/v1"}],"symbols":[{"domain":[{"arguments":[],"kind":"atomic","name":"Object","schema_version":"syntax-logic-sort/v1"}],"kind":"predicate","metadata":{},"name":"CoveredOfficer","range":{"arguments":[],"kind":"bool","name":"Bool","schema_version":"syntax-logic-sort/v1"},"schema_version":"syntax-symbol-declaration/v1"},{"domain":[{"arguments":[],"kind":"atomic","name":"Object","schema_version":"syntax-logic-sort/v1"}],"kind":"predicate","metadata":{},"name":"Excused","range":{"arguments":[],"kind":"bool","name":"Bool","schema_version":"syntax-logic-sort/v1"},"schema_version":"syntax-symbol-declaration/v1"},{"domain":[{"arguments":[],"kind":"atomic","name":"Object","schema_version":"syntax-logic-sort/v1"}],"kind":"predicate","metadata":{},"name":"FilesReport","range":{"arguments":[],"kind":"bool","name":"Bool","schema_version":"syntax-logic-sort/v1"},"schema_version":"syntax-symbol-declaration/v1"}]}}},"id":"reviewed:fixture:mixed-act-v1/unit-2","source_text":"Every covered officer must file a report unless the Board expressly excuses that officer.","unit_id":"fixture:mixed-act-v1/unit-2"},{"canonical_ir":{"argument_roles":[{"roles":["officer"],"symbol":"CoveredOfficer"},{"roles":["officer","supervisor","event","moment"],"symbol":"InspectsRegisterAt"}],"assumptions":[],"cross_references":[],"definition_uses":[{"applicability":"governing","defined_predicate":"CoveredOfficer","definition_unit_id":"fixture:mixed-act-v1/unit-1","evidence_refs":[{"artifact_id":"fixture:reviewed-process-evidence","sha256":"0b615d48c2dccad89db514054a793e966e582dcb7180e055f85678d9d26f5086"}],"interpretation_id":"fixture:mixed-act-v1/selected-interpretation","target_typed_paths":["/root/arguments/0/arguments/0/arguments/0/arguments/0/arguments/0/arguments/0","/root/arguments/0/arguments/0/arguments/0/arguments/0/arguments/0/arguments/1"],"use_occurrence_cid":"baguqeera7sbnrtwgmqegsigv7mc6v6eit3ugb2pl425jgjduxgvsrwsslcma","use_unit_id":"fixture:mixed-act-v1/unit-3"}],"governing_context":{"governing_edition":"fictional-edition-1","instrument_id":"fixture:mixed-act-v1","jurisdiction":"fictional-jurisdiction","legal_as_of_utc":"2026-10-15T12:03:00Z","valid_from_utc":"2026-10-01T00:00:00Z","valid_until_utc":"2026-11-01T00:00:00Z"},"interpretation_id":"fixture:mixed-act-v1/selected-interpretation","profile":"authored-many-sorted-relational-deontic/v1","source_binding":{"document_revision":"fixture:mixed-act-v1/revision-1","occurrence_cid":"baguqeera7sbnrtwgmqegsigv7mc6v6eit3ugb2pl425jgjduxgvsrwsslcma","source_version_cid":"baguqeerajnvuszussa3idemidjf5fau2jutxvfyihltferekhw7faxxmjvdq"},"typed_expression":{"content_digest":"c69b6a0dbfd514f4bd2b48e3b7820a4e5f7f7ec260f27b6a6e67c6b94edacf6b","expression_id":"fixture:complete-mixed-expression","family":{"interface":"LogicIdentityNamespaces@1","namespace":"family","schema_version":"logic-identity-namespaces/v1","value":"tdfol","version":"1.0.0"},"interface":"TypedExpression@1","metadata":{},"profile":{"interface":"LogicIdentityNamespaces@1","namespace":"profile","schema_version":"logic-identity-namespaces/v1","value":"tdfol_default","version":"1.0.0"},"root":{"arguments":[{"arguments":[{"arguments":[{"arguments":[{"arguments":[{"arguments":[{"arguments":[{"arguments":[],"binders":[],"kind":"variable","metadata":{},"node_id":"fixture:node:3","schema_version":"syntax-logic-node/v1","sort":{"arguments":[],"kind":"atomic","name":"Object","schema_version":"syntax-logic-sort/v1"},"symbol":"officer"}],"binders":[],"kind":"predicate","metadata":{},"node_id":"fixture:node:2","schema_version":"syntax-logic-node/v1","sort":{"arguments":[],"kind":"bool","name":"Bool","schema_version":"syntax-logic-sort/v1"},"symbol":"CoveredOfficer"},{"arguments":[{"arguments":[],"binders":[],"kind":"variable","metadata":{},"node_id":"fixture:node:5","schema_version":"syntax-logic-node/v1","sort":{"arguments":[],"kind":"atomic","name":"Object","schema_version":"syntax-logic-sort/v1"},"symbol":"supervisor"}],"binders":[],"kind":"predicate","metadata":{},"node_id":"fixture:node:4","schema_version":"syntax-logic-node/v1","sort":{"arguments":[],"kind":"bool","name":"Bool","schema_version":"syntax-logic-sort/v1"},"symbol":"CoveredOfficer"}],"binders":[],"kind":"and","metadata":{},"node_id":"fixture:node:1","schema_version":"syntax-logic-node/v1","sort":{"arguments":[],"kind":"bool","name":"Bool","schema_version":"syntax-logic-sort/v1"},"symbol":""},{"arguments":[],"binders":[],"extension":{"children":[{"arguments":[{"arguments":[],"binders":[],"kind":"variable","metadata":{},"node_id":"fixture:node:7","schema_version":"syntax-logic-node/v1","sort":{"arguments":[],"kind":"atomic","name":"Object","schema_version":"syntax-logic-sort/v1"},"symbol":"officer"},{"arguments":[],"binders":[],"kind":"variable","metadata":{},"node_id":"fixture:node:8","schema_version":"syntax-logic-node/v1","sort":{"arguments":[],"kind":"atomic","name":"Object","schema_version":"syntax-logic-sort/v1"},"symbol":"supervisor"},{"arguments":[],"binders":[],"kind":"variable","metadata":{},"node_id":"fixture:node:9","schema_version":"syntax-logic-node/v1","sort":{"arguments":[],"kind":"atomic","name":"EventFrame","schema_version":"syntax-logic-sort/v1"},"symbol":"event"},{"arguments":[],"binders":[],"kind":"variable","metadata":{},"node_id":"fixture:node:10","schema_version":"syntax-logic-node/v1","sort":{"arguments":[],"kind":"atomic","name":"TimeFrame","schema_version":"syntax-logic-sort/v1"},"symbol":"moment"}],"binders":[],"kind":"predicate","metadata":{},"node_id":"fixture:node:6","schema_version":"syntax-logic-node/v1","sort":{"arguments":[],"kind":"bool","name":"Bool","schema_version":"syntax-logic-sort/v1"},"symbol":"InspectsRegisterAt"}],"family":{"interface":"LogicIdentityNamespaces@1","namespace":"family","schema_version":"logic-identity-namespaces/v1","value":"tdfol","version":"1.0.0"},"features":["legacy.classic_letter","legacy.permission"],"interface":"LogicExtensionNode@1","metadata":{},"node_id":"fixture:node:12:ext","payload":{"kind":"permission","letter":"P","resolution":"deontic","schema_version":"legacy.deontic/v1"},"payload_schema":"legacy.deontic/v1","profile":{"interface":"LogicIdentityNamespaces@1","namespace":"profile","schema_version":"logic-identity-namespaces/v1","value":"tdfol_default","version":"1.0.0"},"schema_version":"syntax-logic-extension-node/v1"},"kind":"extension","metadata":{},"node_id":"fixture:node:12","schema_version":"syntax-logic-node/v1","sort":{"arguments":[],"kind":"bool","name":"Bool","schema_version":"syntax-logic-sort/v1"},"symbol":""}],"binders":[],"kind":"implies","metadata":{},"node_id":"fixture:node:11","schema_version":"syntax-logic-node/v1","sort":{"arguments":[],"kind":"bool","name":"Bool","schema_version":"syntax-logic-sort/v1"},"symbol":""}],"binders":[{"name":"moment","schema_version":"syntax-binder/v1","sort":{"arguments":[],"kind":"atomic","name":"TimeFrame","schema_version":"syntax-logic-sort/v1"}}],"kind":"forall","metadata":{},"node_id":"fixture:node:13","schema_version":"syntax-logic-node/v1","sort":{"arguments":[],"kind":"bool","name":"Bool","schema_version":"syntax-logic-sort/v1"},"symbol":""}],"binders":[{"name":"event","schema_version":"syntax-binder/v1","sort":{"arguments":[],"kind":"atomic","name":"EventFrame","schema_version":"syntax-logic-sort/v1"}}],"kind":"forall","metadata":{},"node_id":"fixture:node:14","schema_version":"syntax-logic-node/v1","sort":{"arguments":[],"kind":"bool","name":"Bool","schema_version":"syntax-logic-sort/v1"},"symbol":""}],"binders":[{"name":"supervisor","schema_version":"syntax-binder/v1","sort":{"arguments":[],"kind":"atomic","name":"Object","schema_version":"syntax-logic-sort/v1"}}],"kind":"forall","metadata":{},"node_id":"fixture:node:15","schema_version":"syntax-logic-node/v1","sort":{"arguments":[],"kind":"bool","name":"Bool","schema_version":"syntax-logic-sort/v1"},"symbol":""}],"binders":[{"name":"officer","schema_version":"syntax-binder/v1","sort":{"arguments":[],"kind":"atomic","name":"Object","schema_version":"syntax-logic-sort/v1"}}],"kind":"forall","metadata":{},"node_id":"fixture:node:16","schema_version":"syntax-logic-node/v1","sort":{"arguments":[],"kind":"bool","name":"Bool","schema_version":"syntax-logic-sort/v1"},"symbol":""},"schema_version":"syntax-typed-expression/v1","signature":{"family":{"interface":"LogicIdentityNamespaces@1","namespace":"family","schema_version":"logic-identity-namespaces/v1","value":"tdfol","version":"1.0.0"},"features":[],"interface":"LogicSignature@1","metadata":{},"profile":{"interface":"LogicIdentityNamespaces@1","namespace":"profile","schema_version":"logic-identity-namespaces/v1","value":"tdfol_default","version":"1.0.0"},"schema_version":"syntax-logic-signature/v1","signature_id":"fixture:complete-mixed-signature","sorts":[{"arguments":[],"kind":"bool","name":"Bool","schema_version":"syntax-logic-sort/v1"},{"arguments":[],"kind":"atomic","name":"Object","schema_version":"syntax-logic-sort/v1"},{"arguments":[],"kind":"atomic","name":"EventFrame","schema_version":"syntax-logic-sort/v1"},{"arguments":[],"kind":"atomic","name":"TimeFrame","schema_version":"syntax-logic-sort/v1"}],"symbols":[{"domain":[{"arguments":[],"kind":"atomic","name":"Object","schema_version":"syntax-logic-sort/v1"}],"kind":"predicate","metadata":{},"name":"CoveredOfficer","range":{"arguments":[],"kind":"bool","name":"Bool","schema_version":"syntax-logic-sort/v1"},"schema_version":"syntax-symbol-declaration/v1"},{"domain":[{"arguments":[],"kind":"atomic","name":"Object","schema_version":"syntax-logic-sort/v1"},{"arguments":[],"kind":"atomic","name":"Object","schema_version":"syntax-logic-sort/v1"},{"arguments":[],"kind":"atomic","name":"EventFrame","schema_version":"syntax-logic-sort/v1"},{"arguments":[],"kind":"atomic","name":"TimeFrame","schema_version":"syntax-logic-sort/v1"}],"kind":"predicate","metadata":{},"name":"InspectsRegisterAt","range":{"arguments":[],"kind":"bool","name":"Bool","schema_version":"syntax-logic-sort/v1"},"schema_version":"syntax-symbol-declaration/v1"}]}}},"id":"reviewed:fixture:mixed-act-v1/unit-3","source_text":"For every officer, supervisor, event, and time, if both people are covered officers, that officer may inspect the register under that supervisor at that event and time.","unit_id":"fixture:mixed-act-v1/unit-3"}]'
+
+
+def _digest_omitted_codec_case(index=0):
+    from ipfs_datasets_py.logic.autoformal import training_cycle_inputs as inputs
+    row = json.loads(_DIGEST_OMITTED_ACTUAL_TRAIN_ROWS_JSON)[index]
+    codec = inputs.REVIEWED_DECODER_DIGEST_OMITTED_TARGET_CODEC
+    return inputs, codec, row
+
+
+def _digest_omitted_test_wire(value):
+    return json.dumps(value, sort_keys=True, ensure_ascii=True,
+                      separators=(",", ":"), allow_nan=False)
+
+
+@pytest.mark.parametrize("index", [0, 1, 2])
+def test_digest_omitted_codec_actual_TRAIN_roundtrip_and_independent_SHA(index):
+    inputs, codec, row = _digest_omitted_codec_case(index)
+    target = row["canonical_ir"]
+    original = _digest_omitted_test_wire(target)
+    wire = inputs.encode_reviewed_decoder_digest_omitted_target(target, target_codec=codec)
+    projected = json.loads(wire)
+    assert set(projected) == set(target) and len(projected) == 9
+    assert "content_digest" not in projected["typed_expression"]
+    supplied = json.loads(original)
+    del supplied["typed_expression"]["content_digest"]
+    assert projected == supplied
+    assembled = inputs.assemble_reviewed_decoder_digest_omitted_target(wire, target_codec=codec)
+    assert _digest_omitted_test_wire(assembled) == original
+    assert _digest_omitted_test_wire(target) == original
+    expression = assembled["typed_expression"]
+    identity = {key: expression[key] for key in (
+        "expression_id", "family", "interface", "profile", "root", "schema_version", "signature")}
+    independent = hashlib.sha256(json.dumps(identity, sort_keys=True, ensure_ascii=False,
+        separators=(",", ":"), allow_nan=False).encode("utf-8")).hexdigest()
+    assert independent == expression["content_digest"] == (
+        "d72a08d25be06eedc1403b78e851e8bb6dda9ee2c45309e4c32fd79eded1a83e",
+        "bf1648a1fb7fab9299ebe80b200da5f61ecb515374af81d83a9b4c7503130c7d",
+        "c69b6a0dbfd514f4bd2b48e3b7820a4e5f7f7ec260f27b6a6e67c6b94edacf6b")[index]
+
+
+@pytest.mark.parametrize("supplied", [None, "", "0" * 64, "valid_original"])
+def test_digest_omitted_codec_forbids_any_supplied_digest(supplied):
+    inputs, codec, row = _digest_omitted_codec_case()
+    target = row["canonical_ir"]
+    projected = json.loads(inputs.encode_reviewed_decoder_digest_omitted_target(target, target_codec=codec))
+    projected["typed_expression"]["content_digest"] = (
+        target["typed_expression"]["content_digest"] if supplied == "valid_original" else supplied)
+    with pytest.raises(ValueError, match="must omit content_digest"):
+        inputs.assemble_reviewed_decoder_digest_omitted_target(
+            _digest_omitted_test_wire(projected), target_codec=codec)
+
+
+@pytest.mark.parametrize("field", ["expression_id", "family", "interface", "metadata", "profile",
+                                    "root", "schema_version", "signature"])
+def test_digest_omitted_codec_refuses_every_other_missing_expression_field(field):
+    inputs, codec, row = _digest_omitted_codec_case()
+    projected = json.loads(inputs.encode_reviewed_decoder_digest_omitted_target(row["canonical_ir"], target_codec=codec))
+    del projected["typed_expression"][field]
+    with pytest.raises(ValueError):
+        inputs.assemble_reviewed_decoder_digest_omitted_target(
+            _digest_omitted_test_wire(projected), target_codec=codec)
+
+
+@pytest.mark.parametrize("mutation", ["extra_outer", "missing_outer", "extra_expression", "missing_node_id",
+    "empty_expression_id", "empty_node_id", "missing_node_defaults", "binder_sort", "variable_sort",
+    "binder_missing", "roles_shape", "custody_missing", "dependency_missing_sha"])
+def test_digest_omitted_codec_rejects_malformed_semantics_and_custody_without_repair(mutation):
+    inputs, codec, row = _digest_omitted_codec_case()
+    projected = json.loads(inputs.encode_reviewed_decoder_digest_omitted_target(row["canonical_ir"], target_codec=codec))
+    expression = projected["typed_expression"]
+    root = expression["root"]
+    variable = root["arguments"][0]["arguments"][0]["arguments"][0]
+    if mutation == "extra_outer": projected["extra"] = None
+    elif mutation == "missing_outer": del projected["assumptions"]
+    elif mutation == "extra_expression": expression["extra"] = None
+    elif mutation == "missing_node_id": del root["node_id"]
+    elif mutation == "empty_expression_id": expression["expression_id"] = ""
+    elif mutation == "empty_node_id": root["node_id"] = ""
+    elif mutation == "missing_node_defaults": del variable["metadata"]
+    elif mutation == "binder_sort": root["binders"][0]["sort"] = expression["signature"]["sorts"][0]
+    elif mutation == "variable_sort": variable["sort"] = expression["signature"]["sorts"][0]
+    elif mutation == "binder_missing": root["binders"] = []
+    elif mutation == "actor_unbound": variable["symbol"] = "unbound_officer"
+    elif mutation == "roles_shape": projected["argument_roles"][0]["roles"] = "officer"
+    elif mutation == "custody_missing": del projected["definition_uses"][0]["evidence_refs"]
+    elif mutation == "dependency_missing_sha":
+        projected["cross_references"] = [{"from_unit_id": row["unit_id"], "dependency_artifact_id": "missing",
+            "version": "v1", "evidence_refs": []}]
+    frozen = _digest_omitted_test_wire(projected)
+    with pytest.raises(ValueError):
+        inputs.assemble_reviewed_decoder_digest_omitted_target(frozen, target_codec=codec)
+    assert _digest_omitted_test_wire(projected) == frozen
+
+
+@pytest.mark.parametrize("mutation", ["semantic", "actor", "expression_id", "node_id", "role_order",
+                                    "source_custody", "definition_hash", "unresolved_dependency", "actor_unbound"])
+def test_digest_omitted_codec_preserves_changes_and_never_repairs_to_reference(mutation):
+    inputs, codec, row = _digest_omitted_codec_case()
+    original = row["canonical_ir"]
+    projected = json.loads(inputs.encode_reviewed_decoder_digest_omitted_target(original, target_codec=codec))
+    root = projected["typed_expression"]["root"]
+    if mutation == "semantic": root["arguments"][0]["kind"] = "and"
+    elif mutation == "actor":
+        root["binders"][0]["name"] = "different_officer"
+        for predicate in root["arguments"][0]["arguments"]:
+            predicate["arguments"][0]["symbol"] = "different_officer"
+    elif mutation == "actor_unbound": root["arguments"][0]["arguments"][0]["arguments"][0]["symbol"] = "unbound_officer"
+    elif mutation == "expression_id": projected["typed_expression"]["expression_id"] = "other:expression"
+    elif mutation == "node_id": root["node_id"] = "other:node"
+    elif mutation == "role_order": projected["argument_roles"].reverse()
+    elif mutation == "source_custody": projected["source_binding"]["occurrence_cid"] = "unverified:occurrence"
+    elif mutation == "definition_hash": projected["definition_uses"][0]["evidence_refs"][0]["sha256"] = "a" * 64
+    elif mutation == "unresolved_dependency":
+        projected["cross_references"] = [{"from_unit_id": row["unit_id"], "dependency_artifact_id": "unresolved:dependency",
+            "dependency_sha256": "b" * 64, "version": "v1", "evidence_refs": []}]
+    offered = _digest_omitted_test_wire(projected)
+    assembled = inputs.assemble_reviewed_decoder_digest_omitted_target(offered, target_codec=codec)
+    digest = assembled["typed_expression"].pop("content_digest")
+    assert _digest_omitted_test_wire(assembled) == offered
+    assert assembled != {**original, "typed_expression": {key: value for key, value in
+        original["typed_expression"].items() if key != "content_digest"}}
+    if mutation in {"semantic", "actor", "actor_unbound", "expression_id", "node_id"}:
+        assert digest != original["typed_expression"]["content_digest"]
+    else:
+        assert digest == original["typed_expression"]["content_digest"]
+    # An unresolved dependency is retained, never resolved or admitted by this
+    # structural codec. Existing producer/dependency owners still must abstain.
+
+
+@pytest.mark.parametrize("bad_wire", ["malformed", "duplicate", "nonfinite", "pretty"])
+def test_digest_omitted_codec_refuses_noncanonical_JSON(bad_wire):
+    inputs, codec, row = _digest_omitted_codec_case()
+    wire = inputs.encode_reviewed_decoder_digest_omitted_target(row["canonical_ir"], target_codec=codec)
+    if bad_wire == "malformed": wire = wire[:-1]
+    elif bad_wire == "duplicate": wire = '{"profile":"duplicate",' + wire[1:]
+    elif bad_wire == "nonfinite": wire = wire.replace('"assumptions":[]', '"assumptions":[NaN]')
+    elif bad_wire == "pretty": wire = json.dumps(json.loads(wire), indent=2)
+    with pytest.raises(ValueError):
+        inputs.assemble_reviewed_decoder_digest_omitted_target(wire, target_codec=codec)
+
+
+def test_digest_omitted_codec_is_explicit_and_legacy_targets_are_unchanged():
+    inputs, codec, row = _digest_omitted_codec_case()
+    target = row["canonical_ir"]
+    assert inputs.REVIEWED_DECODER_TARGET_CODEC == "complete-reviewed-norm-json/v2"
+    with pytest.raises(TypeError): inputs.encode_reviewed_decoder_digest_omitted_target(target)
+    with pytest.raises(ValueError):
+        inputs.encode_reviewed_decoder_digest_omitted_target(target, target_codec=inputs.REVIEWED_DECODER_TARGET_CODEC)
+    missing = json.loads(_digest_omitted_test_wire(target))
+    del missing["typed_expression"]["content_digest"]
+    with pytest.raises(ValueError):
+        inputs.encode_reviewed_decoder_digest_omitted_target(missing, target_codec=codec)
+    wrong = json.loads(_digest_omitted_test_wire(target))
+    wrong["typed_expression"]["content_digest"] = "0" * 64
+    with pytest.raises(ValueError): inputs.encode_reviewed_decoder_digest_omitted_target(wrong, target_codec=codec)
+
+
+# Opt-in vertical codec controls. Existing primitive and legacy tests above are
+# retained literally. These are authored real owning tests, not author-run.
+def _digest_omitted_torch_backend(architecture="encoder_decoder"):
+    torch, old, _ = _torch_reviewed_backend_fixture(architecture, context_limit=65536)
+    backend = worker.TorchReviewedDecoderBackend(old.model, old.optimizer, old.tokenizer,
+        architecture=architecture, max_sequence_tokens=65536, pretrained=False,
+        target_codec=worker.REVIEWED_DIGEST_OMITTED_TARGET_CODEC)
+    return torch, backend
+
+
+def _digest_omitted_mixed_training_fixture(tmp_path, *, batch_size=2):
+    torch, backend = _digest_omitted_torch_backend()
+    fixture = _reviewed_mixed_worker_fixture(tmp_path, batch_size=batch_size, backend=backend,
+        tokenizer=backend.tokenizer, two_components=False)
+    original_parent = fixture.payload["parent_checkpoint_artifact"]
+    parent = json.loads(Path(original_parent["path"]).read_bytes())
+    parent.update(schema=worker.REVIEWED_DIGEST_OMITTED_CHECKPOINT_SCHEMA,
+        checkpoint_lineage_id="fixture:fresh-digest-omitted-lineage", base_version_id="fixture:fresh-digest-omitted-zero")
+    assert parent["progress"] == {"epochs_completed": 0, "row_cursor": 0, "optimizer_steps": 0}
+    fixture.payload.update(schema_version=worker.REVIEWED_DIGEST_OMITTED_JOB_SCHEMA,
+        checkpoint_lineage_id=parent["checkpoint_lineage_id"], base_version_id=parent["base_version_id"],
+        parent_checkpoint_artifact=_complete_reviewed_artifact(tmp_path / "fresh-codec-initial-pair.json", worker._json_bytes(parent)))
+    fixture.original_parent = original_parent
+    fixture.torch = torch
+    return fixture
+
+
+def _digest_omitted_prepare(fixture):
+    return fixture.inputs.prepare_reviewed_mixed_decoder_digest_omitted_inputs_v1(fixture.data.registry,
+        **dict(fixture.data.kwargs, tokenizer=fixture.runtime.tokenizer,
+            stage_artifact=fixture.payload["stage_artifact"], expected_stage_sha256=fixture.payload["stage_artifact"]["sha256"],
+            max_source_tokens=fixture.payload["max_source_tokens"], max_target_tokens=fixture.payload["max_target_tokens"]))
+
+
+def test_digest_omitted_vertical_preparation_preserves_semantic_rows_and_known_source(tmp_path):
+    fixture = _digest_omitted_mixed_training_fixture(tmp_path)
+    new = _digest_omitted_prepare(fixture)
+    old = fixture.inputs.prepare_reviewed_mixed_decoder_training_inputs_v4(fixture.data.registry,
+        **dict(fixture.data.kwargs, tokenizer=fixture.runtime.tokenizer,
+            stage_artifact=fixture.payload["stage_artifact"], expected_stage_sha256=fixture.payload["stage_artifact"]["sha256"],
+            max_source_tokens=fixture.payload["max_source_tokens"], max_target_tokens=fixture.payload["max_target_tokens"]))
+    assert new["schema"] == fixture.inputs.REVIEWED_DIGEST_OMITTED_INPUT_SCHEMA
+    assert new["receipt"]["schema"] == fixture.inputs.REVIEWED_DIGEST_OMITTED_INPUT_RECEIPT_SCHEMA
+    assert new["receipt"]["target_codec"] == worker.REVIEWED_DIGEST_OMITTED_TARGET_CODEC
+    assert old["receipt"]["target_codec"] == "complete-reviewed-norm-json/v2"
+    assert old["receipt"]["reviewed_consumer_target_codec"] == new["receipt"]["reviewed_consumer_target_codec"]
+    assert len(new["records"]) == len(old["records"]) == 3
+    for offered, full, commitment, old_commitment in zip(new["records"], old["records"],
+            new["receipt"]["row_commitments"], old["receipt"]["row_commitments"], strict=True):
+        assert offered["id"] == full["id"] and offered["unit_id"] == full["unit_id"]
+        assert offered["source_wire"] == full["source_wire"] and offered["source_token_ids"] == full["source_token_ids"]
+        assert "typed_expression" not in json.loads(offered["source_wire"])
+        assert fixture.inputs.assemble_reviewed_decoder_digest_omitted_target(offered["target_json"],
+            target_codec=worker.REVIEWED_DIGEST_OMITTED_TARGET_CODEC) == json.loads(full["target_json"])
+        assert fixture.runtime.tokenizer.decode(offered["target_token_ids"][1:-1]) == offered["target_json"]
+        assert commitment["canonical_ir_sha256"] == old_commitment["canonical_ir_sha256"]
+        assert commitment["target_identities"] == old_commitment["target_identities"]
+        assert commitment["model_target_wire_sha256"] == hashlib.sha256(offered["target_json"].encode()).hexdigest()
+        assert commitment["target_tokens_sha256"] != old_commitment["target_tokens_sha256"]
+    assert new["prepared_sha256"] == hashlib.sha256(fixture.inputs._reviewed_wire({
+        key:value for key,value in new.items() if key != "prepared_sha256"})).hexdigest()
+
+
+def test_digest_omitted_vertical_real_Torch_split_resume_matches_uninterrupted(tmp_path):
+    fixture = _digest_omitted_mixed_training_fixture(tmp_path)
+    backend = fixture.runtime.backend
+    prepared = _digest_omitted_prepare(fixture)
+    def execute(selected, **changes):
+        spec = worker.TrainingJobSpec.from_dict(dict(fixture.payload, **changes))
+        assert type(spec) is worker.ReviewedDigestOmittedDecoderTrainingJobSpec
+        assert worker.TrainingJobSpec.from_dict(spec.to_dict()).canonical_sha256 == spec.canonical_sha256
+        return worker.execute_training_job(spec, reviewed_runtime=replace(fixture.runtime, backend=selected, tokenizer=selected.tokenizer))
+    whole = execute(backend, output_directory=str(tmp_path / "codec-whole"), max_steps=2)
+    _, first_backend = _digest_omitted_torch_backend()
+    first = execute(first_backend, output_directory=str(tmp_path / "codec-first"))
+    _, resumed_backend = _digest_omitted_torch_backend()
+    resumed = execute(resumed_backend, output_directory=str(tmp_path / "codec-resumed"),
+        base_model_checkpoint=first["model_checkpoint"], base_optimizer_checkpoint=first["optimizer_checkpoint"],
+        parent_checkpoint_artifact=first["candidate"])
+    pair = {key:Path(whole[ref]["path"]).read_bytes() for key,ref in
+        (("model_state","model_checkpoint"),("optimizer_state","optimizer_checkpoint"))}
+    assert resumed_backend.restored_checkpoint_matches(pair["model_state"], pair["optimizer_state"])
+    assert whole["backend_reported_metrics"] == first["backend_reported_metrics"] + resumed["backend_reported_metrics"]
+    assert resumed["initial_progress"] == first["worker_progress"] == {"epochs_completed":0,"row_cursor":2,"optimizer_steps":1}
+    assert resumed["worker_progress"] == whole["worker_progress"] == {"epochs_completed":1,"row_cursor":0,"optimizer_steps":2}
+    assert resumed["complete_training_binding"] == first["complete_training_binding"] == whole["complete_training_binding"]
+    assert whole["schema_version"] == worker.REVIEWED_DIGEST_OMITTED_WORKER_RECEIPT_SCHEMA
+    assert json.loads(Path(whole["candidate"]["path"]).read_bytes())["schema"] == worker.REVIEWED_DIGEST_OMITTED_CHECKPOINT_SCHEMA
+    by_source={tuple(row["source_token_ids"]):row for row in prepared["records"]}
+    for call in backend.model.calls:
+        record=by_source[tuple(call["input_ids"][0])]
+        assert call["labels"][0] == record["target_token_ids"][1:]
+        assert call["decoder_input_ids"][0] == record["target_token_ids"][:-1]
+    assert all(whole[key] is False for key in ("qualified","admitted","promotion_performed","convergence_proved"))
+
+
+@pytest.mark.parametrize("mismatch", ["legacy_parent", "legacy_job", "legacy_identity", "continuation"])
+def test_digest_omitted_vertical_cross_codec_ancestry_refuses_before_update(tmp_path, mismatch):
+    fixture = _digest_omitted_mixed_training_fixture(tmp_path)
+    payload = dict(fixture.payload)
+    if mismatch == "legacy_parent": payload["parent_checkpoint_artifact"] = fixture.original_parent
+    elif mismatch == "legacy_job": payload["schema_version"] = worker.REVIEWED_MIXED_DECODER_SCHEMA_VERSION
+    elif mismatch == "legacy_identity": payload["backend_identity"] = dict(payload["backend_identity"],target_codec="complete-reviewed-norm-json/v2")
+    elif mismatch == "continuation": payload["continuation_profile"] = worker.REVIEWED_MIXED_DECODER_CONTINUATION_PROFILE
+    before = fixture.runtime.backend.snapshot_checkpoint()
+    with pytest.raises(worker.TrainingJobValidationError):
+        worker.execute_training_job(worker.TrainingJobSpec.from_dict(payload), reviewed_runtime=fixture.runtime)
+    assert fixture.runtime.backend.model.calls == []
+    assert fixture.runtime.backend.restored_checkpoint_matches(before["model_state"],before["optimizer_state"])
+    assert not Path(payload["output_directory"]).exists()
+
+
+def _digest_omitted_small_generation_target():
+    from ipfs_datasets_py.logic.syntax_core.ast import TypedExpression
+    inputs, codec, row = _digest_omitted_codec_case()
+    target = row["canonical_ir"]
+    expression = target["typed_expression"]
+    expression.pop("content_digest")
+    expression["signature"]["symbols"] = []
+    expression["signature"]["sorts"] = [sort for sort in expression["signature"]["sorts"] if sort["name"] == "Bool"]
+    expression["root"] = {"node_id":"fixture:codec-generation-root", "kind":"true"}
+    target["typed_expression"] = TypedExpression.from_dict(expression).to_dict()
+    return inputs, codec, target
+
+
+@pytest.mark.parametrize("wire_case", ["complete", "supplied_digest", "missing_metadata", "incomplete"])
+def test_digest_omitted_vertical_generation_keeps_raw_wire_and_strict_assembly(monkeypatch, wire_case):
+    inputs, codec, target = _digest_omitted_small_generation_target()
+    torch, backend = _digest_omitted_torch_backend()
+    _, old, training = _torch_reviewed_backend_fixture(context_limit=65536)
+    source = _reviewed_generation_source_records(training)
+    text = inputs.encode_reviewed_decoder_digest_omitted_target(target, target_codec=codec)
+    if wire_case == "supplied_digest": text = _digest_omitted_test_wire(target)
+    elif wire_case == "missing_metadata":
+        value=json.loads(text);del value["typed_expression"]["metadata"];text=_digest_omitted_test_wire(value)
+    script=[*backend.tokenizer.encode(text),backend.tokenizer.eos_token_id]
+    _reviewed_generation_script(monkeypatch,torch,backend,source,script)
+    entry=backend.snapshot_checkpoint();rng=torch.get_rng_state().clone()
+    budget=len(script)+1 if wire_case != "incomplete" else 3
+    result=backend.generate_batch(source,max_output_tokens=budget,execution_guard=lambda:None)[0]
+    assert result["generated_text"] == (text if wire_case != "incomplete" else None)
+    if wire_case == "incomplete":
+        assert result["generated_text"] is None
+        assert result["generated_token_ids"] == [backend.tokenizer.bos_token_id, *script[:2]]
+        assert backend.tokenizer.eos_token_id not in result["generated_token_ids"]
+        assert result["candidate"] is None
+        assert result["outcome"] == "incomplete"
+        assert result["reason"] == "output_limit_without_eos"
+    assert result["generated_token_ids"][0] == backend.tokenizer.bos_token_id
+    assert result["outcome"] == ("complete" if wire_case=="complete" else "incomplete" if wire_case=="incomplete" else "invalid")
+    assert result["candidate"] == (target if wire_case=="complete" else None)
+    assert all(set(row)=={"id","unit_id","source_wire","source_token_ids"} for row in source)
+    assert backend.restored_checkpoint_matches(entry["model_state"],entry["optimizer_state"])
+    assert torch.equal(torch.get_rng_state(),rng)
+
+
+def _digest_omitted_Qwen_local_fixture(tmp_path):
+    from types import SimpleNamespace
+    old = _reviewed_chatml_local_asset_fixture(tmp_path, local_model_profile="builtin-qwen2-bfloat16/v1", max_sequence_tokens=8192)
+    backend = worker.TorchReviewedDecoderBackend(old.backend.model,old.backend.optimizer,old.backend.tokenizer,
+        architecture=old.backend.architecture,max_sequence_tokens=8192,pretrained=False,
+        model_profile="builtin-qwen2-bfloat16/v1",training_conditioning_profile=worker.REVIEWED_DIGEST_OMITTED_CHATML_PROFILE,
+        target_codec=worker.REVIEWED_DIGEST_OMITTED_TARGET_CODEC)
+    assert backend._optimizer_steps == 0 and not backend.optimizer.state
+    snapshot=backend.snapshot_checkpoint()
+    options=dict(old.options)
+    root=tmp_path/"new-codec-assets";root.mkdir()
+    recipe=json.loads(Path(options["recipe_artifact"].path).read_bytes())
+    recipe.update(schema=worker.REVIEWED_DIGEST_OMITTED_RECIPE_SCHEMA,target_codec=worker.REVIEWED_DIGEST_OMITTED_TARGET_CODEC,
+        training_conditioning_profile=worker.REVIEWED_DIGEST_OMITTED_CHATML_PROFILE)
+    for key,name,raw in (("recipe_artifact","recipe.json",worker._json_bytes(recipe)),
+                         ("model_checkpoint","model.pt",snapshot["model_state"]),
+                         ("optimizer_checkpoint","optimizer.pt",snapshot["optimizer_state"])):
+        options[key]=worker.CheckpointArtifact.from_dict(_complete_reviewed_artifact(root/name,raw))
+    options["expected_backend_identity"]=backend.identity()
+    return SimpleNamespace(backend=backend,options=options,torch=old.torch)
+
+
+def test_digest_omitted_vertical_Qwen_prompt_and_public_loader_restore_fresh_pair(tmp_path):
+    fixture=_digest_omitted_Qwen_local_fixture(tmp_path)
+    options=_reviewed_Qwen2_training_local_options(fixture)
+    options["expected_source_sha256"]=worker._reviewed_decoder_source_pins(admission_profile=worker.REVIEWED_MIXED_ADMISSION_PROFILE)
+    runtime,receipt=worker.load_local_reviewed_decoder_digest_omitted_runtime_v1(
+        admission_profile=worker.REVIEWED_MIXED_ADMISSION_PROFILE,**options)
+    assert receipt["schema"] == "reviewed-local-digest-omitted-decoder-runtime-load/v1"
+    assert receipt["optimizer_steps"] == 0 and receipt["matched_pair"] is True
+    assert runtime.backend.identity()==fixture.backend.identity()
+    source='{"profile":"source-only-known"}'
+    contract=fixture.backend._pipeline_contract()
+    expected=fixture.backend._chatml_frame(source,worker.REVIEWED_DIGEST_OMITTED_CHATML_PROFILE,contract)
+    observed=runtime.backend._chatml_frame(source,worker.REVIEWED_DIGEST_OMITTED_CHATML_PROFILE,contract)
+    assert observed==expected
+    text=runtime.tokenizer.decode(observed)
+    assert "Omit ONLY typed_expression.content_digest" in text
+    assert "profile, content_digest, metadata" not in text
+    assert text.endswith("<|im_start|>assistant\n") and source in text
+    # An ordinary trained pair, not a migration derivative, reloads under the
+    # same new codec/configuration and retains actual nonempty Adam/progress.
+    inputs,codec,target=_digest_omitted_small_generation_target()
+    _,_,source_fixture=_torch_reviewed_backend_fixture(context_limit=65536)
+    row=dict(source_fixture[0])
+    row["target_json"]=inputs.encode_reviewed_decoder_digest_omitted_target(target,target_codec=codec)
+    for field,key in (("source_token_ids","source_wire"),("target_token_ids","target_json")):
+        row[field]=[runtime.tokenizer.bos_token_id,*runtime.tokenizer.encode(row[key]),runtime.tokenizer.eos_token_id]
+    runtime.backend.validate_training_records([row],max_source_tokens=65536,max_target_tokens=65536)
+    report=runtime.backend.train_batch([row])
+    assert report["optimizer_steps"]==1 and runtime.backend.optimizer.state
+    pair=runtime.backend.snapshot_checkpoint()
+    advanced=dict(options)
+    for field,key in (("model_checkpoint","model_state"),("optimizer_checkpoint","optimizer_state")):
+        advanced[field]=worker.CheckpointArtifact.from_dict(_complete_reviewed_artifact(tmp_path/(field+"-advanced.pt"),pair[key]))
+    reloaded,closed=worker.load_local_reviewed_decoder_digest_omitted_runtime_v1(
+        admission_profile=worker.REVIEWED_MIXED_ADMISSION_PROFILE,**advanced)
+    assert closed["optimizer_steps"]==1 and reloaded.backend.restored_checkpoint_matches(pair["model_state"],pair["optimizer_state"])
+    with pytest.raises(worker.TrainingJobValidationError):
+        runtime.backend._chatml_frame(source,"qwen2-chatml-complete-legal-ir/v1",contract)
+    with pytest.raises(worker.TrainingJobValidationError):
+        worker.load_local_reviewed_decoder_runtime_v3(admission_profile=worker.REVIEWED_MIXED_ADMISSION_PROFILE,**options)
+
+
+@pytest.mark.parametrize("field,value",[("target_codec","complete-reviewed-norm-json/v2"),
+    ("conditioning_profile","qwen2-chatml-complete-legal-ir/v1"),("generation_profile","full-prefix/v1"),
+    ("max_generation_seconds",True),("context_budget_profile","unknown")])
+def test_digest_omitted_vertical_generation_policy_is_closed_and_paired(field,value):
+    policy={"schema":worker.REVIEWED_DIGEST_OMITTED_GENERATION_POLICY_SCHEMA,
+        "target_codec":worker.REVIEWED_DIGEST_OMITTED_TARGET_CODEC,
+        "conditioning_profile":worker.REVIEWED_DIGEST_OMITTED_CHATML_PROFILE,
+        "generation_profile":"builtin-qwen2-dynamic-kv/v1","max_generation_seconds":1,
+        "context_budget_profile":worker.REVIEWED_QWEN2_CONTEXT_BUDGET_PROFILE}
+    assert worker._reviewed_decoder_generation_policy(policy)==policy
+    policy[field]=value
+    with pytest.raises(worker.TrainingJobValidationError):worker._reviewed_decoder_generation_policy(policy)
+
+
+def test_digest_omitted_vertical_producer_commits_raw_and_assembled_evaluator_outputs(tmp_path,monkeypatch):
+    from copy import deepcopy
+    domain_root=tmp_path/"public-domain";domain_root.mkdir()
+    fixture=_reviewed_mixed_source_producer_fixture(domain_root)
+    local_root=tmp_path/"Qwen";local_root.mkdir()
+    local=_digest_omitted_Qwen_local_fixture(local_root)
+    runtime=replace(fixture.runtime,backend=local.backend,tokenizer=local.backend.tokenizer)
+    policy={"schema":worker.REVIEWED_DIGEST_OMITTED_GENERATION_POLICY_SCHEMA,
+        "target_codec":worker.REVIEWED_DIGEST_OMITTED_TARGET_CODEC,
+        "conditioning_profile":worker.REVIEWED_DIGEST_OMITTED_CHATML_PROFILE,
+        "generation_profile":"builtin-qwen2-dynamic-kv/v1","max_generation_seconds":1,
+        "context_budget_profile":worker.REVIEWED_QWEN2_CONTEXT_BUDGET_PROFILE}
+    options=dict(fixture.options,backend_identity=local.backend.identity(),
+        assets=tuple(local.options[key] for key in ("recipe_artifact","model_config_artifact","tokenizer_artifact","license_artifact")),
+        model_checkpoint=local.options["model_checkpoint"],optimizer_checkpoint=local.options["optimizer_checkpoint"],
+        max_source_tokens=65536,max_output_tokens=4096,generation_policy=policy)
+    inputs,codec,target=_digest_omitted_small_generation_target()
+    raw=inputs.encode_reviewed_decoder_digest_omitted_target(target,target_codec=codec)
+    seen=[]
+    def controlled(offered,**kwargs):
+        # Explicit authored output fixture, not a numerical quality claim.
+        seen.extend(deepcopy(offered))
+        assert all(set(row)=={"id","unit_id","source_wire","source_token_ids"} for row in offered)
+        assert kwargs["conditioning_profile"]==worker.REVIEWED_DIGEST_OMITTED_CHATML_PROFILE
+        return [{"id":row["id"],"unit_id":row["unit_id"],"outcome":"complete",
+            "candidate":inputs.assemble_reviewed_decoder_digest_omitted_target(raw,target_codec=codec),
+            "generated_token_ids":[local.backend.tokenizer.bos_token_id,*local.backend.tokenizer.encode(raw),local.backend.tokenizer.eos_token_id],
+            "generated_text":raw,"reason":None} for row in offered]
+    monkeypatch.setattr(local.backend,"generate_batch",controlled)
+    producer=worker.make_reviewed_decoder_digest_omitted_source_producer_v1(runtime,**options)
+    declarations=fixture.declarations()
+    declarations["decoder"]={"id":options["backend_identity"]["backend_id"],"sha256":options["model_checkpoint"].sha256}
+    artifact=producer.evaluate(compiler_commit="fixture:derived-digest-output-only",checkpoint_declarations=declarations)
+    observed=producer.observation()
+    assert observed["input_profile_id"].startswith("reviewed-decoder-digest-omitted-producer/v1:")
+    assert observed["input_commitment"]["backend_identity"]["target_codec"]==codec
+    assert observed["input_commitment"]["output_derivation"]["only_computed_field"]=="typed_expression.content_digest"
+    call=observed["last_call"]
+    assert len(call["producer_outputs"])==len(call["raw_generation_outputs"])==len(call["output_derivation"])==len(fixture.rows)
+    for generation,derivation,output in zip(call["raw_generation_outputs"],call["output_derivation"],call["producer_outputs"],strict=True):
+        assert generation["generated_text"]==raw and "content_digest" not in json.loads(raw)["typed_expression"]
+        assert output["candidate"]==target
+        assert derivation["raw_model_text_sha256"]==hashlib.sha256(raw.encode()).hexdigest()
+        assert derivation["assembled_full_target_sha256"]==hashlib.sha256(inputs._reviewed_wire(target)).hexdigest()
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_semantic_metrics import evaluate_complete_norm_typed_structure
+    payload=fixture.evaluation._producer_payload(artifact)
+    references={row["id"]:row["canonical_ir"] for row in payload["reference_population"]}
+    rows=[{"case_id":o["id"],"reference":references[o["id"]],"candidate":o["candidate"],"outcome":o["outcome"]} for o in payload["producer_outputs"]]
+    report=evaluate_complete_norm_typed_structure(rows)
+    assert report["denominator"]==len(fixture.rows) and report["candidate_repaired"] is False
+    assert report["legal_admission_or_proof_authority"] is False
+    assert all("canonical_ir" not in json.loads(row["source_wire"]) for row in seen)
+    with pytest.raises(worker.TrainingJobValidationError):
+        worker.make_reviewed_decoder_source_producer_v3(runtime,**options)
+
+
+@pytest.mark.parametrize("damage", ["supplied_digest", "missing_metadata", "extra_root"])
+def test_digest_omitted_vertical_training_AST_refusal_precedes_forward(monkeypatch,tmp_path,damage):
+    fixture=_digest_omitted_mixed_training_fixture(tmp_path)
+    prepared=_digest_omitted_prepare(fixture)
+    record=json.loads(json.dumps(prepared["records"][0]))
+    value=json.loads(record["target_json"])
+    if damage=="supplied_digest":value=fixture.inputs.assemble_reviewed_decoder_digest_omitted_target(record["target_json"],target_codec=worker.REVIEWED_DIGEST_OMITTED_TARGET_CODEC)
+    elif damage=="missing_metadata":del value["typed_expression"]["metadata"]
+    else:value["typed_expression"]["root"]["unrecognized"]=None
+    record["target_json"]=fixture.inputs._reviewed_wire(value).decode()
+    tokenizer=fixture.runtime.tokenizer
+    record["target_token_ids"]=[tokenizer.bos_token_id,*tokenizer.encode(record["target_json"]),tokenizer.eos_token_id]
+    backend=fixture.runtime.backend
+    before=backend.snapshot_checkpoint()
+    with pytest.raises(worker.TrainingJobValidationError,match="strict digest-omitted training target required"):
+        backend.validate_training_records([record],max_source_tokens=fixture.payload["max_source_tokens"],max_target_tokens=fixture.payload["max_target_tokens"])
+    assert backend.model.calls==[] and backend.restored_checkpoint_matches(before["model_state"],before["optimizer_state"])
+
+
+@pytest.mark.parametrize("budget",["max_source_tokens","max_target_tokens"])
+def test_digest_omitted_vertical_complete_budget_refusal_precedes_backend(tmp_path,monkeypatch,budget):
+    fixture=_digest_omitted_mixed_training_fixture(tmp_path)
+    for method in ("validate_training_records","inspect_checkpoint","restore_checkpoint","train_batch"):
+        monkeypatch.setattr(fixture.runtime.backend,method,lambda *a,**k:pytest.fail("over-budget projected inputs reached backend"))
+    spec=worker.TrainingJobSpec.from_dict(dict(fixture.payload,**{budget:3}))
+    with pytest.raises(worker.TrainingJobValidationError,match="current reviewed decoder inputs changed or unsupported"):
+        worker.execute_training_job(spec,reviewed_runtime=fixture.runtime)
+    assert not Path(spec.output_directory).exists()
+
+
+@pytest.mark.parametrize("guard",["execution","asset"])
+def test_digest_omitted_vertical_original_guard_denial_is_not_wrapped(tmp_path,guard):
+    fixture=_digest_omitted_mixed_training_fixture(tmp_path)
+    original=ValueError("existing owner denies projected target run")
+    def denied(*args,**kwargs):raise original
+    runtime=replace(fixture.runtime,**{"execution_guard" if guard=="execution" else "asset_policy_guard":denied})
+    with pytest.raises(ValueError) as raised:
+        worker.execute_training_job(worker.TrainingJobSpec.from_dict(fixture.payload),reviewed_runtime=runtime)
+    assert raised.value is original and fixture.runtime.backend.model.calls==[]
+    assert not Path(fixture.payload["output_directory"]).exists()
+
+
+def test_digest_omitted_vertical_late_denial_retains_unpromoted_partial(tmp_path):
+    fixture=_digest_omitted_mixed_training_fixture(tmp_path)
+    backend=fixture.runtime.backend
+    before=backend.snapshot_checkpoint()
+    original=ValueError("current policy revoked after genuine update")
+    def current():
+        if backend._optimizer_steps:raise original
+    runtime=replace(fixture.runtime,execution_guard=current)
+    with pytest.raises(ValueError) as raised:
+        worker.execute_training_job(worker.TrainingJobSpec.from_dict(fixture.payload),reviewed_runtime=runtime)
+    assert raised.value is original and backend._optimizer_steps==1
+    output=Path(fixture.payload["output_directory"])
+    failure=json.loads((output/"failure.json").read_bytes())
+    assert failure["completed_backend_calls"]==1 and failure["partial_output_preserved"] is True
+    assert failure["qualified"] is False and failure["promotion_performed"] is False
+    assert not (output/"reviewed-decoder-checkpoint.json").exists()
+    assert backend.restored_checkpoint_matches(before["model_state"],before["optimizer_state"]) is False
+
+
+@pytest.mark.parametrize("disposition", ["abstained", "incomplete", "invalid_no_text", "complete", "invalid_text"])
+def test_digest_omitted_vertical_producer_preserves_nullable_raw_text_dispositions(tmp_path,monkeypatch,disposition):
+    from copy import deepcopy
+    domain_root=tmp_path/"public-domain";domain_root.mkdir()
+    fixture=_reviewed_mixed_source_producer_fixture(domain_root)
+    local_root=tmp_path/"Qwen";local_root.mkdir()
+    local=_digest_omitted_Qwen_local_fixture(local_root)
+    runtime=replace(fixture.runtime,backend=local.backend,tokenizer=local.backend.tokenizer)
+    policy={"schema":worker.REVIEWED_DIGEST_OMITTED_GENERATION_POLICY_SCHEMA,
+        "target_codec":worker.REVIEWED_DIGEST_OMITTED_TARGET_CODEC,
+        "conditioning_profile":worker.REVIEWED_DIGEST_OMITTED_CHATML_PROFILE,
+        "generation_profile":"builtin-qwen2-dynamic-kv/v1","max_generation_seconds":1,
+        "context_budget_profile":worker.REVIEWED_QWEN2_CONTEXT_BUDGET_PROFILE}
+    options=dict(fixture.options,backend_identity=local.backend.identity(),
+        assets=tuple(local.options[key] for key in ("recipe_artifact","model_config_artifact","tokenizer_artifact","license_artifact")),
+        model_checkpoint=local.options["model_checkpoint"],optimizer_checkpoint=local.options["optimizer_checkpoint"],
+        max_source_tokens=65536,max_output_tokens=4096,generation_policy=policy)
+    inputs,codec,target=_digest_omitted_small_generation_target()
+    full_wire=inputs.encode_reviewed_decoder_digest_omitted_target(target,target_codec=codec)
+    text=full_wire if disposition=="complete" else "not-json" if disposition=="invalid_text" else None
+    outcome="invalid" if disposition.startswith("invalid") else disposition
+    candidate=target if outcome=="complete" else None
+    reasons={"abstained":"empty_output","incomplete":"output_limit_without_eos",
+        "invalid_no_text":"unexpected_bos_in_output","invalid_text":"invalid_complete_norm_json","complete":None}
+    if text is not None:
+        tokens=[local.backend.tokenizer.bos_token_id,*local.backend.tokenizer.encode(text),local.backend.tokenizer.eos_token_id]
+    elif outcome=="abstained":tokens=[local.backend.tokenizer.bos_token_id,local.backend.tokenizer.eos_token_id]
+    elif outcome=="invalid":tokens=[local.backend.tokenizer.bos_token_id,local.backend.tokenizer.bos_token_id]
+    else:tokens=[local.backend.tokenizer.bos_token_id,5]
+    offered_results=[]
+    def controlled(offered,**kwargs):
+        # These mirror existing backend result dispositions, including the
+        # deliberate absence of decoded text before a completed body/EOS.
+        assert all(set(row)=={"id","unit_id","source_wire","source_token_ids"} for row in offered)
+        result=[{"id":row["id"],"unit_id":row["unit_id"],"outcome":outcome,
+            "candidate":deepcopy(candidate),"generated_token_ids":list(tokens),
+            "generated_text":text,"reason":reasons[disposition]} for row in offered]
+        offered_results.extend(deepcopy(result))
+        return result
+    monkeypatch.setattr(local.backend,"generate_batch",controlled)
+    producer=worker.make_reviewed_decoder_digest_omitted_source_producer_v1(runtime,**options)
+    declarations=fixture.declarations()
+    declarations["decoder"]={"id":options["backend_identity"]["backend_id"],"sha256":options["model_checkpoint"].sha256}
+    artifact=producer.evaluate(compiler_commit="fixture:nullable-generated-text-dispositions",checkpoint_declarations=declarations)
+    observation=producer.observation();call=observation["last_call"]
+    assert call["raw_generation_outputs"]==offered_results
+    assert len(call["output_derivation"])==len(offered_results)==len(fixture.rows)
+    for original,derived,output in zip(offered_results,call["output_derivation"],call["producer_outputs"],strict=True):
+        assert original["generated_text"]==text
+        assert (original["generated_text"] is None)==(text is None)
+        assert original["generated_token_ids"]==tokens and original["reason"]==reasons[disposition]
+        assert derived["raw_model_text_sha256"]==(None if text is None else hashlib.sha256(text.encode()).hexdigest())
+        assert derived["assembled_full_target_sha256"]==(hashlib.sha256(inputs._reviewed_wire(target)).hexdigest() if outcome=="complete" else None)
+        assert output=={"id":original["id"],"outcome":outcome,"candidate":candidate}
+        assert derived["outcome"]==outcome and derived["other_fields_repaired"] is False
+    payload=fixture.evaluation._producer_payload(artifact)
+    assert [row["outcome"] for row in payload["producer_outputs"]]==[outcome]*len(fixture.rows)
+    assert all(row["candidate"]==candidate for row in payload["producer_outputs"])

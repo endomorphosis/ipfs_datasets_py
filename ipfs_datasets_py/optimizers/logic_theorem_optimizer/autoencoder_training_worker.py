@@ -520,6 +520,8 @@ class TrainingJobSpec:
 
     @classmethod
     def from_dict(cls, value: Any) -> "TrainingJobSpec | ReviewedDecoderTrainingJobSpec":
+        if isinstance(value, Mapping) and value.get("schema_version") == REVIEWED_DIGEST_OMITTED_JOB_SCHEMA:
+            return ReviewedDigestOmittedDecoderTrainingJobSpec.from_dict(value)
         if isinstance(value, Mapping) and value.get("schema_version") == REVIEWED_MIXED_DECODER_SCHEMA_VERSION:
             return ReviewedMixedDecoderTrainingJobSpec.from_dict(value)
         if isinstance(value, Mapping) and value.get("schema_version") == REVIEWED_DECODER_SCHEMA_VERSION:
@@ -645,6 +647,13 @@ class TrainingJobSpec:
 # selecting this schema is never resource admission or a model download.
 REVIEWED_DECODER_SCHEMA_VERSION = "autoencoder-training-job-v9-reviewed-legal-ir"
 REVIEWED_MIXED_DECODER_SCHEMA_VERSION = "autoencoder-training-job-v10-reviewed-mixed-legal-ir"
+REVIEWED_DIGEST_OMITTED_JOB_SCHEMA = "reviewed-mixed-digest-omitted-decoder-job/v1"
+REVIEWED_DIGEST_OMITTED_CHECKPOINT_SCHEMA = "reviewed-digest-omitted-decoder-checkpoint/v1"
+REVIEWED_DIGEST_OMITTED_WORKER_RECEIPT_SCHEMA = "reviewed-digest-omitted-decoder-worker-receipt/v1"
+REVIEWED_DIGEST_OMITTED_TARGET_CODEC = "complete-reviewed-norm-digest-omitted-json/v1"
+REVIEWED_DIGEST_OMITTED_CHATML_PROFILE = "qwen2-chatml-digest-omitted-legal-ir/v1"
+REVIEWED_DIGEST_OMITTED_GENERATION_POLICY_SCHEMA = "reviewed-decoder-digest-omitted-generation-policy/v1"
+REVIEWED_DIGEST_OMITTED_RECIPE_SCHEMA = "reviewed-local-digest-omitted-decoder-recipe/v1"
 REVIEWED_MIXED_ADMISSION_PROFILE = "complete-reviewed-mixed-sort-norm-admission/v3"
 REVIEWED_MIXED_DECODER_RECEIPT_SCHEMA = "reviewed-mixed-legal-ir-decoder-worker-receipt/v1"
 REVIEWED_DECODER_CHECKPOINT_SCHEMA = "reviewed-legal-ir-decoder-checkpoint/v1"
@@ -695,8 +704,8 @@ class ReviewedDecoderTrainingJobSpec:
         output = Path(self.output_directory)
         if not output.is_absolute() or ".." in output.parts:
             raise TrainingJobValidationError("reviewed decoder output must be a plain absolute path")
-        expected_schema = (REVIEWED_MIXED_DECODER_SCHEMA_VERSION
-            if type(self) is ReviewedMixedDecoderTrainingJobSpec else REVIEWED_DECODER_SCHEMA_VERSION)
+        expected_schema = (REVIEWED_DIGEST_OMITTED_JOB_SCHEMA if type(self) is ReviewedDigestOmittedDecoderTrainingJobSpec else
+            REVIEWED_MIXED_DECODER_SCHEMA_VERSION if type(self) is ReviewedMixedDecoderTrainingJobSpec else REVIEWED_DECODER_SCHEMA_VERSION)
         if self.schema_version != expected_schema:
             raise TrainingJobValidationError("explicit complete reviewed decoder schema required")
         for name in ("stage_artifact", "exposure_artifact", "source_contexts_artifact", "model_artifact",
@@ -726,7 +735,7 @@ class ReviewedDecoderTrainingJobSpec:
             _text(identity[name], "reviewed_decoder.backend_identity." + name)
         if (type(identity["implementation_sha256"]) is not str or
                 re.fullmatch(r"[0-9a-f]{64}", identity["implementation_sha256"]) is None or
-                identity["target_codec"] != "complete-reviewed-norm-json/v2" or identity["source_conditioned"] is not True or
+                identity["target_codec"] != (REVIEWED_DIGEST_OMITTED_TARGET_CODEC if type(self) is ReviewedDigestOmittedDecoderTrainingJobSpec else "complete-reviewed-norm-json/v2") or identity["source_conditioned"] is not True or
                 type(identity["pretrained"]) is not bool):
             raise TrainingJobValidationError("complete source-conditioned target backend required")
         if type(self.allow_fictional_fixture) is not bool or not identity["pretrained"] and not self.allow_fictional_fixture:
@@ -749,11 +758,11 @@ class ReviewedDecoderTrainingJobSpec:
     @classmethod
     def from_dict(cls, value: Any) -> "ReviewedDecoderTrainingJobSpec":
         data = _object(value, {field.name for field in fields(cls)}, "reviewed decoder job")
-        expected_schema = (REVIEWED_MIXED_DECODER_SCHEMA_VERSION
-            if cls is ReviewedMixedDecoderTrainingJobSpec else REVIEWED_DECODER_SCHEMA_VERSION)
+        expected_schema = (REVIEWED_DIGEST_OMITTED_JOB_SCHEMA if cls is ReviewedDigestOmittedDecoderTrainingJobSpec else
+            REVIEWED_MIXED_DECODER_SCHEMA_VERSION if cls is ReviewedMixedDecoderTrainingJobSpec else REVIEWED_DECODER_SCHEMA_VERSION)
         if data.get("schema_version") != expected_schema:
             raise TrainingJobValidationError("explicit reviewed decoder schema required")
-        if cls is ReviewedMixedDecoderTrainingJobSpec and data.get("admission_profile") != REVIEWED_MIXED_ADMISSION_PROFILE:
+        if cls in (ReviewedMixedDecoderTrainingJobSpec, ReviewedDigestOmittedDecoderTrainingJobSpec) and data.get("admission_profile") != REVIEWED_MIXED_ADMISSION_PROFILE:
             raise TrainingJobValidationError("explicit mixed-sort admission V3 profile required")
         for name in ("stage_artifact", "exposure_artifact", "source_contexts_artifact", "model_artifact",
                 "tokenizer_artifact", "license_artifact", "base_model_checkpoint", "base_optimizer_checkpoint",
@@ -810,6 +819,17 @@ class ReviewedMixedDecoderTrainingJobSpec(ReviewedDecoderTrainingJobSpec):
         if self.continuation_profile is None:
             value.pop("continuation_profile")
         return value
+
+
+@dataclass(frozen=True)
+class ReviewedDigestOmittedDecoderTrainingJobSpec(ReviewedMixedDecoderTrainingJobSpec):
+    """Fresh-lineage codec with ordinary exact same-input resume only."""
+    schema_version: str = REVIEWED_DIGEST_OMITTED_JOB_SCHEMA
+
+    def __post_init__(self):
+        if self.continuation_profile is not None:
+            raise TrainingJobValidationError("digest-omitted jobs do not authorize old-objective or source-epoch continuation")
+        super().__post_init__()
 
 
 @dataclass(frozen=True)
@@ -1070,7 +1090,9 @@ def _execute_reviewed_decoder_job(spec: ReviewedDecoderTrainingJobSpec, runtime:
     prepared = None
     continuation_replay = None
     checkpoint_limit = MAX_REVIEWED_DECODER_STATE_BYTES
-    mixed = type(spec) is ReviewedMixedDecoderTrainingJobSpec
+    digest_omitted = type(spec) is ReviewedDigestOmittedDecoderTrainingJobSpec
+    mixed = type(spec) in (ReviewedMixedDecoderTrainingJobSpec, ReviewedDigestOmittedDecoderTrainingJobSpec)
+    checkpoint_schema = REVIEWED_DIGEST_OMITTED_CHECKPOINT_SCHEMA if digest_omitted else REVIEWED_DECODER_CHECKPOINT_SCHEMA
     admission_profile = spec.admission_profile if mixed else None
     guard_calls = {"execution": 0, "asset_policy": 0, "current_admission": 0}
     identity = _thaw(spec.backend_identity)
@@ -1110,7 +1132,8 @@ def _execute_reviewed_decoder_job(spec: ReviewedDecoderTrainingJobSpec, runtime:
         admission = runtime.current_admission_provider()
         guard_calls["current_admission"] += 1
         try:
-            prepare = (inputs.prepare_reviewed_mixed_decoder_training_inputs_v4 if mixed
+            prepare = (inputs.prepare_reviewed_mixed_decoder_digest_omitted_inputs_v1 if digest_omitted else
+                       inputs.prepare_reviewed_mixed_decoder_training_inputs_v4 if mixed
                        else inputs.prepare_reviewed_decoder_training_inputs)
             profile_options = {"admission_profile": admission_profile} if mixed else {}
             value = prepare(runtime.registry, **profile_options,
@@ -1137,8 +1160,12 @@ def _execute_reviewed_decoder_job(spec: ReviewedDecoderTrainingJobSpec, runtime:
             "reviewed-decoder-training-input-receipt/v4", inputs.REVIEWED_MIXED_DECODER_INPUT_PROFILE)
             and receipt.get("admission_profile") == admission_profile
             and receipt.get("source_context_profile") == inputs.REVIEWED_COMPONENT_DECODER_CONTEXT_PROFILE) if mixed else False
-        if (not (mixed_components if mixed else single_component or signed_components)
-                or receipt.get("target_codec") != inputs.REVIEWED_DECODER_TARGET_CODEC
+        projected_components = (profile == (inputs.REVIEWED_DIGEST_OMITTED_INPUT_SCHEMA,
+            inputs.REVIEWED_DIGEST_OMITTED_INPUT_RECEIPT_SCHEMA, inputs.REVIEWED_DIGEST_OMITTED_INPUT_PROFILE)
+            and receipt.get("admission_profile") == admission_profile
+            and receipt.get("source_context_profile") == inputs.REVIEWED_COMPONENT_DECODER_CONTEXT_PROFILE)
+        if (not (projected_components if digest_omitted else mixed_components if mixed else single_component or signed_components)
+                or receipt.get("target_codec") != (REVIEWED_DIGEST_OMITTED_TARGET_CODEC if digest_omitted else inputs.REVIEWED_DECODER_TARGET_CODEC)
                 or receipt.get("source_profile") != inputs.REVIEWED_DECODER_SOURCE_PROFILE
                 or receipt.get("semantic_selection_supported") is not False):
             raise TrainingJobValidationError("explicit caller-known selection-context training inputs required")
@@ -1201,7 +1228,7 @@ def _execute_reviewed_decoder_job(spec: ReviewedDecoderTrainingJobSpec, runtime:
             expected_fields = {"schema", "checkpoint_lineage_id", "base_version_id", "backend_identity", "assets",
                 "training_binding", "model_state", "optimizer_state", "progress", "batch_size", "seed",
                 "parent_checkpoint_sha256", "producer_pins", "token_budgets", "qualified", "promotion_performed"}
-            if type(parent) is not dict or set(parent) != expected_fields or parent["schema"] != REVIEWED_DECODER_CHECKPOINT_SCHEMA:
+            if type(parent) is not dict or set(parent) != expected_fields or parent["schema"] != checkpoint_schema:
                 raise TrainingJobValidationError("closed complete reviewed decoder parent checkpoint required")
             if (parent["checkpoint_lineage_id"] != spec.checkpoint_lineage_id or parent["base_version_id"] != spec.base_version_id or
                     parent["backend_identity"] != identity or parent["assets"] != [asdict(item) for item in assets] or
@@ -1305,7 +1332,7 @@ def _execute_reviewed_decoder_job(spec: ReviewedDecoderTrainingJobSpec, runtime:
         optimizer = _write_exclusive(output / "optimizer.checkpoint", snapshot["optimizer_state"])
         for item in (model, optimizer):
             _reviewed_decoder_artifact(CheckpointArtifact.from_dict(item), limit=checkpoint_limit)
-        checkpoint = {"schema": REVIEWED_DECODER_CHECKPOINT_SCHEMA, "checkpoint_lineage_id": spec.checkpoint_lineage_id,
+        checkpoint = {"schema": checkpoint_schema, "checkpoint_lineage_id": spec.checkpoint_lineage_id,
             "base_version_id": spec.base_version_id, "backend_identity": identity,
             "assets": [asdict(item) for item in assets], "training_binding": data["receipt"],
             "model_state": model, "optimizer_state": optimizer, "progress": progress,
@@ -1325,7 +1352,7 @@ def _execute_reviewed_decoder_job(spec: ReviewedDecoderTrainingJobSpec, runtime:
         checkpoint_ref = _write_exclusive(output / "reviewed-decoder-checkpoint.json", _json_bytes(checkpoint))
         _reviewed_decoder_artifact(CheckpointArtifact.from_dict(checkpoint_ref))
         current()
-        receipt = {"schema_version": (REVIEWED_MIXED_DECODER_RECEIPT_SCHEMA if mixed else REVIEWED_DECODER_RECEIPT_SCHEMA),
+        receipt = {"schema_version": (REVIEWED_DIGEST_OMITTED_WORKER_RECEIPT_SCHEMA if digest_omitted else REVIEWED_MIXED_DECODER_RECEIPT_SCHEMA if mixed else REVIEWED_DECODER_RECEIPT_SCHEMA),
             "job_id": spec.job_id, "run_id": spec.run_id,
             "job_spec_sha256": spec.canonical_sha256, "job_file_sha256": job_file_sha256,
             "code_identity": spec.code_identity, "base_version_id": spec.base_version_id,
@@ -1815,7 +1842,7 @@ def _execute(spec: TrainingJobSpec, trainer: Callable[..., Mapping[str, Any]] | 
              reduce_native_targets: bool = False,
              reviewed_runtime: ReviewedDecoderRuntime | None = None) -> dict[str, Any]:
     global _PROCESS_SOURCE_HASHES
-    if type(spec) in (ReviewedDecoderTrainingJobSpec, ReviewedMixedDecoderTrainingJobSpec):
+    if type(spec) in (ReviewedDecoderTrainingJobSpec, ReviewedMixedDecoderTrainingJobSpec, ReviewedDigestOmittedDecoderTrainingJobSpec):
         if trainer is not None or defer_target_hydration_gc or reduce_native_targets:
             raise TrainingJobValidationError("legacy trainer/hydration flags cannot select complete reviewed decoder execution")
         return _execute_reviewed_decoder_job(spec, reviewed_runtime, job_file_sha256)
@@ -2353,7 +2380,7 @@ def _execute_training_job(spec: TrainingJobSpec, *, trainer: Callable[..., Mappi
                           defer_target_hydration_gc: bool = False,
                           reduce_native_targets: bool = False,
                           reviewed_runtime: ReviewedDecoderRuntime | None = None) -> dict[str, Any]:
-    if type(spec) in (ReviewedDecoderTrainingJobSpec, ReviewedMixedDecoderTrainingJobSpec):
+    if type(spec) in (ReviewedDecoderTrainingJobSpec, ReviewedMixedDecoderTrainingJobSpec, ReviewedDigestOmittedDecoderTrainingJobSpec):
         if trainer is not None or defer_target_hydration_gc or reduce_native_targets:
             raise TrainingJobValidationError("legacy trainer/hydration flags cannot select complete reviewed decoder execution")
         if type(reviewed_runtime) is not ReviewedDecoderRuntime:
@@ -2364,7 +2391,7 @@ def _execute_training_job(spec: TrainingJobSpec, *, trainer: Callable[..., Mappi
         raise TrainingJobValidationError("reduce_native_targets must be boolean")
     if reduce_native_targets and trainer is not None:
         raise TrainingJobValidationError("target reduction requires the native spawned worker without an injected trainer")
-    if not isinstance(spec, TrainingJobSpec) and type(spec) not in (ReviewedDecoderTrainingJobSpec, ReviewedMixedDecoderTrainingJobSpec):
+    if not isinstance(spec, TrainingJobSpec) and type(spec) not in (ReviewedDecoderTrainingJobSpec, ReviewedMixedDecoderTrainingJobSpec, ReviewedDigestOmittedDecoderTrainingJobSpec):
         raise TrainingJobValidationError("spec must be a TrainingJobSpec or explicit reviewed decoder spec")
     if not _JOB_LOCK.acquire(blocking=False):
         raise TrainingJobValidationError("only one training job may run per worker process")
@@ -2971,7 +2998,7 @@ def _reviewed_builtin_qwen2_rotary_buffers(model, *, initialize=False):
 
 
 def _reviewed_training_conditioning_profile(value, architecture, model_profile):
-    if value is not None and (type(value) is not str or value not in _REVIEWED_QWEN2_CHATML_PROFILES
+    if value is not None and (type(value) is not str or value not in (_REVIEWED_QWEN2_CHATML_PROFILES | {REVIEWED_DIGEST_OMITTED_CHATML_PROFILE})
             or architecture != "causal_lm" or model_profile != "builtin-qwen2-bfloat16/v1"):
         raise TrainingJobValidationError("explicit supported Qwen2 causal training conditioning profile required")
     return value
@@ -3017,7 +3044,7 @@ class TorchReviewedDecoderBackend:
     """
 
     def __init__(self, model, optimizer, tokenizer, *, architecture,
-                 max_sequence_tokens, pretrained, gradient_clip=1.0, model_profile=None, training_conditioning_profile=None):
+                 max_sequence_tokens, pretrained, gradient_clip=1.0, model_profile=None, training_conditioning_profile=None, target_codec="complete-reviewed-norm-json/v2"):
         if architecture not in {"encoder_decoder", "causal_lm"}:
             raise TrainingJobValidationError("explicit supported pretrained decoder architecture required")
         if type(max_sequence_tokens) is not int or not 3 <= max_sequence_tokens <= 262144:
@@ -3032,14 +3059,25 @@ class TorchReviewedDecoderBackend:
             raise TrainingJobValidationError("injected Torch optimizer parameter groups required")
         if model_profile is not None and (type(model_profile) is not str or model_profile != "builtin-qwen2-bfloat16/v1"):
             raise TrainingJobValidationError("explicit supported Torch decoder model profile required")
+        if type(target_codec) is not str or target_codec not in {"complete-reviewed-norm-json/v2", REVIEWED_DIGEST_OMITTED_TARGET_CODEC}:
+            raise TrainingJobValidationError("explicit supported target codec required")
+        self.target_codec = target_codec
         self.training_conditioning_profile = _reviewed_training_conditioning_profile(
             training_conditioning_profile, architecture, model_profile)
         self.model_profile = model_profile
+        self._assert_target_codec_profile()
         self.model, self.optimizer, self.tokenizer = model, optimizer, tokenizer
         self.architecture, self.max_sequence_tokens = architecture, max_sequence_tokens
         self.pretrained, self.gradient_clip = pretrained, float(gradient_clip)
         self._optimizer_steps = 0
         self._tokenizer_pipeline_contract_raw = None
+
+    def _assert_target_codec_profile(self):
+        if (type(self.target_codec) is not str or self.target_codec not in {
+                "complete-reviewed-norm-json/v2", REVIEWED_DIGEST_OMITTED_TARGET_CODEC} or
+                (self.training_conditioning_profile == REVIEWED_DIGEST_OMITTED_CHATML_PROFILE) !=
+                (self.target_codec == REVIEWED_DIGEST_OMITTED_TARGET_CODEC and self.model_profile == "builtin-qwen2-bfloat16/v1")):
+            raise TrainingJobValidationError("target codec and training conditioning profile differ")
 
     def _torch(self):
         import torch
@@ -3078,6 +3116,7 @@ class TorchReviewedDecoderBackend:
             raise TrainingJobValidationError("tokenizer pipeline changed during decoder callback")
 
     def _configuration(self):
+        self._assert_target_codec_profile()
         training_profile = _reviewed_training_conditioning_profile(
             self.training_conditioning_profile, self.architecture, self.model_profile)
         contract = self._pipeline_contract()
@@ -3133,11 +3172,11 @@ class TorchReviewedDecoderBackend:
         declared_limit = model_config.get("max_position_embeddings", model_config.get("n_positions"))
         if type(declared_limit) is int and self.max_sequence_tokens > declared_limit:
             raise TrainingJobValidationError("declared context exceeds the model position limit")
-        configuration = {"schema": "torch-complete-reviewed-decoder-configuration/v2",
+        configuration = {"schema": ("torch-digest-omitted-reviewed-decoder-configuration/v1" if self.target_codec == REVIEWED_DIGEST_OMITTED_TARGET_CODEC else "torch-complete-reviewed-decoder-configuration/v2"),
                 "architecture": self.architecture, "max_sequence_tokens": self.max_sequence_tokens,
                 "gradient_clip": self.gradient_clip, "pretrained_declaration": self.pretrained,
                 "source_profile": "reviewed-source-selection-context/v2",
-                "target_codec": "complete-reviewed-norm-json/v2", "semantic_selection_supported": False,
+                "target_codec": self.target_codec, "semantic_selection_supported": False,
                 "model_class": type(self.model).__module__ + "." + type(self.model).__qualname__,
                 "optimizer_class": type(self.optimizer).__module__ + "." + type(self.optimizer).__qualname__,
                 "device": str(device), "tokenizer": contract, "tokenizer_binding": binding, "model_config": model_config,
@@ -3171,10 +3210,10 @@ class TorchReviewedDecoderBackend:
 
     def identity(self):
         signature = _digest(_json_bytes(self._configuration()))
-        return {"backend_id": "torch-complete-reviewed-decoder/v2:" + signature,
+        return {"backend_id": ("torch-digest-omitted-reviewed-decoder/v1:" if self.target_codec == REVIEWED_DIGEST_OMITTED_TARGET_CODEC else "torch-complete-reviewed-decoder/v2:") + signature,
                 "implementation_sha256": _digest(Path(__file__).read_bytes()),
-                "checkpoint_format": "torch-weights-only-complete-reviewed-state-pair/v2",
-                "target_codec": "complete-reviewed-norm-json/v2", "source_conditioned": True,
+                "checkpoint_format": ("torch-weights-only-digest-omitted-reviewed-state-pair/v1" if self.target_codec == REVIEWED_DIGEST_OMITTED_TARGET_CODEC else "torch-weights-only-complete-reviewed-state-pair/v2"),
+                "target_codec": self.target_codec, "source_conditioned": True,
                 "pretrained": self.pretrained}
 
     def _model_state(self):
@@ -3257,9 +3296,11 @@ class TorchReviewedDecoderBackend:
 
     def _chatml_frame(self, wire, conditioning_profile, contract):
         from ...logic.autoformal.training_cycle_inputs import MAX_REVIEWED_ARTIFACT_BYTES
-        if type(conditioning_profile) is not str or conditioning_profile not in ({"chatml-complete-legal-ir/v1"} | _REVIEWED_QWEN2_CHATML_PROFILES):
+        if type(conditioning_profile) is not str or conditioning_profile not in ({"chatml-complete-legal-ir/v1", REVIEWED_DIGEST_OMITTED_CHATML_PROFILE} | _REVIEWED_QWEN2_CHATML_PROFILES):
             raise TrainingJobValidationError("explicit supported ChatML conditioning profile required")
-        qwen2_chatml = conditioning_profile in _REVIEWED_QWEN2_CHATML_PROFILES
+        if (conditioning_profile == REVIEWED_DIGEST_OMITTED_CHATML_PROFILE) != (self.target_codec == REVIEWED_DIGEST_OMITTED_TARGET_CODEC):
+            raise TrainingJobValidationError("ChatML codec/profile mismatch")
+        qwen2_chatml = conditioning_profile in (_REVIEWED_QWEN2_CHATML_PROFILES | {REVIEWED_DIGEST_OMITTED_CHATML_PROFILE})
         vocab, bos, eos = (contract[key] for key in ("vocab_size", "bos_token_id", "eos_token_id"))
         if type(self.tokenizer) is not ReviewedPretrainedTokenizer or self.tokenizer.allow_fictional_fixture:
             raise TrainingJobValidationError("ChatML requires the actual maintained fast tokenizer")
@@ -3282,10 +3323,15 @@ class TorchReviewedDecoderBackend:
             "Use complete-reviewed-norm-json/v2 and TypedExpression@1. Preserve actors, modalities, ordered "
             "arguments, typed binders, conditions, exceptions, quantities, time, definitions and scope. "
             "Use no facts outside the supplied data. If required meaning or dependencies are missing, emit no body and end.")
-        if conditioning_profile == REVIEWED_QWEN2_FIELD_LAYOUTS_PROFILE:
+        if conditioning_profile in {REVIEWED_QWEN2_FIELD_LAYOUTS_PROFILE, REVIEWED_DIGEST_OMITTED_CHATML_PROFILE}:
             # Public wire layouts only; never caller schema, target values,
             # an answer prefix or permission to synthesize missing facts.
             instruction += ' Public field layouts (type notation, not answer values): argument_roles is an array of objects {"symbol":string,"roles":[string]}, never an array of strings. assumptions is an array. governing_context and source_binding have exactly the fields provided in the user source wire; interpretation_id is the supplied selection identifier. typed_expression is a complete TypedExpression@1 object: interface, schema_version, expression_id, root, signature, family, profile, content_digest, metadata, and optional range; root is a typed LogicNode with kind, symbol, arguments, binders, sort, node_id, schema_version, metadata, and optional range. definition_uses entries have definition_unit_id, defined_predicate, use_unit_id, use_occurrence_cid, target_typed_paths (nonempty string array), applicability, interpretation_id, evidence_refs. cross_references entries have from_unit_id, dependency_artifact_id, dependency_sha256, version, evidence_refs. Each evidence_refs entry has artifact_id and sha256. Copy no example answer. Do not invent dependencies, identities, symbols or missing meaning, and do not emit repeated filler. Missing required facts require an empty body and EOS. Canonical JSON uses lexicographically sorted keys and no insignificant whitespace, comments or Markdown.'
+        if conditioning_profile == REVIEWED_DIGEST_OMITTED_CHATML_PROFILE:
+            instruction = instruction.replace("Use complete-reviewed-norm-json/v2 and TypedExpression@1.",
+                "Use complete-reviewed-norm-digest-omitted-json/v1 and TypedExpression@1.")
+            instruction = instruction.replace("profile, content_digest, metadata", "profile, metadata")
+            instruction += " Omit ONLY typed_expression.content_digest. Do not supply that field, even empty or null; its deterministic value is assembled after generation. Keep expression_id, every node_id, signature, binders, sorts, ordered roles, source and dependency identities/hashes unchanged from the supplied facts. No other missing field is filled."
         frame_text = ("<|im_start|>system\n" + instruction + "<|im_end|>\n"
             "<|im_start|>user\n" + wire + "<|im_end|>\n<|im_start|>assistant\n")
         if len(frame_text.encode("utf-8")) > MAX_REVIEWED_ARTIFACT_BYTES:
@@ -3330,6 +3376,12 @@ class TorchReviewedDecoderBackend:
                     raise TrainingJobValidationError("complete untruncated Torch input and output tokens required")
                 if self.tokenizer.decode(tokens[1:-1]) != row["source_wire" if key == "source_token_ids" else "target_json"]:
                     raise TrainingJobValidationError("Torch token transport differs from full source/target")
+            if self.target_codec == REVIEWED_DIGEST_OMITTED_TARGET_CODEC:
+                from ...logic.autoformal.training_cycle_inputs import assemble_reviewed_decoder_digest_omitted_target
+                try:
+                    assemble_reviewed_decoder_digest_omitted_target(row["target_json"], target_codec=self.target_codec)
+                except (ValueError, TypeError, KeyError, RecursionError) as exc:
+                    raise TrainingJobValidationError("strict digest-omitted training target required") from exc
             lengths = (len(row["source_token_ids"]), len(row["target_token_ids"]))
             used = sum(lengths) if self.architecture == "causal_lm" else max(lengths)
             if config.get("training_conditioning_profile") is not None:
@@ -3775,16 +3827,20 @@ class TorchReviewedDecoderBackend:
             raise TrainingJobValidationError("caller-owned generation execution guard required")
         if type(max_output_tokens) is not int or not 2 <= max_output_tokens <= 65536:
             raise TrainingJobValidationError("finite generation budget including BOS and EOS required")
+        self._assert_target_codec_profile()
+        if (conditioning_profile == REVIEWED_DIGEST_OMITTED_CHATML_PROFILE) != (
+                self.target_codec == REVIEWED_DIGEST_OMITTED_TARGET_CODEC and self.model_profile == "builtin-qwen2-bfloat16/v1"):
+            raise TrainingJobValidationError("generation codec and conditioning profile differ")
         if (type(generation_profile) is not str or generation_profile not in
                 {"full-prefix/v1", "builtin-llama-dynamic-kv/v1", "builtin-qwen2-dynamic-kv/v1"}):
             raise TrainingJobValidationError("closed explicit generation profile required")
         if (type(conditioning_profile) is not str or conditioning_profile not in
-                ({"raw-source-bos/v1", "chatml-complete-legal-ir/v1"} | _REVIEWED_QWEN2_CHATML_PROFILES)):
+                ({"raw-source-bos/v1", "chatml-complete-legal-ir/v1", REVIEWED_DIGEST_OMITTED_CHATML_PROFILE} | _REVIEWED_QWEN2_CHATML_PROFILES)):
             raise TrainingJobValidationError("closed explicit conditioning profile required")
         if context_budget_profile is not None and (type(context_budget_profile) is not str or
                 context_budget_profile not in {REVIEWED_QWEN2_CONTEXT_BUDGET_PROFILE,
                     REVIEWED_QWEN2_EXPANDED_CONTEXT_BUDGET_PROFILE} or
-                conditioning_profile not in _REVIEWED_QWEN2_CHATML_PROFILES):
+                conditioning_profile not in (_REVIEWED_QWEN2_CHATML_PROFILES | {REVIEWED_DIGEST_OMITTED_CHATML_PROFILE})):
             raise TrainingJobValidationError("explicit matching Qwen2 context budget profile required")
         context_token_limit = (REVIEWED_QWEN2_EXPANDED_CONTEXT_MAX_TOKENS
             if context_budget_profile == REVIEWED_QWEN2_EXPANDED_CONTEXT_BUDGET_PROFILE else
@@ -3798,7 +3854,7 @@ class TorchReviewedDecoderBackend:
                 valid_duration = False
             if not valid_duration or max_generation_seconds <= 0:
                 raise TrainingJobValidationError("finite positive per-row generation time budget required")
-        qwen2_chatml = conditioning_profile in _REVIEWED_QWEN2_CHATML_PROFILES
+        qwen2_chatml = conditioning_profile in (_REVIEWED_QWEN2_CHATML_PROFILES | {REVIEWED_DIGEST_OMITTED_CHATML_PROFILE})
         chatml = qwen2_chatml or conditioning_profile == "chatml-complete-legal-ir/v1"
         cached_llama = generation_profile in {"builtin-llama-dynamic-kv/v1", "builtin-qwen2-dynamic-kv/v1"}
         execution_guard()
@@ -4090,9 +4146,14 @@ class TorchReviewedDecoderBackend:
                                 else:
                                     current()
                                     try:
-                                        value = _parse_json(text.encode("utf-8"))
-                                        valid = (_json_bytes(value).decode("utf-8") == text
-                                                 and _complete_norm_payload_shape(value))
+                                        if self.target_codec == REVIEWED_DIGEST_OMITTED_TARGET_CODEC:
+                                            from ...logic.autoformal.training_cycle_inputs import assemble_reviewed_decoder_digest_omitted_target
+                                            value = assemble_reviewed_decoder_digest_omitted_target(text, target_codec=self.target_codec)
+                                            valid = True
+                                        else:
+                                            value = _parse_json(text.encode("utf-8"))
+                                            valid = (_json_bytes(value).decode("utf-8") == text
+                                                     and _complete_norm_payload_shape(value))
                                     except (ValueError, TypeError, UnicodeError, RecursionError):
                                         valid = False
                                     if valid:
@@ -4112,6 +4173,15 @@ __all__ += ["ReviewedPretrainedTokenizer", "TorchReviewedDecoderBackend"]
 
 def _reviewed_decoder_generation_policy(value):
     """Closed opt-in inference DATA, never execution or legal-use authority."""
+    if type(value) is dict and value.get("schema") == REVIEWED_DIGEST_OMITTED_GENERATION_POLICY_SCHEMA:
+        if (set(value) != {"schema", "generation_profile", "conditioning_profile", "max_generation_seconds", "context_budget_profile", "target_codec"}
+                or type(value["target_codec"]) is not str or value["target_codec"] != REVIEWED_DIGEST_OMITTED_TARGET_CODEC
+                or type(value["conditioning_profile"]) is not str or value["conditioning_profile"] != REVIEWED_DIGEST_OMITTED_CHATML_PROFILE):
+            raise TrainingJobValidationError("closed digest-omitted generation policy required")
+        legacy_validation = {key: item for key, item in value.items() if key != "target_codec"}
+        legacy_validation.update(schema="reviewed-decoder-generation-policy/v2", conditioning_profile="qwen2-chatml-complete-legal-ir/v1")
+        _reviewed_decoder_generation_policy(legacy_validation)
+        return _parse_json(_json_bytes(value))
     fields = {"schema", "generation_profile", "conditioning_profile", "max_generation_seconds"}
     qwen2 = type(value) is dict and value.get("schema") == "reviewed-decoder-generation-policy/v2"
     if qwen2:
@@ -4178,7 +4248,7 @@ def _make_reviewed_decoder_source_producer(runtime, *, binding, rows, split_mani
         optimizer_checkpoint, max_source_tokens, max_output_tokens,
         allow_heldout_evaluation=False, context_profile=None,
         current_context_inputs_provider=None, expected_context_inputs_sha256=None,
-        context_policy_guard=None, context_transport="plain_json_v1", generation_policy=None, _admission_version):
+        context_policy_guard=None, context_transport="plain_json_v1", generation_policy=None, _admission_version, _target_codec="complete-reviewed-norm-json/v2"):
     """Bind a trusted admitted runtime to the reviewed source evaluator.
 
     The caller supplies an already-loaded checkpoint pair and real execution,
@@ -4207,8 +4277,13 @@ def _make_reviewed_decoder_source_producer(runtime, *, binding, rows, split_mani
         return _parse_json(wire(value))
 
     need(_admission_version in {"v2", "v3"}, "closed reviewed producer admission domain required")
+    need(type(_target_codec) is str and _target_codec in {"complete-reviewed-norm-json/v2", REVIEWED_DIGEST_OMITTED_TARGET_CODEC},
+         "explicit supported producer codec required")
+    digest_omitted = _target_codec == REVIEWED_DIGEST_OMITTED_TARGET_CODEC
     generation_copy = None if generation_policy is None else _reviewed_decoder_generation_policy(generation_policy)
-    qwen2_generation = generation_copy is not None and generation_copy["schema"] == "reviewed-decoder-generation-policy/v2"
+    need((generation_copy is not None and generation_copy["schema"] == REVIEWED_DIGEST_OMITTED_GENERATION_POLICY_SCHEMA) == digest_omitted,
+         "explicit matching producer codec and generation policy required")
+    qwen2_generation = generation_copy is not None and generation_copy["schema"] in {"reviewed-decoder-generation-policy/v2", REVIEWED_DIGEST_OMITTED_GENERATION_POLICY_SCHEMA}
     context_token_limit = (REVIEWED_QWEN2_EXPANDED_CONTEXT_MAX_TOKENS if qwen2_generation
         and generation_copy["context_budget_profile"] == REVIEWED_QWEN2_EXPANDED_CONTEXT_BUDGET_PROFILE
         else REVIEWED_QWEN2_CONTEXT_MAX_TOKENS if qwen2_generation else REVIEWED_GENERATION_CONTEXT_MAX_TOKENS)
@@ -4277,7 +4352,7 @@ def _make_reviewed_decoder_source_producer(runtime, *, binding, rows, split_mani
          "source contexts differ from independently supplied commitment")
     need(type(identity_copy) is dict and set(identity_copy) == {
         "backend_id", "implementation_sha256", "checkpoint_format", "target_codec", "source_conditioned", "pretrained"}
-        and identity_copy["target_codec"] == "complete-reviewed-norm-json/v2"
+        and identity_copy["target_codec"] == _target_codec
         and identity_copy["source_conditioned"] is True and type(identity_copy["pretrained"]) is bool,
         "complete source-conditioned decoder identity required")
     operation = "heldout_evaluation" if allow_heldout_evaluation else "hparam_selection"
@@ -4368,6 +4443,11 @@ def _make_reviewed_decoder_source_producer(runtime, *, binding, rows, split_mani
         policy.update(schema="reviewed-decoder-source-producer-policy/v4" if qwen2_generation else "reviewed-decoder-source-producer-policy/v3", generation_policy=generation_copy)
         if qwen2_generation:
             policy["runtime_profile"] = "builtin-qwen2-bfloat16/v1"
+    if digest_omitted:
+        policy.update(schema="reviewed-decoder-digest-omitted-source-producer-policy/v1",
+            output_derivation={"schema": "reviewed-digest-omitted-output-assembly/v1", "target_codec": _target_codec,
+                "only_computed_field": "typed_expression.content_digest", "other_default_filling": False})
+        observation["schema"] = "reviewed-decoder-digest-omitted-source-producer-observation/v1"
     pair_bytes = None
     first_review = None
 
@@ -4644,7 +4724,7 @@ def _make_reviewed_decoder_source_producer(runtime, *, binding, rows, split_mani
             shared_context_schema=shared_schema)
     commitment_sha = _digest(wire(commitment))
     observation.update(input_commitment=commitment, input_commitment_sha256=commitment_sha,
-        input_profile_id=("reviewed-decoder-qwen2-profiled-producer/v1:" if qwen2_generation
+        input_profile_id=("reviewed-decoder-digest-omitted-producer/v1:" if digest_omitted else "reviewed-decoder-qwen2-profiled-producer/v1:" if qwen2_generation
                           else "reviewed-decoder-profiled-producer/v1:" if generation_copy is not None
                           else "reviewed-decoder-rich-TRAIN-producer/v1:" if context_enabled
                           else "reviewed-decoder-source-producer/v2:" if admission_profile
@@ -4712,6 +4792,12 @@ def _make_reviewed_decoder_source_producer(runtime, *, binding, rows, split_mani
                     and generated_row["id"] == row["id"] and generated_row["unit_id"] == row["unit_id"],
                      "generation identities/order or disposition fields differ")
             call["raw_generation_outputs"] = generated
+            if digest_omitted:
+                call["output_derivation"] = [{"id": item["id"],
+                    "raw_model_text_sha256": (None if item["generated_text"] is None else _digest(item["generated_text"].encode("utf-8"))),
+                    "assembled_full_target_sha256": _digest(wire(item["candidate"])) if item["outcome"] == "complete" else None,
+                    "outcome": item["outcome"], "computed_field": "typed_expression.content_digest",
+                    "other_fields_repaired": False} for item in generated]
             outputs = [{key: item[key] for key in ("id", "outcome", "candidate")} for item in generated]
             call["producer_outputs"] = copy_json(outputs)
         except BaseException as error:
@@ -4839,7 +4925,7 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
         tokenizer_artifact, license_artifact, model_checkpoint, optimizer_checkpoint,
         expected_backend_identity, expected_source_sha256,
         expected_admission_inputs_sha256, max_model_bytes, _admission_version, _runtime_profile,
-        _source_epoch_migration=None):
+        _source_epoch_migration=None, _target_codec="complete-reviewed-norm-json/v2"):
     """Load an explicitly profiled built-in CPU decoder and paired state.
 
     The caller owns live execution, license/asset policy and current admission.
@@ -4849,6 +4935,11 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
     keeps the checkpoint's RNG; failure restores the CPU RNG seen at Torch entry.
     """
     import stat
+    if type(_target_codec) is not str or _target_codec not in {"complete-reviewed-norm-json/v2", REVIEWED_DIGEST_OMITTED_TARGET_CODEC}:
+        raise TrainingJobValidationError("explicit local loader target codec required")
+    digest_omitted = _target_codec == REVIEWED_DIGEST_OMITTED_TARGET_CODEC
+    if digest_omitted and (_admission_version != "v3" or _source_epoch_migration is not None):
+        raise TrainingJobValidationError("digest-omitted loader requires fresh current-source admission; no old-objective migration")
     if type(_runtime_profile) is not str or _runtime_profile not in {"builtin-t5-gpt2-float32/v1", "builtin-llama-bfloat16/v1", "builtin-qwen2-bfloat16/v1"}:
         raise TrainingJobValidationError("explicit supported local decoder runtime profile required")
     qwen2_profile = _runtime_profile == "builtin-qwen2-bfloat16/v1"
@@ -4872,7 +4963,7 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
     identity = _parse_json(_json_bytes(expected_backend_identity))
     if (type(identity) is not dict or set(identity) != {"backend_id", "implementation_sha256",
             "checkpoint_format", "target_codec", "source_conditioned", "pretrained"}
-            or identity["target_codec"] != "complete-reviewed-norm-json/v2"
+            or identity["target_codec"] != _target_codec
             or identity["source_conditioned"] is not True or type(identity["pretrained"]) is not bool):
         raise TrainingJobValidationError("exact complete reviewed decoder backend identity required")
     references = (recipe_artifact, model_config_artifact, tokenizer_artifact,
@@ -4887,6 +4978,8 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
         "max_model_bytes": max_model_bytes, "device": "cpu", "dtype": parameter_dtype,
         "load_requested": True, "restore_requested": True, "training_requested": False,
         "downloads_requested": False, "resource_grant_requested": False}
+    if digest_omitted:
+        policy.update(schema="reviewed-local-digest-omitted-decoder-load-policy/v1", target_codec=_target_codec)
     if _source_epoch_migration is not None:
         policy["source_epoch_migration_requested"] = True
         policy["source_epoch_migration_profile"] = (REVIEWED_DECODER_TRAIN_RESUME_EPOCH_PROFILE
@@ -4955,13 +5048,15 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
     # and the small recipe/config wire buffers have no remaining consumers.
     del tokenizer_data, recipe_raw, config_raw
     recipe_fields = {"schema", "architecture", "model_type", "max_sequence_tokens", "pretrained", "gradient_clip", "optimizer", "tokenizer"}
+    if digest_omitted:
+        recipe_fields.add("target_codec")
     if llama_profile:
         recipe_fields.add("parameter_dtype")
-    training_recipe = qwen2_profile and type(recipe) is dict and recipe.get("schema") == "reviewed-local-decoder-recipe/v3"
+    training_recipe = qwen2_profile and type(recipe) is dict and recipe.get("schema") == (REVIEWED_DIGEST_OMITTED_RECIPE_SCHEMA if digest_omitted else "reviewed-local-decoder-recipe/v3")
     if training_recipe:
         recipe_fields.add("training_conditioning_profile")
     if (type(recipe) is not dict or set(recipe) != recipe_fields
-            or recipe["schema"] != ("reviewed-local-decoder-recipe/v3" if training_recipe else "reviewed-local-decoder-recipe/v2" if llama_profile else "reviewed-local-decoder-recipe/v1")
+            or recipe["schema"] != (REVIEWED_DIGEST_OMITTED_RECIPE_SCHEMA if digest_omitted else "reviewed-local-decoder-recipe/v3" if training_recipe else "reviewed-local-decoder-recipe/v2" if llama_profile else "reviewed-local-decoder-recipe/v1")
             or type(recipe["architecture"]) is not str or type(recipe["model_type"]) is not str
             or (recipe["architecture"], recipe["model_type"]) not in ({("causal_lm", "qwen2" if qwen2_profile else "llama")} if llama_profile else {("encoder_decoder", "t5"), ("causal_lm", "gpt2")})
             or type(recipe["max_sequence_tokens"]) is not int or not 3 <= recipe["max_sequence_tokens"] <= 65536
@@ -4975,7 +5070,9 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
                    if "attn_implementation" in key or "attention_implementation" in key or "experts_implementation" in key)
             or any(value not in (None, {}, [], "", False) for key, value in config_data.items() if "kernel" in key)) :
         raise TrainingJobValidationError("closed strict-JSON built-in local decoder recipe/configuration required")
-    if training_recipe and (type(recipe["training_conditioning_profile"]) is not str or recipe["training_conditioning_profile"] not in _REVIEWED_QWEN2_CHATML_PROFILES):
+    if digest_omitted and recipe.get("target_codec") != _target_codec:
+        raise TrainingJobValidationError("local recipe target codec differs")
+    if training_recipe and (type(recipe["training_conditioning_profile"]) is not str or recipe["training_conditioning_profile"] not in ({REVIEWED_DIGEST_OMITTED_CHATML_PROFILE} if digest_omitted else _REVIEWED_QWEN2_CHATML_PROFILES)):
         raise TrainingJobValidationError("closed explicit Qwen2 training conditioning profile required")
     if llama_profile and (recipe["parameter_dtype"] != "bfloat16" or
             not any(config_data.get(key) == "bfloat16" for key in ("dtype", "torch_dtype")) or
@@ -5147,7 +5244,8 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
             architecture=recipe["architecture"], max_sequence_tokens=recipe["max_sequence_tokens"],
             pretrained=recipe["pretrained"], gradient_clip=recipe["gradient_clip"],
             **({"model_profile": _runtime_profile} if qwen2_profile else {}),
-            **({"training_conditioning_profile": recipe["training_conditioning_profile"]} if training_recipe else {}))
+            **({"training_conditioning_profile": recipe["training_conditioning_profile"]} if training_recipe else {}),
+            **({"target_codec": _target_codec} if digest_omitted else {}))
         if backend.identity() != identity:
             raise TrainingJobValidationError("local constructed decoder backend identity differs")
         current()
@@ -5183,6 +5281,9 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
                 if name in dict(model.named_buffers())],
             "tokenizer_constructor_option_order": ["bos_token", "eos_token", "unk_token", "pad_token",
                 "model_max_length", "clean_up_tokenization_spaces"]}
+        if digest_omitted:
+            receipt.update(schema="reviewed-local-digest-omitted-decoder-runtime-load/v1", target_codec=_target_codec,
+                old_objective_checkpoint_migration_performed=False)
         if _source_epoch_migration is not None:
             receipt["explicit_source_epoch_migration_performed"] = True
         current()
@@ -6965,3 +7066,44 @@ def migrate_local_reviewed_decoder_train_resume_source_epoch_v5(spec, *, registr
         if not succeeded:torch.set_rng_state(entry_rng)
 
 __all__ += ['migrate_local_reviewed_decoder_train_resume_source_epoch_v5', 'REVIEWED_DECODER_TRAIN_RESUME_EPOCH_PROFILE', 'REVIEWED_DECODER_TRAIN_RESUME_EPOCH_CONTRACT_SCHEMA', 'REVIEWED_DECODER_TRAIN_RESUME_EPOCH_RECEIPT_SCHEMA']
+
+
+def make_reviewed_decoder_digest_omitted_source_producer_v1(runtime, *, binding, rows, split_manifest,
+        exposure_records, source_contexts, expected_source_contexts_sha256,
+        expected_admission_inputs_sha256, backend_identity, assets, model_checkpoint,
+        optimizer_checkpoint, max_source_tokens, max_output_tokens,
+        allow_heldout_evaluation=False, context_profile=None,
+        current_context_inputs_provider=None, expected_context_inputs_sha256=None,
+        context_policy_guard=None, context_transport="plain_json_v1", generation_policy=None):
+    """Bind admission V3 source or explicitly reviewed heldout TRAIN context."""
+    return _make_reviewed_decoder_source_producer(runtime, binding=binding, rows=rows,
+        split_manifest=split_manifest, exposure_records=exposure_records, source_contexts=source_contexts,
+        expected_source_contexts_sha256=expected_source_contexts_sha256,
+        expected_admission_inputs_sha256=expected_admission_inputs_sha256,
+        backend_identity=backend_identity, assets=assets, model_checkpoint=model_checkpoint,
+        optimizer_checkpoint=optimizer_checkpoint, max_source_tokens=max_source_tokens,
+        max_output_tokens=max_output_tokens, allow_heldout_evaluation=allow_heldout_evaluation,
+        context_profile=context_profile, current_context_inputs_provider=current_context_inputs_provider,
+        expected_context_inputs_sha256=expected_context_inputs_sha256,
+        context_policy_guard=context_policy_guard, context_transport=context_transport, generation_policy=generation_policy, _admission_version="v3", _target_codec=REVIEWED_DIGEST_OMITTED_TARGET_CODEC)
+
+
+def load_local_reviewed_decoder_digest_omitted_runtime_v1(*, admission_profile, registry, current_admission_provider,
+        execution_guard, asset_policy_guard, recipe_artifact, model_config_artifact,
+        tokenizer_artifact, license_artifact, model_checkpoint, optimizer_checkpoint,
+        expected_backend_identity, expected_source_sha256,
+        expected_admission_inputs_sha256, max_model_bytes,
+        runtime_profile="builtin-t5-gpt2-float32/v1"):
+    """Load a local decoder only for the explicitly selected admission V3 domain."""
+    if type(admission_profile) is not str or admission_profile != REVIEWED_MIXED_ADMISSION_PROFILE:
+        raise TrainingJobValidationError("explicit mixed-sort admission V3 load profile required")
+    return _load_local_reviewed_decoder_runtime(registry=registry, current_admission_provider=current_admission_provider,
+        execution_guard=execution_guard, asset_policy_guard=asset_policy_guard,
+        recipe_artifact=recipe_artifact, model_config_artifact=model_config_artifact,
+        tokenizer_artifact=tokenizer_artifact, license_artifact=license_artifact,
+        model_checkpoint=model_checkpoint, optimizer_checkpoint=optimizer_checkpoint,
+        expected_backend_identity=expected_backend_identity, expected_source_sha256=expected_source_sha256,
+        expected_admission_inputs_sha256=expected_admission_inputs_sha256, max_model_bytes=max_model_bytes,
+        _admission_version="v3", _runtime_profile=runtime_profile, _target_codec=REVIEWED_DIGEST_OMITTED_TARGET_CODEC)
+
+__all__ += ["ReviewedDigestOmittedDecoderTrainingJobSpec", "REVIEWED_DIGEST_OMITTED_JOB_SCHEMA", "REVIEWED_DIGEST_OMITTED_WORKER_RECEIPT_SCHEMA", "REVIEWED_DIGEST_OMITTED_TARGET_CODEC", "REVIEWED_DIGEST_OMITTED_CHECKPOINT_SCHEMA", "REVIEWED_DIGEST_OMITTED_CHATML_PROFILE", "REVIEWED_DIGEST_OMITTED_GENERATION_POLICY_SCHEMA", "REVIEWED_DIGEST_OMITTED_RECIPE_SCHEMA", "load_local_reviewed_decoder_digest_omitted_runtime_v1", "make_reviewed_decoder_digest_omitted_source_producer_v1"]

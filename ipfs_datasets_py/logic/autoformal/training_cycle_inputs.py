@@ -1388,7 +1388,7 @@ def _reviewed_decoder_target_identities(canonical_ir):
         "semantic_equivalence_or_incompatibility_proved": False}
 
 
-def _reviewed_decoder_source_target_wires(rows, contexts, selection_context):
+def _reviewed_decoder_source_target_wires(rows, contexts, selection_context, *, _target_codec=REVIEWED_DECODER_TARGET_CODEC):
     """Reject unsupported many-target transport for identical complete inputs.
 
     This current-batch relation check does not adjudicate meaning, turn custody
@@ -1410,7 +1410,11 @@ def _reviewed_decoder_source_target_wires(rows, contexts, selection_context):
             "governing_context": context["governing_context"], "source_binding": context["source_binding"],
             "selection_context": selection_context}
         source_wire = _reviewed_wire(source).decode("utf-8")
-        target_json = _reviewed_wire(target).decode("utf-8")
+        _reviewed_decoder_need(_target_codec in {REVIEWED_DECODER_TARGET_CODEC, REVIEWED_DECODER_DIGEST_OMITTED_TARGET_CODEC},
+                               "explicit supported target codec required")
+        target_json = (encode_reviewed_decoder_digest_omitted_target(target, target_codec=_target_codec)
+            if _target_codec == REVIEWED_DECODER_DIGEST_OMITTED_TARGET_CODEC
+            else _reviewed_wire(target).decode("utf-8"))
         _reviewed_decoder_need(source_wire not in seen or seen[source_wire] == target_json,
                        "unsupported conflicting full-target relation for identical complete source/selection input; no admitted multi-target policy")
         seen[source_wire] = target_json
@@ -1472,7 +1476,7 @@ def _prepare_reviewed_decoder_training_inputs(registry, *, stage_artifact, expec
         current_admission_inputs, expected_admission_inputs_sha256,
         exposure_records, expected_exposure_sha256, source_contexts,
         expected_source_contexts_sha256, split_config, expected_split_config_sha256,
-        tokenizer, max_source_tokens, max_target_tokens, allow_fictional_fixture=False, _admission_version="v2"):
+        tokenizer, max_source_tokens, max_target_tokens, allow_fictional_fixture=False, _admission_version="v2", _target_codec=REVIEWED_DECODER_TARGET_CODEC):
     """Prepare detached training-only source/full-target tokens, without fitting.
 
     The registry protocol is read-only: artifact_path(descriptor) and
@@ -1497,6 +1501,11 @@ def _prepare_reviewed_decoder_training_inputs(registry, *, stage_artifact, expec
     Re-call this function at the independently guarded training boundary; its
     return is data and provenance, not an execution capability.
     """
+    digest_omitted = _target_codec == REVIEWED_DECODER_DIGEST_OMITTED_TARGET_CODEC
+    _reviewed_decoder_need(type(_target_codec) is str and _target_codec in {
+        REVIEWED_DECODER_TARGET_CODEC, REVIEWED_DECODER_DIGEST_OMITTED_TARGET_CODEC}
+        and (not digest_omitted or _admission_version == "v3"),
+        "explicit digest-omitted codec requires mixed admission V3")
     for expected in (expected_stage_sha256, expected_admission_inputs_sha256,
                      expected_exposure_sha256, expected_source_contexts_sha256,
                      expected_split_config_sha256):
@@ -1724,7 +1733,7 @@ def _prepare_reviewed_decoder_training_inputs(registry, *, stage_artifact, expec
         component_guard = _reviewed_decoder_component_split_guard(assessment, records)
         assessment_sha = receipt["admission_assessment_sha256"]
         custody = _reviewed_decoder_admission_custody(admission_copy)
-    wires = _reviewed_decoder_source_target_wires(rows, contexts["rows"], selections)
+    wires = _reviewed_decoder_source_target_wires(rows, contexts["rows"], selections, _target_codec=_target_codec)
     contract = _reviewed_decoder_tokenizer_contract(tokenizer)
     _reviewed_decoder_need(contract["pipeline_kind"] != "fictional_fixed_byte" or fixture and allow_fictional_fixture,
                    "fictional tokenizer pipeline requires fresh fictional admission and explicit fixture opt-in")
@@ -1740,10 +1749,12 @@ def _prepare_reviewed_decoder_training_inputs(registry, *, stage_artifact, expec
             commitments.append({"id": row["id"], "unit_id": row["unit_id"],
                 "source_text_sha256": hashlib.sha256(row["source_text"].encode("utf-8")).hexdigest(),
                 "source_wire_sha256": hashlib.sha256(source_wire.encode("utf-8")).hexdigest(),
-                "canonical_ir_sha256": hashlib.sha256(target_json.encode("utf-8")).hexdigest(),
+                "canonical_ir_sha256": hashlib.sha256(_reviewed_wire(row["canonical_ir"]) if digest_omitted else target_json.encode("utf-8")).hexdigest(),
                 "source_tokens_sha256": hashlib.sha256(_reviewed_wire(source_ids)).hexdigest(),
                 "target_tokens_sha256": hashlib.sha256(_reviewed_wire(target_ids)).hexdigest(),
                 "target_identities": _reviewed_decoder_target_identities(row["canonical_ir"])})
+            if digest_omitted:
+                commitments[-1]["model_target_wire_sha256"] = hashlib.sha256(target_json.encode("utf-8")).hexdigest()
         # All rows and both complete output budgets have passed before a caller
         # can obtain this data. No model restore/fit callback exists in this API.
         _reviewed_decoder_need(_reviewed_decoder_tokenizer_contract(tokenizer) == contract,
@@ -1765,7 +1776,7 @@ def _prepare_reviewed_decoder_training_inputs(registry, *, stage_artifact, expec
                        and consumer.reviewed_admission_inputs_sha256(admission_copy) == admission_sha
                        and implementation() == producers,
                        "reviewed decoder preparation inputs, admission or named producers changed during final closure")
-        _reviewed_decoder_need(_reviewed_decoder_source_target_wires(rows, contexts["rows"], selections) == wires,
+        _reviewed_decoder_need(_reviewed_decoder_source_target_wires(rows, contexts["rows"], selections, _target_codec=_target_codec) == wires,
                        "caller-known full input/target relation changed during preparation")
         proof = {"schema": ("reviewed-decoder-training-input-receipt/v4" if _admission_version == "v3" else
                             "reviewed-decoder-training-input-receipt/v3" if component_cycle
@@ -1815,6 +1826,12 @@ def _prepare_reviewed_decoder_training_inputs(registry, *, stage_artifact, expec
         result = {"schema": (REVIEWED_MIXED_DECODER_INPUT_SCHEMA if _admission_version == "v3" else
                              REVIEWED_COMPONENT_DECODER_INPUT_SCHEMA if component_cycle else REVIEWED_DECODER_INPUT_SCHEMA),
                   "records": prepared, "receipt": proof}
+        if digest_omitted:
+            proof.update(schema=REVIEWED_DIGEST_OMITTED_INPUT_RECEIPT_SCHEMA,
+                profile=REVIEWED_DIGEST_OMITTED_INPUT_PROFILE, target_codec=_target_codec,
+                model_target_projection={"schema": "reviewed-digest-omitted-target-projection/v1",
+                    "omitted_field": "typed_expression.content_digest", "other_fields_discarded": False})
+            result["schema"] = REVIEWED_DIGEST_OMITTED_INPUT_SCHEMA
         result["prepared_sha256"] = hashlib.sha256(_reviewed_wire(result)).hexdigest()
         return result
 
@@ -2539,3 +2556,96 @@ def prepare_reviewed_mixed_decoder_continuation_v4(registry, *, admission_profil
         "current_training_authority_supplied_by_complete_preparation": True,
         "historical_positive_authority_replayed": False, "weights_or_optimizer_loaded": False,
         "retired_information_unlearned": False, "qualified": False, "corpus_admitted": False}
+
+
+# Explicit primitive only: existing preparation, targets, prompts and defaults
+# still use complete-reviewed-norm-json/v2. This selector omits one derived AST
+# digest from a new model wire; all semantic/custody fields remain mandatory.
+REVIEWED_DECODER_DIGEST_OMITTED_TARGET_CODEC = "complete-reviewed-norm-digest-omitted-json/v1"
+
+
+def _reviewed_decoder_digest_omitted_codec(target_codec):
+    _reviewed_decoder_need(
+        type(target_codec) is str and target_codec == REVIEWED_DECODER_DIGEST_OMITTED_TARGET_CODEC,
+        "explicit digest-omitted target codec required")
+
+
+def _reviewed_decoder_canonical_formula_target(canonical_ir):
+    """Use the maintained full-nine/formula boundary, without legal authority."""
+    from ...optimizers.logic_theorem_optimizer.legal_ir_semantic_metrics import (
+        evaluate_complete_norm_typed_structure,
+    )
+
+    value = _reviewed_copy(canonical_ir)
+    try:
+        # Both sides are deliberately the offered value: this validates shape
+        # and exact AST canonicality, not reference accuracy or source fidelity.
+        evaluate_complete_norm_typed_structure([{
+            "case_id": "digest-omitted-codec-structural-boundary",
+            "reference": value, "candidate": value, "outcome": "complete",
+        }])
+    except (ValueError, TypeError, KeyError, RecursionError) as exc:
+        raise ReviewedDecoderInputValidationError(
+            "strict canonical full-nine formula target required") from exc
+    return value
+
+
+def encode_reviewed_decoder_digest_omitted_target(canonical_ir, *, target_codec):
+    """Project an exact full target; remove only typed_expression.content_digest.
+
+    This opt-in primitive does not alter an input profile, prepare training
+    records, select a prompt, authenticate custody, or grant legal meaning.
+    """
+    _reviewed_decoder_digest_omitted_codec(target_codec)
+    value = _reviewed_decoder_canonical_formula_target(canonical_ir)
+    expression = value["typed_expression"]
+    _reviewed_decoder_need("content_digest" in expression,
+                           "canonical expression digest required before projection")
+    del expression["content_digest"]
+    return _reviewed_wire(value).decode("utf-8")
+
+
+def assemble_reviewed_decoder_digest_omitted_target(model_wire, *, target_codec):
+    """Compute the one omitted digest; refuse every other AST normalization.
+
+    No reference target or dependency resolver is accepted. IDs, binders,
+    children, roles and custody are the offered values, never generated or
+    repaired. Dependency/context admission remains with its existing owners.
+    """
+    from ...logic.syntax_core.ast import TypedExpression
+
+    _reviewed_decoder_digest_omitted_codec(target_codec)
+    _reviewed_decoder_need(type(model_wire) is str, "ordinary model wire string required")
+    value = _reviewed_json(model_wire.encode("utf-8"))
+    _reviewed_closed(value, _REVIEWED_DECODER_TARGET_FIELDS, "digest-omitted full target")
+    offered = value["typed_expression"]
+    _reviewed_decoder_need(type(offered) is dict and "content_digest" not in offered,
+                           "model wire must omit content_digest entirely")
+    try:
+        expression = TypedExpression.from_dict(offered)
+        _reviewed_decoder_need(expression.is_formula, "formula expression required")
+        assembled = expression.to_dict()
+        projected = dict(assembled)
+        del projected["content_digest"]
+        _reviewed_decoder_need(_reviewed_wire(projected) == _reviewed_wire(offered),
+                               "only the computed content_digest may be added")
+    except (ValueError, TypeError, KeyError, RecursionError) as exc:
+        raise ReviewedDecoderInputValidationError(
+            "strict digest-omitted formula wire required; no repair allowed") from exc
+    value["typed_expression"] = assembled
+    # Apply the unchanged strict from_dict/to_dict boundary with the computed
+    # digest now present. The original model wire itself remains untouched.
+    return _reviewed_decoder_canonical_formula_target(value)
+
+
+REVIEWED_DIGEST_OMITTED_INPUT_SCHEMA = "reviewed-decoder-digest-omitted-training-inputs/v1"
+REVIEWED_DIGEST_OMITTED_INPUT_PROFILE = "complete-reviewed-mixed-digest-omitted-training-inputs/v1"
+REVIEWED_DIGEST_OMITTED_INPUT_RECEIPT_SCHEMA = "reviewed-decoder-digest-omitted-training-input-receipt/v1"
+
+
+def prepare_reviewed_mixed_decoder_digest_omitted_inputs_v1(registry, *, admission_profile, **kwargs):
+    """Explicit projected model wire; full semantic rows/current admission remain."""
+    _reviewed_decoder_need(type(admission_profile) is str and admission_profile == REVIEWED_MIXED_ADMISSION_PROFILE,
+                           "explicit mixed admission V3 required for digest-omitted targets")
+    return _prepare_reviewed_decoder_training_inputs(registry, _admission_version="v3",
+        _target_codec=REVIEWED_DECODER_DIGEST_OMITTED_TARGET_CODEC, **kwargs)
