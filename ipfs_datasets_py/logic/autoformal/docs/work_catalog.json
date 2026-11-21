@@ -18526,6 +18526,240 @@
         "Source/Main evidence populations and runtime qualification remain distinct; publication transfers no runtime authority."
       ],
       "preserved_private_v01_cutoff": "2026-11-21T13:03:30.639720+00:00"
+    },
+    {
+      "id": "world-codec-component39-plus1-normal82-frontier-milestone484-20261121",
+      "root": "artifact_workspace",
+      "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/milestone484-four-guide-private-builder-v01/Root-final-facts-v01.json",
+      "observed_bytes": 11830,
+      "observed_sha256": "b0402d42a5b0aaa371b2a92c613aa3ed39e543f355eacfed37dc0f5c5e6db6d9",
+      "required_for_catalog_check": false,
+      "status": "Source41 strict derived-digest codec installed and full canonical82 PASS; fresh real-asset objective/CLI import integration remains the next gap, no new large-model experiment.",
+      "task_ids": [
+        "LIR-07",
+        "LIR-12",
+        "LIR-13",
+        "LIR-14",
+        "LIR-17",
+        "LIR-19",
+        "LIR-20"
+      ],
+      "component_ids": [
+        "counted-threshold-target-factory",
+        "native-family-lean-renderer",
+        "reviewed-decoder-numerical-worker",
+        "reviewed-component-cycle-preparation",
+        "reviewed-evaluation-and-retention"
+      ],
+      "scope": "Frozen milestone484 worldwideLegalIR→Lean4 software frontier; original39PASS/1FAIL plus corrected1PASS remain distinct from fullcanonical normal82 actual outcome. No model/legal/convergence promotion.",
+      "observations": {
+        "schema": "Root-frozen-world-LegalIR-Lean-milestone484-facts/v1",
+        "milestone": 484,
+        "final_factual_cutoff": true,
+        "cutoff_utc": "2026-11-21T14:28:56.257302+00:00",
+        "scope": "Entire world legal corpus → source-grounded LegalIR → Lean4; U.S. Code pilot. Component software qualification is separate from legal meaning and model quality.",
+        "phase5_frontier_status": "Source41 strict derived-digest codec installed and full canonical82 PASS; fresh real-asset objective/CLI import integration remains the next gap, no new large-model experiment.",
+        "normal82": {
+          "outcome": "PASS",
+          "tests": 82,
+          "passed": 82,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "all_actual_custody_closed": true,
+          "actual_result_references": [
+            {
+              "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/installed-reviewed-digest-omitted-codec82-component39-plus1-three-lane-preparation-v02/actual-closed-normal-Source41-codec82-three-lane-qualification-v01.json",
+              "bytes": 20380,
+              "sha256": "080eb866072b1b69aac9f2a795649bb298008fd550282b78bd7fdf265cae72f6"
+            }
+          ],
+          "lane_unique_counts": [
+            25,
+            11,
+            46
+          ],
+          "node_overlap_count": 0,
+          "function_count": 26,
+          "canonical_three_post_sha256s": {
+            "worker": "65d55a34f097a4b673464ef59b87942274e65eb5083ea79d01759f8df16372f2",
+            "inputs": "7fbcfeb40e6f0d68537d0601169fbc208c3b6ca36273d786a85d876720323afb",
+            "test": "e360d8df4dda92f2efeb4d4416555cc3ea4d2545c70e225169ea866fa5ceecf9"
+          },
+          "per_phase_binding_stages": [
+            "initial",
+            "loaded",
+            "collection",
+            "closing"
+          ],
+          "Source_fence_count": 18,
+          "Source_fence_sha256": "ff8a81d8061870e00af920a205380686e7ade850f282d9014467ce4dad17a083",
+          "actual_run_SDK_seconds": [
+            462.105129,
+            467.702106,
+            474.825287
+          ],
+          "Root_independent_readback_tool": "5c32e0",
+          "scope": "Normal physical current Source41 imports and conftests; 42 primitive+40 integration cases. Tiny Torch and controlled-output software tests; not real-asset model-quality, legal-review or convergence evidence."
+        },
+        "component_evidence": {
+          "original_private40": {
+            "passed": 39,
+            "failures": 1,
+            "actual_report": {
+              "bytes": 239372,
+              "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/private-reviewed-digest-omitted-vertical-integration-focused40-existing-owner-preparation-v01/output-v01/complete-reviewed-digest-omitted-integration40-GREEN-existing-owner-report.json",
+              "sha256": "ab1b869f9ef5e8b59592fdcd8e46400d59b24cdb085a1b79a471c9aa3281ce59"
+            },
+            "failed_node": "test_digest_omitted_vertical_generation_keeps_raw_wire_and_strict_assembly[incomplete]"
+          },
+          "corrected_private1": {
+            "passed": 1,
+            "failures": 0,
+            "actual_report": {
+              "bytes": 85262,
+              "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/private-reviewed-digest-omitted-integration-corrected1-existing-owner-preparation-v01/output-v01/complete-private-reviewed-digest-omitted-integration-corrected1-existing-owner-report.json",
+              "sha256": "4cb7445c96da0448f379265f7f28c04174edd77edcdd8c350c4a4ec6f83c0b2c"
+            },
+            "actual_raw_JUnit": {
+              "bytes": 456,
+              "logical_name": "junit.xml",
+              "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/private-reviewed-digest-omitted-integration-corrected1-existing-owner-preparation-v01/output-v01/green-run-result0-output1.bin",
+              "sha256": "2c47213b990132088285c50d0723a2bf53d4f918f43132f5ba27c9740e38b1a7"
+            },
+            "Root_raw_JUnit_readback": "2d919b"
+          },
+          "paired_evidence": {
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/private-reviewed-digest-omitted-integration-corrected1-existing-owner-preparation-v01/actual-closed-original39-known1FAIL-plus-corrected1PASS-paired-evidence-v01.json",
+            "bytes": 7054,
+            "sha256": "f5a91c6d79e1bb07b50893d01df3c0fb0ba32e295e4208a52b2c9443574d1870"
+          },
+          "full_corrected_private40_executed": false
+        },
+        "source41_codec_installation": {
+          "actual_install_closed": true,
+          "actual_binding": {
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/reviewed-digest-omitted-integration-three-file-CAS-v01/actual-post-reviewed-codec-integration-Source-and-index-binding-v01.json",
+            "bytes": 2106,
+            "sha256": "20da05bb845d6b497db76a656bd6c685616caec6b52ffea3b896abdb6e3a77d2"
+          },
+          "changed_maintained_paths": [
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py",
+            "ipfs_datasets_py/logic/autoformal/training_cycle_inputs.py",
+            "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py"
+          ],
+          "old_source_identities_and_original_checkpoints_retained": true,
+          "original_TRAIN14_objective_migration_permitted": false
+        },
+        "producer_nullable_text_fix": {
+          "original_unrun_worker_sha256": "1336a78bd63b28af78ab42a467f503c671b1823e5f56e2f2f83d536e635fd7fb",
+          "failure_scope": "Exact AST stdlib reproduction: generated_text=None on abstained/incomplete/invalid-no-text caused AttributeError in new producer bookkeeping. Original candidate was not adopted or run as a project cohort.",
+          "fix": "Retain null text and null raw-text hash, preserve actual strings/token IDs, hash assembled candidate only for complete output.",
+          "corrected_worker_sha256": "65d55a34f097a4b673464ef59b87942274e65eb5083ea79d01759f8df16372f2",
+          "owning_nullable_disposition_cases": 5
+        },
+        "incomplete_fixture_correction": {
+          "descriptor": {
+            "path": "/tmp/reviewed-digest-omitted-incomplete-fixture-test-only-private-v03/descriptor.json",
+            "bytes": 3155,
+            "sha256": "352453cb721acff1652e84fe67ef7ec57712d20daf299354e35ff6c8de0c1011"
+          },
+          "diagnosis": "Backend intentionally decodes text only at EOS. The failing test incorrectly expected decoded partial text.",
+          "test_only_change": "Expect None, require exact partial token prefix/no EOS, null candidate and explicit incomplete reason; preserve other assertions and product bytes.",
+          "Root_static_readback": "c1e58b",
+          "canonical82_includes_all_four_parameters_of_the_corrected_function": true
+        },
+        "unchanged_science": {
+          "new_large_checkpoint_training_or_inference_experiment": false,
+          "historical_fixed_TRAIN_T3_scalar_means": [
+            0.9662747780481974,
+            0.7533335487047831
+          ],
+          "historical_equal_record_scalar_reduction_percent": 22.037337,
+          "historical_measurement_updates": 0,
+          "historical_model_steps": [
+            0,
+            3
+          ],
+          "token_weighted_CE_or_NLL_proved": false,
+          "convergence_proved": false,
+          "Q3_completion_per_conditioning_arm": "0/3 on the same three Q3 rows, not six unique rows",
+          "independent_real_legal_reviews": 0,
+          "source_faithfulness_accuracy": "unknown",
+          "world_corpus_conversion_complete": false,
+          "historical_quantity_Lean_DATA": "64 empty-axiom reports,24 independent expanded type assignments,2 intended mismatch refusals; unchanged math qualification separate from decoder software."
+        },
+        "target_projection_DATA": {
+          "report": {
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/same-TRAIN14-digest-omitted-target-comparison-DATA-v01/comparison-report-v02.json",
+            "bytes": 10636,
+            "sha256": "ef2797d7cf91f8646d5ffcbd3ff7bdeb7635151d46cc7b6aa18f18695b529258"
+          },
+          "fictional_TRAIN_rows": 3,
+          "only_removed_field": "typed_expression.content_digest",
+          "bytes_removed_per_target": 84,
+          "bytes_removed_total": 252,
+          "non_digest_semantics_IDs_context_source_custody_and_original_rows_unchanged": true,
+          "token_savings_or_model_quality_measured": false
+        },
+        "existing_masked_retrieval_path": {
+          "report": {
+            "path": "/tmp/Phase4-existing-masked-contrastive-published-Main-integration-map-v01/current-Source40-owner-map-v02.json",
+            "bytes": 5725,
+            "sha256": "0340932c33e94af5ecf419db06a26e04842905f0867932b3e320f5a7c9dc7ab3"
+          },
+          "finding": "Existing reviewed V4 masks already connect to symmetric masked Adam fitting; no duplicate bridge needed. Actual GTE producer computation/benefit and heldout retrieval remain separate scientific evidence."
+        },
+        "real_asset_route_gap": {
+          "report": {
+            "path": "/tmp/current-codec-local-vendor-importer-flow-gap-check-v01/report.json",
+            "bytes": 8837,
+            "sha256": "d553bf3f7307755f9914662599ff7a658df227cd5aadcc287523d7b5c8fcacac"
+          },
+          "known_gap": "Historical sealed vendor-import program omits target_codec and fixes old complete ChatML/recipe v3; Source rebinding alone does not select the new objective.",
+          "new_recipe_literal": "reviewed-local-digest-omitted-decoder-recipe/v1",
+          "downstream_inference_request_consumer_readiness": "under current-owner inspection; not established by changing two import-program literals",
+          "new_initializer_trainer_or_backend_selected": false
+        },
+        "next_existing_owner_actions": [
+          "Update the same local-vendor import program/template for an explicit new objective before initialization, and resolve the actual maintained inference request/loader/producer dispatch gap from its current owner. Preserve old objective/pair checks.",
+          "Qualify the corrected existing real-asset route; bind actual current vendor/tokenizer/license/config/admission/registry facts before selecting a fresh pretrained lineage with empty Adam/step0.",
+          "Keep full canonical T3 rows and source context; record fit, source-conditioned heldout output, full typed-AST/semantic fidelity and proof results separately. No TRAIN14 retag.",
+          "Adopt these exact maintained guide updates and publish only qualified codec library changes/documents; publishing does not establish merged Main runtime or model quality."
+        ],
+        "publication_at_cutoff": {
+          "closed_receipt": {
+            "path": "/tmp/v5-quantity-milestone483-combined-publication-and-ledger-v01/receipt.json",
+            "bytes": 3754,
+            "sha256": "d8d12f2b304483a5ee200c2885d44e5eea8245eb710a6d0892ed1a03ac2d657c"
+          },
+          "verified_R": "9865f4b8e722271dfb7706b59dd72e43e80a21a7",
+          "verified_H": "7121b42bbca3bdf3f0ab8b1f730bd47dc5bb0a93",
+          "verified_root": "3db3d66d305c098cc7c9b4cbb1a7d0007e18031a",
+          "prepared_unpublished_codec_commit": "ab709886ec96a54e406c23b5b374f8d09caf3489",
+          "merged_Main_runtime_qualified": false
+        },
+        "new_large_checkpoint_model_experiment_claimed": false,
+        "convergence_claimed": false,
+        "new_real_legal_review_claimed": false,
+        "whole_eight_phase_goal_complete": false,
+        "no_Source_Git_model_or_runtime_action_by_this_fact_write": true
+      },
+      "catalog_population": {
+        "kind": "Main4",
+        "before": 478,
+        "after": 479,
+        "new_index": 478,
+        "Source_catalog_after": 484,
+        "Main_catalog_after": 479
+      },
+      "qualification_limits": [
+        "Worldwide legal corpus→source-grounded LegalIR→Lean4 remains the goal; U.S.Code is a pilot. User-goalPhase5 differs from historical programmePhase05, whose task states remain unchanged.",
+        "Original private40 is39PASS/known1FAIL plus a separate corrected1PASS. No full corrected-private40 run or cross-source qualification transfer is claimed.",
+        "The actual normal82 outcome is copied from Root final facts, including failure/partial evidence; expected82 alone never becomes a passed count.",
+        "Actual Source41 installation, producer None-text bookkeeping repair and incomplete-output test-only correction remain distinct software evidence.",
+        "No fresh scientific model experiment, model-quality, heldout completion, legal-review, world-law autoformalization or convergence result is created by this guide update."
+      ]
     }
   ]
 }

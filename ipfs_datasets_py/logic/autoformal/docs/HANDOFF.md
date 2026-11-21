@@ -2842,3 +2842,63 @@ The digest-omitted primitive retains **42 private PASS** cases. Only derived `ty
 Science is unchanged: the same three fictional TRAIN read-only scalar means remain **0.966274778 → 0.753333549**, **22.037337%** lower; historical measurement updates0, original steps0/3. This is not token-weighted CE/NLL or convergence. Heldout completion remains **0/3 per conditioning arm on the same three Q3 rows**, not six unique cases. Independent real legal reviews remain0; no world-corpus conversion, legal-meaning, generalization or full eight-phase completion is established.
 
 Next: qualify corrected private integration40, then perform its exact versioned Source transition before any fresh baseline. Latest published R remains `d3b4760a` in the frozen Root facts; no new qualified chunk is published or merged-Main runtime inferred here. The [milestone483 catalog record](work_catalog.json#/selected_evidence/477) binds the exact v2 facts and preserves v1 as an immutable private variant. Catalog population: **Main477→478/index477; Source483/index482 remains a separate catalog**. All24 task records,126 components, prior raw evidence objects and all old Markdown bytes remain exact. This private proposal performs no Source write, report-body read, Git operation, SDK/test/Native or model execution.
+
+## Latest frontier — milestone484, 2026-11-21
+
+Frozen Root factual cutoff: **2026-11-21T14:28:56.257302+00:00**. The goal remains the entire world legal corpus → source-grounded LegalIR → Lean4; U.S.Code is a pilot. **User-goal Phase5** remains distinct from historical programme **Phase05**. All24 task states,126 components, hierarchy and earlier history remain unchanged.
+
+**Canonical normal82 factual outcome: PASS.** Expected82 never substitutes for actual collection/execution. Root's exact final normal82 record follows, retaining failure or partial evidence when present:
+
+```json
+{
+  "outcome": "PASS",
+  "tests": 82,
+  "passed": 82,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "all_actual_custody_closed": true,
+  "actual_result_references": [
+    {
+      "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/installed-reviewed-digest-omitted-codec82-component39-plus1-three-lane-preparation-v02/actual-closed-normal-Source41-codec82-three-lane-qualification-v01.json",
+      "bytes": 20380,
+      "sha256": "080eb866072b1b69aac9f2a795649bb298008fd550282b78bd7fdf265cae72f6"
+    }
+  ],
+  "lane_unique_counts": [
+    25,
+    11,
+    46
+  ],
+  "node_overlap_count": 0,
+  "function_count": 26,
+  "canonical_three_post_sha256s": {
+    "worker": "65d55a34f097a4b673464ef59b87942274e65eb5083ea79d01759f8df16372f2",
+    "inputs": "7fbcfeb40e6f0d68537d0601169fbc208c3b6ca36273d786a85d876720323afb",
+    "test": "e360d8df4dda92f2efeb4d4416555cc3ea4d2545c70e225169ea866fa5ceecf9"
+  },
+  "per_phase_binding_stages": [
+    "initial",
+    "loaded",
+    "collection",
+    "closing"
+  ],
+  "Source_fence_count": 18,
+  "Source_fence_sha256": "ff8a81d8061870e00af920a205380686e7ade850f282d9014467ce4dad17a083",
+  "actual_run_SDK_seconds": [
+    462.105129,
+    467.702106,
+    474.825287
+  ],
+  "Root_independent_readback_tool": "5c32e0",
+  "scope": "Normal physical current Source41 imports and conftests; 42 primitive+40 integration cases. Tiny Torch and controlled-output software tests; not real-asset model-quality, legal-review or convergence evidence."
+}
+```
+
+The original private40 remains **39PASS/known1FAIL** and the exact corrected incomplete-case retry is a separate **1PASS** result. There was **no full corrected-private40 run**. The canonical82 cohort is a new execution scope; old private results and timing data do not transfer qualification. Source41's three-file codec installation is separately bound by Root's final facts.
+
+Two software corrections remain distinct: the original producer bookkeeping attempted to hash `generated_text=None`; the corrected worker preserves a null hash for absent text. The later incomplete-output **test-only** correction asserts absent final text plus retained partial token IDs/noEOS/reason, without changing worker65d/input7f behavior. Neither changes the semantic fields into a reference target.
+
+No new scientific model experiment, model-quality, legal-review or convergence result is asserted here. Historical fictionalTRAIN fit, heldoutQ3 completion, semantic fidelity and Lean proof evidence retain their own denominators/scopes in the exact facts. Fresh-codec baseline initialization remains an existing-owner task; no oldTRAIN14 pair or Adam state is retagged as a changed objective.
+
+The [milestone484 record](work_catalog.json#/selected_evidence/478) binds Root's exact final JSON. Catalog population: **Main478→479/index478;Source484/index483 is a separate Source pointer**. All prior raw evidence objects and all old Markdown bytes remain exact. These are private guide postimages; no Source write, publication or runtime authority follows.

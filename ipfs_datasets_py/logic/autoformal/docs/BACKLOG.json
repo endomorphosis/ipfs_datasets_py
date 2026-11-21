@@ -318,295 +318,172 @@
       "preservation": "Additive documentary note only; existing Main480 note, task contracts, hierarchy, statuses, dependencies, acceptance criteria, frontiers and earlier metadata remain byte-exact."
     },
     "current_user_goal_phase5_evidence": {
-      "evidence_id": "world-quantity-constructive-proof-and-codec-decoder-frontier-milestone483-20261121",
-      "evidence_home": "ipfs_datasets_py/logic/autoformal/docs/work_catalog.json#/selected_evidence/477",
-      "cutoff_utc": "2026-11-21T13:30:03+00:00",
-      "user_goal_phase": "User-goal Phase5 source-conditioned decoder/versioned continuation and corrected codec integration owning validation; distinct from historical programme Phase05. Programme/task states unchanged.",
-      "goal_scope": "Worldwide source-grounded LegalIR to Lean4; USCode pilot, full eight-phase goal remains active",
-      "status": "Source38_normal36_CLOSED_Source39_quantity_math447_CLOSED_codec40_PRIVATE_SELECTED_UNRUN",
-      "source39_binding": {
-        "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/positive-quantity-four-file-CAS-v01/actual-post-positive-quantity-Source-and-index-binding-v01.json",
-        "bytes": 1994,
-        "sha256": "af5be654062d1483f01c1781c14053b2e1572ce2ec25ba50036204cee8f6926a",
-        "full9": {
-          "st_dev": "66306",
-          "st_ino": "69337930",
-          "st_mode": "33204",
-          "st_nlink": "1",
-          "st_uid": "1000",
-          "st_gid": "1000",
-          "st_size": "1994",
-          "st_mtime_ns": "1795267239787042414",
-          "st_ctime_ns": "1795267239787042414"
-        }
-      },
-      "numeric_Source5_pins_unchanged": {
-        "worker": "8b49917fc9862b4c89bcfa3d037a1066288d06f276e6735e43cc417a539f9aba",
-        "inputs": "a6883078a59ca6e3a5ae9a5fc69da5b43d1d513a3701a1d9dfe2c38b714d7049",
-        "test": "62c19ebbddf2a03bb2c05362d2d044d5368202f1cfcee486d9c65ea4bd82c2ee"
-      },
-      "closed_progress": "NormalSource38 worker/test cohort36uniquePASS closes all3lanes. Quantity4installed atSource39; whole2math owning files447uniquePASS(121threshold/326preservation). Rootcb28e8 verifies24equalfences/actualmodulebindings/rawJUnit/cleanup. Native8DATA64empty/24expandedtypes/2negatives remains separate. Codec42privateprimitive passed; correctedintegrationv02owning40 selected/unrun, no Sourceadoption or freshbaseline.",
-      "installed_normal36": {
-        "state": "CLOSED_NORMAL_UNION36_GREEN",
-        "canonical_Source_application": true,
-        "report": {
-          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/installed-TRAIN-resume-v5-corrected36-three-lane-preparation-v02/actual-closed-normal-Source38-corrected36-three-lane-qualification-v01.json",
-          "bytes": 13800,
-          "sha256": "3b65262bb60d30fec7cfa90bb89dd983a677a5dd38a52369c446c1f4c4c8bb9f",
-          "full9": {
-            "st_dev": "66306",
-            "st_ino": "69337785",
-            "st_mode": "33204",
-            "st_nlink": "1",
-            "st_uid": "1000",
-            "st_gid": "1000",
-            "st_size": "13800",
-            "st_mtime_ns": "1795267119842480308",
-            "st_ctime_ns": "1795267119842480308"
-          }
-        },
-        "unique": 36,
-        "passed": 36,
+      "evidence_id": "world-codec-component39-plus1-normal82-frontier-milestone484-20261121",
+      "evidence_home": "ipfs_datasets_py/logic/autoformal/docs/work_catalog.json#/selected_evidence/478",
+      "cutoff_utc": "2026-11-21T14:28:56.257302+00:00",
+      "user_goal_phase": "User-goalPhase5 source-conditioned decoder/fresh-codec preparation; programmePhase05/task states unchanged.",
+      "goal_scope": "Entire world legal corpus→source-grounded LegalIR→Lean4; U.S.Code pilot.",
+      "status": "Source41 strict derived-digest codec installed and full canonical82 PASS; fresh real-asset objective/CLI import integration remains the next gap, no new large-model experiment.",
+      "normal82": {
+        "outcome": "PASS",
+        "tests": 82,
+        "passed": 82,
         "failures": 0,
         "errors": 0,
         "skipped": 0,
-        "lane_cases": [
-          8,
-          10,
-          18
-        ],
-        "all_Source_resource_SDK_process_cleanup_confirmed": true,
-        "all18_equal_Source_fences_sha256": "de0cb58bac9a7d529b45baa1565684d61eb8907dbdbf6ff8444bae696e3a4ea6",
-        "worker_sha256": "8b49917fc9862b4c89bcfa3d037a1066288d06f276e6735e43cc417a539f9aba",
-        "inputs_sha256": "a6883078a59ca6e3a5ae9a5fc69da5b43d1d513a3701a1d9dfe2c38b714d7049",
-        "test_sha256": "62c19ebbddf2a03bb2c05362d2d044d5368202f1cfcee486d9c65ea4bd82c2ee",
-        "qualification_scope": "Normal software cohort on exact Source38 worker/test; does not establish large-checkpoint quality, new training or legal fidelity."
-      },
-      "quantity": {
-        "canonical_adoption": true,
-        "empty_axiom_reports": 64,
-        "expanded_type_assignments": 24,
-        "normal_owning_case_count_hint": 447,
-        "positive_projects": 8,
-        "quantities": [
-          "at_least",
-          "exactly"
-        ],
-        "report": {
-          "bytes": 21210,
-          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/counted-quantity-constructive-matcher-one-case-Native434-existing-owner-preparation-v04/actual-closed-eight-case-constructive-quantity-Native434-qualification-v01.json",
-          "sha256": "af58a0f688d8e44cc5440718e91e2cd794d8a6db31a2c94f10e8b3e03de662e3"
-        },
-        "retained_failed_Prop_and_Bool_smokes": "Each compiled;6of8empty,2propext; namedinstance diagnostic isolated generated sparse matcher; direct List/Sum eliminators fixed it without axioms policy change",
-        "thresholds": [
-          0,
-          1,
-          2,
-          4
-        ],
-        "wrong_Fin3_for_n4_refusals": 2,
-        "Native_evidence_remains_eight_mathematical_DATA_projects": true,
-        "Source_version": 39,
-        "Source_binding": {
-          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/positive-quantity-four-file-CAS-v01/actual-post-positive-quantity-Source-and-index-binding-v01.json",
-          "bytes": 1994,
-          "sha256": "af5be654062d1483f01c1781c14053b2e1572ce2ec25ba50036204cee8f6926a",
-          "full9": {
-            "st_dev": "66306",
-            "st_ino": "69337930",
-            "st_mode": "33204",
-            "st_nlink": "1",
-            "st_uid": "1000",
-            "st_gid": "1000",
-            "st_size": "1994",
-            "st_mtime_ns": "1795267239787042414",
-            "st_ctime_ns": "1795267239787042414"
-          }
-        },
-        "installed_four": [
+        "all_actual_custody_closed": true,
+        "actual_result_references": [
           {
-            "path": "ipfs_datasets_py/logic/autoformal/legal_counted_frame_threshold_v2.py",
-            "bytes": 43904,
-            "sha256": "15e8555004899fda84c47d2fdf998dd90eb44edc2edc64f1e2a172df3a6b7875"
-          },
-          {
-            "path": "ipfs_datasets_py/logic/autoformal/legal_native_ast_preservation.py",
-            "bytes": 203553,
-            "sha256": "597eec98e2e457351a4a679f1144f21eecca702e0d51d07a239fd1a7722cda2f"
-          },
-          {
-            "path": "tests/unit/logic/autoformal/test_legal_counted_frame_threshold_v2.py",
-            "bytes": 43825,
-            "sha256": "72ccfe9489cd8cecb7c856f9721c5c71f49be948c8017eadebc9623cd8bae08c"
-          },
-          {
-            "path": "tests/unit/logic/autoformal/test_legal_native_ast_preservation.py",
-            "bytes": 108149,
-            "sha256": "b96964becab3834f95cc7c7e7c9b0eb6feb44b09d748a7df796a821af467cda6"
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/installed-reviewed-digest-omitted-codec82-component39-plus1-three-lane-preparation-v02/actual-closed-normal-Source41-codec82-three-lane-qualification-v01.json",
+            "bytes": 20380,
+            "sha256": "080eb866072b1b69aac9f2a795649bb298008fd550282b78bd7fdf265cae72f6"
           }
         ],
-        "normal_owning_pytest": {
-          "report": {
-            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/installed-positive-quantity-two-whole-owning-files-existing-owner-preparation-v01/output-v01/complete-positive-quantity-math-two-whole-owning-files-existing-owner-report.json",
-            "bytes": 3357450,
-            "sha256": "b372103d03456e8019eb61d635768c1e3b0d04dce5f911c9d07b48b01c1f4091"
-          },
-          "raw_JUnit_metadata": {
-            "bytes": 220240,
-            "sha256": "db9c646b27ead336d6fddaf72423afad67ab298c697bcaea498869c5fdde45a0",
-            "locator": "Exact raw JUnit reference inside the Root/Reader-authenticated math report; report body not reread by this author."
-          },
-          "unique": 447,
-          "passed": 447,
-          "threshold": 121,
-          "preservation": 326,
-          "failures": 0,
-          "errors": 0,
-          "skipped": 0,
-          "all_Source_resource_SDK_process_cleanup_confirmed": true,
-          "equal_Source_fences": 6,
-          "run_seconds": 31.112
-        },
-        "Native_DATA_and_normal_software_cohorts_are_separate": true,
-        "whole_world_corpus_public_proof_or_legal_meaning_qualified": false
-      },
-      "codec": {
-        "actual_TRAIN3_has_derived_AST_digest": true,
-        "actual_primitive_pytest_passed": 42,
-        "canonical_adoption": false,
-        "current_integration_state": "PRIVATE_CORRECTED_V02_OWNING40_SELECTED_UNRUN",
-        "integration_design": {
-          "bytes": 7752,
-          "path": "/tmp/reviewed-digest-omitted-codec-integration-design-v01/plan.md",
-          "sha256": "e2574f92a37e3e2894b8a33de53d2e503b2cbdeecd8168a71d34a752b71855b8"
-        },
-        "node_or_expression_IDs_regenerated": false,
-        "only_derived_field_omitted": "typed_expression.content_digest",
-        "primitive": {
-          "bytes": 5903,
-          "path": "/tmp/reviewed-digest-omitted-codec-private-v02/descriptor.json",
-          "sha256": "57523dcf09b690f961ef91e0f76f0d289ca9663869a0030797a557fbfd3c15c5"
-        },
-        "producer_integration": false,
-        "report": {
-          "bytes": 194140,
-          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/private-reviewed-digest-omitted-codec-focused42-existing-owner-preparation-v01/output-v01/complete-reviewed-digest-omitted-codec42-GREEN-existing-owner-report.json",
-          "sha256": "e8f6bb1f09154e5c60fcd3feb28d0456922719a2e40feb36cc20140c4d9c3557"
-        },
-        "scientific_next_branch": "fresh explicitly versioned pretrained baseline; no oldTRAIN14 objective-changing retag",
-        "semantic_or_custody_fields_removed": false,
-        "integration_review": {
-          "independent_input_job_loader_static_review": "accepted within bounded static scope",
-          "Root_generation_producer_review": "original1336 None-text bookkeeping defect retained; corrected v02 conditional-null hash and five appended producer controls STATIC CLEAR",
-          "Root_corrected_review_tool": "b8aeca",
-          "original_1336_candidate": "UNRUN_UNADOPTED_HELD_HISTORICAL_VARIANT",
-          "integrated_owning_tests": "40 SELECTED_UNRUN_AT_CUTOFF;30new+10retained; tinyTorch/controlled output fixtures, no large checkpoint experiment",
-          "model_quality_or_semantic_claim": false
-        },
-        "corrected_integration_descriptor": {
-          "path": "/tmp/reviewed-digest-omitted-vertical-integration-private-v02/descriptor.json",
-          "bytes": 7118,
-          "sha256": "716b97abf0425b9dc4da18714d806fa80f23c5f97fbd6450ad758ccca3c38651"
-        },
-        "corrected_private_pins": {
-          "inputs": "7fbcfeb40e6f0d68537d0601169fbc208c3b6ca36273d786a85d876720323afb",
+        "lane_unique_counts": [
+          25,
+          11,
+          46
+        ],
+        "node_overlap_count": 0,
+        "function_count": 26,
+        "canonical_three_post_sha256s": {
           "worker": "65d55a34f097a4b673464ef59b87942274e65eb5083ea79d01759f8df16372f2",
-          "test": "97041e5c5e2270b87d0c22f8046b1f155990f1af259017609f76a08f5ed51781"
+          "inputs": "7fbcfeb40e6f0d68537d0601169fbc208c3b6ca36273d786a85d876720323afb",
+          "test": "e360d8df4dda92f2efeb4d4416555cc3ea4d2545c70e225169ea866fa5ceecf9"
         },
-        "corrected_selector_inventory": {
-          "path": "/tmp/reviewed-digest-omitted-vertical-integration-private-v02/selector-inventory.json",
-          "bytes": 9192,
-          "sha256": "7c52db8e956d67ee022764661e7a518eef2831f9f6be44d7b447d721c29ba154"
-        }
+        "per_phase_binding_stages": [
+          "initial",
+          "loaded",
+          "collection",
+          "closing"
+        ],
+        "Source_fence_count": 18,
+        "Source_fence_sha256": "ff8a81d8061870e00af920a205380686e7ade850f282d9014467ce4dad17a083",
+        "actual_run_SDK_seconds": [
+          462.105129,
+          467.702106,
+          474.825287
+        ],
+        "Root_independent_readback_tool": "5c32e0",
+        "scope": "Normal physical current Source41 imports and conftests; 42 primitive+40 integration cases. Tiny Torch and controlled-output software tests; not real-asset model-quality, legal-review or convergence evidence."
       },
-      "Root_independent_readback": {
-        "tool": "cb28e8",
-        "normal3_report_and_raw_JUnit_SHA_bytes_verified": true,
-        "normal_cases": "8+10+18=36 disjoint PASS/0FES",
-        "math_cases": "447 unique PASS/0FES =121threshold+326preservation",
-        "per_phase_initial_loaded_collection_closing_module_SHA_sets_match": true,
-        "equal_source_fences": {
-          "normal": 18,
-          "math": 6,
-          "total": 24
+      "component_evidence": {
+        "original_private40": {
+          "passed": 39,
+          "failures": 1,
+          "actual_report": {
+            "bytes": 239372,
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/private-reviewed-digest-omitted-vertical-integration-focused40-existing-owner-preparation-v01/output-v01/complete-reviewed-digest-omitted-integration40-GREEN-existing-owner-report.json",
+            "sha256": "ab1b869f9ef5e8b59592fdcd8e46400d59b24cdb085a1b79a471c9aa3281ce59"
+          },
+          "failed_node": "test_digest_omitted_vertical_generation_keeps_raw_wire_and_strict_assembly[incomplete]"
         },
-        "SDK_flags_clean_process_resource_Source_cleanup_confirmed": true,
-        "report_bodies_reread_by_this_author": false
+        "corrected_private1": {
+          "passed": 1,
+          "failures": 0,
+          "actual_report": {
+            "bytes": 85262,
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/private-reviewed-digest-omitted-integration-corrected1-existing-owner-preparation-v01/output-v01/complete-private-reviewed-digest-omitted-integration-corrected1-existing-owner-report.json",
+            "sha256": "4cb7445c96da0448f379265f7f28c04174edd77edcdd8c350c4a4ec6f83c0b2c"
+          },
+          "actual_raw_JUnit": {
+            "bytes": 456,
+            "logical_name": "junit.xml",
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/private-reviewed-digest-omitted-integration-corrected1-existing-owner-preparation-v01/output-v01/green-run-result0-output1.bin",
+            "sha256": "2c47213b990132088285c50d0723a2bf53d4f918f43132f5ba27c9740e38b1a7"
+          },
+          "Root_raw_JUnit_readback": "2d919b"
+        },
+        "paired_evidence": {
+          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/private-reviewed-digest-omitted-integration-corrected1-existing-owner-preparation-v01/actual-closed-original39-known1FAIL-plus-corrected1PASS-paired-evidence-v01.json",
+          "bytes": 7054,
+          "sha256": "f5a91c6d79e1bb07b50893d01df3c0fb0ba32e295e4208a52b2c9443574d1870"
+        },
+        "full_corrected_private40_executed": false
+      },
+      "source41_codec_installation": {
+        "actual_install_closed": true,
+        "actual_binding": {
+          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/reviewed-digest-omitted-integration-three-file-CAS-v01/actual-post-reviewed-codec-integration-Source-and-index-binding-v01.json",
+          "bytes": 2106,
+          "sha256": "20da05bb845d6b497db76a656bd6c685616caec6b52ffea3b896abdb6e3a77d2"
+        },
+        "changed_maintained_paths": [
+          "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py",
+          "ipfs_datasets_py/logic/autoformal/training_cycle_inputs.py",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py"
+        ],
+        "old_source_identities_and_original_checkpoints_retained": true,
+        "original_TRAIN14_objective_migration_permitted": false
+      },
+      "producer_nullable_text_fix": {
+        "original_unrun_worker_sha256": "1336a78bd63b28af78ab42a467f503c671b1823e5f56e2f2f83d536e635fd7fb",
+        "failure_scope": "Exact AST stdlib reproduction: generated_text=None on abstained/incomplete/invalid-no-text caused AttributeError in new producer bookkeeping. Original candidate was not adopted or run as a project cohort.",
+        "fix": "Retain null text and null raw-text hash, preserve actual strings/token IDs, hash assembled candidate only for complete output.",
+        "corrected_worker_sha256": "65d55a34f097a4b673464ef59b87942274e65eb5083ea79d01759f8df16372f2",
+        "owning_nullable_disposition_cases": 5
+      },
+      "incomplete_fixture_correction": {
+        "descriptor": {
+          "path": "/tmp/reviewed-digest-omitted-incomplete-fixture-test-only-private-v03/descriptor.json",
+          "bytes": 3155,
+          "sha256": "352453cb721acff1652e84fe67ef7ec57712d20daf299354e35ff6c8de0c1011"
+        },
+        "diagnosis": "Backend intentionally decodes text only at EOS. The failing test incorrectly expected decoded partial text.",
+        "test_only_change": "Expect None, require exact partial token prefix/no EOS, null candidate and explicit incomplete reason; preserve other assertions and product bytes.",
+        "Root_static_readback": "c1e58b",
+        "canonical82_includes_all_four_parameters_of_the_corrected_function": true
       },
       "unchanged_science": {
-        "convergence_established": false,
-        "heldout_Q3_complete_per_conditioning_arm": [
-          0,
-          3
-        ],
-        "independent_real_legal_reviews": 0,
-        "matched_three_TRAIN_mean_native_scalar_loss": [
+        "new_large_checkpoint_training_or_inference_experiment": false,
+        "historical_fixed_TRAIN_T3_scalar_means": [
           0.9662747780481974,
           0.7533335487047831
         ],
-        "new_large_model_training_or_generation": false,
-        "relative_reduction_percent": 22.037337016447808,
-        "same_three_heldouts_not_six_unique": true,
-        "world_corpus_converted": false
+        "historical_equal_record_scalar_reduction_percent": 22.037337,
+        "historical_measurement_updates": 0,
+        "historical_model_steps": [
+          0,
+          3
+        ],
+        "token_weighted_CE_or_NLL_proved": false,
+        "convergence_proved": false,
+        "Q3_completion_per_conditioning_arm": "0/3 on the same three Q3 rows, not six unique rows",
+        "independent_real_legal_reviews": 0,
+        "source_faithfulness_accuracy": "unknown",
+        "world_corpus_conversion_complete": false,
+        "historical_quantity_Lean_DATA": "64 empty-axiom reports,24 independent expanded type assignments,2 intended mismatch refusals; unchanged math qualification separate from decoder software."
       },
-      "historical_v01_live_observation": {
-        "actual_owned_sessions": [
-          70702,
-          5791,
-          5897
-        ],
-        "inputs_sha256": "a6883078a59ca6e3a5ae9a5fc69da5b43d1d513a3701a1d9dfe2c38b714d7049",
-        "lane_cases": [
-          8,
-          10,
-          18
-        ],
-        "last_observed_active_CPU_seconds_approx": [
-          676,
-          678,
-          677
-        ],
-        "not_a_PASS_or_terminal_claim": true,
-        "state": "RUNNING_UNQUALIFIED_AT_CUTOFF",
-        "test_sha256": "62c19ebbddf2a03bb2c05362d2d044d5368202f1cfcee486d9c65ea4bd82c2ee",
-        "worker_sha256": "8b49917fc9862b4c89bcfa3d037a1066288d06f276e6735e43cc417a539f9aba"
-      },
-      "preserved_v01_facts": {
-        "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/milestone483-four-guide-private-v01/Root-facts-v01.json",
-        "bytes": 7258,
-        "sha256": "4c62918b58da0e859e97c83ae0e4025cc127aa0b66da797bf123c4463feb6121",
+      "Root_final_facts_reference": {
+        "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/milestone484-four-guide-private-builder-v01/Root-final-facts-v01.json",
+        "bytes": 11830,
+        "sha256": "b0402d42a5b0aaa371b2a92c613aa3ed39e543f355eacfed37dc0f5c5e6db6d9",
         "full9": {
           "st_dev": "66306",
-          "st_ino": "69337859",
+          "st_ino": "69338182",
           "st_mode": "33024",
           "st_nlink": "1",
           "st_uid": "1000",
           "st_gid": "1000",
-          "st_size": "7258",
-          "st_mtime_ns": "1795266210640323830",
-          "st_ctime_ns": "1795266210640323830"
+          "st_size": "11830",
+          "st_mtime_ns": "1795271336256500955",
+          "st_ctime_ns": "1795271336256500955"
         }
       },
       "next_existing_owner_actions": [
-        "Run the selected corrected private integration40 owning qualification; only then exact versioned Source transition before any fresh pretrained baseline. Original1336 remained unrun/unadopted.",
-        "Retain Source39 normal36/math447 closures separately from Native8 DATA and codec42 primitive scopes",
-        "Publish coherent maintained work only under existing Root publication ownership; Source qualification does not qualify merged Main runtime",
-        "Adopt final four maintained guides through existing Reader after Root readback; all task states and old evidence/history remain unchanged"
+        "Update the same local-vendor import program/template for an explicit new objective before initialization, and resolve the actual maintained inference request/loader/producer dispatch gap from its current owner. Preserve old objective/pair checks.",
+        "Qualify the corrected existing real-asset route; bind actual current vendor/tokenizer/license/config/admission/registry facts before selecting a fresh pretrained lineage with empty Adam/step0.",
+        "Keep full canonical T3 rows and source context; record fit, source-conditioned heldout output, full typed-AST/semantic fidelity and proof results separately. No TRAIN14 retag.",
+        "Adopt these exact maintained guide updates and publish only qualified codec library changes/documents; publishing does not establish merged Main runtime or model quality."
       ],
-      "publication": {
-        "latest_published_R": "d3b4760a5565a0a29e74a41c4f94c700d482d558",
-        "new_qualified_chunk_not_yet_published": true,
-        "no_runtime_authority_transferred_by_publication": true
-      },
       "qualification_limits": [
-        "User-goal Phase5 remains active; historical programme Phase05 and all24 task states remain unchanged.",
-        "NormalSource38 cohort36 and Source39 wholemath447 are genuine software closures at separate epochs; neither is a model-quality or legal-admission result.",
-        "Native64emptyaxiom reports/24expanded assignments/2negatives remain eight authored finite DATA cases, not independent whole-world legal semantics.",
-        "Codec42privateprimitive passed; corrected integration40 is selected/unrun, unadopted and not a v5hardpin bypass or fresh baseline.",
-        "Same3fictionalTRAIN22.037337%scalar change and same3Q3 0/3completion remain distinct; zero independent real legal reviews and no convergence.",
-        "Source/Main evidence populations and runtime qualification remain distinct; publication transfers no runtime authority."
+        "Worldwide legal corpus→source-grounded LegalIR→Lean4 remains the goal; U.S.Code is a pilot. User-goalPhase5 differs from historical programmePhase05, whose task states remain unchanged.",
+        "Original private40 is39PASS/known1FAIL plus a separate corrected1PASS. No full corrected-private40 run or cross-source qualification transfer is claimed.",
+        "The actual normal82 outcome is copied from Root final facts, including failure/partial evidence; expected82 alone never becomes a passed count.",
+        "Actual Source41 installation, producer None-text bookkeeping repair and incomplete-output test-only correction remain distinct software evidence.",
+        "No fresh scientific model experiment, model-quality, heldout completion, legal-review, world-law autoformalization or convergence result is created by this guide update."
       ],
-      "catalog_population": "Main477→478/index477; Source483 is separate",
+      "catalog_population": "Main478→479/index478;Source484 remains separate",
       "Main_merged_runtime_qualification_claimed": false
     }
   },
