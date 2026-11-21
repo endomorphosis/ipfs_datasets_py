@@ -1838,3 +1838,131 @@ def test_parametric_collision_avoids_the_measured_unsafe_Fin_cases_dependency(ma
     assert 'Fin.cases ' not in proof
     assert 'thresholdFinCases (motive :=' in proof
     _counted_check_or_injection_arity(proof)
+
+
+# Additive quantity preservation controls, separate from actual Native execution.
+def _positive_quantity_preservation_capture(quantity, threshold):
+    from ipfs_datasets_py.logic.autoformal import legal_counted_frame_threshold_v2 as counted
+    request = counted.authored_counted_quantity_request_v4(quantity, threshold)
+    raw = canonical(request)
+    report = counted.prepare_counted_quantity_v4(raw, expected_request_sha256=sha(raw))
+    return report, raw
+
+
+def _positive_quantity_prepare(captured, **overrides):
+    report, raw = captured
+    return owner.prepare_counted_quantity_ast_preservation(report, raw, **({
+        'expected_report_sha256':sha(canonical(report)), 'expected_request_sha256':sha(raw),
+        'toolchain':TOOLCHAIN} | overrides))
+
+
+@pytest.mark.parametrize('quantity', ['at_least','exactly'])
+@pytest.mark.parametrize('threshold', [0,1,2,4])
+def test_positive_quantity_preservation_reuses_mixed_route_and_independent_Fin_contract(quantity, threshold):
+    captured = _positive_quantity_preservation_capture(quantity,threshold)
+    prepared = _positive_quantity_prepare(captured)
+    report, raw = captured
+    assert owner.validate_counted_quantity_ast_preservation(prepared,report,raw,
+        expected_preparation_sha256=owner.preparation_sha256(prepared),
+        expected_report_sha256=sha(canonical(report)),expected_request_sha256=sha(raw),toolchain=TOOLCHAIN) == prepared
+    meta, files = manifest(prepared), dict(prepared.files)
+    assert meta['profile'] == owner.QUANTITY_COUNTED_PROFILE
+    assert meta['quantity'] == quantity and meta['threshold'] == threshold
+    assert len(files) == owner.MAX_FILES == 7 and len(meta['expected_modules']) == 4
+    assert len(meta['theorems']) == 8 and len(set(meta['theorems'])) == 8
+    assert set(meta['expected_axioms']) == set(meta['theorems'])
+    assert all(value == [] for value in meta['expected_axioms'].values())
+    assert meta['genuine_mixed_manifest']['profile'] == owner.MIXED_PROFILE
+    assert meta['genuine_mixed_preparation_sha256']
+    assert meta['authority'] and not any(meta['authority'].values())
+    assert meta['training_mask'] == meta['evaluation_gold_mask'] == 0
+    assert meta['quantity_cardinality_proved'] is False
+    assert meta['native_TDFOL_route_used'] is meta['native_parser_roundtrip'] is False
+    for path,text in files.items():assert sha(text.encode()) == meta['file_sha256'][path]
+    semantics = files[meta['expected_modules'][1].replace('.','/')+'.lean']
+    instance = files[meta['expected_modules'][2].replace('.','/')+'.lean']
+    assert 'def mixedDenote' in semantics and 'def thresholdFinCases' in semantics
+    assert 'def quantityFiniteAtLeast' in semantics and 'def quantityFiniteExactly' in semantics
+    assert 'Function.Injective objects' in semantics
+    assert 'member x event time ↔ ∃ index, objects index = x' in semantics
+    assert 'quantityExpansion member ↔ quantityFinite' in instance
+    assert 'quantity_denotation_matches_finite' in instance
+    assert ('quantityFiniteAtLeast' if quantity == 'at_least' else 'quantityFiniteExactly')+' '+str(threshold)+' member' in instance
+    assert all(token not in semantics+instance for token in ['Classical.','DecidableEq Object','sorry','admit','axiom '])
+    if threshold == 0:
+        assert 'Fin 0' in instance and 'Fin.elim0' in instance
+        if quantity == 'at_least':assert 'member zeroWitness event time → member zeroWitness event time' in instance
+    assert 'AL-and-AM shortcut' in '\n'.join(meta['theorem_assumptions'])
+
+
+@pytest.mark.parametrize('pin', ['expected_report_sha256','expected_request_sha256'])
+def test_positive_quantity_preservation_independent_pins_precede_operation_owners(monkeypatch,pin):
+    report, raw = _positive_quantity_preservation_capture('exactly',2)
+    options = dict(expected_report_sha256=sha(canonical(report)),expected_request_sha256=sha(raw),toolchain=TOOLCHAIN)
+    options[pin] = '0'*64
+    monkeypatch.setattr(owner,'_owners',lambda:pytest.fail('bad independent quantity pin reached operation owners'))
+    with pytest.raises(ValueError):owner.prepare_counted_quantity_ast_preservation(report,raw,**options)
+
+
+@pytest.mark.parametrize('damage', ['quantity','threshold','coverage','member_sort','member_roles'])
+def test_positive_quantity_rehashed_report_requires_original_declared_subject(damage):
+    report, raw = _positive_quantity_preservation_capture('exactly',2)
+    altered = deepcopy(report)
+    if damage == 'quantity':altered['quantity'] = 'at_least'
+    elif damage == 'threshold':altered['threshold'] = 1
+    elif damage == 'member_roles':altered['argument_roles'][0]['roles'] = ['event','object','time']
+    else:
+        def first(root,predicate):
+            if predicate(root):return root
+            for child in root['arguments']:
+                found=first(child,predicate)
+                if found is not None:return found
+            return None
+        root=altered['typed_expression']['root']
+        if damage=='coverage':first(root,lambda x:x['kind']=='iff')['kind']='implies'
+        else:first(root,lambda x:x['kind']=='predicate')['arguments'][0]['sort']['name']='TimeFrame'
+    with pytest.raises(ValueError):_positive_quantity_prepare((altered,raw))
+
+
+@pytest.mark.parametrize('damage', ['Fin_bound','finite_contract','Member_interpretation','source_expansion'])
+def test_positive_quantity_resealed_complete_project_cannot_change_independent_cardinality(damage):
+    captured = _positive_quantity_preservation_capture('exactly',4)
+    prepared = _positive_quantity_prepare(captured)
+    meta, files = manifest(prepared), dict(prepared.files)
+    instance=meta['expected_modules'][2].replace('.','/')+'.lean'
+    semantics=meta['expected_modules'][1].replace('.','/')+'.lean'
+    if damage=='Fin_bound':
+        assert 'quantityFiniteExactly 4 member' in files[instance]
+        files[instance]=files[instance].replace('quantityFiniteExactly 4 member','quantityFiniteExactly 3 member',1)
+    elif damage=='finite_contract':
+        assert 'Function.Injective objects' in files[semantics]
+        files[semantics]=files[semantics].replace('Function.Injective objects','True',1)
+    elif damage=='Member_interpretation':
+        assert 'member object event time' in files[semantics]
+        files[semantics]=files[semantics].replace('member object event time','False',1)
+    else:
+        assert 'member candidate event time ↔' in files[instance]
+        files[instance]=files[instance].replace('member candidate event time ↔','member candidate event time →',1)
+    meta['file_sha256']={name:sha(text.encode())for name,text in sorted(files.items())}
+    # Even self-consistent local hashes cannot replace complete original regeneration.
+    altered=owner.NativeAstPreservationPreparation(canonical(meta).decode(),tuple(sorted(files.items())))
+    report,raw=captured
+    with pytest.raises(ValueError):owner.validate_counted_quantity_ast_preservation(altered,report,raw,
+        expected_preparation_sha256=owner.preparation_sha256(altered),
+        expected_report_sha256=sha(canonical(report)),expected_request_sha256=sha(raw),toolchain=TOOLCHAIN)
+
+
+@pytest.mark.parametrize('quantity,threshold',[('at_least',True),('exactly',-1),('at_most',2),('exactly',10**100)])
+def test_positive_quantity_native_preflight_refuses_before_expansion(quantity,threshold):
+    with pytest.raises(ValueError):owner._quantity_native_budget(quantity,threshold)
+    with pytest.raises(ValueError):owner._quantity_lean_expansion(quantity,threshold)
+
+
+def test_positive_quantity_preservation_leaves_v3_legacy_project_replay_exact():
+    legacy=_parametric_counted_capture(4)
+    prior=_prepare_parametric_counted(legacy)
+    _positive_quantity_prepare(_positive_quantity_preservation_capture('at_least',2))
+    _positive_quantity_prepare(_positive_quantity_preservation_capture('exactly',2))
+    assert _prepare_parametric_counted(legacy)==prior
+    assert _validate_parametric_counted(legacy,prior)==prior
+    assert manifest(prior)['profile']==owner.PARAMETRIC_COUNTED_PROFILE

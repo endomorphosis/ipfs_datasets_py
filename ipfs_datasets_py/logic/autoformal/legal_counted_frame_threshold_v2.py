@@ -530,3 +530,257 @@ def validate_counted_threshold_v3(report, request_raw, *, expected_request_sha25
 
 __all__ += ["authored_counted_threshold_request_v3", "prepare_counted_threshold_v3",
             "validate_counted_threshold_v3"]
+
+
+# Explicit positive-cardinality opt-in. All preceding v1/v2/v3 definitions stay exact.
+QUANTITY_REQUEST_SCHEMA = "legal-counted-frame-quantity-request/v4"
+QUANTITY_SCHEMA = "legal-counted-frame-quantity-report/v4"
+QUANTITY_PROFILE = "authored-positive-lower-or-exact-enumeration-per-event-and-time/v4"
+_QUANTITY_RELATIONAL_SHA = "e3fb0941e123672f4c280f282b0bce80937dab6cdc56ca607ffd5d3713ae9adf"
+_QUANTITY_FIELDS = frozenset(("schema", "profile", "quantity", "threshold",
+    "interpretation_status", "frame", "membership", "distinctness", "source_binding"))
+
+
+def _quantity_budget(quantity, threshold, *, max_nodes=512, max_depth=48,
+        max_bytes=131072, max_json_depth=64, max_json_items=20000):
+    """Reject finite representation costs before syntax allocation or lazy imports."""
+    _need(type(quantity) is str and quantity in ("at_least", "exactly"),
+          "explicit at_least or exactly quantity required")
+    _need(type(threshold) is int and threshold >= 0, "plain natural quantity threshold required")
+    _need(all(type(v) is int and v > 0 for v in
+          (max_nodes, max_depth, max_bytes, max_json_depth, max_json_items)),
+          "positive existing quantity capacities required")
+    _need(threshold <= max_nodes, "quantity expansion exceeds existing node capacity")
+    n = threshold
+    pairs = n * (n - 1) // 2
+    if n == 0:
+        nodes, depth = (12, 5) if quantity == "at_least" else (8, 5)
+    else:
+        leaves = n + pairs
+        nodes = 6 * n + 5 * pairs + 1
+        depth = n + 2 + leaves
+        if quantity == "exactly":
+            nodes += 4 * n + 6
+            depth = n + 3 + max(leaves, n + 2)
+    expression_bytes = 8192 + 512 * nodes
+    json_depth, json_items = 2 * depth + 4, 128 * nodes + 4096
+    _need(nodes <= max_nodes and depth <= max_depth and expression_bytes <= max_bytes
+          and json_depth <= max_json_depth and json_items <= max_json_items,
+          "quantity expansion exceeds existing AST/depth/byte/JSON capacity")
+    return {"quantity": quantity, "threshold": n, "ast_nodes": nodes, "ast_depth": depth,
+        "distinctness_pairs": pairs, "expression_bytes_upper_bound": expression_bytes,
+        "json_depth_upper_bound": json_depth, "json_items_upper_bound": json_items}
+
+
+def _quantity_declaration(base, quantity, threshold):
+    _quantity_budget(quantity, threshold)
+    original = base._declaration()
+    return {"schema": QUANTITY_REQUEST_SCHEMA, "profile": QUANTITY_PROFILE,
+        "quantity": quantity, "threshold": threshold,
+        "interpretation_status": "authored_unreviewed_declaration",
+        "frame": original["frame"], "membership": original["membership"],
+        "distinctness": original["distinctness"], "source_binding": None}
+
+
+def _quantity_request_preflight(request_raw, expected_request_sha256):
+    """Authenticate closed quantity data before any project operation owner."""
+    import json
+    _need(type(request_raw) is bytes and 0 < len(request_raw) <= 131072,
+          "bounded complete quantity request bytes required")
+    _need(type(expected_request_sha256) is str and len(expected_request_sha256) == 64
+          and all(c in "0123456789abcdef" for c in expected_request_sha256)
+          and hashlib.sha256(request_raw).hexdigest() == expected_request_sha256,
+          "independent quantity request SHA256 mismatch")
+    def pairs(items):
+        result = {}
+        for key, value in items:
+            _need(key not in result, "duplicate quantity request key")
+            result[key] = value
+        return result
+    def constant(_):
+        raise ValueError("nonfinite quantity request value")
+    try:
+        request = json.loads(request_raw.decode("utf-8"), object_pairs_hook=pairs,
+                             parse_constant=constant)
+    except (ValueError, UnicodeError, RecursionError) as error:
+        raise ValueError("bounded duplicate-free ordinary quantity JSON required") from error
+    _need(type(request) is dict and set(request) == _QUANTITY_FIELDS
+          and request["schema"] == QUANTITY_REQUEST_SCHEMA and request["profile"] == QUANTITY_PROFILE,
+          "explicit closed quantity request profile required")
+    _quantity_budget(request["quantity"], request["threshold"])
+    return request
+
+
+def _quantity_parse(base, request_raw, expected_request_sha256):
+    request = _quantity_request_preflight(request_raw, expected_request_sha256)
+    expected = _quantity_declaration(base, request["quantity"], request["threshold"])
+    _need(base._compact_wire(request) == base._compact_wire(expected),
+          "unsupported or altered quantity frame/membership/distinctness declaration")
+    return request
+
+
+def _quantity_expression(ast, signatures, quantity, threshold):
+    """Construct the existing mixed TypedIR, with positive existential witnesses."""
+    _quantity_budget(quantity, threshold)
+    sorts = {name: signatures.LogicSort(name) for name in ("Object", "EventFrame", "TimeFrame")}
+    serial = 0
+    def nid():
+        nonlocal serial
+        serial += 1
+        return "authored:counted-quantity:node:" + str(serial)
+    def variable(name, sort="Object"):
+        return ast.mk_variable(nid(), name, sorts[sort])
+    def member(name):
+        return ast.mk_predicate(nid(), "Member", (variable(name),
+            variable("event", "EventFrame"), variable("time", "TimeFrame")))
+    def equality(left, right):
+        return ast.mk_equality(nid(), variable(left), variable(right))
+    def fold(constructor, children):
+        _need(bool(children), "nonempty quantity connective sequence required")
+        result = children[0]
+        for child in children[1:]:
+            result = constructor(nid(), result, child)
+        return result
+    def quantify(constructor, name, sort, body):
+        return constructor(nid(), (ast.Binder(name, sorts[sort]),), body)
+    n = threshold
+    if n == 0:
+        if quantity == "at_least":
+            body = ast.mk_implies(nid(), member("zeroWitness"), member("zeroWitness"))
+        else:
+            body = ast.mk_not(nid(), member("zeroWitness"))
+        body = quantify(ast.mk_forall, "zeroWitness", "Object", body)
+    else:
+        names = ["x" + str(i) for i in range(n)]
+        children = [member(name) for name in names]
+        children += [ast.mk_not(nid(), equality(left, right))
+                     for left, right in combinations(names, 2)]
+        if quantity == "exactly":
+            coverage = ast.mk_iff(nid(), member("candidate"),
+                fold(ast.mk_or, [equality("candidate", name) for name in names]))
+            children.append(quantify(ast.mk_forall, "candidate", "Object", coverage))
+        body = fold(ast.mk_and, children)
+        for name in reversed(names):
+            body = quantify(ast.mk_exists, name, "Object", body)
+    for name, sort in reversed((("event", "EventFrame"), ("time", "TimeFrame"))):
+        body = quantify(ast.mk_forall, name, sort, body)
+    signature = signatures.LogicSignature("authored:counted-quantity:signature",
+        family="tdfol", profile="tdfol_default", sorts=tuple(sorts.values()),
+        symbols=(signatures.declare_predicate("Member", (
+            sorts["Object"], sorts["EventFrame"], sorts["TimeFrame"])),))
+    return ast.TypedExpression("authored:counted-quantity:expression", body, signature)
+
+
+def _quantity_owners(base):
+    relational = importlib.import_module("ipfs_datasets_py.logic.autoformal.legal_relational_norm_v1")
+    path = _SELF_PATH.with_name("legal_relational_norm_v1.py")
+    _need(Path(relational.__file__).absolute() == path
+          and hashlib.sha256(path.read_bytes()).hexdigest() == _QUANTITY_RELATIONAL_SHA,
+          "exact existing mixed relational operation owner required")
+    ast, signatures, emitter, pins = relational._mixed_owners()
+    pins = dict(pins)
+    pins[str(_SELF_PATH)] = _SELF_PIN
+    pins[str(_SELF_PATH.with_name("legal_counted_frame_v1.py"))] = _BASE_SHA
+    _need(_base() is base, "fixed counted operation owner changed")
+    return relational, ast, signatures, emitter, pins
+
+
+def _quantity_fence(base, pins):
+    _need(_base() is base and _quantity_owners(base)[-1] == pins,
+          "counted quantity operation producers changed")
+
+
+def authored_counted_quantity_request_v4(quantity, threshold):
+    """Declare at_least/exactly explicitly; infer no quantity from legal text."""
+    _quantity_budget(quantity, threshold)
+    base = _base()
+    request = _quantity_declaration(base, quantity, threshold)
+    raw = base._compact_wire(request, base.MAX_REQUEST_BYTES)
+    _quantity_parse(base, raw, hashlib.sha256(raw).hexdigest())
+    _need(_base() is base, "quantity construction sources changed")
+    return request
+
+
+def prepare_counted_quantity_v4(request_raw, *, expected_request_sha256):
+    """Reuse the genuine mixed TypedIR validation and existing sorted emitter."""
+    _quantity_request_preflight(request_raw, expected_request_sha256)
+    base = _base()
+    request = _quantity_parse(base, request_raw, expected_request_sha256)
+    budget = _quantity_budget(request["quantity"], request["threshold"])
+    relational, ast, signatures, emitter, pins = _quantity_owners(base)
+    try:
+        expression = _quantity_expression(ast, signatures, request["quantity"], request["threshold"])
+        mixed_request = {"schema": relational.MIXED_REQUEST_SCHEMA,
+            "profile": relational.MIXED_PROFILE,
+            "interpretation_status": "authored_unreviewed_declaration",
+            "expression": expression.to_dict(),
+            "argument_roles": [{"symbol": "Member", "roles": ["object", "event", "time"]}],
+            "source_binding": None}
+        mixed_raw = base._compact_wire(mixed_request, base.MAX_REQUEST_BYTES)
+        mixed_sha = hashlib.sha256(mixed_raw).hexdigest()
+        _quantity_fence(base, pins)
+        mixed = relational.prepare_mixed_relational_norm_v1(mixed_raw,
+            expected_request_sha256=mixed_sha)
+        _need(mixed["typed_expression"] == expression.to_dict()
+              and mixed["counts"]["nodes"] == budget["ast_nodes"]
+              and mixed["argument_roles"] == mixed_request["argument_roles"],
+              "complete quantity typed source or mixed lowering changed")
+        result = {"schema": QUANTITY_SCHEMA, "profile": QUANTITY_PROFILE,
+            "status": "authored_unreviewed_counted_quantity_prepared",
+            "request": request, "request_raw_utf8": request_raw.decode("utf-8"),
+            "request_sha256": expected_request_sha256,
+            "quantity": request["quantity"], "threshold": request["threshold"],
+            "frame": request["frame"], "membership": request["membership"],
+            "distinctness": request["distinctness"], "budget": budget,
+            "typed_expression": mixed["typed_expression"],
+            "typed_expression_content_digest": mixed["typed_expression_content_digest"],
+            "typed_expression_sha256": mixed["typed_expression_sha256"],
+            "argument_roles": mixed["argument_roles"], "counts": mixed["counts"],
+            "mixed_request_raw_utf8": mixed_raw.decode("utf-8"),
+            "mixed_request_sha256": mixed_sha, "mixed_report": mixed,
+            "mixed_report_sha256": relational.mixed_relational_norm_report_sha256(mixed),
+            "lean_body": mixed["lean_body"],
+            "lean_body_sha256": hashlib.sha256(mixed["lean_body"].encode("utf-8")).hexdigest(),
+            "lowering_route": "existing_mixed_TypedIR_and_sorted_relational_emitter",
+            "producer_pins": pins, "source_binding": None, "source_bound": False,
+            "source_translation_performed": False, "native_TDFOL_route_used": False,
+            "native_build_executed": False, "model_executed": False, "training_executed": False,
+            "training_mask": 0, "evaluation_gold_mask": 0, "authority": dict(base.AUTHORITY),
+            "assumptions": [
+                "The caller explicitly selects a nonnegative lower bound or exact finite enumeration; no statutory meaning is inferred.",
+                "Object/EventFrame/TimeFrame may be empty; membership is frame-local and identity, not occurrence multiplicity.",
+                "Exactly uses explicit existential witnesses and full membership/range coverage, not an assumed AL-and-AM equivalence.",
+                "Lean cardinality proofs and native compilation remain separate unexecuted obligations.",
+                "Ambient modal Nat time is separate from authored TimeFrame; no temporal aggregation is asserted."]}
+        detached = base._compact_capture(result)
+        _need(base._compact_wire(detached) == base._compact_wire(result),
+              "complete counted quantity report changed during serialization")
+        return detached
+    finally:
+        _quantity_fence(base, pins)
+
+
+def validate_counted_quantity_v4(report, request_raw, *, expected_request_sha256,
+                                  expected_report_sha256):
+    """Require complete original declaration replay, including genuine mixed output."""
+    _quantity_request_preflight(request_raw, expected_request_sha256)
+    base = _base()
+    base._digest(expected_report_sha256, "counted quantity report")
+    captured = (base._compact_capture(base._read_json(report, base.MAX_REPORT_BYTES, "quantity report"))
+                if type(report) is bytes else base._compact_capture(report))
+    offered = base._compact_wire(captured)
+    _need(hashlib.sha256(offered).hexdigest() == expected_report_sha256,
+          "counted quantity report SHA256 mismatch")
+    regenerated = prepare_counted_quantity_v4(request_raw,
+        expected_request_sha256=expected_request_sha256)
+    _need(base._compact_wire(regenerated) == offered,
+          "counted quantity report differs from complete original request replay")
+    if type(report) is not bytes:
+        _need(base._compact_wire(report) == offered, "offered quantity report changed during replay")
+    _need(_base() is base, "quantity replay sources changed")
+    return regenerated
+
+
+__all__ += ["QUANTITY_REQUEST_SCHEMA", "QUANTITY_SCHEMA", "QUANTITY_PROFILE",
+            "authored_counted_quantity_request_v4", "prepare_counted_quantity_v4",
+            "validate_counted_quantity_v4"]

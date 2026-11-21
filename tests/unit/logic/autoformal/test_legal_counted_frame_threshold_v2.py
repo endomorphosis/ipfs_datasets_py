@@ -610,3 +610,193 @@ def test_parametric_preflight_accounts_for_existing_transport_depth_and_items():
     with pytest.raises(ValueError):
         subject._parametric_budget(4, max_json_items=1)
     assert subject._parametric_budget(4)['json_depth_upper_bound'] <= 64
+
+
+# Additive opt-in quantity controls; all preceding v1/v2/v3 tests remain exact.
+def _quantity_capture(quantity, threshold):
+    request = subject.authored_counted_quantity_request_v4(quantity, threshold)
+    raw = wire(request)
+    report = subject.prepare_counted_quantity_v4(raw, expected_request_sha256=sha(raw))
+    assert subject.validate_counted_quantity_v4(report, raw,
+        expected_request_sha256=sha(raw), expected_report_sha256=sha(wire(report))) == report
+    return report, raw
+
+
+def _quantity_model(root, objects, events, times, members, environment=None):
+    """Finite countermodel interpreter, independent of producer declarations."""
+    environment = {} if environment is None else environment
+    kind, children = root['kind'], root['arguments']
+    if kind == 'variable':
+        return environment[root['symbol']]
+    if kind == 'predicate':
+        assert root['symbol'] == 'Member' and len(children) == 3
+        return tuple(_quantity_model(x, objects, events, times, members, environment) for x in children) in members
+    if kind == 'equality':
+        return _quantity_model(children[0],objects,events,times,members,environment) == _quantity_model(children[1],objects,events,times,members,environment)
+    if kind == 'not':
+        return not _quantity_model(children[0],objects,events,times,members,environment)
+    if kind in ('and','or','implies','iff'):
+        left = _quantity_model(children[0],objects,events,times,members,environment)
+        right = _quantity_model(children[1],objects,events,times,members,environment)
+        return {'and':left and right,'or':left or right,'implies':not left or right,'iff':left == right}[kind]
+    assert kind in ('forall','exists') and len(root['binders']) == 1
+    binder = root['binders'][0]
+    values = {'Object':objects,'EventFrame':events,'TimeFrame':times}[binder['sort']['name']]
+    observations = (_quantity_model(children[0],objects,events,times,members,dict(environment,**{binder['name']:value})) for value in values)
+    return all(observations) if kind == 'forall' else any(observations)
+
+
+def _quantity_cardinality_oracle(quantity, threshold, objects, events, times, members):
+    """Count distinct members directly; inspect no generated AST or report fields."""
+    return all((len({x for x in objects if (x,event,time) in members}) >= threshold
+                if quantity == 'at_least' else
+                len({x for x in objects if (x,event,time) in members}) == threshold)
+               for event in events for time in times)
+
+
+@pytest.mark.parametrize('quantity', ['at_least','exactly'])
+@pytest.mark.parametrize('threshold', [0,1,2,4])
+def test_positive_quantity_same_sorted_source_matches_independent_cardinality(quantity, threshold):
+    report, raw = _quantity_capture(quantity,threshold)
+    assert report['quantity'] == quantity and report['threshold'] == threshold
+    assert report['source_binding'] is None and not any(report['authority'].values())
+    assert report['training_mask'] == report['evaluation_gold_mask'] == 0
+    assert report['lowering_route'] == 'existing_mixed_TypedIR_and_sorted_relational_emitter'
+    assert report['typed_expression'] == report['mixed_report']['typed_expression']
+    assert report['lean_body'] == report['mixed_report']['lean_body']
+    assert report['argument_roles'] == [{'symbol':'Member','roles':['object','event','time']}]
+    objects, events, times = tuple(range(threshold+1)), ('event',), ('time',)
+    for size in sorted({0,max(0,threshold-1),threshold,threshold+1}):
+        members = {(x,'event','time')for x in objects[:size]}
+        assert _quantity_model(report['typed_expression']['root'],objects,events,times,members) == _quantity_cardinality_oracle(quantity,threshold,objects,events,times,members)
+    assert report['budget']['ast_nodes'] == report['counts']['nodes']
+
+
+@pytest.mark.parametrize('quantity', ['at_least','exactly'])
+@pytest.mark.parametrize('empty', ['Object','EventFrame','TimeFrame'])
+def test_positive_quantity_empty_carriers_add_no_inhabitation_axiom(quantity, empty):
+    report, _ = _quantity_capture(quantity,2)
+    carriers = {'Object':(0,1),'EventFrame':('e',),'TimeFrame':('t',)}
+    carriers[empty] = ()
+    actual = _quantity_model(report['typed_expression']['root'],carriers['Object'],carriers['EventFrame'],carriers['TimeFrame'],set())
+    assert actual == (empty != 'Object')
+    zero, _ = _quantity_capture(quantity,0)
+    assert _quantity_model(zero['typed_expression']['root'],carriers['Object'],carriers['EventFrame'],carriers['TimeFrame'],set())
+
+
+@pytest.mark.parametrize('quantity', ['at_least','exactly'])
+def test_positive_quantity_frame_locality_and_duplicate_occurrences(quantity):
+    report, _ = _quantity_capture(quantity,2)
+    root = report['typed_expression']['root']
+    assert not _quantity_model(root,(0,1),('a','b'),('t',),{(0,'a','t'),(1,'a','t')})
+    assert _quantity_model(root,(0,1),('a','b'),('t',),{(x,e,'t')for x in (0,1)for e in ('a','b')})
+    repeated = [(0,'a','t'),(0,'a','t')]
+    assert not _quantity_model(root,(0,1),('a',),('t',),repeated)
+
+
+def _quantity_first(root, predicate):
+    if predicate(root):
+        return root
+    for child in root['arguments']:
+        found = _quantity_first(child,predicate)
+        if found is not None:
+            return found
+    return None
+
+
+@pytest.mark.parametrize('quantity', ['at_least','exactly'])
+def test_positive_quantity_pairwise_distinctness_has_an_independent_countermodel(quantity):
+    report, _ = _quantity_capture(quantity,2)
+    root = deepcopy(report['typed_expression']['root'])
+    not_equal = _quantity_first(root,lambda node:node['kind']=='not' and node['arguments'][0]['kind']=='equality')
+    assert not_equal is not None
+    # A same-variable equality is a tautology.  Replacing the disequality permits duplicate witnesses.
+    equality = not_equal['arguments'][0]
+    equality['arguments'][1] = deepcopy(equality['arguments'][0])
+    not_equal.clear();not_equal.update(equality)
+    members = {(0,'e','t')}
+    assert not _quantity_model(report['typed_expression']['root'],(0,),('e',),('t',),members)
+    assert _quantity_model(root,(0,),('e',),('t',),members)
+
+
+def test_positive_quantity_exact_coverage_and_lower_membership_have_separate_countermodels():
+    lower, _ = _quantity_capture('at_least',2)
+    damaged = deepcopy(lower['typed_expression']['root'])
+    member = _quantity_first(damaged,lambda node:node['kind']=='predicate')
+    # Keep the first object variable but replace its membership leaf with x=x.
+    variable = deepcopy(member['arguments'][0])
+    member.update(kind='equality',symbol='',arguments=[variable,deepcopy(variable)])
+    sparse = {(1,'e','t')}
+    assert not _quantity_model(lower['typed_expression']['root'],(0,1),('e',),('t',),sparse)
+    assert _quantity_model(damaged,(0,1),('e',),('t',),sparse)
+    exact, _ = _quantity_capture('exactly',2)
+    damaged = deepcopy(exact['typed_expression']['root'])
+    coverage = _quantity_first(damaged,lambda node:node['kind']=='forall' and node['binders'][0]['name']=='candidate')
+    tautology = deepcopy(_quantity_first(damaged,lambda node:node['kind']=='equality'))
+    tautology['arguments'][1] = deepcopy(tautology['arguments'][0])
+    coverage.clear();coverage.update(tautology)
+    overfull = {(x,'e','t')for x in (0,1,2)}
+    assert not _quantity_model(exact['typed_expression']['root'],(0,1,2),('e',),('t',),overfull)
+    assert _quantity_model(damaged,(0,1,2),('e',),('t',),overfull)
+
+
+@pytest.mark.parametrize('quantity', ['at_least','exactly'])
+@pytest.mark.parametrize('damage', ['frame_sort','member_roles','distinctness','source_binding'])
+def test_positive_quantity_closed_declaration_refuses_before_mixed_owners(monkeypatch, quantity, damage):
+    request = subject.authored_counted_quantity_request_v4(quantity,2)
+    if damage == 'frame_sort':request['frame']['event']['sort'] = 'Object'
+    elif damage == 'member_roles':request['membership']['argument_roles'] = ['event','object','time']
+    elif damage == 'distinctness':request['distinctness'] = 'occurrence_multiplicity'
+    else:request['source_binding'] = {'claimed_source':'not-an-authored-declaration'}
+    raw = wire(request)
+    monkeypatch.setattr(subject,'_quantity_owners',lambda *a:pytest.fail('altered declaration reached mixed owners'))
+    with pytest.raises(ValueError):subject.prepare_counted_quantity_v4(raw,expected_request_sha256=sha(raw))
+
+
+@pytest.mark.parametrize('damage', ['member','sort','coverage','roles','frame_order','relation'])
+def test_positive_quantity_resealed_report_requires_whole_original_replay(damage):
+    report, raw = _quantity_capture('exactly',2)
+    altered = deepcopy(report)
+    if damage == 'roles':altered['argument_roles'][0]['roles'] = ['event','object','time']
+    elif damage == 'relation':altered['quantity'] = 'at_least'
+    else:
+        root = altered['typed_expression']['root']
+        if damage == 'sort':root['binders'][0]['sort']['name'] = 'Object'
+        elif damage == 'coverage':_quantity_first(root,lambda node:node['kind']=='iff')['kind'] = 'implies'
+        elif damage == 'frame_order':
+            member = _quantity_first(root,lambda node:node['kind']=='predicate')
+            member['arguments'][1],member['arguments'][2] = member['arguments'][2],member['arguments'][1]
+        else:
+            # Exact full coverage makes one membership leaf redundant semantically;
+            # complete replay still retains it as part of the selected source.
+            _quantity_first(root,lambda node:node['kind']=='predicate')['symbol'] = 'Other'
+    with pytest.raises(ValueError):subject.validate_counted_quantity_v4(altered,raw,
+        expected_request_sha256=sha(raw),expected_report_sha256=sha(wire(altered)))
+
+
+@pytest.mark.parametrize('quantity,threshold', [('at_least',True),('exactly',-1),('at_least',1.5),('exactly',None),('at_most',2),('at_least',10**100)])
+def test_positive_quantity_invalid_or_overbudget_refuses_before_lazy_owners(monkeypatch,quantity,threshold):
+    monkeypatch.setattr(subject,'_base',lambda:pytest.fail('refused quantity reached lazy owners'))
+    with pytest.raises(ValueError):subject.authored_counted_quantity_request_v4(quantity,threshold)
+
+
+def test_positive_quantity_budget_is_resource_derived_not_four_case_semantic_ceiling():
+    assert subject._quantity_budget('at_least',6)['threshold'] == 6
+    assert subject._quantity_budget('exactly',5)['threshold'] == 5
+    with pytest.raises(ValueError,match='capacity'):subject._quantity_budget('exactly',6)
+    with pytest.raises(ValueError,match='capacity'):subject._quantity_budget('at_least',4,max_json_depth=1)
+
+
+def test_positive_quantity_opt_in_keeps_every_existing_threshold_profile_replay_exact():
+    captures = []
+    for version, maximum in [(2,1),(2,2),(2,3),(3,0),(3,4)]:
+        request = getattr(subject,'authored_counted_threshold_request_v'+str(version))(maximum)
+        raw = wire(request)
+        report = getattr(subject,'prepare_counted_threshold_v'+str(version))(raw,expected_request_sha256=sha(raw))
+        captures.append((version,raw,report))
+    _quantity_capture('at_least',2);_quantity_capture('exactly',2)
+    for version,raw,report in captures:
+        assert getattr(subject,'prepare_counted_threshold_v'+str(version))(raw,expected_request_sha256=sha(raw)) == report
+        assert getattr(subject,'validate_counted_threshold_v'+str(version))(report,raw,
+            expected_request_sha256=sha(raw),expected_report_sha256=sha(wire(report))) == report
+    assert {'authored_counted_quantity_request_v4','prepare_counted_quantity_v4','validate_counted_quantity_v4'} <= set(subject.__all__)

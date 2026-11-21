@@ -2890,3 +2890,552 @@ def validate_counted_threshold_ast_preservation(preparation, report, request_raw
     _need(expected == preparation and preparation_sha256(preparation) == expected_preparation_sha256,
           "counted threshold preservation differs from complete original regeneration")
     return expected
+
+
+# Explicit positive-cardinality profile; preceding preservation APIs stay exact.
+QUANTITY_COUNTED_PROFILE = "typed-many-sorted-positive-quantity-preservation/v4"
+QUANTITY_COUNTED_INPUT_SCHEMA = "legal-counted-quantity-preservation-inputs/v4"
+
+QUANTITY_FINITE_SEMANTICS = r"""
+def quantityFiniteAtLeast {Object EventFrame TimeFrame : Type}
+    (n : Nat) (member : Object → EventFrame → TimeFrame → Prop) : Prop :=
+  ∀ event time, ∃ objects : Fin n → Object,
+    Function.Injective objects ∧ ∀ index, member (objects index) event time
+
+def quantityFiniteExactly {Object EventFrame TimeFrame : Type}
+    (n : Nat) (member : Object → EventFrame → TimeFrame → Prop) : Prop :=
+  ∀ event time, ∃ objects : Fin n → Object,
+    Function.Injective objects ∧
+      ∀ x, member x event time ↔ ∃ index, objects index = x
+
+def quantityInterpretation {Object EventFrame TimeFrame : Type}
+    (member : Object → EventFrame → TimeFrame → Prop)
+    (base : Interpretation (MixedEntity Object EventFrame TimeFrame) Unit) :
+    Interpretation (MixedEntity Object EventFrame TimeFrame) Unit :=
+  { base with atom := fun name values atTime =>
+      if name = "Member" then
+        (List.casesOn values
+          False
+          (fun first rest1 =>
+            (Sum.casesOn first
+              (fun _ => False)
+              (fun firstPayload =>
+                (Sum.casesOn firstPayload
+                  (fun object =>
+                    (List.casesOn rest1
+                      False
+                      (fun second rest2 =>
+                        (Sum.casesOn second
+                          (fun _ => False)
+                          (fun secondPayload =>
+                            (Sum.casesOn secondPayload
+                              (fun _ => False)
+                              (fun secondFrames =>
+                                (Sum.casesOn secondFrames
+                                  (fun event =>
+                                    (List.casesOn rest2
+                                      False
+                                      (fun third rest3 =>
+                                        (Sum.casesOn third
+                                          (fun _ => False)
+                                          (fun thirdPayload =>
+                                            (Sum.casesOn thirdPayload
+                                              (fun _ => False)
+                                              (fun thirdFrames =>
+                                                (Sum.casesOn thirdFrames
+                                                  (fun _ => False)
+                                                  (fun time =>
+                                                    (List.casesOn rest3
+                                                      (member object event time)
+                                                      (fun _ _ => False)))))))))))
+                                  (fun _ => False)))))))))
+                  (fun _ => False))))))
+      else base.atom name values atTime }
+"""
+
+
+def _quantity_native_budget(quantity, threshold):
+    """Independent finite resource preflight, before owners or proof expansion."""
+    _need(type(quantity) is str and quantity in ("at_least", "exactly")
+          and type(threshold) is int and 0 <= threshold <= MAX_MIXED_AST_NODES,
+          "explicit positive quantity and natural bounded representation required")
+    n, pairs = threshold, threshold * (threshold - 1) // 2
+    if n == 0:
+        nodes, depth = (12, 5) if quantity == "at_least" else (8, 5)
+    else:
+        leaves = n + pairs
+        nodes, depth = 6 * n + 5 * pairs + 1, n + 2 + leaves
+        if quantity == "exactly":
+            nodes += 4 * n + 6
+            depth = n + 3 + max(leaves, n + 2)
+    proof_bound = 65536 + 8192 * (n + 1) ** 3
+    _need(nodes <= MAX_MIXED_AST_NODES and depth <= MAX_MIXED_AST_DEPTH
+          and 8192 + 512 * nodes <= 131072 and 2 * depth + 4 <= 64
+          and 128 * nodes + 4096 <= 20000 and proof_bound <= MAX_PROJECT_BYTES,
+          "quantity proof expansion exceeds existing node/depth/byte/JSON capacity")
+    return {"nodes": nodes, "depth": depth, "proof_bytes_upper_bound": proof_bound}
+
+
+def _quantity_lean_expansion(quantity, threshold):
+    """Independent proof-witness expansion; never a production lowering route."""
+    _quantity_native_budget(quantity, threshold)
+    n = threshold
+    def fold(values, operator):
+        _need(bool(values), "nonempty quantity proof connective required")
+        result = values[0]
+        for value in values[1:]:
+            result = "(" + result + " " + operator + " " + value + ")"
+        return result
+    if n == 0:
+        body = ("∀ (zeroWitness : Object), member zeroWitness event time → member zeroWitness event time"
+                if quantity == "at_least" else
+                "∀ (zeroWitness : Object), ¬ member zeroWitness event time")
+    else:
+        names = ["x" + str(i) for i in range(n)]
+        leaves = ["member " + name + " event time" for name in names]
+        leaves += ["(¬ (" + names[i] + " = " + names[j] + "))"
+                   for i in range(n) for j in range(i + 1, n)]
+        if quantity == "exactly":
+            leaves.append("(∀ (candidate : Object), member candidate event time ↔ "
+                + fold(["candidate = " + name for name in names], "∨") + ")")
+        body = "∃ (" + " ".join(names) + " : Object), " + fold(leaves, "∧")
+    return ("def quantityExpansion {Object EventFrame TimeFrame : Type}\n"
+        "    (member : Object → EventFrame → TimeFrame → Prop) : Prop :=\n"
+        "  ∀ (event : EventFrame) (time : TimeFrame), " + body + "\n")
+
+
+def _quantity_extra_semantics():
+    """Reuse the already selected direct constructor-based finite eliminator."""
+    marker = "\nuniverse u\n\ndef thresholdFinCases"
+    _need(PARAMETRIC_COUNTED_SEMANTICS.count(marker) == 1
+          and "def thresholdFinCases" not in MIXED_SEMANTICS,
+          "exact existing direct Fin helper selection required")
+    direct = PARAMETRIC_COUNTED_SEMANTICS[PARAMETRIC_COUNTED_SEMANTICS.index(marker):]
+    return direct + "\n" + QUANTITY_FINITE_SEMANTICS
+
+
+def _quantity_theorem_types(quantity, threshold):
+    _quantity_native_budget(quantity, threshold)
+    finite = "quantityFiniteAtLeast" if quantity == "at_least" else "quantityFiniteExactly"
+    return {
+        "quantity_lowering_matches_expansion":
+            "formula (quantityInterpretation member base) t ↔ quantityExpansion member",
+        "quantity_finite_equivalence":
+            "quantityExpansion member ↔ " + finite + " " + str(threshold) + " member",
+        "quantity_denotation_matches_finite":
+            "mixedDenote (quantityInterpretation member base) typedMixedAst emptyCountedEnvironment t ↔ "
+            + finite + " " + str(threshold) + " member"}
+
+
+def _quantity_cardinality_obligations(quantity, threshold):
+    budget = _quantity_native_budget(quantity, threshold)
+    finite = "quantityFiniteAtLeast" if quantity == "at_least" else "quantityFiniteExactly"
+    text = (_quantity_lean_expansion(quantity, threshold)
+        + "\ntheorem quantity_lowering_matches_expansion {Object EventFrame TimeFrame : Type}\n"
+          "    (member : Object → EventFrame → TimeFrame → Prop)\n"
+          "    (base : Interpretation (MixedEntity Object EventFrame TimeFrame) Unit) (t : Nat) :\n"
+          "    formula (quantityInterpretation member base) t ↔ quantityExpansion member := by\n"
+          "  exact Iff.intro (fun h => h) (fun h => h)\n"
+          "#print axioms quantity_lowering_matches_expansion\n"
+        + _quantity_finite_equivalence_proof(quantity, threshold)
+        + "\ntheorem quantity_denotation_matches_finite {Object EventFrame TimeFrame : Type}\n"
+          "    (member : Object → EventFrame → TimeFrame → Prop)\n"
+          "    (base : Interpretation (MixedEntity Object EventFrame TimeFrame) Unit) (t : Nat) :\n"
+          "    mixedDenote (quantityInterpretation member base) typedMixedAst emptyCountedEnvironment t ↔ "
+        + finite + " " + str(threshold) + " member := by\n"
+          "  exact Iff.trans (mixed_denotation_matches_lowering (quantityInterpretation member base) t)\n"
+          "    (Iff.trans (quantity_lowering_matches_expansion member base t) (quantity_finite_equivalence member))\n"
+          "#print axioms quantity_denotation_matches_finite\n")
+    _need(len(text.encode("utf-8")) <= budget["proof_bytes_upper_bound"],
+          "complete quantity proof candidate exceeds its preflight")
+    return text
+
+
+def _quantity_preparation_inputs(report, request_raw, expected_report_sha256, expected_request_sha256):
+    _pin(expected_report_sha256, "complete positive quantity report")
+    _pin(expected_request_sha256, "original positive quantity request")
+    raw = _wire(report, MAX_RECORD_BYTES)
+    _need(_sha(raw) == expected_report_sha256 and type(request_raw) is bytes
+          and 0 < len(request_raw) <= 131072 and _sha(request_raw) == expected_request_sha256,
+          "independent complete quantity commitments required")
+    request = _parse(request_raw, 131072)
+    _need(type(request) is dict and "quantity" in request and "threshold" in request,
+          "explicit quantity declaration required")
+    _quantity_native_budget(request["quantity"], request["threshold"])
+    return raw, request
+
+
+def prepare_counted_quantity_ast_preservation(report, request_raw: bytes, *,
+        expected_report_sha256, expected_request_sha256, toolchain):
+    """Extend the genuine mixed preparation with constructive finite contracts."""
+    report_raw, request = _quantity_preparation_inputs(report, request_raw,
+        expected_report_sha256, expected_request_sha256)
+    _need(type(toolchain) is str and _TOOLCHAIN.fullmatch(toolchain) is not None,
+          "exact version-pinned Lean toolchain required")
+    from . import legal_counted_frame_threshold_v2 as counted
+    checked = counted.validate_counted_quantity_v4(report, request_raw,
+        expected_report_sha256=expected_report_sha256, expected_request_sha256=expected_request_sha256)
+    _need(checked["request"] == request and checked["profile"] == counted.QUANTITY_PROFILE
+          and checked["source_binding"] is None and not any(checked["authority"].values()),
+          "complete unreviewed positive quantity replay required")
+    quantity, threshold = checked["quantity"], checked["threshold"]
+    _quantity_native_budget(quantity, threshold)
+    mixed_raw = checked["mixed_request_raw_utf8"].encode("utf-8")
+    baseline = prepare_mixed_relational_ast_preservation(checked["mixed_report"], mixed_raw,
+        expected_report_sha256=checked["mixed_report_sha256"],
+        expected_request_sha256=checked["mixed_request_sha256"], toolchain=toolchain)
+    base_manifest = baseline.to_dict()
+    _need(base_manifest["profile"] == MIXED_PROFILE and len(base_manifest["expected_modules"]) == MAX_MODULES,
+          "unchanged existing mixed preservation route required")
+    modules = list(base_manifest["expected_modules"])
+    semantics_module, instance = modules[1], modules[2]
+    files = dict(baseline.files)
+    files[semantics_module.replace(".", "/") + ".lean"] += "\n" + _file(MIXED_PROJECT_ROOT, [], _quantity_extra_semantics())
+    files[instance.replace(".", "/") + ".lean"] += "\n" + _file(instance, [],
+        _quantity_cardinality_obligations(quantity, threshold))
+    inputs = {"schema": QUANTITY_COUNTED_INPUT_SCHEMA, "profile": QUANTITY_COUNTED_PROFILE,
+        "quantity_report": checked, "quantity_report_sha256": expected_report_sha256,
+        "original_request_raw_utf8": request_raw.decode("utf-8"),
+        "original_request_sha256": expected_request_sha256,
+        "genuine_mixed_preparation_sha256": preparation_sha256(baseline),
+        "genuine_mixed_manifest": base_manifest}
+    files["preservation-inputs.json"] = _wire(inputs, MAX_PROJECT_BYTES).decode("utf-8") + "\n"
+    _need(len(files) == MAX_FILES and sum(len(value.encode("utf-8")) for value in files.values()) <= MAX_PROJECT_BYTES,
+          "complete quantity project exceeds existing seven-file byte capacity")
+    owners = _owners()
+    contracts = owners[-1]
+    extra_names = list(_quantity_theorem_types(quantity, threshold))
+    manifest = contracts.seal_record({
+        "schema": SCHEMA, "profile": QUANTITY_COUNTED_PROFILE, "toolchain": toolchain, "target": "legal",
+        "quantity": quantity, "threshold": threshold, "family": "tdfol", "typed_profile": "tdfol_default",
+        "quantity_report_sha256": expected_report_sha256, "original_request_sha256": expected_request_sha256,
+        "typed_expression_sha256": checked["typed_expression_sha256"],
+        "typed_expression_content_digest": checked["typed_expression_content_digest"],
+        "genuine_mixed_preparation_sha256": preparation_sha256(baseline), "genuine_mixed_manifest": base_manifest,
+        "expected_modules": modules, "module_imports": base_manifest["module_imports"],
+        "file_sha256": {name: _sha(text.encode("utf-8")) for name, text in sorted(files.items())},
+        "theorems": list(base_manifest["theorems"]) + [instance + "." + name for name in extra_names],
+        "quantity_expected_theorem_types": _quantity_theorem_types(quantity, threshold),
+        "expected_axioms": {name: [] for name in list(base_manifest["theorems"]) + [instance + "." + key for key in extra_names]},
+        "mathematical_contract": "positive_injective_Fin_witness" if quantity == "at_least" else "explicit_injective_Fin_enumeration_with_membership_range_iff",
+        "theorem_assumptions": [
+            "Object/EventFrame/TimeFrame may be empty; quantification remains per event/time pair.",
+            "Object equality is built-in; no DecidableEq Object, Classical, choice, funext or propext is requested.",
+            "Positive witnesses and explicit enumeration are independent Fin contracts, not an AL-and-AM shortcut.",
+            "Only closed Fin-index disequality controls use decide; existing direct Fin elimination is reused.",
+            "All eight theorem proofs, elaboration, exact types and empty-axiom reports remain unexecuted until actual native qualification."],
+        "support_profile": {"sorts": ["Object", "EventFrame", "TimeFrame"], "predicate": "Member",
+            "roles": ["object", "event", "time"], "quantity": quantity, "threshold": threshold,
+            "max_nodes": MAX_MIXED_AST_NODES, "max_depth": MAX_MIXED_AST_DEPTH,
+            "max_project_bytes": MAX_PROJECT_BYTES, "source_carriers_may_be_empty": True},
+        "source_custody": {"original_request": "preservation-inputs.json/original_request_raw_utf8",
+            "whole_quantity_report": "preservation-inputs.json/quantity_report", "statutory_meaning_proved": False},
+        "producer_pins": dict(base_manifest["producer_pins"]),
+        "counted_producer_pins": dict(checked["producer_pins"]),
+        "preparation_only": True, "authority": dict(AUTHORITY), "training_mask": 0,
+        "evaluation_gold_mask": 0, "native_ast": None, "native_TDFOL_route_used": False,
+        "native_parser_roundtrip": False, "quantity_cardinality_proved": False,
+        **FALSE_FLAGS})
+    _need(_wire(report, MAX_RECORD_BYTES) == report_raw,
+          "offered quantity report changed during preservation preparation")
+    final = NativeAstPreservationPreparation(_wire(manifest, MAX_RECORD_BYTES).decode("utf-8"), tuple(sorted(files.items())))
+    preparation_sha256(final)
+    # Closing regeneration still binds the complete original quantity declaration.
+    _need(counted.validate_counted_quantity_v4(report, request_raw,
+        expected_report_sha256=expected_report_sha256, expected_request_sha256=expected_request_sha256) == checked,
+        "quantity operation owners changed during complete preparation")
+    return final
+
+
+def validate_counted_quantity_ast_preservation(preparation, report, request_raw: bytes, *,
+        expected_preparation_sha256, expected_report_sha256, expected_request_sha256, toolchain):
+    _pin(expected_preparation_sha256, "complete positive quantity preservation preparation")
+    _need(preparation_sha256(preparation) == expected_preparation_sha256,
+          "independent complete quantity preparation pin differs")
+    expected = prepare_counted_quantity_ast_preservation(report, request_raw,
+        expected_report_sha256=expected_report_sha256, expected_request_sha256=expected_request_sha256,
+        toolchain=toolchain)
+    _need(expected == preparation and preparation_sha256(expected) == expected_preparation_sha256,
+          "quantity preparation differs from complete original regeneration")
+    return expected
+
+# PRIVATE UNIMPORTED / UNEXECUTED PROOF-GENERATION DATA.
+# This fragment is not a maintained logic module or a qualification receipt.
+# The caller owns resource preflight, the exact source lowerer, and admission.
+# Required Lean names: thresholdFinCases, quantityExpansion,
+# quantityFiniteAtLeast, quantityFiniteExactly.  No imports are generated.
+# quantityExpansion must have precisely the source shape documented below.
+
+
+def _quantity_finite_equivalence_proof(quantity, n):
+    """Generate one constructive per-specialization Lean proof candidate.
+
+    Accepted quantities are exactly at_least and exactly; n is a nonnegative
+    plain Python int (not bool).  The caller must preflight all output budgets.
+
+    Source contract, under forall event time:
+      n=0 at_least: forall z, member z event time -> member z event time.
+      n=0 exactly:  forall z, not (member z event time).
+      n>0: nested exists x0 ... x(n-1), followed by a LEFT-associated
+        conjunction whose leaves, in order, are:
+          1. member xi event time, i ascending;
+          2. not (xi = xj), pairs i<j in lexicographic order;
+          3. for exactly only, forall x, member x event time iff the
+             LEFT-associated disjunction [x = xi, i ascending].
+        A singleton conjunction/disjunction is its sole leaf.
+
+    The finite specifications are the requested independent definitions:
+      AtLeast: exists f : Fin n -> Object, Injective f and all f i are members.
+      Exactly: exists f : Fin n -> Object, Injective f and
+                 forall x, member x event time iff exists i, f i = x.
+
+    Only direct thresholdFinCases/Fin.elim0 elimination is used.  The only
+    generated decide terms compare closed Fin literals.  Eq.mp/congrArg
+    merely transport along supplied Object equality; they use no propext.
+    This function and all generated Lean remain unexecuted and unqualified.
+    """
+    if (type(quantity) is not str or quantity not in ("at_least", "exactly")
+            or type(n) is not int or n < 0):
+        raise ValueError("quantity must be at_least/exactly and n a natural plain int")
+
+    target = "quantityFiniteAtLeast" if quantity == "at_least" else "quantityFiniteExactly"
+
+    def finish(forward, backward):
+        return (
+            "theorem quantity_finite_equivalence {Object EventFrame TimeFrame : Type}\n"
+            "    (member : Object → EventFrame → TimeFrame → Prop) :\n"
+            "    quantityExpansion member ↔ " + target + " " + str(n) + " member := by\n"
+            "  exact Iff.intro\n    " + forward + "\n    " + backward + "\n"
+            "#print axioms quantity_finite_equivalence\n"
+        )
+
+    if n == 0:
+        empty_function = "(fun (index : Fin 0) => Fin.elim0 index)"
+        empty_injective = "(fun {leftIndex} {rightIndex} equality => Fin.elim0 leftIndex)"
+        if quantity == "at_least":
+            forward = (
+                "(fun h event time =>\n"
+                "      let objects : Fin 0 → Object := " + empty_function + "\n"
+                "      Exists.intro objects (And.intro " + empty_injective
+                + " (fun index => Fin.elim0 index)))"
+            )
+            backward = "(fun h event time z membership => membership)"
+        else:
+            forward = (
+                "(fun h event time =>\n"
+                "      let objects : Fin 0 → Object := " + empty_function + "\n"
+                "      Exists.intro objects (And.intro " + empty_injective
+                + " (fun x => Iff.intro"
+                + " (fun membership => False.elim (h event time x membership))"
+                + " (fun enumeration => Exists.elim enumeration"
+                + " (fun index equality => Fin.elim0 index)))))"
+            )
+            backward = (
+                "(fun h event time x membership =>\n"
+                "      Exists.elim (h event time) (fun objects evidence =>\n"
+                "        Exists.elim (Iff.mp ((And.right evidence) x) membership)"
+                " (fun index equality => Fin.elim0 index)))"
+            )
+        return finish(forward, backward)
+
+    variables = ["x" + str(i) for i in range(n)]
+    pairs = [(i, j) for i in range(n) for j in range(i + 1, n)]
+    pair_positions = {pair: n + k for k, pair in enumerate(pairs)}
+    leaf_count = n + len(pairs) + (1 if quantity == "exactly" else 0)
+
+    def fin(i):
+        proof = "Nat.le.refl"
+        for _ in range(n - i - 1):
+            proof = "(Nat.le.step " + proof + ")"
+        return "(⟨" + str(i) + ", " + proof + "⟩ : Fin " + str(n) + ")"
+
+    def fold_and(values):
+        result = values[0]
+        for value in values[1:]:
+            result = "(And.intro (" + result + ") (" + value + "))"
+        return result
+
+    def projection(value, index, length):
+        if length == 1:
+            return value
+        if index == length - 1:
+            return "(And.right " + value + ")"
+        return projection("(And.left " + value + ")", index, length - 1)
+
+    def or_type(values):
+        result = values[0]
+        for value in values[1:]:
+            result = "(" + result + " ∨ " + value + ")"
+        return result
+
+    def or_intro(index, length, value):
+        if length == 1:
+            return value
+        if index == length - 1:
+            return "(Or.inr (" + value + "))"
+        return "(Or.inl (" + or_intro(index, length - 1, value) + "))"
+
+    def or_eliminate(value, length, leaf):
+        if length == 1:
+            return leaf(0, value)
+        earlier = "earlier" + str(length)
+        equality = "equality" + str(length - 1)
+        return (
+            "(Or.elim (" + value + ") (fun " + earlier + " => "
+            + or_eliminate(earlier, length - 1, leaf) + ") (fun " + equality + " => "
+            + leaf(length - 1, equality) + "))"
+        )
+
+    def cases(branches, name, motive, offset=0):
+        # The lift and dependent motive deliberately follow the cached,
+        # previously qualified thresholdFinCases constructor-elimination shape.
+        if not branches:
+            return "(fun (" + name + " : Fin 0) => Fin.elim0 " + name + ")"
+        size_here = len(branches)
+        argument = name + "Value"
+        lifted = argument
+        if offset:
+            proof = "(" + argument + ").isLt"
+            for _ in range(offset):
+                proof = "(Nat.succ_lt_succ " + proof + ")"
+            lifted = (
+                "(⟨(" + argument + ").val + " + str(offset) + ", " + proof
+                + "⟩ : Fin " + str(size_here + offset) + ")"
+            )
+        annotation = (
+            "(motive := fun (" + argument + " : Fin " + str(size_here) + ") => "
+            + motive(lifted) + ")"
+        )
+        return (
+            "(fun (" + name + " : Fin " + str(size_here) + ") => thresholdFinCases "
+            + annotation + " (" + branches[0] + ") "
+            + cases(branches[1:], name + "Tail", motive, offset + 1) + " " + name + ")"
+        )
+
+    def injection_type(left, right):
+        return (
+            "(objects (" + left + ") = objects (" + right + ")) → ("
+            + left + ") = (" + right + ")"
+        )
+
+    def source_forward(properties):
+        objects = cases(variables, "objectIndex", lambda index: "Object")
+        member_branches = [projection(properties, i, leaf_count) for i in range(n)]
+        members = cases(
+            member_branches, "memberIndex",
+            lambda index: "member (objects (" + index + ")) event time"
+        )
+        rows = []
+        for i in range(n):
+            row = []
+            for j in range(n):
+                if i == j:
+                    result = "Eq.refl " + fin(i)
+                else:
+                    pair = (min(i, j), max(i, j))
+                    distinct = projection(properties, pair_positions[pair], leaf_count)
+                    equality = "equality" if i < j else "(Eq.symm equality)"
+                    result = "False.elim ((" + distinct + ") (" + equality + "))"
+                row.append("(fun equality => " + result + ")")
+            rows.append(cases(
+                row, "rightIndex",
+                lambda right, left=i: injection_type(fin(left), right)
+            ))
+        conclude = cases(
+            rows, "leftIndex",
+            lambda left: "∀ (j : Fin " + str(n) + "), " + injection_type(left, "j")
+        )
+        result = (
+            "(let objects : Fin " + str(n) + " → Object := " + objects + "\n"
+            "        let members : ∀ i : Fin " + str(n)
+            + ", member (objects i) event time := " + members + "\n"
+            "        let conclude : ∀ (i j : Fin " + str(n)
+            + "), objects i = objects j → i = j := " + conclude + "\n"
+            "        let injective : Function.Injective objects :="
+            " (fun {i} {j} equality => conclude i j equality)\n"
+        )
+        if quantity == "at_least":
+            return result + "        Exists.intro objects (And.intro injective members))"
+        coverage = projection(properties, leaf_count - 1, leaf_count)
+        source_disjunction = or_type(["x = " + variable for variable in variables])
+        from_source = or_eliminate(
+            "Iff.mp (cover x) membership", n,
+            lambda i, equality: "(Exists.intro " + fin(i) + " (Eq.symm (" + equality + ")))"
+        )
+        to_member = (
+            "(fun enumeration => Exists.elim enumeration (fun index equality => "
+            "Eq.mp (congrArg (fun entity : Object => member entity event time) equality)"
+            " (members index)))"
+        )
+        return (
+            result + "        let cover : ∀ (x : Object), member x event time ↔ "
+            + source_disjunction + " := " + coverage + "\n"
+            "        Exists.intro objects (And.intro injective (fun x => Iff.intro "
+            + "(fun membership => " + from_source + ") " + to_member + ")))"
+        )
+
+    def unpack_source(value, index):
+        if index == n:
+            return source_forward(value)
+        remaining = "sourceRest" + str(index)
+        return (
+            "(Exists.elim (" + value + ") (fun " + variables[index] + " " + remaining
+            + " => " + unpack_source(remaining, index + 1) + "))"
+        )
+
+    forward = "(fun h event time => " + unpack_source("h event time", 0) + ")"
+
+    witness_values = ["(objects " + fin(i) + ")" for i in range(n)]
+    if quantity == "at_least":
+        backward_prefix = (
+            "let members : ∀ i : Fin " + str(n)
+            + ", member (objects i) event time := And.right evidence\n"
+        )
+        leaves = ["(members " + fin(i) + ")" for i in range(n)]
+    else:
+        backward_prefix = (
+            "let cover : ∀ (x : Object), member x event time ↔ ∃ i : Fin "
+            + str(n) + ", objects i = x := And.right evidence\n"
+        )
+        leaves = [
+            "(Iff.mpr (cover (objects " + fin(i) + ")) (Exists.intro "
+            + fin(i) + " (Eq.refl _)))"
+            for i in range(n)
+        ]
+    for i, j in pairs:
+        leaves.append(
+            "(fun equality => (by decide : " + fin(i) + " ≠ " + fin(j)
+            + ") (injective equality))"
+        )
+    if quantity == "exactly":
+        source_disjunction = or_type(["x = " + value for value in witness_values])
+        coverage_handlers = cases(
+            [
+                "(fun equality => " + or_intro(i, n, "(Eq.symm equality)") + ")"
+                for i in range(n)
+            ],
+            "coverageIndex",
+            lambda index: "(objects (" + index + ") = x) → " + source_disjunction
+        )
+        source_to_finite = or_eliminate(
+            "sourceEquality", n,
+            lambda i, equality: (
+                "(Iff.mpr (cover x) (Exists.intro " + fin(i)
+                + " (Eq.symm (" + equality + "))))"
+            )
+        )
+        leaves.append(
+            "(fun x => Iff.intro"
+            " (fun membership => Exists.elim (Iff.mp (cover x) membership)"
+            " (fun index equality => (" + coverage_handlers + ") index equality))"
+            " (fun sourceEquality => " + source_to_finite + "))"
+        )
+    packed = fold_and(leaves)
+    for value in reversed(witness_values):
+        packed = "(Exists.intro " + value + " (" + packed + "))"
+    backward = (
+        "(fun h event time => Exists.elim (h event time) (fun objects evidence =>\n"
+        "      let injective : Function.Injective objects := And.left evidence\n"
+        "      " + backward_prefix + "      " + packed + "))"
+    )
+    return finish(forward, backward)

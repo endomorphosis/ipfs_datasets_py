@@ -9838,7 +9838,7 @@ def _readonly_epoch_real_qwen_fixture(tmp_path,monkeypatch,steps):
     return SimpleNamespace(spec=spec,options=options,artifact=artifact,contract=contract,snapshot=snapshot,
         current_configuration=current_configuration,old_pipeline=old_pipeline,target=target,prior=prior,
         expected_model=expected_model,expected_optimizer=expected_optimizer,expected_rng=expected_rng,
-        originals=originals,mixed=mixed,steps=steps)
+        originals=originals,mixed=mixed,steps=steps,original_worker=original)
 
 
 @pytest.mark.parametrize('steps',[0,3],ids=['actual-pristine0','actual-trained3'])
@@ -10036,3 +10036,267 @@ def test_readonly_epoch_operational_reader_is_scoped_and_mechanically_bound():
     assert changed != fragment
     with pytest.raises(worker.TrainingJobValidationError, match="classified operational receipt helper changed"):
         worker._reviewed_readonly_epoch_projection(old, source.replace(fragment, changed, 1).encode())
+
+
+# Separate opt-in TRAIN-resume Source transition. Readonly v4 remains closed;
+# all numerical work below uses the existing tiny real-Qwen fixtures/backends.
+def _train_resume_epoch_real_qwen_fixture(tmp_path, monkeypatch):
+    from copy import deepcopy
+    fixture = _readonly_epoch_real_qwen_fixture(tmp_path, monkeypatch, 3)
+    fixture.readonly_options = dict(fixture.options)
+    contract = deepcopy(fixture.contract)
+    contract.update(schema=worker.REVIEWED_DECODER_TRAIN_RESUME_EPOCH_CONTRACT_SCHEMA,
+                    profile=worker.REVIEWED_DECODER_TRAIN_RESUME_EPOCH_PROFILE)
+    assert json.loads(fixture.originals['candidate'])['schema'] == worker.REVIEWED_DECODER_CHECKPOINT_SCHEMA
+    fixture.contract = contract
+    fixture.options = dict(fixture.options,
+        compatibility_contract_artifact=fixture.artifact('NEW-explicit-TRAIN-resume-contract.json', contract),
+        output_directory=str(tmp_path/'NEW-train-resume-current-version'))
+    return fixture
+
+
+def test_train_resume_epoch_migrated_update_matches_uninterrupted_original_Adam_RNG_and_progress(tmp_path, monkeypatch):
+    from copy import deepcopy
+    fixture = _train_resume_epoch_real_qwen_fixture(tmp_path, monkeypatch)
+    # The existing fixture owns this original9d runtime. Its original public
+    # executor supplies the same-state uninterrupted next-update baseline.
+    original_runtime = fixture.mixed.runtime
+    original_namespace = original_runtime.backend.train_batch.__func__.__globals__
+    old_parent = json.loads(fixture.originals['candidate'])
+    baseline_payload = fixture.spec.to_dict()
+    baseline_payload.update(backend_identity=old_parent['backend_identity'],
+        expected_source_sha256=old_parent['producer_pins'], max_steps=1,
+        output_directory=str(tmp_path/'old9d-uninterrupted-next-update'))
+    baseline_spec = original_namespace['TrainingJobSpec'].from_dict(baseline_payload)
+    # Keep the genuinely original public baseline in its own existing canonical
+    # module slot so a688 can enforce the exact original maintained tokenizer
+    # class. The actual module was created by the existing original9d fixture;
+    # no shim, recreated module, type-check bypass or second bridge is used.
+    import sys
+    from ipfs_datasets_py.optimizers import logic_theorem_optimizer as package
+    current_worker = worker
+    original_worker = fixture.original_worker
+    assert original_worker.__dict__ is original_namespace
+    assert original_worker.__name__ == current_worker.__name__
+    assert type(original_runtime.backend.tokenizer) is original_worker.ReviewedPretrainedTokenizer
+    with monkeypatch.context() as old_scope:
+        old_scope.setitem(sys.modules, current_worker.__name__, original_worker)
+        old_scope.setattr(package, 'autoencoder_training_worker', original_worker)
+        old_scope.setitem(globals(), 'worker', original_worker)
+        baseline = original_worker.execute_training_job(baseline_spec, reviewed_runtime=original_runtime)
+    assert worker is current_worker
+    assert sys.modules[current_worker.__name__] is current_worker
+    assert package.autoencoder_training_worker is current_worker
+    expected_model = deepcopy(original_runtime.backend._model_state())
+    expected_optimizer = deepcopy(original_runtime.backend.optimizer.state_dict())
+    expected_rng = fixture.target.torch.get_rng_state().clone()
+    runtime, migration = worker.migrate_local_reviewed_decoder_train_resume_source_epoch_v5(
+        fixture.spec, **fixture.options)
+    assert migration['training_resume_eligible'] is True and migration['training_performed'] is False
+    next_payload = migration['next_job_spec']
+    next_payload.update(max_steps=1, output_directory=str(tmp_path/'new-current-next-update'))
+    continued = worker.execute_training_job(worker.TrainingJobSpec.from_dict(next_payload), reviewed_runtime=runtime)
+    assert continued['initial_progress'] == {'epochs_completed':1,'row_cursor':0,'optimizer_steps':3}
+    assert continued['worker_progress'] == baseline['worker_progress'] == {
+        'epochs_completed':1,'row_cursor':1,'optimizer_steps':4}
+    assert runtime.backend._same(runtime.backend._model_state(), expected_model)
+    assert runtime.backend._same(runtime.backend.optimizer.state_dict(), expected_optimizer)
+    assert fixture.target.torch.equal(fixture.target.torch.get_rng_state(), expected_rng)
+    assert runtime.backend.optimizer.state and runtime.backend._optimizer_steps == 4
+    manifest = json.loads(Path(continued['candidate']['path']).read_bytes())
+    assert manifest['schema'] == worker.REVIEWED_DECODER_SOURCE_EPOCH_CHECKPOINT_SCHEMA
+    assert manifest['source_epoch_migration'] == migration['migration_receipt']
+    assert manifest['checkpoint_lineage_id'] != old_parent['checkpoint_lineage_id']
+    assert manifest['base_version_id'] != old_parent['base_version_id']
+    assert continued['promotion_performed'] is continued['convergence_proved'] is False
+    assert all(Path(fixture.prior[name]['path']).read_bytes() == raw for name,raw in fixture.originals.items())
+
+
+def test_train_resume_epoch_migration_preserves_nonempty_Adam_pair_and_new_lineage_without_updates(tmp_path, monkeypatch):
+    fixture = _train_resume_epoch_real_qwen_fixture(tmp_path, monkeypatch)
+    monkeypatch.setattr(worker.TorchReviewedDecoderBackend, 'train_batch',
+        lambda *a,**k:pytest.fail('migration itself performed a training update'))
+    runtime, result = worker.migrate_local_reviewed_decoder_train_resume_source_epoch_v5(fixture.spec, **fixture.options)
+    assert result['worker_progress'] == fixture.prior['worker_progress'] == {
+        'epochs_completed':1,'row_cursor':0,'optimizer_steps':3}
+    assert runtime.backend._optimizer_steps == 3 and runtime.backend.optimizer.state
+    assert runtime.backend._same(runtime.backend._model_state(), fixture.expected_model)
+    assert runtime.backend._same(runtime.backend.optimizer.state_dict(), fixture.expected_optimizer)
+    assert fixture.target.torch.equal(fixture.target.torch.get_rng_state(), fixture.expected_rng)
+    assert result['ordinary_current_loader']['matched_pair'] and result['ordinary_current_loader']['checkpoint_restored']
+    assert result['ordinary_current_loader']['optimizer_steps'] == 3
+    receipt = worker._reviewed_train_resume_epoch_validate_receipt(result['migration_receipt'], runtime.backend,
+        expected_spec=worker.TrainingJobSpec.from_dict(result['next_job_spec']))
+    assert receipt['profile'] == worker.REVIEWED_DECODER_TRAIN_RESUME_EPOCH_PROFILE
+    assert receipt['training_resume_eligible'] is True and 'readonly_only' not in receipt
+    assert receipt['model_Adam_steps_RNG_and_progress_preserved'] is True
+    assert receipt['old_checkpoint_manifest'] == fixture.prior['candidate']
+    assert result['new_checkpoint_lineage_id'] != fixture.spec.checkpoint_lineage_id
+    assert result['new_base_version_id'] != fixture.spec.base_version_id
+    assert all(result[key] is False for key in ('training_performed','promotion_performed',
+        'qualified','resource_granted','historical_dependency_execution_requalified'))
+
+
+@pytest.mark.parametrize('family', ['old_v3','readonly_v4'])
+def test_train_resume_epoch_new_profile_does_not_relabel_old_migration_families(tmp_path, monkeypatch, family):
+    fixture = _train_resume_epoch_real_qwen_fixture(tmp_path, monkeypatch)
+    migrate = (worker.migrate_local_reviewed_decoder_source_epoch_v3 if family == 'old_v3'
+               else worker.migrate_local_reviewed_decoder_readonly_source_epoch_v4)
+    with pytest.raises(worker.TrainingJobValidationError):
+        migrate(fixture.spec, **fixture.options)
+    assert not Path(fixture.options['output_directory']).exists()
+    assert all(Path(fixture.prior[name]['path']).read_bytes() == raw for name,raw in fixture.originals.items())
+
+
+def test_train_resume_epoch_readonly_derivative_is_never_a_training_parent(tmp_path, monkeypatch):
+    from copy import deepcopy
+    fixture = _train_resume_epoch_real_qwen_fixture(tmp_path, monkeypatch)
+    runtime, readonly = worker.migrate_local_reviewed_decoder_readonly_source_epoch_v4(
+        fixture.spec, **fixture.readonly_options)
+    payload = fixture.spec.to_dict()
+    payload.update(parent_checkpoint_artifact=readonly['candidate'],
+        base_model_checkpoint=readonly['model_checkpoint'], base_optimizer_checkpoint=readonly['optimizer_checkpoint'],
+        checkpoint_lineage_id=readonly['new_checkpoint_lineage_id'],base_version_id=readonly['new_base_version_id'],
+        output_directory=str(tmp_path/'forbidden-readonly-training'))
+    spec = worker.TrainingJobSpec.from_dict(payload)
+    monkeypatch.setattr(runtime.backend, 'inspect_checkpoint',
+        lambda *a,**k:pytest.fail('readonly checkpoint reached numerical resume inspection'))
+    with pytest.raises(worker.TrainingJobValidationError, match='closed complete reviewed decoder continuation checkpoint'):
+        worker.execute_training_job(spec, reviewed_runtime=runtime)
+    assert not Path(spec.output_directory).exists()
+    contract = deepcopy(fixture.contract)
+    contract['old_checkpoint_manifest_sha256'] = readonly['candidate']['sha256']
+    options = dict(fixture.options, compatibility_contract_artifact=fixture.artifact('forbidden-readonly-parent-contract.json',contract))
+    with pytest.raises(worker.TrainingJobValidationError, match='original V1 manifest'):
+        worker.migrate_local_reviewed_decoder_train_resume_source_epoch_v5(spec, **options)
+    assert not Path(options['output_directory']).exists()
+    assert json.loads(Path(readonly['candidate']['path']).read_bytes())['readonly_only'] is True
+
+
+@pytest.mark.parametrize('damage', ['config_math','conditioning','pipeline','runtime_context','old_source',
+    'current_source','data','context','profile','ancestry','seed','progress'])
+def test_train_resume_epoch_changed_numerical_or_provenance_inputs_refuse_without_publication(tmp_path, monkeypatch, damage):
+    from copy import deepcopy
+    fixture = _train_resume_epoch_real_qwen_fixture(tmp_path, monkeypatch)
+    options = dict(fixture.options); contract = deepcopy(fixture.contract); payload = fixture.spec.to_dict()
+    if damage in ('config_math','conditioning'):
+        config = deepcopy(fixture.current_configuration)
+        if damage == 'config_math': config['gradient_clip'] = 0.5
+        else: config['training_conditioning_profile'] = 'qwen2-chatml-field-layouts/v1'
+        changed = fixture.artifact('changed-current-configuration.json', config)
+        options['current_configuration_artifact'] = changed
+        contract['current_configuration_sha256'] = changed.sha256
+    elif damage == 'pipeline':
+        pipeline = json.loads(fixture.old_pipeline); pipeline['frontend']['model_max_length'] = 17
+        changed = fixture.artifact('changed-old-pipeline.json', pipeline)
+        options['old_tokenizer_pipeline_artifact'] = changed
+        contract['old_tokenizer_pipeline_sha256'] = changed.sha256
+    elif damage == 'runtime_context':
+        snapshot = deepcopy(fixture.snapshot); next(iter(snapshot['implementation'].values()))['sha256'] = '0'*64
+        contract['dependency_snapshot_artifact'] = worker.asdict(fixture.artifact('changed-runtime-context.json', snapshot))
+    elif damage == 'old_source': contract['old_source_sha256']['worker'] = '0'*64
+    elif damage == 'current_source': contract['current_source_sha256']['inputs'] = '0'*64
+    elif damage in ('data','context'):
+        population = json.loads(Path(contract['old_training_binding_artifact']['path']).read_bytes())
+        if damage == 'data': population['row_commitments'][0]['target_tokens_sha256'] = '0'*64
+        else: population['source_contexts_sha256'] = '0'*64
+        contract['old_training_binding_artifact'] = worker.asdict(fixture.artifact('changed-same-T3-binding.json', population))
+    elif damage == 'profile': contract['profile'] = worker.REVIEWED_DECODER_READONLY_EPOCH_PROFILE
+    elif damage in ('ancestry','progress'):
+        origin = json.loads(fixture.originals['candidate'])
+        if damage == 'ancestry': origin['parent_checkpoint_sha256'] = '0'*64
+        else: origin['progress'] = {'epochs_completed':1,'row_cursor':1,'optimizer_steps':4}
+        changed = fixture.artifact('changed-original-manifest.json', origin)
+        payload['parent_checkpoint_artifact'] = worker.asdict(changed)
+        contract['old_checkpoint_manifest_sha256'] = changed.sha256
+    else: payload['seed'] = 1730
+    options['compatibility_contract_artifact'] = fixture.artifact('changed-TRAIN-resume-contract.json', contract)
+    with pytest.raises(worker.TrainingJobValidationError):
+        worker.migrate_local_reviewed_decoder_train_resume_source_epoch_v5(worker.TrainingJobSpec.from_dict(payload), **options)
+    assert not Path(options['output_directory']).exists()
+    assert all(Path(fixture.prior[name]['path']).read_bytes() == raw for name,raw in fixture.originals.items())
+
+
+@pytest.mark.parametrize('damage', ['next_context','next_seed','receipt_scope','receipt_origin'])
+def test_train_resume_epoch_next_spec_or_receipt_tamper_refuses_before_training(tmp_path, monkeypatch, damage):
+    fixture = _train_resume_epoch_real_qwen_fixture(tmp_path, monkeypatch)
+    runtime, migration = worker.migrate_local_reviewed_decoder_train_resume_source_epoch_v5(fixture.spec, **fixture.options)
+    payload = migration['next_job_spec']; payload.update(max_steps=1,output_directory=str(tmp_path/'forbidden-next-output'))
+    if damage == 'next_context':
+        old = json.loads(Path(payload['source_contexts_artifact']['path']).read_bytes())
+        changed = fixture.artifact('changed-next-context.json', {'changed_context':old})
+        payload['source_contexts_artifact'] = worker.asdict(changed)
+    elif damage == 'next_seed': payload['seed'] += 1
+    else:
+        receipt = json.loads(Path(migration['migration_receipt']['path']).read_bytes())
+        if damage == 'receipt_scope':
+            receipt['profile'] = worker.REVIEWED_DECODER_READONLY_EPOCH_PROFILE
+        else: receipt['old_checkpoint_manifest']['sha256'] = '0'*64
+        altered = fixture.artifact('changed-migration-receipt.json', receipt)
+        manifest = json.loads(Path(migration['candidate']['path']).read_bytes())
+        manifest['source_epoch_migration'] = worker.asdict(altered)
+        parent = fixture.artifact('changed-migrated-parent.json', manifest)
+        payload['parent_checkpoint_artifact'] = worker.asdict(parent)
+    monkeypatch.setattr(runtime.backend, 'train_batch',lambda *a,**k:pytest.fail('tampered resume reached fitting'))
+    # This deliberately malformed outer context is refused by canonical a688
+    # before the worker receipt oracle. Preserve its actual foreign exception.
+    expected_error = ValueError if damage == 'next_context' else worker.TrainingJobValidationError
+    expected_message = ('^closed separately supplied source-known selection contexts required$'
+                        if damage == 'next_context' else None)
+    with pytest.raises(expected_error, match=expected_message) as rejected:
+        worker.execute_training_job(worker.TrainingJobSpec.from_dict(payload), reviewed_runtime=runtime)
+    assert type(rejected.value) is expected_error
+    assert not Path(payload['output_directory']).exists()
+    assert all(Path(fixture.prior[name]['path']).read_bytes() == raw for name,raw in fixture.originals.items())
+
+
+@pytest.mark.parametrize('damage', ['train_labels','optimizer_math','context_binding','old_readonly_transfer','new_train_transfer',
+    'new_context_guard','restore_dispatch'])
+def test_train_resume_epoch_projection_keeps_exact_numerical_and_bridge_allowlists(damage):
+    import ast
+    raw = Path(worker.__file__).read_bytes(); tree = ast.parse(raw)
+    if damage == 'train_labels':
+        function = next(n for n in ast.walk(tree)if isinstance(n,ast.FunctionDef)and n.name=='_teacher_forced_forward')
+        expected = 'labels=labels'; replacement = 'labels=labels.clone().zero_()'
+    elif damage == 'optimizer_math':
+        backend = next(n for n in tree.body if isinstance(n,ast.ClassDef)and n.name=='TorchReviewedDecoderBackend')
+        function = next(n for n in backend.body if isinstance(n,ast.FunctionDef)and n.name=='train_batch')
+        expected = 'self.optimizer.step()'; replacement = 'self.optimizer.step(); self.optimizer.step()'
+    elif damage == 'context_binding':
+        function = next(n for n in ast.walk(tree)if isinstance(n,ast.FunctionDef)and n.name=='generate_batch')
+        expected = 'as readonly_state:'; replacement = 'as wrong_state:'
+    elif damage in ('old_readonly_transfer','new_train_transfer'):
+        name = '_reviewed_readonly_epoch_restore'if damage == 'old_readonly_transfer'else '_reviewed_train_resume_epoch_restore'
+        function = next(n for n in tree.body if isinstance(n,ast.FunctionDef)and n.name==name)
+        expected = 'backend.optimizer.load_state_dict(optimizer["state"]);current()'
+        replacement = 'backend.optimizer.load_state_dict(optimizer["state"]);backend._optimizer_steps=0;current()'
+    elif damage == 'new_context_guard':
+        function = next(n for n in tree.body if isinstance(n,ast.FunctionDef)and n.name=='_reviewed_train_resume_epoch_context')
+        expected = '"TRAIN-resume exact original same-T3 data/context binding differs"'
+        replacement = '"changed unreviewed context guard"'
+    else:
+        function = next(n for n in tree.body if isinstance(n,ast.FunctionDef)and n.name=='_reviewed_epoch_restore')
+        expected = 'return _reviewed_train_resume_epoch_restore('
+        replacement = 'return _reviewed_readonly_epoch_restore('
+    lines = raw.decode().splitlines(keepends=True)
+    selected = ''.join(lines[function.lineno-1:function.end_lineno]); assert expected in selected
+    changed = selected.replace(expected,replacement,1)
+    lines[function.lineno-1:function.end_lineno] = [changed]
+    with pytest.raises(worker.TrainingJobValidationError):
+        worker._reviewed_readonly_epoch_projection(_readonly_epoch_original9d_source(),''.join(lines).encode())
+
+
+def test_train_resume_epoch_late_denial_preserves_originals_and_unpromoted_partial(tmp_path, monkeypatch):
+    fixture = _train_resume_epoch_real_qwen_fixture(tmp_path, monkeypatch)
+    options = dict(fixture.options); denials = []
+    def deny_after_publication():
+        if Path(options['output_directory']).exists():
+            denials.append(True); raise PermissionError('original TRAIN-resume late guard refusal')
+    options['execution_guard'] = deny_after_publication
+    with pytest.raises(PermissionError,match='original TRAIN-resume late guard refusal'):
+        worker.migrate_local_reviewed_decoder_train_resume_source_epoch_v5(fixture.spec, **options)
+    assert denials and (Path(options['output_directory'])/'failure.json').exists()
+    failure = json.loads((Path(options['output_directory'])/'failure.json').read_bytes())
+    assert failure['partial_output_preserved'] is True and failure['old_artifacts_rewritten'] is False
+    assert failure['qualified'] is failure['promotion_performed'] is False
+    assert all(Path(fixture.prior[name]['path']).read_bytes() == raw for name,raw in fixture.originals.items())
