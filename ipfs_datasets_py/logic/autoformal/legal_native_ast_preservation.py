@@ -2402,3 +2402,491 @@ def validate_mixed_relational_ast_preservation(preparation, report, request_raw:
     _need(expected == preparation and preparation_sha256(preparation) == expected_preparation_sha256,
           "mixed preservation differs from complete original regeneration")
     return expected
+
+
+# Explicit opt-in extension. Legacy fixed-three profiles and their bytes above
+# remain unchanged; this reuses their sorted value/environment proof witnesses.
+PARAMETRIC_COUNTED_PROFILE = "typed-many-sorted-parametric-counted-preservation/v3"
+PARAMETRIC_COUNTED_INPUT_SCHEMA = "legal-counted-threshold-ast-preservation-inputs/v3"
+_PARAMETRIC_COUNTED_OPERATION_PINS = None
+
+PARAMETRIC_COUNTED_SEMANTICS = (SEMANTICS + "\n\n" + _SORTED_PROOF_TYPES + r'''
+inductive CountedThresholdFormula where
+  | falsity (nodeId : String)
+  | member (nodeId : String) (object event time : CountedVariable)
+  | equality (nodeId : String) (left right : CountedVariable)
+  | conjunction (nodeId : String) (left right : CountedThresholdFormula)
+  | disjunction (nodeId : String) (left right : CountedThresholdFormula)
+  | implication (nodeId : String) (left right : CountedThresholdFormula)
+  | universal (nodeId name : String) (sort : CountedSort) (body : CountedThresholdFormula)
+
+''' + _SORTED_PROOF_VALUES + r'''
+def thresholdToTypedNodeValue : CountedThresholdFormula → NativeValue
+  | .falsity nodeId => countedNodeValue nodeId "false" "" countedBoolSortValue [] []
+  | .member nodeId object event time =>
+      countedNodeValue nodeId "predicate" "Member" countedBoolSortValue
+        [countedVariableValue object, countedVariableValue event, countedVariableValue time] []
+  | .equality nodeId left right =>
+      countedNodeValue nodeId "equality" "" countedBoolSortValue
+        [countedVariableValue left, countedVariableValue right] []
+  | .conjunction nodeId left right =>
+      countedNodeValue nodeId "and" "" countedBoolSortValue
+        [thresholdToTypedNodeValue left, thresholdToTypedNodeValue right] []
+  | .disjunction nodeId left right =>
+      countedNodeValue nodeId "or" "" countedBoolSortValue
+        [thresholdToTypedNodeValue left, thresholdToTypedNodeValue right] []
+  | .implication nodeId left right =>
+      countedNodeValue nodeId "implies" "" countedBoolSortValue
+        [thresholdToTypedNodeValue left, thresholdToTypedNodeValue right] []
+  | .universal nodeId name sort body =>
+      countedNodeValue nodeId "forall" "" countedBoolSortValue
+        [thresholdToTypedNodeValue body] [countedBinderValue name sort]
+
+def countedIdentityValue (space value : String) : NativeValue :=
+  .object [("interface", .string "LogicIdentityNamespaces@1"),
+    ("namespace", .string space), ("schema_version", .string "logic-identity-namespaces/v1"),
+    ("value", .string value), ("version", .string "1.0.0")]
+
+def countedSignatureValue (signatureId : String) : NativeValue :=
+  .object [("family", countedIdentityValue "family" "first_order"),
+    ("features", .array []), ("interface", .string "LogicSignature@1"),
+    ("metadata", .object []), ("profile", countedIdentityValue "profile" "many_sorted"),
+    ("schema_version", .string "syntax-logic-signature/v1"),
+    ("signature_id", .string signatureId),
+    ("sorts", .array [countedBoolSortValue, countedAtomicSortValue .object,
+      countedAtomicSortValue .event, countedAtomicSortValue .time]),
+    ("symbols", .array [.object [
+      ("domain", .array [countedAtomicSortValue .object, countedAtomicSortValue .event,
+        countedAtomicSortValue .time]),
+      ("kind", .string "predicate"), ("metadata", .object []),
+      ("name", .string "Member"), ("range", countedBoolSortValue),
+      ("schema_version", .string "syntax-symbol-declaration/v1")]])]
+
+def thresholdTypedExpressionValue (expressionId signatureId contentDigest : String)
+    (ast : CountedThresholdFormula) : NativeValue :=
+  .object [("content_digest", .string contentDigest), ("expression_id", .string expressionId),
+    ("family", countedIdentityValue "family" "first_order"),
+    ("interface", .string "TypedExpression@1"), ("metadata", .object []),
+    ("profile", countedIdentityValue "profile" "many_sorted"),
+    ("root", thresholdToTypedNodeValue ast),
+    ("schema_version", .string "syntax-typed-expression/v1"),
+    ("signature", countedSignatureValue signatureId)]
+
+def thresholdVariableClosed (bound : List (CountedSort × String))
+    (boundVariable : CountedVariable) : Bool :=
+  bound.contains (boundVariable.sort, boundVariable.name)
+
+def thresholdClosed (bound : List (CountedSort × String)) : CountedThresholdFormula → Bool
+  | .falsity _ => true
+  | .member _ object event time =>
+      (object.sort == .object) && (event.sort == .event) && (time.sort == .time) &&
+        thresholdVariableClosed bound object && thresholdVariableClosed bound event &&
+        thresholdVariableClosed bound time
+  | .equality _ left right =>
+      (left.sort == .object) && (right.sort == .object) &&
+        thresholdVariableClosed bound left && thresholdVariableClosed bound right
+  | .conjunction _ left right => thresholdClosed bound left && thresholdClosed bound right
+  | .disjunction _ left right => thresholdClosed bound left && thresholdClosed bound right
+  | .implication _ left right => thresholdClosed bound left && thresholdClosed bound right
+  | .universal _ name sort body => thresholdClosed ((sort, name) :: bound) body
+
+''' + _SORTED_PROOF_ENVIRONMENT + r'''
+def thresholdDenote {Object EventFrame TimeFrame : Type}
+    (member : Object → EventFrame → TimeFrame → Prop) (ast : CountedThresholdFormula) :
+    CountedEnvironment Object EventFrame TimeFrame → Prop :=
+  CountedThresholdFormula.rec
+    (fun _ _ => False)
+    (fun _ object event time environment =>
+      Option.casesOn (countedObjectValue environment object) False (fun o =>
+        Option.casesOn (countedEventValue environment event) False (fun e =>
+          Option.casesOn (countedTimeValue environment time) False (fun t => member o e t))))
+    (fun _ left right environment =>
+      Option.casesOn (countedObjectValue environment left) False (fun l =>
+        Option.casesOn (countedObjectValue environment right) False (fun r => l = r)))
+    (fun _ _ _ left right environment => left environment ∧ right environment)
+    (fun _ _ _ left right environment => left environment ∨ right environment)
+    (fun _ _ _ left right environment => left environment → right environment)
+    (fun _ name sort _ child environment =>
+      CountedSort.casesOn sort
+        (∀ entity : Object, child (updateCountedObject environment name entity))
+        (∀ frame : EventFrame, child (updateCountedEvent environment name frame))
+        (∀ instant : TimeFrame, child (updateCountedTime environment name instant))) ast
+
+-- Positive finite-index collision semantics, defined independently of AST syntax.
+-- No finiteness, inhabitant or decidable equality is required for Object.
+-- No equivalence with a negated injective-witness proposition is assumed.
+def thresholdCollisionBound {Object EventFrame TimeFrame : Type}
+    (maximum : Nat) (member : Object → EventFrame → TimeFrame → Prop) : Prop :=
+  ∀ (event : EventFrame) (time : TimeFrame) (objects : Fin (maximum + 1) → Object),
+    (∀ i : Fin (maximum + 1), member (objects i) event time) →
+      ∃ i : Fin (maximum + 1), ∃ j : Fin (maximum + 1), i ≠ j ∧ objects i = objects j
+
+
+universe u
+
+def thresholdFinCases {n : Nat} {motive : Fin (n + 1) → Sort u}
+    (zeroCase : motive ⟨0, Nat.zero_lt_succ n⟩)
+    (succCase : ∀ i : Fin n, motive ⟨i.val + 1, Nat.succ_lt_succ i.isLt⟩)
+    (index : Fin (n + 1)) : motive index :=
+  match index with
+  | ⟨0, _⟩ => zeroCase
+  | ⟨Nat.succ k, bound⟩ => succCase ⟨k, Nat.lt_of_succ_lt_succ bound⟩
+''')
+
+
+def _parametric_counted_dimensions(maximum):
+    """Check derived expansion size before allocating syntax or proof text."""
+    _need(type(maximum) is int and 0 <= maximum <= MAX_AST_NODES,
+          "natural counted threshold exceeds existing preservation capacity")
+    size, pairs = maximum + 1, maximum * (maximum + 1) // 2
+    nodes = 9 if maximum == 0 else 2 * maximum * maximum + 8 * maximum + 7
+    depth = 5 if maximum == 0 else max(size + pairs + 3, 2 * size + 3)
+    _need(nodes <= MAX_AST_NODES and depth <= MAX_AST_DEPTH
+          and 2 * depth + 4 <= 64 and 128 * nodes + 4096 <= 20000,
+          "counted threshold expansion exceeds existing node/depth/JSON capacity")
+    return nodes, depth
+
+
+def _parametric_counted_source_syntax(root, maximum):
+    """Walk actual v3 constructors with independent finite resource bounds."""
+    expected_nodes, _ = _parametric_counted_dimensions(maximum)
+    count, identifiers = 0, set()
+    sorts = {"Object": "object", "EventFrame": "event", "TimeFrame": "time"}
+
+    def sort(value, *, formula=False):
+        _keys(value, {"arguments", "kind", "name", "schema_version"}, "counted typed sort")
+        name = value["name"]
+        _need(value["schema_version"] == "syntax-logic-sort/v1" and value["arguments"] == [],
+              "exact atomic counted sort required")
+        if formula:
+            _need(name == "Bool" and value["kind"] == "bool", "counted formula Bool sort required")
+            return "bool"
+        _need(type(name) is str and name in sorts and value["kind"] == "atomic",
+              "unsupported counted term/binder sort")
+        return sorts[name]
+
+    def node(value, depth):
+        nonlocal count
+        _keys(value, {"arguments", "binders", "kind", "metadata", "node_id", "schema_version",
+                      "sort", "symbol"}, "counted typed node")
+        _need(type(value["node_id"]) is str and 0 < len(value["node_id"]) <= 512
+              and value["node_id"] not in identifiers, "distinct bounded counted node IDs required")
+        count += 1
+        identifiers.add(value["node_id"])
+        _need(count <= MAX_AST_NODES and depth <= MAX_AST_DEPTH, "bounded counted threshold AST required")
+        _need(value["schema_version"] == "syntax-logic-node/v1" and value["metadata"] == {}
+              and type(value["symbol"]) is str and type(value["arguments"]) is list
+              and type(value["binders"]) is list, "exact unannotated counted node required")
+
+    def variable(value, environment, depth, expected_sort):
+        node(value, depth)
+        _need(value["kind"] == "variable" and value["arguments"] == [] and value["binders"] == [],
+              "only bound counted variables supported")
+        found, name = sort(value["sort"]), value["symbol"]
+        _need(found == expected_sort and (found, name) in environment,
+              "free, wrongly sorted or reordered counted variable")
+        return "⟨" + _counted_string(value["node_id"]) + ", " + _counted_string(name) + ", ." + found + "⟩"
+
+    def formula(value, environment, depth):
+        node(value, depth)
+        sort(value["sort"], formula=True)
+        kind, arguments = value["kind"], value["arguments"]
+        prefix = "(." + {"false": "falsity", "predicate": "member", "equality": "equality",
+                           "and": "conjunction", "or": "disjunction", "implies": "implication",
+                           "forall": "universal"}.get(kind, "unsupported")
+        prefix += " " + _counted_string(value["node_id"]) + " "
+        if kind == "predicate":
+            _need(value["symbol"] == "Member" and value["binders"] == [] and len(arguments) == 3,
+                  "ordered ternary Member required")
+            return prefix + " ".join(variable(argument, environment, depth + 1, expected)
+                for argument, expected in zip(arguments, ("object", "event", "time"), strict=True)) + ")"
+        _need(value["symbol"] == "", "unexpected counted connective/equality symbol")
+        if kind == "false":
+            _need(value["binders"] == [] and arguments == [], "exact counted False required")
+            return prefix.rstrip() + ")"
+        if kind == "equality":
+            _need(value["binders"] == [] and len(arguments) == 2, "binary built-in object equality required")
+            return prefix + " ".join(variable(argument, environment, depth + 1, "object")
+                                      for argument in arguments) + ")"
+        if kind in {"and", "or", "implies"}:
+            _need(value["binders"] == [] and len(arguments) == 2, "binary counted connective required")
+            return prefix + formula(arguments[0], environment, depth + 1) + " " + formula(
+                arguments[1], environment, depth + 1) + ")"
+        if kind == "forall":
+            _need(len(value["binders"]) == 1 and len(arguments) == 1, "single counted universal binder required")
+            binder = value["binders"][0]
+            _keys(binder, {"name", "schema_version", "sort"}, "counted typed binder")
+            _need(binder["schema_version"] == "syntax-binder/v1" and type(binder["name"]) is str,
+                  "exact counted binder required")
+            found, name = sort(binder["sort"]), binder["name"]
+            _need(not any(name == bound_name for _, bound_name in environment),
+                  "counted lexical binder shadowing unsupported")
+            return prefix + _counted_string(name) + " ." + found + " " + formula(
+                arguments[0], ((found, name), *environment), depth + 1) + ")"
+        raise ValueError("unsupported counted threshold preservation constructor: " + str(kind))
+
+    result = formula(root, (), 0)
+    _need(count == expected_nodes, "exact complete threshold witness node count required")
+    return result, count
+
+
+def _parametric_counted_pins(owners, counted, checked):
+    """Keep opt-in threshold replay pins separate from the fixed-v1 lane."""
+    global _PARAMETRIC_COUNTED_OPERATION_PINS
+    pins = dict(_pins(owners))
+    supplied = checked["producer_pins"]
+    _need(type(supplied) is dict and 1 <= len(supplied) <= 32,
+          "bounded current counted producer pins required")
+    for name, expected in supplied.items():
+        _pin(expected, "current counted producer")
+        path = Path(name)
+        _need(path.is_absolute() and str(path.resolve()) == name
+              and _sha(path.read_bytes()) == expected, "current counted producer bytes differ")
+        pins[name] = expected
+    path = Path(counted.__file__).resolve()
+    pins[str(path)] = _sha(path.read_bytes())
+    if _PARAMETRIC_COUNTED_OPERATION_PINS is None:
+        _PARAMETRIC_COUNTED_OPERATION_PINS = dict(pins)
+    _need(pins == _PARAMETRIC_COUNTED_OPERATION_PINS,
+          "counted threshold preservation owners changed during operation")
+    return pins
+
+
+def _parametric_counted_collision_proof(maximum):
+    """Generate an unexecuted constructive, per-instance Fin proof candidate.
+
+    Direct constructor elimination enumerates finite indices; Object remains an
+    arbitrary type. The only decide terms compare closed finite indices.
+    No proposition asserting a cardinality or equivalence is supplied as input.
+    """
+    _parametric_counted_dimensions(maximum)
+    size = maximum + 1
+    variables = ["x" + str(i) for i in range(size)]
+    pairs = [(i, j) for i in range(size) for j in range(i + 1, size)]
+
+    def fin(i):
+        proof = "Nat.le.refl"
+        for _ in range(size - i - 1):
+            proof = "(Nat.le.step " + proof + ")"
+        return "(⟨" + str(i) + ", " + proof + "⟩ : Fin " + str(size) + ")"
+
+    def fold_and(values):
+        result = values[0]
+        for value in values[1:]:
+            result = "(And.intro (" + result + ") (" + value + "))"
+        return result
+
+    def and_projection(value, index, length):
+        if length == 1:
+            return value
+        if index == length - 1:
+            return "(And.right " + value + ")"
+        return and_projection("(And.left " + value + ")", index, length - 1)
+
+    def or_intro(index, length, value):
+        if length == 1:
+            return value
+        if index == length - 1:
+            return "(Or.inr (" + value + "))"
+        return "(Or.inl (" + or_intro(index, length - 1, value) + "))"
+
+    def cases(branches, name="index", motive=lambda _index: "Object", offset=0):
+        if not branches:
+            return "(fun (" + name + " : Fin 0) => Fin.elim0 " + name + ")"
+        size_here = len(branches)
+        argument = name + "Value"
+        lifted = argument
+        if offset:
+            proof = "(" + argument + ").isLt"
+            for _ in range(offset):
+                proof = "(Nat.succ_lt_succ " + proof + ")"
+            lifted = "(⟨(" + argument + ").val + " + str(offset) + ", " + proof + (
+                "⟩ : Fin " + str(size_here + offset) + ")")
+        annotation = "(motive := fun (" + argument + " : Fin " + str(size_here) + (
+            ") => " + motive(lifted) + ")")
+        return "(fun (" + name + " : Fin " + str(size_here) + ") => thresholdFinCases " + (
+            annotation + " (" + branches[0] + ") " + cases(
+                branches[1:], name + "Tail", motive, offset + 1) + " " + name + ")")
+
+    def witness(index, equality):
+        left, right = pairs[index]
+        return "(Exists.intro " + fin(left) + " (Exists.intro " + fin(right) + " (And.intro " + (
+            "(by decide : " + fin(left) + " ≠ " + fin(right) + ")") + " (" + equality + "))))"
+
+    def eliminate(value, length):
+        if length == 1:
+            return witness(0, value)
+        return "(Or.elim (" + value + ") (fun earlier => " + eliminate("earlier", length - 1) + (
+            ") (fun equality => " + witness(length - 1, "equality") + "))")
+
+    offered = "h event time " + " ".join("(objects " + fin(i) + ")" for i in range(size))
+    premise = fold_and(["members " + fin(i) for i in range(size)])
+    forward = ("(fun h event time objects members => " +
+        ("False.elim (" + offered + " (" + premise + "))" if maximum == 0 else
+         eliminate(offered + " (" + premise + ")", len(pairs))) + ")")
+    conclusion = "False"
+    for index, (left, right) in enumerate(pairs):
+        equality = variables[left] + " = " + variables[right]
+        conclusion = equality if index == 0 else "(" + conclusion + " ∨ " + equality + ")"
+
+    def pair_type(left, right):
+        return "((" + left + ") ≠ (" + right + ") ∧ objects (" + left + ") = objects (" + (
+            right + ")) → " + conclusion)
+
+    object_function = cases(variables)
+    members_function = cases([and_projection("membership", i, size) for i in range(size)],
+        "memberIndex", lambda index: "member (objects (" + index + ")) event time")
+    branches = []
+    for i in range(size):
+        row = []
+        for j in range(size):
+            if i == j:
+                result = "False.elim (And.left pair (Eq.refl _))"
+            else:
+                index = pairs.index((min(i, j), max(i, j)))
+                equality = "And.right pair" if i < j else "Eq.symm (And.right pair)"
+                result = or_intro(index, len(pairs), equality)
+            row.append("(fun pair => " + result + ")")
+        branches.append(cases(row, "rightIndex",
+            lambda right, left=i: pair_type(fin(left), right)))
+    handlers = cases(branches, "leftIndex",
+        lambda left: "∀ (j : Fin " + str(size) + "), " + pair_type(left, "j"))
+    backward = ("(fun h event time " + " ".join(variables) + " membership =>\n"
+        + "    let objects : Fin " + str(size) + " → Object := " + object_function + "\n"
+        + "    let members : ∀ i : Fin " + str(size) + ", member (objects i) event time := " + members_function + "\n"
+        + "    let conclude : ∀ (i j : Fin " + str(size) + "), (i ≠ j ∧ objects i = objects j) → "
+        + conclusion + " := " + handlers + "\n"
+        + "    Exists.elim (h event time objects members) (fun i remaining =>\n"
+        + "      Exists.elim remaining (fun j pair => conclude i j pair)))")
+    return ("theorem threshold_collision_equivalence {Object EventFrame TimeFrame : Type}\n"
+        + "    (member : Object → EventFrame → TimeFrame → Prop) :\n"
+        + "    countedAtMostThreshold member ↔ thresholdCollisionBound " + str(maximum) + " member := by\n"
+        + "  exact Iff.intro\n    " + forward + "\n    " + backward + "\n"
+        + "#print axioms threshold_collision_equivalence\n")
+
+
+def prepare_counted_threshold_ast_preservation(report, request_raw: bytes, *,
+        expected_report_sha256, expected_request_sha256, toolchain):
+    """Prepare v3 exact-value/denotation obligations; perform no native build."""
+    _pin(expected_report_sha256, "complete counted threshold report")
+    _pin(expected_request_sha256, "complete counted threshold request")
+    report_raw = _wire(report, MAX_RECORD_BYTES)
+    _need(_sha(report_raw) == expected_report_sha256, "independent counted threshold report pin differs")
+    _need(type(request_raw) is bytes and 0 < len(request_raw) <= MAX_RECORD_BYTES // 8
+          and _sha(request_raw) == expected_request_sha256, "independent bounded counted threshold request pin differs")
+    request = _parse(request_raw, MAX_RECORD_BYTES // 8)
+    _need(type(request) is dict and type(report) is dict, "ordinary complete counted threshold request/report required")
+    _need(type(toolchain) is str and len(toolchain) <= 128 and _TOOLCHAIN.fullmatch(toolchain) is not None,
+          "exact version-pinned Lean toolchain required")
+    _need(_sha(Path(__file__).read_bytes()) == _SELF_PIN, "native AST preservation owner changed since import")
+    from . import legal_counted_frame_threshold_v2 as counted
+    checked = counted.validate_counted_threshold_v3(report, request_raw,
+        expected_report_sha256=expected_report_sha256, expected_request_sha256=expected_request_sha256)
+    _need(checked["request"] == request and checked["profile"] == counted.PARAMETRIC_PROFILE
+          and checked.get("source_binding") is None and checked.get("native_TDFOL_route_used", False) is False,
+          "exact authored parametric counted replay required")
+    _need(type(checked["authority"]) is dict and not any(checked["authority"].values()),
+          "parametric counted preparation grants no authority")
+    maximum = checked["maximum"]
+    owners = _owners()
+    _, emitter, contracts = owners
+    producers = _parametric_counted_pins(owners, counted, checked)
+    expression = checked["typed_expression"]
+    typed, count = _parametric_counted_source_syntax(expression["root"], maximum)
+    actual, semantics = _counted_json_value(expression), PARAMETRIC_COUNTED_SEMANTICS
+    instance = COUNTED_PROJECT_ROOT + ".Instance" + _sha(_wire({
+        "profile": PARAMETRIC_COUNTED_PROFILE, "report_sha256": expected_report_sha256,
+        "request_sha256": expected_request_sha256, "semantics_sha256": _sha(semantics.encode()),
+    }, MAX_RECORD_BYTES))
+    modules = [COUNTED_PROJECT_ROOT + ".Prelude", COUNTED_PROJECT_ROOT + ".Semantics", instance, COUNTED_PROJECT_ROOT]
+    imports = {modules[0]: [], modules[1]: [modules[0]], instance: [modules[1]], COUNTED_PROJECT_ROOT: [instance]}
+    reconstructed = ("thresholdTypedExpressionValue " + _counted_string(expression["expression_id"]) + " "
+        + _counted_string(expression["signature"]["signature_id"]) + " "
+        + _counted_string(expression["content_digest"]) + " typedCountedThresholdAst")
+    names = ["threshold_value_exact", "threshold_ast_closed", "threshold_denotation_matches_lowering",
+             "threshold_collision_equivalence"]
+    body = (checked["lean_body"] + "\n\ndef actualTypedValue : NativeValue := " + actual
+        + "\ndef typedCountedThresholdAst : CountedThresholdFormula := " + typed
+        + "\ndef reconstructedTypedValue : NativeValue := " + reconstructed
+        + "\ntheorem threshold_value_exact : reconstructedTypedValue = actualTypedValue := by\n  rfl\n"
+        + "#print axioms threshold_value_exact\n"
+        + "theorem threshold_ast_closed : thresholdClosed [] typedCountedThresholdAst = true := by\n  decide\n"
+        + "#print axioms threshold_ast_closed\n"
+        + "theorem threshold_denotation_matches_lowering {Object EventFrame TimeFrame : Type}\n"
+        + "    (member : Object → EventFrame → TimeFrame → Prop) :\n"
+        + "    thresholdDenote member typedCountedThresholdAst emptyCountedEnvironment ↔ countedAtMostThreshold member := by\n"
+        + "  exact Iff.intro (fun h => h) (fun h => h)\n#print axioms threshold_denotation_matches_lowering\n"
+        + _parametric_counted_collision_proof(maximum))
+    inputs = {"schema": PARAMETRIC_COUNTED_INPUT_SCHEMA, "profile": PARAMETRIC_COUNTED_PROFILE,
+        "counted_report": checked, "counted_report_sha256": expected_report_sha256,
+        "original_request_raw_utf8": request_raw.decode("utf-8"), "original_request_sha256": expected_request_sha256,
+        "typed_expression_sha256": checked["typed_expression_sha256"],
+        "original_counted_lean_body_sha256": checked["lean_body_sha256"], "maximum": maximum}
+    files = {
+        "lakefile.toml": 'name = "legal_native_ast_preservation"\nversion = "0.1.0"\n\n[[lean_lib]]\nname = "legal"\nroots = ["LegalCountedAstPreservation"]\n',
+        "lean-toolchain": toolchain + "\n",
+        "preservation-inputs.json": _wire(inputs, 4 * MAX_RECORD_BYTES).decode() + "\n",
+        modules[0].replace(".", "/") + ".lean": _file(COUNTED_PROJECT_ROOT, [], emitter.PRELUDE),
+        modules[1].replace(".", "/") + ".lean": _file(COUNTED_PROJECT_ROOT, imports[modules[1]], semantics),
+        instance.replace(".", "/") + ".lean": _file(instance, imports[instance], body),
+        COUNTED_PROJECT_ROOT + ".lean": "import " + instance + "\n"}
+    _need(len(files) == MAX_FILES and len(set(modules)) == MAX_MODULES
+          and sum(len(text.encode()) for text in files.values()) <= MAX_PROJECT_BYTES,
+          "complete counted threshold preservation project exceeds existing bounds")
+    manifest = contracts.seal_record({
+        "schema": SCHEMA, "profile": PARAMETRIC_COUNTED_PROFILE, "toolchain": toolchain, "target": "legal",
+        "family": "first_order", "typed_profile": "many_sorted", "maximum": maximum,
+        "counted_report_sha256": expected_report_sha256, "original_request_sha256": expected_request_sha256,
+        "typed_expression_sha256": checked["typed_expression_sha256"],
+        "typed_expression_content_digest": expression["content_digest"], "lean_body_sha256": checked["lean_body_sha256"],
+        "actual_typed_lean_value_sha256": _sha(actual.encode()), "typed_counted_lean_value_sha256": _sha(typed.encode()),
+        "semantics_sha256": _sha(semantics.encode()), "prelude_sha256": _sha(emitter.PRELUDE.encode()),
+        "typed_ast_node_count": count, "typed_predicates": ["Member"],
+        "expected_modules": modules, "module_imports": imports,
+        "file_sha256": {name: _sha(text.encode()) for name, text in sorted(files.items())},
+        "theorems": [instance + "." + name for name in names],
+        "theorem_assumptions": [
+            "Object, EventFrame and TimeFrame are arbitrary Type carriers, not assumed inhabited or finite.",
+            "Member is an arbitrary ternary Prop relation in ordered object,event,time roles.",
+            "Object equality is Lean equality; only closed Fin-index comparisons use decide.",
+            "The positive Fin(maximum+1) collision specification is defined independently of the typed AST.",
+            "No injective-witness negation equivalence, desired bound or preservation result is assumed.",
+            "Physical identity/schema/digest fields are preserved as values, not rehashed in Lean.",
+            "All four obligations, elaboration and axiom reports are unexecuted and unqualified."],
+        "support_profile": {"source_owner": "legal_counted_frame_threshold_v2", "threshold_domain": "Nat subject to unchanged resource admission",
+            "maximum": maximum, "sorts": ["Object", "EventFrame", "TimeFrame"], "formula_sort": "Bool",
+            "authored_sort_names_generalized": False, "arbitrary_carrier_types": True,
+            "predicate": "Member", "predicate_arity": 3, "ordered_argument_roles": ["object", "event", "time"],
+            "operators": ["False", "∧", "∨", "→", "="], "quantifiers": ["∀"],
+            "closed_only": True, "named_lexical_shadowing": False, "event_time_policy": "per_event_and_time",
+            "native_TDFOL_route_used": False, "max_ast_nodes": MAX_AST_NODES, "max_ast_depth": MAX_AST_DEPTH,
+            "max_project_bytes": MAX_PROJECT_BYTES, "max_json_depth": 64, "max_json_items": 20000},
+        "proof_candidate": {"status": "UNQUALIFIED_NOT_EXECUTED", "native_execution": False,
+            "kernel_checked": False, "extra_axioms_requested": [],
+            "remaining": "Actual Lean syntax/elaboration, four theorem proofs and their exact axiom reports require the existing admitted native owner."},
+        "source_custody": {"scope": "whole authored v3 threshold request/report and unchanged owner Lean definition replay",
+            "original_request_raw_retained_in": "preservation-inputs.json/original_request_raw_utf8",
+            "original_source_bundle_replayed": False, "source_prose_to_ast_proved": False},
+        "producer_pins": producers, "counted_producer_pins": checked["producer_pins"],
+        "preparation_only": True, "authority": dict(AUTHORITY), "training_mask": 0, "evaluation_gold_mask": 0,
+        **FALSE_FLAGS})
+    _need(_wire(report, MAX_RECORD_BYTES) == report_raw, "caller counted threshold report changed during preservation preparation")
+    _need(_parametric_counted_pins(owners, counted, checked) == producers,
+          "counted threshold preservation owners changed during preparation")
+    preparation = NativeAstPreservationPreparation(_wire(manifest, MAX_RECORD_BYTES).decode(), tuple(sorted(files.items())))
+    preparation_sha256(preparation)
+    return preparation
+
+
+def validate_counted_threshold_ast_preservation(preparation, report, request_raw: bytes, *,
+        expected_preparation_sha256, expected_report_sha256, expected_request_sha256, toolchain):
+    """Require all three commitments and whole original v3 regeneration."""
+    _pin(expected_preparation_sha256, "complete counted threshold preservation preparation")
+    _need(preparation_sha256(preparation) == expected_preparation_sha256,
+          "independent complete counted threshold preservation pin differs")
+    expected = prepare_counted_threshold_ast_preservation(report, request_raw,
+        expected_report_sha256=expected_report_sha256, expected_request_sha256=expected_request_sha256,
+        toolchain=toolchain)
+    _need(expected == preparation and preparation_sha256(preparation) == expected_preparation_sha256,
+          "counted threshold preservation differs from complete original regeneration")
+    return expected

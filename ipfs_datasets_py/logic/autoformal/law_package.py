@@ -26,6 +26,7 @@ TOOLCHAIN = "leanprover/lean4:v4.26.0\n"
 MAX_TERM_DEFS = 64
 MAX_CITE_IMPORTS = 32
 MAX_LAKE_MODULES = 64
+UNICODE_TERM_NAME_PROFILE = "unicode-exact-key-utf8-hex-term-names/v1"
 STITCH_FILES = (
     "section-neighborhoods.parquet",
     "term-index.parquet",
@@ -107,6 +108,13 @@ def _category(kind: str, value: str) -> str:
     return term_category(kind, value)
 
 
+def _term_lookup_key(value: str) -> str:
+    """Keep Unicode case/codepoints exact; retain the existing ASCII lookup."""
+
+    text = str(value or "")
+    return normalize_lookup(text) if text.isascii() else text.strip()
+
+
 def _atom_body(value: str) -> str:
     chars = []
     for char in str(value or ""):
@@ -119,9 +127,14 @@ def _atom_body(value: str) -> str:
 
 
 def sanitize_ident(value: str) -> str:
-    """Lean def fragment. Empty when the surface cannot be named."""
+    """Lean def fragment; Unicode uses the exact reversible term-name profile."""
 
-    body = _atom_body(str(value or "").lower())
+    raw = str(value or "")
+    if not raw.isascii():
+        # Legacy ASCII fragments are lowercase, so uppercase U_ cannot alias
+        # a literal ASCII spelling of this reversible UTF-8 identity.
+        return "U_" + raw.encode("utf-8").hex()
+    body = _atom_body(raw.lower())
     if not body:
         return ""
     if body[0].isdigit():
@@ -201,7 +214,7 @@ def term_module(category: str, surface: str) -> dict[str, Any]:
     cat = str(category or "")
     if cat not in _CATEGORY_DIR:
         return {"gap": True, "reason": "unknown_category", "category": cat}
-    key = normalize_lookup(surface)
+    key = _term_lookup_key(surface)
     ident = sanitize_ident(key)
     if not ident:
         return {"gap": True, "normalized": key, "reason": "unsanitizable_term"}
@@ -213,7 +226,7 @@ def term_module(category: str, surface: str) -> dict[str, Any]:
     bucket = "H" + hashlib.sha256(key.encode("utf-8")).hexdigest()[:2]
     namespace = f"Law.Term.{directory}"
     module = f"{namespace}.{bucket}.S00"
-    return {
+    result = {
         "bucket": bucket,
         "category": cat,
         "directory": directory,
@@ -225,6 +238,9 @@ def term_module(category: str, surface: str) -> dict[str, Any]:
         "path": f"Law/Term/{directory}/{bucket}/S00.lean",
         "qualified": f"{namespace}.{name}",
     }
+    if not key.isascii():
+        result["name_profile"] = UNICODE_TERM_NAME_PROFILE
+    return result
 
 
 def document_module(document_id: str, legal_id: str = "") -> dict[str, Any]:
@@ -644,7 +660,9 @@ def _covered_by_rule(rule: Mapping[str, Any], normalized: str) -> bool:
     if not normalized:
         return False
     for value in _rule_values(rule):
-        if normalize_lookup(value) == normalized or contains_lookup_phrase(value, normalized):
+        if _term_lookup_key(value) == normalized:
+            return True
+        if value.isascii() and normalized.isascii() and contains_lookup_phrase(value, normalized):
             return True
     return False
 
@@ -674,7 +692,7 @@ def _term_catalog(rows: Sequence[Mapping[str, Any]]) -> tuple[dict[tuple[str, st
         category = _category(kind, value)
         if category not in _CATEGORY_DIR:
             continue
-        groups.setdefault((category, normalize_lookup(value)), []).append(row)
+        groups.setdefault((category, _term_lookup_key(value)), []).append(row)
     catalog: dict[tuple[str, str], dict[str, Any]] = {}
     for key, members in groups.items():
         category, normalized = key
@@ -699,6 +717,8 @@ def _term_catalog(rows: Sequence[Mapping[str, Any]]) -> tuple[dict[tuple[str, st
             "term_ids": [item for item in term_ids if item],
             "value": str(winner.get("value") or ""),
         }
+        if not normalized.isascii() and not _fits(render_term_module([catalog[key]])):
+            raise LawPackageError("Unicode term definition exceeds the existing source cap")
     by_namespace: dict[str, list[dict[str, Any]]] = {}
     for item in catalog.values():
         by_namespace.setdefault(str(item["namespace"]), []).append(item)
@@ -756,7 +776,7 @@ def _lookup_term(
     category = _category(kind, text)
     if category not in _CATEGORY_DIR:
         return None
-    return catalog.get((category, normalize_lookup(text)))
+    return catalog.get((category, _term_lookup_key(text)))
 
 
 def _prepare_clause(
@@ -816,7 +836,7 @@ def _mentions_for(
         if str(row.get("legal_id") or "") != legal_id or str(row.get("hit_kind") or "") != "mention":
             continue
         surface = str(row.get("surface") or row.get("normalized") or "").strip()
-        normalized = normalize_lookup(surface)
+        normalized = _term_lookup_key(surface)
         ident = sanitize_ident(normalized)
         if not surface or not ident:
             continue

@@ -436,3 +436,70 @@ def test_default_script_does_not_call_lake_or_upload(law: dict, tmp_path: Path, 
     assert all(row["admitted"] is False and row["formalized"] is False and row["lake_ok"] is False for row in manifest)
     assert (out / "lean-toolchain").read_text(encoding="utf-8") == "leanprover/lean4:v4.26.0\n"
     assert any(row["reason"] == "section_not_ready" and row["legal_id"] == "usc:us:2:2" for row in manifest)
+
+
+def _assemble_with_actor_terms(law: dict, actors: list[str]) -> dict:
+    term_path = law["stitch"] / "term-index.parquet"
+    term_table = pq.read_table(term_path)
+    _write(term_path, term_table.to_pylist() + [_term("actor", value) for value in actors], term_table.schema)
+    span_table = pq.read_table(law["spans"])
+    spans = [
+        _span(
+            "usc:us:1:1", f"span-unicode-{index}", "sealed", f"{value} shall publish notice.",
+            {"actor": value, "action": "publish", "object": "notice", "modality": "obligation"},
+        )
+        for index, value in enumerate(actors)
+    ]
+    _write(law["spans"], span_table.to_pylist() + spans, span_table.schema)
+    return assemble_law_package(law["stitch"], law["spans"])
+
+
+def test_unicode_term_identity_survives_assembly_render_and_section_references(law: dict) -> None:
+    actors = [
+        "医师", "主管机关", "医师2", "主管机关2", "médical", "mèdical",
+        "Éducateur", "éducateur", "me\u0301dical",
+        "U_" + "医师".encode("utf-8").hex(),
+        "U_" + "主管机关2".encode("utf-8").hex(),
+    ]
+    assembled = _assemble_with_actor_terms(law, actors)
+    files = assembled["files"]
+    section = _joined(files, "Law/Title/T1/S1")
+    qualified = set()
+    for value in actors:
+        term_id = _term_id("actor", value)
+        rows = [row for row in assembled["manifest"]
+                if row["record_kind"] == "term" and term_id in json.loads(row["term_id"])]
+        assert len(rows) == 1
+        row = rows[0]
+        assert json.loads(row["term_id"]) == [term_id]
+        qualified.add(row["module"])
+        name = row["module"].rsplit(".", 1)[-1]
+        source = files[row["path"]]
+        assert f"def {name} : Law.Kernel.Term :=" in source
+        assert f"def {name}_fingerprint : Nat := {term_fingerprint('actor', value)}" in source
+        assert f"participant := {row['module']}" in section
+        assert f"import {'.'.join(Path(row['path']).with_suffix('').parts)}" in section
+    assert len(qualified) == len(actors)
+    assert all(len(part.encode("utf-8")) <= 255 for path in files for part in Path(path).parts)
+    assert all(len(source.encode("utf-8")) <= MAX_SOURCE for source in _law_sources(files))
+    assert all(row["admitted"] is False and row["formalized"] is False for row in assembled["manifest"])
+
+
+def test_unicode_term_keys_do_not_reuse_ascii_article_or_case_aliases(law: dict) -> None:
+    actors = ["The 医师", "the 医师", "医师"]
+    assembled = _assemble_with_actor_terms(law, actors)
+    rows = [row for row in assembled["manifest"] if row["record_kind"] == "term"
+            and any(_term_id("actor", value) in json.loads(row["term_id"]) for value in actors)]
+    assert len(rows) == 3
+    assert len({row["module"] for row in rows}) == 3
+    assert normalize_lookup("The President") == normalize_lookup("the president") == "president"
+
+
+def test_oversized_unicode_term_refuses_before_a_package_can_be_written(law: dict) -> None:
+    term_path = law["stitch"] / "term-index.parquet"
+    term_table = pq.read_table(term_path)
+    _write(
+        term_path, term_table.to_pylist() + [_term("actor", "医师" * MAX_SOURCE)], term_table.schema
+    )
+    with pytest.raises(LawPackageError, match="Unicode term definition exceeds the existing source cap"):
+        assemble_law_package(law["stitch"], law["spans"])

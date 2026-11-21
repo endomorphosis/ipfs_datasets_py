@@ -17522,6 +17522,297 @@
         "unchanged": true
       },
       "qualification_scope": "Root-closed Source observations only; current Main additive publication does not infer Main-merged runtime qualification, worldwide coverage, legal interpretation, model quality or release authority."
+    },
+    {
+      "id": "world-counted-Lean-normal396-conditioning-and-readonly-frontier-milestone481-20261121",
+      "root": "artifact_workspace",
+      "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/milestone481-four-guide-private-v01/Root-closed-facts-v02.json",
+      "observed_bytes": 13957,
+      "observed_sha256": "fcc868b03d305aba9712fd86c415ab5afce931b7c2f0cb84b6993a2291e3862f",
+      "required_for_catalog_check": false,
+      "status": "closed_same_gen14_two_arm_DATA_counted_Native16_normal396_R7_current9d_private_fit29PASS_migration_bridge_pending",
+      "task_ids": [
+        "LIR-07",
+        "LIR-12",
+        "LIR-13",
+        "LIR-14",
+        "LIR-17",
+        "LIR-19",
+        "LIR-20"
+      ],
+      "component_ids": [
+        "counted-threshold-target-factory",
+        "native-family-lean-renderer",
+        "reviewed-decoder-numerical-worker",
+        "reviewed-component-cycle-preparation",
+        "reviewed-evaluation-and-retention"
+      ],
+      "scope": "Frozen milestone481 worldwide LegalIR-to-Lean progress: separate same-gen14 conditioning DATA arms, Source6 normal396 software cohort, four counted Native4.34.1 projects/16 empty axiom reports, current9d DATA capture, closed R7 publication, and private29 tiny-Torch software cases. Existing migration-v3 does not support current9d-to-factored-helper or pristine0; its bounded existing-family bridge is private authoring, not canonical adoption. No pooled test count, representative world benchmark, source/legal fidelity, model convergence, real checkpoint fit or new fit/Source6 publication is inferred.",
+      "observations": {
+        "R7_publication": {
+          "Source6_or_new_fit_publication_claimed": false,
+          "closed_receipt": {
+            "bytes": 13593,
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/closed-R7-R-H-root-publication-20261121-y2kgq0hp/receipt.json",
+            "sha256": "bae1bc48986088c56142393806f284f56a92f7ae298740d7a6baefe6263eb2eb"
+          },
+          "heads": {
+            "A": "efce9cb1f8a5b148cd22b0fdf6c016e4149e10b6",
+            "H": "3babc117118cb6c6e83b249d11b0793ef34a8d12",
+            "Kit": "b15442e490dc39d046a911ea663c73c99ed3c755",
+            "R": "2f6452c863515adc743c0fe789f06bb9e425ec30",
+            "root": "aa977b502edf31e641f7081af8ac8b2179946976"
+          },
+          "normal_non_force_verified": true,
+          "qualification_cohorts": "installed7/private17/resource168/frontend138 remain separate historical evidence; not merged-suite/CI/model/convergence qualification"
+        },
+        "conditioning_comparison": {
+          "arms": {
+            "complete_legal_ir": {
+              "JSON_syntax_and_canonical": 2,
+              "complete": 0,
+              "denominator": 3,
+              "incomplete": 1,
+              "invalid": 2
+            },
+            "field_layouts": {
+              "JSON_syntax_and_canonical": 0,
+              "complete": 0,
+              "denominator": 3,
+              "incomplete": 1,
+              "invalid": 2
+            }
+          },
+          "checkpoint": "same trained gen14, optimizer steps3",
+          "control_missing_outer_SDK_report_reconstructed": false,
+          "facts": {
+            "bytes": 6365,
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/pristine-low-LR1e-5-matched1200-control-existing-owner-preparation-v01/same-gen14-candidate-inference-conditioning-comparison-execution-v03/explicit-conditioning-only-comparison-facts-v01.json",
+            "sha256": "be52b7407c88c92b5bade9f8aff70118fd630d8165abec13e59c344391eebc31"
+          },
+          "field_failure_stage": "after generation, strict unchanged-policy retention comparator rejects intentionally different conditioning policy",
+          "field_native_returncode": 1,
+          "full_AST_status": "not_checked for all noncomplete dispositions",
+          "generation_rerun_for_recovery": false,
+          "model_restored": true,
+          "no_retention_validator_weakening": true,
+          "only_policy_delta": "conditioning_profile",
+          "per_arm_metrics_DATA_only": true,
+          "population": "same three fictional Q3 fixture rows; not six unique cases or representative world corpus",
+          "semantic_proof_and_legal_authority": false
+        },
+        "counted_Lean": {
+          "actual_empty_axiom_reports": 16,
+          "expected_theorems": 16,
+          "independent_runtime_type_reprint_performed": false,
+          "legacy_defaults_unchanged": true,
+          "native_commands": 5,
+          "old_failures_and_propext_refusals_preserved": true,
+          "projects_passed": 4,
+          "report": {
+            "bytes": 122774,
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/counted-parametric-threshold-four-projects-Native434-direct-existing-owner-preparation-v01/output-v08/complete-counted-threshold-four-projects-Native434-existing-owner-report.json",
+            "sha256": "03da8e10016ad6db882c91ece7f828e2e99adebad4dfcc1fc88018fabb8e0a6f"
+          },
+          "resource_limits_not_semantic_all_N_coverage": true,
+          "scope": "exact selected private DATA generated by installed owner candidate; no automatic runtime-type-reprint/current public-report/real-law/world transfer",
+          "source_binding": null,
+          "thresholds": [
+            0,
+            1,
+            3,
+            4
+          ],
+          "toolchain": "leanprover/lean4:v4.34.1"
+        },
+        "current9d_snapshot": {
+          "Source_version": 31,
+          "capture_complete": true,
+          "no_model_optimizer_or_weight_construction": true,
+          "older_3ff_snapshot_retained_separately": true,
+          "raw_pipeline_sha256": "63b9b3e9f8511b4160e8a4a3a422ef420fbeb1d01bd800d5d445a6b4a693b8fe",
+          "report": {
+            "bytes": 10727099,
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/current9d-lossless-tokenizer-pipeline-and-eight-runtime-roles-existing-owner-preparation-v01/output-v01/complete-current9d-pipeline-and-eight-runtime-roles-existing-owner-report.json",
+            "sha256": "7815f1350247fa1abf2402b47b91810696c5527bc049673f647b1adc32faa471"
+          },
+          "runtime_roles": 8
+        },
+        "cutoff_utc": "2026-11-21T07:42:35.273991+00:00",
+        "desired_source_evidence_id": 481,
+        "doc_rules": {
+          "append_exactly_one_481_record": true,
+          "mutable_BACKLOG_phase5_frontier_only": true,
+          "no_new_guide_or_plan": true,
+          "preserve_126_component_objects": true,
+          "preserve_24_task_objects": true,
+          "preserve_480_prior_Source_evidence_records_and_MD_history": true,
+          "world_scope_and_existing_8phase_hierarchy_retained": true
+        },
+        "goal": {
+          "complete": false,
+          "convergence_proved": false,
+          "parallel_phases": [
+            3,
+            6,
+            8
+          ],
+          "phase_focus": 5,
+          "world_or_real_legal_meaning_qualified": false
+        },
+        "legal_review": {
+          "actual_real_legal_training_mask_ready": false,
+          "no_fabricated_review_or_edition": true,
+          "real_independent_reviews": 0,
+          "real_source_faithfulness": "pending/unknown; include in coverage, outside accuracy denominators"
+        },
+        "normal_source_qualification": {
+          "Source_resource_SDK_closed": true,
+          "actual_unique_cases": 396,
+          "by_file": {
+            "test_law_package.py": 14,
+            "test_legal_counted_frame_threshold_v2.py": 80,
+            "test_legal_native_ast_preservation.py": 302
+          },
+          "current_Source_named_rows": 4219,
+          "current_Source_outer_rows": 4229,
+          "current_Source_version": 32,
+          "errors": 0,
+          "failures": 0,
+          "normal_imports_and_conftests": true,
+          "original_failed_run": {
+            "errors": 71,
+            "failures": 37,
+            "passed": 288,
+            "report_sha256": "522974864989875cb87ea6a294c2c205e043413ab7f3d8330eb8ea371af35fce"
+          },
+          "passed": 396,
+          "private_shadows": false,
+          "repair": "three exact tracked prerequisite bodies restored (FOL parser, publisher script, evidence JSON), necessary docs ancestor directories only; no test/golden or product weakening",
+          "report": {
+            "bytes": 3208854,
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/world-counted-legalmath-law-Unicode-three-owning-files-existing-owner-preparation-v03/output-v02/complete-counted-legalmath-law-three-owning-files-existing-owner-report.json",
+            "sha256": "83405e3e3f554c06977a87647559af3726e9bb85d69e976e0eda04e17384b4e7"
+          },
+          "row_counts_are_not_module_counts": true,
+          "skipped": 0
+        },
+        "prior_frozen_facts": {
+          "bytes": 10227,
+          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/milestone481-four-guide-private-v01/Root-closed-facts-v01.json",
+          "sha256": "80c52503b0c58285a0cf44390d1cf16c3004772d75e8d80dd6f1bac7232435f4"
+        },
+        "read_only_fit_frontier": {
+          "active_canonical_worker_sha256": "9dcd7d6b57dee43f562d45dc22672a1c1a3004802e94849a289ec813a8d62236",
+          "actual_Torch_cohort": {
+            "Source_resource_SDK_closed": true,
+            "canonical_Source_application": false,
+            "errors": 0,
+            "failures": 0,
+            "passed": 29,
+            "population": "tiny authored Torch fixtures; no gen14/pretrained assets/Native or large model inference",
+            "report": {
+              "bytes": 156515,
+              "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/private-current-readonly-teacher-fit-and-generation-restoration-focused29-existing-owner-preparation-v02/output-v01/complete-readonly-teacher-fit29-GREEN-existing-owner-report.json",
+              "sha256": "a149d144be934e71357f3ba112b3b376038b30e85c35cedbd022e46c1c65a1fd"
+            },
+            "skipped": 0,
+            "unique_cases": 29
+          },
+          "canonical_adoption": false,
+          "existing_owner_migration_gap": {
+            "current_v3_limit": "old3ff+9ec to continuation/a688, AST-identical numerical methods; progressed-v1 precondition excludes pristine0-step12",
+            "engineering_selected": "same existing child authors PRIVATE bridge+tests; canonical Source5 transition and numerical fit not selected until valid bridge",
+            "needed": "bounded existing-family 9d to factored-readonly backend bridge for pristine0 and trained3, mechanically checked numerical refactor, new lineage/version, no retagging12/14",
+            "old_v3_checks_preserved": true,
+            "scope": "exact cached owner/API contract finding, no numerical run"
+          },
+          "fixed_fit_contract": {
+            "contract": {
+              "bytes": 13781,
+              "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/pristine-low-LR1e-5-matched1200-control-existing-owner-preparation-v01/fixed-identical-TRAIN-T3-pristine12-versus-trained14-readonly-fit-contract-private-v01/bounded-fixed-identical-TRAIN-only-fit-diagnostic-contract.json",
+              "sha256": "0b4b252358eb8f11401548507ec639c879bf99e2961e8a26adda06ce8f44d0d9"
+            },
+            "descriptor": {
+              "bytes": 2009,
+              "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/pristine-low-LR1e-5-matched1200-control-existing-owner-preparation-v01/fixed-identical-TRAIN-T3-pristine12-versus-trained14-readonly-fit-contract-private-v01/descriptor.json",
+              "sha256": "5d3ed945ff68356935e2547bdab90466db3c0186843436897ca2883cd511a2d6"
+            },
+            "owner_API_scope": {
+              "bytes": 9419,
+              "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/pristine-low-LR1e-5-matched1200-control-existing-owner-preparation-v01/fixed-identical-TRAIN-T3-pristine12-versus-trained14-readonly-fit-contract-private-v01/existing-qualified-owner-API-and-migration-scope.json",
+              "sha256": "687b4999107f4135153c8861d06ce3f0f14dd4cd6da0ed4869632ba247b70ffc"
+            }
+          },
+          "next_experiment": "fixed identical TRAIN-only T3 rows at pristine12 and trained14 checkpoints, readonly per-record model scalar losses/counts, no optimizer updates; pending genuine source/API qualification",
+          "previous_three_different_row_losses": "execution evidence only; not comparable loss trend or convergence",
+          "private_descriptor": {
+            "bytes": 3528,
+            "path": "/tmp/teacher-forced-expected-counts-private-v01/readonly-fit-followup-v01/descriptor-v02.json",
+            "sha256": "d4f7460b8d9d2f37e8c28c080a7344c70baa9b94b9adad1f89c36aedac08785d"
+          },
+          "private_static_and_stdlib_scope": "add expected Python-list label counts; shared readonly state/forward helpers; actual extraction NameError fixed, fullconfig checked; no real checkpoint measurement yet",
+          "test_sha256": "3eefa601187c4f05ccb717a609e09638ee2013d8b7886a0ee2999e6557dd2078",
+          "worker_sha256": "0eae649ab7a600a8981af9d5f01154c1cf0813e88e1c46dcf43aefa6f39a60b5"
+        },
+        "schema": "Root-closed-world-milestone481-facts/v2",
+        "scope": "entire world legal corpus to source-grounded LegalIR to Lean4; USCode remains pilot",
+        "source6": {
+          "Source5_unchanged": true,
+          "WRITE_closed": true,
+          "installed": [
+            {
+              "bytes": 29757,
+              "path": "ipfs_datasets_py/logic/autoformal/legal_counted_frame_threshold_v2.py",
+              "sha256": "39fceb7059f86bd43215b2329f52a5f897ac1a99d23552f49d731a76ea4a8e34"
+            },
+            {
+              "bytes": 174361,
+              "path": "ipfs_datasets_py/logic/autoformal/legal_native_ast_preservation.py",
+              "sha256": "5a776947736e4096e88600f135587ee6d94ab734bb27976404c1b0b66e29f054"
+            },
+            {
+              "bytes": 32202,
+              "path": "tests/unit/logic/autoformal/test_legal_counted_frame_threshold_v2.py",
+              "sha256": "18191b738a6cfa5539b157e746f19c7a0d6d1d07a51ec48583d7e492c82b546f"
+            },
+            {
+              "bytes": 100108,
+              "path": "tests/unit/logic/autoformal/test_legal_native_ast_preservation.py",
+              "sha256": "3ba9c19e21df985caa4cde12bfeba1dce0ba643fa09679dd10e38644ec57a24c"
+            },
+            {
+              "bytes": 55049,
+              "path": "ipfs_datasets_py/logic/autoformal/law_package.py",
+              "sha256": "58e6e88175eb515fc03f38798d035b90385e2ba722d02924d3c38c91563afefe"
+            },
+            {
+              "bytes": 22218,
+              "path": "tests/unit/logic/test_law_package.py",
+              "sha256": "eb7afc6ad8142faa8a80de2dd037ba1064d11419e8801c32cbe3c3079c35b72a"
+            }
+          ],
+          "receipt": {
+            "bytes": 28190129,
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/world-six-file-legalmath-Unicode-Source-CAS-v01/actual-world-six-file-counted-legalmath-law-Unicode-CAS-receipt-v01.json",
+            "sha256": "24f3ec257a0be553fb9a321672240394e0a1e42b21ccd4568b1de22aabfa884a"
+          }
+        }
+      },
+      "documentation_preparation_only": "Append one evidence record and Markdown history; replace only the existing BACKLOG mutable Phase5 frontier. Referenced reports were not reread; no Source, tests, runtime or model work performed.",
+      "Main_publication_integration_scope": {
+        "Source_W_catalog_evidence_count": 481,
+        "Source_W_new_record_index": 480,
+        "Main_prior_catalog_evidence_count": 475,
+        "Main_catalog_evidence_count_after": 476,
+        "Main_new_record_index": 475,
+        "Source396_software_privateNative16_privateTorch29_are_separate": true,
+        "Main_merged_runtime_qualification": false,
+        "world_legal_meaning_qualified": false,
+        "model_convergence_proved": false,
+        "full_goal_complete": false,
+        "rule": "These are source-bound documentary evidence unions. Source396, private Native16 and private Torch29 do not qualify the integrated Main tree, its runtime, worldwide legal meaning or convergence. SourceW481 and Main476 are distinct catalog populations. The frozen Source cutoff, current9d status and pending migration bridge remain unchanged."
+      }
     }
   ]
 }

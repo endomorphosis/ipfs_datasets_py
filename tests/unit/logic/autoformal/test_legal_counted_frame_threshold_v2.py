@@ -447,3 +447,166 @@ def test_threshold_panel_retains_complete_requests_reports_and_finite_witnesses(
     path = tmp_path/"authored-threshold-panel-v2.json"
     path.write_bytes(payload)
     assert path.read_bytes() == payload
+
+
+# Explicit Nat profile controls; none widens the retained v1/v2 schemas.
+def _nat_report(maximum):
+    request = subject.authored_counted_threshold_request_v3(maximum)
+    raw = wire(request)
+    report = subject.prepare_counted_threshold_v3(raw, expected_request_sha256=sha(raw))
+    assert subject.validate_counted_threshold_v3(report, raw,
+        expected_request_sha256=sha(raw), expected_report_sha256=sha(wire(report))) == report
+    return report
+
+
+def _nat_denote(node, members, domains, environment=None):
+    """Independent finite semantics, including the zero bound's false node."""
+    environment = {} if environment is None else environment
+    kind = node['kind']
+    if kind == 'false':
+        return False
+    if kind == 'true':
+        return True
+    if kind == 'variable':
+        return environment[node['symbol']]
+    if kind == 'predicate':
+        return tuple(_nat_denote(c, members, domains, environment) for c in node['arguments']) in members
+    if kind == 'equality':
+        return _nat_denote(node['arguments'][0], members, domains, environment) == _nat_denote(
+            node['arguments'][1], members, domains, environment)
+    if kind == 'forall':
+        binder = node['binders'][0]
+        return all(_nat_denote(node['arguments'][0], members, domains,
+            environment | {binder['name']: v}) for v in domains[binder['sort']['name']])
+    left, right = (_nat_denote(c, members, domains, environment) for c in node['arguments'])
+    if kind == 'and':
+        return left and right
+    if kind == 'or':
+        return left or right
+    assert kind == 'implies'
+    return not left or right
+
+
+def _nat_truth(report, rows, objects, events=('e',), times=('t',)):
+    return _nat_denote(report['typed_expression']['root'], set(rows),
+        {'Object': tuple(objects), 'EventFrame': events, 'TimeFrame': times})
+
+
+@pytest.mark.parametrize('maximum', [0, 1, 3, 4])
+def test_parametric_threshold_distinguishes_n_and_n_plus_one_members(maximum):
+    report = _nat_report(maximum)
+    objects = tuple(range(maximum + 1))
+    for count in (maximum, maximum + 1):
+        rows = [(i, 'e', 't') for i in range(count)]
+        assert _nat_truth(report, rows, objects) == (count <= maximum)
+        assert _nat_truth(report, rows + rows, objects) == (count <= maximum)
+    assert report['profile'] == subject.PARAMETRIC_PROFILE
+    assert not any(report['authority'].values())
+    assert report['training_mask'] == report['evaluation_gold_mask'] == 0
+    assert not report['native_build_executed']
+    assert 'def countedAtMostThreshold' in report['lean_body']
+
+
+def test_parametric_zero_and_empty_carriers_have_no_inhabitation_assumption():
+    report = _nat_report(0)
+    assert _nat_truth(report, [], ())
+    assert _nat_truth(report, [], (0,))
+    assert not _nat_truth(report, [(0, 'e', 't')], (0,))
+    assert _nat_truth(report, [(0, 'e', 't')], (0,), events=())
+    assert _nat_truth(report, [(0, 'e', 't')], (0,), times=())
+
+
+def test_parametric_frame_locality_and_nonmembers_remain_distinct():
+    report = _nat_report(1)
+    rows = [(0, 'e0', 't'), (1, 'e1', 't')]
+    assert _nat_truth(report, rows, (0, 1, 2), events=('e0', 'e1'))
+    assert not _nat_truth(report, [(0, 'e0', 't'), (1, 'e0', 't')], (0, 1, 2), events=('e0', 'e1'))
+
+
+def test_parametric_n4_missing_equality_pair_has_a_semantic_countermodel():
+    report = _nat_report(4)
+    changed = deepcopy(report)
+    first_equality = next(n for n in nodes(changed['typed_expression']['root']) if n['kind'] == 'equality')
+    first_equality.update(kind='false', symbol='', arguments=[], binders=[])
+    rows = [(i, 'e', 't') for i in range(4)]
+    assert _nat_truth(report, rows, range(4))
+    assert not _nat_truth(changed, rows, range(4))
+
+
+def test_parametric_changed_roles_cannot_hide_an_overfull_frame():
+    report = _nat_report(1)
+    changed = deepcopy(report)
+    for n in nodes(changed['typed_expression']['root']):
+        if n['kind'] == 'predicate':
+            n['arguments'][0], n['arguments'][1] = n['arguments'][1], n['arguments'][0]
+    rows = [(0, 'e', 't'), (1, 'e', 't')]
+    assert not _nat_truth(report, rows, (0, 1))
+    assert _nat_truth(changed, rows, (0, 1))
+
+
+def test_parametric_report_mutation_cannot_replace_complete_request_replay():
+    request = subject.authored_counted_threshold_request_v3(4)
+    raw = wire(request)
+    report = subject.prepare_counted_threshold_v3(raw, expected_request_sha256=sha(raw))
+    changed = deepcopy(report)
+    changed['maximum'] = 3
+    with pytest.raises(ValueError):
+        subject.validate_counted_threshold_v3(changed, raw,
+            expected_request_sha256=sha(raw), expected_report_sha256=sha(wire(changed)))
+
+
+@pytest.mark.parametrize('maximum', [True, -1, 1.0, '4', 10**100])
+def test_parametric_type_and_capacity_refusal_precede_lazy_owner_access(monkeypatch, maximum):
+    monkeypatch.setattr(subject, '_base', lambda: pytest.fail('invalid/capacity input reached owners'))
+    with pytest.raises(ValueError):
+        subject.authored_counted_threshold_request_v3(maximum)
+
+
+def test_parametric_opt_in_preserves_existing_v2_targets_and_closed_thresholds():
+    new = _nat_report(3)
+    old = prepare(3)
+    assert new['typed_expression'] == old['typed_expression']
+    assert new['canonical_fol'] == old['canonical_fol']
+    for maximum in (0, 4):
+        with pytest.raises(ValueError):
+            subject.authored_counted_threshold_request_v2(maximum)
+    assert subject._BASE_SHA == 'df91798d11e2b0da36afc75e0bc1a8b6d0a3d08bc255e7362d1c200e5e9baa13'
+
+
+@pytest.mark.parametrize('maximum', [True, -1, 10**100])
+def test_parametric_raw_prepare_and_validate_preflight_before_base_import(monkeypatch, maximum):
+    request = subject.authored_counted_threshold_request_v3(1)
+    request['maximum'] = maximum
+    raw = wire(request)
+    monkeypatch.setattr(subject, '_base', lambda: pytest.fail('raw invalid/capacity input reached base owner'))
+    with pytest.raises(ValueError):
+        subject.prepare_counted_threshold_v3(raw, expected_request_sha256=sha(raw))
+    with pytest.raises(ValueError):
+        subject.validate_counted_threshold_v3({}, raw,
+            expected_request_sha256=sha(raw), expected_report_sha256='0'*64)
+
+
+@pytest.mark.parametrize('raw', [b'{', b'{"schema":"legal-counted-frame-threshold-request/v3","maximum":1,"maximum":4}', b'x'*131073])
+def test_parametric_malformed_raw_transport_refuses_before_base_import(monkeypatch, raw):
+    monkeypatch.setattr(subject, '_base', lambda: pytest.fail('bad transport reached base owner'))
+    with pytest.raises(ValueError):
+        subject.prepare_counted_threshold_v3(raw, expected_request_sha256=sha(raw))
+    with pytest.raises(ValueError):
+        subject.validate_counted_threshold_v3({}, raw,
+            expected_request_sha256=sha(raw), expected_report_sha256='0'*64)
+
+
+def test_parametric_entry_points_are_explicit_public_exports():
+    assert {'authored_counted_threshold_request_v3', 'prepare_counted_threshold_v3',
+            'validate_counted_threshold_v3'} <= set(subject.__all__)
+
+
+def test_parametric_preflight_accounts_for_existing_transport_depth_and_items():
+    # AST depth alone cannot admit a tree whose serialized wrapper exceeds64.
+    with pytest.raises(ValueError):
+        subject._parametric_budget(6)
+    with pytest.raises(ValueError):
+        subject._parametric_budget(4, max_json_depth=1)
+    with pytest.raises(ValueError):
+        subject._parametric_budget(4, max_json_items=1)
+    assert subject._parametric_budget(4)['json_depth_upper_bound'] <= 64

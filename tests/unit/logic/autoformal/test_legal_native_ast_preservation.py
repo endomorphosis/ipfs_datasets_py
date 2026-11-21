@@ -1646,3 +1646,195 @@ def test_reviewed_source_use_child_late_identity_validator_replacement_refuses(
     with pytest.raises(ValueError):
         prepare(captured, **_reviewed_source_use_options(binding))
     assert hits == [True]
+
+
+def _parametric_counted_capture(maximum):
+    from ipfs_datasets_py.logic.autoformal import legal_counted_frame_threshold_v2 as counted
+    request = counted.authored_counted_threshold_request_v3(maximum)
+    raw = canonical(request)
+    report = counted.prepare_counted_threshold_v3(raw, expected_request_sha256=sha(raw))
+    return report, raw
+
+
+def _prepare_parametric_counted(captured, **overrides):
+    report, raw = captured
+    return owner.prepare_counted_threshold_ast_preservation(report, raw, **({
+        "expected_report_sha256": sha(canonical(report)),
+        "expected_request_sha256": sha(raw), "toolchain": TOOLCHAIN,
+    } | overrides))
+
+
+def _validate_parametric_counted(captured, prepared, **overrides):
+    report, raw = captured
+    return owner.validate_counted_threshold_ast_preservation(prepared, report, raw, **({
+        "expected_preparation_sha256": owner.preparation_sha256(prepared),
+        "expected_report_sha256": sha(canonical(report)),
+        "expected_request_sha256": sha(raw), "toolchain": TOOLCHAIN,
+    } | overrides))
+
+
+@pytest.mark.parametrize("maximum", [0, 1, 3, 4, 5])
+def test_parametric_counted_preservation_replays_complete_subject_without_native_credit(maximum):
+    captured = _parametric_counted_capture(maximum)
+    before = deepcopy(captured)
+    prepared = _prepare_parametric_counted(captured)
+    assert _validate_parametric_counted(captured, prepared) == prepared
+    assert captured == before
+    report, raw = captured
+    meta, files = manifest(prepared), dict(prepared.files)
+    assert meta["profile"] == owner.PARAMETRIC_COUNTED_PROFILE
+    assert meta["maximum"] == maximum
+    assert meta["typed_ast_node_count"] == (9 if maximum == 0 else 2 * maximum * maximum + 8 * maximum + 7)
+    assert meta["support_profile"]["max_ast_nodes"] == owner.MAX_AST_NODES == 4096
+    assert meta["support_profile"]["max_ast_depth"] == owner.MAX_AST_DEPTH == 32
+    assert meta["support_profile"]["max_project_bytes"] == owner.MAX_PROJECT_BYTES == 8 * 1024**2
+    assert meta["support_profile"]["max_json_depth"] == 64
+    assert meta["support_profile"]["max_json_items"] == 20000
+    assert meta["support_profile"]["authored_sort_names_generalized"] is False
+    assert meta["support_profile"]["arbitrary_carrier_types"] is True
+    assert meta["proof_candidate"]["status"] == "UNQUALIFIED_NOT_EXECUTED"
+    assert meta["proof_candidate"]["native_execution"] is False
+    assert meta["proof_candidate"]["kernel_checked"] is False
+    assert meta["proof_candidate"]["extra_axioms_requested"] == []
+    assert len(meta["theorems"]) == 4 and len(files) == 7
+    assert report["lean_body"] in "\n".join(files.values())
+    inputs = json.loads(files["preservation-inputs.json"])
+    assert inputs["counted_report"] == report and inputs["original_request_raw_utf8"].encode() == raw
+    assert not any(meta["authority"].values())
+    assert all(meta[field] is False for field in owner.FALSE_FLAGS)
+    assert meta["training_mask"] == meta["evaluation_gold_mask"] == 0
+
+
+@pytest.mark.parametrize("field", ["expected_report_sha256", "expected_request_sha256"])
+@pytest.mark.parametrize("pin", ["0" * 64, "A" * 64, None, True])
+def test_parametric_counted_independent_commitments_cannot_be_replaced(field, pin):
+    with pytest.raises(ValueError):
+        _prepare_parametric_counted(_parametric_counted_capture(4), **{field: pin})
+
+
+@pytest.mark.parametrize("damage", ["maximum", "expression", "lowering", "authority", "producer", "extra"])
+def test_parametric_counted_resealed_report_still_requires_original_v3_replay(damage):
+    report, raw = deepcopy(_parametric_counted_capture(4))
+    if damage == "maximum":
+        report["maximum"] = 5
+    elif damage == "expression":
+        report["typed_expression"]["root"]["binders"][0]["name"] = "different_event"
+    elif damage == "lowering":
+        report["lean_body"] = report["lean_body"].replace("x0 = x1", "x0 = x0", 1)
+    elif damage == "authority":
+        report["authority"][next(iter(report["authority"]))] = True
+    elif damage == "producer":
+        report["producer_pins"]["/untrusted/never-open-this.py"] = "0" * 64
+    else:
+        report["extra"] = True
+    with pytest.raises(ValueError):
+        _prepare_parametric_counted((report, raw))
+
+
+@pytest.mark.parametrize("damage", ["collision_distinctness", "collision_maximum", "source_denotation"])
+def test_parametric_counted_resealed_project_cannot_change_independent_meaning(damage):
+    captured = _parametric_counted_capture(4)
+    original = _prepare_parametric_counted(captured)
+    meta, files = manifest(original), dict(original.files)
+    if damage == "collision_distinctness":
+        path = owner.COUNTED_PROJECT_ROOT + "/Semantics.lean"
+        changed = files[path].replace("i ≠ j ∧ objects i = objects j", "i = j ∧ objects i = objects j", 1)
+    else:
+        path = next(name for name, text in files.items() if "theorem threshold_collision_equivalence" in text)
+        old, new = (("thresholdCollisionBound 4 member", "thresholdCollisionBound 5 member")
+                    if damage == "collision_maximum" else
+                    ("thresholdDenote member typedCountedThresholdAst", "countedAtMostThreshold member"))
+        changed = files[path].replace(old, new, 1)
+    assert changed != files[path]
+    files[path] = changed
+    meta["file_sha256"] = {name: sha(text.encode()) for name, text in sorted(files.items())}
+    meta = corpus_contracts.seal_record({key: value for key, value in meta.items()
+                                       if key not in {"record_cid", "cid_scope"}})
+    altered = replace(original, manifest_json=canonical(meta).decode(), files=tuple(sorted(files.items())))
+    with pytest.raises(ValueError):
+        _validate_parametric_counted(captured, altered)
+
+
+def test_parametric_counted_zero_has_false_witness_without_rewriting_actual_target():
+    captured = _parametric_counted_capture(0)
+    prepared = _prepare_parametric_counted(captured)
+    files = dict(prepared.files)
+    body = next(text for text in files.values() if "def typedCountedThresholdAst" in text)
+    assert "(.falsity " in body
+    assert captured[0]["lean_body"] in body
+    assert json.loads(files["preservation-inputs.json"])["counted_report"] == captured[0]
+    assert "| .falsity nodeId => countedNodeValue nodeId \"false\" \"\"" in owner.PARAMETRIC_COUNTED_SEMANTICS
+
+
+def test_parametric_counted_preservation_keeps_legacy_profile_and_independent_pin_state(
+        counted_preservation_base):
+    legacy_capture, legacy_prepared = counted_preservation_base
+    old_semantics = owner.COUNTED_SEMANTICS
+    parametric_capture = _parametric_counted_capture(4)
+    parametric_prepared = _prepare_parametric_counted(parametric_capture)
+    assert _validate_counted_preservation(legacy_capture, legacy_prepared) == legacy_prepared
+    assert _validate_parametric_counted(parametric_capture, parametric_prepared) == parametric_prepared
+    assert owner.COUNTED_SEMANTICS == old_semantics
+    assert sha(old_semantics.encode()) == "fdcff83f56b84d34222f7b567950f5594b8e71303446b8d8d32093939224f091"
+    assert manifest(legacy_prepared)["profile"] == owner.COUNTED_PROFILE
+    assert manifest(legacy_prepared)["typed_ast_node_count"] == 49
+    assert manifest(parametric_prepared)["profile"] != owner.COUNTED_PROFILE
+
+
+@pytest.mark.parametrize("maximum", [True, -1, 6, 7, 4097, 10**100])
+def test_parametric_counted_pure_witness_and_proof_preflight_capacity_before_expansion(maximum):
+    with pytest.raises(ValueError):
+        owner._parametric_counted_source_syntax(None, maximum)
+    with pytest.raises(ValueError):
+        owner._parametric_counted_collision_proof(maximum)
+
+
+def test_parametric_counted_preparation_does_not_execute_compiler_or_model():
+    captured = _parametric_counted_capture(4)
+    with patch.object(subprocess, "run", side_effect=AssertionError("process reached")), patch.object(
+            subprocess, "Popen", side_effect=AssertionError("process reached")):
+        prepared = _prepare_parametric_counted(captured)
+        assert _validate_parametric_counted(captured, prepared) == prepared
+
+
+
+def _counted_check_or_injection_arity(text):
+    """Independent application grouping check for generated Lean proof terms."""
+    import re
+    stack = [[]]
+    for token in re.findall(r"\(|\)|[^\s()]+", text):
+        if token == '(':
+            stack.append([])
+        elif token == ')':
+            assert len(stack) > 1
+            group = stack.pop()
+            if group and group[0] == 'Or.inl':
+                assert len(group) == 2, 'Or.inl must receive one grouped proof argument'
+            stack[-1].append(group)
+        else:
+            stack[-1].append(token)
+    assert len(stack) == 1
+
+
+@pytest.mark.parametrize('maximum', [0, 1, 3, 4])
+def test_counted_collision_proof_groups_injected_terms_after_native_elaborator_red(maximum):
+    # This guards argument boundaries only. The existing Native case builds
+    # remain the regression for dependent motives and theorem correctness.
+    _counted_check_or_injection_arity(owner._parametric_counted_collision_proof(maximum))
+
+
+def test_counted_application_grouping_guard_detects_the_actual_latent_injection_error():
+    with pytest.raises(AssertionError):
+        _counted_check_or_injection_arity('(Or.inl And.right pair)')
+    _counted_check_or_injection_arity('(Or.inl (And.right pair))')
+
+
+@pytest.mark.parametrize('maximum', [0, 1, 3, 4, 5])
+def test_parametric_collision_avoids_the_measured_unsafe_Fin_cases_dependency(maximum):
+    # Native probe measured Fin.cases=[propext], direct dependent helper=[].
+    # This prevents that known dependency from reentering generated proofs;
+    # it does not replace the separate Native theorem/axiom qualification.
+    proof = owner._parametric_counted_collision_proof(maximum)
+    assert 'Fin.cases ' not in proof
+    assert 'thresholdFinCases (motive :=' in proof
+    _counted_check_or_injection_arity(proof)
