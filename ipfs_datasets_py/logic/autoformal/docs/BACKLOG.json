@@ -316,7 +316,321 @@
       },
       "Source_pointer_scope": "The nested Source481 frontier is copied exactly, including its Source-only evidence_home index480. Main uses the separate evidence_home index475 above.",
       "preservation": "Additive documentary note only; existing Main480 note, task contracts, hierarchy, statuses, dependencies, acceptance criteria, frontiers and earlier metadata remain byte-exact."
-    }
+    },
+    "current_user_goal_phase5_evidence": {
+  "evidence_id": "world-operational-receipts-capacity-Unicode-and-readonly-fit-frontier-milestone482-20261121",
+  "evidence_home": "ipfs_datasets_py/logic/autoformal/docs/work_catalog.json#/selected_evidence/476",
+  "cutoff_utc": "2026-11-21T10:34:30.900698+00:00",
+  "user_goal_phase": "User-goal Phase5 source-conditioned decoder and read-only matched fit; distinct from historical programme Phase05 Lean work. Existing programme/task states remain unchanged.",
+  "goal_scope": "Entire world legal corpus → source-grounded LegalIR → Lean4; USCode pilot. User-goal Phase5 remains active, with formal-preservation and evaluation in parallel. Historical programme Phase05/task states are unchanged.",
+  "status": "paired_readonly_fit_CLOSED_Source35_same_three_fictional_TRAIN_rows_zero_measurement_updates",
+  "closed_progress": "Current Source35 e224 worker and operational-receipt parser are installed. Normal worker29PASS and separate Resource/Law220PASS(198/22) close with no failures/errors/skips. Explicit same-ledger250GB→280GB migration preserves all3402records/roots/history/charges; complete e224 tokenizer pipeline/eight-runtime-role DATA capture closes without constructing model/optimizer/weights. Independent Lean4.34.1 positive module compiles eight expected-type assignments at n0/n4; separate Fin4 negative rejects, original wrapper failure retained. Normal non-force publication529 closes without merged-Main runtime/legal/model qualification. Both matched read-only fit arms are now closed on the same three fictional TRAIN rows: equal-record scalar mean0.966274778→0.753333549,22.037337% lower; no measurement optimizer updates, original steps0/3 and registry21/22; restoration and Source/resource closure confirmed.",
+  "actual_fit_frontier": {
+    "matched_population": "Same exact three TRAIN-only fictional T3 rows; pristine12 step0 versus trained14 step3, current read-only API, no optimizer updates. New honest lineages/versions; old12/14 never retagged.",
+    "records_SHA256": "62484cf20b98bbe1fecbbe9c686e9ce5b46ae7d69bc556c8fc2566e8be2bc929",
+    "rows_SHA256": "596429fd312e86647d3387f830a4f8c3bc35172ca7b1cd64f0f29f546c836621",
+    "initialization_seed": 271828,
+    "trained_history_row_order_seed": 1729,
+    "current_real_checkpoint_loss_measurements": {
+      "pristine_report": {
+        "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/pristine-low-LR1e-5-matched1200-control-existing-owner-preparation-v01/actual-pristine12-trained14-operational-owner-readonly-T3-fit-existing-owner-preparation-v04/pristine0-output-v02/complete-current-operational-owner-readonly-T3-fit-pristine0-existing-owner-report.json",
+        "bytes": 8269736,
+        "sha256": "f2d4e1e05ddfa9ac1f26da6aa3adbac56705f4437578b3ce824b784efb0d6293"
+      },
+      "trained_report": {
+        "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/pristine-low-LR1e-5-matched1200-control-existing-owner-preparation-v01/actual-pristine12-trained14-operational-owner-readonly-T3-fit-existing-owner-preparation-v04/trained3-output-v02/complete-current-operational-owner-readonly-T3-fit-trained3-existing-owner-report.json",
+        "bytes": 8264518,
+        "sha256": "61431268309103a3ff3c409cb027f48198dd6a8bd38547bc064b1f3e6aaf25e9"
+      },
+      "paired_readback": {
+        "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/pristine-low-LR1e-5-matched1200-control-existing-owner-preparation-v01/actual-pristine12-trained14-operational-owner-readonly-T3-fit-existing-owner-preparation-v04/closed-pristine-trained-fixed-T3-readonly-paired-scalar-loss-readback-v01.json",
+        "bytes": 9939,
+        "sha256": "6085ce01b74e7b60b102b88e483fbb00fb3a3263f757ba89ff10cc3fa9ea3677"
+      },
+      "Root_independent_verification": "1e0ad1",
+      "rows": [
+        {
+          "id": "reviewed:fixture:mixed-act-v1/unit-1",
+          "unit_id": "fixture:mixed-act-v1/unit-1",
+          "pristine": 1.142890453338623,
+          "trained3": 0.9241337776184082,
+          "trained_minus_pristine": -0.21875667572021484,
+          "expected_geometry": {
+            "expected_aligned_ignored_positions": 414,
+            "expected_aligned_nonignored_positions": 1632,
+            "expected_input_positions": 2047,
+            "expected_raw_ignored_positions": 415,
+            "expected_raw_label_positions": 2047,
+            "expected_record_count": 1,
+            "expected_target_body_eos_positions": 1632
+          }
+        },
+        {
+          "id": "reviewed:fixture:mixed-act-v1/unit-2",
+          "unit_id": "fixture:mixed-act-v1/unit-2",
+          "pristine": 0.9425825476646423,
+          "trained3": 0.7043220400810242,
+          "trained_minus_pristine": -0.23826050758361816,
+          "expected_geometry": {
+            "expected_aligned_ignored_positions": 413,
+            "expected_aligned_nonignored_positions": 1944,
+            "expected_input_positions": 2358,
+            "expected_raw_ignored_positions": 414,
+            "expected_raw_label_positions": 2358,
+            "expected_record_count": 1,
+            "expected_target_body_eos_positions": 1944
+          }
+        },
+        {
+          "id": "reviewed:fixture:mixed-act-v1/unit-3",
+          "unit_id": "fixture:mixed-act-v1/unit-3",
+          "pristine": 0.8133513331413269,
+          "trained3": 0.631544828414917,
+          "trained_minus_pristine": -0.1818065047264099,
+          "expected_geometry": {
+            "expected_aligned_ignored_positions": 421,
+            "expected_aligned_nonignored_positions": 2447,
+            "expected_input_positions": 2869,
+            "expected_raw_ignored_positions": 422,
+            "expected_raw_label_positions": 2869,
+            "expected_record_count": 1,
+            "expected_target_body_eos_positions": 2447
+          }
+        }
+      ],
+      "equal_record_mean": {
+        "pristine": 0.9662747780481974,
+        "trained3": 0.7533335487047831,
+        "trained_minus_pristine": -0.2129412293434143,
+        "relative_reduction_percent": 22.037337016447808
+      },
+      "all_three_training_rows_lower": true,
+      "same_ordered_records_context_tokenizer_configuration_profile_and_expected_geometry": true,
+      "both_entry_exit_pair_fullconfig_model_optimizer_RNG_modes_grad_restoration_and_Source_resource_closure": true,
+      "measurement_optimizer_updates": [
+        0,
+        0
+      ],
+      "actual_original_checkpoint_steps": [
+        0,
+        3
+      ],
+      "actual_registry_generations": [
+        21,
+        22
+      ],
+      "original_checkpoints12_and14_unchanged": true,
+      "new_readonly_lineages": [
+        "readonly-source-epoch:aee2c49370ca11255f8441da72a83a8094a86c8b2259d8a90104de5c7c753d13",
+        "readonly-source-epoch:6b4dee28f7e93e370589fe376ac054dcd88407ccfa4bd04a870d11b109e4a95c"
+      ],
+      "actual_measured_forward_count": null,
+      "not_tokenweighted_CE_NLL_observed_mask_generalization_or_convergence": true,
+      "scope": "Matched native model_scalar_loss on the same three fictional TRAIN examples, not an accepted real legal corpus."
+    },
+    "trained_arm_launched": true,
+    "next": "Extend the existing versioned TRAIN-resume migration family for original TRAIN14 under the current helper refactor. Current v4 is explicitly readonly-only and must not be bypassed. Private same-owner implementation selected; no extra training run selected until qualification/admission.",
+    "not_token_weighted_CE_or_observed_mask_or_generalization_proof": true,
+    "prior_heldout_complete_outputs": {
+      "complete_legal_ir": {
+        "complete": 0,
+        "denominator": 3
+      },
+      "field_layouts": {
+        "complete": 0,
+        "denominator": 3
+      }
+    },
+    "prior_same_three_Q3_not_six_unique": true,
+    "prior_training_three_different_row_losses_not_a_trend": true,
+    "Q3_targets_not_used": true,
+    "historical_admission_observation": {
+      "owner": "/root/phase2_validation_recovery",
+      "handle": 89540,
+      "PID": 964452,
+      "stage": "admission/accounting",
+      "elapsed_seconds": 114,
+      "CPU_seconds": 114,
+      "CPU_percent": 99.8,
+      "confirmed_live_at_that_observation": true,
+      "not_a_terminal_or_weight_load_result": true
+    },
+    "historical_first_attempt_terminal": {
+      "handle": 89540,
+      "PID": 964452,
+      "returncode": 1,
+      "report": {
+        "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/pristine-low-LR1e-5-matched1200-control-existing-owner-preparation-v01/actual-pristine12-trained14-operational-owner-readonly-T3-fit-existing-owner-preparation-v04/pristine0-output-v01/complete-current-operational-owner-readonly-T3-fit-pristine0-existing-owner-report.json",
+        "bytes": 4148463,
+        "sha256": "512988e4dfa83e7c9b5dc0d94b0cebd17b274100c256256406b8404e7ce6a6d3"
+      },
+      "reason": "Operator FIXED_METADATA_REFERENCE pointed at renamed nonexistent current-operational-owner filename; genuine fixed metadata file retains currentced name.",
+      "before_SDK_model_weights_or_registry_dispatch": true,
+      "reservation_released_and_durable": true,
+      "final_attempt_bytes": 0,
+      "ledger_capacity280_preserved": true,
+      "Source_resource_closed": true,
+      "previous_live_observation_superseded": true
+    },
+    "both_actual_fit_arms_closed": true
+  },
+  "first_pristine_attempt_status": "HISTORICAL_CLOSED1_PRE_SDK_MODEL_WEIGHTS_OR_REGISTRY; wrong metadata filename, reservation released/durable280, finalattempt0 and Source/resource closed. Superseded as current frontier by the accepted closed pristine/trained pair.",
+  "next_experiment": "Extend the existing versioned TRAIN-resume migration family for original TRAIN14 under the current helper refactor. Current v4 is explicitly readonly-only and must not be bypassed. Private same-owner implementation selected; no extra training run selected until qualification/admission.",
+  "current_checkpoint_losses": {
+    "pristine_report": {
+      "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/pristine-low-LR1e-5-matched1200-control-existing-owner-preparation-v01/actual-pristine12-trained14-operational-owner-readonly-T3-fit-existing-owner-preparation-v04/pristine0-output-v02/complete-current-operational-owner-readonly-T3-fit-pristine0-existing-owner-report.json",
+      "bytes": 8269736,
+      "sha256": "f2d4e1e05ddfa9ac1f26da6aa3adbac56705f4437578b3ce824b784efb0d6293"
+    },
+    "trained_report": {
+      "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/pristine-low-LR1e-5-matched1200-control-existing-owner-preparation-v01/actual-pristine12-trained14-operational-owner-readonly-T3-fit-existing-owner-preparation-v04/trained3-output-v02/complete-current-operational-owner-readonly-T3-fit-trained3-existing-owner-report.json",
+      "bytes": 8264518,
+      "sha256": "61431268309103a3ff3c409cb027f48198dd6a8bd38547bc064b1f3e6aaf25e9"
+    },
+    "paired_readback": {
+      "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/pristine-low-LR1e-5-matched1200-control-existing-owner-preparation-v01/actual-pristine12-trained14-operational-owner-readonly-T3-fit-existing-owner-preparation-v04/closed-pristine-trained-fixed-T3-readonly-paired-scalar-loss-readback-v01.json",
+      "bytes": 9939,
+      "sha256": "6085ce01b74e7b60b102b88e483fbb00fb3a3263f757ba89ff10cc3fa9ea3677"
+    },
+    "Root_independent_verification": "1e0ad1",
+    "rows": [
+      {
+        "id": "reviewed:fixture:mixed-act-v1/unit-1",
+        "unit_id": "fixture:mixed-act-v1/unit-1",
+        "pristine": 1.142890453338623,
+        "trained3": 0.9241337776184082,
+        "trained_minus_pristine": -0.21875667572021484,
+        "expected_geometry": {
+          "expected_aligned_ignored_positions": 414,
+          "expected_aligned_nonignored_positions": 1632,
+          "expected_input_positions": 2047,
+          "expected_raw_ignored_positions": 415,
+          "expected_raw_label_positions": 2047,
+          "expected_record_count": 1,
+          "expected_target_body_eos_positions": 1632
+        }
+      },
+      {
+        "id": "reviewed:fixture:mixed-act-v1/unit-2",
+        "unit_id": "fixture:mixed-act-v1/unit-2",
+        "pristine": 0.9425825476646423,
+        "trained3": 0.7043220400810242,
+        "trained_minus_pristine": -0.23826050758361816,
+        "expected_geometry": {
+          "expected_aligned_ignored_positions": 413,
+          "expected_aligned_nonignored_positions": 1944,
+          "expected_input_positions": 2358,
+          "expected_raw_ignored_positions": 414,
+          "expected_raw_label_positions": 2358,
+          "expected_record_count": 1,
+          "expected_target_body_eos_positions": 1944
+        }
+      },
+      {
+        "id": "reviewed:fixture:mixed-act-v1/unit-3",
+        "unit_id": "fixture:mixed-act-v1/unit-3",
+        "pristine": 0.8133513331413269,
+        "trained3": 0.631544828414917,
+        "trained_minus_pristine": -0.1818065047264099,
+        "expected_geometry": {
+          "expected_aligned_ignored_positions": 421,
+          "expected_aligned_nonignored_positions": 2447,
+          "expected_input_positions": 2869,
+          "expected_raw_ignored_positions": 422,
+          "expected_raw_label_positions": 2869,
+          "expected_record_count": 1,
+          "expected_target_body_eos_positions": 2447
+        }
+      }
+    ],
+    "equal_record_mean": {
+      "pristine": 0.9662747780481974,
+      "trained3": 0.7533335487047831,
+      "trained_minus_pristine": -0.2129412293434143,
+      "relative_reduction_percent": 22.037337016447808
+    },
+    "all_three_training_rows_lower": true,
+    "same_ordered_records_context_tokenizer_configuration_profile_and_expected_geometry": true,
+    "both_entry_exit_pair_fullconfig_model_optimizer_RNG_modes_grad_restoration_and_Source_resource_closure": true,
+    "measurement_optimizer_updates": [
+      0,
+      0
+    ],
+    "actual_original_checkpoint_steps": [
+      0,
+      3
+    ],
+    "actual_registry_generations": [
+      21,
+      22
+    ],
+    "original_checkpoints12_and14_unchanged": true,
+    "new_readonly_lineages": [
+      "readonly-source-epoch:aee2c49370ca11255f8441da72a83a8094a86c8b2259d8a90104de5c7c753d13",
+      "readonly-source-epoch:6b4dee28f7e93e370589fe376ac054dcd88407ccfa4bd04a870d11b109e4a95c"
+    ],
+    "actual_measured_forward_count": null,
+    "not_tokenweighted_CE_NLL_observed_mask_generalization_or_convergence": true,
+    "scope": "Matched native model_scalar_loss on the same three fictional TRAIN examples, not an accepted real legal corpus."
+  },
+  "trained_arm_launched_at_cutoff": true,
+  "remaining_limits": {
+    "full_world_eight_phase_goal_complete": false,
+    "model_convergence_proved": false,
+    "real_statutory_independent_reviews": 0,
+    "real_source_faithfulness": "pending/unknown; retained in coverage, outside accuracy denominators",
+    "real_legal_training_and_gold_eligibility": false,
+    "old_AFTER15_outer_wrapper_cleanup": "unknown; no closure inferred",
+    "old_orphan_bytes_retained": 12884901888,
+    "old_extra_charge_bytes_retained": 67108864,
+    "private_ASCII_document_path_collision_guard": "52083086/test09ab493d remains private, unadopted, normal tests unrun; Source35 excludes it. Legacy names preserved; proposed explicit refusal prevents silently overwriting document entries.",
+    "all_historical_failures_old_checkpoints_and_variant_scopes_preserved": true,
+    "continued_training_under_current_refactor": "No current maintained public resume route for original TRAIN14. Private versioned same-owner extension selected; preserve v3/v4 and old artifacts; Source adoption/actual resumed training not yet qualified."
+  },
+  "evidence_boundaries": {
+    "normal29_and220_are_separate_cohorts": true,
+    "historical_normal51_and_Native16_remain_separate": true,
+    "Native8_positive_type_assignments_not_large_typed_value_reconstruction": true,
+    "old_failed_Native_wrapper_return1_qualification_false_retained": true,
+    "corrected_Native_classification_is_DATA_only_no_replay": true,
+    "runtime_roles8_not_proof_or_model_quality": true,
+    "same_three_Q3_each_arm_complete0of3_not_six_unique": true,
+    "no_new_Source_adoption_by_document_preparation": true,
+    "no_merged_Main_model_legal_or_CI_qualification": true,
+    "Source_row_counts_not_module_counts": true,
+    "matched_three_fictional_TRAIN_rows_only": true,
+    "measurement_updates_zero": true,
+    "actual_measured_forward_count": null,
+    "no_tokenweighted_CE_NLL_observed_masks_Q3_gain_generalization_or_convergence": true,
+    "current_v4_readonly_only_no_public_original_TRAIN14_resume": true,
+    "private_versioned_resume_extension_not_training_execution": true
+  },
+  "task_ids": [
+    "LIR-07",
+    "LIR-12",
+    "LIR-13",
+    "LIR-14",
+    "LIR-17",
+    "LIR-19",
+    "LIR-20"
+  ],
+  "component_ids": [
+    "counted-threshold-target-factory",
+    "native-family-lean-renderer",
+    "reviewed-decoder-numerical-worker",
+    "reviewed-component-cycle-preparation",
+    "reviewed-evaluation-and-retention"
+  ],
+  "prior_frontier_evidence_id": "world-counted-Lean-normal396-conditioning-and-readonly-frontier-milestone481-20261121",
+  "programme_Phase05_or_task_states_changed": false,
+  "no_new_plan_component_task_queue_or_authority": true,
+  "publication_integration_scope": {
+    "Source_catalog_count": 482,
+    "Main_catalog_count": 477,
+    "Main_merged_runtime_qualified": false,
+    "Source_current_frontier_has_same_facts_with_Source_index": 481
+  }
+}
   },
   "programme_goal_hierarchy": {
     "canonical_plan": "ipfs_datasets_py/logic/autoformal/docs/HANDOFF.md#whole-us-code-goal-and-supervised-delivery",

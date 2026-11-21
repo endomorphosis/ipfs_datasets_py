@@ -2221,3 +2221,34 @@ Real independent legal reviews remain 0, real legal training-mask readiness rema
 The single [milestone481 catalog record](work_catalog.json#/selected_evidence/475) binds the exact frozen facts, including report sizes and SHA256 values. This documentation-only append rereads no report body and performs no Source, runtime, model, test or publication work. The SourceW481 variant preserves its 480 prior evidence records. This Main integration preserves all 24 Main tasks, 126 components, 475 prior evidence records, hierarchy, archives and preceding Markdown bytes; its catalog has 476 records after this append.
 
 Publication integration scope: the table and frontier above retain their frozen **SourceW481** evidence cutoff. The appended Main record is index **475**, yielding **Main476**; these are distinct catalog populations. Source396 software cases, private Native16 reports and private Torch29 cases **do not qualify the integrated Main tree or its runtime, worldwide legal meaning, model convergence or full-goal completion**. Canonical Source5 remains current9d with the existing-family migration bridge pending; old checkpoints12/14 remain unretagged. The nested Source481 frontier retains its explicitly Source-only index480 pointer; Main uses the valid index475 link above.
+
+## Milestone482 — operational headroom, type fidelity and matched read-only fit closure, 2026-11-21
+
+Cutoff: **2026-11-21T10:34:30.900698+00:00**. Worldwide source-grounded LegalIR → Lean4 remains the goal, with the U.S. Code as a pilot. User-goal Phase5 decoder/fit work is distinct from historical programme Phase05. Every old task status, hierarchy, component and history entry is retained.
+
+| Evidence cohort | Actual result | Scope retained |
+| --- | --- | --- |
+| Current Source35 normal worker |29 unique passed,0 failures/errors/skips at worker `e224b4ba` / test `a2ee8908`. | Installed software fixtures; operational receipt JSON acceptance is limited to pristine-v4 prepared-pair/independent-restore evidence. Canonical normative profiles/old v3 remain strict. |
+| Current resource and law owning files |220 unique passed:198 resource and22 law,0 failures/errors/skips. | Separate from worker29 and historical Source34 normal51. No pooled full-suite/model-quality count. |
+| Same-ledger capacity |250→280 GB;3402 records and all roots/schema/history/charges preserved. | No new claim or namespace. Full claims64,170,413,248 bytes; accounted236,840,047,133. Both earlier failed attempts remain preserved;32 MiB caller file headroom covers the measured ledger/temp write. |
+| e224 pipeline/runtime-role capture |Complete pipeline `5596ab43`, eight fresh runtime roles; original genuine tokenizer SDK result reused. |0 new continuation tokenizer SDK calls; no model/optimizer/weights constructed by capture; old KeyError retained, no transitive native-semantics proof. |
+| Native expected-type check |Positive module rc0 with eight assignments for thresholds0/4; separate negative rc1 at the intended Fin4/Fin5 declaration. |Original wrapper rc1/qualification-false retained. Corrected classification is saved-output DATA readback, not a Lean replay; historical Native16 remains separate. No independent reconstruction of large typed-value constants or statutory meaning. |
+| Publication |R `529caae1`, H `abf64103`, root `5810c152` normal non-force/skip-ci publication verified. |A/Kit pins preserved without fresh queries; no merged-Main model, legal or CI qualification. |
+
+The earlier pristine attempt **89540/PID964452 closed1 before SDK/model/weights/registry dispatch** because `FIXED_METADATA_REFERENCE` used a renamed nonexistent filename. Its reservation was released and durable at280 GB, final-attempt bytes0, with Source/resource closure confirmed. This failure and the preceding114-second admission sample remain historical; they do not describe the accepted pair below. Historical TRAIN14 batch losses remain separate, noncomparable observations.
+
+**Both matched read-only fit arms are now genuinely closed** on the same exact three TRAIN-only fictional T3 rows (records SHA `62484cf2`, rows SHA `596429fd`). The accepted scalar measurements are:
+
+| Fictional TRAIN row | Pristine12 / original step0 | Trained14 / original step3 |
+| --- | ---: | ---: |
+| unit-1 | 1.142890453 | 0.924133778 |
+| unit-2 | 0.942582548 | 0.704322040 |
+| unit-3 | 0.813351333 | 0.631544828 |
+
+The equal-record mean changes **0.966274778 → 0.753333549**, a **22.037337%** relative reduction; every row is lower. Each measurement performs **0 optimizer updates**; original checkpoint steps remain0/3 and actual registry generations are21/22. Both arms use the same ordered records, context, tokenizer, full configuration, profile and expected geometry. Entry/exit model, optimizer, RNG, modes and gradients are restored; Source/resource closure is confirmed. Checkpoints12/14 remain unchanged under honest new read-only lineages. The actual measured forward count is **null**. These are matched native `model_scalar_loss` measurements, not token-weighted CE/NLL, observed-mask evidence, heldout gains or a convergence result.
+
+Next: extend the existing versioned TRAIN-resume migration family for original TRAIN14 under the current helper refactor. **Current v4 is readonly-only and has no maintained public training-continuation route for that checkpoint.** The same owner is preparing a private versioned extension; no additional training run or Source adoption of that extension is selected or qualified here. Initialization seed271828 differs from trained-history row-order seed1729. Q3 targets are not used. Prior heldout completion remains **0/3 for each conditioning arm on the same three Q3 rows**, not six unique cases; earlier losses on different rows are not a trend.
+
+Source35 excludes the proposed ASCII collision refusal `52083086` / test `09ab493d`: it remains private, unadopted and normal tests unrun. Real statutory reviews remain0, source faithfulness pending/unknown, real legal training/gold eligibility false, convergence unproved and the worldwide eight-phase goal incomplete. Old checkpoints, wrapper failures and12 GiB/64 MiB retained charges keep their historical scopes. Source row counts4229/4219 do not count modules.
+
+The single [milestone482 catalog record](work_catalog.json#/selected_evidence/476) commits all frozen facts/report references. Main catalog476→477/index476 is distinct from Source482/index481. All24 Main tasks,126 components,476 prior evidence objects and all older Main Markdown bytes remain exact; Source software/Native scopes do not qualify the integrated Main runtime. This append performs no Source/Git/runtime/model work and reads no report bodies; Any Source adoption requires the existing Reader after Root readback; this private append itself changes no Source.
