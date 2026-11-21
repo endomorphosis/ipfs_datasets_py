@@ -125,7 +125,7 @@ def _reviewed_dependency_paths(parent_prefix, parent_paths=None):
     known = [*primary, site.getusersitepackages(),
         *site.getsitepackages(prefixes=[sys.base_prefix, sys.base_exec_prefix])]
     if parent_paths is None:
-        paths = list(dict.fromkeys(value for value in sys.path if type(value) is str and value in known))
+        paths = list(dict.fromkeys(value for value in known if type(value) is str and value in sys.path))
     else:
         _require(type(parent_paths) is list, "bounded original dependency directory list required")
         paths = list(parent_paths)

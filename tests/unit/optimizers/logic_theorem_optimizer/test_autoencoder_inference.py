@@ -3540,3 +3540,41 @@ def test_reviewed_inference_v11_outputs_cover_ordered_source_population(tmp_path
             inference._check_digest_omitted_generation_outputs(generation, request)
     assert observed and worker._json_bytes(generation) == original_generation
     assert Path(request["source_contexts_artifact"]["path"]).read_bytes() == original_context
+
+
+
+@pytest.mark.parametrize("mode", ["default-user-first", "default-active-subset", "explicit-user-first", "explicit-repeat"])
+def test_reviewed_inference_default_child_dependency_order_uses_active_known_roots(tmp_path, monkeypatch, mode):
+    """Controlled site metadata; exercise the actual maintained guard unchanged.
+
+    These are empty owned directories, not installed package/runtime claims.
+    The physical original-owner case separately checks the real environment.
+    """
+    import site
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_campaign_process_worker as bootstrap
+    primary = [str(tmp_path / name) for name in ("interpreter-site-a", "interpreter-site-b", "known-but-inactive-site")]
+    user = str(tmp_path / "user-site")
+    unrelated = str(tmp_path / "unrelated-active-root")
+    for directory in [*primary, user, unrelated]: Path(directory).mkdir()
+    prefix = str(Path(sys.executable).parent.parent)
+    original_path = list(sys.path)
+    with monkeypatch.context() as context:
+        # Input metadata only: never patch _require, either maintained helper,
+        # the original owner, or the normal qualification/bootstrap protocol.
+        context.setattr(site, "getsitepackages", lambda *, prefixes: list(primary))
+        context.setattr(site, "getusersitepackages", lambda: user)
+        active = [user, primary[1], primary[0]]
+        if mode == "default-active-subset": active = [unrelated, user, primary[1]]
+        context.setattr(sys, "path", active)
+        if mode.startswith("default-"):
+            result = bootstrap._reviewed_dependency_paths(prefix)
+            assert result == ((primary[1], user) if mode == "default-active-subset" else (primary[0], primary[1], user))
+            assert primary[2] not in result and all(value in active for value in result)
+            assert unrelated not in result and sys.path == active
+        else:
+            supplied = ([user, primary[0], primary[1]] if mode == "explicit-user-first" else [primary[0], primary[1], user, user])
+            message = "interpreter site directories first" if mode == "explicit-user-first" else "unknown or repeated"
+            with pytest.raises(RuntimeError, match=message):
+                bootstrap._reviewed_dependency_paths(prefix, supplied)
+            assert sys.path == active
+    assert sys.path == original_path
