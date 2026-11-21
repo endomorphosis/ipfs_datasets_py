@@ -27,6 +27,7 @@ MAX_TERM_DEFS = 64
 MAX_CITE_IMPORTS = 32
 MAX_LAKE_MODULES = 64
 UNICODE_TERM_NAME_PROFILE = "unicode-exact-key-utf8-hex-term-names/v1"
+UNICODE_DOCUMENT_NAME_PROFILE = "unicode-exact-document-id-sha256/v1"
 STITCH_FILES = (
     "section-neighborhoods.parquet",
     "term-index.parquet",
@@ -244,12 +245,31 @@ def term_module(category: str, surface: str) -> dict[str, Any]:
 
 
 def document_module(document_id: str, legal_id: str = "") -> dict[str, Any]:
-    """One document file. A legal id selects one section pair and does not merge siblings."""
+    """One document file, preserving exact Unicode IDs in a bounded name profile.
 
-    atom = _module_atom(document_id)
+    Unicode IDs use a SHA256-named child namespace; the original ID and its
+    byte digest remain explicit. No case folding or Unicode normalization is
+    applied. ASCII names keep the legacy profile and output unchanged.
+    """
+
+    raw = str(document_id or "")
+    identity = {}
+    if not raw.isascii():
+        digest = hashlib.sha256(raw.encode("utf-8")).hexdigest()
+        # The extra namespace segment separates these names from every
+        # legacy single-atom ASCII document name, including literal H<hash>.
+        atom = f"Unicode.H{digest}"
+        path_atom = f"Unicode/H{digest}"
+        identity = {
+            "name_profile": UNICODE_DOCUMENT_NAME_PROFILE,
+            "document_id_sha256": digest,
+        }
+    else:
+        atom = _module_atom(document_id)
+        path_atom = atom
     if not atom:
         return {
-            "document_id": str(document_id or ""),
+            "document_id": raw,
             "gap": True,
             "reason": "unsanitizable_document",
         }
@@ -259,19 +279,21 @@ def document_module(document_id: str, legal_id: str = "") -> dict[str, Any]:
             return info
         suffix = str(info["title"]) + str(info["section"])
         return {
-            "document_id": str(document_id or ""),
+            "document_id": raw,
             "gap": False,
             "legal_id": info["legal_id"],
             "module": f"Law.Document.{atom}.{suffix}",
             "namespace": f"Law.Document.{atom}.{suffix}",
-            "path": f"Law/Document/{atom}/{suffix}.lean",
+            "path": f"Law/Document/{path_atom}/{suffix}.lean",
+            **identity,
         }
     return {
-        "document_id": str(document_id or ""),
+        "document_id": raw,
         "gap": False,
         "module": f"Law.Document.{atom}",
         "namespace": f"Law.Document.{atom}",
-        "path": f"Law/Document/{atom}.lean",
+        "path": f"Law/Document/{path_atom}.lean",
+        **identity,
     }
 
 

@@ -5936,10 +5936,13 @@ def _reviewed_readonly_epoch_projection(old_raw, current_raw):
         '_reviewed_readonly_epoch_projection', '_reviewed_readonly_epoch_sources',
         '_reviewed_readonly_epoch_context', '_reviewed_readonly_epoch_restore',
         '_reviewed_readonly_epoch_validate_receipt',
-        'migrate_local_reviewed_decoder_readonly_source_epoch_v4'}
+        'migrate_local_reviewed_decoder_readonly_source_epoch_v4',
+        '_reviewed_readonly_epoch_operational_receipt'}
     _reviewed_epoch_need(set(current_defs) == set(old_defs) | bridge_names | {'_expected_teacher_forced_position_counts'},
         "unsupported top-level refactor definition")
     expected_ast = {'_preserve_readonly_state': '93b10a8c365d92111c50bd58a2b201416b101a4e1d2d5eb393b5d4120b6a5c99', '_teacher_forced_forward': '9731e3401fcd814e07b5d2da863fa49c5ad94513f9af4b4ea6f4efd5ca6a9b65', 'teacher_forced_fit_batch': '8d65dc61dfbc623afe370d37df082052985fcc7cc7a316af0910851641b2f93e', '_expected_teacher_forced_position_counts': 'f722b5579685ae5465652333af9390819445d4ed5abe23e05c72d8f32bca33f0'}
+    _reviewed_epoch_need(_digest(dump(current_defs['_reviewed_readonly_epoch_operational_receipt']).encode())
+        == '15457d70de1abf1594d236b9c3a7435ec329fc8878eecd15405769410d607a4e', 'classified operational receipt helper changed')
     backend = current_defs['TorchReviewedDecoderBackend']
     old_backend = old_defs['TorchReviewedDecoderBackend']
     methods, old_methods = definitions(backend.body), definitions(old_backend.body)
@@ -6144,6 +6147,23 @@ def _reviewed_readonly_epoch_sources(contract, origin, spec):
         "projection_sha256":projection["numerical_projection_sha256"],"readonly_projection":projection}
 
 
+def _reviewed_readonly_epoch_operational_receipt(reference, *, receipt_kind):
+    """Read only the two byte-authenticated pristine operational evidence roles.
+
+    Import/independent-restore observations are ordinary JSON, not canonical
+    normative profile documents. Original references, bytes and hashes remain
+    authoritative; the existing pristine origin checks still join every used
+    pair/backend/Source/progress fact. This reader creates no restored state
+    and is never used by old v3 or by Source/config/contract/checkpoint profiles.
+    """
+    _reviewed_epoch_need(receipt_kind in {"prepared_pair", "independent_restoration"},
+        "classified pristine operational receipt role required")
+    raw = _reviewed_decoder_artifact(CheckpointArtifact.from_dict(reference), limit=4*1024**2)
+    value = _parse_json(raw)
+    _reviewed_epoch_need(type(value) is dict, "classified pristine operational receipt object required")
+    return value, raw
+
+
 def _reviewed_readonly_epoch_context(spec, old_configuration_artifact, old_tokenizer_pipeline_artifact,
         current_configuration_artifact, compatibility_contract_artifact):
     """Two honest origins: actual V1 trained3 or newly declared pristine0 metadata."""
@@ -6171,8 +6191,10 @@ def _reviewed_readonly_epoch_context(spec, old_configuration_artifact, old_token
         evidence=origin["origin_evidence_artifacts"]
         _reviewed_epoch_need(type(evidence)is dict and set(evidence)=={"prepared_pair","independent_restoration"},
             "pristine origin must retain actual import/strict-restore metadata references")
-        prepared_pair,_=_reviewed_epoch_document(evidence["prepared_pair"],limit=4*1024**2)
-        strict_restore,_=_reviewed_epoch_document(evidence["independent_restoration"],limit=4*1024**2)
+        prepared_pair,_=_reviewed_readonly_epoch_operational_receipt(
+            evidence["prepared_pair"],receipt_kind="prepared_pair")
+        strict_restore,_=_reviewed_readonly_epoch_operational_receipt(
+            evidence["independent_restoration"],receipt_kind="independent_restoration")
         _reviewed_epoch_need(type(prepared_pair)is type(strict_restore)is dict
             and type(prepared_pair.get("artifacts"))is dict and type(strict_restore.get("loader_receipt"))is dict
             and prepared_pair.get("optimizer_steps")==0 and type(prepared_pair.get("optimizer_steps"))is int

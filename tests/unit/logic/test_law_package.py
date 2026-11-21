@@ -503,3 +503,74 @@ def test_oversized_unicode_term_refuses_before_a_package_can_be_written(law: dic
     )
     with pytest.raises(LawPackageError, match="Unicode term definition exceeds the existing source cap"):
         assemble_law_package(law["stitch"], law["spans"])
+
+
+@pytest.mark.parametrize("document_id", [
+    "法律甲", "法A", "律A", "é", "e\u0301", "法律甲" * 512,
+])
+def test_unicode_document_module_retains_exact_id_with_bounded_path(document_id: str) -> None:
+    from ipfs_datasets_py.logic.autoformal.law_package import document_module
+
+    digest = hashlib.sha256(document_id.encode("utf-8")).hexdigest()
+    for legal_id in ("", "usc:us:1:1"):
+        info = document_module(document_id, legal_id)
+        assert info["gap"] is False
+        assert info["document_id"] == document_id
+        assert info["document_id_sha256"] == digest
+        assert info["name_profile"] == "unicode-exact-document-id-sha256/v1"
+        assert info["module"].startswith("Law.Document.Unicode.H" + digest)
+        assert info["module"] == ".".join(Path(info["path"]).with_suffix("").parts)
+        assert all(len(part.encode("utf-8")) <= 255 for part in Path(info["path"]).parts)
+
+
+def test_unicode_document_ids_do_not_alias_ascii_names_or_normalized_spellings() -> None:
+    from ipfs_datasets_py.logic.autoformal.law_package import document_module
+
+    digest = hashlib.sha256("法律甲".encode("utf-8")).hexdigest()
+    ids = ["法律甲", "法A", "律A", "é", "e\u0301", "É", "法律甲 ",
+           "Unicode", "H" + digest, "Unicode.H" + digest, "Unicode_H" + digest]
+    unicode_infos = [document_module(value) for value in ids[:7]]
+    ascii_infos = [document_module(value) for value in ids[7:]]
+    assert len({info["module"] for info in unicode_infos}) == 7
+    assert len({info["path"] for info in unicode_infos}) == 7
+    assert {info["module"] for info in unicode_infos}.isdisjoint(
+        info["module"] for info in ascii_infos)
+    assert {info["path"] for info in unicode_infos}.isdisjoint(
+        info["path"] for info in ascii_infos)
+    # Preserve the existing ASCII punctuation-to-underscore alias.
+    assert ascii_infos[-2]["module"] == ascii_infos[-1]["module"]
+    assert ascii_infos[-2]["path"] == ascii_infos[-1]["path"]
+    assert document_module("doc1") == {
+        "document_id": "doc1", "gap": False, "module": "Law.Document.doc1",
+        "namespace": "Law.Document.doc1", "path": "Law/Document/doc1.lean",
+    }
+    assert document_module("doc1", "usc:us:1:1") == {
+        "document_id": "doc1", "gap": False, "legal_id": "usc:us:1:1",
+        "module": "Law.Document.doc1.T1S1", "namespace": "Law.Document.doc1.T1S1",
+        "path": "Law/Document/doc1/T1S1.lean",
+    }
+
+
+def test_unicode_documents_remain_distinct_in_package_files_and_manifest(law: dict) -> None:
+    path = law["stitch"] / "logic-occurrences.parquet"
+    table = pq.read_table(path)
+    ids = ["法律甲", "法A", "律A", "é", "e\u0301"]
+    rows = table.to_pylist() + [
+        _occurrence(document_id=value, document_label=value,
+                    entity_id=f"{value}:section:1", hit_kind="label",
+                    legal_id="usc:us:1:1", section_label="1", surface="1")
+        for value in ids
+    ]
+    _write(path, rows, table.schema)
+    assembled = assemble_law_package(law["stitch"], law["spans"])
+    documents = [row for row in assembled["manifest"]
+                 if row["record_kind"] == "document" and json.loads(row["term_id"]) in [[v] for v in ids]]
+    assert len(documents) == len(ids)
+    assert len({row["path"] for row in documents}) == len(ids)
+    assert len({row["module"] for row in documents}) == len(ids)
+    for row in documents:
+        source = assembled["files"][row["path"]]
+        assert "import Law.Title.T1.S1" in source
+        assert f"namespace {row['module']}" in source
+        assert row["sha256"] == hashlib.sha256(source.encode("utf-8")).hexdigest()
+    assert assembled["admitted"] is False and assembled["formalized"] is False

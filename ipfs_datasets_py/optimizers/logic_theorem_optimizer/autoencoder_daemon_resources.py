@@ -19,6 +19,7 @@ from __future__ import annotations
 from contextlib import contextmanager
 import copy
 import fcntl
+import hashlib
 import json
 import math
 import os
@@ -33,9 +34,9 @@ import uuid
 from .resource_scheduler import ResourceLane, get_global_resource_scheduler
 from . import resource_scheduler as native_deadlines
 
-# Campaign cap aligned to the applied 220 GB rollout on 2026-10-17. Existing
-# ledgers require an explicit, lock-held limit migration; _read never upgrades
-# historical ledgers or releases their retained reservations implicitly.
+# Legacy default campaign capacity. Callers may configure a finite byte limit;
+# existing ledgers change only through explicit lock-held migration. _read never
+# upgrades historical ledgers or releases retained reservations implicitly.
 MAX_STORAGE_BYTES = 250_000_000_000
 # Bound the retained JSON metadata independently of storage admission.
 # Reading/writing a larger ledger never changes its schema or storage cap.
@@ -109,15 +110,17 @@ def _integer(value, name, *, minimum=1, maximum=None):
     return value
 
 
-def _external_charges(record):
+def _external_charges(record, *, limit_bytes=None):
     # Original v1 records predate named charges and have an empty inventory.
+    limit_bytes = _integer(MAX_STORAGE_BYTES if limit_bytes is None else limit_bytes,
+                           "storage_limit_bytes", maximum=(1 << 63) - 1)
     charges = record.get("external_charges", {})
     if type(charges) is not dict or len(charges) > MAX_EXTERNAL_CHARGES:
         raise DaemonResourceError("invalid external charge inventory")
     for key, value in charges.items():
         if type(key) is not str or not _CHARGE_KEY.fullmatch(key):
             raise DaemonResourceError("invalid external charge key")
-        _integer(value, "external charge bytes", minimum=0, maximum=MAX_STORAGE_BYTES)
+        _integer(value, "external charge bytes", minimum=0, maximum=limit_bytes)
     return charges
 
 
@@ -559,8 +562,11 @@ class DaemonResourceReservation:
     def __init__(self, ledger_path, *, roots, storage_bytes, memory_mb, cpu_slots=1, child_process_slots=1,
                  timeout_seconds=0, ledger_lock_timeout_seconds=None,
                  scheduler_state_path=None, expected_scheduler_policy_sha256=None,
-                 require_existing_ledger=False):
-        self.storage_bytes = _integer(storage_bytes, "storage_bytes", maximum=MAX_STORAGE_BYTES)
+                 require_existing_ledger=False, storage_limit_bytes=None):
+        self.storage_limit_bytes = _integer(
+            MAX_STORAGE_BYTES if storage_limit_bytes is None else storage_limit_bytes,
+            "storage_limit_bytes", maximum=(1 << 63) - 1)
+        self.storage_bytes = _integer(storage_bytes, "storage_bytes", maximum=self.storage_limit_bytes)
         self.memory_mb = _integer(memory_mb, "memory_mb")
         self.cpu_slots = _integer(cpu_slots, "cpu_slots")
         self.child_process_slots = _integer(child_process_slots, "child_process_slots")
@@ -612,6 +618,69 @@ class DaemonResourceReservation:
         self._cleanup_error = None
         self._cleanup_failure_observations = []
         self._cleanup_failure_observation_overflow = False
+
+    @classmethod
+    def migrate_storage_limit(cls, ledger_path, *, roots, expected_limit_bytes,
+                              storage_limit_bytes, ledger_lock_timeout_seconds=30):
+        """Explicitly raise one existing ledger capacity without releasing claims.
+
+        No reservation or scheduler lease is acquired. Every nonreleased owner
+        must be dead under the existing PID/group rules: old live implementations
+        otherwise still require their previous exact cap and cannot reopen it.
+        Historical records, roots, charges and child histories are never edited.
+        Callers reopening the migrated ledger must explicitly select its new cap.
+        """
+        previous = _integer(expected_limit_bytes, "expected_limit_bytes", maximum=(1 << 63) - 1)
+        target = _integer(storage_limit_bytes, "storage_limit_bytes", maximum=(1 << 63) - 1)
+        if target <= previous:
+            raise DaemonResourceError("storage limit migration must increase capacity")
+        control = cls(ledger_path, roots=roots, storage_bytes=1, memory_mb=1,
+                      storage_limit_bytes=previous, require_existing_ledger=True,
+                      ledger_lock_timeout_seconds=ledger_lock_timeout_seconds)
+        with control._locked():
+            ledger = control._read()
+            original_records = copy.deepcopy(ledger["reservations"])
+
+            def refuse_live_owners():
+                for record in original_records.values():
+                    native_deadlines._check_resource_operation_deadline()
+                    if record["status"] == "released":
+                        continue
+                    owner = _process(record["owner_pid"])
+                    if owner is not None and owner["state"] != "Z":
+                        raise DaemonResourceError(
+                            "live disk ledger owner prevents storage limit migration: "
+                            + str(record["reservation_id"]))
+                    if _group_usage(record.get("child"))["live_processes"]:
+                        raise DaemonResourceError(
+                            "live disk ledger child prevents storage limit migration: "
+                            + str(record["reservation_id"]))
+
+            refuse_live_owners()
+            migrated = copy.deepcopy(ledger)
+            migrated["limit_bytes"] = target
+            control.storage_limit_bytes = target
+            # Existing over-cap accounting can be repaired by a larger capacity;
+            # all full claims still count, and filesystem free space still binds.
+            accounting = control._account(migrated)
+            refuse_live_owners()
+            if migrated["reservations"] != original_records:
+                raise DaemonResourceError("storage limit migration changed reservation records")
+            control._write(migrated)
+            if control._read() != migrated:
+                raise DaemonResourceError("storage limit migration readback differs")
+            records_raw = json.dumps(original_records, sort_keys=True,
+                                     separators=(",", ":"), allow_nan=False).encode()
+            return {"schema": "daemon-resource-storage-limit-migration/v1",
+                    "ledger_path": str(control.ledger_path),
+                    "roots": copy.deepcopy(control.root_identities),
+                    "previous_limit_bytes": previous, "storage_limit_bytes": target,
+                    "reservation_count": len(original_records),
+                    "reservation_records_sha256": hashlib.sha256(records_raw).hexdigest(),
+                    "records_roots_history_and_charges_preserved": True,
+                    "live_nonreleased_owners_and_current_children_refused": True,
+                    "accounting": copy.deepcopy(accounting),
+                    "reservation_or_scheduler_lease_acquired": False}
 
     def _scheduler_identity(self):
         """Private fixed-lane hook; the daemon public API stays HAMMER_LEAN."""
@@ -689,7 +758,7 @@ class DaemonResourceReservation:
             if self._entered or self._require_existing_ledger:
                 raise DaemonResourceError("disk ledger disappeared") from None
             return {"schema": SCHEMA, "roots": self.root_identities,
-                    "limit_bytes": MAX_STORAGE_BYTES, "reservations": {}}
+                    "limit_bytes": self.storage_limit_bytes, "reservations": {}}
         with os.fdopen(descriptor, "rb") as stream:
             info = os.fstat(stream.fileno())
             if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1 or info.st_size > MAX_LEDGER_BYTES:
@@ -702,7 +771,9 @@ class DaemonResourceReservation:
             raise DaemonResourceError("invalid disk ledger JSON") from exc
         if type(value) is not dict or set(value) != {"schema", "roots", "limit_bytes", "reservations"}:
             raise DaemonResourceError("invalid disk ledger schema")
-        if value["schema"] != SCHEMA or value["roots"] != self.root_identities or value["limit_bytes"] != MAX_STORAGE_BYTES:
+        if (value["schema"] != SCHEMA or value["roots"] != self.root_identities
+                or type(value["limit_bytes"]) is not int
+                or value["limit_bytes"] != self.storage_limit_bytes):
             raise DaemonResourceError("disk ledger storage scope differs")
         records = value["reservations"]
         if type(records) is not dict or len(records) > MAX_RESERVATIONS:
@@ -710,11 +781,11 @@ class DaemonResourceReservation:
         for key, record in records.items():
             if type(record) is not dict or record.get("reservation_id") != key or record.get("status") not in {"reserved", "active", "retained", "released"}:
                 raise DaemonResourceError("invalid disk reservation record")
-            _integer(record.get("storage_bytes"), "ledger storage_bytes", maximum=MAX_STORAGE_BYTES)
+            _integer(record.get("storage_bytes"), "ledger storage_bytes", maximum=self.storage_limit_bytes)
             _integer(record.get("owner_pid"), "ledger owner_pid")
             if "child_process_slots" in record:
                 _integer(record["child_process_slots"], "ledger child_process_slots")
-            _external_charges(record)
+            _external_charges(record, limit_bytes=self.storage_limit_bytes)
         return value
 
     def _write(self, value):
@@ -766,9 +837,9 @@ class DaemonResourceReservation:
         free = min(free_values)
         result = {"observed_apparent_bytes": observed, "outstanding_full_reservations_bytes": outstanding,
                   "additional_requested_bytes": additional, "charged_bytes": charged,
-                  "limit_bytes": MAX_STORAGE_BYTES, "minimum_filesystem_free_bytes": free,
+                  "limit_bytes": self.storage_limit_bytes, "minimum_filesystem_free_bytes": free,
                   "scope": "named_roots_only_apparent_bytes", "inventory": inventory}
-        if charged > MAX_STORAGE_BYTES or free < outstanding + additional:
+        if charged > self.storage_limit_bytes or free < outstanding + additional:
             error = DaemonResourceError("storage reservation capacity exceeded")
             error._capacity_observation = copy.deepcopy({
                 "schema": "daemon-resource-capacity-observation/v1",
@@ -776,9 +847,9 @@ class DaemonResourceReservation:
                     "observed_apparent_bytes", "outstanding_full_reservations_bytes",
                     "additional_requested_bytes", "charged_bytes", "limit_bytes",
                     "minimum_filesystem_free_bytes", "scope")},
-                "storage_capacity_exceeded": charged > MAX_STORAGE_BYTES,
+                "storage_capacity_exceeded": charged > self.storage_limit_bytes,
                 "filesystem_free_insufficient": free < outstanding + additional,
-                "storage_capacity_deficit_bytes": max(0, charged - MAX_STORAGE_BYTES),
+                "storage_capacity_deficit_bytes": max(0, charged - self.storage_limit_bytes),
                 "filesystem_free_deficit_bytes": max(0, outstanding + additional - free),
             })
             raise error
@@ -911,13 +982,13 @@ class DaemonResourceReservation:
             raise DaemonResourceError("reservation is not outstanding")
         if type(key) is not str or not _CHARGE_KEY.fullmatch(key):
             raise DaemonResourceError("invalid external charge key")
-        _integer(byte_count, "external charge bytes", minimum=0, maximum=MAX_STORAGE_BYTES)
+        _integer(byte_count, "external charge bytes", minimum=0, maximum=self.storage_limit_bytes)
         with self._locked():
             ledger = self._read()
             row = ledger["reservations"].get(self.reservation_id)
             if row is None or row["owner_pid"] != self._owner_pid or row["status"] == "released":
                 raise DaemonResourceError("owned disk reservation differs")
-            charges = dict(_external_charges(row))
+            charges = dict(_external_charges(row, limit_bytes=self.storage_limit_bytes))
             already_charged = key in charges
             if already_charged and charges[key] != byte_count:
                 raise DaemonResourceError("external charge amount changed")
@@ -980,7 +1051,7 @@ class DaemonResourceReservation:
             ledger = self._read()
             usage = self._account(ledger)
             row = ledger["reservations"][self.reservation_id]
-            external_bytes = sum(_external_charges(row).values())
+            external_bytes = sum(_external_charges(row, limit_bytes=self.storage_limit_bytes).values())
             usage.update(attempt_bytes=attempt_bytes, attempt_limit_bytes=self.storage_bytes,
                          external_charged_bytes=external_bytes,
                          total_attempt_charged_bytes=attempt_bytes + external_bytes,
@@ -1043,7 +1114,7 @@ class DaemonResourceReservation:
             account_seconds = time.monotonic() - account_started
             if _root_identity(attempt) != self._attempt:
                 raise DaemonResourceError("attempt directory identity changed")
-            external_bytes = sum(_external_charges(row).values())
+            external_bytes = sum(_external_charges(row, limit_bytes=self.storage_limit_bytes).values())
             usage = copy.deepcopy(accounting)
             usage.update(attempt_bytes=attempt_bytes, attempt_limit_bytes=self.storage_bytes,
                          external_charged_bytes=external_bytes,
@@ -1112,7 +1183,7 @@ class DaemonResourceReservation:
             row["final_accounting"] = self._account(ledger)
             row["final_attempt_bytes"] = (_inventory([Path(self._attempt["path"])], strict=True)["apparent_bytes"]
                                           if self._attempt is not None else None)
-            row["final_external_charged_bytes"] = sum(_external_charges(row).values())
+            row["final_external_charged_bytes"] = sum(_external_charges(row, limit_bytes=self.storage_limit_bytes).values())
             row["final_total_charged_bytes"] = (row["final_attempt_bytes"] or 0) + row["final_external_charged_bytes"]
             row["attempt_exceeded_reservation"] = row["final_total_charged_bytes"] > self.storage_bytes
             self._write(ledger)
@@ -1129,7 +1200,7 @@ class DaemonResourceReservation:
                 "scheduler_lane": scheduler_lane.value, "workload": scheduler_workload,
                 "status": self._record["status"] if self._record is not None else "not_entered",
                 "ledger_path": str(self.ledger_path), "roots": copy.deepcopy(self.root_identities),
-                "storage_limit_bytes": MAX_STORAGE_BYTES, "record": copy.deepcopy(self._record),
+                "storage_limit_bytes": self.storage_limit_bytes, "record": copy.deepcopy(self._record),
                 "resource_lease": self._lease.to_dict() if self._lease is not None else None,
                 "cleanup_error": self._cleanup_error,
                 "enforcement": "cooperative_admission_and_polled_usage_not_kernel_quota"}

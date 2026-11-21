@@ -9920,3 +9920,119 @@ def test_readonly_epoch_migration_late_denial_retains_unpromoted_new_partial_and
     failure=json.loads((Path(options['output_directory'])/'failure.json').read_bytes())
     assert not failure['qualified']and failure['old_artifacts_rewritten']is False
     assert all(Path(fixture.prior[name]['path']).read_bytes()==body for name,body in fixture.originals.items())
+
+
+# Pristine operational receipt encoding compatibility. Numeric checkpoint,
+# Source/config/profile canonicality, old v3, and original refs remain strict.
+@pytest.mark.parametrize("receipt_kind", ["prepared_pair", "independent_restoration"])
+@pytest.mark.parametrize("encoding", ["compact", "pretty"])
+def test_readonly_epoch_operational_receipts_accept_authenticated_encoding(tmp_path, receipt_kind, encoding):
+    value = {"schema": ("actual-pinned-Qwen25-pretrained-checkpoint-pair/v1"
+        if receipt_kind == "prepared_pair" else "actual-Qwen25-independent-native-loader-restoration/v1"),
+        "operational_fixture_only": True, "value": [0, 3, "authenticated"]}
+    raw = worker._json_bytes(value) if encoding == "compact" else (json.dumps(value, indent=2) + "\n").encode()
+    reference = _complete_reviewed_artifact(tmp_path / (receipt_kind + ".json"), raw)
+    observed, actual_raw = worker._reviewed_readonly_epoch_operational_receipt(reference, receipt_kind=receipt_kind)
+    assert observed == value and actual_raw == raw
+    assert Path(reference["path"]).read_bytes() == raw
+    if encoding == "pretty":
+        with pytest.raises(worker.TrainingJobValidationError, match="canonical complete metadata"):
+            worker._reviewed_epoch_document(reference)
+    else:
+        assert worker._reviewed_epoch_document(reference)[0] == value
+
+
+@pytest.mark.parametrize("receipt_kind", ["prepared_pair", "independent_restoration"])
+@pytest.mark.parametrize("damage", ["bad_sha", "malformed", "duplicate", "nonfinite", "array"])
+def test_readonly_epoch_operational_receipts_refuse_bad_bytes_or_JSON(tmp_path, receipt_kind, damage):
+    bodies = {"bad_sha": b'{"observed":true}', "malformed": b'{"observed":',
+        "duplicate": b'{"observed":true,"observed":false}', "nonfinite": b'{"observed":NaN}', "array": b'[]'}
+    reference = _complete_reviewed_artifact(tmp_path / (damage + ".json"), bodies[damage])
+    if damage == "bad_sha": reference = {**reference, "sha256": "0" * 64}
+    with pytest.raises(ValueError):
+        worker._reviewed_readonly_epoch_operational_receipt(reference, receipt_kind=receipt_kind)
+    assert Path(reference["path"]).read_bytes() == bodies[damage]
+
+
+@pytest.mark.parametrize("receipt_kind", ["configuration", "compatibility_contract", "candidate_manifest"])
+def test_readonly_epoch_operational_reader_refuses_unclassified_roles_before_IO(tmp_path, monkeypatch, receipt_kind):
+    def forbidden(*args, **kwargs): pytest.fail("unclassified receipt attempted artifact IO")
+    monkeypatch.setattr(worker, "_reviewed_decoder_artifact", forbidden)
+    with pytest.raises(worker.TrainingJobValidationError, match="classified pristine operational receipt role"):
+        worker._reviewed_readonly_epoch_operational_receipt(
+            {"path": str(tmp_path / "absent.json"), "bytes": 1, "sha256": "0" * 64}, receipt_kind=receipt_kind)
+
+
+@pytest.mark.parametrize("profile_kind", ["Source_contract", "old_configuration", "current_configuration",
+    "migration_receipt", "candidate_manifest", "old_v3_contract"])
+def test_readonly_epoch_normative_documents_keep_exact_canonical_bytes(tmp_path, profile_kind):
+    value = {"schema": "normative-test-only:" + profile_kind, "unchanged": True}
+    canonical = _complete_reviewed_artifact(tmp_path / (profile_kind + "-compact.json"), worker._json_bytes(value))
+    pretty = _complete_reviewed_artifact(tmp_path / (profile_kind + "-pretty.json"), (json.dumps(value, indent=2) + "\n").encode())
+    assert worker._reviewed_epoch_document(canonical)[0] == value
+    with pytest.raises(worker.TrainingJobValidationError, match="canonical complete metadata"):
+        worker._reviewed_epoch_document(pretty)
+
+
+def _readonly_epoch_fixture_with_operational_encoding(tmp_path, monkeypatch, encoding):
+    from copy import deepcopy
+    fixture = _readonly_epoch_real_qwen_fixture(tmp_path, monkeypatch, 0)
+    old_origin = json.loads(fixture.originals["candidate"])
+    original_evidence = deepcopy(old_origin["origin_evidence_artifacts"])
+    old_bytes = {key: Path(reference["path"]).read_bytes() for key, reference in original_evidence.items()}
+    def encoded(value):
+        return worker._json_bytes(value) if encoding == "compact" else (json.dumps(value, indent=2) + "\n").encode()
+    pair_value = json.loads(old_bytes["prepared_pair"])
+    pair_value["schema"] = "actual-pinned-Qwen25-pretrained-checkpoint-pair/v1"
+    pair_ref = _complete_reviewed_artifact(tmp_path / "operational-pair.json", encoded(pair_value))
+    restore_value = json.loads(old_bytes["independent_restoration"])
+    restore_value.update(schema="actual-Qwen25-independent-native-loader-restoration/v1", prepared_pair=pair_ref)
+    restore_ref = _complete_reviewed_artifact(tmp_path / "operational-independent-restoration.json", encoded(restore_value))
+    origin = deepcopy(old_origin)
+    origin["origin_evidence_artifacts"] = {"prepared_pair": pair_ref, "independent_restoration": restore_ref}
+    origin_ref = _complete_reviewed_artifact(tmp_path / "NEW-operational-fixture-origin.json", worker._json_bytes(origin))
+    contract = deepcopy(fixture.contract); snapshot = deepcopy(fixture.snapshot)
+    contract["old_checkpoint_manifest_sha256"] = snapshot["old_checkpoint_manifest_sha256"] = origin_ref["sha256"]
+    contract["dependency_snapshot_artifact"] = worker.asdict(fixture.artifact("operational-fixture-dependencies.json", snapshot))
+    options = dict(fixture.options, compatibility_contract_artifact=fixture.artifact("operational-fixture-contract.json", contract))
+    payload = fixture.spec.to_dict(); payload["parent_checkpoint_artifact"] = origin_ref
+    spec = worker.TrainingJobSpec.from_dict(payload)
+    return fixture, spec, options, original_evidence, old_bytes, pair_ref, restore_ref
+
+
+@pytest.mark.parametrize("encoding", ["compact", "pretty"])
+def test_readonly_epoch_pristine_migration_accepts_operational_receipts_without_retagging(tmp_path, monkeypatch, encoding):
+    fixture, spec, options, originals, old_bytes, pair_ref, restore_ref = _readonly_epoch_fixture_with_operational_encoding(tmp_path, monkeypatch, encoding)
+    monkeypatch.setattr(worker.TorchReviewedDecoderBackend, "train_batch", lambda *a, **k: pytest.fail("receipt compatibility performed training"))
+    runtime, result = worker.migrate_local_reviewed_decoder_readonly_source_epoch_v4(spec, **options)
+    assert runtime.backend._optimizer_steps == 0 and not runtime.backend.optimizer.state
+    assert runtime.backend._same(runtime.backend._model_state(), fixture.expected_model)
+    assert runtime.backend._same(runtime.backend.optimizer.state_dict(), fixture.expected_optimizer)
+    assert fixture.target.torch.equal(fixture.target.torch.get_rng_state(), fixture.expected_rng)
+    assert result["readonly_only"] and not result["training_performed"] and not result["qualified"]
+    origin = json.loads(Path(spec.parent_checkpoint_artifact.path).read_bytes())
+    assert origin["origin_evidence_artifacts"] == {"prepared_pair": pair_ref, "independent_restoration": restore_ref}
+    assert all(Path(reference["path"]).read_bytes() == old_bytes[key] for key, reference in originals.items())
+    assert all(Path(fixture.prior[name]["path"]).read_bytes() == body for name, body in fixture.originals.items())
+
+
+def test_readonly_epoch_operational_reader_is_scoped_and_mechanically_bound():
+    import ast
+    import inspect
+    source = inspect.getsource(worker)
+    context = ast.parse(inspect.getsource(worker._reviewed_readonly_epoch_context)).body[0]
+    calls = [node for node in ast.walk(context) if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+        and node.func.id == "_reviewed_readonly_epoch_operational_receipt"]
+    assert len(calls) == 2
+    assert {(ast.literal_eval(node.args[0].slice), ast.literal_eval(node.keywords[0].value)) for node in calls} == {
+        ("prepared_pair", "prepared_pair"), ("independent_restoration", "independent_restoration")}
+    assert all(len(node.keywords) == 1 and node.keywords[0].arg == "receipt_kind" for node in calls)
+    old = _readonly_epoch_original9d_source()
+    assert worker._reviewed_readonly_epoch_projection(old, source.encode())["old_source_executed"] is False
+    helper = next(node for node in ast.parse(source).body if isinstance(node, ast.FunctionDef)
+        and node.name == "_reviewed_readonly_epoch_operational_receipt")
+    fragment = ast.get_source_segment(source, helper)
+    changed = fragment.replace("return value, raw", "return {}, raw")
+    assert changed != fragment
+    with pytest.raises(worker.TrainingJobValidationError, match="classified operational receipt helper changed"):
+        worker._reviewed_readonly_epoch_projection(old, source.replace(fragment, changed, 1).encode())
