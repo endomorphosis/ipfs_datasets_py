@@ -408,7 +408,7 @@ def _reviewed_physical_cli(monkeypatch):
     return cli
 
 
-def _reviewed_physical_packet(facts, *, rich_fixture=None, admission_version="v2", operation="heldout_evaluation", runtime_profile=None, generation_policy=None, source_fixture=None):
+def _reviewed_physical_packet(facts, *, rich_fixture=None, admission_version="v2", operation="heldout_evaluation", runtime_profile=None, generation_policy=None, source_fixture=None, digest_omitted=False):
     """Independent physical source facts, signed heldout policy, real HF pair.
 
     Models are constructed only when a test calls this INSIDE its original
@@ -426,6 +426,11 @@ def _reviewed_physical_packet(facts, *, rich_fixture=None, admission_version="v2
     assert runtime_profile is None or (admission_version == "v3" and runtime_profile in {"builtin-llama-bfloat16/v1", "builtin-qwen2-bfloat16/v1"})
     assert generation_policy is None or runtime_profile is not None
     assert source_fixture is None or (rich_fixture is None and admission_version == "v3" and runtime_profile is not None)
+    assert type(digest_omitted) is bool
+    if digest_omitted:
+        assert rich_fixture is None and source_fixture is None and admission_version == "v3"
+        assert runtime_profile == "builtin-qwen2-bfloat16/v1" and generation_policy is not None
+        assert generation_policy["schema"] == worker.REVIEWED_DIGEST_OMITTED_GENERATION_POLICY_SCHEMA
     actual_pretrained = source_fixture is not None or bool(getattr(rich_fixture, "actual_pretrained", False))
     calls = {"source": 0, "asset": 0, "admission": 0}
     assets = facts.root / "independent-local-assets"
@@ -461,8 +466,9 @@ def _reviewed_physical_packet(facts, *, rich_fixture=None, admission_version="v2
     if source_fixture is not None:
         fixture = source_fixture.model
     elif rich_fixture is None and runtime_profile is not None:
-        fixture = _reviewed_physical_fixture_assets(facts, assets, "causal_lm", max_sequence_tokens=4096,
-            local_model_profile=runtime_profile, **({"profiled_generation": True} if generation_policy is not None else {}))
+        fixture = _reviewed_physical_fixture_assets(facts, assets, "causal_lm", max_sequence_tokens=8192 if digest_omitted else 4096,
+            local_model_profile=runtime_profile, **({"profiled_generation": True} if generation_policy is not None else {}),
+            **({"digest_omitted": True} if digest_omitted else {}))
     else:
         fixture = (model_fixtures._reviewed_local_loader_hf_fixture(assets, admission_provider=fresh_admission,
                        max_sequence_tokens=4096 if admission_version == "v3" else 2048)
@@ -587,6 +593,8 @@ def _reviewed_physical_packet(facts, *, rich_fixture=None, admission_version="v2
             else ("reviewed-source-evaluation-request/v8" if rich_fixture is not None else "reviewed-source-evaluation-request/v7"), generation_policy=deepcopy(generation_policy))
         if qwen2 and rich_fixture is not None:
             payload["training_context"]["context_budget_profile"] = generation_policy["context_budget_profile"]
+    if digest_omitted:
+        payload["schema"] = inference.REVIEWED_DIGEST_OMITTED_EVALUATION_REQUEST_SCHEMA
     def write_request():
         return put_json(payload)
 
@@ -667,13 +675,51 @@ def _reviewed_physical_fixture_assets(facts, directory, architecture="encoder_de
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_training_worker as worker
     assert facts.owner.to_dict()["status"] == "active"
     assert set(options) <= {"admission_provider", "max_sequence_tokens", "fixed_json_schema_subwords",
-                            "fixed_typed_schema_subwords", "ranked_context_snapshot", "ranked_context_snapshot_artifact", "local_model_profile", "profiled_generation"}
+                            "fixed_typed_schema_subwords", "ranked_context_snapshot", "ranked_context_snapshot_artifact", "local_model_profile", "profiled_generation", "digest_omitted"}
     configuration = {key: value for key, value in options.items() if key != "admission_provider"}
     root = Path(__file__).resolve().parents[4]
-    script = r"""import sys,json,hashlib,importlib.machinery
+    def existing_package_binding():
+        # Top-level spec lookup is metadata only: do not import a model in the
+        # parent, install packages, or inherit the parent's whole search path.
+        import importlib.util
+        origins, roots = {}, {}
+        for name in ("transformers", "torch"):
+            spec = importlib.util.find_spec(name)
+            assert spec is not None and type(spec.origin) is str, "existing package origin required: " + name
+            origin = Path(spec.origin)
+            assert origin.is_absolute() and origin.is_file(), "existing package file required: " + name
+            origin = origin.resolve(strict=True)
+            assert origin.name == "__init__.py" and origin.parent.name == name, "ordinary package required: " + name
+            locations = spec.submodule_search_locations
+            assert locations is not None and len(locations) == 1 and Path(locations[0]).resolve(strict=True) == origin.parent, "package location differs: " + name
+            package_root = origin.parent.parent
+            assert any(type(item) is str and item and Path(item).is_absolute()
+                and Path(item).resolve(strict=False) == package_root for item in sys.path), "package root is not already visible to parent: " + name
+            origins[name], roots[name] = str(origin), str(package_root)
+        assert roots["torch"] == roots["transformers"], "Torch and Transformers must use the same existing package root"
+        return {"schema": "physical-fixture-existing-package-binding/v1", "package_root": roots["transformers"], "package_origins": origins}
+    package_binding = existing_package_binding()
+    script = r"""import sys,json,hashlib,importlib.machinery,importlib.util
 from pathlib import Path
 from dataclasses import asdict
 root=Path(sys.argv[1]);sys.path.insert(0,str(root));sys.dont_write_bytecode=True
+binding=json.loads(sys.argv[5])
+assert type(binding) is dict and set(binding)=={"schema","package_root","package_origins"}
+assert binding["schema"]=="physical-fixture-existing-package-binding/v1"
+assert type(binding["package_root"]) is str
+package_root=Path(binding["package_root"])
+assert package_root.is_absolute() and package_root.resolve(strict=True)==package_root and package_root.is_dir()
+assert type(binding["package_origins"]) is dict and set(binding["package_origins"])=={"transformers","torch"}
+sys.path.insert(1,str(package_root))
+for name in ("transformers","torch"):
+ expected=binding["package_origins"][name]
+ assert type(expected) is str
+ origin=Path(expected)
+ assert origin.is_absolute() and origin.resolve(strict=True)==origin and origin.parent.parent==package_root
+ spec=importlib.util.find_spec(name)
+ assert spec is not None and type(spec.origin) is str and Path(spec.origin).resolve(strict=True)==origin, "child package origin differs: "+name
+ assert spec.submodule_search_locations is not None and len(spec.submodule_search_locations)==1 and Path(spec.submodule_search_locations[0]).resolve(strict=True)==origin.parent, "child package location differs: "+name
+assert sys.flags.isolated==1
 compiled={};original=importlib.machinery.SourceFileLoader.get_code
 def code(loader,name):
  p=Path(loader.path).resolve()
@@ -695,19 +741,26 @@ elif configuration.pop("ranked_context_snapshot",False):
  ranked_snapshot=captured[0]
 profiled=configuration.pop("profiled_generation",False)
 assert type(profiled) is bool
-if profiled:
+digest_omitted=configuration.pop("digest_omitted",False)
+assert type(digest_omitted) is bool
+if digest_omitted:
+ assert profiled and sys.argv[3]=="causal_lm"
+ assert configuration=={"max_sequence_tokens":8192,"local_model_profile":"builtin-qwen2-bfloat16/v1"}
+ from tests.unit.optimizers.logic_theorem_optimizer.test_autoencoder_training_worker import _digest_omitted_Qwen_local_fixture
+ fixture=_digest_omitted_Qwen_local_fixture(Path(sys.argv[2]))
+elif profiled:
  from tests.unit.optimizers.logic_theorem_optimizer.test_autoencoder_training_worker import _reviewed_chatml_local_asset_fixture
  fixture=_reviewed_chatml_local_asset_fixture(Path(sys.argv[2]),sys.argv[3],**configuration)
 else:
  fixture=_reviewed_local_loader_hf_fixture(Path(sys.argv[2]),sys.argv[3],**configuration)
 keys=('recipe_artifact','model_config_artifact','tokenizer_artifact','license_artifact','model_checkpoint','optimizer_checkpoint')
-result={'assets':{k:asdict(fixture.options[k]) for k in keys},'backend_identity':fixture.options['expected_backend_identity'],'compiled_sources':compiled}
+result={'assets':{k:asdict(fixture.options[k]) for k in keys},'backend_identity':fixture.options['expected_backend_identity'],'compiled_sources':compiled,'existing_package_binding':binding,'isolated_mode':sys.flags.isolated}
 if ranked_snapshot is not None:result["ranked_context_snapshot"]=ranked_snapshot
 assert all(hashlib.sha256(Path(p).read_bytes()).hexdigest()==h for p,h in compiled.items())
 print(json.dumps(result,sort_keys=True))
 """
     command = [sys.executable, "-I", "-B", "-c", script, str(root), str(directory), architecture,
-               json.dumps(configuration, sort_keys=True)]
+               json.dumps(configuration, sort_keys=True), json.dumps(package_binding, sort_keys=True)]
     child = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
         env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1"))
     try:
@@ -718,6 +771,7 @@ print(json.dumps(result,sort_keys=True))
             child.wait()
     assert child.returncode == 0, stderr
     result = json.loads(stdout)
+    assert result["existing_package_binding"] == package_binding and result["isolated_mode"] == 1
     for path, digest in result["compiled_sources"].items():
         assert Path(path).is_relative_to(root) and _sha(path) == digest
     artifacts = {key: worker.CheckpointArtifact.from_dict(value) for key, value in result["assets"].items()}
@@ -3167,3 +3221,322 @@ def test_reviewed_inference_generic_v3_transport_remains_single_component_reques
     else:
         with pytest.raises(ValueError): inference._read_reviewed_evaluation_request(write())
     assert not Path(value["output_directory"]).exists()
+
+
+# Explicit v11 software controls. Metadata-only cases do not establish a real
+# local-vendor pair; the physical case uses the existing tiny fictional assets.
+def _reviewed_v11_tuple(worker, request):
+    request.update(schema=inference.REVIEWED_DIGEST_OMITTED_EVALUATION_REQUEST_SCHEMA,
+        runtime_profile="builtin-qwen2-bfloat16/v1")
+    request["generation_policy"].update(schema=worker.REVIEWED_DIGEST_OMITTED_GENERATION_POLICY_SCHEMA,
+        conditioning_profile=worker.REVIEWED_DIGEST_OMITTED_CHATML_PROFILE,
+        target_codec=worker.REVIEWED_DIGEST_OMITTED_TARGET_CODEC)
+    request["backend_identity"] = {"backend_id": "torch-digest-omitted-reviewed-decoder/v1:" + "a" * 64,
+        "implementation_sha256": request["source_sha256"]["worker"],
+        "checkpoint_format": "torch-weights-only-digest-omitted-reviewed-state-pair/v1",
+        "target_codec": worker.REVIEWED_DIGEST_OMITTED_TARGET_CODEC,
+        "source_conditioned": True, "pretrained": False}
+
+
+def _reviewed_v11_request_data(tmp_path):
+    worker, consumer, value, write = _reviewed_Qwen2_request_data(tmp_path)
+    _reviewed_v11_tuple(worker, value)
+    return worker, consumer, value, write
+
+
+@pytest.mark.parametrize("damage", [None, "old_request", "old_policy", "old_prompt", "old_codec", "old_pair",
+    "old_backend", "implementation", "runtime", "rich_context", "target", "extra", "source_cap", "output_cap"])
+def test_reviewed_inference_v11_request_tuple_is_explicit_before_assets(tmp_path, monkeypatch, damage):
+    import builtins
+    worker, _, value, write = _reviewed_v11_request_data(tmp_path)
+    # The largest existing metadata capacities stay available; actual backend
+    # position and complete-context checks remain authoritative at runtime.
+    value.update(max_source_tokens=65536, max_output_tokens=65536, max_model_bytes=2 * 1024**3)
+    if damage == "old_request": value["schema"] = "reviewed-source-evaluation-request/v9"
+    elif damage == "old_policy": value["generation_policy"]["schema"] = "reviewed-decoder-generation-policy/v2"
+    elif damage == "old_prompt": value["generation_policy"]["conditioning_profile"] = "qwen2-chatml-complete-legal-ir/v1"
+    elif damage == "old_codec": value["generation_policy"]["target_codec"] = "complete-reviewed-norm-json/v2"
+    elif damage == "old_pair": value["backend_identity"]["checkpoint_format"] = "torch-weights-only-reviewed-state-pair/v1"
+    elif damage == "old_backend": value["backend_identity"]["backend_id"] = "torch-reviewed-decoder/v1:" + "a" * 64
+    elif damage == "implementation": value["backend_identity"]["implementation_sha256"] = "b" * 64
+    elif damage == "runtime": value["runtime_profile"] = "builtin-llama-bfloat16/v1"
+    elif damage == "rich_context": value["training_context"] = {}
+    elif damage == "target": value["target_json"] = {"hidden": "not an input"}
+    elif damage == "extra": value["generation_policy"]["repair"] = True
+    elif damage == "source_cap": value["max_source_tokens"] = 65537
+    elif damage == "output_cap": value["max_output_tokens"] = 65537
+    ref = write()
+    original_import = builtins.__import__
+    def no_assets(name, *args, **kwargs):
+        if name.split(".")[0] in {"torch", "transformers", "tokenizers"}:
+            raise AssertionError("request DATA validation imported a model runtime")
+        return original_import(name, *args, **kwargs)
+    monkeypatch.setattr(builtins, "__import__", no_assets)
+    if damage is None:
+        assert inference._read_reviewed_evaluation_request(ref)[2] == value
+    else:
+        with pytest.raises((ValueError, worker.TrainingJobValidationError)):
+            inference._read_reviewed_evaluation_request(ref)
+    assert not Path(value["assets"]["model_checkpoint"]["path"]).exists()
+
+
+@pytest.mark.parametrize("version", range(1, 11))
+def test_reviewed_inference_old_versions_refuse_new_codec_identity(tmp_path, version):
+    worker, _, value, write = _reviewed_v11_request_data(tmp_path)
+    value["schema"] = "reviewed-source-evaluation-request/v" + str(version)
+    if version < 7: value.pop("generation_policy")
+    else:
+        from tests.unit.optimizers.logic_theorem_optimizer import test_autoencoder_training_worker as numerical
+        value["generation_policy"] = numerical._reviewed_Qwen2_generation_policy() if version >= 9 else {
+            "schema": "reviewed-decoder-generation-policy/v1", "generation_profile": "builtin-llama-dynamic-kv/v1",
+            "conditioning_profile": "chatml-complete-legal-ir/v1", "max_generation_seconds": 1.0}
+    if version < 5: value.pop("runtime_profile")
+    elif version < 9: value["runtime_profile"] = "builtin-llama-bfloat16/v1"
+    if version < 3: value.pop("admission_profile")
+    if version in {2, 4, 6, 8, 10}: value["training_context"] = {}
+    with pytest.raises((ValueError, worker.TrainingJobValidationError)):
+        inference._read_reviewed_evaluation_request(write())
+
+
+def _reviewed_v11_parent_policy_data(tmp_path, kind):
+    worker, request, policy = _reviewed_Qwen2_parent_policy_data(tmp_path, kind)
+    _reviewed_v11_tuple(worker, request)
+    policy["backend_identity"] = json.loads(worker._json_bytes(request["backend_identity"]))
+    if kind == "load":
+        policy.update(schema="reviewed-local-digest-omitted-decoder-load-policy/v1",
+            target_codec=worker.REVIEWED_DIGEST_OMITTED_TARGET_CODEC)
+    else:
+        policy.update(schema="reviewed-decoder-digest-omitted-source-producer-policy/v1",
+            generation_policy=json.loads(worker._json_bytes(request["generation_policy"])),
+            output_derivation={"schema": "reviewed-digest-omitted-output-assembly/v1",
+                "target_codec": worker.REVIEWED_DIGEST_OMITTED_TARGET_CODEC,
+                "only_computed_field": "typed_expression.content_digest", "other_default_filling": False})
+    return worker, request, policy
+
+
+@pytest.mark.parametrize("kind", ["load", "producer"])
+@pytest.mark.parametrize("damage", [None, "schema", "identity", "source", "asset", "extra", "objective"])
+def test_reviewed_inference_v11_parent_callback_exact_objective_and_scope(tmp_path, kind, damage):
+    worker, request, policy = _reviewed_v11_parent_policy_data(tmp_path, kind)
+    if damage == "schema": policy["schema"] = "reviewed-local-decoder-load-policy/v2" if kind == "load" else "reviewed-decoder-source-producer-policy/v4"
+    elif damage == "identity": policy["backend_identity"]["checkpoint_format"] = "torch-weights-only-reviewed-state-pair/v1"
+    elif damage == "source":
+        if kind == "load": policy["producer_pins"] = {**policy["producer_pins"], "worker": "b" * 64}
+        else: policy["source_contexts_sha256"] = "b" * 64
+    elif damage == "asset": policy["assets"][0] = {**policy["assets"][0], "sha256": "b" * 64}
+    elif damage == "extra": policy["hidden_target"] = {}
+    elif damage == "objective":
+        if kind == "load": policy["target_codec"] = "complete-reviewed-norm-json/v2"
+        else: policy["output_derivation"]["other_default_filling"] = True
+    if damage is None:
+        inference._check_reviewed_generation_policy(request, policy)
+    else:
+        with pytest.raises(ValueError): inference._check_reviewed_generation_policy(request, policy)
+
+
+@pytest.mark.parametrize("kind", ["load", "producer"])
+def test_reviewed_inference_old_callback_cannot_admit_digest_omitted_policy(tmp_path, kind):
+    worker, request, policy = _reviewed_Qwen2_parent_policy_data(tmp_path, kind)
+    request["generation_policy"].update(schema=worker.REVIEWED_DIGEST_OMITTED_GENERATION_POLICY_SCHEMA,
+        conditioning_profile=worker.REVIEWED_DIGEST_OMITTED_CHATML_PROFILE, target_codec=worker.REVIEWED_DIGEST_OMITTED_TARGET_CODEC)
+    if kind == "producer": policy["generation_policy"] = json.loads(worker._json_bytes(request["generation_policy"]))
+    with pytest.raises(ValueError, match="explicit v11"):
+        inference._check_reviewed_generation_policy(request, policy)
+
+
+def _reviewed_v11_saved_control(tmp_path, disposition):
+    from tests.unit.optimizers.logic_theorem_optimizer import test_autoencoder_training_worker as numerical
+    worker, request, policy = _reviewed_v11_parent_policy_data(tmp_path, "producer")
+    inputs, codec, target = numerical._digest_omitted_small_generation_target()
+    request["max_output_tokens"] = 65536
+    policy["max_output_tokens"] = request["max_output_tokens"]
+    text = inputs.encode_reviewed_decoder_digest_omitted_target(target, target_codec=codec) if disposition == "complete" else ("not-json" if disposition == "invalid_text" else None)
+    outcome = "invalid" if disposition in {"invalid_text", "invalid_no_text"} else disposition
+    candidate = target if outcome == "complete" else None
+    raw = {"id": "fixture:source-only-row", "unit_id": "fixture:unit", "outcome": outcome,
+        "candidate": candidate, "generated_token_ids": [0, 3, 2] if text is not None else [0, 3],
+        "generated_text": text, "reason": None if outcome == "complete" else "fixture:" + disposition}
+    proof = {"id": raw["id"], "raw_model_text_sha256": None if text is None else worker._digest(text.encode("utf-8")),
+        "assembled_full_target_sha256": worker._digest(inputs._reviewed_wire(target)) if outcome == "complete" else None,
+        "outcome": outcome, "computed_field": "typed_expression.content_digest", "other_fields_repaired": False}
+    # Coverage fixture only: these offered identities are not reference targets.
+    contexts = {"profile": "reviewed-source-selection-context/v2",
+        "rows": [{"id": raw["id"], "unit_id": raw["unit_id"]}]}
+    context_path = Path(request["source_contexts_artifact"]["path"])
+    context_path.write_bytes(worker._json_bytes(contexts))
+    request["source_contexts_artifact"] = {"path": str(context_path), "bytes": context_path.stat().st_size, "sha256": _sha(context_path)}
+    policy["source_contexts_sha256"] = worker._digest(worker._json_bytes(contexts))
+    exposure = {"fixture": "independent original source-only exposure"}
+    path = tmp_path / "exposure.json"; path.write_bytes(worker._json_bytes(exposure))
+    request["exposure_artifact"] = {"path": str(path), "bytes": path.stat().st_size, "sha256": _sha(path)}
+    commitment = {**policy, "source_sha256": request["source_sha256"],
+        "exposure_sha256": worker._digest(inputs._reviewed_wire(exposure)),
+        "supplied_context_supported": "empty_permitted_and_retrieved_only"}
+    generation = {"schema": "reviewed-decoder-digest-omitted-source-producer-observation/v1",
+        "input_commitment": commitment,
+        "input_profile_id": "reviewed-decoder-digest-omitted-producer/v1:" + worker._digest(inputs._reviewed_wire(commitment)),
+        "last_call": {"raw_generation_outputs": [raw], "producer_outputs": [{key: raw[key] for key in ("id", "outcome", "candidate")}],
+            "output_derivation": [proof]}}
+    loader = {"schema": "reviewed-local-digest-omitted-decoder-runtime-load/v1", "target_codec": codec,
+        "expected_backend_identity": request["backend_identity"], "loaded_backend_identity": request["backend_identity"],
+        "producer_pins": request["source_sha256"], "artifacts": [request["assets"][key] for key in
+            ("recipe_artifact", "model_config_artifact", "tokenizer_artifact", "license_artifact", "model_checkpoint", "optimizer_checkpoint")],
+        "runtime_profile": request["runtime_profile"], "device": "cpu", "dtype": "bfloat16", "optimizer_steps": 0,
+        **{key: True for key in ("checkpoint_restored", "matched_pair", "load_performed", "restore_performed")},
+        **{key: False for key in ("training_performed", "downloads_performed", "resource_granted", "automatic_old_source_checkpoint_migration",
+            "old_objective_checkpoint_migration_performed", "license_bytes_are_permission", "pretrained_quality_verified", "legal_meaning_verified",
+            "proof_authority", "convergence_proved", "corpus_admitted")}}
+    output = tmp_path / "outputs"; output.mkdir(); request["output_directory"] = str(output)
+    def write():
+        paths, descriptors = {}, {}
+        for name, value in (("evaluation", {}), ("loader", loader), ("generation", generation)):
+            path = output / (name + ".json"); path.write_bytes(worker._json_bytes(value))
+            paths[name] = str(path); descriptors[name] = {"path": str(path), "bytes": path.stat().st_size, "sha256": _sha(path)}
+        return {"output_artifacts": descriptors, "inference": {"profile": request["schema"], **paths}}
+    return worker, inputs, request, generation, loader, write
+
+
+@pytest.mark.parametrize("disposition", ["abstained", "incomplete", "invalid_no_text", "invalid_text", "complete"])
+def test_reviewed_inference_v11_saved_raw_assembled_dispositions_preserved(tmp_path, disposition):
+    worker, _, request, generation, _, write = _reviewed_v11_saved_control(tmp_path, disposition)
+    # Controlled token IDs are bookkeeping fixtures, not an assertion that the
+    # tokenizer produced them. The original-owner test covers actual generation.
+    original = worker._json_bytes(generation)
+    cycle = write(); before = {name: Path(ref["path"]).read_bytes() for name, ref in cycle["output_artifacts"].items()}
+    inference._check_reviewed_evaluation_outputs(cycle, request)
+    assert worker._json_bytes(generation) == original
+    assert all(Path(cycle["output_artifacts"][name]["path"]).read_bytes() == raw for name, raw in before.items())
+    proof = generation["last_call"]["output_derivation"][0]
+    assert (proof["raw_model_text_sha256"] is None) == (generation["last_call"]["raw_generation_outputs"][0]["generated_text"] is None)
+    assert (proof["assembled_full_target_sha256"] is not None) == (disposition == "complete")
+
+
+@pytest.mark.parametrize("damage", ["raw_hash", "null_as_empty", "candidate_rewrite", "supplied_digest", "derivation", "population",
+    "tokens", "profile", "observation", "loader_schema", "loader_pair", "loader_authority", "source", "exposure", "commitment_extra"])
+def test_reviewed_inference_v11_saved_output_refuses_raw_derivation_or_scope_changes(tmp_path, damage):
+    worker, inputs, request, generation, loader, write = _reviewed_v11_saved_control(tmp_path, "complete" if damage in {"candidate_rewrite", "supplied_digest"} else "incomplete")
+    raw = generation["last_call"]["raw_generation_outputs"][0]
+    output = generation["last_call"]["producer_outputs"][0]
+    proof = generation["last_call"]["output_derivation"][0]
+    if damage == "raw_hash": proof["raw_model_text_sha256"] = "b" * 64
+    elif damage == "null_as_empty": proof["raw_model_text_sha256"] = worker._digest(b"")
+    elif damage == "candidate_rewrite":
+        changed = json.loads(inputs._reviewed_wire(raw["candidate"]))
+        changed["typed_expression"]["expression_id"] += ":changed"
+        raw["candidate"] = output["candidate"] = changed
+        proof["assembled_full_target_sha256"] = worker._digest(inputs._reviewed_wire(changed))
+    elif damage == "supplied_digest":
+        body = json.loads(raw["generated_text"])
+        body["typed_expression"]["content_digest"] = raw["candidate"]["typed_expression"]["content_digest"]
+        raw["generated_text"] = inputs._reviewed_wire(body).decode("utf-8")
+        proof["raw_model_text_sha256"] = worker._digest(raw["generated_text"].encode("utf-8"))
+    elif damage == "derivation": proof["other_fields_repaired"] = True
+    elif damage == "population": generation["last_call"]["producer_outputs"] = []
+    elif damage == "tokens": raw["generated_token_ids"] = [True]
+    elif damage == "profile": generation["input_profile_id"] = "reviewed-decoder-digest-omitted-producer/v1:" + "b" * 64
+    elif damage == "observation": generation["schema"] = "reviewed-decoder-source-producer-observation/v4"
+    elif damage == "loader_schema": loader["schema"] = "reviewed-local-decoder-runtime-load/v3"
+    elif damage == "loader_pair": loader["matched_pair"] = False
+    elif damage == "loader_authority": loader["proof_authority"] = True
+    elif damage == "source": generation["input_commitment"]["source_sha256"] = {**request["source_sha256"], "worker": "b" * 64}
+    elif damage == "exposure": generation["input_commitment"]["exposure_sha256"] = "b" * 64
+    elif damage == "commitment_extra": generation["input_commitment"]["hidden_target"] = {"forbidden": True}
+    if damage in {"source", "exposure", "commitment_extra"}:
+        generation["input_profile_id"] = "reviewed-decoder-digest-omitted-producer/v1:" + worker._digest(inputs._reviewed_wire(generation["input_commitment"]))
+    with pytest.raises((ValueError, worker.TrainingJobValidationError)):
+        inference._check_reviewed_evaluation_outputs(write(), request)
+
+
+def test_reviewed_inference_v11_source_only_physical_original_owner(reviewed_physical_owner, monkeypatch, capsys):
+    """Tiny fictional real-owner dispatch/cleanup, not vendor or quality proof."""
+    facts = reviewed_physical_owner
+    from tests.unit.optimizers.logic_theorem_optimizer import test_autoencoder_training_worker as numerical
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_training_worker as worker
+    policy = numerical._reviewed_Qwen2_generation_policy()
+    policy.update(schema=worker.REVIEWED_DIGEST_OMITTED_GENERATION_POLICY_SCHEMA,
+        conditioning_profile=worker.REVIEWED_DIGEST_OMITTED_CHATML_PROFILE, target_codec=worker.REVIEWED_DIGEST_OMITTED_TARGET_CODEC)
+    packet = _reviewed_physical_packet(facts, admission_version="v3", runtime_profile="builtin-qwen2-bfloat16/v1",
+        generation_policy=policy, digest_omitted=True)
+    assert packet.payload["schema"] == inference.REVIEWED_DIGEST_OMITTED_EVALUATION_REQUEST_SCHEMA
+    cli = _reviewed_physical_cli(monkeypatch)
+    assert _reviewed_physical_run(cli, facts, packet) == 0
+    report = json.loads(capsys.readouterr().out.splitlines()[-1])
+    assert report["original_owner_reservation_id"] == facts.owner.reservation_id
+    assert all(report[key] for key in ("parent_FINISH_acknowledged", "original_child_waited", "parent_current_admission_rechecked_after_wait", "parent_output_artifacts_rechecked_after_wait"))
+    assert not report["training_executed"] and report["weight_publications"] == [] and not report["resource_release_performed"]
+    output = facts.attempt / "outputs"
+    cycle = json.loads((output / "cycle.json").read_bytes()); _assert_reviewed_output_artifacts(output, cycle, report)
+    loader = json.loads((output / "loader.json").read_bytes())
+    assert loader["schema"] == "reviewed-local-digest-omitted-decoder-runtime-load/v1" and loader["target_codec"] == worker.REVIEWED_DIGEST_OMITTED_TARGET_CODEC
+    assert loader["optimizer_steps"] == 0 and loader["matched_pair"] and loader["checkpoint_restored"]
+    observed = json.loads((output / "generation.json").read_bytes())
+    assert observed["schema"] == "reviewed-decoder-digest-omitted-source-producer-observation/v1"
+    call = observed["last_call"]
+    assert call["completed"] and call["entry_pair_match"] and call["exit_pair_match"]
+    assert len(call["raw_generation_outputs"]) == len(call["output_derivation"]) == 3
+    for raw, derived in zip(call["raw_generation_outputs"], call["output_derivation"], strict=True):
+        assert raw["outcome"] == "abstained" and raw["candidate"] is None and raw["generated_text"] is None
+        assert raw["generated_token_ids"] == [packet.fixture.backend.tokenizer.bos_token_id, packet.fixture.backend.tokenizer.eos_token_id]
+        assert derived["raw_model_text_sha256"] is None and derived["assembled_full_target_sha256"] is None
+        assert derived["other_fields_repaired"] is False
+    evaluated = json.loads((output / "evaluation.json").read_bytes())
+    assert evaluated["metrics"]["complete_norm_payload"]["denominator"] == evaluated["metrics"]["complete_norm_payload"]["outcome_counts"]["abstained"] == 3
+    for name, artifact in packet.payload["assets"].items():
+        assert Path(artifact["path"]).read_bytes() == packet.original_assets[name]
+    _reviewed_physical_assert_stopped(facts); _reviewed_physical_fsync_tree(facts.root)
+    assert facts.owner.finalize(facts.attempt, artifacts_durable=True)["status"] == "released"
+
+
+
+def _reviewed_v11_three_source_coverage_control(tmp_path):
+    worker, inputs, request, generation, loader, write = _reviewed_v11_saved_control(tmp_path, "incomplete")
+    call = generation["last_call"]
+    offered = [("fixture:source-row:" + str(index), "fixture:unit:" + str(index)) for index in range(3)]
+    for name in ("raw_generation_outputs", "producer_outputs", "output_derivation"):
+        original = call[name][0]
+        call[name] = [json.loads(worker._json_bytes(original)) for _ in offered]
+        for row, (identity, unit) in zip(call[name], offered, strict=True):
+            row["id"] = identity
+            if name == "raw_generation_outputs": row["unit_id"] = unit
+    contexts = {"profile": "reviewed-source-selection-context/v2",
+        "rows": [{"id": identity, "unit_id": unit} for identity, unit in offered]}
+    path = Path(request["source_contexts_artifact"]["path"])
+    path.write_bytes(worker._json_bytes(contexts))
+    request["source_contexts_artifact"] = {"path": str(path), "bytes": path.stat().st_size, "sha256": _sha(path)}
+    generation["input_commitment"]["source_contexts_sha256"] = worker._digest(worker._json_bytes(contexts))
+    generation["input_profile_id"] = "reviewed-decoder-digest-omitted-producer/v1:" + worker._digest(inputs._reviewed_wire(generation["input_commitment"]))
+    return worker, request, generation, write, offered
+
+
+@pytest.mark.parametrize("damage", [None, "drop_middle", "only_one", "coordinated_reverse", "renamed_id", "renamed_unit"])
+def test_reviewed_inference_v11_outputs_cover_ordered_source_population(tmp_path, monkeypatch, damage):
+    worker, request, generation, write, expected = _reviewed_v11_three_source_coverage_control(tmp_path)
+    call = generation["last_call"]
+    names = ("raw_generation_outputs", "producer_outputs", "output_derivation")
+    if damage == "drop_middle":
+        for name in names: del call[name][1]
+    elif damage == "only_one":
+        for name in names: del call[name][1:]
+    elif damage == "coordinated_reverse":
+        for name in names: call[name].reverse()
+    elif damage == "renamed_id":
+        for name in names: call[name][1]["id"] += ":renamed"
+    elif damage == "renamed_unit": call["raw_generation_outputs"][1]["unit_id"] += ":renamed"
+    observed = []
+    original_reader = worker._reviewed_decoder_artifact
+    def observe(reference, *args, **kwargs):
+        if reference.path == request["source_contexts_artifact"]["path"]: observed.append(reference.path)
+        return original_reader(reference, *args, **kwargs)
+    monkeypatch.setattr(worker, "_reviewed_decoder_artifact", observe)
+    original_generation = worker._json_bytes(generation)
+    original_context = Path(request["source_contexts_artifact"]["path"]).read_bytes()
+    if damage is None:
+        inference._check_digest_omitted_generation_outputs(generation, request)
+        assert [(row["id"], row["unit_id"]) for row in call["raw_generation_outputs"]] == expected
+        # Also check the existing saved-byte/commitment path, without repair.
+        inference._check_reviewed_evaluation_outputs(write(), request)
+    else:
+        with pytest.raises(ValueError, match="ordered source context"):
+            inference._check_digest_omitted_generation_outputs(generation, request)
+    assert observed and worker._json_bytes(generation) == original_generation
+    assert Path(request["source_contexts_artifact"]["path"]).read_bytes() == original_context

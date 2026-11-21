@@ -375,19 +375,29 @@ def _check_reviewed_evaluation_lifecycle(request):
 REVIEWED_EVALUATION_OUTPUT_LIMIT = 32 * 1024**2
 
 
+REVIEWED_DIGEST_OMITTED_EVALUATION_REQUEST_SCHEMA = "reviewed-source-evaluation-request/v11"
+
+
 def _check_reviewed_generation_policy(request, policy):
     """Match new-profile load/producer callbacks to the original request DATA."""
     if "generation_policy" not in request:
         return
     from . import autoencoder_training_worker as worker
     generation = worker._reviewed_decoder_generation_policy(request["generation_policy"])
-    qwen2 = request["schema"] in ("reviewed-source-evaluation-request/v9", "reviewed-source-evaluation-request/v10")
-    producer_schema = "reviewed-decoder-source-producer-policy/v4" if qwen2 else "reviewed-decoder-source-producer-policy/v3"
+    digest_omitted = request["schema"] == REVIEWED_DIGEST_OMITTED_EVALUATION_REQUEST_SCHEMA
+    qwen2 = digest_omitted or request["schema"] in ("reviewed-source-evaluation-request/v9", "reviewed-source-evaluation-request/v10")
+    producer_schema = ("reviewed-decoder-digest-omitted-source-producer-policy/v1" if digest_omitted else
+        "reviewed-decoder-source-producer-policy/v4" if qwen2 else "reviewed-decoder-source-producer-policy/v3")
+    load_schema = "reviewed-local-digest-omitted-decoder-load-policy/v1" if digest_omitted else "reviewed-local-decoder-load-policy/v2"
+    if digest_omitted and generation["schema"] != worker.REVIEWED_DIGEST_OMITTED_GENERATION_POLICY_SCHEMA:
+        raise ValueError("v11 callback requires the digest-omitted generation policy")
+    if not digest_omitted and generation["schema"] == worker.REVIEWED_DIGEST_OMITTED_GENERATION_POLICY_SCHEMA:
+        raise ValueError("digest-omitted callback policy requires explicit v11 request")
     if type(policy) is not dict:
         raise ValueError("generation policy callback must be an ordinary mapping")
     asset_names = ("recipe_artifact", "model_config_artifact", "tokenizer_artifact", "license_artifact")
-    if policy.get("schema") == "reviewed-local-decoder-load-policy/v2":
-        expected = {"schema": "reviewed-local-decoder-load-policy/v2", "backend_identity": request["backend_identity"],
+    if policy.get("schema") == load_schema:
+        expected = {"schema": load_schema, "backend_identity": request["backend_identity"],
             "assets": [request["assets"][name] for name in (*asset_names, "model_checkpoint", "optimizer_checkpoint")],
             "producer_pins": request["source_sha256"], "admission_inputs_sha256": request["admission_inputs_sha256"],
             "max_model_bytes": request["max_model_bytes"], "device": "cpu", "dtype": "bfloat16",
@@ -409,6 +419,13 @@ def _check_reviewed_generation_policy(request, policy):
             expected["runtime_profile"] = request["runtime_profile"]
     else:
         raise ValueError("generation policy callback schema differs from the original request")
+    if digest_omitted:
+        if policy.get("schema") == load_schema:
+            expected["target_codec"] = worker.REVIEWED_DIGEST_OMITTED_TARGET_CODEC
+        else:
+            expected["output_derivation"] = {"schema": "reviewed-digest-omitted-output-assembly/v1",
+                "target_codec": worker.REVIEWED_DIGEST_OMITTED_TARGET_CODEC,
+                "only_computed_field": "typed_expression.content_digest", "other_default_filling": False}
     if worker._json_bytes(policy) != worker._json_bytes(expected):
         raise ValueError("generation policy differs from the original request")
 
@@ -439,16 +456,38 @@ def _check_reviewed_evaluation_outputs(cycle, request):
         policy_keys = {"schema", "backend_identity", "assets", "model_checkpoint", "optimizer_checkpoint",
             "source_contexts_sha256", "admission_inputs_sha256", "max_source_tokens", "max_output_tokens",
             "operation", "training_requested", "restore_requested", "admission_profile", "generation_policy"}
-        qwen2 = request["schema"] in ("reviewed-source-evaluation-request/v9", "reviewed-source-evaluation-request/v10")
+        digest_omitted = request["schema"] == REVIEWED_DIGEST_OMITTED_EVALUATION_REQUEST_SCHEMA
+        qwen2 = digest_omitted or request["schema"] in ("reviewed-source-evaluation-request/v9", "reviewed-source-evaluation-request/v10")
+        if digest_omitted:
+            policy_keys.add("output_derivation")
         if qwen2:
             policy_keys.add("runtime_profile")
-        if (type(generation) is not dict or generation.get("schema") != ("reviewed-decoder-source-producer-observation/v4" if qwen2 else "reviewed-decoder-source-producer-observation/v3") or
+        if (type(generation) is not dict or generation.get("schema") != ("reviewed-decoder-digest-omitted-source-producer-observation/v1" if digest_omitted else "reviewed-decoder-source-producer-observation/v4" if qwen2 else "reviewed-decoder-source-producer-observation/v3") or
                 type(commitment) is not dict or not policy_keys <= set(commitment)):
             raise ValueError("generation output must commit the explicit profiled producer policy")
+        if digest_omitted:
+            from ...logic.autoformal import training_cycle_inputs as inputs
+            if (set(commitment) != policy_keys | {"source_sha256", "exposure_sha256", "supplied_context_supported"}
+                    or commitment["source_sha256"] != request["source_sha256"]
+                    or commitment["supplied_context_supported"] != "empty_permitted_and_retrieved_only"):
+                raise ValueError("v11 source-only commitment population or scope differs")
+            exposure = worker._parse_json(worker._reviewed_decoder_artifact(
+                worker.CheckpointArtifact.from_dict(request["exposure_artifact"]), limit=4 * 1024**2))
+            if commitment["exposure_sha256"] != worker._digest(inputs._reviewed_wire(exposure)):
+                raise ValueError("v11 exposure commitment differs from original request")
         _check_reviewed_generation_policy(request, {key: commitment[key] for key in policy_keys})
-        expected = ("reviewed-decoder-qwen2-profiled-producer/v1:" if qwen2 else "reviewed-decoder-profiled-producer/v1:") + worker._digest(worker._json_bytes(commitment))
+        if digest_omitted:
+            from ...logic.autoformal import training_cycle_inputs as inputs
+            expected = "reviewed-decoder-digest-omitted-producer/v1:" + worker._digest(inputs._reviewed_wire(commitment))
+        else:
+            expected = ("reviewed-decoder-qwen2-profiled-producer/v1:" if qwen2 else "reviewed-decoder-profiled-producer/v1:") + worker._digest(worker._json_bytes(commitment))
         if generation.get("input_profile_id") != expected:
             raise ValueError("generation output profile identity differs from its full commitment")
+        if digest_omitted:
+            loader = worker._parse_json(worker._reviewed_decoder_artifact(
+                worker.CheckpointArtifact.from_dict(descriptors["loader"]), limit=REVIEWED_EVALUATION_OUTPUT_LIMIT))
+            _check_digest_omitted_loader_output(loader, request)
+            _check_digest_omitted_generation_outputs(generation, request)
 
 
 def _read_reviewed_evaluation_request(request_artifact):
@@ -467,12 +506,12 @@ def _read_reviewed_evaluation_request(request_artifact):
             "reviewed-source-evaluation-request/v1", "reviewed-source-evaluation-request/v2",
             "reviewed-source-evaluation-request/v3", "reviewed-source-evaluation-request/v4",
             "reviewed-source-evaluation-request/v5", "reviewed-source-evaluation-request/v6",
-            "reviewed-source-evaluation-request/v7", "reviewed-source-evaluation-request/v8", "reviewed-source-evaluation-request/v9", "reviewed-source-evaluation-request/v10"):
+            "reviewed-source-evaluation-request/v7", "reviewed-source-evaluation-request/v8", "reviewed-source-evaluation-request/v9", "reviewed-source-evaluation-request/v10", REVIEWED_DIGEST_OMITTED_EVALUATION_REQUEST_SCHEMA):
         raise ValueError("closed reviewed source evaluation DATA request required")
     rich_context = value["schema"] in ("reviewed-source-evaluation-request/v2", "reviewed-source-evaluation-request/v4", "reviewed-source-evaluation-request/v6", "reviewed-source-evaluation-request/v8", "reviewed-source-evaluation-request/v10")
-    mixed_admission = value["schema"] in ("reviewed-source-evaluation-request/v3", "reviewed-source-evaluation-request/v4", "reviewed-source-evaluation-request/v5", "reviewed-source-evaluation-request/v6", "reviewed-source-evaluation-request/v7", "reviewed-source-evaluation-request/v8", "reviewed-source-evaluation-request/v9", "reviewed-source-evaluation-request/v10")
-    explicit_runtime = value["schema"] in ("reviewed-source-evaluation-request/v5", "reviewed-source-evaluation-request/v6", "reviewed-source-evaluation-request/v7", "reviewed-source-evaluation-request/v8", "reviewed-source-evaluation-request/v9", "reviewed-source-evaluation-request/v10")
-    explicit_generation = value["schema"] in ("reviewed-source-evaluation-request/v7", "reviewed-source-evaluation-request/v8", "reviewed-source-evaluation-request/v9", "reviewed-source-evaluation-request/v10")
+    mixed_admission = value["schema"] in ("reviewed-source-evaluation-request/v3", "reviewed-source-evaluation-request/v4", "reviewed-source-evaluation-request/v5", "reviewed-source-evaluation-request/v6", "reviewed-source-evaluation-request/v7", "reviewed-source-evaluation-request/v8", "reviewed-source-evaluation-request/v9", "reviewed-source-evaluation-request/v10", REVIEWED_DIGEST_OMITTED_EVALUATION_REQUEST_SCHEMA)
+    explicit_runtime = value["schema"] in ("reviewed-source-evaluation-request/v5", "reviewed-source-evaluation-request/v6", "reviewed-source-evaluation-request/v7", "reviewed-source-evaluation-request/v8", "reviewed-source-evaluation-request/v9", "reviewed-source-evaluation-request/v10", REVIEWED_DIGEST_OMITTED_EVALUATION_REQUEST_SCHEMA)
+    explicit_generation = value["schema"] in ("reviewed-source-evaluation-request/v7", "reviewed-source-evaluation-request/v8", "reviewed-source-evaluation-request/v9", "reviewed-source-evaluation-request/v10", REVIEWED_DIGEST_OMITTED_EVALUATION_REQUEST_SCHEMA)
     if explicit_generation:
         fields.add("generation_policy")
     if explicit_runtime:
@@ -487,10 +526,11 @@ def _read_reviewed_evaluation_request(request_artifact):
             or value["operation"] not in ("hparam_selection", "heldout_evaluation")
             or type(value["allow_fictional_fixture"]) is not bool):
         raise ValueError("closed reviewed source evaluation DATA request required")
-    qwen2 = value["schema"] in ("reviewed-source-evaluation-request/v9", "reviewed-source-evaluation-request/v10")
+    digest_omitted = value["schema"] == REVIEWED_DIGEST_OMITTED_EVALUATION_REQUEST_SCHEMA
+    qwen2 = digest_omitted or value["schema"] in ("reviewed-source-evaluation-request/v9", "reviewed-source-evaluation-request/v10")
     if explicit_generation:
         policy = worker._reviewed_decoder_generation_policy(value["generation_policy"])
-        if policy["schema"] != ("reviewed-decoder-generation-policy/v2" if qwen2 else "reviewed-decoder-generation-policy/v1"):
+        if policy["schema"] != (worker.REVIEWED_DIGEST_OMITTED_GENERATION_POLICY_SCHEMA if digest_omitted else "reviewed-decoder-generation-policy/v2" if qwen2 else "reviewed-decoder-generation-policy/v1"):
             raise ValueError("generation policy version differs from request profile")
     if explicit_runtime and (type(value["runtime_profile"]) is not str or
             value["runtime_profile"] != ("builtin-qwen2-bfloat16/v1" if qwen2 else "builtin-llama-bfloat16/v1")):
@@ -498,6 +538,19 @@ def _read_reviewed_evaluation_request(request_artifact):
     if mixed_admission and (type(value["admission_profile"]) is not str
             or value["admission_profile"] != worker.REVIEWED_MIXED_ADMISSION_PROFILE):
         raise ValueError("explicit mixed-sort admission V3 request profile required")
+    identity = value.get("backend_identity")
+    if digest_omitted:
+        if (type(identity) is not dict or set(identity) != {"backend_id", "implementation_sha256", "checkpoint_format", "target_codec", "source_conditioned", "pretrained"}
+                or identity.get("target_codec") != worker.REVIEWED_DIGEST_OMITTED_TARGET_CODEC
+                or identity.get("checkpoint_format") != "torch-weights-only-digest-omitted-reviewed-state-pair/v1"
+                or type(identity.get("backend_id")) is not str
+                or re.fullmatch(r"torch-digest-omitted-reviewed-decoder/v1:[0-9a-f]{64}", identity["backend_id"]) is None
+                or type(identity.get("implementation_sha256")) is not str
+                or re.fullmatch(r"[0-9a-f]{64}", identity["implementation_sha256"]) is None
+                or identity.get("source_conditioned") is not True or type(identity.get("pretrained")) is not bool):
+            raise ValueError("v11 requires exact digest-omitted backend identity, not an old pair/objective")
+    elif type(identity) is dict and identity.get("target_codec") == "complete-reviewed-norm-digest-omitted-json/v1":
+        raise ValueError("digest-omitted objective requires explicit v11 request")
     from . import legal_span_consumer_binding as consumer
     heldout = value["operation"] == "heldout_evaluation"
     heldout_purpose = (consumer.REVIEWED_V3_HELDOUT_CONTEXT_PURPOSE if rich_context and mixed_admission else
@@ -548,6 +601,8 @@ def _read_reviewed_evaluation_request(request_artifact):
     if mixed_admission and value["source_sha256"] != worker._reviewed_decoder_source_pins(
             admission_profile=value["admission_profile"]):
         raise ValueError("mixed-sort admission V3 request source map differs")
+    if digest_omitted and identity["implementation_sha256"] != value["source_sha256"]["worker"]:
+        raise ValueError("v11 backend implementation differs from current worker Source")
     for name, low, high in (("max_source_tokens", 3, 65536), ("max_output_tokens", 2, 65536),
                             ("max_model_bytes", 1, 2*1024**3 if qwen2 else worker.MAX_REVIEWED_DECODER_STATE_BYTES)):
         if type(value[name]) is not int or not low <= value[name] <= high:
@@ -627,7 +682,7 @@ def _execute_reviewed_evaluation_request(request_artifact, *, parent_client):
     heldout = request["operation"] == "heldout_evaluation"
     admission = current_admission()
     canonical_sha = lambda value: hashlib.sha256(inputs._reviewed_wire(value)).hexdigest()
-    mixed_admission = request["schema"] in ("reviewed-source-evaluation-request/v3", "reviewed-source-evaluation-request/v4", "reviewed-source-evaluation-request/v5", "reviewed-source-evaluation-request/v6", "reviewed-source-evaluation-request/v7", "reviewed-source-evaluation-request/v8", "reviewed-source-evaluation-request/v9", "reviewed-source-evaluation-request/v10")
+    mixed_admission = request["schema"] in ("reviewed-source-evaluation-request/v3", "reviewed-source-evaluation-request/v4", "reviewed-source-evaluation-request/v5", "reviewed-source-evaluation-request/v6", "reviewed-source-evaluation-request/v7", "reviewed-source-evaluation-request/v8", "reviewed-source-evaluation-request/v9", "reviewed-source-evaluation-request/v10", REVIEWED_DIGEST_OMITTED_EVALUATION_REQUEST_SCHEMA)
     prepare_binding = (consumer.prepare_reviewed_source_span_consumer_binding_v3 if mixed_admission
                        else consumer.prepare_reviewed_source_span_consumer_binding_v2)
     binding = prepare_binding(rows,
@@ -671,7 +726,9 @@ def _execute_reviewed_evaluation_request(request_artifact, *, parent_client):
             context_options["context_transport"] = context["transport"]
     execution_guard()
     assets = {name: worker.CheckpointArtifact.from_dict(value) for name, value in request["assets"].items()}
-    load_runtime = (worker.load_local_reviewed_decoder_runtime_v3 if mixed_admission
+    digest_omitted = request["schema"] == REVIEWED_DIGEST_OMITTED_EVALUATION_REQUEST_SCHEMA
+    load_runtime = (worker.load_local_reviewed_decoder_digest_omitted_runtime_v1 if digest_omitted else
+                    worker.load_local_reviewed_decoder_runtime_v3 if mixed_admission
                     else worker.load_local_reviewed_decoder_runtime)
     load_options = {"admission_profile": request["admission_profile"]} if mixed_admission else {}
     if "runtime_profile" in request:
@@ -682,7 +739,8 @@ def _execute_reviewed_evaluation_request(request_artifact, *, parent_client):
         expected_backend_identity=request["backend_identity"], expected_source_sha256=request["source_sha256"],
         expected_admission_inputs_sha256=request["admission_inputs_sha256"], max_model_bytes=request["max_model_bytes"],
         **load_options)
-    make_producer = (worker.make_reviewed_decoder_source_producer_v3 if mixed_admission
+    make_producer = (worker.make_reviewed_decoder_digest_omitted_source_producer_v1 if digest_omitted else
+                     worker.make_reviewed_decoder_source_producer_v3 if mixed_admission
                      else worker.make_reviewed_decoder_source_producer)
     generation_options = ({"generation_policy": request["generation_policy"]} if "generation_policy" in request else {})
     producer = make_producer(runtime, binding=binding, rows=rows,
@@ -1056,3 +1114,92 @@ def _check_reviewed_context_transport_policy(context, policy):
             raise ValueError("shared context transport policy differs from the pinned request")
     elif any(name in policy for name in ("context_transport", "max_expanded_context_bytes", "shared_context_schema")):
         raise ValueError("shared context transport requires explicit request opt-in")
+
+
+
+def _check_digest_omitted_loader_output(loader, request):
+    """Check the selected loader's saved DATA, never infer asset authority."""
+    from . import autoencoder_training_worker as worker
+    asset_names = ("recipe_artifact", "model_config_artifact", "tokenizer_artifact", "license_artifact", "model_checkpoint", "optimizer_checkpoint")
+    expected = {"schema": "reviewed-local-digest-omitted-decoder-runtime-load/v1",
+        "target_codec": worker.REVIEWED_DIGEST_OMITTED_TARGET_CODEC,
+        "expected_backend_identity": request["backend_identity"], "loaded_backend_identity": request["backend_identity"],
+        "producer_pins": request["source_sha256"], "artifacts": [request["assets"][name] for name in asset_names],
+        "runtime_profile": request["runtime_profile"], "device": "cpu", "dtype": "bfloat16",
+        "checkpoint_restored": True, "matched_pair": True, "load_performed": True, "restore_performed": True,
+        "training_performed": False, "downloads_performed": False, "resource_granted": False,
+        "automatic_old_source_checkpoint_migration": False, "old_objective_checkpoint_migration_performed": False,
+        "license_bytes_are_permission": False, "pretrained_quality_verified": False, "legal_meaning_verified": False,
+        "proof_authority": False, "convergence_proved": False, "corpus_admitted": False}
+    if (type(loader) is not dict or not set(expected) <= set(loader)
+            or worker._json_bytes({key: loader[key] for key in expected}) != worker._json_bytes(expected)
+            or type(loader.get("optimizer_steps")) is not int or not 0 <= loader["optimizer_steps"] <= 10**9
+            or ("explicit_source_epoch_migration_performed" in loader and loader["explicit_source_epoch_migration_performed"] is not False)):
+        raise ValueError("v11 saved loader identity, pair or scope differs")
+
+
+def _check_digest_omitted_generation_outputs(generation, request):
+    """Verify saved raw/derived pairs without changing either observed value.
+
+    This is a post-generation consistency check of this execution's bytes, not
+    producer authenticity before the first observation or semantic authority.
+    It never decodes tokens, supplies reference facts, or resolves dependencies.
+    """
+    from . import autoencoder_training_worker as worker
+    from ...logic.autoformal import training_cycle_inputs as inputs
+
+    def need(ok, message):
+        if not ok:
+            raise ValueError(message)
+
+    need(type(generation) is dict, "v11 saved generation mapping required")
+    call = generation.get("last_call")
+    need(type(call) is dict, "v11 saved generation call required")
+    raw, outputs, derived = (call.get(name) for name in ("raw_generation_outputs", "producer_outputs", "output_derivation"))
+    need(type(raw) is list and 0 < len(raw) and type(outputs) is list and type(derived) is list
+         and len(raw) == len(outputs) == len(derived), "v11 exact saved output population required")
+    contexts = worker._parse_json(worker._reviewed_decoder_artifact(
+        worker.CheckpointArtifact.from_dict(request["source_contexts_artifact"]), limit=4 * 1024**2))
+    need(type(contexts) is dict and type(contexts.get("rows")) is list and contexts["rows"]
+         and all(type(row) is dict and type(row.get("id")) is str and row["id"]
+                 and type(row.get("unit_id")) is str and row["unit_id"] for row in contexts["rows"]),
+         "v11 ordered source population with id/unit_id required")
+    expected = [(row["id"], row["unit_id"]) for row in contexts["rows"]]
+    need(len({item[0] for item in expected}) == len(expected) and len(raw) == len(expected),
+         "v11 saved output population differs from ordered source context")
+    seen = set()
+    for pair, item, output, proof in zip(expected, raw, outputs, derived, strict=True):
+        need(type(item) is dict and set(item) == {"id", "unit_id", "outcome", "candidate", "generated_token_ids", "generated_text", "reason"}
+             and type(output) is dict and set(output) == {"id", "outcome", "candidate"}
+             and type(proof) is dict and set(proof) == {"id", "raw_model_text_sha256", "assembled_full_target_sha256", "outcome", "computed_field", "other_fields_repaired"},
+             "v11 closed raw/assembled/derivation rows required")
+        need(type(item["id"]) is str and item["id"] and item["id"] not in seen
+             and type(item["unit_id"]) is str and item["unit_id"], "v11 unique saved output identities required")
+        need((item["id"], item["unit_id"]) == pair,
+             "v11 saved output order or id/unit_id differs from ordered source context")
+        seen.add(item["id"])
+        need(type(item["outcome"]) is str and item["outcome"] in {"complete", "abstained", "incomplete", "invalid"}
+             and proof["id"] == output["id"] == item["id"] and proof["outcome"] == output["outcome"] == item["outcome"],
+             "v11 saved disposition or identity differs")
+        tokens, text = item["generated_token_ids"], item["generated_text"]
+        need(type(tokens) is list and 1 <= len(tokens) <= request["max_output_tokens"]
+             and all(type(token) is int and 0 <= token < 2**31 for token in tokens)
+             and (text is None or type(text) is str), "v11 exact raw token/text evidence required")
+        need(proof["computed_field"] == "typed_expression.content_digest" and proof["other_fields_repaired"] is False
+             and proof["raw_model_text_sha256"] == (None if text is None else worker._digest(text.encode("utf-8"))),
+             "v11 raw text or derivation commitment differs")
+        need(inputs._reviewed_wire(output["candidate"]) == inputs._reviewed_wire(item["candidate"]),
+             "v11 producer candidate differs from saved generation")
+        if item["outcome"] == "complete":
+            need(type(text) is str and type(item["candidate"]) is dict and item["reason"] is None,
+                 "v11 complete output requires exact raw body and full candidate")
+            assembled = inputs.assemble_reviewed_decoder_digest_omitted_target(text,
+                target_codec=worker.REVIEWED_DIGEST_OMITTED_TARGET_CODEC)
+            need(inputs._reviewed_wire(assembled) == inputs._reviewed_wire(item["candidate"]),
+                 "v11 saved candidate differs from strict raw-wire assembly")
+            expected = worker._digest(inputs._reviewed_wire(item["candidate"]))
+        else:
+            need(item["candidate"] is None and type(item["reason"]) is str and item["reason"],
+                 "v11 noncomplete output must retain its absent candidate and reason")
+            expected = None
+        need(proof["assembled_full_target_sha256"] == expected, "v11 assembled candidate commitment differs")
