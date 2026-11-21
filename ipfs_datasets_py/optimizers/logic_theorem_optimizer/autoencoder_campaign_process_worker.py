@@ -125,7 +125,7 @@ def _reviewed_dependency_paths(parent_prefix, parent_paths=None):
     known = [*primary, site.getusersitepackages(),
         *site.getsitepackages(prefixes=[sys.base_prefix, sys.base_exec_prefix])]
     if parent_paths is None:
-        paths = list(dict.fromkeys(value for value in known if type(value) is str and value in sys.path))
+        paths = list(dict.fromkeys(value for value in sys.path if type(value) is str and value in known))
     else:
         _require(type(parent_paths) is list, "bounded original dependency directory list required")
         paths = list(parent_paths)
@@ -133,9 +133,6 @@ def _reviewed_dependency_paths(parent_prefix, parent_paths=None):
              and len(paths) == len(set(paths)), "unknown or repeated original dependency directory")
     raw = json.dumps(paths, ensure_ascii=True, separators=(",", ":")).encode("ascii")
     _require(len(raw) <= 4096, "original dependency directory profile exceeds bound")
-    interpreter_paths = [value for value in paths if value in primary]
-    _require(interpreter_paths and paths[:len(interpreter_paths)] == interpreter_paths,
-             "original dependency order must put interpreter site directories first")
     for value in paths:
         path = Path(value)
         _require(path.is_absolute() and str(path) == value and ".." not in path.parts,

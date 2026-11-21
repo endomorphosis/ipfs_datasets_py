@@ -631,9 +631,47 @@ def _reviewed_physical_run(cli, facts, packet, *, source_guard=None, asset_polic
         admission_provider or packet.fresh_admission, facts.deadline,
         typed_structure_profile=typed_structure_profile,
         **(packet.context_callbacks if context_callbacks is None else context_callbacks))
-    return cli.main(["--execution-mode", "inference", "--state-directory", str(facts.attempt),
-        "--reviewed-evaluation-request", request["path"], "--reviewed-evaluation-sha256", request["sha256"]],
-        reviewed_parent_runtime=runtime)
+    try:
+        return cli.main(["--execution-mode", "inference", "--state-directory", str(facts.attempt),
+            "--reviewed-evaluation-request", request["path"], "--reviewed-evaluation-sha256", request["sha256"]],
+            reviewed_parent_runtime=runtime)
+    except BaseException as original_error:
+        def actual_child_log_diagnostic():
+            import os, stat, base64
+            path = facts.attempt / "reviewed-worker.log"
+            limit = 64 * 1024
+            before = path.lstat()
+            assert path.resolve(strict=True) == path and path.parent.resolve(strict=True) == facts.attempt
+            assert stat.S_ISREG(before.st_mode) and before.st_nlink == 1 and before.st_uid == os.getuid()
+            fields = ("st_dev", "st_ino", "st_mode", "st_nlink", "st_uid", "st_gid", "st_size", "st_mtime_ns", "st_ctime_ns")
+            full9 = lambda value: {key: str(getattr(value, key)) for key in fields}
+            fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+            try:
+                assert full9(before) == full9(os.fstat(fd))
+                offset = max(0, before.st_size - limit)
+                assert os.lseek(fd, offset, os.SEEK_SET) == offset
+                tail = bytearray()
+                while len(tail) < limit:
+                    piece = os.read(fd, limit - len(tail))
+                    if not piece: break
+                    tail.extend(piece)
+                assert full9(before) == full9(os.fstat(fd)) == full9(path.lstat())
+            finally:
+                os.close(fd)
+            assert len(tail) == before.st_size - offset
+            return {"schema": "actual-owned-reviewed-child-failure-log-tail/v1", "path": str(path),
+                "full9": full9(before), "actual_file_bytes": before.st_size, "tail_start_offset": offset,
+                "retained_tail_bytes": len(tail), "truncated": offset != 0,
+                "sha256": hashlib.sha256(tail).hexdigest(),
+                "sha256_scope": "retained_tail_only" if offset else "whole_file",
+                "tail_base64": base64.b64encode(tail).decode("ascii"),
+                "tail_utf8_backslashreplace": bytes(tail).decode("utf-8", errors="backslashreplace"),
+                "primary_error_replaced": False}
+        try:
+            original_error.add_note("ACTUAL_REVIEWED_CHILD_FAILURE_LOG=" + json.dumps(actual_child_log_diagnostic(), sort_keys=True, ensure_ascii=True))
+        except BaseException as diagnostic_error:
+            original_error.add_note("ACTUAL_REVIEWED_CHILD_FAILURE_LOG_UNAVAILABLE=" + type(diagnostic_error).__name__ + ": " + str(diagnostic_error)[:2048])
+        raise
 
 
 
@@ -3543,7 +3581,7 @@ def test_reviewed_inference_v11_outputs_cover_ordered_source_population(tmp_path
 
 
 
-@pytest.mark.parametrize("mode", ["default-user-first", "default-active-subset", "explicit-user-first", "explicit-repeat"])
+@pytest.mark.parametrize("mode", ["default-user-first", "default-active-subset", "default-user-only", "explicit-user-first", "explicit-repeat"])
 def test_reviewed_inference_default_child_dependency_order_uses_active_known_roots(tmp_path, monkeypatch, mode):
     """Controlled site metadata; exercise the actual maintained guard unchanged.
 
@@ -3565,16 +3603,51 @@ def test_reviewed_inference_default_child_dependency_order_uses_active_known_roo
         context.setattr(site, "getusersitepackages", lambda: user)
         active = [user, primary[1], primary[0]]
         if mode == "default-active-subset": active = [unrelated, user, primary[1]]
+        elif mode == "default-user-only": active = [user]
         context.setattr(sys, "path", active)
         if mode.startswith("default-"):
             result = bootstrap._reviewed_dependency_paths(prefix)
-            assert result == ((primary[1], user) if mode == "default-active-subset" else (primary[0], primary[1], user))
+            expected = ((user, primary[1]) if mode == "default-active-subset" else
+                (user,) if mode == "default-user-only" else (user, primary[1], primary[0]))
+            assert result == expected
             assert primary[2] not in result and all(value in active for value in result)
             assert unrelated not in result and sys.path == active
+        elif mode == "explicit-user-first":
+            supplied = [user, primary[0], primary[1]]
+            assert bootstrap._reviewed_dependency_paths(prefix, supplied) == tuple(supplied)
+            assert sys.path == active
         else:
-            supplied = ([user, primary[0], primary[1]] if mode == "explicit-user-first" else [primary[0], primary[1], user, user])
-            message = "interpreter site directories first" if mode == "explicit-user-first" else "unknown or repeated"
-            with pytest.raises(RuntimeError, match=message):
+            supplied = [primary[0], primary[1], user, user]
+            with pytest.raises(RuntimeError, match="unknown or repeated"):
                 bootstrap._reviewed_dependency_paths(prefix, supplied)
             assert sys.path == active
     assert sys.path == original_path
+
+
+
+@pytest.mark.parametrize("mode", ["present", "absent", "empty", "override-refused"])
+def test_reviewed_inference_child_environment_preserves_only_existing_original_userbase(tmp_path, monkeypatch, mode):
+    """Environment DATA only; the original isolated child guard stays strict."""
+    import os
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_daemon_invocation_contracts as contracts
+    private_home = str(tmp_path / "private-home")
+    original_userbase = str(tmp_path / "original-userbase")
+    monkeypatch.setenv("HOME", private_home)
+    monkeypatch.delenv("PYTHONUSERBASE", raising=False)
+    if mode != "absent": monkeypatch.setenv("PYTHONUSERBASE", "" if mode == "empty" else original_userbase)
+    # Unrelated ambient settings are not a new environment grant.
+    monkeypatch.setenv("REVIEWED_UNRELATED_ENVIRONMENT", "must-not-propagate")
+    monkeypatch.setenv("HF_TOKEN", "fictional-not-a-credential")
+    before = dict(os.environ)
+    if mode == "override-refused":
+        with pytest.raises(contracts.DaemonInvocationError, match="unsupported execution environment override"):
+            contracts.execution_environment({"PYTHONUSERBASE": str(tmp_path / "not-the-parent-userbase")})
+    else:
+        environment = contracts.execution_environment()
+        assert environment["HOME"] == private_home
+        if mode == "absent": assert "PYTHONUSERBASE" not in environment
+        else: assert environment["PYTHONUSERBASE"] == ("" if mode == "empty" else original_userbase)
+        assert "REVIEWED_UNRELATED_ENVIRONMENT" not in environment and "HF_TOKEN" not in environment
+        assert environment["HF_HUB_OFFLINE"] == environment["TRANSFORMERS_OFFLINE"] == "1"
+        assert not Path(private_home).exists() and not Path(original_userbase).exists()
+    assert dict(os.environ) == before

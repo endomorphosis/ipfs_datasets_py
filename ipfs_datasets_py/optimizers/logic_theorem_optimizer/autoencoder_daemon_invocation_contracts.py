@@ -162,7 +162,7 @@ def execution_environment(overrides: Mapping[str, str] | None = None) -> dict[st
     }
     # Preserve the user's existing home/cache location, not credentials or the
     # ambient application's arbitrary settings. No directory is repurposed.
-    for key in ("HOME", "XDG_CACHE_HOME", "HF_HOME", "HF_HUB_CACHE", "TRANSFORMERS_CACHE",
+    for key in ("HOME", "PYTHONUSERBASE", "XDG_CACHE_HOME", "HF_HOME", "HF_HUB_CACHE", "TRANSFORMERS_CACHE",
                 "IPFS_DATASETS_RESOURCE_SCHEDULER_PATH", "IPFS_DATASETS_RESOURCE_CPU_SLOTS",
                 "IPFS_DATASETS_RESOURCE_MEMORY_MB", "IPFS_DATASETS_RESOURCE_GPU_MEMORY_MB",
                 "IPFS_DATASETS_RESOURCE_UNIFIED_MEMORY_MB", "IPFS_DATASETS_RESOURCE_CHILD_PROCESS_SLOTS"):
