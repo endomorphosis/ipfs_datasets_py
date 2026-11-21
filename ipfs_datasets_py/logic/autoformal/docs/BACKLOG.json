@@ -90,6 +90,56 @@
       "merged_main_or_runtime_qualification": false,
       "actual_Native_model_convergence_statutory_Hub_legal_corpus_release_authority": false,
       "existing_Main_task_status_frontier_acceptance_and_catalog_records_changed": false
+    },
+    "current_world_pipeline_milestone480_20261121": {
+      "evidence_id": "world-source-bridge-compiler-and-decoder-frontier-milestone480-20261121",
+      "recorded_at_utc": "2026-11-21",
+      "world_scope": "Entire world legal corpus→source-groundedLegalIR→Lean4; USCode retained as pilot",
+      "closed_software_cases": {
+        "compiler": 38,
+        "source_span_bridge": 50,
+        "rule": "Do not add prior25/first12/helperprobes to final38; cohorts retain their separate Sourceepochs"
+      },
+      "selected_next": {
+        "task": "Matched samecandidate2arm inference complete-legal-ir/v1 vs existingfield-layouts/v1",
+        "status_at_cutoff": "selected preparation, not yet executed",
+        "condition_changed_only": "generation_policy.conditioning_profile",
+        "training_and_checkpoint_recipe_unchanged": true,
+        "no_live_handle_at_cutoff": true
+      },
+      "retained_limits": {
+        "old_native15_scope": {
+          "before_exact": 0,
+          "after_exact": 0,
+          "denominator": 3,
+          "after_invalid": 2,
+          "after_incomplete": 1,
+          "old_SDK_outer_cleanup": "unknown",
+          "old_disk_claim_bytes_retained": 12884901888,
+          "old_extra_charge_bytes_retained": 67108864
+        },
+        "fresh_DATA16_scope": {
+          "no_model_execution": true,
+          "old_registry_and_all30_pool_objects_preserved": true,
+          "retroqualification_of_old_wrapper": false
+        },
+        "V4_scope": {
+          "unsigned_DATA_preparation_and_validator_succeeded": true,
+          "mask_ready": false,
+          "fit_executed": false,
+          "real_statutory_reviews": 0,
+          "epoch": "historicalv25;124ownerSHAs independentlymatchcurrentv27;noautomaticcurrentepochqualification"
+        },
+        "no_new_Lean_or_statutory_fidelity_or_convergence_or_world_coverage_claim": true,
+        "Main_merged_runtime_qualification": false,
+        "full_goal_complete": false
+      },
+      "Root_sealed_facts": {
+        "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/milestone480-four-guide-private-v01/Root-closed-facts-v01.json",
+        "bytes": 7195,
+        "sha256": "d5a5cf07b269e6772886128fcfba3beaff80f46897f88416debd7b06b9d09f99"
+      },
+      "preservation": "Additive current documentary note only; existing Main task contracts, hierarchy, statuses, dependencies, acceptance criteria, frontiers and all earlier metadata remain byte-exact."
     }
   },
   "programme_goal_hierarchy": {

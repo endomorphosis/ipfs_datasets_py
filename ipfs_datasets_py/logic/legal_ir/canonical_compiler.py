@@ -77,6 +77,10 @@ MEASURED_TYPED_DEONTIC_ADAPTER_RAW_CID: Final = (
 """CIDv1/raw of the current measured typed-deontic adapter module bytes."""
 
 
+ATOM_PROJECTION_REVISION: Final = "ascii-token-jaccard-unicode-exact-identity/v3"
+"""Version Unicode identity matching without claiming multilingual parsing."""
+
+
 def _compiler_configuration_payload() -> dict[str, object]:
     """Build a detached strict-JSON form of the measured configuration."""
 
@@ -97,6 +101,7 @@ def _compiler_configuration_payload() -> dict[str, object]:
             "guidance": "no_guidance",
             "repair": "no_repair",
             "constructor_route": "not_applicable",
+            "atom_projection_revision": ATOM_PROJECTION_REVISION,
         },
         "converter": {
             "use_cache": False,
@@ -213,9 +218,14 @@ def _flatten_strings(value: object) -> list[str]:
 
 
 def _jaccard(left: object, right: object) -> float:
-    left_tokens, right_tokens = set(_tokens(left)), set(_tokens(right))
+    left_text, right_text = _clean_text(left), _clean_text(right)
+    if not left_text.isascii() or not right_text.isascii():
+        # ASCII residues do not justify equating distinct Unicode atoms.
+        # Preserve complete text identity, including accents and codepoints.
+        return float(left_text == right_text)
+    left_tokens, right_tokens = set(_tokens(left_text)), set(_tokens(right_text))
     if not left_tokens and not right_tokens:
-        return 1.0
+        return float(left_text == right_text)
     if not left_tokens or not right_tokens:
         return 0.0
     return len(left_tokens & right_tokens) / len(left_tokens | right_tokens)
@@ -661,6 +671,7 @@ def _base_provenance(
         # (distinct from the historical selection identity above).
         "measured_adapter_raw_cid": MEASURED_TYPED_DEONTIC_ADAPTER_RAW_CID,
         "parser_semantics_revision": "structured_exceptions_numeric_hours_v1",
+        "atom_projection_revision": ATOM_PROJECTION_REVISION,
         "selection_lineage_is_historical": True,
         "implementation_representative_arm_id": (IMPLEMENTATION_REPRESENTATIVE_ARM_ID),
         "implementation_representative_arm_identity_cid": (
@@ -1052,6 +1063,7 @@ assert isinstance(TypedDeonticCanonicalCompiler(), CanonicalStructuredTextCompil
 
 
 __all__ = [
+    "ATOM_PROJECTION_REVISION",
     "CanonicalCompiler",
     "MEASURED_TYPED_DEONTIC_ADAPTER_RAW_CID",
     "TYPED_DEONTIC_COMPILER_CONFIG",

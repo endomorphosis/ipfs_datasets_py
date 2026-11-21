@@ -247,3 +247,193 @@ def test_real_paired_census_producer_rows_are_supported_without_semantic_project
     assert candidate["input_record"]["row_json"].encode() == encode(produced)
     assert len(candidate["interpretations"]) == (2 if has_rule else 0)
     assert candidate["admitted"] is False
+
+
+def country_record():
+    text = "§ Café 😀 e\u0301 — 同意 / 同意"
+    return {"jurisdiction": "JP", "language": "ja", "text": text,
+            "content_sha256": digest(text.encode()), "source_repo": "fixture:world",
+            "source_revision": "dataset-revision-not-legal-edition", "effective_date": None,
+            "provenance": {"document_role": "legislation_or_regulation"}}
+
+
+def country_adapt(value, **kwargs):
+    raw = encode(value)
+    return a.adapt_country_law_record_bytes(raw, expected_record_sha256=digest(raw), **kwargs)
+
+
+def country_binding(value):
+    text = value["text"]
+    raw = ("<p>" + text + "</p>").encode()
+    return dict(source_id="fixture:country-source", release_id="fixture:release",
+                edition="fixture:declared-edition", provision_id="fixture:article-1",
+                raw_bytes=raw, expected_raw_sha256=digest(raw),
+                expected_extracted_sha256=digest(text.encode()),
+                extraction_profile="fixture:extracted-text/v1", normalization_profile="identity/v1",
+                media_type="text/html")
+
+
+def test_country_pending_preserves_exact_custody_and_unknown_edition():
+    value = country_record()
+    result = country_adapt(value)
+    assert result["input_record"]["row_json"].encode() == encode(value)
+    assert result["source_version"] is None
+    assert result["source_occurrences"] == []
+    assert result["admitted"] is result["formalized"] is result["source_semantics_verified"] is False
+    binding = country_binding(value)
+    binding["edition"] = None
+    pending = country_adapt(value, source_binding=binding)
+    assert pending["source_version"] is None
+    assert {i.get("field") for i in pending["issues"]} >= {"edition"}
+    assert value["effective_date"] is None
+
+
+def test_country_multilingual_geometry_distinguishes_repeated_occurrences():
+    value = country_record()
+    text = value["text"]
+    starts = [text.index("同意"), text.rindex("同意")]
+    selectors = [{"start_char": start, "end_char": start + 2} for start in starts]
+    result = country_adapt(value, source_binding=country_binding(value), occurrence_selectors=selectors)
+    one, two = result["source_occurrences"]
+    assert one["span_text"] == two["span_text"] == "同意"
+    assert one["record_cid"] != two["record_cid"]
+    assert one["start_utf8"] == len(text[:starts[0]].encode()) != starts[0]
+    assert result["context_declarations"] == [None, None]
+    assert "jurisdiction" not in result["source_version"]
+    assert result["source_authenticity_verified"] is False
+
+
+def test_country_duplicate_selectors_remain_explicit_in_order():
+    value = country_record()
+    selector = {"start_char": 0, "end_char": 1}
+    result = country_adapt(value, source_binding=country_binding(value),
+                           occurrence_selectors=[selector, selector])
+    assert len(result["source_occurrences"]) == 2
+    assert result["source_occurrences"][0] == result["source_occurrences"][1]
+    assert result["occurrence_selectors"] == [selector, selector]
+
+
+@pytest.mark.parametrize("change", ["content", "expected_view", "raw", "whitespace"])
+def test_country_binding_hash_mismatch_refuses(change):
+    value = country_record()
+    binding = country_binding(value)
+    if change == "content":
+        value["content_sha256"] = "0" * 64
+    elif change == "expected_view":
+        binding["expected_extracted_sha256"] = "0" * 64
+    elif change == "raw":
+        binding["raw_bytes"] += b"!"
+    else:
+        value["text"] = " " + value["text"]
+        value["content_sha256"] = digest(value["text"].encode())
+    with pytest.raises(c.CorpusContractError):
+        country_adapt(value, source_binding=binding)
+
+
+@pytest.mark.parametrize("selector", [
+    {"start_char": True, "end_char": 1}, {"start_char": 1, "end_char": 1},
+    {"start_char": 2, "end_char": 1}, {"start_char": 0, "end_char": 999},
+])
+def test_country_invalid_geometry_refuses(selector):
+    value = country_record()
+    with pytest.raises(c.CorpusContractError):
+        country_adapt(value, source_binding=country_binding(value), occurrence_selectors=[selector])
+
+
+def test_country_missing_text_never_uses_html_or_guesses_edition():
+    value = country_record()
+    value.update(text=None, content_sha256=None)
+    result = country_adapt(value)
+    assert result["source_version"] is None
+    assert "complete_projected_text" in {i.get("field") for i in result["issues"]}
+    value["html"] = "<p>not used as source text</p>"
+    pending = country_adapt(value)
+    assert pending["source_version"] is None
+    assert json.loads(pending["input_record"]["row_json"])["html"] == value["html"]
+
+
+def test_country_context_requires_exact_parent_and_selector_population():
+    value = country_record()
+    selector = {"start_char": 0, "end_char": 1}
+    kwargs = dict(source_binding=country_binding(value), occurrence_selectors=[selector])
+    bound = country_adapt(value, **kwargs)
+    occurrence = bound["source_occurrences"][0]
+    context = build_context_declaration(occurrence, expected_occurrence_cid=occurrence["record_cid"],
+        availability="required_unavailable", reason="fixture definition missing",
+        missing_requirements=["governing definition"])
+    result = country_adapt(value, context_declarations=[context], **kwargs)
+    assert result["context_declarations"] == [context]
+    assert {i["kind"] for i in result["issues"]} >= {"context_required_unavailable"}
+    with pytest.raises(c.CorpusContractError):
+        country_adapt(value, context_declarations=[context, context], **kwargs)
+    with pytest.raises(c.CorpusContractError):
+        country_adapt(value, context_declarations=[context])
+    other = dict(kwargs, occurrence_selectors=[{"start_char": 1, "end_char": 2}])
+    with pytest.raises(c.CorpusContractError):
+        country_adapt(value, context_declarations=[context], **other)
+
+
+def test_country_independent_input_commitment_and_strict_json_refuse():
+    raw = encode(country_record())
+    with pytest.raises(c.CorpusContractError):
+        a.adapt_country_law_record_bytes(raw, expected_record_sha256="0" * 64)
+    for raw in (b'{"text":1,"text":2}', b'{"text":NaN}', b'[]'):
+        with pytest.raises(c.CorpusContractError):
+            a.adapt_country_law_record_bytes(raw, expected_record_sha256=digest(raw))
+
+
+
+def test_country_partial_binding_keys_refuse_but_explicit_unknowns_preserve_pending():
+    value = country_record()
+    value.update(jurisdiction=None, language=None)
+    binding = country_binding(value)
+    binding["edition"] = None
+    selectors = [{"start_char": 0, "end_char": 1},
+                 {"start_char": 2, "end_char": 6}]
+    pending = country_adapt(value, source_binding=binding, occurrence_selectors=selectors)
+    retained = json.loads(pending["input_record"]["row_json"])
+    assert retained["jurisdiction"] is retained["language"] is None
+    assert pending["occurrence_selectors"] == selectors
+    assert pending["source_version"] is None
+    assert pending["source_occurrences"] == []
+    assert {i.get("field") for i in pending["issues"]} >= {"edition"}
+    assert "edition" not in retained  # no invented legal-record field or edition
+    assert pending["admitted"] is pending["formalized"] is False
+    missing = dict(binding)
+    del missing["edition"]
+    with pytest.raises(c.CorpusContractError, match="closed country source binding"):
+        country_adapt(value, source_binding=missing, occurrence_selectors=selectors)
+    extra = dict(binding, guessed_edition="2026")
+    with pytest.raises(c.CorpusContractError, match="closed country source binding"):
+        country_adapt(value, source_binding=extra, occurrence_selectors=selectors)
+
+
+
+def test_country_declared_view_preserves_unknown_metadata_without_schema_claim():
+    value = country_record()
+    value.update(future_field={"nested": [None, "保留", 7]}, language={"unreviewed": "as supplied"})
+    value["provenance"]["future_provenance"] = {"declaration": False}
+    result = country_adapt(value)
+    assert result["input_record"]["input_label"] == "declared_world_law_source_view"
+    assert "record_schema" not in result["input_record"]
+    assert result["input_record"]["row_json"].encode() == encode(value)
+    assert json.loads(result["input_record"]["row_json"]) == value
+    assert result["source_version"] is None
+    assert result["admitted"] is result["source_semantics_verified"] is False
+
+
+@pytest.mark.parametrize("field", ["text", "content_sha256", "provenance"])
+def test_country_declared_view_requires_only_its_consumed_fields(field):
+    value = country_record()
+    del value[field]
+    with pytest.raises(c.CorpusContractError, match="fields required"):
+        country_adapt(value)
+    minimal = {"text": None, "content_sha256": None, "provenance": {}}
+    assert country_adapt(minimal)["source_version"] is None
+
+
+def test_country_declared_view_consumed_provenance_type_refuses():
+    value = country_record()
+    value["provenance"] = []
+    with pytest.raises(c.CorpusContractError, match="provenance object"):
+        country_adapt(value)

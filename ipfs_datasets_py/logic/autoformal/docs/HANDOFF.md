@@ -1,5 +1,26 @@
 # Current handoff
 
+## Current frontier — milestone480, 2026-11-21
+
+The objective remains the entire world legal corpus → source-grounded LegalIR → Lean4, with the U.S. Code as a retained pilot. User-goal Phase 5 decoder work continues alongside the existing world source/span and compiler owners. All earlier Main text below retains its original cutoff; no captured guide body replaces it.
+
+| Newly closed observation | Result and limit |
+| --- | --- |
+| World source/span bridge | Owning-file50 passed,0 failures/errors/skips (529804aa); Source and resource cleanup closed. This is software qualification, not a worldwide coverage census or legal interpretation. |
+| Canonical compiler | Final owning-file38 passed,0 failures/errors/skips (bba99fd0); Source and resource cleanup closed. Prior25-pass focused work, initial12/helper probes and four legacy-fixture failures remain historical attempts; their counts are not added to38 or relabeled success. |
+| WORLD scope and source prerequisites | WORLD guide postimages and29 sparse prerequisites installed under e4daa6b0. This preserves the existing tasks/hierarchy and does not establish new corpus coverage or a Lean result. |
+| Fresh registry DATA16 handoff | Closed e14588d8 with Source/resource cleanup; no model execution. Old registry and all30 pool objects are preserved. This does not retroqualify the old native15 SDK wrapper. |
+| Historical current-GTE V4 DATA | Unsigned preparation and ordinary validator succeeded (e955f527); mask_ready=false, fit_executed=false, real statutory reviews0. Originalv25 scope remains historical;124 owner SHAs matchingv27 does not automatically qualify a new source epoch or authorize a fit. |
+
+The old lower-LR native15 comparison remains0/3 exact both before and after; AFTER has2 invalid and1 incomplete output. Its missing SDK outer-wrapper/cleanup result remains unknown. The old12GiB disk claim and64MiB extra charge are retained; fresh DATA closure neither releases them nor manufactures the missing wrapper.
+
+The next selected experiment is a matched same-candidate two-arm inference comparison of the existing complete-legal-ir/v1 and field-layouts/v1 profiles. At this documentary cutoff it is preparation only, unrun, with no live handle or outcome claimed. Only generation_policy.conditioning_profile changes; training and checkpoint recipes remain unchanged. Existing owners retain execution and full input/output/resource checks; this documentation supplies no new gate and must not delay numerical preparation.
+
+The single480 [catalog record](work_catalog.json) binds the seven exact report locators through Root-sealed facts. This documentation does not reexecute or pool those cohorts. All24 Main task records,126 Main components,474 prior Main evidence records, task hierarchy, APIs, historical cutoffs and archives remain exact. Main-merged runtime qualification is not inferred. No new authenticated statutory review, source-faithfulness result, Lean qualification, convergence, release authority or worldwide coverage is established. The full goal remains open.
+
+---
+
+
 ## Physical definition-realization bridge: ordinary software qualified, Native pending — 2026-11-20
 
 The A protocol4-to-R internal live5 implementation retains each owner's existing opaque factory; the original A parent handle is passed directly to the physical facade. A and R have distinct existing opaque classes/factories. Physical wire context4 remains source-only with native=None; a wire version or flag does not substitute for an issued Native capability. Existing checked-policy, parent-run and verified-loader APIs remain the entry points. No task, owner module, decoder, controller or plan was added for this milestone.

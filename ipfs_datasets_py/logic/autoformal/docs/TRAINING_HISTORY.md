@@ -1,5 +1,24 @@
 # Training and experiment history
 
+## Milestone480 — world source/span and compiler qualification, closed DATA handoff, 2026-11-21
+
+The world legal corpus → source-grounded LegalIR → Lean4 objective and retained U.S. Code pilot remain unchanged. This records the Root-closed milestone480 cutoff while preserving every earlier Main history entry below.
+
+| Closed observation | Result | Qualification limit |
+| --- | --- | --- |
+| World source/span bridge /529804aa | Owning-file50 passed,0 failures/errors/skips; Source/resource cleanup closed | Software cohort only, without a worldwide coverage census or statutory-meaning acceptance. |
+| Canonical compiler /bba99fd0 | Final owning-file38 passed,0 failures/errors/skips; Source/resource cleanup closed | Prior25 focused passes, initial12/helper probes and four legacy-fixture failures remain distinct historical attempts, not extra credit or erased failures. |
+| WORLD guides and29 sparse prerequisites /e4daa6b0 | Installed through the existing Source owner | Existing hierarchy/tasks preserved; source restoration is not semantic, Lean or corpus qualification. |
+| Fresh registry DATA16 /e14588d8 | Closed handoff, old registry/all30 pool objects preserved, no model execution | Fresh cleanup does not retroqualify old native15 wrapper/custody. |
+| Historical unsigned V4 DATA /e955f527 | Preparation and validator succeeded; mask_ready=false, fit_executed=false, statutory reviews0 | Historicalv25 scope retained;124 owner SHAs matchingv27 does not supply automatic current-epoch qualification, review or fit authority. |
+
+Retained lower-LR native15 BEFORE/AFTER exact results remain0/3 and0/3. AFTER contains2 invalid and1 incomplete output; no improvement or convergence is established. The missing old SDK wrapper/outer cleanup remains unknown, with its12GiB claim and64MiB extra charge retained. Fresh DATA16 closure does not release or repair that historical custody claim.
+
+A matched same-candidate two-arm inference comparison, complete-legal-ir/v1 versus the already-existing field-layouts/v1, is now selected for preparation. It is unrun at this cutoff, with no handle or outcome claim; only the generation-policy conditioning profile changes, and training/checkpoint recipes stay unchanged. Any later experiment needs its own actual outcome and unchanged context/checkpoint/resource bindings. No output rewriting, validator relaxation, hidden reference context or invented labels are authorized by this record.
+
+The grouped480 catalog record retains all seven exact report references via Root-sealed facts. The compiler38 and bridge50 cohorts are separate; this update performs no tests or model work. All474 prior Main evidence records,24 Main tasks,126 Main components, original hierarchy, APIs, Markdown history and archives are retained. Main-merged runtime qualification is not inferred. No new legal fidelity, Lean result, model convergence, production promotion, release authority or worldwide coverage claim follows.
+
+
 ## Physical bridge ordinary controls; installed Native still pending — 2026-11-20
 
 The existing A protocol4-to-R internal live5 physical definition-realization bridge passed separate selected ordinary cohorts: A25 at Source4,166/4cb7 (20 new+5 retained packet controls), and R32 at Source4,166/e139 (31 authored bridge+1 actual-SDK argv control), both0 failures/errors/skips. A25 took14.576s collection/58.355s run; R32 took1.206s/258.615s. Root authenticated original raw JUnits and normal Source/SDK/public-parent cleanup. These selected modeled controls do not constitute a Native/compiler run or a pooled whole-file qualification.

@@ -224,3 +224,117 @@ def validate_span_candidate(record, *, expected_row_sha256, source_binding=None)
     if expected != value:
         raise CorpusContractError("candidate contents differ from recomputed paired/source custody")
     return value
+
+
+COUNTRY_LAW_SCHEMA = "legal-corpus-country-law-candidate/v1"
+_MAX_COUNTRY_OCCURRENCES = 256
+_COUNTRY_BINDING_FIELDS = {
+    "source_id", "release_id", "edition", "provision_id", "raw_bytes",
+    "expected_raw_sha256", "expected_extracted_sha256", "extraction_profile",
+    "normalization_profile", "media_type",
+}
+
+
+def adapt_country_law_record_bytes(raw, *, expected_record_sha256,
+                                  source_binding=None, occurrence_selectors=(),
+                                  context_declarations=()):
+    """Preserve one declared projected source view as an unadmitted candidate.
+
+    Dataset revision, dates and language never supply a governing edition.
+    source_binding=None is unresolved. A supplied binding requires every named
+    key: missing/extra keys refuse; explicit None values preserve a pending
+    candidate without constructing a source version or guessing missing metadata.
+    Pending candidates retain exact input bytes and caller-selected geometry.
+    Geometry addresses the exact projected text, not a raw HTML/PDF artifact.
+    Source identity/extraction profiles are caller declarations, not authenticity.
+    No imports, retrieval, extraction, model or legal interpretation are performed
+    beyond the ordinary pure record/source owners used by this explicit call.
+    """
+    from .corpus_source import MAX_TEXT_BYTES, build_source_version, build_source_occurrence
+
+    row = load_record_bytes(raw, expected_sha256=expected_record_sha256)
+    # This is caller-declared data, not full legal-record/v1 schema validation.
+    # Unknown/untouched fields survive verbatim inside the exact input JSON.
+    if not {"text", "content_sha256", "provenance"} <= set(row):
+        raise CorpusContractError("projected text/content_sha256/provenance fields required")
+    if type(row["provenance"]) is not dict:
+        raise CorpusContractError("projected provenance object required")
+    text = row["text"]
+    if text is not None:
+        require_text(text, "complete projected text", max_bytes=MAX_TEXT_BYTES)
+        require_sha256(row["content_sha256"], "content_sha256")
+        if hashlib.sha256(text.encode("utf-8")).hexdigest() != row["content_sha256"]:
+            raise CorpusContractError("projected content SHA256 differs from exact text")
+    elif row["content_sha256"] is not None:
+        raise CorpusContractError("missing text cannot carry a content digest")
+    for value, label in ((occurrence_selectors, "occurrence selectors"),
+                         (context_declarations, "context declarations")):
+        if type(value) not in (tuple, list) or len(value) > _MAX_COUNTRY_OCCURRENCES:
+            raise CorpusContractError("bounded " + label + " required")
+    if context_declarations and len(context_declarations) != len(occurrence_selectors):
+        raise CorpusContractError("context declarations must match exact selector population")
+    # Validate selector types/order even for pending records; never discard input.
+    for selector in occurrence_selectors:
+        require_keys(selector, {"start_char", "end_char"}, "country occurrence selector")
+        start, end = selector["start_char"], selector["end_char"]
+        require_int(start, "start_char", maximum=MAX_TEXT_BYTES)
+        require_int(end, "end_char", maximum=MAX_TEXT_BYTES)
+        if start >= end or (text is not None and end > len(text)):
+            raise CorpusContractError("nonempty in-view country occurrence required")
+    missing = []
+    if text is None:
+        missing.append("complete_projected_text")
+    if source_binding is None:
+        missing.append("explicit_source_binding")
+    else:
+        require_keys(source_binding, _COUNTRY_BINDING_FIELDS, "country source binding")
+        for field in sorted(_COUNTRY_BINDING_FIELDS):
+            value = source_binding[field]
+            if value is None:
+                missing.append(field)
+            elif field == "raw_bytes":
+                if type(value) is not bytes or len(value) > 64 * 1024 * 1024:
+                    raise CorpusContractError("bounded exact raw bytes required")
+            elif field.startswith("expected_"):
+                require_sha256(value, field)
+            else:
+                require_text(value, field)
+    version, occurrences, contexts = None, [], []
+    if not missing:
+        arguments = dict(source_binding, extracted_text=text)
+        version = build_source_version(**arguments)
+        for index, selector in enumerate(occurrence_selectors):
+            start, end = selector["start_char"], selector["end_char"]
+            occurrence = build_source_occurrence(
+                version, expected_raw_sha256=source_binding["expected_raw_sha256"],
+                extracted_text=text,
+                expected_extracted_sha256=source_binding["expected_extracted_sha256"],
+                start_char=start, end_char=end,
+                start_utf8=len(text[:start].encode("utf-8")),
+                end_utf8=len(text[:end].encode("utf-8")),
+            )
+            occurrences.append(occurrence)  # preserve order and duplicates
+            context = context_declarations[index] if context_declarations else None
+            contexts.append(None if context is None else validate_context_declaration(
+                context, source_occurrence=occurrence,
+                expected_occurrence_cid=occurrence["record_cid"]))
+    elif any(context is not None for context in context_declarations):
+        raise CorpusContractError("cannot bind context without exact source occurrences")
+    issues = [{"kind": "source_metadata_unavailable", "field": field} for field in missing]
+    if not occurrence_selectors:
+        issues.append({"kind": "source_occurrences_unselected"})
+    if missing or any(context is None for context in contexts):
+        issues.append({"kind": "context_unresolved"})
+    for context in contexts:
+        if context is not None and context["availability"] != "none_required":
+            issues.append({"kind": "context_" + context["availability"]})
+    return seal_record({
+        "schema": COUNTRY_LAW_SCHEMA,
+        "input_record": {"input_label": "declared_world_law_source_view", "row_json": raw.decode("utf-8"),
+                         "row_sha256": expected_record_sha256},
+        "source_version": version, "source_occurrences": occurrences,
+        "occurrence_selectors": clone_json(list(occurrence_selectors)),
+        "context_declarations": contexts, "issues": issues,
+        "view": "candidate", "admitted": False, "formalized": False,
+        "source_authenticity_verified": False, "source_semantics_verified": False,
+    })

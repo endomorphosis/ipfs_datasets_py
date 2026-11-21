@@ -8,6 +8,7 @@ from types import MappingProxyType
 import pytest
 
 from ipfs_datasets_py.logic.legal_ir.canonical_compiler import (
+    ATOM_PROJECTION_REVISION,
     MEASURED_TYPED_DEONTIC_ADAPTER_RAW_CID,
     TYPED_DEONTIC_COMPILER_CONFIG,
     TYPED_DEONTIC_COMPILER_CONFIG_CID,
@@ -255,6 +256,7 @@ def test_compiler_success_has_cid_bound_ir_source_map_and_lineage() -> None:
     )
     assert provenance["compiler_config_cid"] == (TYPED_DEONTIC_COMPILER_CONFIG_CID)
     assert provenance["parser_semantics_revision"] == "structured_exceptions_numeric_hours_v1"
+    assert provenance["atom_projection_revision"] == ATOM_PROJECTION_REVISION
     assert provenance["selection_lineage_is_historical"] is True
     assert provenance["fallback_used"] is False
     assert provenance["learned_stages"] == ()
@@ -431,6 +433,9 @@ def test_configuration_and_protocol_identity_are_stable() -> None:
     assert compiler.configuration_cid == TYPED_DEONTIC_COMPILER_CONFIG_CID
     assert cid_for_dag_json(compiler_configuration()) == (TYPED_DEONTIC_COMPILER_CONFIG_CID)
     assert isinstance(TYPED_DEONTIC_COMPILER_CONFIG, MappingProxyType)
+    assert compiler_configuration()["composition"]["atom_projection_revision"] == (
+        ATOM_PROJECTION_REVISION
+    )
     assert isinstance(
         TYPED_DEONTIC_COMPILER_CONFIG["converter"],
         MappingProxyType,
@@ -456,3 +461,132 @@ def test_configuration_and_protocol_identity_are_stable() -> None:
     )
     with pytest.raises(CanonicalContractError, match="CompilerRequest"):
         compiler.compile(object())  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize(
+    "actor,candidates",
+    [
+        ("医师", ("主管机关", "医师")),
+        ("طبيب", ("جهة", "طبيب")),
+        ("врач", ("ведомство", "врач")),
+    ],
+)
+def test_projection_preserves_exact_tokenless_unicode_actor_identity(
+    actor: str, candidates: tuple[str, ...]
+) -> None:
+    norm = _Norm({"norm_type": "obligation", "actor": actor, "action": "file"})
+
+    projected = project_legal_norms((norm,), _vocabulary(actors=candidates))
+
+    assert projected.rules[0].actor == actor
+
+
+@pytest.mark.parametrize(
+    "field,vocabulary_field",
+    [
+        ("actor", "actors"),
+        ("action", "actions"),
+        ("action_object", "objects"),
+        ("conditions", "qualifiers"),
+        ("exceptions", "qualifiers"),
+        ("temporal_constraints", "qualifiers"),
+    ],
+)
+def test_projection_rejects_unrelated_tokenless_unicode_atoms(
+    field: str, vocabulary_field: str
+) -> None:
+    data: dict[str, object] = {
+        "norm_type": "obligation", "actor": "agency", "action": "file"
+    }
+    data[field] = ["医师"] if field in {
+        "conditions", "exceptions", "temporal_constraints"
+    } else "医师"
+    vocabulary = _vocabulary(**{vocabulary_field: ("主管机关", "法官")})
+
+    with pytest.raises(CanonicalContractError, match="unsupported semantics"):
+        project_legal_norms((_Norm(data),), vocabulary)
+
+
+@pytest.mark.parametrize(
+    "actor,candidates",
+    [("医师", ("agency",)), ("agency", ("主管机关",))],
+)
+def test_projection_keeps_tokenless_and_tokenized_atoms_separate(
+    actor: str, candidates: tuple[str, ...]
+) -> None:
+    norm = _Norm({"norm_type": "obligation", "actor": actor, "action": "file"})
+
+    with pytest.raises(CanonicalContractError, match="unsupported semantics"):
+        project_legal_norms((norm,), _vocabulary(actors=candidates))
+
+
+def test_projection_keeps_measured_ascii_lexical_tie_breaking() -> None:
+    norm = _Norm({"norm_type": "obligation", "actor": "agency", "action": "file"})
+
+    projected = project_legal_norms(
+        (norm,), _vocabulary(actors=("agency_b", "agency_a"))
+    )
+
+    assert projected.rules[0].actor == "agency_a"
+
+
+@pytest.mark.parametrize(
+    "actor,candidates",
+    [
+        ("医师2", ("主管机关2", "医师2")),
+        ("médical", ("mèdical", "médical")),
+        ("مدير2", ("جهة2", "مدير2")),
+    ],
+)
+def test_projection_preserves_complete_mixed_unicode_actor_identity(
+    actor: str, candidates: tuple[str, ...]
+) -> None:
+    norm = _Norm({"norm_type": "obligation", "actor": actor, "action": "file"})
+
+    projected = project_legal_norms((norm,), _vocabulary(actors=candidates))
+
+    assert projected.rules[0].actor == actor
+
+
+@pytest.mark.parametrize(
+    "actor,candidates",
+    [
+        ("医师2", ("主管机关2", "法官2")),
+        ("médical", ("mèdical",)),
+        ("physician2", ("physician2é",)),
+        ("me\u0301dical", ("médical",)),
+    ],
+)
+def test_projection_rejects_unicode_residue_and_accent_identity_changes(
+    actor: str, candidates: tuple[str, ...]
+) -> None:
+    norm = _Norm({"norm_type": "obligation", "actor": actor, "action": "file"})
+
+    with pytest.raises(CanonicalContractError, match="unsupported semantics"):
+        project_legal_norms((norm,), _vocabulary(actors=candidates))
+
+
+@pytest.mark.parametrize(
+    "field,vocabulary_field",
+    [
+        ("actor", "actors"),
+        ("action", "actions"),
+        ("action_object", "objects"),
+        ("conditions", "qualifiers"),
+        ("exceptions", "qualifiers"),
+        ("temporal_constraints", "qualifiers"),
+    ],
+)
+def test_projection_rejects_unrelated_mixed_unicode_atoms_in_every_facet(
+    field: str, vocabulary_field: str
+) -> None:
+    data: dict[str, object] = {
+        "norm_type": "obligation", "actor": "agency", "action": "file"
+    }
+    data[field] = ["医师2"] if field in {
+        "conditions", "exceptions", "temporal_constraints"
+    } else "医师2"
+    vocabulary = _vocabulary(**{vocabulary_field: ("主管机关2", "法官2")})
+
+    with pytest.raises(CanonicalContractError, match="unsupported semantics"):
+        project_legal_norms((_Norm(data),), vocabulary)
