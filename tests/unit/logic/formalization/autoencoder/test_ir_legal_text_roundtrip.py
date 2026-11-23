@@ -977,3 +977,76 @@ def test_relational_score_reference_inputs_are_detached_before_rendering(monkeyp
         reference_argument_roles=roles,profile=RELATIONAL_PROSE_PROFILE)
     assert report['measurements']['canonical_prose_exact'] is True
     assert seen and all(not original_ast and not original_roles for original_ast,original_roles in seen)
+
+
+def test_selected_prose_cycle_distinguishes_predicted_modality_from_reference_rewrite(bundle):
+    """An authored text-only callback is no semantic inverse or model witness."""
+    # The second predicted IR permits the act; both references require it.
+    # The existing inert renderer supplies must-prose in either case, and this
+    # deliberately reference-correct callback must not gain predicted-cycle credit.
+    bundle["report"]["rows"][1]["candidate_ir"]["rules"][0]["modality"] = "P"
+    calls = []
+
+    def recompiler(text, request_id):
+        calls.append((text, request_id))
+        return {"status": "recompiled", "candidate_ir": rule(), "reason": None}
+
+    result = score(bundle, render_canonical=True, renderer=render_first,
+        recompile_rendered=True, recompiler=recompiler)
+    assert calls == [("The registrar must approve the notice.",
+        "legal-selected-prose-recompile")] * 2
+    cycle = result["prose_recompilation"]
+    assert cycle["denominator"] == "all_captured_input_rows" and cycle["attempted_rows"] == 2
+    assert cycle["callback_calls"] == cycle["counts"]["recompiled"] == 2
+    assert cycle["counts"]["exact_predicted_ir"] == 1
+    assert cycle["counts"]["exact_reference_ir"] == 2
+    assert cycle["rates"]["exact_predicted_ir"] == .5
+    assert cycle["rates"]["exact_reference_ir"] == 1.0
+    changed = result["rows"][1]["recompilation"]
+    assert changed["exact_predicted_ir"] is False and changed["exact_reference_ir"] is True
+    assert changed["facets_predicted"]["modality"] is False
+    assert changed["facets_reference"]["modality"] is True
+    assert cycle["scope"] == "single_rule_CanonicalRoundTripIR@1_seven_facet_syntax_only"
+    assert cycle["callback_behavior_authenticated"] is False
+    assert cycle["hidden_source_or_target_copying_ruled_out"] is False
+    assert cycle["native_compiler_or_model_execution_authenticated"] is False
+    assert all(cycle[name] is None for name in ("complete_typed_AST_fidelity",
+        "semantic_equivalence", "legal_source_faithfulness", "proof_validity"))
+    assert cycle["semantic_correctness_qualified"] is cycle["proof_authority"] is False
+    assert result["model_inference_executed_by_scorer"] is False
+    assert result["training_executed"] is result["semantic_correctness_qualified"] is False
+
+
+@pytest.mark.parametrize("stage", ("renderer", "inverse"))
+@pytest.mark.parametrize("changed_input", ("roles", "reference_governing", "candidate_governing"))
+def test_relational_score_refuses_mutation_of_original_scoring_inputs(monkeypatch, stage, changed_input):
+    from ipfs_datasets_py.logic.legal_ir import extended_compiler, extended_decompiler
+    expression, roles = _relational_score_reference()
+    reference = {"governing_context": {"valid_from_utc": "2030-01-01T00:00:00Z"},
+        "definition_uses": [{"definition_unit_id": "fixture:definition-A", "applicability": "governing"}]}
+    candidate = clone(reference)
+    mutations = []
+
+    def mutate_original():
+        if changed_input == "roles":
+            roles[0]["roles"][0] = "witness"
+        else:
+            selected = reference if changed_input == "reference_governing" else candidate
+            selected["governing_context"]["valid_from_utc"] = "2030-04-01T00:00:00Z"
+        mutations.append(changed_input)
+
+    owner = extended_decompiler if stage == "renderer" else extended_compiler
+    name = "decompile_relational" if stage == "renderer" else "compile_relational"
+    original = getattr(owner, name)
+
+    def changing_callback(*args, **kwargs):
+        result = original(*args, **kwargs)
+        mutate_original()
+        return result
+
+    monkeypatch.setattr(owner, name, changing_callback)
+    with pytest.raises(scorer.LegalTextRoundTripError, match="inputs changed during scoring"):
+        scorer.score_relational_legal_text_roundtrip(expression, _RELATIONAL_SCORE_TEXT,
+            reference_argument_roles=roles, profile=RELATIONAL_PROSE_PROFILE,
+            reference_governing_fields=reference, candidate_governing_fields=candidate)
+    assert mutations

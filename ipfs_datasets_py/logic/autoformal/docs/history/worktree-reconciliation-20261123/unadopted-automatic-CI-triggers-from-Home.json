@@ -1,0 +1,31 @@
+{
+  "active_workflow_preserved_sha256": "6c52a516fdcaa8cd7f269cd731788c01a822434e723cbb9df1fa504121d4303f",
+  "automatic_CI_enablement_selected": false,
+  "patch_bytes": 5909,
+  "patch_representation": "zero-context unified diff; future application requires git apply --unidiff-zero after selection, not an automatic action",
+  "patch_sha256": "8b9232670710873a5fa7dc50161ed260f09272531cf91e86b24a4dfb2bd0a997",
+  "prior_context_patch_sha256_retained_in_private_receipt": "ea3c0b3b292ef0ad0d6090dfa53af8619503f608f61d7bf9165a76e7ed8b2e18",
+  "retained_delta": "Only captured push/pull_request trigger path lists, applied hypothetically onto current richer manual workflow. Incoming removal of pinned archive/witness/JUnit/storage controls was superseded, not applied.",
+  "runtime_or_hosted_CI_qualification": false,
+  "schema": "unadopted-source-CI-trigger-contribution/v1",
+  "source_HEAD": "3f1691d59cc0a310750c0b441b51d3528b17eb85",
+  "source_body": {
+    "bytes": 57300,
+    "full9": {
+      "st_ctime_ns": "1795425096268189672",
+      "st_dev": "66306",
+      "st_gid": "1000",
+      "st_ino": "71869407",
+      "st_mode": "33024",
+      "st_mtime_ns": "1795425096268189672",
+      "st_nlink": "1",
+      "st_size": "57300",
+      "st_uid": "1000"
+    },
+    "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/publication-remaining2570-selected-source-owner-READ-v02/raw/0072-legal-v2-reasoner-ci.yml.DATA",
+    "sha256": "63839489b0f30d0554cbe175f2c2b1d166cb483ea16637bf50b0d285fa6a29af"
+  },
+  "source_root": "/home/barberb/lift_coding/external/ipfs_datasets",
+  "source_wrapper": 122,
+  "status": "RETAINED_UNADOPTED_NOT_ACTIVE_WORKFLOW"
+}
