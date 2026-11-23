@@ -1,0 +1,19 @@
+{
+  "Torch_or_test_or_source_execution_authorized_by_archive": false,
+  "candidate_bytes": 71738,
+  "candidate_must_not_replace_current_test_module": true,
+  "candidate_sha256": "391eb651417757377f34457e573d7a01b1b07cccba29950a6fd0c1014222a8b4",
+  "contains_actual_tiny_optimizer_test": true,
+  "current_positive_regression_absent_from_candidate": "test_reviewed_v4_source_query_preparation_retains_authenticated_context_set",
+  "intended_owner": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_joint_retrieval.py",
+  "model_quality_or_convergence_claim": false,
+  "original_private_source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legal-ir-reviewed-component-cycle-20261110-Ex3yDW/reviewed-mixed-joint-adoption-v01/profiled-retention-integration-v01/private-reviewed-definition-application-implementation-v01/test_legal_joint_retrieval-v02-v4-tiny-numerical.CANDIDATE.DATA",
+  "publication_scope": "Historical authored proposal retained under the request to publish work from temporary workspaces; not an active implementation, test selection, resource grant or completion claim.",
+  "schema": "preserved-unadopted-reviewed-V4-numerical-source/v1",
+  "selected_future_step_counts": [
+    0,
+    3
+  ],
+  "status": "UNADOPTED_UNEXECUTED",
+  "superseding_candidate_known": null
+}
