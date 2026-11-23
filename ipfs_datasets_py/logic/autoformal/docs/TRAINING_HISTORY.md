@@ -2603,3 +2603,38 @@ The existing public paired metadata API closed return code 0 with equal Source f
 The existing writer installed the five-file capacity propagation at Source63. Its later normal cohort passed 16 unique tests with zero failures/errors/skips, plus 26 passing typed subreports (42 raw, not 42 tests), with actual calls/JUnit, equal saved Source fences and owned cleanup/release. Default behavior and the explicit expanded capacity route were covered; no legal/model/Native qualification follows. The earlier CAS-pending flag remains historical in that receipt.
 
 Exact paired, capacity CAS, normal16 and Source64/492 closure pins are in `/tmp/Root-Main-493-actual-paired-capacity-and492-close-addendum-v01.json` (3,603 B, SHA256 `4cfa8ad047e0a4589d5a5046f4065487dfd5ffbaf40e79aa4af107ff40d34c62`) and the 493 handoff/catalog. Root's latest hosted check 135533859610 never started due its account-billing lock; this job-scoped cause conveys no native Lean success and no account/CI action. Old scientific fields, failures and all 24 tasks/126 components remain unchanged; the eight-phase objective remains open.
+
+
+## Captured worktree records retained for publication — 2026-11-23
+
+The following sections retain their original source dates, result scopes and unresolved qualifications. They are indexed with twelve captured references added to the existing catalog; this reconciliation runs no tests and grants no new milestone, model, legal, proof, admission or completion credit. Existing task and component state is unchanged.
+
+## Milestone494 — Source66 terminal-rule software result (no training update)
+
+An authored strict public-codec body reproduced the missing optional termination behavior: the previous decoder could emit the complete body followed by a non-EOS continuation and remain incomplete. Four real-codec controls passed; the prospective terminal-profile test refused the missing keyword. The same five controls passed after the private change, followed by 15 unique private controls including output/time limits, early EOS/UTF-8, semantic mutation, source guards, policy and exact default rows/traces/counters. These cohorts overlap.
+
+The two-file Source66 installation was then normally qualified: **32 unique parent cases, zero failures/errors/skips**, comprising 15 new and 17 retained generation cases; 29 passing subreports were retained separately (61 raw reports/JUnit suite attribute). Normal compact `33051/fdb466bbf8bd612068505a4e55668eff2cea8edf6e5eaee99225f77b0d2c8fe3`, JUnit `7505/297c0a36af8f1bd155e424f82ca99b8740070985543aaca77c4362cdb7dea3a1`; SDK collection/run were approximately 2.100/17.655 seconds. Current module/source observations and cleanup were authenticated; rewritten-test compiled SHA remains unobserved. No current-model training or new held-out evaluation occurred.
+
+The optional `digest-omitted-canonical-body-eos/v1` rule uses the public codec to constrain the next actual finite-forward token selection. A structurally valid Boolean mutation remains eligible; source/reference correctness is not tested by that predicate. Default inference remains unchanged. The distinct policy/producer identity and changed worker Source fingerprint require a reviewed derivative before future saved-model use. The admitted producer-factory runtime remains unqualified.
+
+Earlier Source62 fixed-TRAIN scalar fit, held-out 0/3, checkpoint/admission identities, GEN37, failures and costs remain exactly as recorded at milestone493. This software result adds no CE/NLL, convergence, generalization, legal/proof/corpus or service-activation credit.
+
+
+
+
+## Milestone 495 — Source68 source-proof software qualification (2026-11-22)
+
+Installed worker451be2de/testaa24e502 extend only the existing closed source-proof route. Actual normal8:8 unique parents passed,0 subreports,0 failures/errors/skips; JUnit3.074s (SDK collect1.998519s/run3.643369s). Source/resource/owned cleanup closed. The preview's wrong-label refusal preceded all SDK jobs; no hidden retry. Private37/19 controls and earlier normal32 are separate evidence.
+
+No training, model restore, checkpoint migration, registry or service activation occurred. Exact byte ancestry does not requalify historical execution, generation equivalence or original/marked-parent eligibility. All prior scalar fit, held-out0/3, checkpoint and GEN37 facts remain unchanged. Receipt facts: `/tmp/Root-milestone495-Source68-closed-source-proof-normal8-one-guide-wave-facts-v01.json`. Full WORLD goal remains incomplete.
+
+
+
+
+## Milestone 496 — recovery software and original identity prerequisites (2026-11-22)
+
+HOME gate/lane1a78a50c/00bf759b +test2510afed are installed. Actual normal9:9 unique parent passes,0 subs/F/E/S, JUnit15.847s; SDK collect16.743500s/run17.284493s. Source/resource/owned cleanup closed. Private9/4 and previous cohorts remain separate; the pre-write archive error and pre-SDK preview refusal are preserved.
+
+Saved original6ba configuration and reconstructed920 pipeline agree in their complete public tokenizer contract/binding; original cache marker key is absent. These metadata facts do not establish current checkpoint eligibility, historical execution or a loaded tokenizer. No optimization, model restore, checkpoint migration, registry or service activation occurred. Prior scalar fit and held-out0/3/GEN37 facts are unchanged. Full WORLD mission remains open. Exact references: `/tmp/Root-milestone496-Home-normal9-and-original-pipeline-one-guide-wave-facts-v01.json`.
+
+Publication reconciliation adds no new runtime or legal qualification.

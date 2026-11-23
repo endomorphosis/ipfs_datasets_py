@@ -1,0 +1,940 @@
+{
+  "current_anchor": "333e1cd026c122284ab865ce259dccd7fa348f2e",
+  "fragment_sha256": "f652aac9109d51843bcc782f59091d64a173065b1af9fbb4d33f33d4c72fab95",
+  "new_qualification_credit": false,
+  "schema": "captured-common-evidence-record-variants/v1",
+  "scope": "Exact metadata deltas retained as UNADOPTED source variants; no current common-ID record overwritten.",
+  "variants": [
+    {
+      "current_record_canonical_sha256": "34cf0f7ae243c939b117b0930762069e0baa12ae0a1885df2660d232c0e4b116",
+      "id": "no-child-native-closed-inspection-qualified-20261109",
+      "patch_operations_from_current_to_unselected_source_variant": [
+        {
+          "op": "remove",
+          "path": "/v5_postgrant_ledger_lock_software_20261115"
+        }
+      ],
+      "selected_for_current_guide": false,
+      "source": {
+        "differing_keys_vs_current": [
+          "v5_postgrant_ledger_lock_software_20261115"
+        ],
+        "record_canonical_sha256": "55a110fad67bc02a88b7e1d7f55a68ddf202ccf52c4ec3c5f7440c90d6c1bbf7",
+        "source": {
+          "FD_closed": true,
+          "NF_all_components": true,
+          "authenticated_selection_index": 442,
+          "observed_private_F9": {
+            "st_ctime_ns": "1795425098351191989",
+            "st_dev": "66306",
+            "st_gid": "1000",
+            "st_ino": "71869813",
+            "st_mode": "33024",
+            "st_mtime_ns": "1795425098351191989",
+            "st_nlink": "1",
+            "st_size": "1011530",
+            "st_uid": "1000"
+          },
+          "private_body": {
+            "bytes": 1011530,
+            "full9": {
+              "st_ctime_ns": "1795425098351191989",
+              "st_dev": "66306",
+              "st_gid": "1000",
+              "st_ino": "71869813",
+              "st_mode": "33024",
+              "st_mtime_ns": "1795425098351191989",
+              "st_nlink": "1",
+              "st_size": "1011530",
+              "st_uid": "1000"
+            },
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/publication-remaining2570-selected-source-owner-READ-v02/raw/0478-work_catalog.json.DATA",
+            "sha256": "48e78a13890bece85b2529dabdac90471c224364bc1e1301f7e9d8f364fb9224"
+          },
+          "relative_path": "ipfs_datasets_py/logic/autoformal/docs/work_catalog.json",
+          "repo_root": "/home/barberb/lift_coding/external/ipfs_datasets",
+          "source_HEAD": "3f1691d59cc0a310750c0b441b51d3528b17eb85",
+          "stable_FD_and_path_F9": true,
+          "wrapper_index": 528
+        },
+        "source_array_index": 241
+      },
+      "source_record_canonical_sha256": "55a110fad67bc02a88b7e1d7f55a68ddf202ccf52c4ec3c5f7440c90d6c1bbf7"
+    },
+    {
+      "current_record_canonical_sha256": "34cf0f7ae243c939b117b0930762069e0baa12ae0a1885df2660d232c0e4b116",
+      "id": "no-child-native-closed-inspection-qualified-20261109",
+      "patch_operations_from_current_to_unselected_source_variant": [],
+      "selected_for_current_guide": false,
+      "source": {
+        "differing_keys_vs_current": [],
+        "record_canonical_sha256": "34cf0f7ae243c939b117b0930762069e0baa12ae0a1885df2660d232c0e4b116",
+        "source": {
+          "FD_closed": true,
+          "NF_all_components": true,
+          "authenticated_selection_index": 632,
+          "observed_private_F9": {
+            "st_ctime_ns": "1795425099283193037",
+            "st_dev": "66306",
+            "st_gid": "1000",
+            "st_ino": "71870005",
+            "st_mode": "33024",
+            "st_mtime_ns": "1795425099283193037",
+            "st_nlink": "1",
+            "st_size": "1598025",
+            "st_uid": "1000"
+          },
+          "private_body": {
+            "bytes": 1598025,
+            "full9": {
+              "st_ctime_ns": "1795425099283193037",
+              "st_dev": "66306",
+              "st_gid": "1000",
+              "st_ino": "71870005",
+              "st_mode": "33024",
+              "st_mtime_ns": "1795425099283193037",
+              "st_nlink": "1",
+              "st_size": "1598025",
+              "st_uid": "1000"
+            },
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/publication-remaining2570-selected-source-owner-READ-v02/raw/0670-work_catalog.json.DATA",
+            "sha256": "f44f00b3e2b4e6a60f79cd531b44e29469b374c9caff81af5c6f3d01543f9b71"
+          },
+          "relative_path": "ipfs_datasets_py/logic/autoformal/docs/work_catalog.json",
+          "repo_root": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/ipfs_datasets-lir14-consumer-regression-v01",
+          "source_HEAD": "ebab0edfa5b5630a3acd8ad7e133447a51d49252",
+          "stable_FD_and_path_F9": true,
+          "wrapper_index": 720
+        },
+        "source_array_index": 259
+      },
+      "source_record_canonical_sha256": "34cf0f7ae243c939b117b0930762069e0baa12ae0a1885df2660d232c0e4b116"
+    },
+    {
+      "current_record_canonical_sha256": "34cf0f7ae243c939b117b0930762069e0baa12ae0a1885df2660d232c0e4b116",
+      "id": "no-child-native-closed-inspection-qualified-20261109",
+      "patch_operations_from_current_to_unselected_source_variant": [],
+      "selected_for_current_guide": false,
+      "source": {
+        "differing_keys_vs_current": [],
+        "record_canonical_sha256": "34cf0f7ae243c939b117b0930762069e0baa12ae0a1885df2660d232c0e4b116",
+        "source": {
+          "FD_closed": true,
+          "NF_all_components": true,
+          "authenticated_selection_index": 676,
+          "observed_private_F9": {
+            "st_ctime_ns": "1795425099511193295",
+            "st_dev": "66306",
+            "st_gid": "1000",
+            "st_ino": "71870049",
+            "st_mode": "33024",
+            "st_mtime_ns": "1795425099511193295",
+            "st_nlink": "1",
+            "st_size": "1095162",
+            "st_uid": "1000"
+          },
+          "private_body": {
+            "bytes": 1095162,
+            "full9": {
+              "st_ctime_ns": "1795425099511193295",
+              "st_dev": "66306",
+              "st_gid": "1000",
+              "st_ino": "71870049",
+              "st_mode": "33024",
+              "st_mtime_ns": "1795425099511193295",
+              "st_nlink": "1",
+              "st_size": "1095162",
+              "st_uid": "1000"
+            },
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/publication-remaining2570-selected-source-owner-READ-v02/raw/0714-work_catalog.json.DATA",
+            "sha256": "42760a43dc8ff836c1398922727af2aacd730c8594a505daf2cdf02d39f71f57"
+          },
+          "relative_path": "ipfs_datasets_py/logic/autoformal/docs/work_catalog.json",
+          "repo_root": "/tmp/datasets-publish-main-20261114",
+          "source_HEAD": "c76bcfc274899d95944365dfaf35554ce729ce77",
+          "stable_FD_and_path_F9": true,
+          "wrapper_index": 764
+        },
+        "source_array_index": 259
+      },
+      "source_record_canonical_sha256": "34cf0f7ae243c939b117b0930762069e0baa12ae0a1885df2660d232c0e4b116"
+    },
+    {
+      "current_record_canonical_sha256": "34cf0f7ae243c939b117b0930762069e0baa12ae0a1885df2660d232c0e4b116",
+      "id": "no-child-native-closed-inspection-qualified-20261109",
+      "patch_operations_from_current_to_unselected_source_variant": [],
+      "selected_for_current_guide": false,
+      "source": {
+        "differing_keys_vs_current": [],
+        "record_canonical_sha256": "34cf0f7ae243c939b117b0930762069e0baa12ae0a1885df2660d232c0e4b116",
+        "source": {
+          "FD_closed": true,
+          "NF_all_components": true,
+          "authenticated_selection_index": 704,
+          "observed_private_F9": {
+            "st_ctime_ns": "1795425099666193470",
+            "st_dev": "66306",
+            "st_gid": "1000",
+            "st_ino": "71870077",
+            "st_mode": "33024",
+            "st_mtime_ns": "1795425099666193470",
+            "st_nlink": "1",
+            "st_size": "1143394",
+            "st_uid": "1000"
+          },
+          "private_body": {
+            "bytes": 1143394,
+            "full9": {
+              "st_ctime_ns": "1795425099666193470",
+              "st_dev": "66306",
+              "st_gid": "1000",
+              "st_ino": "71870077",
+              "st_mode": "33024",
+              "st_mtime_ns": "1795425099666193470",
+              "st_nlink": "1",
+              "st_size": "1143394",
+              "st_uid": "1000"
+            },
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/publication-remaining2570-selected-source-owner-READ-v02/raw/0742-work_catalog.json.DATA",
+            "sha256": "0fedd05fd41675bf76e796dcaa566cc4bd49921448e08084212285022d85856f"
+          },
+          "relative_path": "ipfs_datasets_py/logic/autoformal/docs/work_catalog.json",
+          "repo_root": "/tmp/datasets-reviewed-source-use-main-20261115",
+          "source_HEAD": "1cc4e60770e7df800051df041c54acd23c3392b6",
+          "stable_FD_and_path_F9": true,
+          "wrapper_index": 792
+        },
+        "source_array_index": 259
+      },
+      "source_record_canonical_sha256": "34cf0f7ae243c939b117b0930762069e0baa12ae0a1885df2660d232c0e4b116"
+    },
+    {
+      "current_record_canonical_sha256": "3c40f15aeeeb3ebfbda96587162869736e226861d1b8a9e3fbe8f6b637140fa1",
+      "id": "proof-screen-and-legacy-metrics-20261114",
+      "patch_operations_from_current_to_unselected_source_variant": [],
+      "selected_for_current_guide": false,
+      "source": {
+        "differing_keys_vs_current": [],
+        "record_canonical_sha256": "3c40f15aeeeb3ebfbda96587162869736e226861d1b8a9e3fbe8f6b637140fa1",
+        "source": {
+          "FD_closed": true,
+          "NF_all_components": true,
+          "authenticated_selection_index": 632,
+          "observed_private_F9": {
+            "st_ctime_ns": "1795425099283193037",
+            "st_dev": "66306",
+            "st_gid": "1000",
+            "st_ino": "71870005",
+            "st_mode": "33024",
+            "st_mtime_ns": "1795425099283193037",
+            "st_nlink": "1",
+            "st_size": "1598025",
+            "st_uid": "1000"
+          },
+          "private_body": {
+            "bytes": 1598025,
+            "full9": {
+              "st_ctime_ns": "1795425099283193037",
+              "st_dev": "66306",
+              "st_gid": "1000",
+              "st_ino": "71870005",
+              "st_mode": "33024",
+              "st_mtime_ns": "1795425099283193037",
+              "st_nlink": "1",
+              "st_size": "1598025",
+              "st_uid": "1000"
+            },
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/publication-remaining2570-selected-source-owner-READ-v02/raw/0670-work_catalog.json.DATA",
+            "sha256": "f44f00b3e2b4e6a60f79cd531b44e29469b374c9caff81af5c6f3d01543f9b71"
+          },
+          "relative_path": "ipfs_datasets_py/logic/autoformal/docs/work_catalog.json",
+          "repo_root": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/ipfs_datasets-lir14-consumer-regression-v01",
+          "source_HEAD": "ebab0edfa5b5630a3acd8ad7e133447a51d49252",
+          "stable_FD_and_path_F9": true,
+          "wrapper_index": 720
+        },
+        "source_array_index": 17
+      },
+      "source_record_canonical_sha256": "3c40f15aeeeb3ebfbda96587162869736e226861d1b8a9e3fbe8f6b637140fa1"
+    },
+    {
+      "current_record_canonical_sha256": "3c40f15aeeeb3ebfbda96587162869736e226861d1b8a9e3fbe8f6b637140fa1",
+      "id": "proof-screen-and-legacy-metrics-20261114",
+      "patch_operations_from_current_to_unselected_source_variant": [
+        {
+          "op": "remove",
+          "path": "/covered_raw_metric_precedence_20261116"
+        }
+      ],
+      "selected_for_current_guide": false,
+      "source": {
+        "differing_keys_vs_current": [
+          "covered_raw_metric_precedence_20261116"
+        ],
+        "record_canonical_sha256": "57f8e0076ea9aab696adefcbb2b58951379b1f2d1a4bf959cae163f7482f3f34",
+        "source": {
+          "FD_closed": true,
+          "NF_all_components": true,
+          "authenticated_selection_index": 676,
+          "observed_private_F9": {
+            "st_ctime_ns": "1795425099511193295",
+            "st_dev": "66306",
+            "st_gid": "1000",
+            "st_ino": "71870049",
+            "st_mode": "33024",
+            "st_mtime_ns": "1795425099511193295",
+            "st_nlink": "1",
+            "st_size": "1095162",
+            "st_uid": "1000"
+          },
+          "private_body": {
+            "bytes": 1095162,
+            "full9": {
+              "st_ctime_ns": "1795425099511193295",
+              "st_dev": "66306",
+              "st_gid": "1000",
+              "st_ino": "71870049",
+              "st_mode": "33024",
+              "st_mtime_ns": "1795425099511193295",
+              "st_nlink": "1",
+              "st_size": "1095162",
+              "st_uid": "1000"
+            },
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/publication-remaining2570-selected-source-owner-READ-v02/raw/0714-work_catalog.json.DATA",
+            "sha256": "42760a43dc8ff836c1398922727af2aacd730c8594a505daf2cdf02d39f71f57"
+          },
+          "relative_path": "ipfs_datasets_py/logic/autoformal/docs/work_catalog.json",
+          "repo_root": "/tmp/datasets-publish-main-20261114",
+          "source_HEAD": "c76bcfc274899d95944365dfaf35554ce729ce77",
+          "stable_FD_and_path_F9": true,
+          "wrapper_index": 764
+        },
+        "source_array_index": 17
+      },
+      "source_record_canonical_sha256": "57f8e0076ea9aab696adefcbb2b58951379b1f2d1a4bf959cae163f7482f3f34"
+    },
+    {
+      "current_record_canonical_sha256": "3c40f15aeeeb3ebfbda96587162869736e226861d1b8a9e3fbe8f6b637140fa1",
+      "id": "proof-screen-and-legacy-metrics-20261114",
+      "patch_operations_from_current_to_unselected_source_variant": [],
+      "selected_for_current_guide": false,
+      "source": {
+        "differing_keys_vs_current": [],
+        "record_canonical_sha256": "3c40f15aeeeb3ebfbda96587162869736e226861d1b8a9e3fbe8f6b637140fa1",
+        "source": {
+          "FD_closed": true,
+          "NF_all_components": true,
+          "authenticated_selection_index": 704,
+          "observed_private_F9": {
+            "st_ctime_ns": "1795425099666193470",
+            "st_dev": "66306",
+            "st_gid": "1000",
+            "st_ino": "71870077",
+            "st_mode": "33024",
+            "st_mtime_ns": "1795425099666193470",
+            "st_nlink": "1",
+            "st_size": "1143394",
+            "st_uid": "1000"
+          },
+          "private_body": {
+            "bytes": 1143394,
+            "full9": {
+              "st_ctime_ns": "1795425099666193470",
+              "st_dev": "66306",
+              "st_gid": "1000",
+              "st_ino": "71870077",
+              "st_mode": "33024",
+              "st_mtime_ns": "1795425099666193470",
+              "st_nlink": "1",
+              "st_size": "1143394",
+              "st_uid": "1000"
+            },
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/publication-remaining2570-selected-source-owner-READ-v02/raw/0742-work_catalog.json.DATA",
+            "sha256": "0fedd05fd41675bf76e796dcaa566cc4bd49921448e08084212285022d85856f"
+          },
+          "relative_path": "ipfs_datasets_py/logic/autoformal/docs/work_catalog.json",
+          "repo_root": "/tmp/datasets-reviewed-source-use-main-20261115",
+          "source_HEAD": "1cc4e60770e7df800051df041c54acd23c3392b6",
+          "stable_FD_and_path_F9": true,
+          "wrapper_index": 792
+        },
+        "source_array_index": 17
+      },
+      "source_record_canonical_sha256": "3c40f15aeeeb3ebfbda96587162869736e226861d1b8a9e3fbe8f6b637140fa1"
+    },
+    {
+      "current_record_canonical_sha256": "9518ca60c6b9f8d67bb953a6b8b203d7917432a8db6dfee8b75363e2b566b328",
+      "id": "legal-ir-current-release-v3-source-only-R56-qualified-20261115-v01",
+      "patch_operations_from_current_to_unselected_source_variant": [],
+      "selected_for_current_guide": false,
+      "source": {
+        "differing_keys_vs_current": [],
+        "record_canonical_sha256": "9518ca60c6b9f8d67bb953a6b8b203d7917432a8db6dfee8b75363e2b566b328",
+        "source": {
+          "FD_closed": true,
+          "NF_all_components": true,
+          "authenticated_selection_index": 632,
+          "observed_private_F9": {
+            "st_ctime_ns": "1795425099283193037",
+            "st_dev": "66306",
+            "st_gid": "1000",
+            "st_ino": "71870005",
+            "st_mode": "33024",
+            "st_mtime_ns": "1795425099283193037",
+            "st_nlink": "1",
+            "st_size": "1598025",
+            "st_uid": "1000"
+          },
+          "private_body": {
+            "bytes": 1598025,
+            "full9": {
+              "st_ctime_ns": "1795425099283193037",
+              "st_dev": "66306",
+              "st_gid": "1000",
+              "st_ino": "71870005",
+              "st_mode": "33024",
+              "st_mtime_ns": "1795425099283193037",
+              "st_nlink": "1",
+              "st_size": "1598025",
+              "st_uid": "1000"
+            },
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/publication-remaining2570-selected-source-owner-READ-v02/raw/0670-work_catalog.json.DATA",
+            "sha256": "f44f00b3e2b4e6a60f79cd531b44e29469b374c9caff81af5c6f3d01543f9b71"
+          },
+          "relative_path": "ipfs_datasets_py/logic/autoformal/docs/work_catalog.json",
+          "repo_root": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/ipfs_datasets-lir14-consumer-regression-v01",
+          "source_HEAD": "ebab0edfa5b5630a3acd8ad7e133447a51d49252",
+          "stable_FD_and_path_F9": true,
+          "wrapper_index": 720
+        },
+        "source_array_index": 450
+      },
+      "source_record_canonical_sha256": "9518ca60c6b9f8d67bb953a6b8b203d7917432a8db6dfee8b75363e2b566b328"
+    },
+    {
+      "current_record_canonical_sha256": "9518ca60c6b9f8d67bb953a6b8b203d7917432a8db6dfee8b75363e2b566b328",
+      "id": "legal-ir-current-release-v3-source-only-R56-qualified-20261115-v01",
+      "patch_operations_from_current_to_unselected_source_variant": [
+        {
+          "op": "remove",
+          "path": "/release21_realization_consumer_20261116"
+        }
+      ],
+      "selected_for_current_guide": false,
+      "source": {
+        "differing_keys_vs_current": [
+          "release21_realization_consumer_20261116"
+        ],
+        "record_canonical_sha256": "58a2c6eb9ef281f535a33ce5a0ddbc61517eb7338ce4af46c681fcbd2e366c2e",
+        "source": {
+          "FD_closed": true,
+          "NF_all_components": true,
+          "authenticated_selection_index": 676,
+          "observed_private_F9": {
+            "st_ctime_ns": "1795425099511193295",
+            "st_dev": "66306",
+            "st_gid": "1000",
+            "st_ino": "71870049",
+            "st_mode": "33024",
+            "st_mtime_ns": "1795425099511193295",
+            "st_nlink": "1",
+            "st_size": "1095162",
+            "st_uid": "1000"
+          },
+          "private_body": {
+            "bytes": 1095162,
+            "full9": {
+              "st_ctime_ns": "1795425099511193295",
+              "st_dev": "66306",
+              "st_gid": "1000",
+              "st_ino": "71870049",
+              "st_mode": "33024",
+              "st_mtime_ns": "1795425099511193295",
+              "st_nlink": "1",
+              "st_size": "1095162",
+              "st_uid": "1000"
+            },
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/publication-remaining2570-selected-source-owner-READ-v02/raw/0714-work_catalog.json.DATA",
+            "sha256": "42760a43dc8ff836c1398922727af2aacd730c8594a505daf2cdf02d39f71f57"
+          },
+          "relative_path": "ipfs_datasets_py/logic/autoformal/docs/work_catalog.json",
+          "repo_root": "/tmp/datasets-publish-main-20261114",
+          "source_HEAD": "c76bcfc274899d95944365dfaf35554ce729ce77",
+          "stable_FD_and_path_F9": true,
+          "wrapper_index": 764
+        },
+        "source_array_index": 459
+      },
+      "source_record_canonical_sha256": "58a2c6eb9ef281f535a33ce5a0ddbc61517eb7338ce4af46c681fcbd2e366c2e"
+    },
+    {
+      "current_record_canonical_sha256": "9518ca60c6b9f8d67bb953a6b8b203d7917432a8db6dfee8b75363e2b566b328",
+      "id": "legal-ir-current-release-v3-source-only-R56-qualified-20261115-v01",
+      "patch_operations_from_current_to_unselected_source_variant": [],
+      "selected_for_current_guide": false,
+      "source": {
+        "differing_keys_vs_current": [],
+        "record_canonical_sha256": "9518ca60c6b9f8d67bb953a6b8b203d7917432a8db6dfee8b75363e2b566b328",
+        "source": {
+          "FD_closed": true,
+          "NF_all_components": true,
+          "authenticated_selection_index": 704,
+          "observed_private_F9": {
+            "st_ctime_ns": "1795425099666193470",
+            "st_dev": "66306",
+            "st_gid": "1000",
+            "st_ino": "71870077",
+            "st_mode": "33024",
+            "st_mtime_ns": "1795425099666193470",
+            "st_nlink": "1",
+            "st_size": "1143394",
+            "st_uid": "1000"
+          },
+          "private_body": {
+            "bytes": 1143394,
+            "full9": {
+              "st_ctime_ns": "1795425099666193470",
+              "st_dev": "66306",
+              "st_gid": "1000",
+              "st_ino": "71870077",
+              "st_mode": "33024",
+              "st_mtime_ns": "1795425099666193470",
+              "st_nlink": "1",
+              "st_size": "1143394",
+              "st_uid": "1000"
+            },
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/publication-remaining2570-selected-source-owner-READ-v02/raw/0742-work_catalog.json.DATA",
+            "sha256": "0fedd05fd41675bf76e796dcaa566cc4bd49921448e08084212285022d85856f"
+          },
+          "relative_path": "ipfs_datasets_py/logic/autoformal/docs/work_catalog.json",
+          "repo_root": "/tmp/datasets-reviewed-source-use-main-20261115",
+          "source_HEAD": "1cc4e60770e7df800051df041c54acd23c3392b6",
+          "stable_FD_and_path_F9": true,
+          "wrapper_index": 792
+        },
+        "source_array_index": 450
+      },
+      "source_record_canonical_sha256": "9518ca60c6b9f8d67bb953a6b8b203d7917432a8db6dfee8b75363e2b566b328"
+    },
+    {
+      "current_record_canonical_sha256": "2bf2bd7847ab9d1bf343149988b39e0d8f52338c4dec9a9a3566e7bce865dbfd",
+      "id": "world-source-bridge-compiler-and-decoder-frontier-milestone480-20261121",
+      "patch_operations_from_current_to_unselected_source_variant": [
+        {
+          "op": "remove",
+          "path": "/all_Main_tasks_components_APIs_order_status_and_history_preserved"
+        },
+        {
+          "op": "remove",
+          "path": "/retained_Source65_documentation_evidence_scope"
+        },
+        {
+          "op": "remove",
+          "path": "/qualification_scope"
+        },
+        {
+          "op": "remove",
+          "path": "/all_Main_prior_evidence_records_preserved"
+        },
+        {
+          "op": "replace",
+          "path": "/documentation_evidence_scope",
+          "value": "Exact report references and closure statements copied from Root-sealed facts; this private documentation preparation does not reread the referenced reports, execute tests, capture Source or run a model."
+        }
+      ],
+      "selected_for_current_guide": false,
+      "source": {
+        "differing_keys_vs_current": [
+          "all_Main_prior_evidence_records_preserved",
+          "all_Main_tasks_components_APIs_order_status_and_history_preserved",
+          "documentation_evidence_scope",
+          "qualification_scope",
+          "retained_Source65_documentation_evidence_scope"
+        ],
+        "record_canonical_sha256": "e9c9df213475067449cc7b6110c1122c90778b37928aeacc616d903c91f07d8c",
+        "source": {
+          "FD_closed": true,
+          "NF_all_components": true,
+          "authenticated_selection_index": 632,
+          "observed_private_F9": {
+            "st_ctime_ns": "1795425099283193037",
+            "st_dev": "66306",
+            "st_gid": "1000",
+            "st_ino": "71870005",
+            "st_mode": "33024",
+            "st_mtime_ns": "1795425099283193037",
+            "st_nlink": "1",
+            "st_size": "1598025",
+            "st_uid": "1000"
+          },
+          "private_body": {
+            "bytes": 1598025,
+            "full9": {
+              "st_ctime_ns": "1795425099283193037",
+              "st_dev": "66306",
+              "st_gid": "1000",
+              "st_ino": "71870005",
+              "st_mode": "33024",
+              "st_mtime_ns": "1795425099283193037",
+              "st_nlink": "1",
+              "st_size": "1598025",
+              "st_uid": "1000"
+            },
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/publication-remaining2570-selected-source-owner-READ-v02/raw/0670-work_catalog.json.DATA",
+            "sha256": "f44f00b3e2b4e6a60f79cd531b44e29469b374c9caff81af5c6f3d01543f9b71"
+          },
+          "relative_path": "ipfs_datasets_py/logic/autoformal/docs/work_catalog.json",
+          "repo_root": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/ipfs_datasets-lir14-consumer-regression-v01",
+          "source_HEAD": "ebab0edfa5b5630a3acd8ad7e133447a51d49252",
+          "stable_FD_and_path_F9": true,
+          "wrapper_index": 720
+        },
+        "source_array_index": 479
+      },
+      "source_record_canonical_sha256": "e9c9df213475067449cc7b6110c1122c90778b37928aeacc616d903c91f07d8c"
+    },
+    {
+      "current_record_canonical_sha256": "89a752f46eda7f669005b49b778d54360defb2541619c4ff5970dabb90373bc7",
+      "id": "world-counted-Lean-normal396-conditioning-and-readonly-frontier-milestone481-20261121",
+      "patch_operations_from_current_to_unselected_source_variant": [
+        {
+          "op": "remove",
+          "path": "/Main_publication_integration_scope"
+        }
+      ],
+      "selected_for_current_guide": false,
+      "source": {
+        "differing_keys_vs_current": [
+          "Main_publication_integration_scope"
+        ],
+        "record_canonical_sha256": "525a74dc0a08f45ea242973724ceb189f0dc89e201c027267a7a59f5b381cd40",
+        "source": {
+          "FD_closed": true,
+          "NF_all_components": true,
+          "authenticated_selection_index": 632,
+          "observed_private_F9": {
+            "st_ctime_ns": "1795425099283193037",
+            "st_dev": "66306",
+            "st_gid": "1000",
+            "st_ino": "71870005",
+            "st_mode": "33024",
+            "st_mtime_ns": "1795425099283193037",
+            "st_nlink": "1",
+            "st_size": "1598025",
+            "st_uid": "1000"
+          },
+          "private_body": {
+            "bytes": 1598025,
+            "full9": {
+              "st_ctime_ns": "1795425099283193037",
+              "st_dev": "66306",
+              "st_gid": "1000",
+              "st_ino": "71870005",
+              "st_mode": "33024",
+              "st_mtime_ns": "1795425099283193037",
+              "st_nlink": "1",
+              "st_size": "1598025",
+              "st_uid": "1000"
+            },
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/publication-remaining2570-selected-source-owner-READ-v02/raw/0670-work_catalog.json.DATA",
+            "sha256": "f44f00b3e2b4e6a60f79cd531b44e29469b374c9caff81af5c6f3d01543f9b71"
+          },
+          "relative_path": "ipfs_datasets_py/logic/autoformal/docs/work_catalog.json",
+          "repo_root": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/ipfs_datasets-lir14-consumer-regression-v01",
+          "source_HEAD": "ebab0edfa5b5630a3acd8ad7e133447a51d49252",
+          "stable_FD_and_path_F9": true,
+          "wrapper_index": 720
+        },
+        "source_array_index": 480
+      },
+      "source_record_canonical_sha256": "525a74dc0a08f45ea242973724ceb189f0dc89e201c027267a7a59f5b381cd40"
+    },
+    {
+      "current_record_canonical_sha256": "41e0543e714de7b332dcc379d5a3737402d3fd8cea99e3b0b331cd1eb1c9b013",
+      "id": "world-operational-receipts-capacity-Unicode-and-readonly-fit-frontier-milestone482-20261121",
+      "patch_operations_from_current_to_unselected_source_variant": [
+        {
+          "op": "remove",
+          "path": "/Main_publication_integration_scope"
+        }
+      ],
+      "selected_for_current_guide": false,
+      "source": {
+        "differing_keys_vs_current": [
+          "Main_publication_integration_scope"
+        ],
+        "record_canonical_sha256": "c481de4f62f63743a6250ce6f3d1e5dbae29875a17119feebb9910f17351620d",
+        "source": {
+          "FD_closed": true,
+          "NF_all_components": true,
+          "authenticated_selection_index": 632,
+          "observed_private_F9": {
+            "st_ctime_ns": "1795425099283193037",
+            "st_dev": "66306",
+            "st_gid": "1000",
+            "st_ino": "71870005",
+            "st_mode": "33024",
+            "st_mtime_ns": "1795425099283193037",
+            "st_nlink": "1",
+            "st_size": "1598025",
+            "st_uid": "1000"
+          },
+          "private_body": {
+            "bytes": 1598025,
+            "full9": {
+              "st_ctime_ns": "1795425099283193037",
+              "st_dev": "66306",
+              "st_gid": "1000",
+              "st_ino": "71870005",
+              "st_mode": "33024",
+              "st_mtime_ns": "1795425099283193037",
+              "st_nlink": "1",
+              "st_size": "1598025",
+              "st_uid": "1000"
+            },
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/publication-remaining2570-selected-source-owner-READ-v02/raw/0670-work_catalog.json.DATA",
+            "sha256": "f44f00b3e2b4e6a60f79cd531b44e29469b374c9caff81af5c6f3d01543f9b71"
+          },
+          "relative_path": "ipfs_datasets_py/logic/autoformal/docs/work_catalog.json",
+          "repo_root": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/ipfs_datasets-lir14-consumer-regression-v01",
+          "source_HEAD": "ebab0edfa5b5630a3acd8ad7e133447a51d49252",
+          "stable_FD_and_path_F9": true,
+          "wrapper_index": 720
+        },
+        "source_array_index": 481
+      },
+      "source_record_canonical_sha256": "c481de4f62f63743a6250ce6f3d1e5dbae29875a17119feebb9910f17351620d"
+    },
+    {
+      "current_record_canonical_sha256": "050c485d029102b4b110996ea7a79e0a038c1373250c9bdbea04cff3e8108d2a",
+      "id": "world-quantity-constructive-proof-and-codec-decoder-frontier-milestone483-20261121",
+      "patch_operations_from_current_to_unselected_source_variant": [
+        {
+          "op": "remove",
+          "path": "/source_catalog_population_at_preparation"
+        },
+        {
+          "op": "replace",
+          "path": "/catalog_population/after",
+          "value": 483
+        },
+        {
+          "op": "replace",
+          "path": "/catalog_population/kind",
+          "value": "Source4"
+        },
+        {
+          "op": "replace",
+          "path": "/catalog_population/new_index",
+          "value": 482
+        },
+        {
+          "op": "replace",
+          "path": "/catalog_population/before",
+          "value": 482
+        }
+      ],
+      "selected_for_current_guide": false,
+      "source": {
+        "differing_keys_vs_current": [
+          "catalog_population",
+          "source_catalog_population_at_preparation"
+        ],
+        "record_canonical_sha256": "a89857a959687e09529aa35329e5801a119071c4a823a960b4ce5cef7619072b",
+        "source": {
+          "FD_closed": true,
+          "NF_all_components": true,
+          "authenticated_selection_index": 632,
+          "observed_private_F9": {
+            "st_ctime_ns": "1795425099283193037",
+            "st_dev": "66306",
+            "st_gid": "1000",
+            "st_ino": "71870005",
+            "st_mode": "33024",
+            "st_mtime_ns": "1795425099283193037",
+            "st_nlink": "1",
+            "st_size": "1598025",
+            "st_uid": "1000"
+          },
+          "private_body": {
+            "bytes": 1598025,
+            "full9": {
+              "st_ctime_ns": "1795425099283193037",
+              "st_dev": "66306",
+              "st_gid": "1000",
+              "st_ino": "71870005",
+              "st_mode": "33024",
+              "st_mtime_ns": "1795425099283193037",
+              "st_nlink": "1",
+              "st_size": "1598025",
+              "st_uid": "1000"
+            },
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/publication-remaining2570-selected-source-owner-READ-v02/raw/0670-work_catalog.json.DATA",
+            "sha256": "f44f00b3e2b4e6a60f79cd531b44e29469b374c9caff81af5c6f3d01543f9b71"
+          },
+          "relative_path": "ipfs_datasets_py/logic/autoformal/docs/work_catalog.json",
+          "repo_root": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/ipfs_datasets-lir14-consumer-regression-v01",
+          "source_HEAD": "ebab0edfa5b5630a3acd8ad7e133447a51d49252",
+          "stable_FD_and_path_F9": true,
+          "wrapper_index": 720
+        },
+        "source_array_index": 482
+      },
+      "source_record_canonical_sha256": "a89857a959687e09529aa35329e5801a119071c4a823a960b4ce5cef7619072b"
+    },
+    {
+      "current_record_canonical_sha256": "5123ea9e7b814d2d3828ea63adbc23ad56a5de0c186806aedd815a21a3969063",
+      "id": "world-codec-component39-plus1-normal82-frontier-milestone484-20261121",
+      "patch_operations_from_current_to_unselected_source_variant": [
+        {
+          "op": "remove",
+          "path": "/source_catalog_population_at_preparation"
+        },
+        {
+          "op": "replace",
+          "path": "/catalog_population/after",
+          "value": 484
+        },
+        {
+          "op": "replace",
+          "path": "/catalog_population/kind",
+          "value": "Source4"
+        },
+        {
+          "op": "replace",
+          "path": "/catalog_population/new_index",
+          "value": 483
+        },
+        {
+          "op": "replace",
+          "path": "/catalog_population/before",
+          "value": 483
+        }
+      ],
+      "selected_for_current_guide": false,
+      "source": {
+        "differing_keys_vs_current": [
+          "catalog_population",
+          "source_catalog_population_at_preparation"
+        ],
+        "record_canonical_sha256": "c06a7ae8e0b069d2fee0f8cffe0f497a6c5e60416d1ed6a8900d13848e099072",
+        "source": {
+          "FD_closed": true,
+          "NF_all_components": true,
+          "authenticated_selection_index": 632,
+          "observed_private_F9": {
+            "st_ctime_ns": "1795425099283193037",
+            "st_dev": "66306",
+            "st_gid": "1000",
+            "st_ino": "71870005",
+            "st_mode": "33024",
+            "st_mtime_ns": "1795425099283193037",
+            "st_nlink": "1",
+            "st_size": "1598025",
+            "st_uid": "1000"
+          },
+          "private_body": {
+            "bytes": 1598025,
+            "full9": {
+              "st_ctime_ns": "1795425099283193037",
+              "st_dev": "66306",
+              "st_gid": "1000",
+              "st_ino": "71870005",
+              "st_mode": "33024",
+              "st_mtime_ns": "1795425099283193037",
+              "st_nlink": "1",
+              "st_size": "1598025",
+              "st_uid": "1000"
+            },
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/publication-remaining2570-selected-source-owner-READ-v02/raw/0670-work_catalog.json.DATA",
+            "sha256": "f44f00b3e2b4e6a60f79cd531b44e29469b374c9caff81af5c6f3d01543f9b71"
+          },
+          "relative_path": "ipfs_datasets_py/logic/autoformal/docs/work_catalog.json",
+          "repo_root": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/ipfs_datasets-lir14-consumer-regression-v01",
+          "source_HEAD": "ebab0edfa5b5630a3acd8ad7e133447a51d49252",
+          "stable_FD_and_path_F9": true,
+          "wrapper_index": 720
+        },
+        "source_array_index": 483
+      },
+      "source_record_canonical_sha256": "c06a7ae8e0b069d2fee0f8cffe0f497a6c5e60416d1ed6a8900d13848e099072"
+    },
+    {
+      "current_record_canonical_sha256": "14d13b6e7c5f03afc812ba7506cc80d52e9b48ce989f6878e4219fabe7035c84",
+      "id": "world-v11-frontend-and-fresh-objective-frontier-milestone485-20261121",
+      "patch_operations_from_current_to_unselected_source_variant": [
+        {
+          "op": "remove",
+          "path": "/source_catalog_population_at_preparation"
+        },
+        {
+          "op": "replace",
+          "path": "/catalog_population/after",
+          "value": 485
+        },
+        {
+          "op": "replace",
+          "path": "/catalog_population/kind",
+          "value": "Source4"
+        },
+        {
+          "op": "replace",
+          "path": "/catalog_population/new_index",
+          "value": 484
+        },
+        {
+          "op": "replace",
+          "path": "/catalog_population/before",
+          "value": 484
+        }
+      ],
+      "selected_for_current_guide": false,
+      "source": {
+        "differing_keys_vs_current": [
+          "catalog_population",
+          "source_catalog_population_at_preparation"
+        ],
+        "record_canonical_sha256": "59370d4c11a187022c4aaf8ed760b44d4583d95156885770cec2575aa23f9497",
+        "source": {
+          "FD_closed": true,
+          "NF_all_components": true,
+          "authenticated_selection_index": 632,
+          "observed_private_F9": {
+            "st_ctime_ns": "1795425099283193037",
+            "st_dev": "66306",
+            "st_gid": "1000",
+            "st_ino": "71870005",
+            "st_mode": "33024",
+            "st_mtime_ns": "1795425099283193037",
+            "st_nlink": "1",
+            "st_size": "1598025",
+            "st_uid": "1000"
+          },
+          "private_body": {
+            "bytes": 1598025,
+            "full9": {
+              "st_ctime_ns": "1795425099283193037",
+              "st_dev": "66306",
+              "st_gid": "1000",
+              "st_ino": "71870005",
+              "st_mode": "33024",
+              "st_mtime_ns": "1795425099283193037",
+              "st_nlink": "1",
+              "st_size": "1598025",
+              "st_uid": "1000"
+            },
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/publication-remaining2570-selected-source-owner-READ-v02/raw/0670-work_catalog.json.DATA",
+            "sha256": "f44f00b3e2b4e6a60f79cd531b44e29469b374c9caff81af5c6f3d01543f9b71"
+          },
+          "relative_path": "ipfs_datasets_py/logic/autoformal/docs/work_catalog.json",
+          "repo_root": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/ipfs_datasets-lir14-consumer-regression-v01",
+          "source_HEAD": "ebab0edfa5b5630a3acd8ad7e133447a51d49252",
+          "stable_FD_and_path_F9": true,
+          "wrapper_index": 720
+        },
+        "source_array_index": 484
+      },
+      "source_record_canonical_sha256": "59370d4c11a187022c4aaf8ed760b44d4583d95156885770cec2575aa23f9497"
+    }
+  ]
+}

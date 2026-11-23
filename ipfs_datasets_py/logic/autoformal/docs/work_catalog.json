@@ -23290,6 +23290,374 @@
       "scope": "Entire world legal corpus -> source-grounded LegalIR -> Lean4, across jurisdictions and original languages; U.S. Code pilot, existing eight-phase hierarchy unchanged.",
       "status": "PRIVATE_ACTUAL_PAIRED_AND_CAPACITY_EVIDENCE_NOT_WRITE_SELECTION",
       "task_ids": []
+    },
+    {
+      "id": "world-source66-codec-terminal-normal32-milestone494",
+      "milestone": 494,
+      "observations": {
+        "Source66_CAS": {
+          "bytes": 8835,
+          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/codec-terminal-two-file-Source66-CAS-v01/actual-closed-Source66-canonical-codec-terminal-two-file-CAS-authenticated-readback-v01.json",
+          "sha256": "71121b2bbfaae87a4d617aa3cb51f44e2a9404b6da1f2980db9245c2fee0fbde"
+        },
+        "StageA": "Four unit postimages remain on disk only; no reload, restart, hold, refill or service runtime efficacy is inferred.",
+        "actual_Source_epoch": 66,
+        "approximate_SDK_seconds": {
+          "collect": 2.1,
+          "precision": "Rounded Root-supplied values; approximate timings only.",
+          "run": 17.655
+        },
+        "authority": {
+          "CE_or_NLL_claim": false,
+          "Lean_or_Native_qualification_claim": false,
+          "actual_494M_model_runtime": false,
+          "admitted_producer_factory_runtime_qualified": false,
+          "corpus_or_task_completion_authority": false,
+          "full_pipeline_qualified": false,
+          "heldout_model_comparison": false,
+          "learning_or_generalization_claim": false,
+          "legal_quality_or_source_fidelity_claim": false,
+          "service_activation_or_refill_selected": false
+        },
+        "count_boundary": "32 parents plus 29 passing typed subreports are 61 raw reports, not 61 tests. Prior private 15, private 5 and initial 4 overlap and are not added.",
+        "explicit_limits": [
+          "32parents+29subreports are61raw, not61tests;15private/5private/4initial cohorts overlap, never sum.",
+          "Software/directcodec+retainedtinyCPUdefaultgeneration only. No actual494M-model/tokenizer/Source62heldout/P0/TRAIN3/CE/NLL/learning/legal/Lean/corpus/fullpipeline qualification.",
+          "Committedproducerpolicy/forwarding implemented; admittedproducerfactory runtime is still unqualified/static-only. Newworker fingerprint requires explicitly reviewed Source/checkpoint relationship beforefuturemodeluse; no oldauthorityretag.",
+          "Source66installed software remainsopt-in; StageA4unitson-diskonly/no reload,restart,hold,refill orserviceruntimeefficacy inferred."
+        ],
+        "future_model_use": "New worker Source identity requires an explicitly reviewed Source/checkpoint relationship; no old authority is retagged.",
+        "historical_preparation_retained": {
+          "initial_failed_auth_RUN_manifest_reconstruction": "Retained as preparation history; no product failure or runtime/Source replay inferred.",
+          "metadata_controls_not_added_to_normal32": true,
+          "runtime_binding": "Private v02 non-null-only authority gap corrected in v03 shared typed-clock metadata; both histories retained.",
+          "separate_metadata_control_counts": [
+            13,
+            9
+          ]
+        },
+        "normal_Source_observations": {
+          "all_Source_native_resource_and_parent_release_closed": true,
+          "equal_Source_fences": 6,
+          "fixture_closure": 8,
+          "freshly_compiled_maintained_owners": 8,
+          "normal_conftests": 5,
+          "rewritten_test_compiled_SHA256": null,
+          "rewritten_test_compiled_SHA_observed": false,
+          "test_Source_module_spec_and_item_code_filename_authenticated": true
+        },
+        "normal_readback": {
+          "bytes": 33051,
+          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/installed-worker-decoder-terminal-nine-owner-normal-INERT-Source65-existing-owner-preparation-v01/v03-closed-shared-runtime-clock-authority-UNBOUND/actual-Root-selected-runtime-v01/output-v01/actual-closed-Source66-worker-codec-normal32-GREEN-authenticated-readback-v01.json",
+          "sha256": "fdb466bbf8bd612068505a4e55668eff2cea8edf6e5eaee99225f77b0d2c8fe3"
+        },
+        "opt_in_generation_contract": {
+          "default_omission_and_None_preserved": true,
+          "generation_policy_schema": "reviewed-decoder-digest-omitted-terminal-generation-policy/v1",
+          "next_finite_forward_singleton_EOS_selection": true,
+          "not_raw_argmax_or_posthoc_append": true,
+          "producer_identity_prefix": "reviewed-decoder-digest-omitted-terminal-producer/v1:",
+          "strict_existing_public_codec_without_hidden_reference": true,
+          "terminal_profile": "digest-omitted-canonical-body-eos/v1"
+        },
+        "owning_test": {
+          "bytes": 1121230,
+          "sha256": "c97a8b8248bd374fea762fecc6cc583ec8b7c35246d5c1562edac107af9d17ce"
+        },
+        "qualification_boundary": "Software/direct codec and retained tiny CPU default generation only. Committed producer policy and forwarding are implemented; admitted producer-factory runtime remains unqualified/static-only.",
+        "software_counts": {
+          "errors": 0,
+          "failures": 0,
+          "new_parent_tests": 15,
+          "passing_typed_subreports": 29,
+          "raw_reports": 61,
+          "retained_parent_tests": 17,
+          "skips": 0,
+          "unique_parent_tests": 32
+        },
+        "unchanged_old_science": "Original P0, TRAIN3 and GEN37 model/checkpoint/configuration/admission results retain their old Source scope; no new model update or Source66 scientific requalification.",
+        "worker": {
+          "bytes": 591227,
+          "sha256": "6dc99f98868d69ce92c8a6218458bc9ee60d35faefc362ad42aaa8f69875a439"
+        }
+      },
+      "observed_bytes": 4658,
+      "observed_sha256": "d215f67c57d5bf17114dcf71755553938c41c1b60423cd1959cef82cfc04e8ec",
+      "path": "/tmp/Root-milestone494-Source66-codec-normal32-one-guide-wave-facts-v01.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Actual closed Source66 codec-terminal software qualification: 32 unique parent tests, 29 passing typed subreports, 61 raw reports and 0 failures/errors/skips. Model, legal, Native, admitted producer and service activation scopes remain separate.",
+      "status": "Source66_normal32_software_qualified_separate_science_and_service_scopes_unchanged"
+    },
+    {
+      "id": "world-source68-closed-terminal-source-proof-normal8-milestone495",
+      "milestone": 495,
+      "observations": {
+        "actual_Source_epoch": 68,
+        "Source68_CAS": {
+          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/closed-terminal-source-proof-two-file-Source68-CAS-v01/actual-closed-Source68-canonical-closed-terminal-source-proof-two-file-CAS-authenticated-readback-v01.json",
+          "bytes": 9049,
+          "sha256": "fa7c9e23bf38a471ec376e2050cfe46a1a02729b45cfad6ce4ea9e994c97a22b"
+        },
+        "normal_readback": {
+          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/installed-worker-closed-terminal-source-proof-normal8-INERT-existing-owner-preparation-v01/v03-actual68-bound-runtime-UNBOUND/actual-Root-selected-runtime-v01/output-v01/actual-closed-Source68-closed-terminal-source-proof-normal8-GREEN-authenticated-readback-v01.json",
+          "bytes": 26120,
+          "sha256": "2334373c02394ba3acb3febf5fad13ff663ace05f24b7bf4199b566b8b82f22d"
+        },
+        "raw_JUnit": {
+          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/installed-worker-closed-terminal-source-proof-normal8-INERT-existing-owner-preparation-v01/v03-actual68-bound-runtime-UNBOUND/actual-Root-selected-runtime-v01/output-v01/worker-closed-terminal-source-proof-normal8-run-result0-output1.bin",
+          "bytes": 1817,
+          "sha256": "dcc001e6e5e1bae515e9f36e4ef1bd85a80756ce2887675c52b1194e98505e9a"
+        },
+        "worker": {
+          "bytes": 597715,
+          "sha256": "451be2dee4de4365ecf78183629a2a4283aa31adeb9a4ddcdaeae0843ad90528"
+        },
+        "owning_test": {
+          "bytes": 1131731,
+          "sha256": "aa24e5029c3a33cf1524c6c2dba28b7b9136d8d3de714581e8c5966f65afc8f8"
+        },
+        "source_proof": "Existing worker source-epoch projection recognizes one closed raw terminal-generation source extension via vetted executing glue hash, exact dispatch removal to complete6dc then12 exact reversals to complete348. Historical65d/7fbc-to881 origin guard remains first and historical proof nested unchanged.",
+        "preservation": "Only one old projection definition changes plus2purehelpers; all other worker definitions and complete previous owning-test prefix exact. No broad AST omission, candidate selfhash waiver, numeric/generation equivalence or historical-execution requalification.",
+        "software_counts": {
+          "unique_parent_passes": 8,
+          "subtest_reports": 0,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "normal_Source_observations": {
+          "normal_nine_owner_audits": 9,
+          "fresh_maintained_source_compiles": 8,
+          "test_rewrite_compiled_SHA256": null,
+          "test_rewrite_compiled_SHA_observed": false,
+          "ordinary_test_source_and_item_origin_bound": true,
+          "all_owned_Source_resource_process_reader_workspace_and_parent_closed": true
+        },
+        "negative_coverage": "Changed historical origin, dispatch, effectful glue even with recomputed supplied claim, hash literal, terminal body, unrelated prior bytes refuse. Positive exact inverses/idempotence/history binding retained.",
+        "engineering_cohorts_separate": {
+          "actual_normal_Source68": {
+            "unique_parent_passes": 8,
+            "subtest_reports": 0,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          "private_source_controls": 37,
+          "private_retained_metadata_controls": 19,
+          "old_actual_normal_Source66": {
+            "parent_tests": 32,
+            "typed_subreports": 29
+          },
+          "cohorts_pooled_or_added": false
+        },
+        "count_boundary": "Eight actual normal parents are one cohort; do not add private37 source/private19 metadata controls or old Source66 normal32 parents/29 subreports.",
+        "configuration_and_checkpoint_boundary": "Original-parent context and configuration marker, pipeline, backend, admission, license and dependency checks remain mandatory and unchanged. Actual original configuration-marker body still unread/unknown. Current already-migratedec8 parent remains unsupported as original; no actual checkpoint migration, model restore, registration or new policy model run.",
+        "historical_preparation_failure": "Reader preview used wrong normal8 phase/group literal; genuine factory refused BEFORE request/SDK. Corrected preview arguments only; preserved failure and exactlyone actual collect+RUN.",
+        "accounting_erratum": {
+          "description": "Original sealed private descriptor derivative-output arithmetic1709446 is superseded by exact8B erratum1729446; actual file refs were exact. Not a new Source charge or test count.",
+          "reference": {
+            "path": "/tmp/closed-terminal-source-proof-existing-worker-private-v01/new_full_module_derivatives_output_bytes.corrected.txt",
+            "bytes": 8,
+            "sha256": "06c73988434a28a997838bbc30fbb97be81617ce6fdb6f9e8ef2ff7ac733cd50"
+          }
+        },
+        "authority": {
+          "full_goal_complete": false,
+          "actual_checkpoint_eligibility_established": false,
+          "already_migrated_parent_supported_as_original": false,
+          "historical_execution_requalified": false,
+          "actual_checkpoint_migration_or_restore": false,
+          "model_registration_or_new_policy_model_run": false,
+          "legal_quality_proof_convergence_or_corpus_completion": false,
+          "service_activation": false,
+          "hosted_Native_CI_verified": false,
+          "admitted_full_producer_factory_runtime_qualified": false
+        },
+        "unchanged_science_and_operations": "All original P0/TRAIN3 scalar/heldout/GEN37/Source62 identities, task statuses, pending legal review and full producer-factory runtime scope preserved. No service activation, actual model/DB/Native/Git operation, legal/quality/convergence/proof/corpus completion claim. HostedCI remains externally unverified; no new run gate."
+      },
+      "observed_bytes": 6250,
+      "observed_sha256": "79d6c0b683749c23658dc0e319809743bcdfc2ac6a2b4017a78f52e28a88a387",
+      "path": "/tmp/Root-milestone495-Source68-closed-source-proof-normal8-one-guide-wave-facts-v01.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Actual closed Source68 source-proof software and eight normal owning parent passes only. Original checkpoint/configuration eligibility, already-migrated parents, model/producer/legal/Native/service scopes remain separate.",
+      "status": "Source68_closed_source_proof_normal8_software_qualified_checkpoint_eligibility_unknown"
+    },
+    {
+      "id": "world-Home-recovery-normal9-original-pipeline-milestone496",
+      "milestone": 496,
+      "observations": {
+        "Home_install": {
+          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/LIVE_HOME-rescue-evidence-origin-three-file-CAS-v02-raw-beforeimage-helper/actual-closed-Home-rescue-evidence-origin-three-file-CAS-authenticated-readback-v01.json",
+          "bytes": 9520,
+          "sha256": "39e0af8e0f2ff9321331c2c4339957eccfe2bebc4d8a271ee1451e38fe9f2737"
+        },
+        "normal_readback": {
+          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/LIVE_HOME-installed-rescue-evidence-origin-normal9-INERT-existing-owner-preparation-v01/v02-actual-HOME3-Source69-bound-runtime-UNBOUND/actual-Root-selected-runtime-v01/output-v01/actual-closed-Home-rescue-evidence-origin-normal9-GREEN-authenticated-readback-v01.json",
+          "bytes": 25294,
+          "sha256": "64e0eb465f6e721078e4dc7312ddc225f2ade001efb2edfa21bfff8a0169ae4f"
+        },
+        "Root_independent_normal9": {
+          "path": "/tmp/Root-installed-HOME-rescue-normal9-independent-saved-evidence-check-v01.json",
+          "bytes": 1834,
+          "sha256": "56ff4f4f2b48c572834aee7e5b58518bc0fea08e24475903d409fd65733935af"
+        },
+        "raw_JUnit": {
+          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/LIVE_HOME-installed-rescue-evidence-origin-normal9-INERT-existing-owner-preparation-v01/v02-actual-HOME3-Source69-bound-runtime-UNBOUND/actual-Root-selected-runtime-v01/output-v01/home-rescue-evidence-origin-normal9-run-result0-output1.bin",
+          "bytes": 1948,
+          "sha256": "0f32eccb572d31419db007c9d3b2ace38138c18c00e57fc2010c8f82e40547ac"
+        },
+        "installed_scope": "Existing gate_recovery2829\u21921a78 and lane_resumec314\u219200bf plus new2510 owningtest, HOME root only; Source53temporary proposal never installed.",
+        "recovery_behavior": "Persist dependency-validation evidence origin with spent probe reservation before validator. Changed semantic evidence reports stale/unknown/current truthfully while retaining source-bound spent latch, old failure rows, repair/source counters and retry policy; no additional validation probe, replay, claim, completion or authority granted. All other typed/Unicode/bounds/custody code retained.",
+        "software_counts": {
+          "unique_parent_passes": 9,
+          "subtest_reports": 0,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "normal_source_observations": {
+          "ordinary_test_configuration": "HOME/test/pytest.ini and two normal conftests",
+          "direct_owner_source_audits": 3,
+          "maintained_compiled_owner_hashes": 2,
+          "rewritten_test_compiled_SHA256": null,
+          "rewritten_test_compiled_SHA_observed": false,
+          "test_source_module_and_item_origins_bound": true,
+          "all_Source_resource_native_readers_workspace_and_parent_closed": true
+        },
+        "engineering_scopes_separate": {
+          "actual_Home_normal9": {
+            "unique_parent_passes": 9,
+            "subtest_reports": 0,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+          },
+          "earlier_exact_Home_isolated_controls": {
+            "RED": 9,
+            "GREEN": 9
+          },
+          "separate_samecaller_passes": 4,
+          "cohorts_pooled_or_added": false,
+          "statement": "Earlier exactHOME isolated9RED\u21929GREEN and samecaller4PASS remain separate from actualnormal9; never13normalcases. Oldworker8/Home36/otherhistory not pooled."
+        },
+        "count_boundary": "Actual normal9 parents are not combined with earlier isolated9RED/9GREEN or samecaller4PASS; old worker8, Home36 and other cohorts retain their own scope.",
+        "failures_preserved": "Writer first failed BEFORE staging/mutation because rawbytes were passed to JSONarchive; actual16reads23505233B retained. Corrected rawarchive writer succeeded; privateempty/nonemptyarchivecheck occurred AFTERclosure, notretroactivelybefore. Reader stalepreviewnamespaceKeyError happened before Source/SDK; no failedactualSDKattempt or hiddenreplay.",
+        "original_configuration_pipeline_metadata_join": {
+          "observation": "Original7aa parent refs join saved6ba configuration and920 pipeline. Strict authenticated savedconfiguration has no cache_source_epoch_marker key. Derived complete publictokenizer contract and6fieldbinding from exact8523796B canonicalpipeline equal oldconfiguration values, including3IDs/vocabularyhash/tokenizerID.",
+          "reference": {
+            "path": "/tmp/Root-original-T3-config-pipeline-public-identity-join-v02-offered-worker-row.json",
+            "bytes": 3791,
+            "sha256": "220d16caa020eb416bfe3418c07eb509b3b0f4e952c77934407298fa5bfc4f31"
+          },
+          "provenance_and_remaining": "920 is content-matched constructor-order reconstruction, not historical runtime capture. Full old/current pipeline-source+5wrapper-marshal proof, actualcurrentconfiguration/backend/admission/license/dependency checks remain; no eligibility or migration established. Already-migratedec8 schema/reference cannotbe used as originalparent.",
+          "content_reconstruction_not_historical_runtime_capture": true,
+          "actual_checkpoint_eligibility_established": false
+        },
+        "authority": {
+          "full_WORLD_goal_complete": false,
+          "actual_checkpoint_eligibility_established": false,
+          "already_migrated_parent_supported_as_original": false,
+          "historical_runtime_capture_claimed": false,
+          "actual_model_restore_migration_or_registration": false,
+          "actual_DB_registry_or_Git_action": false,
+          "loaded_service_or_handler_runtime_qualification": false,
+          "mission_override_or_service_activation": false,
+          "task_requeue_claim_completion_or_extra_validation_probe_authority": false,
+          "Native_legal_or_corpus_authority": false
+        },
+        "source_and_model_scope": "Homebindings distinct from unchanged R2Source69. No loadedservice/currentmodel/wholeepoch/handler/task-requeue/validator/Native/legal/corpusauthority inferred. No serviceactivation, DB/model/checkpoint/registry/Git action.",
+        "frozen_cutoff": "No later prompt-owner capture or evolving consumer implementation is inserted or treated as runtime wiring."
+      },
+      "observed_bytes": 6539,
+      "observed_sha256": "cef636c7b413e99b8a033302fe7ba468b82ee95467aadd43015e638359970d48",
+      "path": "/tmp/Root-milestone496-Home-normal9-and-original-pipeline-one-guide-wave-facts-v01.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Actual closed Home recovery software normal9 and independently joined saved-original configuration/reconstructed-pipeline public identities only. Home bindings are separate from unchanged R2Source69; checkpoint, handler, mission, model and legal authority remain unestablished.",
+      "status": "Home_recovery_normal9_software_qualified_original_pipeline_identity_joined_checkpoint_eligibility_not_established"
+    },
+    {
+      "id": "current-release-v3-physical56-typed-json-20261114",
+      "observed_bytes": 43574,
+      "observed_sha256": "2073e9ac201c8975bc21f426c3e68e56ee83b25e339041116725eb1fd3eea891",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/current-canonical-release-v3-physical56-qualified-and-closed.json",
+      "root": "ipfs_datasets",
+      "scope": "Current canonical V3 physical/typed JSON/transport/selected CLI56 (54release+2shared-fixture);closed Source/native/process/storage;no actual Lean,statutory,parent,Hub or whole152 qualification.",
+      "status": "qualified_within_recorded_scope"
+    },
+    {
+      "id": "shared-lawrow6-closed-20261115",
+      "observed_bytes": 3124,
+      "observed_sha256": "eed2ea598830dca8f9ede4ebe281b2271b5aebbc23e8b77e0db3e8497051ae51",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/shared_lawrow6-shared-v01/cohort-closeout.json",
+      "root": "ipfs_datasets",
+      "scope": "Six selected fictional replay checks: three new shared-row cases, retained three-row positive and two helper controls; complete caches/offsets, duplicate/overlap refusal; closed own32MiB; no actual Lean/legal/model/Hub/corpus gain.",
+      "status": "qualified_within_recorded_scope"
+    },
+    {
+      "id": "remaining-release-regression35-closed-20261115",
+      "observed_bytes": 4547,
+      "observed_sha256": "c7e0f0c02e1e562313000c588725945748da58ec58c631100718dd6c10f69635",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/remaining-small-cohort-progress-6closed-shared6closed-physical6failed-v01.json",
+      "root": "ipfs_datasets",
+      "scope": "35of original remaining98 cases pass in six distinct captured-source runs;63 remain. Separate new shared-row3 cases; physical6 timeout retained/no JUnit/no credit. No whole current155 qualification or source-epoch pooling.",
+      "status": "qualified_within_recorded_scope"
+    },
+    {
+      "id": "existing-physical-five-owning-test-closed-20261115",
+      "observed_bytes": 3024,
+      "observed_sha256": "cfc604197e4fac88a0e2c0517a342fdcccd86e6a690142b0706a10b8393d4cb6",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/legacy_CLI_paths5-physical-current5-green-v01/cohort-closeout.json",
+      "root": "ipfs_datasets",
+      "scope": "Five existing invalid-path cases; test-only exact-leaf lifecycle correction, unchanged C19/SDK/CLI. Closed original custody/own32MiB durable; old real teardown error preserved. No observer runtime installed.",
+      "status": "qualified_within_recorded_scope"
+    },
+    {
+      "id": "remaining-release-regression52-closed-20261115",
+      "observed_bytes": 8385,
+      "observed_sha256": "f5538d1d1391ead49443031a47cebaf3bbc55513e384f91a9a8fdec0b458f6b3",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/remaining-small-cohort-progress-10closed-52passed-46remaining-v01.json",
+      "root": "ipfs_datasets",
+      "scope": "52of original98 selected release cases in10distinct source-bound closed scopes;46ordinary remain. No pooled whole155/current-source/Lean/model/statutory/corpus qualification.",
+      "status": "qualified_within_recorded_scope"
+    },
+    {
+      "id": "supervisor-sawm-source-preflight26-closed-20261115",
+      "observed_bytes": 4910,
+      "observed_sha256": "e4747e6cfece9d320db7c6cbb99fe07e295ba4c49c9afcbfaf2ff379ee16787b",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/SAWM_preflight_current26-small-v01/cohort-closeout.json",
+      "root": "ipfs_datasets",
+      "scope": "22new+4retained owning software checks for exact source availability before unit binding; olddata-only actualbinder failure preserved;SourceA3installed/closed Native+own32MiB. Current missing SAWM checkout/runtime/live rollout not restored.",
+      "status": "qualified_within_recorded_scope"
+    },
+    {
+      "id": "remaining-release98-and-155-case-coverage-20261115",
+      "observed_bytes": 29811,
+      "observed_sha256": "5a4360ef14a020060009ce568a229c36265301836acfa5574ddcb7f4b698f514",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/independent-final-remaining98-and-release155-captured-epoch-coverage-audit-v01.json",
+      "root": "ipfs_datasets",
+      "scope": "Independent raw accounting: 19 closed source-bound originals cover original98 remainder; earlier54 release and3 new shared cases yield all155 declared case IDs/39functions. Exact epochs remain separate, no unified-current-source or statutory corpus claim.",
+      "status": "qualified_within_recorded_scope"
+    },
+    {
+      "id": "current-013d-native-cache-helper-20261115",
+      "observed_bytes": 5230,
+      "observed_sha256": "92c62f7beb5e5e9d9961d7d53c502301f785156b6d268b2f4a8d2adc06a90137",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/current-native-cache-helper-binding-v01/current-native-cache-helper-v02-qualified-and-closed-v01.json",
+      "root": "ipfs_datasets",
+      "scope": "One fictional True cache helper; actual Lean4.34.1 version probe+2 compiles/empty axioms, disk reopen and0 Native commands on reuse/mismatch; current f492/013d/bd4a/e0c2 epoch; Source/Native/process/own16MiB closed. Zero pytest, no model/statutory/corpus authority.",
+      "status": "qualified_within_recorded_scope"
+    },
+    {
+      "id": "original-parent-v3-A-to-D-bridge-progress-20261115",
+      "observed_bytes": 78513,
+      "observed_sha256": "903d702e980a864dbf36cce64ad41cfc9416c4fad7c1ec84aa83d19be37e4978",
+      "path": "workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/original-parent-v3-bridge-progress-selected-evidence-v07-local-engineering-A-to-D-complete.json",
+      "root": "ipfs_datasets",
+      "scope": "Genuine v07 same-process/thread A handle consumed and original 83-file Native receipt authenticated through existing D local engineering replay for one fictional three-unit control only. Fresh D1 v08, ordinary28, observer63/live sources, actual clear and both immutable registries remain separately bound. Earlier v06 D failure and all prior source epochs retained. D closure/release/legal/remote/source-kernel/training flags false; two blockers preserved.",
+      "status": "GENUINE_V07_FICTIONAL_THREE_UNIT_LOCAL_ENGINEERING_A_TO_D_QUALIFIED_BINDING_CLEARED"
     }
   ]
 }

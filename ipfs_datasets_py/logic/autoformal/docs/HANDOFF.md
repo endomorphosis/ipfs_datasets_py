@@ -3227,3 +3227,169 @@ The closed consolidation inputs are pinned by `/tmp/Root-Main-493-actual-paired-
 Hosted current-revision native Lean success remains **unverified/null**. Root reports that the latest hosted check `135533859610` never started because of an account-billing lock; that cause is scoped to this particular check. Existing Lean4.34.1 lane code is not proof of a successful CI run. No account mutation, new CI job, rerun, service action or extra readiness gate is selected by this entry. Actual 493 installation remains subject to Root's separate existing-writer selection and exact current preimage checks.
 
 All prior Markdown, 24 task states/dependencies/criteria, 126 components and 492 evidence records including milestone 492 are preserved. No legal interpretation, source correspondence, statutory admission, corpus release, learned-model quality, convergence, processing or eight-phase completion is established. Root owns the current comparison/graph/runtime sequencing; this author performed private documentation preparation only.
+
+
+## Captured worktree records retained for publication — 2026-11-23
+
+The following sections retain their original source dates, result scopes and unresolved qualifications. They are indexed with twelve captured references added to the existing catalog; this reconciliation runs no tests and grants no new milestone, model, legal, proof, admission or completion credit. Existing task and component state is unchanged.
+
+## Milestone494 — opt-in public-codec terminal EOS; Source66 software qualification
+
+The existing decoder worker now accepts the explicit `digest-omitted-canonical-body-eos/v1` terminal profile through the closed `reviewed-decoder-digest-omitted-terminal-generation-policy/v1` policy and a distinct `reviewed-decoder-digest-omitted-terminal-producer/v1:` identity. After a real next forward and finite-logit/source guards, the existing strict digest-omitted codec can constrain that token selection to EOS when the generated body is complete. This is a singleton constraint, not an unconstrained argmax claim or posthoc EOS append. The predicate receives no hidden original/reference target; a valid semantic mutation remains structurally eligible. Default `None`, existing limits, refusal/outcome distinctions and prior policies are preserved.
+
+Source66 installed only `autoencoder_training_worker.py` (591227 B; SHA256 `6dc99f98868d69ce92c8a6218458bc9ee60d35faefc362ad42aaa8f69875a439`) and its owning test (1121230 B; SHA256 `c97a8b8248bd374fea762fecc6cc583ec8b7c35246d5c1562edac107af9d17ce`). The other Source identities, inputs/validators/Core, old artifacts, docs493, service configurations and Git/index state were preserved. New worker identity requires an explicit Source/checkpoint relationship for future model use; frozen Source62 P0/TRAIN3 results and GEN37 are not retagged.
+
+The selected normal owning run passed **32 unique parent cases**: 15 new codec/terminal controls and 17 retained default-generation cases. All 29 typed subreports passed; 61 raw reports and the JUnit suite attribute of 61 are not 61 tests. Exact 21-function coverage and actual collected IDs/order were used for RUN; no parameter IDs were guessed. Eight maintained owners had actual compilation/origin evidence; the rewritten owning-test compiled hash remains unobserved/None, with source/module/spec/item-filename bindings retained. Six saved Source fences were equal and all owned Source/resource/reader/workspace/parent leases closed. Shared parent/request/child launch authority was corrected and authenticated; prior inert and authentication failures remain historical, with no runtime replay.
+
+Evidence: private packet `26647/67ec57eb5441e13a0b36778f28c50fee1fed50035ed463e13be43e47c2a97080`; Source66 adoption compact `8835/71121b2bbfaae87a4d617aa3cb51f44e2a9404b6da1f2980db9245c2fee0fbde`; normal compact `33051/fdb466bbf8bd612068505a4e55668eff2cea8edf6e5eaee99225f77b0d2c8fe3`; raw JUnit `7505/297c0a36af8f1bd155e424f82ca99b8740070985543aaca77c4362cdb7dea3a1`. Full locators are indexed in catalog evidence494. Private 4/5/15 cohorts overlap; their counts must not be added to the normal32.
+
+Qualification covers authored software/direct codec controls and retained tiny CPU Torch generation. It does not qualify admitted producer-factory runtime, the saved 494M model, model-quality gains, statutory fidelity, legal review, Lean or a corpus release. No new model/optimizer/held-out run, registration, checkpoint migration or service reload/restart/refill occurred. StageA remains on disk only. The full eight-phase WORLD goal remains open.
+
+
+
+
+## Milestone 495 — closed terminal source proof and normal8 (2026-11-22)
+
+Source68 installs the existing worker's closed terminal-generation source proof: the vetted executing glue and one dispatch reverse to the complete prior6dc worker, then twelve exact pinned reversals recover348. The historical65d/7fbc-to881 origin guard remains first; its proof stays nested unchanged. Only the projection plus two pure helpers change, and the entire old owning-test prefix is retained. Worker451be2de and testaa24e502 are new identities.
+
+Actual normal package collection and RUN passed eight unique parent tests, zero subreports and zero failures/errors/skips; raw JUnit reports8 cases in3.074s. Nine source-owner audits and eight maintained compile hashes matched; rewritten-test compiled SHA remains unobserved. Owned Source/resource/process/readers/workspace/parent cleanup closed. The wrong-label preview refusal happened before any SDK job and is preserved. Private37 source controls,19 metadata controls and earlier Source66 normal32 remain separate cohorts.
+
+This closes the exact source-proof software gap, not checkpoint eligibility or generation equivalence. Original-parent configuration-marker/pipeline/backend/admission/license/dependency checks remain mandatory; the actual original configuration-marker body is still unread. Already-migrated parents remain unsupported. No model, checkpoint migration, registry, DB, Native, Git or service action was performed. P0/TRAIN3 and GEN37 identities/results remain unchanged; the WORLD eight-phase goal remains open. Exact receipts and the retained arithmetic erratum are bound in `/tmp/Root-milestone495-Source68-closed-source-proof-normal8-one-guide-wave-facts-v01.json`. Next: establish the original parent's configuration/pipeline prerequisites through the existing owner before any separately admitted derivative.
+
+
+
+
+## Milestone 496 — Home recovery evidence origin and normal9 (2026-11-22)
+
+Installed the existing HOME gate/lane evidence-origin port (1a78a50c/00bf759b) and new owning test2510afed. Probe origin is persisted with the spent reservation before validation. Evidence changes report stale/current/unknown without refunding the source-bound probe, deleting failures, resetting retry/repair counters or granting authority. All other typed, Unicode, bounds and custody code is preserved. The temporary Source53-root proposal was not installed.
+
+Actual normal package qualification passed9 unique parents,0 subreports and0 failures/errors/skips; JUnit15.847s, SDK collect16.743500s/run17.284493s. Three source-owner audits and both maintained compiled-source hashes matched; rewritten-test compile SHA remains unobserved. Source/resources/owned processes/readers/workspace/parent closed. Private9RED-to-GREEN and4callerPASS remain separate engineering evidence. The pre-write rawbytes/JSONarchive failure and pre-SDK preview KeyError are retained; neither was a failed product test. Rawarchive validation happened after the corrected write closed.
+
+The original7aa checkpoint's saved6ba configuration and920 pipeline now join exactly in public tokenizer contract, six-field binding, IDs and vocabulary hash; the original configuration marker key is absent. Pipeline920 is a content-matched reconstruction, not a historical capture. Complete old/current source/marshal/config/backend/admission/license/dependency checks and current eligibility remain unresolved; no migration or model run occurred. Original P0/TRAIN3/GEN37 results remain unchanged.
+
+This is installed software qualification, not loaded-service activation or trusted metadata dispatch. Next use the existing prompt.prompt_workflow catalog and trusted context for bounded metadata-only resolution with durable reservation and a partial-progress result; existing retry/replay actions cannot be relabelled. Receipt facts: `/tmp/Root-milestone496-Home-normal9-and-original-pipeline-one-guide-wave-facts-v01.json`. Full WORLD goal remains open.
+
+
+## V3 original-parent bridge: same-thread A-to-D control verified; binding cleared — 2026-11-15
+
+Genuine original 22410 completed the existing A parent and D consumer in the same process and thread. D consumed the issued opaque A handle and authenticated the original 83-file Native receipt against the same signed physical component. The original legacy 77-file loader separately refused that genuine V3 capability. The full readback verifies the original Source, SDK wait, Native/process closeout, output seals and durable release of the caller's own 16 MiB. Three declared Native commands compiled eight modules and produced 15 empty-axiom observations.
+
+This is a successful local engineering replay for one fictional three-unit control. D still reports `closure_complete`, release, statutory/legal, remote, source-kernel and training authority false, with its two existing blockers retained. It establishes no whole-USCode completion, real statutory review, training/gold admission or global scientific-worker activation. The fresh D1 v08, genuine v07, current c970/493/7d3 ordinary 28 cases in six functions, earlier 58-case reviewed-parent failure-close qualification, observer 63 cases and older A272/D39/A26/A50/namespace/D1 proofs remain separate source-bound scopes.
+
+Genuine v06 remains an A-positive, D-failed original: its persisted V3 packet was read through a default-V2 helper. The minimal explicit-version forwarding fix then passed four new routing/domain cases and 24 retained controls before the fresh successful genuine run. Earlier 89631 retains its failed namespace proof, raw UNKNOWN and Root TERM closure; failed software originals 65314 and 51272 retain their own 16 MiB and zero partial-case credit. These receipts and failed attempts are preserved.
+
+The existing lane/fleet observer qualified 63 cases in 24 functions, and its two Primary/OA CLI sources are live. The byte-identical v02 producer executed once, registered the actual caller PID/birth/boot/start and execed the same controller. Natural monitoring observed the caller; gone/unobservable status retained attention even after reported Source closure. Only after independent whole-caller/D outcome review did Root explicitly clear the optional binding; actual readback and a natural cycle confirm baseline config ab496. Both v07 registry edaf and old v06 registry 3ec5 remain immutable. The 600-second observer window grants no custody, handle, retry, signal, cleanup, restart or completion authority. No next original is automatically enrolled.
+
+All 123 current owners, 467 evidence IDs and 24 task states, including peer additions, are preserved. [Selected bridge evidence](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/original-parent-v3-bridge-progress-selected-evidence-v07-local-engineering-A-to-D-complete.json).
+
+
+## Full-release CLI selects strict wire metadata — 2026-11-15
+
+The existing `scripts/ops/legal_data/build_uscode_full_hf_release.py` now
+selects the existing `hf-default-parquet-envelope/v1` packaging profile by
+default. Staged release metadata lists exact files and records measured
+Parquet schema, row counts and Arrow bytes. Unselected files in the staging
+directory remain untouched and cannot enter the manifest through a broad
+glob. `--legacy-metadata-profile` explicitly retains the old CLI behavior;
+the underlying producer API keeps its existing default.
+
+The old CLI reproduced a strict-intake failure after successful real local
+staging. The corrected default and explicit legacy route pass both owning
+tests, using real tiny Parquet files and the existing staging/intake owners.
+Only upstream family generation is modeled. All229 source pins stayed exact;
+the original156-second run closed Source, Native and process custody and
+durably released its own32MiB reservation. This is local packaging evidence,
+with no Hub upload, model execution, statutory review or corpus admission.
+Public law/span/entity compatibility findings remain separate from this fix.
+
+[Closed two-case qualification](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/HF_full_release_cli_current2-small-v01/cohort-closeout.json).
+
+
+
+## Current Lean verification-profile cache roundtrip — 2026-11-15
+
+A fresh original now exercises the existing cache helper against the updated
+Lean backend and proof cache, including the lean-kernel-verification/v1 fence
+and current verified fixture loader. Lean 4.34.1 ran one version probe and two
+real compilations. Both compiled obligation reports contain no axiom
+dependencies. Disk persistence/reopen and exact reuse pass; reuse and changed
+context/obligation checks launch zero additional Lean commands.
+
+This is one fictional True-obligation control, with zero pytest case credit.
+The captured backend f4925374, cache 013d9977, kernel test bd4a7e5b and fixture
+e0c287ad form its tested source epoch. All 216 source/control pins and declared
+public Native inputs stayed unchanged; 52 source buffers and 53 loaded origins
+were recorded. The original parent genuinely exited zero, closed Source,
+Native and process custody, and durably released its own 16 MiB promise.
+No compiler/cache implementation was duplicated. The existing caller-owned
+runner made no nested resource grant. This does not establish statutory
+correspondence, training eligibility, model quality or corpus admission.
+
+[Closed current Native qualification](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/current-native-cache-helper-binding-v01/current-native-cache-helper-v02-qualified-and-closed-v01.json).
+
+
+
+
+## Shared law-row replay and release regression checks — 2026-11-15
+
+The existing physical fixture represents two source rows carrying three legal
+units. It retains complete original bytes, exact character and UTF-8 offsets,
+all span overlaps and one graph source-version node per identity. Signing binds
+the original shared row before admission; source/IR artifact identities stay
+distinct for each unit. The prior three-row default remains available.
+
+The shared-row run passed six checks: three new cases, the retained three-row
+positive and two shared-artifact controls. The five invalid-path cases also
+passed after their owning test gained exact-leaf cleanup following its original
+CLI assertions. Original and working snapshots plus ordinary observation
+evidence remain; the C19 plugin, SDK and CLI were not changed for this fix.
+Both runs closed all original custody and released their own 32 MiB promises.
+The old symlink teardown error and earlier timed-out runs remain preserved.
+
+All 98 cases in the previously unqualified regression selection now have
+passing results across 19 closed originals. The latest nine sequential runs
+cover the final 46. Independent raw-JUnit accounting joins those 98 with the
+earlier 54 release cases and three new shared-row cases: all 155 declared
+release case IDs and 39 functions are covered. Helper cases and overlapping
+runs are not added twice. Every scope retains its exact source epoch; this is
+not one unified current-source run or verification of statutory meaning.
+Actual corpus Native-parent integration, immutable Hub readback, real legal
+review and a complete statutory Lean corpus remain open.
+
+[Shared-row closeout](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/shared_lawrow6-shared-v01/cohort-closeout.json). [Physical5 closeout](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/legacy_CLI_paths5-physical-current5-green-v01/cohort-closeout.json). [Complete98 closeout](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/remaining-release98-complete-19closed-v01.json). [Independent155 accounting](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/independent-final-remaining98-and-release155-captured-epoch-coverage-audit-v01.json).
+
+
+
+
+## Current V3 three-cache integration and typed JSON correction — 2026-11-14
+
+The integration checkout now extends the existing release coordinator and CLI
+with the explicit V3 law/span/entity path. Complete admission and graph
+artifacts use the existing norm correspondence JSON profile, retaining the
+1,000,000-byte artifact and 8 MiB request ceilings and all downstream semantic
+and independent-pin validation. Generic graph records and V1/V2 keep their
+existing decoder limits. The shared review fixture now inventories one exact
+artifact per identity while preserving every legal unit and cross-reference;
+conflicting bytes under one identity refuse before manifest replacement.
+
+A fresh canonical-source run passed **56 cases in 13 functions**: 54 release
+cases and two shared-fixture controls. It covers a complete three-unit
+fictional physical replay, damaged legal JSON, complete 83-file packet
+transport, selected V1/V2 behavior and direct/module CLI paths. Source, native
+resource, process, genuine wait and storage custody closed; this successful
+run released only its own 32 MiB promise. The earlier missing-API, temporary
+factory, duplicate-reference and generic-depth failures remain preserved.
+A larger legacy batch hit its original 120-second deadline and grants no
+whole-batch credit. Use the retained smaller cohorts and the existing
+`--owned-ordinary-temp-factory` option for remaining checks.
+
+At that run’s cutoff, the release owning file declared 152 cases; **98 remained
+unqualified on its captured source**. The prior 35-case transport result overlaps this run
+and must not be added to it. No actual Lean build, original Native-parent
+authentication, immutable Hub readback, statutory review, model fitting or
+corpus release is established. V3 remains an explicit local replay path.
+[Closed qualification](../../../../workspace/test-logs/federal-corpus-audits/legal-ir-mixed-renderer-preservation-20261111-v01/release-v3-candidate-v02/current-main-qualification-20261114-v01/current-canonical-release-v3-physical56-qualified-and-closed.json).
+
+
+
+Publication reconciliation adds no new runtime or legal qualification.

@@ -1306,6 +1306,282 @@
         },
         "user_goal_phase": "User-goal Phase 5 source-conditioned decoder/fresh-objective experiment preparation; historical programme Phase 05/task states unchanged."
       }
+    },
+    "current_user_goal_codec_terminal_normal32_evidence_milestone494": {
+      "Root_facts": {
+        "bytes": 4658,
+        "path": "/tmp/Root-milestone494-Source66-codec-normal32-one-guide-wave-facts-v01.json",
+        "sha256": "d215f67c57d5bf17114dcf71755553938c41c1b60423cd1959cef82cfc04e8ec"
+      },
+      "StageA": "Four unit postimages remain on disk only; no reload, restart, hold, refill or service runtime efficacy is inferred.",
+      "actual_normal32_readback": {
+        "bytes": 33051,
+        "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/installed-worker-decoder-terminal-nine-owner-normal-INERT-Source65-existing-owner-preparation-v01/v03-closed-shared-runtime-clock-authority-UNBOUND/actual-Root-selected-runtime-v01/output-v01/actual-closed-Source66-worker-codec-normal32-GREEN-authenticated-readback-v01.json",
+        "sha256": "fdb466bbf8bd612068505a4e55668eff2cea8edf6e5eaee99225f77b0d2c8fe3"
+      },
+      "approximate_SDK_seconds": {
+        "collect": 2.1,
+        "precision": "Rounded Root-supplied values; approximate timings only.",
+        "run": 17.655
+      },
+      "authority": {
+        "CE_or_NLL_claim": false,
+        "Lean_or_Native_qualification_claim": false,
+        "actual_494M_model_runtime": false,
+        "admitted_producer_factory_runtime_qualified": false,
+        "corpus_or_task_completion_authority": false,
+        "full_pipeline_qualified": false,
+        "heldout_model_comparison": false,
+        "learning_or_generalization_claim": false,
+        "legal_quality_or_source_fidelity_claim": false,
+        "service_activation_or_refill_selected": false
+      },
+      "catalog_evidence_id": "world-source66-codec-terminal-normal32-milestone494",
+      "counts_are_not_pooled": "Private 15/private 5/initial 4 overlap. The 29 subreports are not additional parent tests.",
+      "current_worker_and_test": {
+        "owning_test": {
+          "bytes": 1121230,
+          "sha256": "c97a8b8248bd374fea762fecc6cc583ec8b7c35246d5c1562edac107af9d17ce"
+        },
+        "worker": {
+          "bytes": 591227,
+          "sha256": "6dc99f98868d69ce92c8a6218458bc9ee60d35faefc362ad42aaa8f69875a439"
+        }
+      },
+      "future_model_use": "New worker Source identity requires an explicitly reviewed Source/checkpoint relationship; no old authority is retagged.",
+      "milestone": 494,
+      "normal_Source_scope": {
+        "all_Source_native_resource_and_parent_release_closed": true,
+        "equal_Source_fences": 6,
+        "fixture_closure": 8,
+        "freshly_compiled_maintained_owners": 8,
+        "normal_conftests": 5,
+        "rewritten_test_compiled_SHA256": null,
+        "rewritten_test_compiled_SHA_observed": false,
+        "test_Source_module_spec_and_item_code_filename_authenticated": true
+      },
+      "opt_in_contract": {
+        "default_omission_and_None_preserved": true,
+        "generation_policy_schema": "reviewed-decoder-digest-omitted-terminal-generation-policy/v1",
+        "next_finite_forward_singleton_EOS_selection": true,
+        "not_raw_argmax_or_posthoc_append": true,
+        "producer_identity_prefix": "reviewed-decoder-digest-omitted-terminal-producer/v1:",
+        "strict_existing_public_codec_without_hidden_reference": true,
+        "terminal_profile": "digest-omitted-canonical-body-eos/v1"
+      },
+      "preparation_history": {
+        "initial_failed_auth_RUN_manifest_reconstruction": "Retained as preparation history; no product failure or runtime/Source replay inferred.",
+        "metadata_controls_not_added_to_normal32": true,
+        "runtime_binding": "Private v02 non-null-only authority gap corrected in v03 shared typed-clock metadata; both histories retained.",
+        "separate_metadata_control_counts": [
+          13,
+          9
+        ]
+      },
+      "preservation": "All prior migration fields, ordered 24 tasks, statuses, dependencies, programme hierarchy, permissions and old Phase5 scientific fields remain unchanged. This is one additive evidence field, not a task or capability upgrade.",
+      "qualification_boundary": "Software/direct codec and retained tiny CPU default generation only. Committed producer policy and forwarding are implemented; admitted producer-factory runtime remains unqualified/static-only.",
+      "summary": "Source66 installed opt-in canonical-body EOS codec software passed normal 32 parents (15 new and 17 retained), with 29 passing typed subreports and 61 raw reports, 0 failures/errors/skips; Source/native/resource and parent custody closed.",
+      "unchanged_old_science": "Original P0, TRAIN3 and GEN37 model/checkpoint/configuration/admission results retain their old Source scope; no new model update or Source66 scientific requalification."
+    },
+    "current_user_goal_closed_terminal_source_proof_normal8_evidence_milestone495": {
+      "milestone": 495,
+      "catalog_evidence_id": "world-source68-closed-terminal-source-proof-normal8-milestone495",
+      "Root_facts": {
+        "path": "/tmp/Root-milestone495-Source68-closed-source-proof-normal8-one-guide-wave-facts-v01.json",
+        "bytes": 6250,
+        "sha256": "79d6c0b683749c23658dc0e319809743bcdfc2ac6a2b4017a78f52e28a88a387",
+        "full9": {
+          "st_dev": "66306",
+          "st_ino": "579318",
+          "st_mode": "33024",
+          "st_nlink": "1",
+          "st_uid": "1000",
+          "st_gid": "1000",
+          "st_size": "6250",
+          "st_mtime_ns": "1795382065955967647",
+          "st_ctime_ns": "1795382065955967647"
+        },
+        "FD_closed": true,
+        "scope": "existing selected private DATA, not fresh canonical currentness"
+      },
+      "actual_Source68_install": {
+        "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/closed-terminal-source-proof-two-file-Source68-CAS-v01/actual-closed-Source68-canonical-closed-terminal-source-proof-two-file-CAS-authenticated-readback-v01.json",
+        "bytes": 9049,
+        "sha256": "fa7c9e23bf38a471ec376e2050cfe46a1a02729b45cfad6ce4ea9e994c97a22b"
+      },
+      "actual_Source68_normal8": {
+        "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/installed-worker-closed-terminal-source-proof-normal8-INERT-existing-owner-preparation-v01/v03-actual68-bound-runtime-UNBOUND/actual-Root-selected-runtime-v01/output-v01/actual-closed-Source68-closed-terminal-source-proof-normal8-GREEN-authenticated-readback-v01.json",
+        "bytes": 26120,
+        "sha256": "2334373c02394ba3acb3febf5fad13ff663ace05f24b7bf4199b566b8b82f22d"
+      },
+      "raw_JUnit": {
+        "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/installed-worker-closed-terminal-source-proof-normal8-INERT-existing-owner-preparation-v01/v03-actual68-bound-runtime-UNBOUND/actual-Root-selected-runtime-v01/output-v01/worker-closed-terminal-source-proof-normal8-run-result0-output1.bin",
+        "bytes": 1817,
+        "sha256": "dcc001e6e5e1bae515e9f36e4ef1bd85a80756ce2887675c52b1194e98505e9a"
+      },
+      "summary": "Closed terminal-source proof software is installed under Source68 and passed eight unique normal owning parents with zero failures, errors, skips or subtest reports. This is source-proof qualification, not saved-checkpoint eligibility.",
+      "implementation": "Existing worker source-epoch projection recognizes one closed raw terminal-generation source extension via vetted executing glue hash, exact dispatch removal to complete6dc then12 exact reversals to complete348. Historical65d/7fbc-to881 origin guard remains first and historical proof nested unchanged.",
+      "preservation": "Only one old projection definition changes plus2purehelpers; all other worker definitions and complete previous owning-test prefix exact. No broad AST omission, candidate selfhash waiver, numeric/generation equivalence or historical-execution requalification.",
+      "actual_normal_counts": {
+        "unique_parent_passes": 8,
+        "subtest_reports": 0,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "normal_Source_scope": {
+        "normal_nine_owner_audits": 9,
+        "fresh_maintained_source_compiles": 8,
+        "test_rewrite_compiled_SHA256": null,
+        "test_rewrite_compiled_SHA_observed": false,
+        "ordinary_test_source_and_item_origin_bound": true,
+        "all_owned_Source_resource_process_reader_workspace_and_parent_closed": true
+      },
+      "engineering_cohorts_separate": {
+        "actual_normal_Source68": {
+          "unique_parent_passes": 8,
+          "subtest_reports": 0,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "private_source_controls": 37,
+        "private_retained_metadata_controls": 19,
+        "old_actual_normal_Source66": {
+          "parent_tests": 32,
+          "typed_subreports": 29
+        },
+        "cohorts_pooled_or_added": false
+      },
+      "negative_coverage": "Changed historical origin, dispatch, effectful glue even with recomputed supplied claim, hash literal, terminal body, unrelated prior bytes refuse. Positive exact inverses/idempotence/history binding retained.",
+      "configuration_and_checkpoint_boundary": "Original-parent context and configuration marker, pipeline, backend, admission, license and dependency checks remain mandatory and unchanged. Actual original configuration-marker body still unread/unknown. Current already-migratedec8 parent remains unsupported as original; no actual checkpoint migration, model restore, registration or new policy model run.",
+      "historical_setup_failure": "Reader preview used wrong normal8 phase/group literal; genuine factory refused BEFORE request/SDK. Corrected preview arguments only; preserved failure and exactlyone actual collect+RUN.",
+      "accounting_erratum": {
+        "description": "Original sealed private descriptor derivative-output arithmetic1709446 is superseded by exact8B erratum1729446; actual file refs were exact. Not a new Source charge or test count.",
+        "reference": {
+          "path": "/tmp/closed-terminal-source-proof-existing-worker-private-v01/new_full_module_derivatives_output_bytes.corrected.txt",
+          "bytes": 8,
+          "sha256": "06c73988434a28a997838bbc30fbb97be81617ce6fdb6f9e8ef2ff7ac733cd50"
+        }
+      },
+      "authority": {
+        "full_goal_complete": false,
+        "actual_checkpoint_eligibility_established": false,
+        "already_migrated_parent_supported_as_original": false,
+        "historical_execution_requalified": false,
+        "actual_checkpoint_migration_or_restore": false,
+        "model_registration_or_new_policy_model_run": false,
+        "legal_quality_proof_convergence_or_corpus_completion": false,
+        "service_activation": false,
+        "hosted_Native_CI_verified": false,
+        "admitted_full_producer_factory_runtime_qualified": false
+      },
+      "old_science_and_operational_limits": "All original P0/TRAIN3 scalar/heldout/GEN37/Source62 identities, task statuses, pending legal review and full producer-factory runtime scope preserved. No service activation, actual model/DB/Native/Git operation, legal/quality/convergence/proof/corpus completion claim. HostedCI remains externally unverified; no new run gate.",
+      "whole_old_document_preservation": "All prior migration values, ordered24 task objects, hierarchy, statuses, dependencies, criteria, permissions and old Phase5/WORLD science remain raw/value exact. This single additive evidence field changes no task or execution authority."
+    },
+    "current_user_goal_Home_recovery_normal9_original_pipeline_evidence_milestone496": {
+      "milestone": 496,
+      "catalog_evidence_id": "world-Home-recovery-normal9-original-pipeline-milestone496",
+      "Root_facts": {
+        "path": "/tmp/Root-milestone496-Home-normal9-and-original-pipeline-one-guide-wave-facts-v01.json",
+        "bytes": 6539,
+        "sha256": "cef636c7b413e99b8a033302fe7ba468b82ee95467aadd43015e638359970d48",
+        "full9": {
+          "st_dev": "66306",
+          "st_ino": "579354",
+          "st_mode": "33024",
+          "st_nlink": "1",
+          "st_uid": "1000",
+          "st_gid": "1000",
+          "st_size": "6539",
+          "st_mtime_ns": "1795384823209562558",
+          "st_ctime_ns": "1795384823209562558"
+        },
+        "FD_closed": true,
+        "scope": "existing selected private DATA, not fresh canonical currentness"
+      },
+      "actual_Home_install": {
+        "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/LIVE_HOME-rescue-evidence-origin-three-file-CAS-v02-raw-beforeimage-helper/actual-closed-Home-rescue-evidence-origin-three-file-CAS-authenticated-readback-v01.json",
+        "bytes": 9520,
+        "sha256": "39e0af8e0f2ff9321331c2c4339957eccfe2bebc4d8a271ee1451e38fe9f2737"
+      },
+      "actual_Home_normal9": {
+        "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/LIVE_HOME-installed-rescue-evidence-origin-normal9-INERT-existing-owner-preparation-v01/v02-actual-HOME3-Source69-bound-runtime-UNBOUND/actual-Root-selected-runtime-v01/output-v01/actual-closed-Home-rescue-evidence-origin-normal9-GREEN-authenticated-readback-v01.json",
+        "bytes": 25294,
+        "sha256": "64e0eb465f6e721078e4dc7312ddc225f2ade001efb2edfa21bfff8a0169ae4f"
+      },
+      "Root_independent_normal9": {
+        "path": "/tmp/Root-installed-HOME-rescue-normal9-independent-saved-evidence-check-v01.json",
+        "bytes": 1834,
+        "sha256": "56ff4f4f2b48c572834aee7e5b58518bc0fea08e24475903d409fd65733935af"
+      },
+      "raw_JUnit": {
+        "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/LIVE_HOME-installed-rescue-evidence-origin-normal9-INERT-existing-owner-preparation-v01/v02-actual-HOME3-Source69-bound-runtime-UNBOUND/actual-Root-selected-runtime-v01/output-v01/home-rescue-evidence-origin-normal9-run-result0-output1.bin",
+        "bytes": 1948,
+        "sha256": "0f32eccb572d31419db007c9d3b2ace38138c18c00e57fc2010c8f82e40547ac"
+      },
+      "summary": "Existing Home recovery owners and their new owning test are installed; the normal owning cohort passed nine unique parents with zero failures, errors, skips or subreports. Saved original configuration and reconstructed pipeline public identities also match; checkpoint eligibility and runtime authority are not established.",
+      "installed_scope": "Existing gate_recovery2829→1a78 and lane_resumec314→00bf plus new2510 owningtest, HOME root only; Source53temporary proposal never installed.",
+      "behavior": "Persist dependency-validation evidence origin with spent probe reservation before validator. Changed semantic evidence reports stale/unknown/current truthfully while retaining source-bound spent latch, old failure rows, repair/source counters and retry policy; no additional validation probe, replay, claim, completion or authority granted. All other typed/Unicode/bounds/custody code retained.",
+      "actual_normal_counts": {
+        "unique_parent_passes": 9,
+        "subtest_reports": 0,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "normal_source_scope": {
+        "ordinary_test_configuration": "HOME/test/pytest.ini and two normal conftests",
+        "direct_owner_source_audits": 3,
+        "maintained_compiled_owner_hashes": 2,
+        "rewritten_test_compiled_SHA256": null,
+        "rewritten_test_compiled_SHA_observed": false,
+        "test_source_module_and_item_origins_bound": true,
+        "all_Source_resource_native_readers_workspace_and_parent_closed": true
+      },
+      "engineering_scopes_separate": {
+        "actual_Home_normal9": {
+          "unique_parent_passes": 9,
+          "subtest_reports": 0,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "earlier_exact_Home_isolated_controls": {
+          "RED": 9,
+          "GREEN": 9
+        },
+        "separate_samecaller_passes": 4,
+        "cohorts_pooled_or_added": false,
+        "statement": "Earlier exactHOME isolated9RED→9GREEN and samecaller4PASS remain separate from actualnormal9; never13normalcases. Oldworker8/Home36/otherhistory not pooled."
+      },
+      "failed_receipts_and_preparation_history_preserved": "Writer first failed BEFORE staging/mutation because rawbytes were passed to JSONarchive; actual16reads23505233B retained. Corrected rawarchive writer succeeded; privateempty/nonemptyarchivecheck occurred AFTERclosure, notretroactivelybefore. Reader stalepreviewnamespaceKeyError happened before Source/SDK; no failedactualSDKattempt or hiddenreplay.",
+      "original_configuration_pipeline_progress": {
+        "observation": "Original7aa parent refs join saved6ba configuration and920 pipeline. Strict authenticated savedconfiguration has no cache_source_epoch_marker key. Derived complete publictokenizer contract and6fieldbinding from exact8523796B canonicalpipeline equal oldconfiguration values, including3IDs/vocabularyhash/tokenizerID.",
+        "metadata_join_reference": {
+          "path": "/tmp/Root-original-T3-config-pipeline-public-identity-join-v02-offered-worker-row.json",
+          "bytes": 3791,
+          "sha256": "220d16caa020eb416bfe3418c07eb509b3b0f4e952c77934407298fa5bfc4f31"
+        },
+        "provenance_and_remaining": "920 is content-matched constructor-order reconstruction, not historical runtime capture. Full old/current pipeline-source+5wrapper-marshal proof, actualcurrentconfiguration/backend/admission/license/dependency checks remain; no eligibility or migration established. Already-migratedec8 schema/reference cannotbe used as originalparent.",
+        "content_reconstruction_not_historical_runtime_capture": true,
+        "actual_checkpoint_eligibility_established": false
+      },
+      "authority": {
+        "full_WORLD_goal_complete": false,
+        "actual_checkpoint_eligibility_established": false,
+        "already_migrated_parent_supported_as_original": false,
+        "historical_runtime_capture_claimed": false,
+        "actual_model_restore_migration_or_registration": false,
+        "actual_DB_registry_or_Git_action": false,
+        "loaded_service_or_handler_runtime_qualification": false,
+        "mission_override_or_service_activation": false,
+        "task_requeue_claim_completion_or_extra_validation_probe_authority": false,
+        "Native_legal_or_corpus_authority": false
+      },
+      "source_and_model_scope": "Homebindings distinct from unchanged R2Source69. No loadedservice/currentmodel/wholeepoch/handler/task-requeue/validator/Native/legal/corpusauthority inferred. No serviceactivation, DB/model/checkpoint/registry/Git action.",
+      "whole_old_document_preservation": "All prior migration values, ordered24 task objects, hierarchy, statuses, dependencies, criteria, permissions and old Phase5/WORLD science remain raw/value exact. This single additive evidence field changes no task, handler, mission or execution authority.",
+      "frozen_cutoff": "Only these frozen Root facts are appended. Later prompt-owner captures or evolving consumer work are outside this record and are not runtime-wiring evidence."
     }
   },
   "programme_goal_hierarchy": {
