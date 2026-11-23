@@ -1,5 +1,9 @@
 # Legal autoformalization
 
+## AArch64 Native policy fixtures — 2026-11-16
+
+A separate audited run met seven Native policy-fixture expectations using eight actual Lean4.34.1 AArch64 commands (three version queries and five compilations). It accepted the empty-axiom conjunction, refused a wrong goal, unapproved Classical dependencies, wrong configured version and malformed quoted identifier, and accepted the three foundations only when explicitly approved. All seven retain authority disposition `reject`, zero pytest credit and false admission. This adds no cache-reuse, full-toolchain, AMD64 CI, statutory, model or corpus qualification and does not complete Phase1. See the [handoff](docs/HANDOFF.md#aarch64-native-policy-fixtures--2026-11-16).
+
 ## Kernel source screening and current verifier v2 — 2026-11-16
 
 The existing Lean source screen now rejects active `run_elab`, `run_meta` and `by_elab` syntax. Kernel and cache support the same `lean-kernel-verification/v2` marker; receipt wire v3 and `LeanKernelBackend@1` remain unchanged. Old-v1 receipts cannot supply current accepted proof or cache reuse, and archived evidence is preserved. The earlier GREEN140 original passed 140 selected software cases (79 kernel/61 cache, including 13 new controls). After a separately measured stale fixture-pin failure and one-line pin repair, GREEN141 passed 141 unique software cases (80 kernel/61 cache), adding the ungated loader-contract regression; both final independent saved-output audits passed. See the [handoff](docs/HANDOFF.md#kernel-source-screening-and-current-verifier-v2--2026-11-16) for failure lineage and limits. No Native Lean, model-training, legal-review or corpus authority follows.
