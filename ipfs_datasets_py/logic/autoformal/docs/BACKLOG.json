@@ -318,255 +318,994 @@
       "preservation": "Additive documentary note only; existing Main480 note, task contracts, hierarchy, statuses, dependencies, acceptance criteria, frontiers and earlier metadata remain byte-exact."
     },
     "current_user_goal_phase5_evidence": {
-      "evidence_id": "world-v11-frontend-and-fresh-objective-frontier-milestone485-20261121",
-      "evidence_home": "ipfs_datasets_py/logic/autoformal/docs/work_catalog.json#/selected_evidence/479",
-      "cutoff_utc": "2026-11-21T17:37:55.326724+00:00",
-      "prior_immutable_cutoff": {
-        "bytes": 12094,
-        "cutoff_utc": "2026-11-21T17:32:33.093518+00:00",
-        "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/milestone485-four-guide-private-builder-v01/Root-final-facts-v01.json",
-        "sha256": "7a7091da4594a8a1ce0bc3537e180b0c14c1171e080c41aeb57f21eb1373282e"
-      },
-      "prior_private_package_reference": {
-        "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/milestone485-four-guide-private-builder-v01/descriptor-v02.json",
-        "bytes": 5305,
-        "sha256": "0657d5f7672cf6f83c6dc91616d1264395d45469ae9d732112b97a0240df2ec2"
-      },
-      "user_goal_phase": "User-goal Phase 5 source-conditioned decoder/fresh-objective experiment preparation; historical programme Phase 05/task states unchanged.",
-      "goal_scope": "Entire world legal corpus → source-grounded LegalIR → Lean4; U.S. Code pilot. Component software qualification is separate from legal meaning and model quality.",
-      "status": "Source48 full normal214 PASS. Genuine current22-to-copy23 DATA handoff and current-copy23-to-T3stage24 closed with exact canonical training population/history preserved. Fresh vendor initialization is the next actual step; no fresh large-model import/training/generation result at this cutoff.",
-      "actual_Source_epoch": 48,
-      "full214": {
-        "Source_resource_SDK_process_cleanup_confirmed": true,
-        "actual_collected_equals_called": true,
-        "collection_seconds": 0.951,
-        "errors": 0,
-        "failures": 0,
-        "functions": 25,
-        "passed": 214,
-        "readback": {
-          "bytes": 44255,
-          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/installed-v11-current-epoch-full214-six-modules-existing-owner-preparation-v01/actual-closed-Source48-normal214-authenticated-readback-v01.json",
-          "sha256": "e881dbf7c5c2594ddb183bc6bc7673601938e92d86a1ce2633831374358d951b"
-        },
-        "report": {
-          "bytes": 867429,
-          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/installed-v11-current-epoch-full214-six-modules-existing-owner-preparation-v01/output-v01/complete-installed-v11-inference-full214-existing-owner-report.json",
-          "sha256": "1093946269a27faa0c010ebbab85ba503537cb3eeefccea00cebb499478eac9e"
-        },
-        "run_seconds": 24.42,
-        "scope": "original205 plus currentcampaign5 and environment4; exact same actual Source48 epoch, six canonical modules, original normal5 conftests, user-first pytest environment",
-        "scope_limit": "tiny fictional fixtures and real physical software dispatch; no actual vendor-sized initialization or learned quality result",
-        "skipped": 0,
-        "tests": 214
-      },
-      "normal6": {
-        "passed": 6,
-        "readback_bytes": 6232,
-        "readback_sha256": "1129772f147351ba6f62a2ba5b3cb915c02bf8862fdb0e1a6bf7bdad4f04a06a",
-        "report_bytes": 241947,
-        "report_sha256": "32f37838549507f7565a6eb6f892f0d5f418dee51a55550db7d4e68c5a88030c",
-        "scope": "physical1 plus campaign5; earlier focused cohort separate from full214",
-        "tests": 6
-      },
-      "causal_repairs": {
-        "backend_source5_unchanged": true,
-        "environment": "preserve optional existing PYTHONUSERBASE alongside HOME; no inferred root/installation/site hooks",
-        "fixture": "bind exact existing package parent/origins in same isolated waited asset child; bounded actual startup-log tail retained before cleanup",
-        "library_cohort": "capture parent active known dependency root order and preserve explicit vector order; remove arbitrary interpreter-first priority; actual diagnostic showed system boto3/botocore/OpenSSL GEN_EMAIL incompatibility while parent cohort imported",
-        "no_T5_extra_install_or_architecture_workaround": true,
-        "raw_metadata_diagnostics": "actual c8a870 userbase metadata and4474e5 library metadata are separate no-model diagnostics; later Source48 physical/full214 are actual software qualification"
-      },
-      "retained_failures": [
-        {
-          "epoch": 43,
-          "reason": "isolated fixture child did not carry already-installed transformer package root",
-          "result": "204PASS1FAIL full205"
-        },
-        {
-          "epoch": 44,
-          "reason": "default worker refused normal user-first active dependency order",
-          "result": "204PASS1FAIL full205"
-        },
-        {
-          "epoch": 44,
-          "reason": "global interpreter-first reorder changed pytest/conftest cohort; retained unselected remedy",
-          "result": "0 test calls"
-        },
-        {
-          "epoch": 45,
-          "reason": "caller stale205 count refused209 before collection",
-          "result": "0 test calls"
-        },
-        {
-          "epoch": 45,
-          "reason": "isolated child preREADY dependency known-set mismatch; actual log initially absent after SDK cleanup",
-          "result": "208PASS1FAIL full209"
-        },
-        {
-          "epoch": 46,
-          "reason": "retained actual whole1654B child log exposed unknown original user site before READY",
-          "result": "1FAIL focusedphysical1"
-        },
-        {
-          "epoch": 47,
-          "reason": "userbase fix reached READY/release; unrelated eager T5 import exposed incompatible interpreter-priority library cohort",
-          "result": "4PASS1FAIL focused5"
-        }
+      "Source_catalog_population": [
+        490,
+        491
       ],
-      "registry_DATA_copy": {
-        "SDK_Source_resource_cleanup_confirmed": true,
-        "actual_source_epoch": 47,
-        "all60_pool_entries_full9_preserved": true,
-        "copied_generation": 23,
-        "database_bytes": 798720,
-        "database_sha256_prefix": "2760e2a8",
-        "model_or_weights_or_numeric_parent_used": false,
-        "new_pool_objects": 0,
-        "readback_bytes": 6715,
-        "readback_sha256": "152743ec0cfdf388088d82971a87352a192c63592b7de35eafcb6af0d8ac394e",
-        "report": {
-          "bytes": 9713850,
-          "path": "/tmp/digest-omitted-v11-fresh-registry-copy-and-T3-restage-private-v01/copy-existing-owner-preparation-v02/output-v01/complete-fresh-v11-registry-DATA-copy-existing-owner-report.json",
-          "sha256": "082b9579105bf0f3b484bd958f677c2790f5da1fcec717739d4d93bf04de6ef6"
-        },
-        "scope": "genuine SDK DATA copy and byte-exact persistent mapping only; not T3 execution, model initialization, legal admission or new statutory coverage",
-        "source_generation": 22
+      "actual_current_Source_binding": {
+        "bytes": 2199,
+        "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/milestone490-four-guide-Source59-CAS-v01/actual-post-milestone490-Source-and-index-binding-v01.json",
+        "sha256": "f022f030589617e52f155ccc0dcd5c0d3d7e0046506ea0b75d8573bb2554ed9f"
       },
-      "T3_stage_status": {
-        "Source_SDK_resource_process_cleanup_confirmed": true,
-        "actual_SDK_seconds": 5.059,
-        "actual_admission_entry_seconds": 51.811,
-        "actual_native_wait_seconds": 0.001234,
-        "actual_registry_generation": 24,
-        "canonical_training_rows": 3,
-        "copied23_source47_provenance_unchanged": true,
-        "current_staged_DB_bytes": 1060864,
-        "current_staged_DB_sha256_prefix": "aa8ce607",
-        "exact_census_seconds": null,
-        "exact_refusal": "proof_io_stall sample11.23% above10.0% with timeout0; no foreign leases/hardware insufficiency demonstrated",
-        "failed_readback_bytes": 2522,
-        "failed_readback_sha256": "8beddab571b73fac433a83b630b6ea458214f40da12580d91acdd54ca315db34",
-        "first_attempt": "Source47 preSDK admission refusal; no SDK, no generation24",
-        "foreign_origins": [],
-        "full64MiB_growth_charge_retained": true,
-        "full_nine_field_targets_preserved": true,
-        "global_retained_charge_bytes": 253705939294,
-        "historical_rows_preserved": 6,
-        "old26_metadata_preserved": true,
-        "profile": "DATA1CPU4GiB, existing12GiB storage+64MiB fullgrowth charge,600 productive admission entry plus180 cleanup using existing public deadline context; no hardware-capacity inflation",
-        "readback": {
-          "bytes": 9986,
-          "path": "/tmp/digest-omitted-v11-fresh-registry-copy-and-T3-restage-private-v01/actual-closed-Source48-copy23-to-T3stage24-DATA-readback-v01.json",
-          "sha256": "fe890d2510a9a181f879e7e2b763088c88ae2bbb7c41870c163593afc9d2c4ac"
-        },
-        "report": {
-          "bytes": 6349829,
-          "path": "/tmp/digest-omitted-v11-fresh-registry-copy-and-T3-restage-private-v01/stage-existing-owner-preparation-v02/output-v02/complete-fresh-v11-T3-existing-V4-restage-report.json",
-          "sha256": "cec3c6c1013e554307aa0b7636e80314f3860939bfec800c9b80cfbd866c76b1"
-        },
-        "retained_stage_charge_bytes": 69417592,
-        "retry_descriptor": {
-          "bytes": 11073,
-          "path": "/tmp/digest-omitted-v11-fresh-registry-copy-and-T3-restage-private-v01/T3-DATA-resource-retry-descriptor-v03.json",
-          "sha256": "ed19f9d36bdf17880a7da368846b9d40bec1a0c8bc43aec73dfdd9f945176e32"
-        },
-        "retry_status_at_cutoff": "ACTUALLY CLOSED0; qualified DATA staging and cleanup only, actual registry generation24. No model/tokenizer/weights/training.",
-        "retry_status_at_prior_cutoff": "ACTUALLY LIVE in original admission/census under same owner; session47907/PID1417902; no SDK/outcome/newgeneration inferred",
-        "source_drift": [],
-        "source_fences": 3
+      "canonical_Source_or_runtime_action_by_this_unit": false,
+      "current_code_epoch_at_cutoff": 59,
+      "evidence_home": "ipfs_datasets_py/logic/autoformal/docs/work_catalog.json#/selected_evidence/490",
+      "evidence_id": "world-current-backend-metadata-Home32-partial-pristine-frontier-milestone491-20261122",
+      "final_frozen_facts": {
+        "bytes": 9320,
+        "path": "/tmp/Root-milestone491-frozen-facts-v02-pristine0-completion.json",
+        "sha256": "9b955378b11f5dce25738c7c1daaf967ef21ba053b0771e1da48cb05e3472d29"
       },
-      "existing_experiment_DATA_preparation": {
-        "TRAIN": "43395/43958ed9; exact old numerical algorithm,3updates,batch1,seed1729,LR1e-5,existing API target codec",
-        "evaluation": "49913/ada274af; same source-only Q3/budgets, actual typed serialized restore in each arm, explicit actual TRAIN lineage, no fabricated old separate restore witness",
-        "fresh_vendor_required": "new objective must start pristine vendor weights, empty Adam, step0 and new IDs; never objective-changing resume/retag of old TRAIN14",
-        "importer": "currentcopy-v04 40143/4a7d50a9, factoryd7454c7e, entryea413ae7; actual SDKcopy/currentclosedT3 DB joins; historical9 stays ancestry, not current DB path",
-        "importer_descriptor_sha256": "eb160cf4a6ab9b834bd75048f1e1ff7fd1f4136b1a3cf6af15dc3e448931a8bc",
-        "initializer_profile": "4CPU12GiB with actualSDKRSS12GiB; unchanged VM/file/output/algorithm/model2GiB bounds; finite600 wait explicitly postcensus unless separately selected absolute context",
-        "private_only_no_runtime_qualification_transfer": true
-      },
-      "existing_masked_retrieval_path": {
-        "finding": "Existing reviewed V4 masks already connect to symmetric masked Adam fitting; no duplicate bridge needed. Actual GTE producer computation/benefit and heldout retrieval remain separate scientific evidence.",
-        "report": {
-          "bytes": 5725,
-          "path": "/tmp/Phase4-existing-masked-contrastive-published-Main-integration-map-v01/current-Source40-owner-map-v02.json",
-          "sha256": "0340932c33e94af5ecf419db06a26e04842905f0867932b3e320f5a7c9dc7ab3"
+      "guide_payload_base_epoch": 59,
+      "historical_programme_task_states_unchanged": true,
+      "observations": {
+        "Home_installed_timeout_and_existing_transport_normal32": {
+          "F_E_skip": 0,
+          "Root_independent_readback": {
+            "bytes": 2830,
+            "path": "/tmp/Root-Home-normal32-independent-readback-v01.json",
+            "sha256": "d1e86ceefbfc4872f10f58d73e7cc9cd01b7454172699985b972c07807b1225b"
+          },
+          "Source_native_workspace_readers_parent_cleanup_confirmed": true,
+          "actual_unique_parent_passes": 32,
+          "applicable_conftests": 2,
+          "collect_SDK_seconds": 27.454031714238226,
+          "compact": {
+            "bytes": 31070,
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/LIVE_HOME-installed-timeout10-plus-transport22-normal32-existing-owner-preparation-v01/v04-normal-pytest-rewrite-truthful-source-observer/output-v01/actual-closed-Home-timeout10-transport22-normal32-GREEN-authenticated-readback-v01.json",
+            "sha256": "63e5443271de79c2b66a24b60c535aabf6d5255c33779e023ae258b41efc119c"
+          },
+          "compiled_owner_SHAs": [
+            "5db28ccb2f2de7106dece1c7505ad24cf3592329d8ccb00875932a5c69598969",
+            "4fcd57f9b76c58ca661f3beece687e29a6b19ab4199e024666f3b65117498cc3",
+            "347a4036b41d7f575c877a4d56b9e5bbd25d6c96ecc8a867e4ca8cb5699f1c06"
+          ],
+          "installed_test_SHAs": [
+            "29e81884e31533f55d7ed70cab134ce67473eb0d562a8ddfe297709be29ac927",
+            "c4901a2ed40e32ac185f5e966d442195da2922d3d1c370bd727e58b85301ff7a"
+          ],
+          "meaning": "installed software controls only; mock RPC/fake timer; no real daemon/socket/signal/service/task dispatch",
+          "normal_inifile": "/home/barberb/lift_coding/external/ipfs_accelerate/test/pytest.ini",
+          "old_v03_collect_rc3_masked_by_missing_bindings": "retained unchanged; observer repaired only, no product/test change",
+          "passing_subtest_reports": 27,
+          "raw_JUnit": {
+            "bytes": 5624,
+            "sha256": "ad812fc9b7805516073c30b88b38f3291603e1a68652e7cdc4a9359f586e5bd1"
+          },
+          "raw_equal_Source_fences": 6,
+          "run_SDK_seconds": 25.93543923832476,
+          "terminal_reports": 59,
+          "test_rewrite_compiledSHA_observed": false,
+          "test_source_SHA_F9_origins_loader_codefilenames_guarded": true,
+          "timeout_parents": 10,
+          "transport_parents": 22,
+          "typed_parent_passes": 32
+        },
+        "historical_pristine0_first_caller_failure": {
+          "SDK_rc": 1,
+          "Source_resource_cleanup_confirmed": true,
+          "actual_SDK_seconds": 191.2358146,
+          "current_next_action": "First migration caller rc1 stays historical; separate validation-only ordinary-reload completion is now genuinely passed. Next is original TRAIN3 current-cache migration/reload from genuine34 close, not yet selected.",
+          "explicit_followthrough_witness_and_genuine_registry_close_not_exported": true,
+          "failure": "caller passed typed CheckpointArtifact to raw-dict receipt validator; no worker API change required",
+          "failure_boundary_DB_SHA": "6c2f3b5da0df19f1f8bab3199ebb9728ccdbf7ffee60544aa34332c01b7666dd",
+          "failure_boundary_DB_bytes": 1060864,
+          "failure_snapshot_NOT_native_close": true,
+          "new_closed_generation_not_claimed": true,
+          "partial_public_API_migration_artifacts_preserved": true,
+          "separate_ordinary_load_returned_before_caller_error": true
+        },
+        "pristine0_validation_reload_completion": {
+          "Root_independent_readback": {
+            "bytes": 1972,
+            "path": "/tmp/Root-pristine0-current-cache-completion-independent-readback-v01.json",
+            "sha256": "f808c137964fb759ccd61bc3a186bc0602f582ebffdc9d02b3f5eeee31bf0702"
+          },
+          "Source_resource_parent_close_confirmed": true,
+          "TRAIN3_migration_reloaded": false,
+          "actual_SDK_seconds": 58.17300888430327,
+          "actual_closed_DB_SHA": "4bf87018422b294f117b9b0835a0a3b49dde0f83947ecb20074785fcc7ca879f",
+          "actual_closed_DB_bytes": 798720,
+          "actual_closed_registry_generation": 34,
+          "actual_raw_report": {
+            "bytes": 9295945,
+            "path": "/tmp/saved-pair-current-cohort-migration-inert-driver-v01/same-owner-entry-and-ordinary-reload-private-v01/pristine0-validator-ABI-and-validation-only-followthrough-private-v01/actual-validation-followthrough-output-v01/complete-pristine0-validation-only-followthrough-existing-owner-report.json",
+            "sha256": "d2cd0ad5fb2778bebd24af80652ff11b4ffc1ac30bc39946c7e31db51f6313b5"
+          },
+          "migration_or_numeric_writes_in_completion": false,
+          "old_failure_boundary_snapshot_preserved": true,
+          "ordinary_public_close34_is_own_new_evidence_not_retagged_old33": true,
+          "ordinary_reload_model_SHA": "429f892430e9847e92868da9adc8ffa7b74dc1dc059f04bbf32bcaecbfa3a746",
+          "ordinary_reload_model_bytes": 988173691,
+          "ordinary_reload_optimizer_SHA": "6d3c245606ba0c20265514e88830c81de8f75de90267ca81ac9d3c79dcd4a565",
+          "ordinary_reload_optimizer_bytes": 7785,
+          "original_and_reloaded_progress": {
+            "epochs_completed": 0,
+            "optimizer_steps": 0,
+            "row_cursor": 0
+          },
+          "scientific_qualified_or_promoted": false,
+          "training_updates": 0,
+          "validator_recomputed_actual_old_new_model_Adam_RNG_progress_equality": true
+        },
+        "registry_free_current_backend_metadata_observation": {
+          "SDK_seconds": 43.98804211616516,
+          "Source_resource_parent_cleanup_confirmed": true,
+          "TRAIN3_cohort_SHA": "80182f33547b9d7a236a46417d786a1a5f3f245008431f63d5699be5d1d3e767",
+          "TRAIN3_config_SHA": "8647363a58efbb62a7e9678c2509237fe94157b0519bcb628a0f73a053d7c205",
+          "TRAIN3_saved_numeric_state_restored_by_observation": false,
+          "actual_model_tensor_bytes": 988065792,
+          "actual_probe_updates_each": 0,
+          "actual_role_bytes_per_arm": 882973,
+          "checkpoint_migration_or_serialization": false,
+          "compact": {
+            "bytes": 180241,
+            "path": "/tmp/saved-pair-current-cohort-migration-inert-driver-v01/current-metadata-observation-private-v01/actual-Source59-observation-output-v01/actual-closed-Source59-registry-free-current-metadata-observation-authenticated-readback-v01.json",
+            "sha256": "70d3108b2a3b94351a8b19c069401ab29ace8a26eb2c1762b18263fac8f2a95b"
+          },
+          "peak_sampled_RSS_bytes": 3064160256,
+          "pipeline": {
+            "bytes": 8523796,
+            "sha256": "7605e78be8618db52926f46d35986c9a5cf77b32bd27eb22ff054d5d1dd1edd3"
+          },
+          "pristine0_cohort_SHA": "d5f3421cadc5f99ac9c3f77eed32b20f075661416d7594165480777cb19ff71f",
+          "pristine0_config_SHA": "130497b16d02ea9e1cc7cacbb93f4d8ad30144fb26f6ed79ecf31d4f966f0fd9",
+          "registered_rows_or_DB_operations": 0,
+          "roles_per_arm": 8,
+          "strict_reader_validations_per_arm": 2,
+          "vendor_elements_bit_equal": 494032768
+        },
+        "separate_closed_registry_DATA32_metadata_handoff": {
+          "DB_bytes": 798720,
+          "DB_sha256": "52daaa8aa7612b5607c2b56516cc4258f425e7cfb0b8e7c88046c3e919c03102",
+          "SDK_seconds": 0.4170108027756214,
+          "actual_new_generation": 32,
+          "compact": {
+            "bytes": 12662,
+            "path": "/tmp/currentcohort-closed31-snapshot-publiccopy-DATA-private-v03/actual-closed-Source59-savedpair-publiccopy-newbranch32-authenticated-readback-v01.json",
+            "sha256": "f82a94de97e3b69fc0a944d263f63a81344a810cc067a23eb31d361ecc8bc806"
+          },
+          "metadata_only": true,
+          "old_closed31_snapshot_preserved": true,
+          "scope_clarification": {
+            "bytes": 2441,
+            "path": "/tmp/currentcohort-closed31-snapshot-publiccopy-DATA-private-v03/actual-DATA32-admission-digest-scopes-clarification-v01.json",
+            "sha256": "20d9bc798076cea2a631a3451802167a2b598a6939dd0fdb6231d96635adcb2c"
+          }
+        },
+        "unchanged_scientific_and_authority_scope": {
+          "Source59_numerical5_and_math4_unchanged": true,
+          "current_checkpoint_full_migration_qualification": "pristine0 ordinary current-cache completion passed within stated software scope; TRAIN3 pair still not migrated/reloaded; scientific qualified flags remain false",
+          "new_model_training_fit_eval_or_generalization_result": false,
+          "new_statutory_review_or_admission": false,
+          "no_new_Native_result_or_old_whole_scope_transfer": true,
+          "old_AFTER_custody_not_reconstructed": true,
+          "prior_fictional_TRAIN3_fit_mean": [
+            0.8112399776776632,
+            0.5896293520927429
+          ],
+          "prior_heldout_complete_correct": "0/3 historical, not remeasured",
+          "service_refill_mission_activation": false
         }
       },
-      "target_projection_DATA": {
-        "bytes_removed_per_target": 84,
-        "bytes_removed_total": 252,
-        "fictional_TRAIN_rows": 3,
-        "non_digest_semantics_IDs_context_source_custody_and_original_rows_unchanged": true,
-        "only_removed_field": "typed_expression.content_digest",
-        "report": {
-          "bytes": 10636,
-          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/same-TRAIN14-digest-omitted-target-comparison-DATA-v01/comparison-report-v02.json",
-          "sha256": "ef2797d7cf91f8646d5ffcbd3ff7bdeb7635151d46cc7b6aa18f18695b529258"
-        },
-        "token_savings_or_model_quality_measured": false
-      },
-      "unchanged_science": {
-        "Q3_completion_per_conditioning_arm": "0/3 on the same three Q3 rows, not six unique rows",
-        "convergence_proved": false,
-        "historical_equal_record_scalar_reduction_percent": 22.037337,
-        "historical_fixed_TRAIN_T3_scalar_means": [
-          0.9662747780481974,
-          0.7533335487047831
-        ],
-        "historical_measurement_updates": 0,
-        "historical_model_steps": [
-          0,
-          3
-        ],
-        "historical_quantity_Lean_DATA": "64 empty-axiom reports,24 independent expanded type assignments,2 intended mismatch refusals; unchanged math qualification separate from decoder software.",
-        "independent_real_legal_reviews": 0,
-        "new_large_checkpoint_training_or_inference_experiment": false,
-        "source_faithfulness_accuracy": "unknown",
-        "token_weighted_CE_or_NLL_proved": false,
-        "world_corpus_conversion_complete": false
-      },
-      "publication_at_cutoff": {
-        "merged_Main_runtime_qualification_claimed": false,
-        "prepared_code_tree": "7cb5e5f8da0d7d004f51dfc6ec728534ad12369e",
-        "prepared_current_code": "12aaff16ae8ceab956b182dcd45ce530c1328e14",
-        "prepared_not_pushed": true,
-        "published_H": "1dd03ea8575b095a3bbaa5c8f23007101038ca56",
-        "published_R": "b5b45debc0ee4d95a98591b54c0aa1dbc0494835",
-        "published_root": "a17718f28cfc45aeedd7ae6a2844852cc481523a"
-      },
-      "Root_final_facts_reference": {
-        "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/milestone485-four-guide-private-builder-v01/Root-final-facts-v02.json",
-        "bytes": 14151,
-        "sha256": "99c49a2178f41f09a8b11eb4465a6cba2053c8a3182a7c74f3ed3733703e073a",
-        "full9": {
-          "st_dev": "66306",
-          "st_ino": "69338711",
-          "st_mode": "33024",
-          "st_nlink": "1",
-          "st_uid": "1000",
-          "st_gid": "1000",
-          "st_size": "14151",
-          "st_mtime_ns": "1795282675326965509",
-          "st_ctime_ns": "1795282675326965509"
-        }
-      },
-      "next_existing_owner_actions": [
-        "Bind actual current Source/T3stage24/registry/assets/admission in the existing fresh vendor driver and execute pristine import; retain source47 copy23 lineage and source48 stage24 independently.",
-        "same existing BEFORE/TRAIN/AFTER stages and fixed-row diagnostics, preserve raw failures and separate training fit/heldout/Lean/source-faithfulness denominators",
-        "continue world-corpus source-grounded graph/Lean work without fabricating review/coverage/convergence"
-      ],
+      "preparation_cutoff_utc": "2026-11-22T07:47:50.408306+00:00",
+      "previous490_and_other_cutoffs_preserved": true,
       "qualification_limits": [
-        "The entire world legal corpus → source-grounded LegalIR → Lean4 remains the goal; U.S. Code is a pilot. Active user-goal Phase 5 differs from historical programme Phase 05; all 24 task states are unchanged.",
-        "Source 48 full normal 214 PASS is software qualification for tiny fictional fixtures and actual physical dispatch, separate from focused 6 and historical repeated attempts. It is not a vendor-sized experiment or learned/legal result.",
-        "Genuine Source 47 registry DATA copy 22 → 23 and Source 48 T3 DATA stage 23 → 24 preserve distinct source provenance. Stage 24 preserves 3 full-nine training targets, 6 historical rows and the old 26 metadata entries; no model, tokenizer, weights or training execution occurred.",
-        "The 17:32:33 live-admission observation and immutable v1 package remain historical. Current closure uses the later 17:37:55 frozen facts, never retagging the old live observation.",
-        "The fresh-objective importer/TRAIN/evaluation derivatives remain private preparation. A fresh pristine vendor/empty Adam/step 0 lineage is required, with no objective-changing TRAIN14 retag.",
-        "Historical fictional TRAIN scalar fit, Q3 completion, semantic fidelity, independent legal review and Lean proof results retain separate denominators. No new model, world-corpus coverage, legal meaning or convergence qualification is conveyed.",
-        "Source catalog 485 and Main catalog 480 are distinct populations. Publication status is frozen, and merged Main runtime qualification remains false."
+        "Installed Home normal32 is one exact10+22 software cohort:32 calls/typed parent passes plus27 passing typed subtests. It is not an additive count with old Home20/private cohorts; old untyped outerrc1 and failed collectrc3 history stay unchanged.",
+        "Home tests use mock RPC and fake timer/thread state. No real daemon/socket/signal, service restart, refill, task dispatch or mission activation is established by those passes.",
+        "Both current metadata arms use the same fresh vendor-bit empty-Adam step0 probe. TRAIN3 labels associate saved manifest metadata; observation does not restore TRAIN3 numeric state, migrate or serialize a checkpoint, prepare registered rows, train, fit, evaluate or generate.",
+        "Eight declared runtime roles per arm and two strict reader validations cover that finite current cohort. They are not historical execution or transitive dependency attestations. The newly observed pipeline7605e78b is distinct from reconstructed old-content920ced16.",
+        "The separately closed public DATA32 handoff is a metadata registry copy/bind, preserving the closed31 snapshot and prior history. Admission digest scopes remain separate; no model pair readiness or optimizer-state transfer follows from it.",
+        "The first pristine0 caller rc1 and partial artifacts remain historical. Separate validation/reload-only completion now has its own genuine public close34, ordinary reload and recomputed old/new model/Adam/RNG/progress equality; it does not retag the failed33 boundary snapshot as a native close.",
+        "Completion reused existing pristine0 artifacts without remigration, numeric writes or updates; progress stays epochs0/cursor0/steps0. This passes the stated pristine0 current-cache software completion scope only, with no scientific qualification/promotion. Original TRAIN3 current-cache migration/reload remains pending and not yet selected.",
+        "Source59 numerical5/math4 and all prior fictional TRAIN3 scalar-fit/heldout results remain unchanged. No new training, CE/NLL, semantic/legal, heldout, convergence, generalization or Native result is inferred.",
+        "All24 raw task objects,126 raw component objects,490 old raw evidence objects, hierarchy/worldscope and both full Markdown prefixes remain exact. One491 append and only the existing Phase5 frontier change.",
+        "At this private preparation cutoff the four posts await their separate Source writer receipt. Documentation does not transfer runtime authority or imply a new Source epoch, service activation, statutory review/admission or whole-goal completion."
       ],
-      "catalog_population": "Main 479 → 480/index 479; Source 485 remains separate",
-      "Main_merged_runtime_qualification_claimed": false
+      "scope": "Entire world legal corpus -> source-grounded LegalIR -> Lean4, across jurisdictions and original languages; U.S. Code pilot, existing eight-phase hierarchy unchanged.",
+      "status": "Home normal32 and registry-free current metadata observation closed. Separate pristine0 validation/reload-only completion passed with its own genuine close34 and unchanged zero-step state; original caller rc1 remains historical. TRAIN3 current-cache migration/reload is pending. Phase5 and the whole-world goal remain open.",
+      "user_goal_phase": 5,
+      "world_goal_complete": false
+    },
+    "current_user_goal_automation_and_reverse_path_evidence": {
+      "home_cli_existing_thread_handoff": {
+        "actual_normal_owning_cohort": {
+          "errors": 0,
+          "failures": 0,
+          "junit_seconds": 16.182,
+          "passing_subreports": 102,
+          "raw_record_interpretation": "36 parents plus 102 passing subreports; 138 raw records is not 138 tests.",
+          "raw_report_records": 138,
+          "skips": 0,
+          "unique_parent_tests": 36
+        },
+        "cohort_relationship": "The earlier isolated 14-method entry cohort overlaps this whole-file normal 36-parent cohort and supplies no additional passing-test credit.",
+        "evidence_references_from_closed_owner_handoff": {
+          "independent_readback": {
+            "bytes": 28657,
+            "sha256_prefix": "6bf63e25"
+          },
+          "primary_report": {
+            "bytes": 573916,
+            "sha256_prefix": "26cb263d"
+          },
+          "raw_junit": {
+            "bytes": 5824,
+            "sha256_prefix": "5693771a"
+          }
+        },
+        "implementation": "Existing openai_codex_cli_integration handoff entry delegates once to the existing durable helper, requires an explicit prior-delivery classification, and preserves delivery uncertainty without granting processing, completion, execution or claim authority.",
+        "implementation_postimage_sha256": "bf84858bd0f32d8660765921720c43d56462cdd3efca5657b038bdd7ad38dffa",
+        "owning_test_postimage_sha256": "850c8b2b64c504b3f7d95c8f0475592a5393c90729c45ab77842e7ca4fba1c31",
+        "qualification_limit": "Normal maintained-module software contracts use fictional transport. They do not establish actual target-thread processing or grant execution, claim or completion authority."
+      },
+      "phase6_source62_source_withheld_authored_at_most_reverse_path": {
+        "actual_normal_owning_cohort": {
+          "errors": 0,
+          "failures": 0,
+          "junit_seconds": 0.35,
+          "passing_typed_subreports": 13,
+          "raw_record_interpretation": "9 parents plus 13 passing typed subreports; 22 raw records is not 22 tests.",
+          "raw_report_records": 22,
+          "skips": 0,
+          "unique_parent_tests": 9
+        },
+        "authored_controls": "Cases cover authored at-most thresholds 0, 1, 3, 4 and 5, visible cardinality changes, renamed binder, missing equality, metadata and role mutations, transport-ID normalization, malformed prose, a legacy positive, and threshold 10 default-capacity refusal.",
+        "closure": "The Source62 owner reports source contexts, owned resources, readers/workspace and child processes closed cleanly; 6390 other files, decoder Source5 and current guides were preserved during CAS.",
+        "cohort_relationship": "The earlier isolated 9-method cohort overlaps this actual normal 9-parent cohort and is not added again. Fictional observer 10 and isolated metadata 8 remain separate harness evidence.",
+        "evidence_references": {
+          "normal_owning_report": {
+            "bytes": 181534,
+            "sha256": "04c1538ebd74326be655ce6d13d05434ee4464cbcd5043f56a4dc9a391a63f35"
+          },
+          "raw_junit": {
+            "bytes": 2008,
+            "sha256": "bc105929aafe0df423e6e8a8c844a92bf523000d3170cf6e6d1d13dd1cfc20b1"
+          },
+          "source62_cas_receipt": {
+            "bytes": 28199587,
+            "sha256": "60ba19db9857e94cf24c90eed4d89cdbf9c20b8f76ce3e3fe899446144e005e9"
+          }
+        },
+        "implementation": "Source62 installs an opt-in authored parametric at-most prose profile in the existing extended decompiler and compiler, profile-aware reconstruction limitations, and nine owning test methods. Legacy TDFOL and fixed-three profiles remain unchanged.",
+        "postimage_sha256": {
+          "extended_compiler": "e220c147813cc5bfed1adbb6e14d6aa899601d793ae414ed6a0adbb0b7647d9d",
+          "extended_decompiler": "c84339a7e865a84e2909ed79ad9b58770800109962b3dffbf72f9292fee44186",
+          "legal_relational_reconstruction_v1": "abc722a20445b499b7800969ff832133bf240a587fd79a1bab8538e85ce3bae6",
+          "test_extended_decompiler": "841b97b1f06a474cf56dfdd4a59d728911846a69388759b9c08933320c2aebeb"
+        },
+        "qualification_limit": "Bounded authored syntax-cycle qualification only: no legal source correspondence, statutory review, semantic-equivalence proof, general-world counting completion, new Native proof or learned-model quality result. Expanded AST cost remains O(n**2). Existing capacity bounds and zero training/evaluation masks remain unchanged.",
+        "source_withheld_contract": "The recognizer compares the complete existing typed projection with the producer-authored expression, retaining non-ID names, binders, ordered roles, predicates, equality structure and metadata. The inverse receives visible prose only; original wording and reference targets stay on the scoring side."
+      },
+      "preserved_boundaries": [
+        "All 24 existing raw tasks, IDs, statuses, dependencies, criteria, WORLD eight-phase hierarchy and frontier remain unchanged.",
+        "The existing current_user_goal_phase5_evidence scientific state and all other migration fields remain unchanged.",
+        "Root-owned matched comparison remains pending and outside this documentation change.",
+        "No admitted-mask, processing, completion, execution or claim grant follows from these software cohorts."
+      ],
+      "scope": "Bounded maintained software progress only. The two actual normal owning cohorts below remain separate; this record changes no task status, scientific state or authority."
+    },
+    "current_user_goal_closed_model_world_home_evidence_milestone493": {
+      "Home_empty_or_none_store_guard": {
+        "current_parent_compiled_sha256": "88a249daa5ac52eeb196b3a81358885ba803f1b57bced217582ccde091b62a88",
+        "normal_owning_cohort": {
+          "errors": 0,
+          "failures": 0,
+          "new_store_tests": 12,
+          "passing_subreports": 39,
+          "raw_count_interpretation": "22 parents (12 new plus 10 retained) plus 39 passing subreports equals 61 raw reports, not 61 tests.",
+          "raw_terminal_reports": 61,
+          "retained_timeout_tests": 10,
+          "skips": 0,
+          "unique_parent_tests": 22
+        },
+        "own_Source_resource_native_and_lease_cleanup_checked": true,
+        "raw_junit": {
+          "bytes": 4648,
+          "logical_name": "junit.xml",
+          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/LIVE_HOME-installed-provisional12-plus-timeout10-normal22-existing-owner-preparation-v01/v03-actual-Home-CAS-metadata-bound/output-v01/home-provisional12-timeout10-normal22-run-result0-output1.bin",
+          "sha256": "5abc763476a5075fe32ff38500acd7542cd78accf2f05404d8cbe5478ab3e773"
+        },
+        "rewritten_test_compiled_sha_not_claimed": true,
+        "scope": "The parent change is the empty/None store guard only. The configured bridge is preserved, and the retained timeout behavior is qualified on the actual new parent.",
+        "service_database_model_or_activation": false,
+        "small_fact_receipt": {
+          "bytes": 2011,
+          "path": "/tmp/Root-Home-provisional-normal22-independent-readback-v01.json",
+          "sha256": "207e512033ca8b5fc11f312db95ff03f8156098ab2c54f952be0a5769f9dfebd"
+        }
+      },
+      "WORLD_two_documentary_files": {
+        "active_goals": 9,
+        "actual_normalized_protected_paths": 17,
+        "completed_goals": 0,
+        "criterion_count_interpretation": "Nine whole criterion strings contain fourteen existing fragments; these are not twenty-three criteria or evidence nodes.",
+        "existing_graph_initializer_API_calls": 1,
+        "fabricated_evidence_nodes": 0,
+        "files": [
+          {
+            "bytes": 143415,
+            "path": "/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/ipfs_datasets_py/logic/autoformal/WORLD-OBJECTIVE-HEAP.md",
+            "sha256": "9770bf56bee5037a49c9e37bf1c7df340a9523901488ed088ac0f37785f69e59"
+          },
+          {
+            "bytes": 91336,
+            "path": "/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/ipfs_datasets_py/logic/autoformal/WORLD-OBJECTIVE-GRAPH.json",
+            "sha256": "3afbe40fd23dbc6f18633d06b589c662270b30661c1880c0cac068048a57efb9"
+          }
+        ],
+        "goal_count": 9,
+        "old145_tasks_default_documents_GEN36_database_and_Git_preserved": true,
+        "old_board_API_calls": 0,
+        "qualification_limit": "Nine active goals and zero completed goals remain planning records, not legal/source correspondence, proof qualification, task completion or service/refill activation.",
+        "refinement_edges": 8,
+        "required_evidence_arrays_empty_preserved": true,
+        "scheduler_binding_limit": "A descriptive UNBOUND label is not evidence that a scheduler fence exists; this documentary result grants no scheduling, claim or activation authority.",
+        "service_activation_refill_claims_or_model_updates": false,
+        "small_fact_receipt": {
+          "bytes": 2104,
+          "path": "/tmp/Root-WORLD-two-documentary-files-independent-readback-v01.json",
+          "sha256": "491102322d03971b4d3391d61ad4b06bd4095d53e60bb7f8330b302b8cd4ba01"
+        },
+        "unsplit_existing_acceptance_fragments": 14,
+        "whole_criterion_strings": 9
+      },
+      "actual_results_and_remaining_unverified_evidence": {
+        "capacity_five_file_adoption": {
+          "actual_adoption_receipt": {
+            "CAS_cutoff_normal16_was_pending": true,
+            "actual_install_Source_WRITE_closed": true,
+            "all_other_6389_full9_unchanged": true,
+            "index_stages_flags_unchanged": true,
+            "installed_five_postimages": [
+              {
+                "bytes": 17767,
+                "repo_relative_path": "ipfs_datasets_py/logic/legal_ir/extended_decompiler.py",
+                "sha256": "77c04582890668b51e430aca967c49ead532439ca9b80092ac49c55b83d839a2"
+              },
+              {
+                "bytes": 15322,
+                "repo_relative_path": "ipfs_datasets_py/logic/legal_ir/extended_compiler.py",
+                "sha256": "2fba84bb4294880981fcb2a4a7e0e114a2282601f92a0e5b31161c3548d9f661"
+              },
+              {
+                "bytes": 40166,
+                "repo_relative_path": "ipfs_datasets_py/logic/autoformal/legal_relational_reconstruction_v1.py",
+                "sha256": "e35acbd09c149b13b4d4aa8e0794a7a35fd2678fdd59f40f6facda73b2373d67"
+              },
+              {
+                "bytes": 36860,
+                "repo_relative_path": "ipfs_datasets_py/logic/formalization/autoencoder/ir_legal_text_roundtrip.py",
+                "sha256": "a0424bbb63df198457f32861d5302859361a4d4d37a78145ee8f8b75d41817e8"
+              },
+              {
+                "bytes": 88555,
+                "repo_relative_path": "tests/unit/logic/legal_ir/test_extended_decompiler.py",
+                "sha256": "634d406e5bd53ae1bbeffd4dcfd72cc8664eb724b59cc8b6df1a513540c03c43"
+              }
+            ],
+            "only_five_selected_named_and_outer_rows_changed": true,
+            "scope": "Explicit existing resource-budget/profile option for bounded authored counted-prose software. None retains default behavior; expansion is not implicit. Capacity adoption alone is not model, legal/source-correspondence or Native-proof qualification.",
+            "small_authenticated_CAS_readback": {
+              "bytes": 22617,
+              "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/Phase6-capacity-five-file-Source63-CAS-v01/actual-closed-Source63-canonical-Phase6-capacity-five-file-CAS-authenticated-readback-v01.json",
+              "sha256": "e2e0f3c18059afbe830bc4fbafae44a4a39deb9f2a4baa6546979137c9185945"
+            },
+            "source_binding": {
+              "bytes": 2213,
+              "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/Phase6-capacity-five-file-Source63-CAS-v01/actual-post-Phase6-capacity-Source-and-index-binding-v01.json",
+              "sha256": "f9179921e270e58449844d905f3015e05063d354c1f6f8fd086b0839f2fce17e"
+            },
+            "source_epoch": 63,
+            "source_install_receipt_reference_only": {
+              "bytes": 28200520,
+              "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/Phase6-capacity-five-file-Source63-CAS-v01/actual-Phase6-capacity-five-file-CAS-receipt-v01.json",
+              "sha256": "ce4133f4ba3b39e3d75323787a6d27a6c258e28c9129eafa4371166afb130a03"
+            },
+            "source_write_lease_closed": true,
+            "state": "ACTUAL_SOURCE63_ADOPTION_CLOSED",
+            "subsequent_normal16_is_recorded_separately": true
+          },
+          "state": "ACTUAL_CLOSED_ROOT_SUPPLIED_RECEIPT"
+        },
+        "capacity_normal16": {
+          "actual_normal_result": {
+            "Source_closed": true,
+            "actual_parent_release_return": true,
+            "cohort_relationship": "The Source63 normal16 includes nine retained authored-profile, three default-boundary and four explicit expanded-capacity methods. Earlier Source62 normal9 and private controls overlap; no extra passing-test credit is added.",
+            "errors": 0,
+            "failures": 0,
+            "own_parent_lease_absent_after_release": true,
+            "passed_parent_tests": 16,
+            "passing_typed_subreports": 26,
+            "qualification_limit": "Counting-capacity software contracts only. No legal semantics/source faithfulness, general counting completion, model-quality gain, new training/evaluation admission or Native proof follows.",
+            "raw_count_interpretation": "16 parents plus 26 passing typed subreports equals 42 raw reports, not 42 tests.",
+            "raw_junit": {
+              "bytes": 3476,
+              "logical_name": "junit.xml",
+              "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/installed-Phase6-expanded-capacity16-normal-future-Source-existing-owner-preparation-v01/output-v01/parametric-counted-prose16-run-result0-output1.bin",
+              "sha256": "41ce3f1f28f0e3f7874fc370473ac2044e008cdf0a967d1d477355dcf71b5e3a"
+            },
+            "raw_terminal_reports": 42,
+            "resource_cleanup_confirmed": true,
+            "selected_parent_class_counts": {
+              "TestAuthoredParametricCountedDefaultBoundary": 3,
+              "TestAuthoredParametricCountedExpandedCapacity": 4,
+              "TestAuthoredParametricCountedProse": 9
+            },
+            "skips": 0,
+            "small_authenticated_receipt": {
+              "bytes": 30380,
+              "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/installed-Phase6-expanded-capacity16-normal-future-Source-existing-owner-preparation-v01/output-v01/actual-closed-Source63-Phase6-parametric-counted-prose16-GREEN-authenticated-readback-v01.json",
+              "sha256": "9867d407c49d1f276e759c5c7ac9ee69e6b84cc2887b49eb6ddf70365c0b62a3"
+            },
+            "source_binding": {
+              "bytes": 2213,
+              "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/Phase6-capacity-five-file-Source63-CAS-v01/actual-post-Phase6-capacity-Source-and-index-binding-v01.json",
+              "sha256": "f9179921e270e58449844d905f3015e05063d354c1f6f8fd086b0839f2fce17e"
+            },
+            "source_epoch": 63,
+            "state": "ACTUAL_SOURCE63_NORMAL16_CLOSED",
+            "unique_parent_tests": 16,
+            "validation_only_no_Source_write_model_training_registry_Native_or_service_action": true
+          },
+          "state": "ACTUAL_CLOSED_ROOT_SUPPLIED_RECEIPT"
+        },
+        "hosted_CI_current_revision": {
+          "CI_is_not_an_extra_readiness_or_Source_write_gate": true,
+          "Native_or_Lean_success_result": null,
+          "existing_lane_context": "Native Lean 4.34.1 lane code is present; code presence and this nonstart are not successful hosted Native/Lean current-revision qualification.",
+          "job_scoped_nonstart": {
+            "hosted_check_id": "135533859610",
+            "provenance": {
+              "bytes": 3603,
+              "path": "/tmp/Root-Main-493-actual-paired-capacity-and492-close-addendum-v01.json",
+              "sha256": "4cfa8ad047e0a4589d5a5046f4065487dfd5ffbaf40e79aa4af107ff40d34c62"
+            },
+            "reported_cause": "account billing lock",
+            "scope": "This exact hosted check only; no account-wide outage or other check outcome is inferred.",
+            "started": false
+          },
+          "new_CI_run_account_mutation_or_promotion": false,
+          "state": "SUCCESS_UNVERIFIED_JOB_SCOPED_NONSTART_RECORDED",
+          "successful_current_revision_qualification": null
+        },
+        "paired_public_api_comparison": {
+          "actual_result": {
+            "closure": {
+              "Source_closed": true,
+              "four_raw_Source_fences_byte_equal": true,
+              "native_readers_workspace_cleanup_confirmed": true,
+              "own_parent_lease_absent_after_release": true,
+              "resource_cleanup_confirmed": true
+            },
+            "fixed_fictional_TRAIN_equal_record_scalar_summary": {
+              "after_equal_record_mean": 0.5896293520927429,
+              "after_minus_before": -0.22161062558492028,
+              "before_equal_record_mean": 0.8112399776776632,
+              "cohort_commitment_sha256": "3ae38962f6e72bc5cbea5df2aa9515f677ba81d1938af51992e70b16797f6c7a",
+              "metric_scope": "model-reported scalar per record and equal-record arithmetic mean only; no token-weightedCE/NLL, legal fidelity, Lean, generalization or convergence",
+              "new_optimizer_updates": 0,
+              "record_count": 3,
+              "rows_with_lower_record_scalar": 3
+            },
+            "interpretation": "All three frozen held-out cases remain incorrect: exact 0/3 before and 0/3 after. Retention rate stays null. This metadata comparison neither replays current admission nor verifies the loaded checkpoint identity, and confers no held-out/legal/source-faithfulness/convergence/model-quality or proof/activation authority.",
+            "public_retention": {
+              "after_exact": 0,
+              "after_outcome_counts": {
+                "abstained": 0,
+                "complete": 0,
+                "error": 0,
+                "incomplete": 2,
+                "invalid": 1,
+                "unsupported": 0
+              },
+              "baseline_exact": 0,
+              "before_outcome_counts": {
+                "abstained": 0,
+                "complete": 0,
+                "error": 0,
+                "incomplete": 3,
+                "invalid": 0,
+                "unsupported": 0
+              },
+              "counts": {
+                "gained": 0,
+                "lost": 0,
+                "retained": 0,
+                "still_incorrect": 3
+              },
+              "current_admission_replayed": false,
+              "denominator": 3,
+              "heldout_generalization_established": false,
+              "loaded_checkpoint_identity_verified": false,
+              "proof_authority": false,
+              "retention_rate": null,
+              "scope": "paired_full_nine_payload_exactness_on_one_declared_frozen_heldout_component"
+            },
+            "small_authenticated_receipt": {
+              "bytes": 18023,
+              "path": "/tmp/current-cache-paired-metadata-SDK-existing-owner-private-v01/output-v01/actual-closed-Source62-paired-fixed-TRAIN-and-retention-GREEN-authenticated-readback-v01.json",
+              "sha256": "d8770bbb005e4c5c6830e4de40009370097ad9ada722ba180cffeeda4088ef0b"
+            },
+            "source_binding": {
+              "bytes": 2159,
+              "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/Phase6-four-file-Source62-CAS-v01/actual-post-Phase6-Source-and-index-binding-v01.json",
+              "sha256": "ae2f82c4a3bd6ae29c12b41f100dde47277add3e64be61e727349b931835b30f"
+            },
+            "state": "ACTUAL_CLOSED_METADATA_COMPARISON"
+          },
+          "state": "ACTUAL_CLOSED_ROOT_SUPPLIED_RECEIPT"
+        }
+      },
+      "frozen492_canonical_adoption": {
+        "actual_documentary_CAS_receipt_reference_only": {
+          "bytes": 28199393,
+          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/milestone492-four-guide-Source64-CAS-v01/actual-milestone492-four-guide-CAS-receipt-v01.json",
+          "sha256": "e93eab77960098fa176575e1b0add9477e31881e44aa096510f6f7256b714287"
+        },
+        "all24_tasks_126_components_hierarchy_preserved": true,
+        "all_Source_context_exits_returned": true,
+        "frozen_BACKLOG_postimage": {
+          "bytes": 1296661,
+          "repo_relative_path": "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
+          "sha256": "ebf015ee7d82abf11d49a931022d0541b70acf01575993fdbb2d6ba4376da334"
+        },
+        "historical492_cutoff_not_retagged_with_later493_facts": true,
+        "no_model_DB_service_Git_Native_or_runtime_action_in_CAS": true,
+        "old_Phase5_scientific_field_preserved": true,
+        "only_four_documentary_outer_rows_changed": true,
+        "prior491_evidence_exact_prefix_preserved": true,
+        "scope": "Actual492 closure provenance is recorded at493 only. The frozen492 bytes and their earlier scientific/software cutoff remain unchanged; no canonical493 write is claimed.",
+        "small_authenticated_readback": {
+          "bytes": 12641,
+          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/milestone492-four-guide-Source64-CAS-v01/actual-closed-Source64-final492-fourguide-CAS-authenticated-readback-v01.json",
+          "sha256": "9c4fb3979b7eb67c857f4200ff0d4a440cc016e1b8f15fdcf098776315c07a51"
+        },
+        "source_epoch_at_recorded_close": 64,
+        "write_lease_closed": true
+      },
+      "guide_canonical_adoption_receipt": null,
+      "preparation_state": "PRIVATE_ACTUAL_PAIRED_AND_CAPACITY_EVIDENCE_NOT_WRITE_SELECTION",
+      "preserved_boundaries": [
+        "All 24 raw task objects and their IDs, statuses, dependencies and criteria, WORLD hierarchy/frontier and all prior guide fields remain byte-exact outside this one insertion.",
+        "The original current_user_goal_phase5_evidence scientific object and the prior492 current_user_goal_automation_and_reverse_path_evidence object are preserved unchanged.",
+        "Source, database, weights, raw gold and generation payloads were not opened by this documentation composition; references remain metadata only.",
+        "This private493 derivative does not imply canonical493 guide adoption, service/refill activation, a scheduler fence, admitted masks, or processing/completion/execution/claim authority. Separate492 Source64 closure is recorded from its actual small receipt above, without retagging492 or inventing future receipt metadata."
+      ],
+      "readonly_fixed_train_checkpoint_records": {
+        "P0_GEN36": {
+          "Q3_outcomes": {
+            "completed": 0,
+            "incomplete": 3,
+            "invalid": 0
+          },
+          "Source_resource_and_native_lifecycle_close_checked": true,
+          "checkpoint_and_state_restoration_verified": true,
+          "closed_owner_generation": 36,
+          "equal_record_scalar_mean": 0.8112399776776632,
+          "fixed_train_rows": 3,
+          "new_optimizer_updates": 0,
+          "optimizer_steps": 0,
+          "paired_comparison_performed_during_this_arm_closeout": false,
+          "small_fact_receipt": {
+            "bytes": 2283,
+            "path": "/tmp/Root-Source62-P0-closed-fit-Q3-independent-metadata-readback-v01.json",
+            "sha256": "903aba02629949edd28e1e8e53765b85a093893290408df32935f3730cdc9078"
+          }
+        },
+        "TRAIN3_GEN37": {
+          "Q3_outcomes": {
+            "completed": 0,
+            "incomplete": 2,
+            "invalid": 1
+          },
+          "Source_resource_and_native_lifecycle_close_checked": true,
+          "checkpoint_and_state_restoration_verified": true,
+          "closed_owner_generation": 37,
+          "equal_record_scalar_mean": 0.5896293520927429,
+          "fixed_train_rows": 3,
+          "historical_optimizer_steps": 3,
+          "new_optimizer_updates": 0,
+          "paired_comparison_performed_during_this_arm_closeout": false,
+          "small_fact_receipt": {
+            "bytes": 2304,
+            "path": "/tmp/Root-Source62-TRAIN3-closed-fit-Q3-independent-metadata-readback-v01.json",
+            "sha256": "cd16d970cb1e97513545ec12380277bf032be15721dcb3663b676dfc6cf185ff"
+          }
+        },
+        "interpretation": "Neither Q3 cohort completed. The separately authenticated comparison now records a decrease on the same three fixed fictional TRAIN records; it establishes no held-out gain, retention-rate success, generalization, legal/source faithfulness, convergence, learned-model quality, promotion or training permission.",
+        "protocol": "Two separately closed Source62 checkpoint records, each readonly over three fixed fictional TRAIN rows. Their per-arm closeouts preceded the separately closed public metadata comparison recorded below. Scalar means are model-reported equal-record arithmetic means, not token-weighted CE or NLL."
+      },
+      "scope": "Private final successor493 derivative with actual paired metadata comparison, Source63 capacity adoption/normal16 and closed Source64 milestone492 provenance. The new493 field alone is amended; the entire frozen492 guide, historical Phase5 scientific state, tasks, hierarchy and frontier remain unchanged. No canonical493 adoption or authority is implied."
+    },
+    "current_user_goal_world_legal_corpus": {
+      "context_to_preserve": [
+        "Original language and exact source spans",
+        "Jurisdiction and issuing authority",
+        "Instrument and provision identity",
+        "Source revision separately from governing legal edition",
+        "Effective dates, amendments and applicable interpretation",
+        "Definitions, cross-references and dependency components"
+      ],
+      "historical_cutoffs_unchanged": true,
+      "objective": "Autoformalize the entire world legal corpus into source-grounded LegalIR and a versioned, compositional Lean4 corpus.",
+      "parallel_existing_tasks": [
+        {
+          "task_ids": [
+            "LIR-02",
+            "LIR-03"
+          ],
+          "work": "Connect existing world/country legal-record projections to canonical source versions and Unicode/UTF8 occurrences without a second importer."
+        },
+        {
+          "task_ids": [
+            "LIR-07"
+          ],
+          "work": "Repair the reproduced tokenless non-ASCII atom-matching error in the existing canonical compiler; retain explicit unsupported language/semantics."
+        },
+        {
+          "task_ids": [
+            "LIR-12",
+            "LIR-13",
+            "LIR-14"
+          ],
+          "work": "Extend existing semantic interpretation, preservation and modular Lean build owners only for selected supported legal constructs."
+        },
+        {
+          "task_ids": [
+            "LIR-17",
+            "LIR-19",
+            "LIR-20"
+          ],
+          "work": "Continue source-conditioned decoding and retrieval with separately measured 8D/384D/768D/4096D profiles; dimensions are not interchangeable."
+        },
+        {
+          "task_ids": [
+            "LIR-23",
+            "LIR-24"
+          ],
+          "work": "Report per-jurisdiction/language/source-release stage coverage and expand by dependency components; a registered dataset is not a formalized corpus."
+        }
+      ],
+      "scope_limits": "This documentation change adds no corpus census, legal review, model convergence, Lean build result, task completion, runtime ownership or new supervisor system.",
+      "source_scope": [
+        "National and supranational legislation",
+        "Subnational and municipal legislation",
+        "Regulations, case law and other legal instruments through their existing source owners"
+      ],
+      "uscode_role": "Retained pilot and benchmark; not the boundary of the worldwide objective. Preserve the existing LIR-WHOLE-USCODE goal and all its historical source, task and evidence identities.",
+      "user_confirmed_at_utc": "2026-11-21",
+      "work_selection_rule": "Prioritize work directly advancing corpus coverage, faithful legal semantics, training, reconstruction, Lean compilation or automatic execution of those tasks."
+    },
+    "documentation_publication_reconciliation_493": {
+      "current_user_goal_phase5_evidence_unchanged_from_Source65": true,
+      "origin_main_revision": "1d2fe946fdb8341c49a38c58ef1d91a334a87085",
+      "retained_Source65_cutoff": "2026-11-22 milestone493; nested older fields keep their attributed cutoffs.",
+      "retained_origin_main_phase5_evidence_key": "retained_origin_main_phase5_evidence_1d2fe946_20261121",
+      "scope": "Documentation-only reconciliation of installed Source65 milestone493 with published Main; no new milestone, current source observation or runtime qualification."
+    },
+    "maintained_guide_compaction_milestone476": {
+      "C_published_raw_guide_refs": [
+        {
+          "Git_blob": "8ad69e960e8e2e5741c49071b7c52903259f8d9c",
+          "bytes": 1235845,
+          "published_snapshot_locator": "d2d498cfe39281988425140b22b93ff6dcc17fcf:ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
+          "repo_relative_path": "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
+          "sha256": "49f61ad74b78195f2b00ee14b4974acd6b6dbe873b9fe904d10ea88238cad78e",
+          "snapshot_commit": "d2d498cfe39281988425140b22b93ff6dcc17fcf"
+        },
+        {
+          "Git_blob": "70b3e2b8bae21b1851b84a13fa536ba204d65ec4",
+          "bytes": 1011530,
+          "published_snapshot_locator": "d2d498cfe39281988425140b22b93ff6dcc17fcf:ipfs_datasets_py/logic/autoformal/docs/work_catalog.json",
+          "repo_relative_path": "ipfs_datasets_py/logic/autoformal/docs/work_catalog.json",
+          "sha256": "48e78a13890bece85b2529dabdac90471c224364bc1e1301f7e9d8f364fb9224",
+          "snapshot_commit": "d2d498cfe39281988425140b22b93ff6dcc17fcf"
+        },
+        {
+          "Git_blob": "780831daea922ac83a336cba4be62f21a87efae8",
+          "bytes": 658067,
+          "published_snapshot_locator": "d2d498cfe39281988425140b22b93ff6dcc17fcf:ipfs_datasets_py/logic/autoformal/docs/HANDOFF.md",
+          "repo_relative_path": "ipfs_datasets_py/logic/autoformal/docs/HANDOFF.md",
+          "sha256": "9ea752a889fdd66e1265af3f74cae16af5ee3037d8505921139c216e4e9d0033",
+          "snapshot_commit": "d2d498cfe39281988425140b22b93ff6dcc17fcf"
+        },
+        {
+          "Git_blob": "ebe1894bf7db4c785698b50268f15e2deb46357e",
+          "bytes": 486180,
+          "published_snapshot_locator": "d2d498cfe39281988425140b22b93ff6dcc17fcf:ipfs_datasets_py/logic/autoformal/docs/TRAINING_HISTORY.md",
+          "repo_relative_path": "ipfs_datasets_py/logic/autoformal/docs/TRAINING_HISTORY.md",
+          "sha256": "92456ffdbd8170c854b521e2d672d9370071f0569e3822e9c8359b82aaf21b99",
+          "snapshot_commit": "d2d498cfe39281988425140b22b93ff6dcc17fcf"
+        }
+      ],
+      "C_snapshot_commit": "d2d498cfe39281988425140b22b93ff6dcc17fcf",
+      "Main_C_W_remote_identities_distinct": true,
+      "classification": "frozen_Main_union_history_compaction",
+      "current_handoff": "ipfs_datasets_py/logic/autoformal/docs/HANDOFF.md",
+      "current_training_history": "ipfs_datasets_py/logic/autoformal/docs/TRAINING_HISTORY.md",
+      "full_frozen475_preimages": {
+        "bytes": 6194,
+        "canonical_path": "ipfs_datasets_py/logic/autoformal/docs/history/main-union-milestone475-archive.json",
+        "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/milestone476-four-guide-compaction-private-v01/history/main-union-milestone475-archive.json",
+        "sha256": "81df64bf9508a221225e3bab0afe2e35184355323fea63ca6331a61dba6da028"
+      },
+      "grouped_evidence_id": "pretrained-Q3-baseline-profiled-cap-and-T3-stage-milestone476-20261120",
+      "grouped_evidence_index": {
+        "bytes": 21945,
+        "canonical_path": "ipfs_datasets_py/logic/autoformal/docs/history/milestone476-grouped-evidence-index.json",
+        "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/milestone476-four-guide-compaction-private-v01/history/milestone476-grouped-evidence-index.v02.json",
+        "sha256": "96e5126c8ffe2abb5a16c2f16c87decea763c0bc6c9cea196ff9203bf951144e"
+      },
+      "installed_or_published_by_this_preparation": false,
+      "milestone": 476,
+      "no_task_contract_state_dependency_or_component_order_changes": true,
+      "original_C_user_guides_preserved": true,
+      "schema": "maintained-guide-compaction-metadata/v1",
+      "separate_pre_cutoff_software_cohorts": [
+        "qwen2_explicit_16384_focused16",
+        "qwen2_full_three_query_pipeline2",
+        "qwen2_frontend138",
+        "ordinary_A79_trusted_pytest",
+        "canonical_C_phase6_roundtrip94",
+        "canonical_CI_source_filter_two_paths"
+      ]
+    },
+    "retained_origin_main_phase5_evidence_1d2fe946_20261121": {
+      "revision": "1d2fe946fdb8341c49a38c58ef1d91a334a87085",
+      "scope": "Exact published Main milestone485 Phase5 snapshot retained at its original cutoff, separate from the unchanged Source491 Phase5 field and Source493 evidence. Not a refreshed current frontier.",
+      "snapshot": {
+        "Main_merged_runtime_qualification_claimed": false,
+        "Root_final_facts_reference": {
+          "bytes": 14151,
+          "full9": {
+            "st_ctime_ns": "1795282675326965509",
+            "st_dev": "66306",
+            "st_gid": "1000",
+            "st_ino": "69338711",
+            "st_mode": "33024",
+            "st_mtime_ns": "1795282675326965509",
+            "st_nlink": "1",
+            "st_size": "14151",
+            "st_uid": "1000"
+          },
+          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/milestone485-four-guide-private-builder-v01/Root-final-facts-v02.json",
+          "sha256": "99c49a2178f41f09a8b11eb4465a6cba2053c8a3182a7c74f3ed3733703e073a"
+        },
+        "T3_stage_status": {
+          "Source_SDK_resource_process_cleanup_confirmed": true,
+          "actual_SDK_seconds": 5.059,
+          "actual_admission_entry_seconds": 51.811,
+          "actual_native_wait_seconds": 0.001234,
+          "actual_registry_generation": 24,
+          "canonical_training_rows": 3,
+          "copied23_source47_provenance_unchanged": true,
+          "current_staged_DB_bytes": 1060864,
+          "current_staged_DB_sha256_prefix": "aa8ce607",
+          "exact_census_seconds": null,
+          "exact_refusal": "proof_io_stall sample11.23% above10.0% with timeout0; no foreign leases/hardware insufficiency demonstrated",
+          "failed_readback_bytes": 2522,
+          "failed_readback_sha256": "8beddab571b73fac433a83b630b6ea458214f40da12580d91acdd54ca315db34",
+          "first_attempt": "Source47 preSDK admission refusal; no SDK, no generation24",
+          "foreign_origins": [],
+          "full64MiB_growth_charge_retained": true,
+          "full_nine_field_targets_preserved": true,
+          "global_retained_charge_bytes": 253705939294,
+          "historical_rows_preserved": 6,
+          "old26_metadata_preserved": true,
+          "profile": "DATA1CPU4GiB, existing12GiB storage+64MiB fullgrowth charge,600 productive admission entry plus180 cleanup using existing public deadline context; no hardware-capacity inflation",
+          "readback": {
+            "bytes": 9986,
+            "path": "/tmp/digest-omitted-v11-fresh-registry-copy-and-T3-restage-private-v01/actual-closed-Source48-copy23-to-T3stage24-DATA-readback-v01.json",
+            "sha256": "fe890d2510a9a181f879e7e2b763088c88ae2bbb7c41870c163593afc9d2c4ac"
+          },
+          "report": {
+            "bytes": 6349829,
+            "path": "/tmp/digest-omitted-v11-fresh-registry-copy-and-T3-restage-private-v01/stage-existing-owner-preparation-v02/output-v02/complete-fresh-v11-T3-existing-V4-restage-report.json",
+            "sha256": "cec3c6c1013e554307aa0b7636e80314f3860939bfec800c9b80cfbd866c76b1"
+          },
+          "retained_stage_charge_bytes": 69417592,
+          "retry_descriptor": {
+            "bytes": 11073,
+            "path": "/tmp/digest-omitted-v11-fresh-registry-copy-and-T3-restage-private-v01/T3-DATA-resource-retry-descriptor-v03.json",
+            "sha256": "ed19f9d36bdf17880a7da368846b9d40bec1a0c8bc43aec73dfdd9f945176e32"
+          },
+          "retry_status_at_cutoff": "ACTUALLY CLOSED0; qualified DATA staging and cleanup only, actual registry generation24. No model/tokenizer/weights/training.",
+          "retry_status_at_prior_cutoff": "ACTUALLY LIVE in original admission/census under same owner; session47907/PID1417902; no SDK/outcome/newgeneration inferred",
+          "source_drift": [],
+          "source_fences": 3
+        },
+        "actual_Source_epoch": 48,
+        "catalog_population": "Main 479 → 480/index 479; Source 485 remains separate",
+        "causal_repairs": {
+          "backend_source5_unchanged": true,
+          "environment": "preserve optional existing PYTHONUSERBASE alongside HOME; no inferred root/installation/site hooks",
+          "fixture": "bind exact existing package parent/origins in same isolated waited asset child; bounded actual startup-log tail retained before cleanup",
+          "library_cohort": "capture parent active known dependency root order and preserve explicit vector order; remove arbitrary interpreter-first priority; actual diagnostic showed system boto3/botocore/OpenSSL GEN_EMAIL incompatibility while parent cohort imported",
+          "no_T5_extra_install_or_architecture_workaround": true,
+          "raw_metadata_diagnostics": "actual c8a870 userbase metadata and4474e5 library metadata are separate no-model diagnostics; later Source48 physical/full214 are actual software qualification"
+        },
+        "cutoff_utc": "2026-11-21T17:37:55.326724+00:00",
+        "evidence_home": "ipfs_datasets_py/logic/autoformal/docs/work_catalog.json#/selected_evidence/479",
+        "evidence_id": "world-v11-frontend-and-fresh-objective-frontier-milestone485-20261121",
+        "existing_experiment_DATA_preparation": {
+          "TRAIN": "43395/43958ed9; exact old numerical algorithm,3updates,batch1,seed1729,LR1e-5,existing API target codec",
+          "evaluation": "49913/ada274af; same source-only Q3/budgets, actual typed serialized restore in each arm, explicit actual TRAIN lineage, no fabricated old separate restore witness",
+          "fresh_vendor_required": "new objective must start pristine vendor weights, empty Adam, step0 and new IDs; never objective-changing resume/retag of old TRAIN14",
+          "importer": "currentcopy-v04 40143/4a7d50a9, factoryd7454c7e, entryea413ae7; actual SDKcopy/currentclosedT3 DB joins; historical9 stays ancestry, not current DB path",
+          "importer_descriptor_sha256": "eb160cf4a6ab9b834bd75048f1e1ff7fd1f4136b1a3cf6af15dc3e448931a8bc",
+          "initializer_profile": "4CPU12GiB with actualSDKRSS12GiB; unchanged VM/file/output/algorithm/model2GiB bounds; finite600 wait explicitly postcensus unless separately selected absolute context",
+          "private_only_no_runtime_qualification_transfer": true
+        },
+        "existing_masked_retrieval_path": {
+          "finding": "Existing reviewed V4 masks already connect to symmetric masked Adam fitting; no duplicate bridge needed. Actual GTE producer computation/benefit and heldout retrieval remain separate scientific evidence.",
+          "report": {
+            "bytes": 5725,
+            "path": "/tmp/Phase4-existing-masked-contrastive-published-Main-integration-map-v01/current-Source40-owner-map-v02.json",
+            "sha256": "0340932c33e94af5ecf419db06a26e04842905f0867932b3e320f5a7c9dc7ab3"
+          }
+        },
+        "full214": {
+          "Source_resource_SDK_process_cleanup_confirmed": true,
+          "actual_collected_equals_called": true,
+          "collection_seconds": 0.951,
+          "errors": 0,
+          "failures": 0,
+          "functions": 25,
+          "passed": 214,
+          "readback": {
+            "bytes": 44255,
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/installed-v11-current-epoch-full214-six-modules-existing-owner-preparation-v01/actual-closed-Source48-normal214-authenticated-readback-v01.json",
+            "sha256": "e881dbf7c5c2594ddb183bc6bc7673601938e92d86a1ce2633831374358d951b"
+          },
+          "report": {
+            "bytes": 867429,
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/installed-v11-current-epoch-full214-six-modules-existing-owner-preparation-v01/output-v01/complete-installed-v11-inference-full214-existing-owner-report.json",
+            "sha256": "1093946269a27faa0c010ebbab85ba503537cb3eeefccea00cebb499478eac9e"
+          },
+          "run_seconds": 24.42,
+          "scope": "original205 plus currentcampaign5 and environment4; exact same actual Source48 epoch, six canonical modules, original normal5 conftests, user-first pytest environment",
+          "scope_limit": "tiny fictional fixtures and real physical software dispatch; no actual vendor-sized initialization or learned quality result",
+          "skipped": 0,
+          "tests": 214
+        },
+        "goal_scope": "Entire world legal corpus → source-grounded LegalIR → Lean4; U.S. Code pilot. Component software qualification is separate from legal meaning and model quality.",
+        "next_existing_owner_actions": [
+          "Bind actual current Source/T3stage24/registry/assets/admission in the existing fresh vendor driver and execute pristine import; retain source47 copy23 lineage and source48 stage24 independently.",
+          "same existing BEFORE/TRAIN/AFTER stages and fixed-row diagnostics, preserve raw failures and separate training fit/heldout/Lean/source-faithfulness denominators",
+          "continue world-corpus source-grounded graph/Lean work without fabricating review/coverage/convergence"
+        ],
+        "normal6": {
+          "passed": 6,
+          "readback_bytes": 6232,
+          "readback_sha256": "1129772f147351ba6f62a2ba5b3cb915c02bf8862fdb0e1a6bf7bdad4f04a06a",
+          "report_bytes": 241947,
+          "report_sha256": "32f37838549507f7565a6eb6f892f0d5f418dee51a55550db7d4e68c5a88030c",
+          "scope": "physical1 plus campaign5; earlier focused cohort separate from full214",
+          "tests": 6
+        },
+        "prior_immutable_cutoff": {
+          "bytes": 12094,
+          "cutoff_utc": "2026-11-21T17:32:33.093518+00:00",
+          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/milestone485-four-guide-private-builder-v01/Root-final-facts-v01.json",
+          "sha256": "7a7091da4594a8a1ce0bc3537e180b0c14c1171e080c41aeb57f21eb1373282e"
+        },
+        "prior_private_package_reference": {
+          "bytes": 5305,
+          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/milestone485-four-guide-private-builder-v01/descriptor-v02.json",
+          "sha256": "0657d5f7672cf6f83c6dc91616d1264395d45469ae9d732112b97a0240df2ec2"
+        },
+        "publication_at_cutoff": {
+          "merged_Main_runtime_qualification_claimed": false,
+          "prepared_code_tree": "7cb5e5f8da0d7d004f51dfc6ec728534ad12369e",
+          "prepared_current_code": "12aaff16ae8ceab956b182dcd45ce530c1328e14",
+          "prepared_not_pushed": true,
+          "published_H": "1dd03ea8575b095a3bbaa5c8f23007101038ca56",
+          "published_R": "b5b45debc0ee4d95a98591b54c0aa1dbc0494835",
+          "published_root": "a17718f28cfc45aeedd7ae6a2844852cc481523a"
+        },
+        "qualification_limits": [
+          "The entire world legal corpus → source-grounded LegalIR → Lean4 remains the goal; U.S. Code is a pilot. Active user-goal Phase 5 differs from historical programme Phase 05; all 24 task states are unchanged.",
+          "Source 48 full normal 214 PASS is software qualification for tiny fictional fixtures and actual physical dispatch, separate from focused 6 and historical repeated attempts. It is not a vendor-sized experiment or learned/legal result.",
+          "Genuine Source 47 registry DATA copy 22 → 23 and Source 48 T3 DATA stage 23 → 24 preserve distinct source provenance. Stage 24 preserves 3 full-nine training targets, 6 historical rows and the old 26 metadata entries; no model, tokenizer, weights or training execution occurred.",
+          "The 17:32:33 live-admission observation and immutable v1 package remain historical. Current closure uses the later 17:37:55 frozen facts, never retagging the old live observation.",
+          "The fresh-objective importer/TRAIN/evaluation derivatives remain private preparation. A fresh pristine vendor/empty Adam/step 0 lineage is required, with no objective-changing TRAIN14 retag.",
+          "Historical fictional TRAIN scalar fit, Q3 completion, semantic fidelity, independent legal review and Lean proof results retain separate denominators. No new model, world-corpus coverage, legal meaning or convergence qualification is conveyed.",
+          "Source catalog 485 and Main catalog 480 are distinct populations. Publication status is frozen, and merged Main runtime qualification remains false."
+        ],
+        "registry_DATA_copy": {
+          "SDK_Source_resource_cleanup_confirmed": true,
+          "actual_source_epoch": 47,
+          "all60_pool_entries_full9_preserved": true,
+          "copied_generation": 23,
+          "database_bytes": 798720,
+          "database_sha256_prefix": "2760e2a8",
+          "model_or_weights_or_numeric_parent_used": false,
+          "new_pool_objects": 0,
+          "readback_bytes": 6715,
+          "readback_sha256": "152743ec0cfdf388088d82971a87352a192c63592b7de35eafcb6af0d8ac394e",
+          "report": {
+            "bytes": 9713850,
+            "path": "/tmp/digest-omitted-v11-fresh-registry-copy-and-T3-restage-private-v01/copy-existing-owner-preparation-v02/output-v01/complete-fresh-v11-registry-DATA-copy-existing-owner-report.json",
+            "sha256": "082b9579105bf0f3b484bd958f677c2790f5da1fcec717739d4d93bf04de6ef6"
+          },
+          "scope": "genuine SDK DATA copy and byte-exact persistent mapping only; not T3 execution, model initialization, legal admission or new statutory coverage",
+          "source_generation": 22
+        },
+        "retained_failures": [
+          {
+            "epoch": 43,
+            "reason": "isolated fixture child did not carry already-installed transformer package root",
+            "result": "204PASS1FAIL full205"
+          },
+          {
+            "epoch": 44,
+            "reason": "default worker refused normal user-first active dependency order",
+            "result": "204PASS1FAIL full205"
+          },
+          {
+            "epoch": 44,
+            "reason": "global interpreter-first reorder changed pytest/conftest cohort; retained unselected remedy",
+            "result": "0 test calls"
+          },
+          {
+            "epoch": 45,
+            "reason": "caller stale205 count refused209 before collection",
+            "result": "0 test calls"
+          },
+          {
+            "epoch": 45,
+            "reason": "isolated child preREADY dependency known-set mismatch; actual log initially absent after SDK cleanup",
+            "result": "208PASS1FAIL full209"
+          },
+          {
+            "epoch": 46,
+            "reason": "retained actual whole1654B child log exposed unknown original user site before READY",
+            "result": "1FAIL focusedphysical1"
+          },
+          {
+            "epoch": 47,
+            "reason": "userbase fix reached READY/release; unrelated eager T5 import exposed incompatible interpreter-priority library cohort",
+            "result": "4PASS1FAIL focused5"
+          }
+        ],
+        "status": "Source48 full normal214 PASS. Genuine current22-to-copy23 DATA handoff and current-copy23-to-T3stage24 closed with exact canonical training population/history preserved. Fresh vendor initialization is the next actual step; no fresh large-model import/training/generation result at this cutoff.",
+        "target_projection_DATA": {
+          "bytes_removed_per_target": 84,
+          "bytes_removed_total": 252,
+          "fictional_TRAIN_rows": 3,
+          "non_digest_semantics_IDs_context_source_custody_and_original_rows_unchanged": true,
+          "only_removed_field": "typed_expression.content_digest",
+          "report": {
+            "bytes": 10636,
+            "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/same-TRAIN14-digest-omitted-target-comparison-DATA-v01/comparison-report-v02.json",
+            "sha256": "ef2797d7cf91f8646d5ffcbd3ff7bdeb7635151d46cc7b6aa18f18695b529258"
+          },
+          "token_savings_or_model_quality_measured": false
+        },
+        "unchanged_science": {
+          "Q3_completion_per_conditioning_arm": "0/3 on the same three Q3 rows, not six unique rows",
+          "convergence_proved": false,
+          "historical_equal_record_scalar_reduction_percent": 22.037337,
+          "historical_fixed_TRAIN_T3_scalar_means": [
+            0.9662747780481974,
+            0.7533335487047831
+          ],
+          "historical_measurement_updates": 0,
+          "historical_model_steps": [
+            0,
+            3
+          ],
+          "historical_quantity_Lean_DATA": "64 empty-axiom reports,24 independent expanded type assignments,2 intended mismatch refusals; unchanged math qualification separate from decoder software.",
+          "independent_real_legal_reviews": 0,
+          "new_large_checkpoint_training_or_inference_experiment": false,
+          "source_faithfulness_accuracy": "unknown",
+          "token_weighted_CE_or_NLL_proved": false,
+          "world_corpus_conversion_complete": false
+        },
+        "user_goal_phase": "User-goal Phase 5 source-conditioned decoder/fresh-objective experiment preparation; historical programme Phase 05/task states unchanged."
+      }
     }
   },
   "programme_goal_hierarchy": {
@@ -12059,7 +12798,7 @@
       "latest_incremental_native_audit": "artifacts/legal-corpus-incremental-lean-20261013-01/native-benchmark-04/independent-native-audit.json",
       "native_build_receipt": "artifacts/legal-corpus-shared-lean-20261013-01/native-smoke-02/native-positive/build-receipt.json",
       "priority": "P1",
-      "remaining_scope": "Actual reviewed statutory corpus builds and domain obligations, broader profile coverage, independently established legal/source correspondence and coherent released toolchain closure. Authored conditional witnesses do not finish the statutory pilot. Historical code5135b951/test9b888ce7 was an unexecuted consumer proposal; the separately factored test19bb4e18/code34eba72e subsequently had one ordinary preparation/consumer pass under Sourceab58972d. Original42018 later closed its actual Source/resource custody after same-parent raw Mapping correction, but its wrong-basename collector retained an emptyZIP and exited1; keep that failure and7860 retention errors. A separately corrected caller now has one unchanged whole-norm[source-use] Native pass on originalSource4127/041770b3, with93 retained members,10 compiledmodules and30 conditionaltheorems with empty observed axiom dependencies; authorityfalse and masks0. This does not run the later factored consumer callback or establish statutory/model/gold/corpus authority. Separately, existingresourceowner7a0dac2d/test4af66862 passed43 cases (12old+31new) on Source4162/0936, then its public same-namespace capacityCAS applied effective16-to-32 while retaining base16/CPU16/memory99688 and safety/history. The older2c006 facade was also observed working/renewing/releasing with this overlay in the correctedNative run. Operating limits are adjustable under userauthorization through existingowners with actual admission, custody and allcharges retained. The firstfour69attempts remain closedfailures; the later reviewedworker61118/test0e315 now has21new+69existing disjointsoftwarecases allPASS0FES on Source4166/0658. Smallinstalled4.52CPU compatibility/retention is qualified, nottrainingcampaign/pretrainedquality/legalmeaning/convergence. Separately, current fromraw Source4166/ad788 preparation/assessment/completevalidation retained42files/148132089B in619.366s:418requests/subjects/dependencyManifests,7pages,6688questions(3762sourceSlots+2926deferred); all418groups pending,0authenticatedEvidence/reviews,authorityfalse/masks0 and §101absent. Existingresource followup47 passed on Source4166/0830 with helperb2b/testaf7; no actualproduction idleadmin expansion is inferred. Reallegal/source/edition/meaning reviews, §101-inclusivepilot, training/convergence and the full eight-phase goal remain open. 2026-11-20 existing physical bridge: A protocol 4/R internal live 5 retains each owner's existing opaque factory; the original A parent handle is passed directly to the physical facade. A and R have distinct opaque classes/factories. Separate selected A25 controls passed at 4cb7 and R32 controls at e139; preserve R31 CPU240 cutoff,30P1F,focused plain-fixture1 and actual pure-SDK fsizeRED. Native5 explicitly bounds physical file128 MiB/workspace256 MiB with legacy limits preserved. Collector53902 failed at metadata classification; a separate56-module isolated startup observation is preparation evidence only, with no repaired-collector pass yet. Actual Native build/packet/facade replay remains PENDING. No statutory/model/training/convergence/gold/corpus or task-completion authority.",
+      "remaining_scope": "Actual reviewed statutory corpus builds and domain obligations, broader profile coverage, independently established legal/source correspondence and coherent released toolchain closure. Authored conditional witnesses do not finish the statutory pilot. Historical code5135b951/test9b888ce7 was an unexecuted consumer proposal; the separately factored test19bb4e18/code34eba72e subsequently had one ordinary preparation/consumer pass under Sourceab58972d. Original42018 later closed its actual Source/resource custody after same-parent raw Mapping correction, but its wrong-basename collector retained an emptyZIP and exited1; keep that failure and7860 retention errors. A separately corrected caller now has one unchanged whole-norm[source-use] Native pass on originalSource4127/041770b3, with93 retained members,10 compiledmodules and30 conditionaltheorems with empty observed axiom dependencies; authorityfalse and masks0. This does not run the later factored consumer callback or establish statutory/model/gold/corpus authority. Separately, existingresourceowner7a0dac2d/test4af66862 passed43 cases (12old+31new) on Source4162/0936, then its public same-namespace capacityCAS applied effective16-to-32 while retaining base16/CPU16/memory99688 and safety/history. The older2c006 facade was also observed working/renewing/releasing with this overlay in the correctedNative run. Operating limits are adjustable under userauthorization through existingowners with actual admission, custody and allcharges retained. The firstfour69attempts remain closedfailures; the later reviewedworker61118/test0e315 now has21new+69existing disjointsoftwarecases allPASS0FES on Source4166/0658. Smallinstalled4.52CPU compatibility/retention is qualified, nottrainingcampaign/pretrainedquality/legalmeaning/convergence. Separately, current fromraw Source4166/ad788 preparation/assessment/completevalidation retained42files/148132089B in619.366s:418requests/subjects/dependencyManifests,7pages,6688questions(3762sourceSlots+2926deferred); all418groups pending,0authenticatedEvidence/reviews,authorityfalse/masks0 and §101absent. Existingresource followup47 passed on Source4166/0830 with helperb2b/testaf7; no actualproduction idleadmin expansion is inferred. Reallegal/source/edition/meaning reviews, §101-inclusivepilot, training/convergence and the full eight-phase goal remain open. 2026-11-20 existing physical bridge: A protocol 4/R internal live 5 retains each owner's existing opaque factory; the original A parent handle is passed directly to the physical facade. A and R have distinct opaque classes/factories. Separate selected A25 controls passed at 4cb7 and R32 controls at e139; preserve R31 CPU240 cutoff,30P1F,focused plain-fixture1 and actual pure-SDK fsizeRED. Native5 explicitly bounds physical file128 MiB/workspace256 MiB with legacy limits preserved. Collector53902 failed at metadata classification; a separate56-module isolated startup observation is preparation evidence only, with no repaired-collector pass yet. Actual Native build/packet/facade replay remains PENDING. No statutory/model/training/convergence/gold/corpus or task-completion authority. Milestone475 (2026-11-20, separate current epoch): Root verified direct original-R Native R5/profile v5, not Git R5 staging or historical Native93/4127: 10 modules, 30 conditional obligations with observed empty axiom lists, three authored units and 93 ZIP members. Original A parent/facade integration and integrated preservation remain pending. Main frontier is Phase5 decoder/pretrained integration; standalone rich mechanics (451 forwards) still produced three incomplete/zero complete outputs and zero whole/full-nine-field metrics; aggregate lengths 8229/8229/5877 refused before forward at 8192 for the first two, then None iteration masked the capacity error. Separate Qwen9, retention90 and corrected A49 software results do not pool cohorts or qualify model quality. The 16K/None-safe core is PRODUCT+TEST STATIC CLEAR only, private/uninstalled/unexecuted. Real four source occurrences remain pending with zero independent reviews; Phase7 trusted reviewed-corpus continual-learning evaluation and release remain unqualified. Existing contracts, task states, dependencies, acceptance criteria and frontier fields are unchanged; see grouped evidence direct-R5-native-and-scoped-decoder-diagnostics-milestone475-20261120.",
       "reuse_owners": [
         "native Lake gates",
         "build manifests",
