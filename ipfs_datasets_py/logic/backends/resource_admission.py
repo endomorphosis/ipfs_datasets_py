@@ -163,6 +163,16 @@ class ResourceAdmittedToolRunner(BoundedToolRunner):
                                   else "native execution exceeded its shared deadline"))
 
     @staticmethod
+    def _observe_resource_admission(result: ToolRunResult, request: ToolRunRequest,
+            ambient_operation_present: bool, deadline: float) -> ToolRunResult:
+        if result.resource_observation is None:
+            return result
+        observation = replace(result.resource_observation,
+            admission_requested_limits=process._tool_resource_limit_envelope(request.limits),
+            ambient_operation_present=ambient_operation_present, admission_deadline_monotonic=deadline)
+        return replace(result, resource_observation=observation)
+
+    @staticmethod
     def _remaining_limits(limits: ToolRunLimits, remaining: float, signal: _Cancellation) -> ToolRunLimits:
         # Preserve the historical no-ambient CPU profile, and never invent a
         # CPU ceiling for callers that left it unspecified. RLIMIT_CPU itself
@@ -307,6 +317,7 @@ class ResourceAdmittedToolRunner(BoundedToolRunner):
                                             pass
                             else:
                                 result = super().run(bounded, cancellation=combined)
+                    result = self._observe_resource_admission(result, request, operation is not None, deadline)
                     # BoundedToolRunner has collected outputs and removed the
                     # workspace before returning. Keep all actual lifecycle flags.
                     if owned_native and lease.cancelled:

@@ -1,0 +1,126 @@
+{
+  "schema": "maintained-guide-full-preimage-compaction-archive/v1",
+  "milestone": 475,
+  "classification": "frozen_Main_union_history_not_current_C_alias",
+  "source_proposal_descriptor": {
+    "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/direct-R5-scoped-decoder-milestone475-four-guide-proposal-v02-zs4jjw9n/descriptor.json",
+    "bytes": 14162,
+    "sha256": "b8406fa3a7612beaf4e529073b7ccafc7f988f56d5ced52d04c321332788f645"
+  },
+  "guide_count": 4,
+  "records": [
+    {
+      "canonical_guide": "ipfs_datasets_py/logic/autoformal/docs/HANDOFF.md",
+      "scope": "entire frozen Root-reviewed Main-union proposal through milestone475; not current C alias or remote runtime qualification",
+      "frozen_preimage": {
+        "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/direct-R5-scoped-decoder-milestone475-four-guide-proposal-v02-zs4jjw9n/HANDOFF.md",
+        "bytes": 799992,
+        "sha256": "d69e2e070ff839f2d5fbb8df13571b61d4dbab4b0ce31b1c1b8fd843b32f21c6"
+      },
+      "snapshot": {
+        "path": "ipfs_datasets_py/logic/autoformal/docs/history/main-union-milestone475-HANDOFF-d69e2e070ff839f2.md.gz",
+        "bytes": 242573,
+        "sha256": "6023bd25e6a2b3556b637d9a3121a19917b8c0686ba2e845b9013cfb14840372"
+      },
+      "compression": {
+        "codec": "gzip",
+        "compresslevel": 9,
+        "mtime": 0,
+        "filename_header": "",
+        "zlib_version": "1.3"
+      },
+      "integrity": {
+        "deterministic_recompression_exact": true,
+        "decompression_bytes": 799992,
+        "decompression_sha256": "d69e2e070ff839f2d5fbb8df13571b61d4dbab4b0ce31b1c1b8fd843b32f21c6",
+        "entire_preimage_recovered": true
+      }
+    },
+    {
+      "canonical_guide": "ipfs_datasets_py/logic/autoformal/docs/TRAINING_HISTORY.md",
+      "scope": "entire frozen Root-reviewed Main-union proposal through milestone475; not current C alias or remote runtime qualification",
+      "frozen_preimage": {
+        "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/direct-R5-scoped-decoder-milestone475-four-guide-proposal-v02-zs4jjw9n/TRAINING_HISTORY.md",
+        "bytes": 584043,
+        "sha256": "cf42c7f28d4e4a0c4110c7559921a7e060b8d79af84680fef5015cebc5c32989"
+      },
+      "snapshot": {
+        "path": "ipfs_datasets_py/logic/autoformal/docs/history/main-union-milestone475-TRAINING_HISTORY-cf42c7f28d4e4a0c.md.gz",
+        "bytes": 175476,
+        "sha256": "738c86dc2956a9ea9e0a2489a82d3dc2d4d52f454826a7d2d3a87ea001347be5"
+      },
+      "compression": {
+        "codec": "gzip",
+        "compresslevel": 9,
+        "mtime": 0,
+        "filename_header": "",
+        "zlib_version": "1.3"
+      },
+      "integrity": {
+        "deterministic_recompression_exact": true,
+        "decompression_bytes": 584043,
+        "decompression_sha256": "cf42c7f28d4e4a0c4110c7559921a7e060b8d79af84680fef5015cebc5c32989",
+        "entire_preimage_recovered": true
+      }
+    },
+    {
+      "canonical_guide": "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
+      "scope": "entire frozen Root-reviewed Main-union proposal through milestone475; not current C alias or remote runtime qualification",
+      "frozen_preimage": {
+        "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/direct-R5-scoped-decoder-milestone475-four-guide-proposal-v02-zs4jjw9n/BACKLOG.json",
+        "bytes": 1270131,
+        "sha256": "ee193d5b4576bc999fb07a2351963b33d5d3d9c393d72887f5f07271481fb2ef"
+      },
+      "snapshot": {
+        "path": "ipfs_datasets_py/logic/autoformal/docs/history/main-union-milestone475-BACKLOG-ee193d5b4576bc99.json.gz",
+        "bytes": 259130,
+        "sha256": "c3fae048f8c74597d19ad41eba27964d0746237c6e83bcf4ca5879f6b13cfe9a"
+      },
+      "compression": {
+        "codec": "gzip",
+        "compresslevel": 9,
+        "mtime": 0,
+        "filename_header": "",
+        "zlib_version": "1.3"
+      },
+      "integrity": {
+        "deterministic_recompression_exact": true,
+        "decompression_bytes": 1270131,
+        "decompression_sha256": "ee193d5b4576bc999fb07a2351963b33d5d3d9c393d72887f5f07271481fb2ef",
+        "entire_preimage_recovered": true
+      }
+    },
+    {
+      "canonical_guide": "ipfs_datasets_py/logic/autoformal/docs/work_catalog.json",
+      "scope": "entire frozen Root-reviewed Main-union proposal through milestone475; not current C alias or remote runtime qualification",
+      "frozen_preimage": {
+        "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/direct-R5-scoped-decoder-milestone475-four-guide-proposal-v02-zs4jjw9n/work_catalog.json",
+        "bytes": 1211975,
+        "sha256": "e1c45b2fba87a23a15cc5f5de685a6103294ef4c567abeb365d0e9943ba73abe"
+      },
+      "snapshot": {
+        "path": "ipfs_datasets_py/logic/autoformal/docs/history/main-union-milestone475-work_catalog-e1c45b2fba87a23a.json.gz",
+        "bytes": 279402,
+        "sha256": "274d17e357d2730f81a3d30e06690b562ba82f08f1fc95458aa7320763cc722c"
+      },
+      "compression": {
+        "codec": "gzip",
+        "compresslevel": 9,
+        "mtime": 0,
+        "filename_header": "",
+        "zlib_version": "1.3"
+      },
+      "integrity": {
+        "deterministic_recompression_exact": true,
+        "decompression_bytes": 1211975,
+        "decompression_sha256": "e1c45b2fba87a23a15cc5f5de685a6103294ef4c567abeb365d0e9943ba73abe",
+        "entire_preimage_recovered": true
+      }
+    }
+  ],
+  "all_original_history_preserved": true,
+  "current_C_raw_variants_not_read_or_overwritten": true,
+  "historical_C_snapshot_refs_retained_in_existing_migration_archive_metadata": true,
+  "archive_members_authenticated_by": "exact private frozen475 byte/SHA verification and full gzip decompression/recompression checks in this preparation; no Source/Git/publication or product runtime",
+  "author_Source_reads_imports_Git_runtime": false
+}

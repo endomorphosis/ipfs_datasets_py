@@ -1877,7 +1877,7 @@ def evaluate_reviewed_source_span_producer_artifact(*, binding, rows, split_mani
 __all__ += ["evaluate_reviewed_source_span_producer_artifact"]
 
 
-def compare_reviewed_source_span_retention(before, after, *, expected_before_sha256, expected_after_sha256):
+def compare_reviewed_source_span_retention(before, after, *, expected_before_sha256, expected_after_sha256, cache_source_epoch_profile=None):
     """Compare two pinned source-only heldout observations on one frozen panel.
 
     The expected digests use stable_digest(artifact.to_dict()). Scores are
@@ -1886,7 +1886,9 @@ def compare_reviewed_source_span_retention(before, after, *, expected_before_sha
     checkpoint identities. The normal source-producer route also replays its
     observed input commitments: only checkpoint artifacts and their derived
     profile ID may vary. Generic callbacks require the same literal profile.
-    This does not replay current admission, reopen assets or load a model.
+    Digest-omitted observations also replay strict saved-text assembly through
+    the pure input owner. This does not replay current admission, reopen assets
+    or load a model.
     """
     from hashlib import sha256
     from .legal_ir_semantic_metrics import (
@@ -1984,6 +1986,10 @@ def compare_reviewed_source_span_retention(before, after, *, expected_before_sha
             "reviewed-decoder-qwen2-profiled-producer/v1:": (
                 "reviewed-decoder-source-producer-observation/v4", "reviewed-decoder-source-producer-policy/v4",
                 REVIEWED_V3_SCHEMA, REVIEWED_V3_PROFILE, "complete-reviewed-mixed-sort-norm-admission/v3"),
+            "reviewed-decoder-digest-omitted-producer/v1:": (
+                "reviewed-decoder-digest-omitted-source-producer-observation/v1",
+                "reviewed-decoder-digest-omitted-source-producer-policy/v1",
+                REVIEWED_V3_SCHEMA, REVIEWED_V3_PROFILE, "complete-reviewed-mixed-sort-norm-admission/v3"),
         }
         observation = metadata.get("source_generation_observation")
         expected = metadata.get("source_generation_input_commitment_sha256")
@@ -2008,12 +2014,15 @@ def compare_reviewed_source_span_retention(before, after, *, expected_before_sha
             "supplied_context_supported"}
         if admission_profile is not None:
             fields.add("admission_profile")
-        qwen2_generation = prefix == "reviewed-decoder-qwen2-profiled-producer/v1:"
+        digest_omitted_generation = prefix == "reviewed-decoder-digest-omitted-producer/v1:"
+        qwen2_generation = digest_omitted_generation or prefix == "reviewed-decoder-qwen2-profiled-producer/v1:"
         profiled_generation = qwen2_generation or prefix == "reviewed-decoder-profiled-producer/v1:"
         if profiled_generation:
             fields.add("generation_policy")
         if qwen2_generation:
             fields.add("runtime_profile")
+        if digest_omitted_generation:
+            fields.add("output_derivation")
         require((admission_profile is None and "admission_profile" not in observation
                  or admission_profile is not None and observation.get("admission_profile") == admission_profile)
                 and all(type(payload.get(field)) is dict
@@ -2034,16 +2043,22 @@ def compare_reviewed_source_span_retention(before, after, *, expected_before_sha
             generation_fields = {"schema", "generation_profile", "conditioning_profile", "max_generation_seconds"}
             if qwen2_generation:
                 generation_fields.add("context_budget_profile")
+            if digest_omitted_generation:
+                generation_fields.add("target_codec")
             require(type(generation) is dict and set(generation) == generation_fields
                     and type(generation["schema"]) is str
-                    and generation["schema"] == ("reviewed-decoder-generation-policy/v2" if qwen2_generation
+                    and generation["schema"] == ("reviewed-decoder-digest-omitted-generation-policy/v1" if digest_omitted_generation
+                                                else "reviewed-decoder-generation-policy/v2" if qwen2_generation
                                                 else "reviewed-decoder-generation-policy/v1")
                     and type(generation["generation_profile"]) is str
                     and generation["generation_profile"] == ("builtin-qwen2-dynamic-kv/v1" if qwen2_generation
                                                             else "builtin-llama-dynamic-kv/v1")
                     and type(generation["conditioning_profile"]) is str
-                    and generation["conditioning_profile"] == ("qwen2-chatml-complete-legal-ir/v1" if qwen2_generation
+                    and generation["conditioning_profile"] == ("qwen2-chatml-digest-omitted-legal-ir/v1" if digest_omitted_generation
+                                                              else "qwen2-chatml-complete-legal-ir/v1" if qwen2_generation
                                                               else "chatml-complete-legal-ir/v1")
+                    and (not digest_omitted_generation or type(generation["target_codec"]) is str
+                         and generation["target_codec"] == "complete-reviewed-norm-digest-omitted-json/v1")
                     and (not qwen2_generation or type(commitment["runtime_profile"]) is str
                          and commitment["runtime_profile"] == "builtin-qwen2-bfloat16/v1"
                          and type(generation["context_budget_profile"]) is str
@@ -2055,6 +2070,18 @@ def compare_reviewed_source_span_retention(before, after, *, expected_before_sha
             except OverflowError:
                 finite_positive = False
             require(finite_positive, "normal retention profiled generation policy differs")
+        if digest_omitted_generation:
+            derivation = commitment["output_derivation"]
+            require(type(derivation) is dict and set(derivation) == {
+                        "schema", "target_codec", "only_computed_field", "other_default_filling"}
+                    and type(derivation["schema"]) is str
+                    and derivation["schema"] == "reviewed-digest-omitted-output-assembly/v1"
+                    and type(derivation["target_codec"]) is str
+                    and derivation["target_codec"] == "complete-reviewed-norm-digest-omitted-json/v1"
+                    and type(derivation["only_computed_field"]) is str
+                    and derivation["only_computed_field"] == "typed_expression.content_digest"
+                    and derivation["other_default_filling"] is False,
+                    "normal retention digest-omitted assembly declaration differs")
         profile = config["input_profile"]
         identity = commitment["backend_identity"]
         require(commitment["operation"] == config["operation"]
@@ -2070,8 +2097,16 @@ def compare_reviewed_source_span_retention(before, after, *, expected_before_sha
                     "checkpoint_format", "target_codec", "source_conditioned", "pretrained"}
                 and identity["backend_id"] == config["checkpoint_declarations"]["decoder"]["id"]
                 and identity["source_conditioned"] is True and type(identity["pretrained"]) is bool
-                and identity["target_codec"] == "complete-reviewed-norm-json/v2",
+                and identity["target_codec"] == ("complete-reviewed-norm-digest-omitted-json/v1" if digest_omitted_generation
+                                                 else "complete-reviewed-norm-json/v2"),
                 "normal retention producer policy differs from evaluator inputs")
+        if digest_omitted_generation:
+            require(type(identity["checkpoint_format"]) is str
+                    and identity["checkpoint_format"] == "torch-weights-only-digest-omitted-reviewed-state-pair/v1"
+                    and type(identity["backend_id"]) is str
+                    and re.fullmatch(r"torch-digest-omitted-reviewed-decoder/v1:[0-9a-f]{64}", identity["backend_id"])
+                        is not None,
+                    "normal retention digest-omitted checkpoint identity differs")
         code = commitment["source_sha256"]
         require(type(code) is dict and set(code) == {"worker", "inputs", "consumer", "admission", "splits"}
                 and all(type(value) is str and re.fullmatch(r"[0-9a-f]{64}", value) is not None
@@ -2124,12 +2159,56 @@ def compare_reviewed_source_span_retention(before, after, *, expected_before_sha
                             and {key: item[key] for key in ("id", "outcome", "candidate")} == output
                             for item, row, output in zip(raw, payload["reference_population"], outputs, strict=True)),
                     "normal retention outputs differ from observed generation")
+            if digest_omitted_generation:
+                # Replay the producer's exact row commitments without importing
+                # numerical owners or interpreting EOS/text as legal meaning.
+                derivations = call.get("output_derivation")
+                require(type(derivations) is list and len(derivations) == len(raw),
+                        "normal retention digest-omitted derivation population differs")
+                for item, output, derivation in zip(raw, outputs, derivations, strict=True):
+                    text = item["generated_text"]
+                    require(text is None or type(text) is str,
+                            "normal retention digest-omitted raw text must retain null or string")
+                    text_sha = None if text is None else sha256(text.encode("utf-8")).hexdigest()
+                    complete = output["outcome"] == "complete"
+                    candidate_sha = None
+                    if complete:
+                        from ipfs_datasets_py.logic.autoformal.training_cycle_inputs import (
+                            _reviewed_wire, assemble_reviewed_decoder_digest_omitted_target,
+                        )
+                        try:
+                            candidate_sha = sha256(_reviewed_wire(output["candidate"])).hexdigest()
+                        except (ValueError, TypeError, KeyError, RecursionError):
+                            require(False, "normal retention digest-omitted complete candidate wire refused")
+                    require(type(derivation) is dict and set(derivation) == {
+                                "id", "raw_model_text_sha256", "assembled_full_target_sha256", "outcome",
+                                "computed_field", "other_fields_repaired"}
+                            and derivation["id"] == item["id"]
+                            and derivation["outcome"] == output["outcome"]
+                            and derivation["raw_model_text_sha256"] == text_sha
+                            and derivation["assembled_full_target_sha256"] == candidate_sha
+                            and derivation["computed_field"] == "typed_expression.content_digest"
+                            and derivation["other_fields_repaired"] is False,
+                            "normal retention digest-omitted row derivation differs")
+                    if complete:
+                        require(type(text) is str,
+                                "normal retention digest-omitted complete output requires raw text")
+                        try:
+                            assembled = assemble_reviewed_decoder_digest_omitted_target(text,
+                                target_codec="complete-reviewed-norm-digest-omitted-json/v1")
+                        except (ValueError, TypeError, KeyError, RecursionError):
+                            require(False, "normal retention digest-omitted complete raw wire refused strict assembly")
+                        require(stable_digest(assembled) == stable_digest(output["candidate"]),
+                                "normal retention digest-omitted candidate differs from strict raw assembly")
         else:
             require(call.get("completed") is False and type(call.get("exception_type")) is str
                     and call["exception_type"] == payload.get("producer_exception_type")
                     and call.get("producer_outputs") is None and call.get("raw_generation_outputs") is None
                     and all(output.get("outcome") == "error" and output.get("candidate") is None for output in outputs),
                     "normal retention failed invocation must preserve every error case")
+            if digest_omitted_generation:
+                require("output_derivation" not in call,
+                        "normal retention digest-omitted failed invocation cannot invent row derivations")
         receipt = call.get("input_receipt")
         if receipt is not None:
             rows = payload["reference_population"]
@@ -2155,11 +2234,18 @@ def compare_reviewed_source_span_retention(before, after, *, expected_before_sha
         return {"fixed_commitment": normalized, "input_receipt": receipt, "checkpoint_pair": pair,
                 "input_commitment_sha256": expected}
 
+    cache_profile_evidence = None
+    cache_projected_commitments = None
     prior_generation = normal_source_observation(previous, prior_payload, prior_config)
     next_generation = normal_source_observation(current, next_payload, next_config)
     require((prior_generation is None) == (next_generation is None), "retention producer routes differ")
+    if cache_source_epoch_profile is not None:
+        require(prior_generation is not None and next_generation is not None,
+                "cache retention profile requires actual normal digest source observations")
+        cache_profile_evidence, cache_projected_commitments = _reviewed_digest_cache_retention_profile(
+            cache_source_epoch_profile, (prior_generation, next_generation))
     if prior_generation is not None:
-        require(stable_digest(prior_generation["fixed_commitment"]) == stable_digest(next_generation["fixed_commitment"])
+        require(stable_digest(prior_generation["fixed_commitment"] if cache_projected_commitments is None else cache_projected_commitments[0]) == stable_digest(next_generation["fixed_commitment"] if cache_projected_commitments is None else cache_projected_commitments[1])
                 and (prior_generation["input_receipt"] is None or next_generation["input_receipt"] is None
                      or stable_digest(prior_generation["input_receipt"]) == stable_digest(next_generation["input_receipt"])),
                 "normal retention observations differ in frozen producer inputs or tokenized source")
@@ -2242,7 +2328,7 @@ def compare_reviewed_source_span_retention(before, after, *, expected_before_sha
         cases.append({"id": left["case_id"], "before_outcome": left["outcome"],
                       "after_outcome": right["outcome"], "status": status})
     baseline_exact = counts["retained"] + counts["lost"]
-    return {"schema": "reviewed-source-span-retention/v1", "before_artifact_sha256": expected_before_sha256,
+    result = {"schema": "reviewed-source-span-retention/v1", "before_artifact_sha256": expected_before_sha256,
         "after_artifact_sha256": expected_after_sha256, "reference_population_sha256": before.key.sample_hash,
         "split_manifest_sha256": prior_config["heldout_evaluation"]["split_manifest_sha256"],
         "dependency_group_sha256": prior_config["heldout_evaluation"]["dependency_group_sha256"],
@@ -2258,6 +2344,306 @@ def compare_reviewed_source_span_retention(before, after, *, expected_before_sha
         "scope": "paired_full_nine_payload_exactness_on_one_declared_frozen_heldout_component",
         "current_admission_replayed": False, "loaded_checkpoint_identity_verified": False,
         "heldout_generalization_established": False, "proof_authority": False}
+    if cache_profile_evidence is not None:
+        result["cache_source_epoch_profile"] = cache_profile_evidence
+    return result
 
 
 __all__ += ["compare_reviewed_source_span_retention"]
+
+
+REVIEWED_DIGEST_CACHE_RETENTION_PROFILE = "reviewed-digest-cache-source-retention-profile/v1"
+
+
+def _reviewed_retention_metadata_json(reference, *, limit, budget):
+    """Read only bounded saved JSON metadata; never load numerical/runtime owners."""
+    import hashlib
+    import json
+    import os
+    import stat
+    from pathlib import Path
+
+    def need(value, message):
+        if not value:
+            raise InvalidEvaluationArtifactError(message)
+
+    need(type(reference) is dict and set(reference) == {"path", "bytes", "sha256"}
+         and type(reference["path"]) is str and 0 < len(reference["path"]) <= 4096
+         and type(reference["bytes"]) is int and 0 < reference["bytes"] <= limit
+         and type(reference["sha256"]) is str
+         and re.fullmatch(r"[0-9a-f]{64}", reference["sha256"]) is not None,
+         "bounded exact retention metadata reference required")
+    path = Path(reference["path"])
+    need(path.is_absolute() and ".." not in path.parts,
+         "ordinary absolute retention metadata path required")
+    budget[0] += reference["bytes"]
+    need(budget[0] <= 64 * 1024 ** 2, "retention metadata aggregate byte cap exceeded")
+    fields = ("st_dev", "st_ino", "st_mode", "st_nlink", "st_uid", "st_gid", "st_size", "st_mtime_ns", "st_ctime_ns")
+    stamp = lambda info: tuple(getattr(info, key) for key in fields)
+    directories = {}
+    for parent in path.parents:
+        info = parent.lstat()
+        need(stat.S_ISDIR(info.st_mode), "ordinary retention metadata ancestry required")
+        directories[str(parent)] = (info.st_dev, info.st_ino, info.st_mode)
+    before = path.lstat()
+    need(stat.S_ISREG(before.st_mode) and before.st_nlink == 1
+         and before.st_uid == os.getuid() and before.st_size == reference["bytes"],
+         "ordinary single-link owned retention metadata required")
+    descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0))
+    try:
+        opened = os.fstat(descriptor)
+        need(stamp(before) == stamp(opened), "retention metadata changed at open")
+        raw = bytearray()
+        while True:
+            chunk = os.read(descriptor, min(1024 ** 2, reference["bytes"] + 1 - len(raw)))
+            if not chunk:
+                break
+            raw.extend(chunk)
+            need(len(raw) <= reference["bytes"], "retention metadata grew during read")
+        ended = os.fstat(descriptor)
+    finally:
+        os.close(descriptor)
+    after = path.lstat()
+    need(stamp(before) == stamp(opened) == stamp(ended) == stamp(after)
+         and len(raw) == reference["bytes"] and hashlib.sha256(raw).hexdigest() == reference["sha256"],
+         "retention metadata bytes or full identity changed")
+    for parent in path.parents:
+        info = parent.lstat()
+        need(stat.S_ISDIR(info.st_mode) and directories[str(parent)] == (info.st_dev, info.st_ino, info.st_mode),
+             "retention metadata ancestry changed")
+
+    def object_pairs(pairs):
+        value = {}
+        for key, item in pairs:
+            need(key not in value, "duplicate retention metadata JSON key")
+            value[key] = item
+        return value
+
+    def invalid_constant(value):
+        raise InvalidEvaluationArtifactError("nonfinite retention metadata JSON value")
+
+    try:
+        value = json.loads(raw, object_pairs_hook=object_pairs, parse_constant=invalid_constant)
+    except (ValueError, UnicodeError, RecursionError) as error:
+        raise InvalidEvaluationArtifactError("ordinary retention metadata JSON required") from error
+    need(type(value) is dict, "retention metadata JSON object required")
+    return value, bytes(raw), {key: str(getattr(after, key)) for key in fields}
+
+
+def _reviewed_digest_cache_retention_profile_metadata(profile, generations):
+    """Prove only a closed saved-metadata identity projection, never numeric equality."""
+    import copy
+    import hashlib
+    import json
+
+    def need(value, message):
+        if not value:
+            raise InvalidEvaluationArtifactError(message)
+
+    def wire(value):
+        return json.dumps(value, sort_keys=True, ensure_ascii=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
+
+    digest = lambda raw: hashlib.sha256(raw).hexdigest()
+    same = lambda left, right: wire(left) == wire(right)
+    source_names = {"worker", "inputs", "consumer", "admission", "splits"}
+    scope = "declared-current-at-migration-cohort-not-historical-execution-attestation/v1"
+    codec = "complete-reviewed-norm-digest-omitted-json/v1"
+    roles = ("pristine0", "TRAIN3")
+    role_fields = {"role", "current_configuration_artifact", "migration_receipt_artifact",
+        "derivative_candidate_artifact", "original_parent_manifest_artifact", "compatibility_contract_artifact"}
+    parent_fields = {"schema", "checkpoint_lineage_id", "base_version_id", "backend_identity", "assets",
+        "training_binding", "model_state", "optimizer_state", "progress", "batch_size", "seed",
+        "parent_checkpoint_sha256", "producer_pins", "token_budgets", "qualified", "promotion_performed"}
+    receipt_fields = {"schema", "profile", "old_checkpoint_manifest", "old_configuration_artifact",
+        "old_pipeline_artifact", "current_configuration_artifact", "source_contract_artifact", "current_pipeline_artifact",
+        "derivative_model_checkpoint", "derivative_optimizer_checkpoint", "target_job_spec", "migrated_training_binding",
+        "original_progress", "pipeline_proof", "source_projection_sha256", "dependency_scope",
+        "historical_dependency_execution_requalified", "model_Adam_steps_RNG_and_progress_preserved", "qualified",
+        "promotion_performed", "legal_meaning_verified", "convergence_proved", "corpus_admitted",
+        "new_checkpoint_lineage_id", "new_base_version_id", "origin_kind", "training_resume_eligible"}
+    contract_fields = {"schema", "profile", "old_checkpoint_manifest_sha256", "old_configuration_sha256",
+        "current_configuration_sha256", "old_tokenizer_pipeline_sha256", "old_source_sha256", "current_source_sha256",
+        "old_source_artifacts", "current_source_artifacts", "dependency_snapshot_artifact",
+        "old_training_binding_artifact", "dependency_association_scope"}
+    need(type(profile) is dict and set(profile) == {"schema", "arms"}
+         and profile["schema"] == REVIEWED_DIGEST_CACHE_RETENTION_PROFILE
+         and type(profile["arms"]) is list and len(profile["arms"]) == 2
+         and all(type(arm) is dict and set(arm) == role_fields and arm["role"] == role
+                 for arm, role in zip(profile["arms"], roles, strict=True)),
+         "explicit ordered pristine0/TRAIN3 retention metadata roles required")
+    need(type(generations) is tuple and len(generations) == 2
+         and all(type(item) is dict and set(item) == {"fixed_commitment", "input_receipt", "checkpoint_pair", "input_commitment_sha256"}
+                 for item in generations), "normal digest source generation required for cache retention profile")
+    budget = [0]
+    evidence = []
+    projected = []
+    configurations = []
+    old_populations = []
+    pipeline_proofs = []
+    for role, arm, generation in zip(roles, profile["arms"], generations, strict=True):
+        commitment = generation["fixed_commitment"]
+        identity = commitment.get("backend_identity")
+        need(commitment.get("schema") == "reviewed-decoder-digest-omitted-source-producer-policy/v1"
+             and type(identity) is dict and set(identity) == {"backend_id", "implementation_sha256", "checkpoint_format", "target_codec", "source_conditioned", "pretrained"}
+             and identity["checkpoint_format"] == "torch-weights-only-digest-omitted-reviewed-state-pair/v1"
+             and identity["target_codec"] == codec and identity["source_conditioned"] is True
+             and type(identity["pretrained"]) is bool,
+             "cache retention profile is exclusive to maintained digest-omitted observations")
+        values = {}
+        observations = {}
+        for name in sorted(role_fields - {"role"}):
+            value, raw, full9 = _reviewed_retention_metadata_json(arm[name], limit=4 * 1024 ** 2, budget=budget)
+            values[name] = (value, raw)
+            observations[name] = {"artifact": dict(arm[name]), "full9": full9}
+        configuration, configuration_raw = values["current_configuration_artifact"]
+        receipt, _ = values["migration_receipt_artifact"]
+        candidate, _ = values["derivative_candidate_artifact"]
+        parent, _ = values["original_parent_manifest_artifact"]
+        contract, _ = values["compatibility_contract_artifact"]
+        migration_profile = "digest-omitted-" + ("PRISTINE0" if role == "pristine0" else "TRAIN3") + "-to-pure-tokenizer-caches/v1"
+        origin = "pristine0" if role == "pristine0" else "trained3"
+        progress = {"epochs_completed": 0, "row_cursor": 0, "optimizer_steps": 0} if role == "pristine0" else {"epochs_completed": 1, "row_cursor": 0, "optimizer_steps": 3}
+        need(set(contract) == contract_fields and contract["schema"] == "reviewed-digest-omitted-cache-source-compatibility/v2"
+             and contract["profile"] == migration_profile and contract["dependency_association_scope"] == scope,
+             "closed current-cohort compatibility metadata required")
+        source, old_source = contract["current_source_sha256"], contract["old_source_sha256"]
+        need(type(source) is type(old_source) is dict and set(source) == set(old_source) == source_names
+             and all(type(value) is str and re.fullmatch(r"[0-9a-f]{64}", value) is not None
+                     for mapping in (source, old_source) for value in mapping.values())
+             and same(source, commitment.get("source_sha256")) and identity["implementation_sha256"] == source["worker"]
+             and all(source[key] == old_source[key] for key in ("consumer", "admission", "splits")),
+             "cache retention source implementation or common producers differ")
+        need(set(parent) == parent_fields and parent["schema"] == "reviewed-digest-omitted-decoder-checkpoint/v1"
+             and parent["qualified"] is parent["promotion_performed"] is False
+             and same(parent["producer_pins"], old_source) and same(parent["progress"], progress)
+             and all(type(value) is int for value in parent["progress"].values())
+             and type(parent["batch_size"]) is int and parent["batch_size"] == 1
+             and type(parent["seed"]) is int and parent["seed"] == 1729,
+             "exact original zero/three-step digest parent metadata required")
+        need(parent["backend_identity"] == {"backend_id": "torch-digest-omitted-reviewed-decoder/v1:" + contract["old_configuration_sha256"],
+                 "implementation_sha256": old_source["worker"], "checkpoint_format": "torch-weights-only-digest-omitted-reviewed-state-pair/v1",
+                 "target_codec": codec, "source_conditioned": True, "pretrained": identity["pretrained"]},
+             "original parent backend identity differs from declared original configuration/Source")
+        need(contract["old_checkpoint_manifest_sha256"] == arm["original_parent_manifest_artifact"]["sha256"]
+             and contract["current_configuration_sha256"] == arm["current_configuration_artifact"]["sha256"],
+             "compatibility parent/configuration references differ")
+        population, population_raw, population_full9 = _reviewed_retention_metadata_json(contract["old_training_binding_artifact"], limit=4 * 1024 ** 2, budget=budget)
+        observations["old_training_binding_artifact"] = {"artifact": dict(contract["old_training_binding_artifact"]), "full9": population_full9}
+        need(population.get("schema") == "reviewed-decoder-digest-omitted-training-input-receipt/v1"
+             and population.get("target_codec") == codec and type(population.get("record_count")) is int
+             and population["record_count"] == 3,
+             "exact same-objective original/prospective T3 population required")
+        if role == "pristine0":
+            need(parent["training_binding"] is None and parent["parent_checkpoint_sha256"] is None,
+                 "pristine parent must have no historical updates or training population")
+        else:
+            need(same(parent["training_binding"], population), "TRAIN3 parent population differs from authenticated binding")
+        version = digest(wire({"profile": migration_profile, "old_manifest": arm["original_parent_manifest_artifact"]["sha256"],
+            "current_source": source, "population": contract["old_training_binding_artifact"]["sha256"]}))
+        marker = {"schema": "reviewed-digest-cache-source-marker/v1", "profile": migration_profile,
+            "origin_checkpoint_sha256": arm["original_parent_manifest_artifact"]["sha256"], "lineage_sha256": version}
+        need(configuration_raw == wire(configuration) and configuration.get("schema") == "torch-complete-reviewed-decoder-configuration/v4"
+             and configuration.get("cache_source_epoch_marker") == marker
+             and configuration.get("device") == "cpu" and configuration.get("model_profile") == "builtin-qwen2-bfloat16/v1"
+             and configuration.get("architecture") == "causal_lm" and configuration.get("target_codec") == codec
+             and configuration.get("training_conditioning_profile") == "qwen2-chatml-digest-omitted-legal-ir/v1"
+             and type(configuration.get("pretrained_declaration")) is bool
+             and identity == {"backend_id": "torch-digest-omitted-reviewed-decoder/v1:" + digest(configuration_raw),
+                 "implementation_sha256": source["worker"], "checkpoint_format": "torch-weights-only-digest-omitted-reviewed-state-pair/v1",
+                 "target_codec": codec, "source_conditioned": True, "pretrained": configuration["pretrained_declaration"]},
+             "backend identity must derive from exact complete canonical marked configuration")
+        need(set(receipt) == receipt_fields and receipt["schema"] == "reviewed-digest-omitted-cache-source-migration/v1"
+             and receipt["profile"] == migration_profile and receipt["origin_kind"] == origin
+             and same(receipt["original_progress"], progress) and receipt["training_resume_eligible"] is True
+             and receipt["model_Adam_steps_RNG_and_progress_preserved"] is True
+             and all(receipt[name] is False for name in ("qualified", "promotion_performed", "legal_meaning_verified", "convergence_proved", "corpus_admitted", "historical_dependency_execution_requalified"))
+             and receipt["old_checkpoint_manifest"] == arm["original_parent_manifest_artifact"]
+             and receipt["current_configuration_artifact"] == arm["current_configuration_artifact"]
+             and receipt["source_contract_artifact"] == arm["compatibility_contract_artifact"]
+             and receipt["old_configuration_artifact"]["sha256"] == contract["old_configuration_sha256"]
+             and receipt["old_pipeline_artifact"]["sha256"] == contract["old_tokenizer_pipeline_sha256"]
+             and receipt["dependency_scope"] == scope,
+             "migration receipt metadata, origin, references or nonauthorizing scope differ")
+        spec = receipt["target_job_spec"]
+        need(type(spec) is dict and spec.get("schema_version") == "reviewed-mixed-digest-omitted-decoder-job/v1"
+             and spec.get("parent_checkpoint_artifact") == arm["original_parent_manifest_artifact"]
+             and spec.get("base_model_checkpoint") == parent["model_state"] and spec.get("base_optimizer_checkpoint") == parent["optimizer_state"]
+             and spec.get("checkpoint_lineage_id") == parent["checkpoint_lineage_id"] and spec.get("base_version_id") == parent["base_version_id"]
+             and same(spec.get("backend_identity"), identity) and same(spec.get("expected_source_sha256"), source)
+             and spec.get("expected_admission_inputs_sha256") == population.get("admission_inputs_sha256")
+             and type(spec.get("stage_artifact")) is dict and spec["stage_artifact"].get("sha256") == population.get("stage_artifact_sha256"),
+             "receipt target spec differs from original pair/current identity/T3 binding")
+        migrated = receipt["migrated_training_binding"]
+        need(type(migrated) is dict and set(migrated) == set(population)
+             and migrated.get("schema") == population["schema"] and migrated.get("target_codec") == codec,
+             "complete migrated same-objective binding required")
+        need(all(same(population[key], migrated[key]) for key in set(population) - {"implementation", "tokenizer_contract"}),
+             "migrated population/context/token/admission values changed")
+        old_implementation, implementation = population.get("implementation"), migrated.get("implementation")
+        need(type(old_implementation) is type(implementation) is dict,
+             "complete old/current input implementation maps required")
+        old_keys = [key for key, value in old_implementation.items() if value == old_source["inputs"]]
+        new_keys = [key for key, value in implementation.items() if value == source["inputs"]]
+        need(len(old_keys) == len(new_keys) == 1
+             and same({key: value for key, value in old_implementation.items() if key != old_keys[0]},
+                      {key: value for key, value in implementation.items() if key != new_keys[0]}),
+             "unrelated input dependency or exact maintained input change differs")
+        proof = receipt["pipeline_proof"]
+        need(type(proof) is dict and set(proof) == {"old_contract", "current_contract", "old_binding", "current_binding", "method_proofs"}
+             and same(proof["old_contract"], population["tokenizer_contract"])
+             and same(proof["current_contract"], migrated["tokenizer_contract"])
+             and same(configuration.get("tokenizer"), migrated["tokenizer_contract"])
+             and same(configuration.get("tokenizer_binding"), proof["current_binding"])
+             and type(generation["input_receipt"]) is dict
+             and same(generation["input_receipt"].get("tokenizer_contract"), configuration["tokenizer"])
+             and receipt["current_pipeline_artifact"]["sha256"] == configuration["tokenizer"].get("pipeline_sha256")
+             and receipt["current_pipeline_artifact"]["bytes"] == configuration["tokenizer"].get("pipeline_bytes")
+             and configuration["tokenizer_binding"].get("configuration_sha256") == "sha256:" + receipt["current_pipeline_artifact"]["sha256"],
+             "saved current tokenizer/pipeline/binding commitments differ")
+        need(set(candidate) == parent_fields | {"cache_source_epoch_migration", "cache_epoch_parent_checkpoint_artifact"}
+             and candidate["schema"] == "reviewed-digest-omitted-cache-source-checkpoint/v1"
+             and candidate["cache_source_epoch_migration"] == arm["migration_receipt_artifact"]
+             and candidate["cache_epoch_parent_checkpoint_artifact"] == arm["original_parent_manifest_artifact"]
+             and candidate["parent_checkpoint_sha256"] == arm["original_parent_manifest_artifact"]["sha256"]
+             and candidate["checkpoint_lineage_id"] == receipt["new_checkpoint_lineage_id"] == "digest-cache-source-lineage:" + version
+             and candidate["base_version_id"] == receipt["new_base_version_id"] == "digest-cache-source-version:" + version
+             and same(candidate["backend_identity"], identity) and same(candidate["producer_pins"], source)
+             and candidate["model_state"] == receipt["derivative_model_checkpoint"] == generation["checkpoint_pair"]["model_checkpoint"]
+             and candidate["optimizer_state"] == receipt["derivative_optimizer_checkpoint"] == generation["checkpoint_pair"]["optimizer_checkpoint"]
+             and same(candidate["training_binding"], migrated) and same(candidate["progress"], progress)
+             and all(type(value) is int for value in candidate["progress"].values())
+             and candidate["assets"] == parent["assets"] and candidate["batch_size"] == parent["batch_size"]
+             and candidate["seed"] == parent["seed"] and candidate["qualified"] is candidate["promotion_performed"] is False
+             and candidate["token_budgets"] == {"max_source_tokens": spec.get("max_source_tokens"),
+                 "max_target_tokens": spec.get("max_target_tokens"), "tokenizer_contract": migrated["tokenizer_contract"]},
+             "derivative candidate pair, ancestry, lineage, progress or binding differs")
+        need(parent["token_budgets"] == {"max_source_tokens": spec.get("max_source_tokens"),
+            "max_target_tokens": spec.get("max_target_tokens"), "tokenizer_contract": population["tokenizer_contract"]},
+            "original complete token budgets differ")
+        projected_commitment = copy.deepcopy(commitment)
+        del projected_commitment["backend_identity"]["backend_id"]
+        projected.append(projected_commitment)
+        configurations.append({key: value for key, value in configuration.items() if key != "cache_source_epoch_marker"})
+        old_populations.append(population_raw)
+        pipeline_proofs.append(proof)
+        evidence.append({"role": role, "metadata_artifacts": observations, "actual_backend_identity": copy.deepcopy(identity),
+            "proved_configuration_sha256": digest(configuration_raw), "proved_marker": marker,
+            "original_progress": progress, "derivative_candidate": dict(arm["derivative_candidate_artifact"]),
+            "migration_receipt": dict(arm["migration_receipt_artifact"]), "numeric_pair_bytes_read": False})
+    need(same(configurations[0], configurations[1]) and old_populations[0] == old_populations[1]
+         and same(pipeline_proofs[0], pipeline_proofs[1]),
+         "cache retention arms differ beyond exact derived markers or original shared population/tokenizer proof")
+    return ({"schema": REVIEWED_DIGEST_CACHE_RETENTION_PROFILE, "arms": evidence,
+        "projection": "remove_only_proved_derived_backend_id_from_comparison_copies",
+        "metadata_bytes_authenticated": budget[0], "metadata_only": True,
+        "numeric_equality_recomputed": False, "fresh_execution_or_admission_replayed": False,
+        "historical_dependency_execution_requalified": False, "loaded_checkpoint_identity_verified": False}, tuple(projected))
+
+
+def _reviewed_digest_cache_retention_profile(profile, generations):
+    try:
+        return _reviewed_digest_cache_retention_profile_metadata(profile, generations)
+    except InvalidEvaluationArtifactError:
+        raise
+    except (OSError, ValueError, TypeError, KeyError, OverflowError, RecursionError) as error:
+        raise InvalidEvaluationArtifactError("invalid bounded cache retention metadata profile") from error

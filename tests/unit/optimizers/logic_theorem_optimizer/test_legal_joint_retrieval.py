@@ -1009,3 +1009,37 @@ def test_reviewed_v4_actual_fixture_masks_and_current_denial_precede_torch(monke
     with pytest.raises(ValueError):
         retrieval.train_reviewed_retriever_v4(*args, **blocked, steps=0)
     assert entered == [True]
+
+
+def test_reviewed_v4_source_query_preparation_retains_authenticated_context_set():
+    """A heldout source query must preserve the real fictional V4 pair domain."""
+    from tests.unit.logic.formalization.autoencoder import test_alignment_relation_mask_handoff as owner
+    case = owner.fixtures.reviewed_pair_fixture_v4()
+    original_preparation = copy.deepcopy(case["preparation"])
+    context_set = copy.deepcopy(case["preparation_inputs"]["body"]["context_set"])
+    assert len(context_set) == 2
+    assert len(case["expected_positive_mask"]) == 4
+    assert all(len(row) == 6 for row in case["expected_positive_mask"])
+
+    current, query, lane, expected = _reviewed_structural_query_fixture(
+        owner, case, admission_version="v4")
+    args, inputs = owner.reviewed_mask_arguments_v2(current)
+    handoff = owner.subject.compile_reviewed_train_relation_masks_v4(*args, **inputs)
+    assert current["preparation"]["schema"] == owner.subject.relations.REVIEWED_V4_SCHEMA
+    assert current["preparation"]["schema"] == "alignment-reviewed-pair-preparation/v4"
+    assert handoff["schema"] == "alignment-reviewed-train-relation-mask-handoff/v4"
+    assert handoff["reviewed_objective_mask_ready"] is True
+    assert handoff["endpoint_admission_version"] == "v3"
+    assert current["preparation_inputs"]["body"]["context_set"] == context_set
+    assert handoff["context_set"] == context_set
+    assert handoff["context_set_sha256"] == case["context_set_sha256"]
+    assert handoff["source_row_count"] == 4 and handoff["formal_row_count"] == 6
+    assert handoff["objective_positive_mask"] == case["expected_positive_mask"]
+    assert all(len(vector) == 384 for vector in handoff["source_vectors"] + handoff["formal_vectors"])
+    assert query["split_sample_id"] in current["preparation_inputs"]["split_manifest"]["assignments"]
+    assert lane["rows"][0]["id"] == query["id"]
+    assert expected["inputs"][0]["id"] == query["id"]
+    assert current["preparation"]["body_sha256"] != original_preparation["body_sha256"]
+    assert case["preparation"] == original_preparation
+    assert handoff["training_gold_mask"] == handoff["evaluation_gold_mask"] == 0
+    assert handoff["legal_applicability_verified"] is handoff["controlling_authority"] is False

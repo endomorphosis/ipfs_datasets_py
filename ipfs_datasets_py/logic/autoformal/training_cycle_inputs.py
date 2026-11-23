@@ -1241,6 +1241,54 @@ def _reviewed_decoder_validate_fixed_byte_pipeline(tokenizer, pipeline, ids):
         _reviewed_decoder_need(path in implementation_paths, "actual fixed-byte method source is missing from implementation pins")
 
 
+import threading as _reviewed_decoder_pipeline_cache_threading
+
+# Pure bytes-to-structure memoization only. Neither live serialization nor any
+# implementation-file authentication is cached. Values contain no mutable JSON.
+_REVIEWED_DECODER_HF_PIPELINE_SUMMARY_CACHE = {}
+_REVIEWED_DECODER_HF_PIPELINE_SUMMARY_LOCK = _reviewed_decoder_pipeline_cache_threading.Lock()
+_REVIEWED_DECODER_HF_PIPELINE_SUMMARY_MAX_ENTRIES = 2
+_REVIEWED_DECODER_HF_PIPELINE_SUMMARY_MAX_RAW_BYTES = 16 * 1024**2
+
+def _reviewed_decoder_hf_pipeline_summary(raw):
+    """Reuse only pure parsing of identical maintained production bytes.
+
+    The caller freshly serializes its actual tokenizer and reauthenticates all
+    implementation files on every call. Oversized otherwise-valid bytes and
+    fixed-byte pipelines keep their ordinary validation path.
+    """
+    import hashlib
+    eligible = type(raw) is bytes and len(raw) <= _REVIEWED_DECODER_HF_PIPELINE_SUMMARY_MAX_RAW_BYTES
+    if eligible:
+        with _REVIEWED_DECODER_HF_PIPELINE_SUMMARY_LOCK:
+            cached = _REVIEWED_DECODER_HF_PIPELINE_SUMMARY_CACHE.get(raw)
+        if cached is not None:
+            return cached, None
+    pipeline = _reviewed_json(raw)
+    if type(pipeline) is not dict or pipeline.get("kind") != "huggingface_fast":
+        return None, pipeline
+    _reviewed_closed(pipeline, {"schema", "kind", "backend", "frontend", "implementation", "transport"},
+                     "complete actual tokenizer pipeline")
+    _reviewed_decoder_need(pipeline["schema"] == "reviewed-decoder-tokenizer-pipeline/v1"
+                   and pipeline["kind"] in {"huggingface_fast", "fictional_fixed_byte"}
+                   and type(pipeline["backend"]) is dict and bool(pipeline["backend"])
+                   and type(pipeline["frontend"]) is dict and bool(pipeline["frontend"]),
+                   "supported complete tokenizer pipeline with actual backend/frontend required")
+    _reviewed_closed(pipeline["transport"], {"body_only", "truncation", "padding"},
+                     "explicit tokenizer transport configuration")
+    _reviewed_decoder_need(pipeline["transport"]["body_only"] is True
+                   and pipeline["transport"]["truncation"] is False
+                   and pipeline["transport"]["padding"] is False,
+                   "body-only tokenizer transport without truncation or padding required")
+    summary = (pipeline["kind"], _reviewed_wire(pipeline["implementation"]),
+               hashlib.sha256(raw).hexdigest(), len(raw))
+    if eligible:
+        with _REVIEWED_DECODER_HF_PIPELINE_SUMMARY_LOCK:
+            _REVIEWED_DECODER_HF_PIPELINE_SUMMARY_CACHE[raw] = summary
+            while len(_REVIEWED_DECODER_HF_PIPELINE_SUMMARY_CACHE) > _REVIEWED_DECODER_HF_PIPELINE_SUMMARY_MAX_ENTRIES:
+                del _REVIEWED_DECODER_HF_PIPELINE_SUMMARY_CACHE[next(iter(_REVIEWED_DECODER_HF_PIPELINE_SUMMARY_CACHE))]
+    return summary, None
+
 def _reviewed_decoder_tokenizer_contract(tokenizer):
     """Derive identity from the complete live pipeline, never an opaque label.
 
@@ -1265,7 +1313,22 @@ def _reviewed_decoder_tokenizer_contract(tokenizer):
                    "decoder tokenizer IDs changed during pipeline serialization")
     _reviewed_decoder_need(type(raw) is bytes and 0 < len(raw) <= MAX_REVIEWED_ARTIFACT_BYTES,
                    "bounded complete canonical tokenizer pipeline bytes required")
-    pipeline = _reviewed_json(raw)
+    if type(tokenizer) is ReviewedPretrainedTokenizer:
+        summary, pipeline = _reviewed_decoder_hf_pipeline_summary(raw)
+        if summary is not None:
+            _reviewed_decoder_need(type(tokenizer) is ReviewedPretrainedTokenizer,
+                           "exact maintained ReviewedPretrainedTokenizer required for production pipeline")
+            # Decode a fresh small inventory and authenticate every actual file;
+            # unchanged metadata never substitutes for a fresh content read.
+            implementation = _reviewed_json(summary[1])
+            _reviewed_decoder_tokenizer_implementation(implementation)
+            _reviewed_decoder_need(_reviewed_decoder_tokenizer_ids(tokenizer) == ids,
+                           "decoder tokenizer IDs changed during implementation authentication")
+            return {"schema": "reviewed-decoder-tokenizer-contract/v2", **ids,
+                    "pipeline_kind": summary[0], "pipeline_sha256": summary[2],
+                    "pipeline_bytes": summary[3]}
+    else:
+        pipeline = _reviewed_json(raw)
     _reviewed_closed(pipeline, {"schema", "kind", "backend", "frontend", "implementation", "transport"},
                      "complete actual tokenizer pipeline")
     _reviewed_decoder_need(pipeline["schema"] == "reviewed-decoder-tokenizer-pipeline/v1"

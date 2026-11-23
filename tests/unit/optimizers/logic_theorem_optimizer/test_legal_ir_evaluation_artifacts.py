@@ -3774,3 +3774,594 @@ def test_rich_policy_exit_keeps_malformed_return_failure_separate_from_producer_
     with pytest.raises(_producer_owner.InvalidEvaluationArtifactError, match="ordinary JSON"):
         _producer_evaluate(options, producer)
     assert len(policy_calls) == 2 and len(producer_calls) == 1
+
+
+# Explicit digest-omitted source-only saved retention. The native fixture below
+# exercises the existing public producer using tiny fictional EOS-only models.
+# Separate controlled saved-output tests exercise assembly/commitment contracts;
+# they do not claim those controlled complete candidates came from a model.
+@pytest.fixture(scope="module")
+def reviewed_digest_omitted_retention_artifacts(tmp_path_factory):
+    import json
+    from copy import deepcopy
+    from tests.unit.optimizers.logic_theorem_optimizer import test_autoencoder_training_worker as models
+    directory = tmp_path_factory.mktemp("digest-omitted-retention-pair")
+    source_directory = directory / "reviewed-source"
+    source_directory.mkdir()
+    base = models._reviewed_mixed_source_producer_fixture(source_directory)
+    model_directory = directory / "digest-model"
+    model_directory.mkdir()
+    local = models._digest_omitted_Qwen_local_fixture(model_directory)
+    options = dict(base.options)
+    options.update(backend_identity=local.backend.identity(),
+        assets=tuple(local.options[key] for key in
+            ("recipe_artifact", "model_config_artifact", "tokenizer_artifact", "license_artifact")),
+        model_checkpoint=local.options["model_checkpoint"],
+        optimizer_checkpoint=local.options["optimizer_checkpoint"])
+    policies = []
+    runtime = models.worker.ReviewedDecoderRuntime(base.runtime.registry, local.backend,
+        local.backend.tokenizer, base.fresh, lambda: None,
+        lambda policy: policies.append(json.loads(models.worker._json_bytes(policy))))
+    policy = models._reviewed_Qwen2_generation_policy()
+    policy.update(schema=models.worker.REVIEWED_DIGEST_OMITTED_GENERATION_POLICY_SCHEMA,
+        conditioning_profile=models.worker.REVIEWED_DIGEST_OMITTED_CHATML_PROFILE,
+        target_codec=models.worker.REVIEWED_DIGEST_OMITTED_TARGET_CODEC)
+    witnesses = []
+
+    def declarations():
+        return {"encoder": base.declarations()["encoder"],
+            "decoder": {"id": options["backend_identity"]["backend_id"],
+                "sha256": options["model_checkpoint"].sha256}}
+
+    def evaluate(*, preflight_error=False):
+        selected = dict(options)
+        if preflight_error:
+            selected["max_source_tokens"] = 3
+        producer = models.worker.make_reviewed_decoder_digest_omitted_source_producer_v1(
+            runtime, **selected, generation_policy=deepcopy(policy))
+        forwards = []
+        def native_forward(model, args, kwargs):
+            assert "labels" not in kwargs
+            forwards.append(int(kwargs["input_ids"].shape[1]))
+        hook = local.backend.model.register_forward_pre_hook(native_forward, with_kwargs=True)
+        try:
+            artifact = producer.evaluate(compiler_commit="fixture:digest-omitted-retention",
+                checkpoint_declarations=declarations())
+        finally:
+            hook.remove()
+        observed = artifact.to_dict()["metadata"]["source_generation_observation"]
+        assert observed["schema"] == "reviewed-decoder-digest-omitted-source-producer-observation/v1"
+        assert observed["input_profile_id"].startswith("reviewed-decoder-digest-omitted-producer/v1:")
+        assert observed["input_commitment"]["generation_policy"] == policy
+        call = observed["last_call"]
+        assert observed["calls"] == 1 and call["entry_pair_match"] is call["exit_pair_match"] is True
+        assert call["completed"] is (not preflight_error)
+        if preflight_error:
+            assert forwards == [] and call["raw_generation_outputs"] is None
+            assert call["input_receipt"] is None and "output_derivation" not in call
+        else:
+            assert len(call["raw_generation_outputs"]) == len(call["output_derivation"]) == 3
+            assert len(forwards) == sum(len(row["generated_token_ids"]) - 1
+                for row in call["raw_generation_outputs"])
+            assert all(row["generated_text"] is None for row in call["raw_generation_outputs"])
+        witnesses.append({"preflight_error": preflight_error, "observed_forward_records": len(forwards),
+            "fictional_tiny_native_fixture_only": True, "observation": observed,
+            "pretrained_or_legal_quality_verified": False})
+        return artifact
+
+    before, before_error = evaluate(), evaluate(preflight_error=True)
+    with local.torch.no_grad():
+        next(local.backend.model.parameters()).add_(0.25)
+    checkpoint = local.backend.snapshot_checkpoint()
+    for role, filename in (("model_checkpoint", "changed-digest-model.pt"),
+                           ("optimizer_checkpoint", "changed-digest-optimizer.pt")):
+        raw = checkpoint["model_state" if role == "model_checkpoint" else "optimizer_state"]
+        options[role] = models.worker.CheckpointArtifact.from_dict(
+            models._complete_reviewed_artifact(directory / filename, raw))
+    after, after_error = evaluate(), evaluate(preflight_error=True)
+    for name, artifact in (("before", before), ("after", after),
+                           ("before-error", before_error), ("after-error", after_error)):
+        (directory / (name + ".json")).write_text(json.dumps(artifact.to_dict(), sort_keys=True, indent=2) + "\n")
+    (directory / "native-forward-witnesses.json").write_text(json.dumps(witnesses, sort_keys=True, indent=2) + "\n")
+    return {"normal": (before, after), "errors": (before_error, after_error), "generation_policy": policy}
+
+
+def _recommit_digest_omitted_retention(artifact, offered):
+    return _recommit_profiled_retention(artifact, offered,
+        prefix="reviewed-decoder-digest-omitted-producer/v1:")
+
+
+def _controlled_digest_omitted_retention_outputs(artifact, *, outcome="complete", unicode_value=False):
+    """Explicit saved-metadata control, not a claim of native generated text."""
+    from copy import deepcopy
+    from hashlib import sha256
+    from ipfs_datasets_py.logic.autoformal import training_cycle_inputs as inputs
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_semantic_metrics import evaluate_complete_norm_payloads
+    offered = artifact.to_dict()
+    payload = offered["compiler_artifact"]["reviewed_source_span_producer_evaluation"]
+    observation = offered["metadata"]["source_generation_observation"]
+    call = observation["last_call"]
+    raw, outputs, derivations = [], [], []
+    for reference in payload["reference_population"]:
+        candidate = deepcopy(reference["canonical_ir"]) if outcome == "complete" else None
+        if unicode_value and candidate is not None:
+            candidate["interpretation_id"] += ":Édition-漢"
+        text = (inputs.encode_reviewed_decoder_digest_omitted_target(candidate,
+            target_codec="complete-reviewed-norm-digest-omitted-json/v1") if candidate is not None
+            else "not-json" if outcome == "invalid" else None)
+        raw.append({"id": reference["id"], "unit_id": reference["unit_id"], "outcome": outcome,
+            "candidate": candidate, "generated_token_ids": [0, 2], "generated_text": text,
+            "reason": None if outcome == "complete" else "controlled_saved_" + outcome})
+        outputs.append({"id": reference["id"], "outcome": outcome, "candidate": candidate})
+        derivations.append({"id": reference["id"], "outcome": outcome,
+            "raw_model_text_sha256": None if text is None else sha256(text.encode("utf-8")).hexdigest(),
+            "assembled_full_target_sha256": sha256(inputs._reviewed_wire(candidate)).hexdigest() if candidate is not None else None,
+            "computed_field": "typed_expression.content_digest", "other_fields_repaired": False})
+    call.update(raw_generation_outputs=raw, producer_outputs=deepcopy(outputs), output_derivation=derivations)
+    payload["producer_outputs"] = outputs
+    scores = evaluate_complete_norm_payloads([{"case_id": reference["id"], "reference": reference["canonical_ir"],
+        "candidate": output["candidate"], "outcome": output["outcome"]}
+        for reference, output in zip(payload["reference_population"], outputs, strict=True)])
+    payload["comparison"] = offered["metrics"]["complete_norm_payload"] = scores
+    return _recommit_digest_omitted_retention(artifact, offered)
+
+
+@pytest.mark.parametrize("case", ("normal", "errors"))
+def test_reviewed_digest_omitted_retention_accepts_public_factory_checkpoint_pair(
+        reviewed_digest_omitted_retention_artifacts, case):
+    before, after = reviewed_digest_omitted_retention_artifacts[case]
+    report = _compare_reviewed_retention(before, after)
+    assert report["producer_route"] == "normal_source_producer" and report["denominator"] == 3
+    assert report["baseline_exact"] == report["after_exact"] == 0 and report["retention_rate"] is None
+    left, right = report["before_source_generation"], report["after_source_generation"]
+    assert left["fixed_commitment"] == right["fixed_commitment"]
+    assert left["fixed_commitment"]["schema"] == "reviewed-decoder-digest-omitted-source-producer-policy/v1"
+    assert left["fixed_commitment"]["output_derivation"] == {
+        "schema": "reviewed-digest-omitted-output-assembly/v1",
+        "target_codec": "complete-reviewed-norm-digest-omitted-json/v1",
+        "only_computed_field": "typed_expression.content_digest", "other_default_filling": False}
+    assert left["checkpoint_pair"]["model_checkpoint"]["sha256"] != right["checkpoint_pair"]["model_checkpoint"]["sha256"]
+    assert left["checkpoint_pair"]["optimizer_checkpoint"]["path"] != right["checkpoint_pair"]["optimizer_checkpoint"]["path"]
+    assert left["input_receipt"] == right["input_receipt"]
+    assert all(report[key] is False for key in ("current_admission_replayed", "loaded_checkpoint_identity_verified", "proof_authority"))
+    if case == "errors":
+        assert report["before_outcome_counts"]["error"] == report["after_outcome_counts"]["error"] == 3
+
+
+@pytest.mark.parametrize("unicode_value", (False, True))
+def test_reviewed_digest_omitted_retention_controlled_complete_replays_pure_assembly(
+        reviewed_digest_omitted_retention_artifacts, unicode_value, monkeypatch):
+    import builtins
+    panels = [_controlled_digest_omitted_retention_outputs(artifact, unicode_value=unicode_value)
+        for artifact in reviewed_digest_omitted_retention_artifacts["normal"]]
+    original = builtins.__import__
+    def metadata_only(name, *args, **kwargs):
+        if name.split(".", 1)[0] in ("torch", "transformers", "tokenizers") or name.endswith("autoencoder_training_worker"):
+            pytest.fail("saved digest-omitted comparison imported numerical runtime")
+        return original(name, *args, **kwargs)
+    monkeypatch.setattr(builtins, "__import__", metadata_only)
+    report = _compare_reviewed_retention(*panels)
+    assert report["denominator"] == 3 and report["before_outcome_counts"]["complete"] == 3
+    assert report["after_outcome_counts"]["complete"] == 3
+    assert all(report[key] is False for key in ("current_admission_replayed", "loaded_checkpoint_identity_verified", "proof_authority"))
+    if unicode_value:
+        raw = panels[0].to_dict()["metadata"]["source_generation_observation"]["last_call"]["raw_generation_outputs"]
+        assert all("Édition-漢" in item["candidate"]["interpretation_id"] for item in raw)
+        assert report["baseline_exact"] == report["after_exact"] == 0
+    else:
+        assert report["counts"]["retained"] == 3
+
+
+@pytest.mark.parametrize("outcome", ("incomplete", "abstained", "invalid"))
+def test_reviewed_digest_omitted_retention_controlled_noncomplete_preserves_nullable_text(
+        reviewed_digest_omitted_retention_artifacts, outcome):
+    panels = [_controlled_digest_omitted_retention_outputs(artifact, outcome=outcome)
+        for artifact in reviewed_digest_omitted_retention_artifacts["normal"]]
+    report = _compare_reviewed_retention(*panels)
+    assert report["before_outcome_counts"][outcome] == report["after_outcome_counts"][outcome] == 3
+    assert report["denominator"] == report["counts"]["still_incorrect"] == 3
+    for artifact in panels:
+        call = artifact.to_dict()["metadata"]["source_generation_observation"]["last_call"]
+        assert all(row["assembled_full_target_sha256"] is None for row in call["output_derivation"])
+        assert all((row["raw_model_text_sha256"] is None) is (outcome != "invalid")
+            for row in call["output_derivation"])
+
+
+@pytest.mark.parametrize("damage", ("observation-schema", "commitment-schema", "runtime-missing", "runtime-wrong",
+    "target-codec", "checkpoint-format", "backend-id", "missing-policy-target", "old-policy", "conditioning",
+    "policy-extra", "policy-target", "context", "seconds-bool", "seconds-zero", "seconds-overflow",
+    "missing-assembly", "assembly-schema", "assembly-target", "assembly-field", "assembly-default", "assembly-extra"))
+def test_reviewed_digest_omitted_retention_rejects_resealed_contract_before_scoring(
+        reviewed_digest_omitted_retention_artifacts, damage, monkeypatch):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_semantic_metrics
+    panels = []
+    for artifact in reviewed_digest_omitted_retention_artifacts["normal"]:
+        offered = artifact.to_dict(); observed = offered["metadata"]["source_generation_observation"]
+        commitment = observed["input_commitment"]; policy = commitment["generation_policy"]
+        if damage == "observation-schema": observed["schema"] = "reviewed-decoder-source-producer-observation/v4"
+        elif damage == "commitment-schema": commitment["schema"] = "reviewed-decoder-source-producer-policy/v4"
+        elif damage == "runtime-missing": commitment.pop("runtime_profile")
+        elif damage == "runtime-wrong": commitment["runtime_profile"] = "builtin-llama-bfloat16/v1"
+        elif damage == "target-codec": commitment["backend_identity"]["target_codec"] = "complete-reviewed-norm-json/v2"
+        elif damage == "checkpoint-format": commitment["backend_identity"]["checkpoint_format"] = "torch-weights-only-complete-reviewed-state-pair/v2"
+        elif damage == "backend-id": commitment["backend_identity"]["backend_id"] = "legacy-backend"
+        elif damage == "missing-policy-target": policy.pop("target_codec")
+        elif damage == "old-policy": policy["schema"] = "reviewed-decoder-generation-policy/v2"
+        elif damage == "conditioning": policy["conditioning_profile"] = "qwen2-chatml-complete-legal-ir/v1"
+        elif damage == "policy-extra": policy["query_target"] = "forbidden"
+        elif damage == "policy-target": policy["target_codec"] = "complete-reviewed-norm-json/v2"
+        elif damage == "context": policy["context_budget_profile"] = "unknown"
+        elif damage == "seconds-bool": policy["max_generation_seconds"] = True
+        elif damage == "seconds-zero": policy["max_generation_seconds"] = 0
+        elif damage == "seconds-overflow": policy["max_generation_seconds"] = 10**1000
+        elif damage == "missing-assembly": commitment.pop("output_derivation")
+        elif damage == "assembly-schema": commitment["output_derivation"]["schema"] = "unknown"
+        elif damage == "assembly-target": commitment["output_derivation"]["target_codec"] = "complete-reviewed-norm-json/v2"
+        elif damage == "assembly-field": commitment["output_derivation"]["only_computed_field"] = "interpretation_id"
+        elif damage == "assembly-default": commitment["output_derivation"]["other_default_filling"] = 0
+        else: commitment["output_derivation"]["caller_gold"] = True
+        panels.append(_recommit_digest_omitted_retention(artifact, offered))
+    monkeypatch.setattr(legal_ir_semantic_metrics, "evaluate_complete_norm_payloads", lambda *_: pytest.fail("bad digest policy reached scorer"))
+    with pytest.raises(ValueError, match="normal retention"):
+        _compare_reviewed_retention(*panels)
+
+
+@pytest.mark.parametrize("damage", ("drop", "reverse", "id", "outcome", "raw-hash", "candidate-hash",
+    "repair", "computed-field", "extra", "text-type", "candidate-text-drift", "supplied-digest"))
+def test_reviewed_digest_omitted_retention_rejects_controlled_derivation_drift_before_scoring(
+        reviewed_digest_omitted_retention_artifacts, damage, monkeypatch):
+    import json
+    from hashlib import sha256
+    from ipfs_datasets_py.logic.autoformal import training_cycle_inputs as inputs
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_semantic_metrics
+    panels = []
+    for artifact in reviewed_digest_omitted_retention_artifacts["normal"]:
+        controlled = _controlled_digest_omitted_retention_outputs(artifact)
+        offered = controlled.to_dict(); call = offered["metadata"]["source_generation_observation"]["last_call"]
+        rows = call["output_derivation"]
+        if damage == "drop": rows.pop()
+        elif damage == "reverse": rows.reverse()
+        elif damage == "id": rows[0]["id"] = "different"
+        elif damage == "outcome": rows[0]["outcome"] = "invalid"
+        elif damage == "raw-hash": rows[0]["raw_model_text_sha256"] = "0" * 64
+        elif damage == "candidate-hash": rows[0]["assembled_full_target_sha256"] = "0" * 64
+        elif damage == "repair": rows[0]["other_fields_repaired"] = 0
+        elif damage == "computed-field": rows[0]["computed_field"] = "interpretation_id"
+        elif damage == "extra": rows[0]["gold"] = True
+        elif damage == "text-type": call["raw_generation_outputs"][0]["generated_text"] = 7
+        else:
+            raw = call["raw_generation_outputs"][0]
+            value = json.loads(raw["generated_text"])
+            if damage == "supplied-digest":
+                value["typed_expression"]["content_digest"] = raw["candidate"]["typed_expression"]["content_digest"]
+            else:
+                value["interpretation_id"] += ":changed-in-raw-only"
+            raw["generated_text"] = inputs._reviewed_wire(value).decode("utf-8")
+            rows[0]["raw_model_text_sha256"] = sha256(raw["generated_text"].encode("utf-8")).hexdigest()
+        panels.append(_recommit_digest_omitted_retention(controlled, offered))
+    original_scorer = legal_ir_semantic_metrics.evaluate_complete_norm_payloads
+    intrinsic_checks = []
+    expected_intrinsic = None
+    if damage == "candidate-text-drift":
+        # This mutation changes only the non-AST interpretation ID. The pure
+        # assembler must first perform its real full-nine self-validation.
+        raw = panels[0].to_dict()["metadata"]["source_generation_observation"]["last_call"]["raw_generation_outputs"][0]
+        expected_intrinsic = json.loads(json.dumps(raw["candidate"]))
+        expected_intrinsic["interpretation_id"] += ":changed-in-raw-only"
+
+    def forbid_outer_retention_scoring(examples):
+        intrinsic = (damage == "candidate-text-drift" and type(examples) is list and len(examples) == 1
+            and type(examples[0]) is dict and set(examples[0]) == {"case_id", "reference", "candidate", "outcome"}
+            and examples[0]["case_id"] == "digest-omitted-codec-structural-boundary"
+            and examples[0]["outcome"] == "complete"
+            and _producer_digest(examples[0]["reference"]) == _producer_digest(expected_intrinsic)
+                == _producer_digest(examples[0]["candidate"]))
+        if intrinsic:
+            intrinsic_checks.append(_producer_digest(examples[0]["reference"]))
+            return original_scorer(examples)
+        pytest.fail("bad derivation reached outer retention scorer")
+
+    monkeypatch.setattr(legal_ir_semantic_metrics, "evaluate_complete_norm_payloads", forbid_outer_retention_scoring)
+    with pytest.raises(ValueError, match="normal retention"):
+        _compare_reviewed_retention(*panels)
+    assert intrinsic_checks == ([_producer_digest(expected_intrinsic)] if damage == "candidate-text-drift" else [])
+
+
+@pytest.mark.parametrize("damage", ("legacy-Qwen", "legacy-profiled", "legacy-v2", "missing-observation", "both-stripped"))
+def test_reviewed_digest_omitted_retention_refuses_route_downgrades(
+        reviewed_digest_omitted_retention_artifacts, damage, monkeypatch):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_semantic_metrics
+    panels = []
+    for artifact in reviewed_digest_omitted_retention_artifacts["normal"]:
+        offered = artifact.to_dict()
+        if damage.startswith("legacy"):
+            prefix = {"legacy-Qwen": "reviewed-decoder-qwen2-profiled-producer/v1:",
+                "legacy-profiled": "reviewed-decoder-profiled-producer/v1:",
+                "legacy-v2": "reviewed-decoder-source-producer/v2:"}[damage]
+            changed = _recommit_profiled_retention(artifact, offered, prefix=prefix)
+        else:
+            offered["metadata"].pop("source_generation_observation")
+            if damage == "both-stripped": offered["metadata"].pop("source_generation_input_commitment_sha256")
+            changed = _reseal_reviewed_retention(artifact, offered)
+        panels.append(changed)
+    monkeypatch.setattr(legal_ir_semantic_metrics, "evaluate_complete_norm_payloads", lambda *_: pytest.fail("digest downgrade reached scorer"))
+    with pytest.raises(ValueError, match="normal retention"):
+        _compare_reviewed_retention(*panels)
+
+
+@pytest.mark.parametrize("damage", ("seconds", "source-budget", "output-budget", "source-code", "tokenizer", "source-wire"))
+def test_reviewed_digest_omitted_retention_freezes_noncheckpoint_inputs(
+        reviewed_digest_omitted_retention_artifacts, damage, monkeypatch):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_semantic_metrics
+    before, after = reviewed_digest_omitted_retention_artifacts["normal"]
+    offered = after.to_dict(); observed = offered["metadata"]["source_generation_observation"]
+    commitment = observed["input_commitment"]; receipt = observed["last_call"]["input_receipt"]
+    if damage == "seconds": commitment["generation_policy"]["max_generation_seconds"] = 2.0
+    elif damage in ("source-budget", "output-budget"): commitment["max_source_tokens" if damage == "source-budget" else "max_output_tokens"] += 1
+    elif damage == "source-code": commitment["source_sha256"]["worker"] = commitment["backend_identity"]["implementation_sha256"] = "f" * 64
+    elif damage == "tokenizer": receipt["tokenizer_contract"]["pipeline_sha256"] = "f" * 64
+    else: receipt["row_commitments"][0]["source_wire_sha256"] = "f" * 64
+    changed = _recommit_digest_omitted_retention(after, offered)
+    monkeypatch.setattr(legal_ir_semantic_metrics, "evaluate_complete_norm_payloads", lambda *_: pytest.fail("changed frozen digest inputs reached scorer"))
+    with pytest.raises(ValueError, match="normal retention"):
+        _compare_reviewed_retention(before, changed)
+
+
+def test_reviewed_digest_omitted_retention_failed_call_cannot_invent_derivations(
+        reviewed_digest_omitted_retention_artifacts, monkeypatch):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_semantic_metrics
+    panels = []
+    for artifact in reviewed_digest_omitted_retention_artifacts["errors"]:
+        offered = artifact.to_dict()
+        offered["metadata"]["source_generation_observation"]["last_call"]["output_derivation"] = []
+        panels.append(_recommit_digest_omitted_retention(artifact, offered))
+    monkeypatch.setattr(legal_ir_semantic_metrics, "evaluate_complete_norm_payloads", lambda *_: pytest.fail("invented error derivations reached scorer"))
+    with pytest.raises(ValueError, match="normal retention"):
+        _compare_reviewed_retention(*panels)
+
+
+def test_reviewed_digest_omitted_retention_preserves_ordinary_key_order(
+        reviewed_digest_omitted_retention_artifacts):
+    before, after = reviewed_digest_omitted_retention_artifacts["normal"]
+    def reverse(value):
+        if type(value) is dict: return {key: reverse(value[key]) for key in reversed(value)}
+        if type(value) is list: return [reverse(item) for item in value]
+        return value
+    changed = type(after).from_dict(reverse(after.to_dict()))
+    assert _compare_reviewed_retention(before, changed) == _compare_reviewed_retention(before, after)
+
+
+def _digest_cache_retention_metadata_fixture(directory, generations, *, nonmarker_change=False):
+    """Declared-fake saved-metadata links; no numeric files or migration are run."""
+    import copy
+    import hashlib
+    import json
+    import os
+    directory.mkdir(parents=True, exist_ok=True)
+    def wire(value):
+        return json.dumps(value, sort_keys=True, ensure_ascii=True, separators=(",", ":"), allow_nan=False).encode()
+    def sha(raw):
+        return hashlib.sha256(raw).hexdigest()
+    def ref(path, value):
+        raw = wire(value)
+        descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o400)
+        with os.fdopen(descriptor, "wb") as stream:
+            stream.write(raw); stream.flush(); os.fsync(stream.fileno())
+        return {"path": str(path), "bytes": len(raw), "sha256": sha(raw)}
+    def declared(name, digest):
+        return {"path": str(directory / name), "bytes": 24, "sha256": digest}
+    source = copy.deepcopy(generations[0]["fixed_commitment"]["source_sha256"])
+    old_source = dict(source, worker="1" * 64, inputs="2" * 64)
+    token = copy.deepcopy(generations[0]["input_receipt"]["tokenizer_contract"])
+    old_token = dict(token, pipeline_sha256="3" * 64)
+    current_binding = {"configuration_sha256": "sha256:" + token["pipeline_sha256"]}
+    population = {"schema": "reviewed-decoder-digest-omitted-training-input-receipt/v1",
+        "target_codec": "complete-reviewed-norm-digest-omitted-json/v1", "record_count": 3,
+        "stage_artifact_sha256": "4" * 64, "admission_inputs_sha256": "5" * 64,
+        "implementation": {"old-inputs.py": old_source["inputs"], "common.py": "6" * 64},
+        "tokenizer_contract": old_token, "ordered_rows": ["fictional-1", "fictional-2", "fictional-3"],
+        "max_source_tokens": 8192, "max_target_tokens": 8192, "target_projection_sha256": "7" * 64}
+    population_ref = ref(directory / "population.json", population)
+    migrated = copy.deepcopy(population)
+    migrated["implementation"] = {"current-inputs.py": source["inputs"], "common.py": "6" * 64}
+    migrated["tokenizer_contract"] = token
+    pipeline_proof = {"old_contract": old_token, "current_contract": token,
+        "old_binding": {"configuration_sha256": "sha256:" + old_token["pipeline_sha256"]},
+        "current_binding": current_binding, "method_proofs": [{"declared_fake": True}]}
+    arms = []
+    amended = copy.deepcopy(generations)
+    documents = []
+    for index, role in enumerate(("pristine0", "TRAIN3")):
+        arm_dir = directory / role; arm_dir.mkdir()
+        profile = "digest-omitted-" + ("PRISTINE0" if role == "pristine0" else "TRAIN3") + "-to-pure-tokenizer-caches/v1"
+        progress = {"epochs_completed": 0, "row_cursor": 0, "optimizer_steps": 0} if index == 0 else {"epochs_completed": 1, "row_cursor": 0, "optimizer_steps": 3}
+        configuration = {"schema": "torch-complete-reviewed-decoder-configuration/v4", "device": "cpu",
+            "model_profile": "builtin-qwen2-bfloat16/v1", "architecture": "causal_lm",
+            "target_codec": "complete-reviewed-norm-digest-omitted-json/v1",
+            "training_conditioning_profile": "qwen2-chatml-digest-omitted-legal-ir/v1",
+            "pretrained_declaration": amended[index]["fixed_commitment"]["backend_identity"]["pretrained"],
+            "tokenizer": token, "tokenizer_binding": current_binding, "declared_fake_numeric_configuration": {"optimizer_lr": 0.00001}}
+        if nonmarker_change and index == 1:
+            configuration["declared_fake_numeric_configuration"]["optimizer_lr"] = 0.00002
+        old_config_ref = declared("old-configuration.json", "8" * 64)
+        parent = {"schema": "reviewed-digest-omitted-decoder-checkpoint/v1", "checkpoint_lineage_id": "original-lineage",
+            "base_version_id": "original-base", "backend_identity": {"backend_id": "torch-digest-omitted-reviewed-decoder/v1:" + old_config_ref["sha256"],
+                "implementation_sha256": old_source["worker"], "checkpoint_format": "torch-weights-only-digest-omitted-reviewed-state-pair/v1",
+                "target_codec": "complete-reviewed-norm-digest-omitted-json/v1", "source_conditioned": True,
+                "pretrained": configuration["pretrained_declaration"]},
+            "assets": [declared("old-asset.json", "9" * 64)],
+            "training_binding": None if index == 0 else population,
+            "model_state": declared(role + "-original-model.pt", "a" * 64),
+            "optimizer_state": declared(role + "-original-optimizer.pt", "b" * 64),
+            "progress": progress, "batch_size": 1, "seed": 1729,
+            "parent_checkpoint_sha256": None if index == 0 else "c" * 64, "producer_pins": old_source,
+            "token_budgets": {"max_source_tokens": 8192, "max_target_tokens": 8192, "tokenizer_contract": old_token},
+            "qualified": False, "promotion_performed": False}
+        parent_ref = ref(arm_dir / "parent.json", parent)
+        version = sha(wire({"profile": profile, "old_manifest": parent_ref["sha256"], "current_source": source,
+            "population": population_ref["sha256"]}))
+        marker = {"schema": "reviewed-digest-cache-source-marker/v1", "profile": profile,
+            "origin_checkpoint_sha256": parent_ref["sha256"], "lineage_sha256": version}
+        configuration["cache_source_epoch_marker"] = marker
+        config_ref = ref(arm_dir / "configuration.json", configuration)
+        identity = {"backend_id": "torch-digest-omitted-reviewed-decoder/v1:" + config_ref["sha256"],
+            "implementation_sha256": source["worker"], "checkpoint_format": "torch-weights-only-digest-omitted-reviewed-state-pair/v1",
+            "target_codec": "complete-reviewed-norm-digest-omitted-json/v1", "source_conditioned": True,
+            "pretrained": configuration["pretrained_declaration"]}
+        amended[index]["fixed_commitment"]["backend_identity"] = identity
+        contract = {"schema": "reviewed-digest-omitted-cache-source-compatibility/v2", "profile": profile,
+            "old_checkpoint_manifest_sha256": parent_ref["sha256"], "old_configuration_sha256": old_config_ref["sha256"],
+            "current_configuration_sha256": config_ref["sha256"], "old_tokenizer_pipeline_sha256": old_token["pipeline_sha256"],
+            "old_source_sha256": old_source, "current_source_sha256": source,
+            "old_source_artifacts": {"worker": declared("old-worker.py", old_source["worker"]), "inputs": declared("old-inputs.py", old_source["inputs"])},
+            "current_source_artifacts": {"worker": declared("current-worker.py", source["worker"]), "inputs": declared("current-inputs.py", source["inputs"])},
+            "dependency_snapshot_artifact": declared("dependencies.json", "d" * 64), "old_training_binding_artifact": population_ref,
+            "dependency_association_scope": "declared-current-at-migration-cohort-not-historical-execution-attestation/v1"}
+        contract_ref = ref(arm_dir / "contract.json", contract)
+        spec = {"schema_version": "reviewed-mixed-digest-omitted-decoder-job/v1", "parent_checkpoint_artifact": parent_ref,
+            "base_model_checkpoint": parent["model_state"], "base_optimizer_checkpoint": parent["optimizer_state"],
+            "checkpoint_lineage_id": parent["checkpoint_lineage_id"], "base_version_id": parent["base_version_id"],
+            "backend_identity": identity, "expected_source_sha256": source,
+            "expected_admission_inputs_sha256": population["admission_inputs_sha256"],
+            "stage_artifact": declared("stage.json", population["stage_artifact_sha256"]), "max_source_tokens": 8192, "max_target_tokens": 8192}
+        receipt = {"schema": "reviewed-digest-omitted-cache-source-migration/v1", "profile": profile,
+            "old_checkpoint_manifest": parent_ref, "old_configuration_artifact": old_config_ref,
+            "old_pipeline_artifact": declared("old-pipeline.json", old_token["pipeline_sha256"]),
+            "current_configuration_artifact": config_ref, "source_contract_artifact": contract_ref,
+            "current_pipeline_artifact": {"path": str(directory / "UNREAD-current-pipeline.json"), "bytes": token["pipeline_bytes"], "sha256": token["pipeline_sha256"]},
+            "derivative_model_checkpoint": amended[index]["checkpoint_pair"]["model_checkpoint"],
+            "derivative_optimizer_checkpoint": amended[index]["checkpoint_pair"]["optimizer_checkpoint"],
+            "target_job_spec": spec, "migrated_training_binding": migrated, "original_progress": progress,
+            "pipeline_proof": pipeline_proof, "source_projection_sha256": "e" * 64,
+            "dependency_scope": contract["dependency_association_scope"], "historical_dependency_execution_requalified": False,
+            "model_Adam_steps_RNG_and_progress_preserved": True, "qualified": False, "promotion_performed": False,
+            "legal_meaning_verified": False, "convergence_proved": False, "corpus_admitted": False,
+            "new_checkpoint_lineage_id": "digest-cache-source-lineage:" + version,
+            "new_base_version_id": "digest-cache-source-version:" + version, "origin_kind": "pristine0" if index == 0 else "trained3",
+            "training_resume_eligible": True}
+        receipt_ref = ref(arm_dir / "receipt.json", receipt)
+        candidate = {**parent, "schema": "reviewed-digest-omitted-cache-source-checkpoint/v1",
+            "checkpoint_lineage_id": receipt["new_checkpoint_lineage_id"], "base_version_id": receipt["new_base_version_id"],
+            "backend_identity": identity, "producer_pins": source, "training_binding": migrated,
+            "model_state": receipt["derivative_model_checkpoint"], "optimizer_state": receipt["derivative_optimizer_checkpoint"],
+            "token_budgets": {"max_source_tokens": 8192, "max_target_tokens": 8192, "tokenizer_contract": token},
+            "parent_checkpoint_sha256": parent_ref["sha256"], "cache_source_epoch_migration": receipt_ref,
+            "cache_epoch_parent_checkpoint_artifact": parent_ref}
+        candidate_ref = ref(arm_dir / "candidate.json", candidate)
+        arms.append({"role": role, "current_configuration_artifact": config_ref, "migration_receipt_artifact": receipt_ref,
+            "derivative_candidate_artifact": candidate_ref, "original_parent_manifest_artifact": parent_ref,
+            "compatibility_contract_artifact": contract_ref})
+        documents.append({"configuration": configuration, "receipt": receipt, "candidate": candidate,
+            "parent": parent, "contract": contract})
+    return {"schema": "reviewed-digest-cache-source-retention-profile/v1", "arms": arms}, tuple(amended), documents
+
+
+def _digest_cache_retention_generations(artifacts):
+    from copy import deepcopy
+    result = []
+    for artifact in artifacts:
+        observation = artifact.to_dict()["metadata"]["source_generation_observation"]
+        commitment = deepcopy(observation["input_commitment"])
+        pair = {key: commitment[key] for key in ("model_checkpoint", "optimizer_checkpoint")}
+        normalized_assets = []
+        for item in commitment["assets"]:
+            aliases = [key for key, value in pair.items() if item["path"] == value["path"]]
+            normalized_assets.append({"checkpoint_role": aliases[0]} if aliases else item)
+        fixed = {key: value for key, value in commitment.items() if key not in pair and key != "assets"}
+        fixed["assets"] = normalized_assets
+        result.append({"fixed_commitment": fixed, "input_receipt": deepcopy(observation["last_call"]["input_receipt"]),
+            "checkpoint_pair": pair, "input_commitment_sha256": observation["input_commitment_sha256"]})
+    return tuple(result)
+
+
+def _digest_cache_retention_declared_artifacts(tmp_path, artifacts, *, nonmarker_change=False):
+    profile, generations, documents = _digest_cache_retention_metadata_fixture(tmp_path,
+        _digest_cache_retention_generations(artifacts), nonmarker_change=nonmarker_change)
+    amended = []
+    for artifact, generation in zip(artifacts, generations, strict=True):
+        offered = artifact.to_dict()
+        identity = generation["fixed_commitment"]["backend_identity"]
+        offered["metadata"]["source_generation_observation"]["input_commitment"]["backend_identity"] = identity
+        offered["compiler_artifact"]["reviewed_source_span_producer_evaluation"]["configuration"]["checkpoint_declarations"]["decoder"]["id"] = identity["backend_id"]
+        amended.append(_recommit_digest_omitted_retention(artifact, offered))
+    return tuple(amended), profile, documents
+
+
+def test_reviewed_digest_cache_retention_opt_in_proves_only_saved_metadata(tmp_path, reviewed_digest_omitted_retention_artifacts):
+    original = reviewed_digest_omitted_retention_artifacts["normal"]
+    artifacts, profile, _ = _digest_cache_retention_declared_artifacts(tmp_path, original)
+    with pytest.raises(_producer_owner.InvalidEvaluationArtifactError):
+        _compare_reviewed_retention(*artifacts)
+    saved = [artifact.to_dict() for artifact in artifacts]
+    report = _compare_reviewed_retention(*artifacts, cache_source_epoch_profile=profile)
+    evidence = report["cache_source_epoch_profile"]
+    assert evidence["metadata_only"] is True
+    assert evidence["numeric_equality_recomputed"] is evidence["fresh_execution_or_admission_replayed"] is False
+    assert evidence["loaded_checkpoint_identity_verified"] is report["loaded_checkpoint_identity_verified"] is False
+    assert [arm["role"] for arm in evidence["arms"]] == ["pristine0", "TRAIN3"]
+    assert evidence["arms"][0]["actual_backend_identity"] != evidence["arms"][1]["actual_backend_identity"]
+    assert [artifact.to_dict() for artifact in artifacts] == saved
+    assert [artifact.to_dict() for artifact in original] != saved
+    assert report["before_source_generation"]["fixed_commitment"]["backend_identity"]["backend_id"] == evidence["arms"][0]["actual_backend_identity"]["backend_id"]
+
+
+@pytest.mark.parametrize("drift", ["wrong-schema", "extra-role-field", "duplicate-role", "reverse-roles", "missing-role", "wrong-reference-SHA", "generic-identity", "wrong-marker", "wrong-parent", "changed-T3-binding", "changed-current-Source", "wrong-candidate-pair", "nonmarker-configuration"])
+def test_reviewed_digest_cache_retention_profile_refuses_unproved_projection(tmp_path, reviewed_digest_omitted_retention_artifacts, drift):
+    import copy
+    import hashlib
+    import json
+    from pathlib import Path
+    artifacts, profile, documents = _digest_cache_retention_declared_artifacts(tmp_path,
+        reviewed_digest_omitted_retention_artifacts["normal"], nonmarker_change=drift == "nonmarker-configuration")
+    if drift == "wrong-schema": profile["schema"] = "generic-profile/v1"
+    elif drift == "extra-role-field": profile["arms"][0]["waiver"] = True
+    elif drift == "duplicate-role": profile["arms"][1]["role"] = "pristine0"
+    elif drift == "reverse-roles": profile["arms"].reverse()
+    elif drift == "missing-role": profile["arms"].pop()
+    elif drift == "wrong-reference-SHA": profile["arms"][0]["migration_receipt_artifact"]["sha256"] = "0" * 64
+    elif drift == "generic-identity":
+        artifact = artifacts[0];offered = artifact.to_dict()
+        identity = offered["metadata"]["source_generation_observation"]["input_commitment"]["backend_identity"]
+        identity["backend_id"] = "torch-digest-omitted-reviewed-decoder/v1:" + "f" * 64
+        offered["compiler_artifact"]["reviewed_source_span_producer_evaluation"]["configuration"]["checkpoint_declarations"]["decoder"]["id"] = identity["backend_id"]
+        artifacts = (_recommit_digest_omitted_retention(artifact, offered), artifacts[1])
+    elif drift != "nonmarker-configuration":
+        name = {"wrong-marker": "current_configuration_artifact", "wrong-parent": "original_parent_manifest_artifact",
+            "changed-T3-binding": "migration_receipt_artifact", "changed-current-Source": "compatibility_contract_artifact",
+            "wrong-candidate-pair": "derivative_candidate_artifact"}[drift]
+        path = tmp_path / ("resealed-" + drift + ".json")
+        value = copy.deepcopy(json.loads(Path(profile["arms"][0][name]["path"]).read_bytes()))
+        if drift == "wrong-marker": value["cache_source_epoch_marker"]["lineage_sha256"] = "f" * 64
+        elif drift == "wrong-parent": value["progress"]["optimizer_steps"] = 1
+        elif drift == "changed-T3-binding": value["migrated_training_binding"]["ordered_rows"].reverse()
+        elif drift == "changed-current-Source": value["current_source_sha256"]["worker"] = "f" * 64
+        elif drift == "wrong-candidate-pair": value["model_state"]["sha256"] = "f" * 64
+        raw = json.dumps(value, sort_keys=True, ensure_ascii=True, separators=(",", ":"), allow_nan=False).encode()
+        path.write_bytes(raw)
+        profile["arms"][0][name] = {"path": str(path), "bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()}
+    with pytest.raises(_producer_owner.InvalidEvaluationArtifactError):
+        _compare_reviewed_retention(*artifacts, cache_source_epoch_profile=profile)
+
+
+def test_reviewed_digest_cache_retention_default_preserves_same_identity_wire(reviewed_digest_omitted_retention_artifacts):
+    artifacts = reviewed_digest_omitted_retention_artifacts["normal"]
+    before = _compare_reviewed_retention(*artifacts)
+    after = _compare_reviewed_retention(*artifacts, cache_source_epoch_profile=None)
+    assert before == after and "cache_source_epoch_profile" not in after
+
+
+def test_reviewed_digest_cache_retention_metadata_reader_refuses_links_and_bounds(tmp_path):
+    import hashlib
+    import os
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_evaluation_artifacts as owner
+    raw = b'{"value":1}';path = tmp_path / "metadata.json";path.write_bytes(raw)
+    reference = {"path": str(path), "bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()}
+    assert owner._reviewed_retention_metadata_json(reference, limit=1024, budget=[0])[0] == {"value": 1}
+    with pytest.raises(owner.InvalidEvaluationArtifactError):
+        owner._reviewed_retention_metadata_json(reference, limit=1, budget=[0])
+    link = tmp_path / "hardlink.json";os.link(path, link)
+    with pytest.raises(owner.InvalidEvaluationArtifactError):
+        owner._reviewed_retention_metadata_json(reference, limit=1024, budget=[0])
+    link.unlink();symlink = tmp_path / "symlink.json";symlink.symlink_to(path)
+    with pytest.raises(owner.InvalidEvaluationArtifactError):
+        owner._reviewed_retention_metadata_json({**reference, "path": str(symlink)}, limit=1024, budget=[0])

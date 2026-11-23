@@ -937,3 +937,117 @@ def test_native_lease_cancellation_is_not_erased_by_simultaneous_local_deadline(
             clock[0] = 103.0
             worker.join(3)
     assert_idle(scheduler)
+
+
+def test_resource_observation_absent_preserves_historical_result_dictionary():
+    value = request()
+    raw = lifecycle.RawProcessResult(returncode=-15, resource_exhausted=True)
+    result = lifecycle.BoundedToolRunner._result(value, command=value.argv, raw=raw,
+        outputs={}, secrets=(), workspace_cleaned=True)
+    assert result.resource_exhausted and result.termination_reason == "resource_limit"
+    assert result.resource_observation is None
+    assert "resource_observation" not in result.to_dict()
+
+
+@pytest.mark.parametrize("ambient", [False, True])
+def test_resource_observation_distinguishes_requested_CPU_and_effective_soft_hard(ambient):
+    """Controlled report construction, not an actual CPU exhaustion claim."""
+    value = request(timeout_seconds=1800, cpu_seconds=6800, memory_bytes=64 * MIB,
+        resident_memory_bytes=32 * MIB, max_file_bytes=2 * MIB)
+    bounded = admission.ResourceAdmittedToolRunner._remaining_limits(value.limits, 400,
+        SimpleNamespace(operation=object() if ambient else None))
+    observation = lifecycle._tool_resource_observation(bounded, dispatched=True, returncode=-9)
+    result = lifecycle.BoundedToolRunner._result(value, command=value.argv,
+        raw=lifecycle.RawProcessResult(returncode=-9, resource_exhausted=True, resource_observation=observation),
+        outputs={}, secrets=(), workspace_cleaned=True)
+    result = admission.ResourceAdmittedToolRunner._observe_resource_admission(result, value, ambient, 12345.)
+    facts = result.to_dict()["resource_observation"]
+    effective = facts["effective_limits"]
+    expected_CPU = 400 if ambient else 6800
+    assert effective["cpu_seconds_configured"] == expected_CPU
+    assert effective["cpu_soft_seconds"] == effective["cpu_hard_seconds"] == expected_CPU
+    assert effective["wall_seconds"] == 400 and effective["virtual_memory_bytes"] == 64 * MIB
+    assert effective["resident_memory_bytes"] == 32 * MIB and effective["file_bytes"] == 2 * MIB
+    assert facts["admission"]["requested_limits"]["cpu_soft_seconds"] == 6800
+    assert facts["admission"]["ambient_operation_present"] is ambient
+    assert facts["signal_number"] == 9 and facts["cause_known"] is False
+    assert facts["observed_trigger"] == "unknown_signal"
+    assert result.resource_exhausted and result.termination_reason == "resource_limit"
+
+
+@pytest.mark.parametrize("number", [15, 9, 24, 25])
+def test_resource_observation_unknown_signal_is_not_inferred_as_configured_cap(number):
+    value = request(cpu_seconds=2)
+    observation = lifecycle._tool_resource_observation(value.limits, dispatched=True, returncode=-number)
+    result = lifecycle.BoundedToolRunner._result(value, command=value.argv,
+        raw=lifecycle.RawProcessResult(returncode=-number, resource_exhausted=True, resource_observation=observation),
+        outputs={}, secrets=(), workspace_cleaned=True)
+    facts = result.to_dict()["resource_observation"]
+    assert facts["signal_number"] == number and facts["cause_known"] is False
+    assert facts["observed_trigger"] == "unknown_signal" and facts["trigger_stage"] == "process_exit"
+    assert facts["rss"]["current_bytes"] is facts["rss"]["peak_sampled_bytes"] is None
+    assert result.resource_exhausted and result.termination_reason == "resource_limit"
+
+
+@pytest.mark.skipif(not sys.platform.startswith("linux"), reason="Linux bounded native lifecycle")
+def test_resource_observation_actual_RSS_guard_records_controlled_sample_and_cleanup(owner, tmp_path, monkeypatch):
+    """Trigger the real existing guard with a controlled sampler, not host pressure."""
+    cap = 64 * MIB
+    observed_sample = cap + 17
+    monkeypatch.setattr(lifecycle._LinuxDescendantTracker, "resident_bytes", lambda tracker: observed_sample)
+    monkeypatch.setattr(lifecycle, "_process_tree_resident_bytes", lambda pid: observed_sample)
+    runner = admission.ResourceAdmittedToolRunner(scheduler=owner[0], workspace_root=tmp_path / "RSS-runs")
+    value = lifecycle.ToolRunRequest(argv=(sys.executable, "-c", "import time; time.sleep(30)"),
+        limits=lifecycle.ToolRunLimits(timeout_seconds=5, cpu_seconds=2,
+            memory_bytes=128 * MIB, resident_memory_bytes=cap))
+    result = runner.run(value)
+    facts = result.to_dict()["resource_observation"]
+    assert result.resource_exhausted and result.termination_reason == "resource_limit"
+    assert result.process_tree_terminated and not result.timed_out and not result.cancelled
+    assert facts["cause_known"] is True and facts["observed_trigger"] == "resident_memory_limit"
+    assert facts["trigger_stage"] == "execution" and facts["signal_number"] == -result.returncode
+    assert facts["rss"] == dict(current_bytes=observed_sample, peak_sampled_bytes=observed_sample, cap_bytes=cap)
+    assert facts["effective_limits"]["resident_memory_bytes"] == cap
+    assert result.native_lifecycle.cleanup_confirmed and result.workspace_cleaned
+    assert result.pid is not None and not Path(f"/proc/{result.pid}").exists()
+    assert_idle(owner[0])
+
+
+@pytest.mark.skipif(not sys.platform.startswith("linux"), reason="Linux bounded native CPU limits")
+def test_resource_observation_actual_tiny_CPU_cap_reports_bounds_without_claiming_signal_origin(owner, tmp_path):
+    runner = admission.ResourceAdmittedToolRunner(scheduler=owner[0], workspace_root=tmp_path / "CPU-runs")
+    value = lifecycle.ToolRunRequest(argv=(sys.executable, "-c", "while True: pass"),
+        limits=lifecycle.ToolRunLimits(timeout_seconds=10, cpu_seconds=.2, memory_bytes=128 * MIB))
+    result = runner.run(value)
+    facts = result.to_dict()["resource_observation"]
+    assert result.returncode is not None and result.returncode < 0
+    assert result.resource_exhausted and result.termination_reason == "resource_limit"
+    assert not result.timed_out and not result.cancelled
+    assert facts["effective_limits"]["cpu_soft_seconds"] == facts["effective_limits"]["cpu_hard_seconds"] == 1
+    assert facts["effective_limits"]["rlimit_cpu_enabled"] is True
+    assert facts["signal_number"] == -result.returncode and facts["cause_known"] is False
+    assert facts["observed_trigger"] == "unknown_signal"
+    assert result.native_lifecycle.cleanup_confirmed and result.workspace_cleaned
+    assert_idle(owner[0])
+
+
+def test_resource_observation_postscan_cannot_claim_it_caused_an_earlier_signal():
+    observation = lifecycle._tool_resource_observation(request().limits, dispatched=True, returncode=-15)
+    post = lifecycle._tool_resource_post_workspace(observation, exceeded=True, error="")
+    facts = post.to_dict()
+    assert facts["cause_known"] is True and facts["observed_trigger"] == "workspace_limit"
+    assert facts["trigger_stage"] == "post_execution_validation" and facts["signal_number"] == 15
+    assert observation.cause_known is False and observation.observed_trigger == "unknown_signal"
+
+
+def test_resource_observation_frozen_fields_and_fresh_serialized_nested_facts():
+    from dataclasses import FrozenInstanceError
+    value = request(cpu_seconds=2)
+    observation = lifecycle._tool_resource_observation(value.limits, dispatched=True, returncode=0)
+    first = observation.to_dict()
+    first["effective_limits"]["cpu_soft_seconds"] = 999
+    first["rss"]["cap_bytes"] = 999
+    second = observation.to_dict()
+    assert second["effective_limits"]["cpu_soft_seconds"] == 2 and second["rss"]["cap_bytes"] is None
+    with pytest.raises(FrozenInstanceError):
+        observation.observed_trigger = "changed"

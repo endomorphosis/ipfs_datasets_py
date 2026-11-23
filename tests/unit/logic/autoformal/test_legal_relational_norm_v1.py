@@ -1171,3 +1171,266 @@ def test_retained_7214_candidates_keep_identity_roles_and_binder_order(mixed_ret
             bridge._wire(expression, bridge.MAX_REQUEST_BYTES)).hexdigest()
         assert record["codec_projection_sha256"] != record["candidate_ast_sha256"]
         assert record["payload_raw_utf8"].encode("utf-8") == item["request_raw"]
+# Append to tests/unit/logic/autoformal/test_legal_relational_norm_v1.py.
+# Run through a fresh existing software request, separately from the full15 run.
+# Provider fixtures check export compatibility, not prover/cache/ZKP behavior.
+import builtins
+import importlib
+from importlib.abc import MetaPathFinder
+import sys
+from contextlib import contextmanager
+
+import pytest
+
+
+_CEC_NATIVE = "ipfs_datasets_py.logic.CEC.native"
+_CEC_STAR_FIXTURE = (
+    "tests.unit.logic.autoformal._legal_relational_norm_cec_star_fixture"
+)
+_CEC_MISSING = object()
+_CEC_FORBIDDEN_COLD_SERVICES = (
+    "prover_core",
+    "nl_converter",
+    "grammar_engine",
+    "shadow_prover",
+    "cec_proof_cache",
+    "cec_zkp_integration",
+)
+_CEC_BASE_ALL = (
+    "DeonticOperator", "CognitiveOperator", "LogicalConnective",
+    "TemporalOperator", "Sort", "Variable", "Function", "Predicate", "Term",
+    "VariableTerm", "FunctionTerm", "Formula", "AtomicFormula",
+    "DeonticFormula", "CognitiveFormula", "TemporalFormula",
+    "ConnectiveFormula", "QuantifiedFormula", "DCECStatement", "DCECNamespace",
+    "DCECContainer", "ProofResult", "ProofTree", "ProofAttempt", "TheoremProver",
+    "InferenceEngine", "ConversionResult", "NaturalLanguageConverter",
+    "strip_whitespace", "strip_comments", "consolidate_parens", "check_parens",
+    "get_matching_close_paren", "tuck_functions", "clean_dcec_expression",
+    "ParseToken", "remove_comments", "functorize_symbols", "replace_synonyms",
+    "prefix_logical_functions", "prefix_emdas", "DCECPrototypeNamespace",
+    "parse_expression_to_token", "token_to_formula", "parse_dcec_string",
+    "validate_formula", "DCECParsingError", "LEGAL_IR_LIFECYCLE_SCHEMA_VERSION",
+    "compile_lifecycle_events",
+)
+_CEC_GRAMMAR_ALL = (
+    "GrammarEngine", "Category", "GrammarRule", "LexicalEntry", "ParseNode",
+    "CompositeGrammar", "make_binary_rule", "make_unary_rule",
+    "DCECEnglishGrammar", "create_dcec_grammar",
+)
+_CEC_SHADOW_ALL = (
+    "ShadowProver", "KProver", "S4Prover", "S5Prover",
+    "CognitiveCalculusProver", "ModalLogic", "ProofStatus", "ProofStep",
+    "ProofTree", "ProblemFile", "ModalOperator", "ProblemReader",
+    "create_prover", "create_cognitive_prover", "TableauNode", "ModalTableau",
+    "TableauProver", "ResolutionProver", "NodeStatus", "create_tableau_prover",
+    "create_resolution_prover",
+)
+_CEC_PROBLEM_ALL = (
+    "TPTPParser", "CustomProblemParser", "ProblemParser", "TPTPFormula",
+    "parse_problem_file", "parse_problem_string",
+)
+_CEC_CACHE_ALL = (
+    "CECCachedProofResult", "CachedTheoremProver", "get_global_cached_prover",
+    "HAVE_CACHE", "ProvingMethod", "UnifiedCECProofResult", "ZKPCECProver",
+    "create_hybrid_prover", "HAVE_ZKP",
+)
+
+
+def _cec_is_native_module(name):
+    return name == _CEC_NATIVE or name.startswith(_CEC_NATIVE + ".")
+
+
+@contextmanager
+def _cec_cold_package():
+    """Restore the native module graph and its parent binding, even on failure."""
+    parent = importlib.import_module("ipfs_datasets_py.logic.CEC")
+    parent_namespace = vars(parent)
+    old_parent_binding = parent_namespace.get("native", _CEC_MISSING)
+    saved_modules = {
+        name: module
+        for name, module in tuple(sys.modules.items())
+        if _cec_is_native_module(name)
+    }
+    for name in saved_modules:
+        sys.modules.pop(name, None)
+    parent_namespace.pop("native", None)
+    try:
+        yield importlib.import_module(_CEC_NATIVE)
+    finally:
+        for name in tuple(sys.modules):
+            if _cec_is_native_module(name):
+                sys.modules.pop(name, None)
+        sys.modules.update(saved_modules)
+        if old_parent_binding is _CEC_MISSING:
+            parent_namespace.pop("native", None)
+        else:
+            parent_namespace["native"] = old_parent_binding
+
+
+def _cec_assert_services_absent():
+    for name in _CEC_FORBIDDEN_COLD_SERVICES:
+        assert _CEC_NATIVE + "." + name not in sys.modules, name
+
+
+def test_cec_core_module_imports_do_not_initialize_public_services():
+    forbidden = {
+        _CEC_NATIVE + "." + name for name in _CEC_FORBIDDEN_COLD_SERVICES
+    }
+
+    class RejectUnrequestedPublicService(MetaPathFinder):
+        def find_spec(self, fullname, path=None, target=None):
+            if fullname in forbidden:
+                raise AssertionError(
+                    "unrequested eager public service: " + fullname
+                )
+            return None
+
+    previous_meta_path = list(sys.meta_path)
+    sys.meta_path.insert(0, RejectUnrequestedPublicService())
+    try:
+        with _cec_cold_package() as package:
+            _cec_assert_services_absent()
+            names = (
+                "dcec_integration", "dcec_core", "dcec_parsing",
+                "dcec_cleaning", "dcec_prototypes",
+            )
+            modules = [
+                importlib.import_module(_CEC_NATIVE + "." + name)
+                for name in names
+            ]
+            for name, module in zip(names, modules):
+                assert vars(package)[name] is module
+                assert importlib.import_module(_CEC_NATIVE + "." + name) is module
+
+            integration, core, parsing, cleaning, prototypes = modules
+            assert integration.Formula is core.Formula
+            assert cleaning.strip_whitespace(" p(x) ") == "p(x)"
+            assert package.tokenize_dcec("p(x)") == ["p", "(", "x", ")"]
+            _cec_assert_services_absent()
+    finally:
+        sys.meta_path[:] = previous_meta_path
+
+
+@pytest.mark.parametrize("failure", (None, "modal_tableaux", "cec_zkp_integration"))
+def test_cec_public_catalog_preserves_legacy_order_and_partial_bindings(
+    monkeypatch, failure
+):
+    with _cec_cold_package() as package:
+        original_import = builtins.__import__
+        calls = []
+        providers = {}
+        reentrant_views = []
+
+        class Provider:
+            def __init__(self, module_name):
+                self.module_name = module_name
+
+            def __getattr__(self, name):
+                if name not in self.__dict__:
+                    self.__dict__[name] = (
+                        True if name in ("HAVE_ZKP", "HAVE_CACHE") else object()
+                    )
+                return self.__dict__[name]
+
+        def fixture_import(name, globals=None, locals=None, fromlist=(), level=0):
+            if globals and globals.get("__name__") == _CEC_NATIVE and level == 1:
+                calls.append(name)
+                if name == "shadow_prover":
+                    # A circular importer must see the earlier legacy bindings.
+                    reentrant_views.append(package.ProofTree)
+                if name == failure:
+                    raise ImportError("deliberate optional import failure: " + name)
+                if name not in providers:
+                    providers[name] = Provider(name)
+                return providers[name]
+            return original_import(name, globals, locals, fromlist, level)
+
+        expected_all = list(_CEC_BASE_ALL + _CEC_GRAMMAR_ALL)
+        if failure != "modal_tableaux":
+            expected_all.extend(_CEC_SHADOW_ALL)
+        expected_all.extend(_CEC_PROBLEM_ALL)
+        if failure != "cec_zkp_integration":
+            expected_all.extend(_CEC_CACHE_ALL)
+        expected_all.extend(("tokenize_dcec", "InferenceRule"))
+
+        with monkeypatch.context() as local:
+            local.setattr(builtins, "__import__", fixture_import)
+
+            # Real named-import syntax must initialize the public catalog.
+            from ipfs_datasets_py.logic.CEC.native import (
+                CachedTheoremProver as imported_cached_prover,
+                Formula as imported_formula,
+                ProofTree as imported_proof_tree,
+            )
+
+            assert imported_formula is providers["dcec_core"].Formula
+            assert imported_proof_tree is providers["shadow_prover"].ProofTree
+            assert imported_cached_prover is (
+                providers["cec_proof_cache"].CachedTheoremProver
+            )
+            assert package.Formula is imported_formula
+            assert package.ProofTree is imported_proof_tree
+            assert package.CachedTheoremProver is imported_cached_prover
+            assert reentrant_views == [providers["prover_core"].ProofTree]
+
+            exported = package.__all__
+            assert exported == expected_all
+            assert exported.count("ProofTree") == (
+                1 if failure == "modal_tableaux" else 2
+            )
+            assert package.SHADOWPROVER_AVAILABLE is (failure != "modal_tableaux")
+            assert package.CACHING_AVAILABLE is (
+                failure != "cec_zkp_integration"
+            )
+            assert package.ZKP_AVAILABLE is (failure != "cec_zkp_integration")
+
+            if failure == "modal_tableaux":
+                assert package.ShadowProver is providers["shadow_prover"].ShadowProver
+                assert "ShadowProver" not in exported
+            if failure == "cec_zkp_integration":
+                assert package.CachedTheoremProver is (
+                    providers["cec_proof_cache"].CachedTheoremProver
+                )
+                assert "CachedTheoremProver" not in exported
+
+            # Import a normal module containing an actual star-import statement.
+            # Keep this helper import isolated as well as the native package.
+            before_repeat = list(calls)
+            helper_parent_name, _, helper_attribute = _CEC_STAR_FIXTURE.rpartition(".")
+            helper_parent_namespace = vars(importlib.import_module(helper_parent_name))
+            previous_helper_binding = helper_parent_namespace.get(
+                helper_attribute, _CEC_MISSING
+            )
+            previous_helper = sys.modules.pop(_CEC_STAR_FIXTURE, _CEC_MISSING)
+            helper_parent_namespace.pop(helper_attribute, None)
+            try:
+                helper = importlib.import_module(_CEC_STAR_FIXTURE)
+                helper_namespace = vars(helper)
+                module_metadata = {
+                    "__name__", "__doc__", "__package__", "__loader__",
+                    "__spec__", "__file__", "__cached__", "__builtins__",
+                }
+                assert set(helper_namespace) - module_metadata == set(expected_all)
+                for name in expected_all:
+                    assert helper_namespace[name] is getattr(package, name), name
+                assert helper_namespace["ProofTree"] is imported_proof_tree
+                assert helper_namespace["Formula"] is imported_formula
+                if failure == "modal_tableaux":
+                    assert "ShadowProver" not in helper_namespace
+                if failure == "cec_zkp_integration":
+                    assert "CachedTheoremProver" not in helper_namespace
+            finally:
+                sys.modules.pop(_CEC_STAR_FIXTURE, None)
+                if previous_helper is not _CEC_MISSING:
+                    sys.modules[_CEC_STAR_FIXTURE] = previous_helper
+                if previous_helper_binding is _CEC_MISSING:
+                    helper_parent_namespace.pop(helper_attribute, None)
+                else:
+                    helper_parent_namespace[helper_attribute] = previous_helper_binding
+
+            assert package.__all__ is exported
+            assert package.ProofTree is imported_proof_tree
+            for unknown in ("_not_a_public_export", "not_a_public_export"):
+                with pytest.raises(AttributeError):
+                    getattr(package, unknown)
+            assert calls == before_repeat

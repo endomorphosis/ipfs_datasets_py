@@ -346,6 +346,87 @@ class ProcessInvocation:
 
 
 @dataclass(frozen=True, slots=True)
+class ToolResourceObservation:
+    """Computed dispatch envelope and observed predicates, never a guessed cause.
+
+    RSS values are existing samples, not an independently measured true peak.
+    A negative return code supplies a signal number, not its sender or cause.
+    """
+
+    effective_limits: tuple[tuple[str, int | float | bool | None], ...]
+    dispatched: bool
+    cause_known: bool
+    observed_trigger: str
+    trigger_stage: str
+    signal_number: int | None = None
+    rss_current_bytes: int | None = None
+    rss_peak_sampled_bytes: int | None = None
+    admission_requested_limits: tuple[tuple[str, int | float | bool | None], ...] = ()
+    ambient_operation_present: bool | None = None
+    admission_deadline_monotonic: float | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        limits = dict(self.effective_limits)
+        result = {"schema": "native-tool-resource-observation/v1",
+            "limits_basis": "computed from final invocation; not an independent getrlimit measurement",
+            "effective_limits": limits, "dispatched": self.dispatched,
+            "cause_known": self.cause_known, "observed_trigger": self.observed_trigger,
+            "trigger_stage": self.trigger_stage, "signal_number": self.signal_number,
+            "rss": {"current_bytes": self.rss_current_bytes, "peak_sampled_bytes": self.rss_peak_sampled_bytes,
+                    "cap_bytes": limits["resident_memory_bytes"]}}
+        if self.admission_requested_limits:
+            result["admission"] = {"requested_limits": dict(self.admission_requested_limits),
+                "ambient_operation_present": self.ambient_operation_present,
+                "shared_deadline_monotonic": self.admission_deadline_monotonic}
+        return result
+
+
+def _tool_resource_limit_envelope(limits: ToolRunLimits) -> tuple[tuple[str, int | float | bool | None], ...]:
+    """The existing native-limit arithmetic, reported without changing it."""
+    return (("wall_seconds", limits.timeout_seconds),
+        ("cpu_seconds_configured", limits.cpu_seconds),
+        ("cpu_soft_seconds", None if limits.cpu_seconds is None else max(1, int(math.ceil(limits.cpu_seconds)))),
+        ("cpu_hard_seconds", None if limits.cpu_seconds is None else max(1, int(math.ceil(limits.cpu_seconds)))),
+        ("rlimit_cpu_enabled", os.name == "posix" and limits.cpu_seconds is not None),
+        ("virtual_memory_bytes", limits.memory_bytes), ("rlimit_as_enabled", os.name == "posix" and limits.memory_bytes is not None),
+        ("resident_memory_bytes", limits.resident_memory_bytes),
+        ("rlimit_fsize_enabled", os.name == "posix" and limits.enforce_file_size_limit),
+        ("file_bytes", (limits.max_workspace_bytes if limits.max_file_bytes is None else limits.max_file_bytes)
+            if limits.enforce_file_size_limit else None),
+        ("workspace_bytes", limits.max_workspace_bytes), ("workspace_entries", limits.max_workspace_entries),
+        ("workspace_depth", limits.max_workspace_depth), ("input_bytes", limits.max_input_bytes),
+        ("output_bytes", limits.max_output_bytes), ("output_files", limits.max_output_files),
+        ("termination_grace_seconds", limits.termination_grace_seconds))
+
+
+def _tool_resource_observation(limits: ToolRunLimits, *, dispatched: bool, returncode: int | None = None,
+        trigger: str | None = None, stage: str = "execution", rss_current_bytes: int | None = None,
+        rss_peak_sampled_bytes: int | None = None,
+        effective_limits: tuple[tuple[str, int | float | bool | None], ...] | None = None) -> ToolResourceObservation:
+    known = trigger is not None
+    if trigger is None:
+        trigger = ("unknown_signal" if returncode is not None and returncode < 0 else
+                   "completed" if returncode == 0 else "nonzero_exit" if returncode is not None else "unknown")
+        known = returncode == 0
+        stage = "process_exit"
+    return ToolResourceObservation(effective_limits=(_tool_resource_limit_envelope(limits)
+        if effective_limits is None else effective_limits),
+        dispatched=dispatched, cause_known=known, observed_trigger=trigger, trigger_stage=stage,
+        signal_number=-returncode if returncode is not None and returncode < 0 else None,
+        rss_current_bytes=rss_current_bytes, rss_peak_sampled_bytes=rss_peak_sampled_bytes)
+
+
+def _tool_resource_post_workspace(observation: ToolResourceObservation | None, *,
+        exceeded: bool, error: str) -> ToolResourceObservation | None:
+    if observation is None or (not exceeded and not error):
+        return observation
+    if observation.cause_known and observation.observed_trigger != "completed":
+        return observation
+    return replace(observation, cause_known=True, observed_trigger=("workspace_limit" if exceeded else
+        "workspace_inspection_error"), trigger_stage="post_execution_validation")
+
+
+@dataclass(frozen=True, slots=True)
 class RawProcessResult:
     """Executor-level result before redaction and declared-output collection."""
 
@@ -363,6 +444,7 @@ class RawProcessResult:
     workspace_limit_exceeded: bool = False
     native_lifecycle: NativeToolLifecycleObservation | None = None
     native_cleanup_handle: NativeToolCleanupHandle | None = field(default=None, repr=False)
+    resource_observation: ToolResourceObservation | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -400,6 +482,7 @@ class ToolRunResult:
     termination_reason: str = ""
     error: str = ""
     native_lifecycle: NativeToolLifecycleObservation | None = None
+    resource_observation: ToolResourceObservation | None = None
 
     @property
     def ok(self) -> bool:
@@ -444,6 +527,8 @@ class ToolRunResult:
         }
         if self.native_lifecycle is not None:
             result["native_lifecycle"] = self.native_lifecycle.to_dict()
+        if self.resource_observation is not None:
+            result["resource_observation"] = self.resource_observation.to_dict()
         return result
 
 
@@ -1294,6 +1379,9 @@ class SubprocessExecutor:
                 timed_out=timed_out, cancelled=cancelled,
                 resource_exhausted=initial_workspace.limit_exceeded or bool(initial_workspace.error),
                 workspace_limit_exceeded=initial_workspace.limit_exceeded,
+                resource_observation=_tool_resource_observation(invocation.limits, dispatched=False,
+                    trigger=("workspace_limit" if initial_workspace.limit_exceeded else "workspace_inspection_error"
+                        if initial_workspace.error else "cancelled" if cancelled else "wall_timeout"), stage="pre_dispatch"),
                 error=initial_workspace.error or ("workspace limit exceeded before process start"
                     if initial_workspace.limit_exceeded else "operation stopped during workspace inspection"),
             )
@@ -1330,6 +1418,7 @@ class SubprocessExecutor:
                     timed_out=timed_out, cancelled=cancelled,
                     error="operation stopped before process start",
                 )
+            effective_resource_limits = _tool_resource_limit_envelope(invocation.limits)
             # No-input launches need a read-only EOF source. CPython DEVNULL
             # opens O_RDWR, which exceeds strict read-only external I/O scopes.
             # Keep the original Popen and close the parent's handle immediately.
@@ -1386,6 +1475,8 @@ class SubprocessExecutor:
 
             next_ancestry_sample = started
             resident_exhausted = False
+            rss_current_bytes = rss_peak_sampled_bytes = None
+            observed_trigger = None
             next_memory_sample = started
             next_workspace_sample = self._clock() + 0.1
             workspace_exceeded = False
@@ -1398,6 +1489,7 @@ class SubprocessExecutor:
                 if process.poll() is not None:
                     break
                 if descendants.error:
+                    observed_trigger = "descendant_observation_error"
                     tree_terminated = _terminate_process_tree(process,
                         grace_seconds=invocation.limits.termination_grace_seconds, descendants=descendants)
                     break
@@ -1406,14 +1498,18 @@ class SubprocessExecutor:
                     next_memory_sample = self._clock() + 0.1
                     resident_bytes = (descendants.resident_bytes() if descendants.enabled
                         else _process_tree_resident_bytes(process.pid))
+                    rss_current_bytes = resident_bytes
+                    rss_peak_sampled_bytes = max(rss_peak_sampled_bytes or 0, resident_bytes)
                     if resident_bytes > invocation.limits.resident_memory_bytes:
                         resident_exhausted = True
+                        observed_trigger = "resident_memory_limit"
                         tree_terminated = _terminate_process_tree(
                             process, grace_seconds=invocation.limits.termination_grace_seconds,
                             descendants=descendants)
                         break
                 if _is_cancelled(cancellation):
                     cancelled = True
+                    observed_trigger = "cancelled"
                     tree_terminated = _terminate_process_tree(
                         process,
                         grace_seconds=invocation.limits.termination_grace_seconds,
@@ -1422,6 +1518,7 @@ class SubprocessExecutor:
                     break
                 if self._clock() >= deadline:
                     timed_out = True
+                    observed_trigger = "wall_timeout"
                     tree_terminated = _terminate_process_tree(
                         process,
                         grace_seconds=invocation.limits.termination_grace_seconds,
@@ -1435,6 +1532,8 @@ class SubprocessExecutor:
                     workspace_exceeded = usage.limit_exceeded
                     workspace_error = usage.error
                     if workspace_exceeded or workspace_error or usage.interrupted:
+                        observed_trigger = ("workspace_limit" if workspace_exceeded else "workspace_inspection_error"
+                            if workspace_error else "cancelled" if cancelled else "wall_timeout")
                         tree_terminated = _terminate_process_tree(
                             process, grace_seconds=invocation.limits.termination_grace_seconds,
                             descendants=descendants)
@@ -1504,6 +1603,10 @@ class SubprocessExecutor:
                 workspace_limit_exceeded=workspace_exceeded,
                 native_lifecycle=native_lifecycle,
                 native_cleanup_handle=owned,
+                resource_observation=_tool_resource_observation(invocation.limits, dispatched=True,
+                    returncode=returncode, trigger=observed_trigger or ("cleanup_error" if cleanup_error else None),
+                    rss_current_bytes=rss_current_bytes, rss_peak_sampled_bytes=rss_peak_sampled_bytes,
+                    effective_limits=effective_resource_limits),
             )
         except BaseException as error:
             if process is None:
@@ -2101,6 +2204,8 @@ class BoundedToolRunner:
                     resource_exhausted=raw.resource_exhausted or workspace_exceeded or bool(usage.error),
                     workspace_limit_exceeded=workspace_exceeded,
                     error="; ".join(filter(None, (raw.error, usage.error))),
+                    resource_observation=_tool_resource_post_workspace(raw.resource_observation,
+                        exceeded=workspace_exceeded, error=usage.error),
                 )
             result = self._result(
                 request,
@@ -2368,6 +2473,7 @@ class BoundedToolRunner:
             termination_reason=reason,
             error=error,
             native_lifecycle=raw.native_lifecycle,
+            resource_observation=raw.resource_observation,
         )
 
 

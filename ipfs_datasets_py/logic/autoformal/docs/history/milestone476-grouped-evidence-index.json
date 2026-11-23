@@ -1,0 +1,346 @@
+{
+  "schema": "maintained-guide-grouped-verified-evidence-index/v1",
+  "milestone": 476,
+  "evidence_id": "pretrained-Q3-baseline-profiled-cap-and-T3-stage-milestone476-20261120",
+  "frozen_cutoff_date_utc": "2026-11-20",
+  "classification": "Root-verified bounded local results; this private documentation preparation performs no Source/Git/runtime/publication",
+  "base_Main_union_proposal": {
+    "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/direct-R5-scoped-decoder-milestone475-four-guide-proposal-v02-zs4jjw9n/descriptor.json",
+    "bytes": 14162,
+    "sha256": "b8406fa3a7612beaf4e529073b7ccafc7f988f56d5ced52d04c321332788f645"
+  },
+  "full_frozen475_archive_manifest": {
+    "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/milestone476-four-guide-compaction-private-v01/history/main-union-milestone475-archive.json",
+    "bytes": 6194,
+    "sha256": "81df64bf9508a221225e3bab0afe2e35184355323fea63ca6331a61dba6da028",
+    "canonical_path": "ipfs_datasets_py/logic/autoformal/docs/history/main-union-milestone475-archive.json"
+  },
+  "identity_receipt": {
+    "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/current-C-W-four-maintained-guide-identities-v01.json",
+    "bytes": 6563,
+    "sha256": "d0ce10d8f168e27831c93d90193e973e62dd0596c0b75b939ae68abe87b9a350"
+  },
+  "published_historical_C_snapshot_bindings": {
+    "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/published-historical-C-guide-snapshot-bindings-v01.json",
+    "bytes": 2667,
+    "sha256": "e3c1ec55fc2bfa899faea59c45dfe3e4720035e7d3dcda452b8b47ab3bc4ab6c"
+  },
+  "published_historical_C_snapshots": [
+    {
+      "Git_blob": "8ad69e960e8e2e5741c49071b7c52903259f8d9c",
+      "bytes": 1235845,
+      "current_C_identity_equal": true,
+      "mode": "100644",
+      "published_snapshot_locator": "d2d498cfe39281988425140b22b93ff6dcc17fcf:ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
+      "repo_relative_path": "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
+      "sha256": "49f61ad74b78195f2b00ee14b4974acd6b6dbe873b9fe904d10ea88238cad78e",
+      "snapshot_commit": "d2d498cfe39281988425140b22b93ff6dcc17fcf"
+    },
+    {
+      "Git_blob": "70b3e2b8bae21b1851b84a13fa536ba204d65ec4",
+      "bytes": 1011530,
+      "current_C_identity_equal": true,
+      "mode": "100644",
+      "published_snapshot_locator": "d2d498cfe39281988425140b22b93ff6dcc17fcf:ipfs_datasets_py/logic/autoformal/docs/work_catalog.json",
+      "repo_relative_path": "ipfs_datasets_py/logic/autoformal/docs/work_catalog.json",
+      "sha256": "48e78a13890bece85b2529dabdac90471c224364bc1e1301f7e9d8f364fb9224",
+      "snapshot_commit": "d2d498cfe39281988425140b22b93ff6dcc17fcf"
+    },
+    {
+      "Git_blob": "780831daea922ac83a336cba4be62f21a87efae8",
+      "bytes": 658067,
+      "current_C_identity_equal": true,
+      "mode": "100644",
+      "published_snapshot_locator": "d2d498cfe39281988425140b22b93ff6dcc17fcf:ipfs_datasets_py/logic/autoformal/docs/HANDOFF.md",
+      "repo_relative_path": "ipfs_datasets_py/logic/autoformal/docs/HANDOFF.md",
+      "sha256": "9ea752a889fdd66e1265af3f74cae16af5ee3037d8505921139c216e4e9d0033",
+      "snapshot_commit": "d2d498cfe39281988425140b22b93ff6dcc17fcf"
+    },
+    {
+      "Git_blob": "ebe1894bf7db4c785698b50268f15e2deb46357e",
+      "bytes": 486180,
+      "current_C_identity_equal": true,
+      "mode": "100644",
+      "published_snapshot_locator": "d2d498cfe39281988425140b22b93ff6dcc17fcf:ipfs_datasets_py/logic/autoformal/docs/TRAINING_HISTORY.md",
+      "repo_relative_path": "ipfs_datasets_py/logic/autoformal/docs/TRAINING_HISTORY.md",
+      "sha256": "92456ffdbd8170c854b521e2d672d9370071f0569e3822e9c8359b82aaf21b99",
+      "snapshot_commit": "d2d498cfe39281988425140b22b93ff6dcc17fcf"
+    }
+  ],
+  "identity_scope": {
+    "C": {
+      "root": "/home/barberb/lift_coding/external/ipfs_datasets",
+      "HEAD_at_identity_receipt": "3f1691d59cc0a310750c0b441b51d3528b17eb85",
+      "role": "old Source-variant/user work, preserved through immutable historical snapshot refs; not this Main-union compaction base"
+    },
+    "W": {
+      "root": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/ipfs_datasets-lir14-consumer-regression-v01",
+      "HEAD_at_identity_receipt": "ebab0edfa5b5630a3acd8ad7e133447a51d49252",
+      "guides": "four tracked guide paths physically absent at identity receipt; actual runtime Source has separately bound current epoch"
+    },
+    "remote_Main": "independent publication/readback identity; neither C/W alias nor private proposal or a runtime receipt establishes current remote guide bytes; this preparation publishes nothing"
+  },
+  "verified_receipts": {
+    "original_pretrained_Q3_baseline": {
+      "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/actual-current-Qwen25-frozen-Q3-source-only-baseline-v01/output-v01/complete-current-Qwen25-frozen-Q3-source-only-baseline-report.json",
+      "bytes": 6324689,
+      "sha256": "f91c08df6ceec0bced460be86f6d49528726ec4c8724437cceb9e476c3582b73"
+    },
+    "original_baseline_compact": {
+      "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/actual-current-Qwen25-frozen-Q3-source-only-baseline-v01/output-v01/closed-current-pretrained-frozen-Q3-source-only-baseline-v01.json",
+      "bytes": 16635,
+      "sha256": "c8e583c1ff78010768bc03ce72c903ea3187c93537b117631759f4ecdc6eb272"
+    },
+    "original_baseline_witness": {
+      "path": "/tmp/pytest-of-barberb/legal-ir-qwen25-frozen-Q3-source-only-434cf2-v01/attempt/exports/frozen-baseline-witness.json",
+      "bytes": 25382,
+      "sha256": "e933f0056fe29aa3d89c28d32a8a7ec2f25df2ae93e058a0baf6ed062109444d"
+    },
+    "current_boundary_status": {
+      "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/Qwen2-profiled-checkpoint-state-cap-qualification-v01/current-installed-boundary-status-v01.json",
+      "bytes": 4135,
+      "sha256": "0c49de116e63f9282b4760849e474eec65cc813604f939ac2033275a224454ca"
+    },
+    "focused_qwen2_green": {
+      "bytes": 8127248,
+      "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/Qwen2-profiled-checkpoint-state-cap-qualification-v01/focused-new-worker2-GREEN-output-v01/complete-current-Qwen2-checkpoint-cap-focused2-new-worker-report.json",
+      "sha256": "e6f125cc085cd1ce09123855afb24c5de60ccd72926f396a716f3c1641290bc3"
+    },
+    "guarded_source_install": {
+      "bytes": 28125281,
+      "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/Qwen2-profiled-checkpoint-state-cap-qualification-v01/worker-and-daemon-three-file-CAS-v01/actual-worker-and-Daemon-selected-three-file-CAS-receipt-v01.json",
+      "sha256": "b322d2eeca997368c119b2051a308aadfd0dd3eeb3207b68fdd334373f47afee"
+    },
+    "meaningful_old_worker_control": {
+      "bytes": 8131441,
+      "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/Qwen2-profiled-checkpoint-state-cap-qualification-v01/focused-old-worker2-RED-output-v02/complete-current-Qwen2-checkpoint-cap-focused2-old-worker-RED-report.json",
+      "sha256": "164933c1c6dcf03a80ed68f5602d27dad03469ee16b0ecfa838a6741172917f4"
+    },
+    "whole_resource_green": {
+      "bytes": 8311055,
+      "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/Qwen2-profiled-checkpoint-state-cap-qualification-v01/whole-Daemon-output-v02/complete-current-whole-Daemon-owning-report.json",
+      "sha256": "db81a24582f7e0b8f24c336ca40e4ed75c8f3c32be949d0c913c7ffadd7fb9b0"
+    },
+    "actual_T3_stage": {
+      "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/actual-current-fictional-T3-real-registry-stage-v01/output-v01/complete-current-fictional-T3-real-registry-stage-report.json",
+      "bytes": 6203661,
+      "sha256": "dc65fd30812f172088192ae8ef9e5ea174ef41c0559516ccd45e77bc21263f93"
+    },
+    "T3_stage_raw_witness": {
+      "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/actual-current-fictional-T3-real-registry-stage-v01/output-v01/run.output.5.bin",
+      "bytes": 7192,
+      "sha256": "5067d20c6ebfd7aeac1c1710074e9832344229b16e471726b0ba6e99b9f29f67"
+    },
+    "T3_gen4_close": {
+      "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/actual-current-fictional-T3-real-registry-stage-v01/output-v01/run.output.6.bin",
+      "bytes": 231,
+      "sha256": "c8f86d74e0bd88b95e156fb52102a8b13d688fdeaf32743930be2932895aff27"
+    },
+    "qwen2_explicit_16384_focused16": {
+      "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/Qwen2-explicit-16384-core-three-file-CAS-v01/focused16-output-v01/complete-current-Qwen2-focused16-report.json",
+      "bytes": 8114031,
+      "sha256": "63b717789712f926794bc36ef90aec6b8f1c520942d61dcdf4c808741b08d025"
+    },
+    "qwen2_full_three_query_pipeline2": {
+      "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/Qwen2-explicit-16384-core-three-file-CAS-v01/full-three-query2-output-v02/complete-current-Qwen2-full-three-query2-report.json",
+      "bytes": 9692036,
+      "sha256": "5893a99866703089d6af898243a4aa3ba187b26a1218a5b2653572efad8efbce"
+    },
+    "qwen2_frontend138": {
+      "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/Qwen2-explicit-16384-frontend-two-file-CAS-v01/frontend138-output-v02/complete-current-Qwen2-frontend138-report.json",
+      "bytes": 8259287,
+      "sha256": "7661fa7e75e9a5e04a7f3f0b71b285f825efbeb6a1b0de00eb4079da28873d53"
+    },
+    "ordinary_A79_trusted_pytest": {
+      "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/A4-trusted-system-pytest-three-file-CAS-v01/ordinary-A79-output-v01/complete-ordinary-A79-trusted-pytest-report.json",
+      "bytes": 8220266,
+      "sha256": "53b00ba6d6c467e75a0bb6feaf507b23ac66378febe27641c36500e89a8e2e9f"
+    },
+    "canonical_C_phase6_roundtrip94": {
+      "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/Phase6-valid-role-test-fixture-CAS-v02/whole-owning94-output-v01/complete-canonical-C-Phase6-whole-owning94-report.json",
+      "bytes": 8216982,
+      "sha256": "50edc7c5674ba021ddc59d4a3ca92dcb637c300f7b2edef10b1ce191758e1096"
+    },
+    "canonical_CI_source_filter_two_paths": {
+      "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/continuation-20261120-policy-and-current-metadata-v01/combined-R-A-physical-definition-realization-CAS-preparation-v01/phase8-canonical-CI-source-filter-CAS-v01/actual-canonical-CI-HF-source-filter-CAS-receipt-v01.json",
+      "bytes": 6715186,
+      "sha256": "9e667c753a61a184264058bdad434ee5d2ce2d92eb7a334671bb82280aa28c28"
+    }
+  },
+  "Root_verified_facts": {
+    "original_pretrained_baseline": {
+      "population": 3,
+      "complete": 0,
+      "incomplete": 3,
+      "native_forwards": 42,
+      "stop_reason": "generation_time_limit_without_eos",
+      "generation_seconds_per_row": 30,
+      "CPU": 1,
+      "training_conditioning_profile": null,
+      "optimizer_lr": 0.001,
+      "training_executed": false,
+      "pair_RNG_modes_gradients_restored": true,
+      "same_source_epoch_as_postfix_results": false,
+      "new_per_forward_wall_or_CPU_timestamps": false,
+      "cost_per_correct_accepted_formalization": "undefined/unmeasured"
+    },
+    "installed_checkpoint_resource_boundary": {
+      "source_epoch": {
+        "rows": 4180,
+        "sha256": "df5189b429899dc059dc0a3682893b91552a76096d325686b82d012b9343ab90"
+      },
+      "installed": {
+        "resource_owner": "6d72cadae90af8c6ad60666b3a23f81dbdf4ba7822095d32d2ed811da368d9bb",
+        "resource_test": "c38bf6398da7c513c1a1eddfe34953033239365af0b317f992e99766457d2db2",
+        "worker": "3ff2e73ce45604dd86e477b865116dd34bac123ce9fa602d7766adc3fb9fe29c",
+        "worker_test": "11ff0763e7502c4d55b65370b6a1ce75935adf8e6ce7ecf4e40a2d1abecc818f"
+      },
+      "actual_Qwen2_profile_bound_bytes": 2147483648,
+      "legacy_general_bound_bytes": 536870912,
+      "actual_large_pretrained_training_state_qualified": false,
+      "new_focused_tests": {
+        "errors": 0,
+        "failed": 0,
+        "passed": 2,
+        "skipped": 0
+      },
+      "whole_resource_owner": {
+        "errors": 0,
+        "failed": 0,
+        "passed": 168,
+        "skipped": 0
+      },
+      "meaningful_old_worker_control": {
+        "failed": 1,
+        "passed": 1,
+        "reason": "validated Qwen2 profile2GiB reaches old executor512MiB numerical asset limit"
+      },
+      "counts_not_pooled": true
+    },
+    "actual_T3_stage": {
+      "registry_generation_after_close": 4,
+      "active_fictional_training_rows": 3,
+      "Q3_protection": "source-only historical guard in a distinct actual-config manifest; original evaluation manifest unchanged",
+      "model_loaded": false,
+      "pretrained_training_executed": false,
+      "production_training_eligible": false,
+      "training_mask": 0,
+      "statutory_review": false
+    },
+    "current_frontier": {
+      "active_phase": 5,
+      "parallel_phases": [
+        6,
+        8
+      ],
+      "real_pilot": {
+        "documents": 3,
+        "occurrences": 4,
+        "questions": 64,
+        "pending_groups": 4,
+        "authenticated_independent_reviews": 0,
+        "governing_edition": null,
+        "applicability": null,
+        "authority": false,
+        "training_evaluation_masks": 0
+      },
+      "model_quality_or_convergence_or_corpus_release": false
+    }
+  },
+  "preparation_not_success": {
+    "explicit_ChatML_import_restore": {
+      "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/current-worker-installed-rotary-compatibility-proposal-v01/pretrained-route-static-audit-v01/explicit-ChatML-T3-experiment-v01/import-restore.descriptor.json",
+      "bytes": 6400,
+      "sha256": "9301e24d5560812f10a7a50f14d74155fc637917351c70c836e5205c8906b83a",
+      "status_at_this_cutoff": "prepared/in progress, not qualified success"
+    },
+    "new_pretrained_T3_updates": 0,
+    "future_newer_results_included": false
+  },
+  "preservation": {
+    "all24_backlog_task_contracts_states_dependencies_unchanged": true,
+    "all126_components_and_order_unchanged": true,
+    "all475_prior_selected_evidence_records_exact_prefix": true,
+    "all_frozen475_guide_bytes_in_deterministic_archives": true,
+    "C_raw_guides_not_retagged_as_Main": true,
+    "all_historical_failures_pending_statements_and_epochs_retained": true
+  },
+  "evidence_verification_scope": "Root independently verified the stated large receipts/output collections and actual closures. Composer verified private frozen guide bytes, supplied small metadata and deterministic archive integrity, and rehashed the six added private software reports exactly. Composer did not rerun their tests, reopen Source, inspect model assets or independently reproduce their semantic outcomes. Other preexisting large proof bodies were not rehashed. Private receipt paths are optional navigation, not portable published proof.",
+  "separate_post475_pre_cutoff_software_cohorts": [
+    {
+      "id": "qwen2_explicit_16384_focused16",
+      "receipt_key": "qwen2_explicit_16384_focused16",
+      "classification": "separate_historical_software_cohort",
+      "passed": 16,
+      "scope": "Explicit 16384 core focused software tests; no pretrained-model quality or convergence qualification."
+    },
+    {
+      "id": "qwen2_full_three_query_pipeline2",
+      "receipt_key": "qwen2_full_three_query_pipeline2",
+      "classification": "separate_historical_software_pipeline_cohort",
+      "pipeline_tests_passed": 2,
+      "model": "tiny nonpretrained fixture",
+      "arms": {
+        "rich": {
+          "actual_forwards": 482,
+          "population": 3,
+          "incomplete": 3,
+          "complete": 0
+        },
+        "aggregate": {
+          "actual_forwards": 344,
+          "population": 3,
+          "incomplete": 3,
+          "complete": 0,
+          "explicit_output_capacity_tokens": 16384
+        }
+      },
+      "scope": "Each arm remains a separate three-row measurement. Passing pipeline tests do not imply successful formalization, pretrained quality or convergence; neither arm is pooled with the original pretrained Q3 baseline."
+    },
+    {
+      "id": "qwen2_frontend138",
+      "receipt_key": "qwen2_frontend138",
+      "classification": "separate_historical_software_cohort",
+      "passed": 138,
+      "new_cases": 34,
+      "retained_cases": 104,
+      "original_missing_lifecycle_fixture_failures_preserved": true,
+      "scope": "Frontend software qualification after the maintained fixture correction; earlier missing-lifecycle failures remain historical evidence, not erased or counted as passes."
+    },
+    {
+      "id": "ordinary_A79_trusted_pytest",
+      "receipt_key": "ordinary_A79_trusted_pytest",
+      "classification": "separate_historical_software_cohort",
+      "passed": 79,
+      "original_A_parent_Native_qualified": false,
+      "scope": "Ordinary trusted-system-pytest A79 cohort only; no qualification of the original A-parent Native execution."
+    },
+    {
+      "id": "canonical_C_phase6_roundtrip94",
+      "receipt_key": "canonical_C_phase6_roundtrip94",
+      "classification": "canonical_C_checkout_software_consolidation",
+      "passed": 94,
+      "Main_already_contains_feature_receipt_prefix": "5e637",
+      "new_upstream_feature_claim": false,
+      "scope": "Scorer consolidation in canonical C and its whole owning-file cohort only. Main already contained the roundtrip scorer feature; this is not a new upstream implementation or model-quality result."
+    },
+    {
+      "id": "canonical_CI_source_filter_two_paths",
+      "receipt_key": "canonical_CI_source_filter_two_paths",
+      "classification": "two_path_CI_trigger_filter_change",
+      "trigger_path_additions": 2,
+      "new_CI_job": false,
+      "hosted_CI_green_claim": false,
+      "scope": "Two existing CI source-filter trigger-path additions only; no new job and no hosted-CI success inferred from the guarded CAS receipt."
+    }
+  ],
+  "post475_software_coverage_policy": {
+    "all_six_cohorts_verified_before_original_f91c_baseline_and_T3_stage_cutoff": true,
+    "Root_independently_verified_results": true,
+    "composer_rehashed_only_the_six_private_report_bytes": true,
+    "case_counts_and_inference_arms_not_pooled": true,
+    "frozen475_uninstalled_labels_remain_historical": "These separately verified later software results supersede the archived uninstalled labels only within each stated cohort and checkout scope; archive bytes remain unchanged.",
+    "task_states_or_contracts_or_component_order_promoted": false,
+    "newer_gen5_213c_or_gen6_934_success_included": false
+  }
+}

@@ -123,6 +123,20 @@ A full-repository clone is never required for sparse GraphRAG query.
 Resumable full/delta orchestration lives in
 `scripts/ops/legal_data/build_uscode_sparse_graphrag.py` (USCIR-030).
 
+The separate full-release builder
+`scripts/ops/legal_data/build_uscode_full_hf_release.py` defaults to the existing
+`hf-default-parquet-envelope/v1` metadata profile. It preserves logical
+`publicus-ir-graphrag/v2`, advertises the safe Hub alias
+`publicus-ir-graphrag-v2`, and lists only the exact generated Parquet paths.
+Existing extra graph files may remain on disk but are excluded from that
+advertised population. Counts and standard DatasetInfosDict metadata come from
+the generated physical envelopes. `--legacy-metadata-profile` explicitly
+requests the preceding broad-glob metadata; that output is not the strict
+intake-v2 profile. The core `build_uscode_hf_release` API still defaults to its
+legacy metadata. These options do not publish a release, alter historical Hub
+revisions, authenticate source meaning, or select a new legal edition. The
+full builder's existing input, model and resource requirements still apply.
+
 ### 5.1 Plan only (no writes)
 
 ```bash

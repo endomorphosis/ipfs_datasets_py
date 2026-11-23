@@ -1,0 +1,700 @@
+{
+  "active_goal_count": 9,
+  "completed_goal_count": 0,
+  "generated_at": "2026-11-22T11:07:07.745461+00:00",
+  "goal_count": 9,
+  "goals": [
+    {
+      "bundle": "",
+      "evidence": [],
+      "fib_priority": 999999,
+      "goal_id": "objective-work:0674a8a48007b8e1282a68fdefdaa0186fe980fd06bb802afd43c26307ea0c74",
+      "parents": [
+        "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931"
+      ],
+      "refinement_depth": "1",
+      "status": "active",
+      "title": "Phase 5 \u2014 Establish a stronger decoder baseline",
+      "track": "ops"
+    },
+    {
+      "bundle": "",
+      "evidence": [],
+      "fib_priority": 999999,
+      "goal_id": "objective-work:2d8ae263ed1986f98d8143ee309faacc41e5420f2961e2f32197d8839021bcb2",
+      "parents": [
+        "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931"
+      ],
+      "refinement_depth": "1",
+      "status": "active",
+      "title": "Phase 7 \u2014 Continual learning and proof feedback",
+      "track": "ops"
+    },
+    {
+      "bundle": "",
+      "evidence": [],
+      "fib_priority": 999999,
+      "goal_id": "objective-work:2d910586cc7372fb6751e8c747849babb74362f1d6a25e62ae7d305532626bdb",
+      "parents": [
+        "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931"
+      ],
+      "refinement_depth": "1",
+      "status": "active",
+      "title": "Phase 3 \u2014 Strengthen legal IR and preservation",
+      "track": "ops"
+    },
+    {
+      "bundle": "",
+      "evidence": [],
+      "fib_priority": 999999,
+      "goal_id": "objective-work:4b9b233535b5edb079581019d1d080b28316551880f44a7f1d07ae15067609e9",
+      "parents": [
+        "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931"
+      ],
+      "refinement_depth": "1",
+      "status": "active",
+      "title": "Phase 2 \u2014 Complete statutory semantic admission",
+      "track": "ops"
+    },
+    {
+      "bundle": "",
+      "evidence": [],
+      "fib_priority": 999999,
+      "goal_id": "objective-work:4f1f97a1b0a2d62bfd9fc0e240ee0c3a588f46fd466e2fc2196b02ef76586818",
+      "parents": [
+        "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931"
+      ],
+      "refinement_depth": "1",
+      "status": "active",
+      "title": "Phase 4 \u2014 Improve contrastive retrieval",
+      "track": "ops"
+    },
+    {
+      "bundle": "",
+      "evidence": [],
+      "fib_priority": 999999,
+      "goal_id": "objective-work:64201d2f93dabb82306a2cd0ccd1206deaf9df735543e570debc90f407bcee1f",
+      "parents": [
+        "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931"
+      ],
+      "refinement_depth": "1",
+      "status": "active",
+      "title": "Phase 1 \u2014 Fix proof-validation correctness",
+      "track": "ops"
+    },
+    {
+      "bundle": "",
+      "evidence": [],
+      "fib_priority": 999999,
+      "goal_id": "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931",
+      "parents": [],
+      "refinement_depth": "0",
+      "status": "active",
+      "title": "Current WORLD legal corpus to LegalIR to Lean 4 mission",
+      "track": "ops"
+    },
+    {
+      "bundle": "",
+      "evidence": [],
+      "fib_priority": 999999,
+      "goal_id": "objective-work:f22614cd95c7a7882f5774896b330760a5758a4aad64f23112f1ccf667dfaace",
+      "parents": [
+        "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931"
+      ],
+      "refinement_depth": "1",
+      "status": "active",
+      "title": "Phase 6 \u2014 Bidirectional reconstruction and semantic fidelity",
+      "track": "ops"
+    },
+    {
+      "bundle": "",
+      "evidence": [],
+      "fib_priority": 999999,
+      "goal_id": "objective-work:fd3cfcda0dbf8fdd323b30adbf439501653893fc3417ea0c452d3bc270fbdf46",
+      "parents": [
+        "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931"
+      ],
+      "refinement_depth": "1",
+      "status": "active",
+      "title": "Phase 8 \u2014 Benchmarking and CI",
+      "track": "ops"
+    }
+  ],
+  "graph": {
+    "children": {
+      "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931": [
+        "objective-work:0674a8a48007b8e1282a68fdefdaa0186fe980fd06bb802afd43c26307ea0c74",
+        "objective-work:2d8ae263ed1986f98d8143ee309faacc41e5420f2961e2f32197d8839021bcb2",
+        "objective-work:2d910586cc7372fb6751e8c747849babb74362f1d6a25e62ae7d305532626bdb",
+        "objective-work:4b9b233535b5edb079581019d1d080b28316551880f44a7f1d07ae15067609e9",
+        "objective-work:4f1f97a1b0a2d62bfd9fc0e240ee0c3a588f46fd466e2fc2196b02ef76586818",
+        "objective-work:64201d2f93dabb82306a2cd0ccd1206deaf9df735543e570debc90f407bcee1f",
+        "objective-work:f22614cd95c7a7882f5774896b330760a5758a4aad64f23112f1ccf667dfaace",
+        "objective-work:fd3cfcda0dbf8fdd323b30adbf439501653893fc3417ea0c452d3bc270fbdf46"
+      ]
+    },
+    "depths": {
+      "objective-work:0674a8a48007b8e1282a68fdefdaa0186fe980fd06bb802afd43c26307ea0c74": 1,
+      "objective-work:2d8ae263ed1986f98d8143ee309faacc41e5420f2961e2f32197d8839021bcb2": 1,
+      "objective-work:2d910586cc7372fb6751e8c747849babb74362f1d6a25e62ae7d305532626bdb": 1,
+      "objective-work:4b9b233535b5edb079581019d1d080b28316551880f44a7f1d07ae15067609e9": 1,
+      "objective-work:4f1f97a1b0a2d62bfd9fc0e240ee0c3a588f46fd466e2fc2196b02ef76586818": 1,
+      "objective-work:64201d2f93dabb82306a2cd0ccd1206deaf9df735543e570debc90f407bcee1f": 1,
+      "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931": 0,
+      "objective-work:f22614cd95c7a7882f5774896b330760a5758a4aad64f23112f1ccf667dfaace": 1,
+      "objective-work:fd3cfcda0dbf8fdd323b30adbf439501653893fc3417ea0c452d3bc270fbdf46": 1
+    },
+    "edges": [
+      {
+        "from": "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931",
+        "kind": "refines",
+        "to": "objective-work:64201d2f93dabb82306a2cd0ccd1206deaf9df735543e570debc90f407bcee1f"
+      },
+      {
+        "from": "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931",
+        "kind": "refines",
+        "to": "objective-work:4b9b233535b5edb079581019d1d080b28316551880f44a7f1d07ae15067609e9"
+      },
+      {
+        "from": "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931",
+        "kind": "refines",
+        "to": "objective-work:2d910586cc7372fb6751e8c747849babb74362f1d6a25e62ae7d305532626bdb"
+      },
+      {
+        "from": "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931",
+        "kind": "refines",
+        "to": "objective-work:4f1f97a1b0a2d62bfd9fc0e240ee0c3a588f46fd466e2fc2196b02ef76586818"
+      },
+      {
+        "from": "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931",
+        "kind": "refines",
+        "to": "objective-work:0674a8a48007b8e1282a68fdefdaa0186fe980fd06bb802afd43c26307ea0c74"
+      },
+      {
+        "from": "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931",
+        "kind": "refines",
+        "to": "objective-work:f22614cd95c7a7882f5774896b330760a5758a4aad64f23112f1ccf667dfaace"
+      },
+      {
+        "from": "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931",
+        "kind": "refines",
+        "to": "objective-work:2d8ae263ed1986f98d8143ee309faacc41e5420f2961e2f32197d8839021bcb2"
+      },
+      {
+        "from": "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931",
+        "kind": "refines",
+        "to": "objective-work:fd3cfcda0dbf8fdd323b30adbf439501653893fc3417ea0c452d3bc270fbdf46"
+      }
+    ],
+    "evidence_edges": [],
+    "evidence_nodes": [],
+    "lifecycle": {
+      "nonterminal_goal_ids": [
+        "objective-work:0674a8a48007b8e1282a68fdefdaa0186fe980fd06bb802afd43c26307ea0c74",
+        "objective-work:2d8ae263ed1986f98d8143ee309faacc41e5420f2961e2f32197d8839021bcb2",
+        "objective-work:2d910586cc7372fb6751e8c747849babb74362f1d6a25e62ae7d305532626bdb",
+        "objective-work:4b9b233535b5edb079581019d1d080b28316551880f44a7f1d07ae15067609e9",
+        "objective-work:4f1f97a1b0a2d62bfd9fc0e240ee0c3a588f46fd466e2fc2196b02ef76586818",
+        "objective-work:64201d2f93dabb82306a2cd0ccd1206deaf9df735543e570debc90f407bcee1f",
+        "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931",
+        "objective-work:f22614cd95c7a7882f5774896b330760a5758a4aad64f23112f1ccf667dfaace",
+        "objective-work:fd3cfcda0dbf8fdd323b30adbf439501653893fc3417ea0c452d3bc270fbdf46"
+      ],
+      "schedulable_goal_ids": [
+        "objective-work:0674a8a48007b8e1282a68fdefdaa0186fe980fd06bb802afd43c26307ea0c74",
+        "objective-work:2d8ae263ed1986f98d8143ee309faacc41e5420f2961e2f32197d8839021bcb2",
+        "objective-work:2d910586cc7372fb6751e8c747849babb74362f1d6a25e62ae7d305532626bdb",
+        "objective-work:4b9b233535b5edb079581019d1d080b28316551880f44a7f1d07ae15067609e9",
+        "objective-work:4f1f97a1b0a2d62bfd9fc0e240ee0c3a588f46fd466e2fc2196b02ef76586818",
+        "objective-work:64201d2f93dabb82306a2cd0ccd1206deaf9df735543e570debc90f407bcee1f",
+        "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931",
+        "objective-work:f22614cd95c7a7882f5774896b330760a5758a4aad64f23112f1ccf667dfaace",
+        "objective-work:fd3cfcda0dbf8fdd323b30adbf439501653893fc3417ea0c452d3bc270fbdf46"
+      ],
+      "state_counts": {
+        "active": 9
+      },
+      "terminal_goal_ids": []
+    },
+    "node_details": {
+      "objective-work:0674a8a48007b8e1282a68fdefdaa0186fe980fd06bb802afd43c26307ea0c74": {
+        "completion_evidence": {
+          "acceptance_criterion": "## Phase 5 \u2014 Establish a stronger decoder baseline **Priority: High after reviewed targets exist** Reuse current source-span and compact formula decoders. Implement the minimum necessary integration for a pretrained source-conditioned decoder producing the existing canonical typed LegalIR. Compare: A. Existing source-span decoder. B. Existing retrieval-conditioned decoder. C. Rich-context retrieval-conditioned decoder. D. Pretrained decoder fine-tuned on accepted source/IR pairs. E. Teacher-augmented decoder using training data whose licenses permit the intended use. F. Optional additional encoder representations or fusion. Hold reviewed populations, allowed context, inference budget, and evaluation criteria constant wherever possible. Preserve the original source spans alongside learned features. Verify that full output structure can express the intended normative provision before fitting. Do not discard difficult clauses to fit a shorter output budget. Support autonomous BOS-to-EOS generation and count incomplete outputs and abstentions. Do not run expensive training or external paid models without the repository's existing explicit authorization and resource-admission procedures."
+        },
+        "goal_id": "objective-work:0674a8a48007b8e1282a68fdefdaa0186fe980fd06bb802afd43c26307ea0c74",
+        "lifecycle_state": "active",
+        "parents": [
+          "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931"
+        ],
+        "required_evidence": [],
+        "schedulable": true,
+        "status": "active",
+        "terminal": false,
+        "title": "Phase 5 \u2014 Establish a stronger decoder baseline"
+      },
+      "objective-work:2d8ae263ed1986f98d8143ee309faacc41e5420f2961e2f32197d8839021bcb2": {
+        "completion_evidence": {
+          "acceptance_criterion": "## Phase 7 \u2014 Continual learning and proof feedback **Priority: Medium, after a trusted evaluation corpus** Reuse existing mixed-replay, checkpoint, optimizer, proof-feedback, and model-registry components. Implement explicit versioned transitions when new reviewed examples are admitted. The system must support: - New accepted formalizations. - Corrected interpretations. - Superseded statutes and definitions. - Negative counterexamples. - Retained earlier training examples. - Periodic supervised optimization. - Exact checkpoint/provenance tracking. - Regression and catastrophic-forgetting evaluation. Immediate library/retrieval updates should not require retraining model weights. Treat `lake build` and proof outcomes as discrete verification signals, suitable for accepted-example selection, repair trajectories, preference learning, or later RL. Do not pretend the compiler supplies an ordinary differentiable gradient. Ensure that proof success cannot compensate for an incorrect translation. ### Experimental weight-space programming Do not rewrite large pretrained model weights directly as a primary optimization method. If useful, add a separately gated experiment for small routing, ranking, or adapter components. Compare the method against conventional supervised updates and explicit rules, with retention/regression tests. Do not promote experimental weight patches without independent evaluation."
+        },
+        "goal_id": "objective-work:2d8ae263ed1986f98d8143ee309faacc41e5420f2961e2f32197d8839021bcb2",
+        "lifecycle_state": "active",
+        "parents": [
+          "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931"
+        ],
+        "required_evidence": [],
+        "schedulable": true,
+        "status": "active",
+        "terminal": false,
+        "title": "Phase 7 \u2014 Continual learning and proof feedback"
+      },
+      "objective-work:2d910586cc7372fb6751e8c747849babb74362f1d6a25e62ae7d305532626bdb": {
+        "completion_evidence": {
+          "acceptance_criterion": "## Phase 3 \u2014 Strengthen legal IR and preservation **Priority: High** Inspect: - `logic/legal_ir/` - `legal_native_ast_preservation.py` - Existing relational, counting, deontic, temporal, and definition-scope implementations. Determine the minimum missing representational and compiler interfaces required for the selected pilot. The complete legal IR must preserve, where supported: - Multiple predicates and ordered arguments. - Types and binder scope. - Actor and institutional roles. - Obligations, prohibitions, and permissions. - Conditions and exceptions. - Quantities and cardinality. - Temporal triggers and deadlines. - Governing definitions. - Jurisdiction, version, and interpretation context. Extend independent AST-to-Lean semantic-preservation checks beyond the existing limited unary fragment as required by the pilot. Use an independently defined interpretation/denotation. Avoid proving preservation by simply assuming the generated statement or desired equivalence. Add mutation tests showing that changing actor roles, quantifier scope, modality, exceptions, or cardinality is detected. Unsupported constructs must fail explicitly rather than being silently omitted. Preserve existing Lean project generation, incremental checking, and invalidation machinery."
+        },
+        "goal_id": "objective-work:2d910586cc7372fb6751e8c747849babb74362f1d6a25e62ae7d305532626bdb",
+        "lifecycle_state": "active",
+        "parents": [
+          "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931"
+        ],
+        "required_evidence": [],
+        "schedulable": true,
+        "status": "active",
+        "terminal": false,
+        "title": "Phase 3 \u2014 Strengthen legal IR and preservation"
+      },
+      "objective-work:4b9b233535b5edb079581019d1d080b28316551880f44a7f1d07ae15067609e9": {
+        "completion_evidence": {
+          "acceptance_criterion": "## Phase 2 \u2014 Complete statutory semantic admission **Priority: Critical** Inspect the existing source, review, and admission owners, including: - `corpus_source_bindings.py` - `legal_norm_content_adjudication_v1.py` - `legal_span_consumer_binding.py` - Existing definition-use and source-correspondence modules. The repository already distinguishes authenticated evidence from legally accepted meaning. Preserve that distinction. Implement the missing positive transition from **complete, independently reviewed statutory meaning** to eligible formalization, training, and evaluation artifacts. An accepted record should bind: - Exact source bytes, spans, and revisions. - Governing legal edition and applicability context. - Explicitly selected interpretation. - Complete typed legal IR. - Definition and cross-reference dependencies. - Independent review outcome. - Permitted training/evaluation/proof uses. - Exact provenance and revocation/invalidation dependencies. Do not fabricate missing legal interpretations, reviewers, approvals, or governing-definition decisions. If substantive review is unavailable, implement and test the transition with explicitly fictional fixtures and retain real statutory records as pending. ### End-to-end pilot Reuse the existing Title 10 pilot involving \u00a7101, \u00a77213, and \u00a77214. Target one complete normative provision, its governing definition, and two genuinely distinct statutory uses. Existing partial interpretations and unresolved conditions must remain visible. Do not count two interpretations of one paragraph as two independent statutory uses. Once genuinely reviewed inputs are available, the path should produce: Source \u2192 reviewed meaning \u2192 typed LegalIR \u2192 semantic graph \u2192 Lean module \u2192 checked artifact \u2192 admitted corpus entry. Extend existing contracts rather than build another importer, graph system, or corpus manager."
+        },
+        "goal_id": "objective-work:4b9b233535b5edb079581019d1d080b28316551880f44a7f1d07ae15067609e9",
+        "lifecycle_state": "active",
+        "parents": [
+          "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931"
+        ],
+        "required_evidence": [],
+        "schedulable": true,
+        "status": "active",
+        "terminal": false,
+        "title": "Phase 2 \u2014 Complete statutory semantic admission"
+      },
+      "objective-work:4f1f97a1b0a2d62bfd9fc0e240ee0c3a588f46fd466e2fc2196b02ef76586818": {
+        "completion_evidence": {
+          "acceptance_criterion": "## Phase 4 \u2014 Improve contrastive retrieval **Priority: High** Inspect: - `legal_joint_retrieval.py` - `legal_structured_retrieval.py` - `alignment_masked_contrastive.py` - Existing source and formal embedding producers. The repository already implements contrastive retrieval and a masked multi-positive loss. Connect the existing masked objective to an eligible training route using admitted semantic relation labels. Support: - Multiple correct formalizations. - Equivalent representations. - Explicitly incompatible interpretations. - Unknown or unreviewed relationships. - Jurisdiction/version-specific applicability. - Reusable but noncontrolling analogies. Unknown pairs must not become automatic negatives. Retain a distinction between: 1. Retrieval of legally applicable authorities. 2. Retrieval of semantically corresponding source/formalization pairs. 3. Retrieval of structurally useful examples and proof dependencies. Start with current GTE representations. Compare lexical retrieval, existing embeddings, and learned alignment on fixed data. Do not immediately combine every encoder. ### Rich retrieval context The current structured retrieval representation loses important information such as argument roles, ordering, and qualifier values. Implement an optional source-conditioned retrieval profile that can provide complete permitted examples, typed ASTs, definitions, and source links to the decoder. Retain the existing compact histogram/vector paths as baselines. Prevent reference-target leakage."
+        },
+        "goal_id": "objective-work:4f1f97a1b0a2d62bfd9fc0e240ee0c3a588f46fd466e2fc2196b02ef76586818",
+        "lifecycle_state": "active",
+        "parents": [
+          "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931"
+        ],
+        "required_evidence": [],
+        "schedulable": true,
+        "status": "active",
+        "terminal": false,
+        "title": "Phase 4 \u2014 Improve contrastive retrieval"
+      },
+      "objective-work:64201d2f93dabb82306a2cd0ccd1206deaf9df735543e570debc90f407bcee1f": {
+        "completion_evidence": {
+          "acceptance_criterion": "## Phase 1 \u2014 Fix proof-validation correctness **Priority: Critical** ### 1.1 Generic Lean backend Inspect: `logic/backends/kernel/lean.py` Investigate whether proof acceptance can be incorrectly established through: - An arbitrary or unapproved axiom. - A theorem report belonging to another declaration. - Ambiguous or multiple theorem reports. - A clean report appearing elsewhere in the compiler output. - Source constructs missed by lexical screening. - Incomplete binding between the requested obligation and verified declaration. Implement strict validation that binds the expected declaration, proposition, proof dependencies, and approved axiom policy. Do not infer acceptance from an unrelated successful compiler report. Reject `sorry`, `admit`, and any unapproved proof dependencies. Distinguish source-based diagnostics from elaborated Lean dependency evidence. Reuse stricter existing canonical autoformal validation where appropriate. ### 1.2 Proof-cache integrity Inspect: `logic/legal_ir/proof_cache.py` Ensure cached proof reuse is bound to: - Source and artifact identity. - Exact formal obligation. - Formal assumptions. - Declaration and proposition identity. - Backend and toolchain profile. - Applicable interpretation and dependency versions. A receipt that is merely associated with an artifact must not be promoted to proof of that artifact. Create negative tests for changed source digests, obligations, assumptions, declarations, and toolchain identities. **Acceptance:** all reproduced false acceptances are rejected; existing positive behavior remains valid; relevant native Lean tests pass when the toolchain is available. Do not claim a native result from mocked compiler output."
+        },
+        "goal_id": "objective-work:64201d2f93dabb82306a2cd0ccd1206deaf9df735543e570debc90f407bcee1f",
+        "lifecycle_state": "active",
+        "parents": [
+          "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931"
+        ],
+        "required_evidence": [],
+        "schedulable": true,
+        "status": "active",
+        "terminal": false,
+        "title": "Phase 1 \u2014 Fix proof-validation correctness"
+      },
+      "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931": {
+        "completion_evidence": {
+          "acceptance_criterion": "# Current WORLD legal corpus to LegalIR to Lean 4 mission This is the current objective input selected by Root for preparation of the existing supervisor refill. The user's repeated worldwide clarification supersedes the earlier United States-only mission scope. The U.S. Code and the existing Title 10 pilot remain required pilots within the worldwide mission. The full eight-phase implementation specification follows, with exactly one scope sentence updated. Every correctness, review, preservation, training, evaluation and delivery requirement remains. Completed legacy-board tasks are historical implementation evidence; 145 completed tasks do not establish mission completion. Preserve source bytes, spans, governing context, jurisdiction, original language, edition, selected interpretation, definition identities and versioned dependencies. Unknown legal applicability and pending review remain unknown. Lean compilation alone does not establish source-faithfulness or legal correctness. No fabricated reviews, accepted-corpus entries, scientific results or convergence. Reference pilot datasets supplied by the user: - https://huggingface.co/datasets/justicedao/ipfs_uscode - https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache - https://huggingface.co/datasets/justicedao/uscode-autoformal-entity-cache For the first bounded refill preparation use the current input/claimed-unit map at /tmp/world-legal-existing-supervisor-mission-context-v01.json. It names existing owners and one unclaimed private v4 quantity-capacity candidate. Preserve all 145 completed task identities and history. Do not duplicate active decoder, math, documentation or recovery work, and do not infer a restart, Source overlay, model run or board mutation from this objective file alone. Bind any actual operation through the existing live refill/submission owner and its current configuration/resource contract. ## Eight-phase specification # Codex Task: Implement the Remaining Legal Autoformalization Architecture ## Repository https://github.com/endomorphosis/ipfs_datasets_py Primary locations: - `ipfs_datasets_py/logic/autoformal/` - `ipfs_datasets_py/logic/legal_ir/` - `ipfs_datasets_py/logic/formalization/autoencoder/` - `ipfs_datasets_py/optimizers/logic_theorem_optimizer/` - `ipfs_datasets_py/logic/backends/kernel/` - `tests/unit/logic/autoformal/` Reference audit commit: `4201f0248e76187de1b2bd23b286e5bd9e3c6d2f`. Work from the current checkout and reconcile any later changes. Do not assume the reference commit remains HEAD. ## Mission Advance our existing neuro-symbolic legal autoformalization framework toward a continuously improving compiler capable of translating legal text into faithful, source-grounded formal logic, ultimately supporting a versioned, compositional Lean 4 corpus of the world's legal materials across jurisdictions and source languages. Our intended architecture combines: 1. Natural-language source spans and their legal context. 2. Learned representations from GTE and potentially Leanstral. 3. Contrastively aligned natural-language and formal-logic representations. 4. Retrieval of existing definitions, predicates, formalizations, and proofs. 5. A compact, source-conditioned legal-IR decoder. 6. Bidirectional natural-language \u2194 formal-logic reconstruction. 7. Deterministic IR-to-Lean compilation. 8. Kernel-checked proofs and counterexample-driven repair. 9. Continual learning over accepted examples, corrections, and proof memory. 10. Versioned provenance, legal interpretation review, and semantic-fidelity evaluation. Prior literature includes: - ProofBridge: https://arxiv.org/html/2510.15681v1 - Catala: https://doi.org/10.1145/3473582 - FormalAlign: https://proceedings.iclr.cc/paper_files/paper/2025/file/fceedf8c9c0ff51f41b9fe0294ef0070-Paper-Conference.pdf - LegalRuleML: https://docs.oasis-open.org/legalruleml/legalruleml-core-spec/v1.0/os/legalruleml-core-spec-v1.0-os.html - Weight-space programming: https://rikiyat.github.io/blog/weight-space-programming/ The goal is not merely successful Lean compilation. It is faithful preservation of legal meaning, including actors, modalities, exceptions, conditions, scope, definitions, temporal applicability, and assumptions. ## First: inspect and reconcile the existing code Before implementation: 1. Read all applicable `AGENTS.md` files. 2. Read `logic/autoformal/README.md`. 3. Read `logic/autoformal/docs/HANDOFF.md`, `ARCHITECTURE.md`, `TRAINING_HISTORY.md`, `BACKLOG.json`, and the indexed work catalog. 4. Identify canonical implementation owners and existing tests. 5. Reproduce reported defects before modifying their code. 6. Determine whether current HEAD already resolves any proposed gap. Do not duplicate existing implementations, create parallel supervisor systems, or replace working numerical machinery. Extend existing owners and tests. Preserve task IDs, source identities, immutable receipts, checkpoint provenance, historical failures, and approved runtime/resource constraints. The earlier audit reported 166 passing focused tests and two reproduced proof-evidence problems. Treat those as findings to verify, not as proof that the current checkout necessarily has the same defects. ## Phase 1 \u2014 Fix proof-validation correctness **Priority: Critical** ### 1.1 Generic Lean backend Inspect: `logic/backends/kernel/lean.py` Investigate whether proof acceptance can be incorrectly established through: - An arbitrary or unapproved axiom. - A theorem report belonging to another declaration. - Ambiguous or multiple theorem reports. - A clean report appearing elsewhere in the compiler output. - Source constructs missed by lexical screening. - Incomplete binding between the requested obligation and verified declaration. Implement strict validation that binds the expected declaration, proposition, proof dependencies, and approved axiom policy. Do not infer acceptance from an unrelated successful compiler report. Reject `sorry`, `admit`, and any unapproved proof dependencies. Distinguish source-based diagnostics from elaborated Lean dependency evidence. Reuse stricter existing canonical autoformal validation where appropriate. ### 1.2 Proof-cache integrity Inspect: `logic/legal_ir/proof_cache.py` Ensure cached proof reuse is bound to: - Source and artifact identity. - Exact formal obligation. - Formal assumptions. - Declaration and proposition identity. - Backend and toolchain profile. - Applicable interpretation and dependency versions. A receipt that is merely associated with an artifact must not be promoted to proof of that artifact. Create negative tests for changed source digests, obligations, assumptions, declarations, and toolchain identities. **Acceptance:** all reproduced false acceptances are rejected; existing positive behavior remains valid; relevant native Lean tests pass when the toolchain is available. Do not claim a native result from mocked compiler output. ## Phase 2 \u2014 Complete statutory semantic admission **Priority: Critical** Inspect the existing source, review, and admission owners, including: - `corpus_source_bindings.py` - `legal_norm_content_adjudication_v1.py` - `legal_span_consumer_binding.py` - Existing definition-use and source-correspondence modules. The repository already distinguishes authenticated evidence from legally accepted meaning. Preserve that distinction. Implement the missing positive transition from **complete, independently reviewed statutory meaning** to eligible formalization, training, and evaluation artifacts. An accepted record should bind: - Exact source bytes, spans, and revisions. - Governing legal edition and applicability context. - Explicitly selected interpretation. - Complete typed legal IR. - Definition and cross-reference dependencies. - Independent review outcome. - Permitted training/evaluation/proof uses. - Exact provenance and revocation/invalidation dependencies. Do not fabricate missing legal interpretations, reviewers, approvals, or governing-definition decisions. If substantive review is unavailable, implement and test the transition with explicitly fictional fixtures and retain real statutory records as pending. ### End-to-end pilot Reuse the existing Title 10 pilot involving \u00a7101, \u00a77213, and \u00a77214. Target one complete normative provision, its governing definition, and two genuinely distinct statutory uses. Existing partial interpretations and unresolved conditions must remain visible. Do not count two interpretations of one paragraph as two independent statutory uses. Once genuinely reviewed inputs are available, the path should produce: Source \u2192 reviewed meaning \u2192 typed LegalIR \u2192 semantic graph \u2192 Lean module \u2192 checked artifact \u2192 admitted corpus entry. Extend existing contracts rather than build another importer, graph system, or corpus manager. ## Phase 3 \u2014 Strengthen legal IR and preservation **Priority: High** Inspect: - `logic/legal_ir/` - `legal_native_ast_preservation.py` - Existing relational, counting, deontic, temporal, and definition-scope implementations. Determine the minimum missing representational and compiler interfaces required for the selected pilot. The complete legal IR must preserve, where supported: - Multiple predicates and ordered arguments. - Types and binder scope. - Actor and institutional roles. - Obligations, prohibitions, and permissions. - Conditions and exceptions. - Quantities and cardinality. - Temporal triggers and deadlines. - Governing definitions. - Jurisdiction, version, and interpretation context. Extend independent AST-to-Lean semantic-preservation checks beyond the existing limited unary fragment as required by the pilot. Use an independently defined interpretation/denotation. Avoid proving preservation by simply assuming the generated statement or desired equivalence. Add mutation tests showing that changing actor roles, quantifier scope, modality, exceptions, or cardinality is detected. Unsupported constructs must fail explicitly rather than being silently omitted. Preserve existing Lean project generation, incremental checking, and invalidation machinery. ## Phase 4 \u2014 Improve contrastive retrieval **Priority: High** Inspect: - `legal_joint_retrieval.py` - `legal_structured_retrieval.py` - `alignment_masked_contrastive.py` - Existing source and formal embedding producers. The repository already implements contrastive retrieval and a masked multi-positive loss. Connect the existing masked objective to an eligible training route using admitted semantic relation labels. Support: - Multiple correct formalizations. - Equivalent representations. - Explicitly incompatible interpretations. - Unknown or unreviewed relationships. - Jurisdiction/version-specific applicability. - Reusable but noncontrolling analogies. Unknown pairs must not become automatic negatives. Retain a distinction between: 1. Retrieval of legally applicable authorities. 2. Retrieval of semantically corresponding source/formalization pairs. 3. Retrieval of structurally useful examples and proof dependencies. Start with current GTE representations. Compare lexical retrieval, existing embeddings, and learned alignment on fixed data. Do not immediately combine every encoder. ### Rich retrieval context The current structured retrieval representation loses important information such as argument roles, ordering, and qualifier values. Implement an optional source-conditioned retrieval profile that can provide complete permitted examples, typed ASTs, definitions, and source links to the decoder. Retain the existing compact histogram/vector paths as baselines. Prevent reference-target leakage. ## Phase 5 \u2014 Establish a stronger decoder baseline **Priority: High after reviewed targets exist** Reuse current source-span and compact formula decoders. Implement the minimum necessary integration for a pretrained source-conditioned decoder producing the existing canonical typed LegalIR. Compare: A. Existing source-span decoder. B. Existing retrieval-conditioned decoder. C. Rich-context retrieval-conditioned decoder. D. Pretrained decoder fine-tuned on accepted source/IR pairs. E. Teacher-augmented decoder using training data whose licenses permit the intended use. F. Optional additional encoder representations or fusion. Hold reviewed populations, allowed context, inference budget, and evaluation criteria constant wherever possible. Preserve the original source spans alongside learned features. Verify that full output structure can express the intended normative provision before fitting. Do not discard difficult clauses to fit a shorter output budget. Support autonomous BOS-to-EOS generation and count incomplete outputs and abstentions. Do not run expensive training or external paid models without the repository's existing explicit authorization and resource-admission procedures. ## Phase 6 \u2014 Bidirectional reconstruction and semantic fidelity **Priority: High** Reuse existing IR rendering, decompilation, and text-round-trip owners. Support and evaluate: Natural language \u2192 LegalIR \u2192 normalized legal language. LegalIR \u2192 legal language \u2192 LegalIR. Keep separate measurements for: - Original UTF-8 byte restoration. - Canonical prose reconstruction. - Semantic equivalence. - Complete typed-AST fidelity. - Source dependence. - Proof validity. Do not equate byte-perfect recovery with legal interpretation correctness. Prevent the reverse decoder from copying hidden original-text information while ostensibly reconstructing it from formal semantics. Create paired semantic tests covering: - Must versus may. - Obligations versus observed compliance. - Quantifier scope. - Changed actors. - Exception presence and scope. - Calendar versus business days. - Different legal effective dates. - Cardinality boundaries. - Missing or conflicting governing definitions. Require source-faithfulness tests in addition to Lean build success. ## Phase 7 \u2014 Continual learning and proof feedback **Priority: Medium, after a trusted evaluation corpus** Reuse existing mixed-replay, checkpoint, optimizer, proof-feedback, and model-registry components. Implement explicit versioned transitions when new reviewed examples are admitted. The system must support: - New accepted formalizations. - Corrected interpretations. - Superseded statutes and definitions. - Negative counterexamples. - Retained earlier training examples. - Periodic supervised optimization. - Exact checkpoint/provenance tracking. - Regression and catastrophic-forgetting evaluation. Immediate library/retrieval updates should not require retraining model weights. Treat `lake build` and proof outcomes as discrete verification signals, suitable for accepted-example selection, repair trajectories, preference learning, or later RL. Do not pretend the compiler supplies an ordinary differentiable gradient. Ensure that proof success cannot compensate for an incorrect translation. ### Experimental weight-space programming Do not rewrite large pretrained model weights directly as a primary optimization method. If useful, add a separately gated experiment for small routing, ranking, or adapter components. Compare the method against conventional supervised updates and explicit rules, with retention/regression tests. Do not promote experimental weight patches without independent evaluation. ## Phase 8 \u2014 Benchmarking and CI **Priority: High** Reuse existing semantic mutation, source-census, grouped-split, formal-preservation, and evaluation modules. Add missing integrations so that actual producer outputs are independently tied to their: - Source population. - Inference context. - Encoder/decoder checkpoint. - Retrieved examples. - Selected output. - Formal checks. - Reviewed reference target. Evaluate on source/dependency-grouped held-out cases. Report: 1. Complete source coverage. 2. Exact typed-AST accuracy. 3. Semantic facet accuracy. 4. Formal validity. 5. Legal source-correspondence accuracy. 6. Counterexample/scenario correctness. 7. Abstention and unsupported rates. 8. Previous-task retention. 9. Training and inference compute. 10. Total cost per correctly accepted formalization. Enable a pinned native Lean CI job for the affected autoformalization paths, reusing existing tests. Extend existing corpus-release validation to require consistent source, IR, graph, proof, dependency, and version manifests. Do not equate a successful graph export, cached receipt, or mock Lean fixture with a verified statutory corpus. ## Implementation constraints - Use existing canonical owners. - Follow `AGENTS.md` and maintained handoff/task records. - Preserve old checkpoint and source identities. - Keep historical failures and receipts. - Avoid duplicate architecture, task queues, or monitoring. - Do not broaden execution permissions or reset exhausted budgets. - Never fabricate legal reviews or validation results. - Keep unsupported legal semantics explicitly unresolved. - Do not merge unreviewed teacher outputs into gold labels. - Do not add unapproved axioms to force Lean success. - Use a fresh, exact test/evidence record for every new qualification. - Preserve backward compatibility unless the relevant defect requires a documented change. ## Execution instructions **Do not stop after producing a plan. Implement the highest-priority verified gaps.** Work in this order: 1. Reproduce and resolve Phase 1 correctness defects. 2. Implement Phase 2 admission contracts with realistic negative controls. 3. Advance the existing statutory pilot as far as actual reviewed evidence permits. 4. Extend semantic preservation and evaluation. 5. Integrate the existing contrastive-learning components. 6. Add the minimum useful decoder/continual-learning experiments. For each substantial change: - Identify the existing owner and task. - Explain the precise gap. - Modify the canonical implementation. - Add positive and adversarial tests. - Run the relevant tests. - Record what was verified and what remains unverified. - Update existing documentation and handoff records in place. If an implementation depends on unavailable legal judgment, model assets, native resources, or authorization, complete the independently testable software work and leave the dependent scientific/operational claim blocked. Do not represent partial completion as end-to-end success. ## Final deliverables Provide: 1. A summary of implemented changes. 2. Exact changed files and relevant commits. 3. Tests run, including failures and unavailable tests. 4. Resolved correctness defects. 5. Remaining semantic, graph, proof, and model-training gaps. 6. Experimental results, if genuinely measured. 7. The next smallest actionable task under the existing supervisor/backlog. **Success means a demonstrably more correct and better-integrated legal autoformalization pipeline\u2014not simply more modules, more passing fixture tests, or more generated Lean code.**"
+        },
+        "goal_id": "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931",
+        "lifecycle_state": "active",
+        "parents": [],
+        "required_evidence": [],
+        "schedulable": true,
+        "status": "active",
+        "terminal": false,
+        "title": "Current WORLD legal corpus to LegalIR to Lean 4 mission"
+      },
+      "objective-work:f22614cd95c7a7882f5774896b330760a5758a4aad64f23112f1ccf667dfaace": {
+        "completion_evidence": {
+          "acceptance_criterion": "## Phase 6 \u2014 Bidirectional reconstruction and semantic fidelity **Priority: High** Reuse existing IR rendering, decompilation, and text-round-trip owners. Support and evaluate: Natural language \u2192 LegalIR \u2192 normalized legal language. LegalIR \u2192 legal language \u2192 LegalIR. Keep separate measurements for: - Original UTF-8 byte restoration. - Canonical prose reconstruction. - Semantic equivalence. - Complete typed-AST fidelity. - Source dependence. - Proof validity. Do not equate byte-perfect recovery with legal interpretation correctness. Prevent the reverse decoder from copying hidden original-text information while ostensibly reconstructing it from formal semantics. Create paired semantic tests covering: - Must versus may. - Obligations versus observed compliance. - Quantifier scope. - Changed actors. - Exception presence and scope. - Calendar versus business days. - Different legal effective dates. - Cardinality boundaries. - Missing or conflicting governing definitions. Require source-faithfulness tests in addition to Lean build success."
+        },
+        "goal_id": "objective-work:f22614cd95c7a7882f5774896b330760a5758a4aad64f23112f1ccf667dfaace",
+        "lifecycle_state": "active",
+        "parents": [
+          "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931"
+        ],
+        "required_evidence": [],
+        "schedulable": true,
+        "status": "active",
+        "terminal": false,
+        "title": "Phase 6 \u2014 Bidirectional reconstruction and semantic fidelity"
+      },
+      "objective-work:fd3cfcda0dbf8fdd323b30adbf439501653893fc3417ea0c452d3bc270fbdf46": {
+        "completion_evidence": {
+          "acceptance_criterion": "## Phase 8 \u2014 Benchmarking and CI **Priority: High** Reuse existing semantic mutation, source-census, grouped-split, formal-preservation, and evaluation modules. Add missing integrations so that actual producer outputs are independently tied to their: - Source population. - Inference context. - Encoder/decoder checkpoint. - Retrieved examples. - Selected output. - Formal checks. - Reviewed reference target. Evaluate on source/dependency-grouped held-out cases. Report: 1. Complete source coverage. 2. Exact typed-AST accuracy. 3. Semantic facet accuracy. 4. Formal validity. 5. Legal source-correspondence accuracy. 6. Counterexample/scenario correctness. 7. Abstention and unsupported rates. 8. Previous-task retention. 9. Training and inference compute. 10. Total cost per correctly accepted formalization. Enable a pinned native Lean CI job for the affected autoformalization paths, reusing existing tests. Extend existing corpus-release validation to require consistent source, IR, graph, proof, dependency, and version manifests. Do not equate a successful graph export, cached receipt, or mock Lean fixture with a verified statutory corpus."
+        },
+        "goal_id": "objective-work:fd3cfcda0dbf8fdd323b30adbf439501653893fc3417ea0c452d3bc270fbdf46",
+        "lifecycle_state": "active",
+        "parents": [
+          "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931"
+        ],
+        "required_evidence": [],
+        "schedulable": true,
+        "status": "active",
+        "terminal": false,
+        "title": "Phase 8 \u2014 Benchmarking and CI"
+      }
+    },
+    "nodes": [
+      "objective-work:0674a8a48007b8e1282a68fdefdaa0186fe980fd06bb802afd43c26307ea0c74",
+      "objective-work:2d8ae263ed1986f98d8143ee309faacc41e5420f2961e2f32197d8839021bcb2",
+      "objective-work:2d910586cc7372fb6751e8c747849babb74362f1d6a25e62ae7d305532626bdb",
+      "objective-work:4b9b233535b5edb079581019d1d080b28316551880f44a7f1d07ae15067609e9",
+      "objective-work:4f1f97a1b0a2d62bfd9fc0e240ee0c3a588f46fd466e2fc2196b02ef76586818",
+      "objective-work:64201d2f93dabb82306a2cd0ccd1206deaf9df735543e570debc90f407bcee1f",
+      "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931",
+      "objective-work:f22614cd95c7a7882f5774896b330760a5758a4aad64f23112f1ccf667dfaace",
+      "objective-work:fd3cfcda0dbf8fdd323b30adbf439501653893fc3417ea0c452d3bc270fbdf46"
+    ],
+    "roots": [
+      "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931"
+    ],
+    "schedulable_goal_ids": [
+      "objective-work:0674a8a48007b8e1282a68fdefdaa0186fe980fd06bb802afd43c26307ea0c74",
+      "objective-work:2d8ae263ed1986f98d8143ee309faacc41e5420f2961e2f32197d8839021bcb2",
+      "objective-work:2d910586cc7372fb6751e8c747849babb74362f1d6a25e62ae7d305532626bdb",
+      "objective-work:4b9b233535b5edb079581019d1d080b28316551880f44a7f1d07ae15067609e9",
+      "objective-work:4f1f97a1b0a2d62bfd9fc0e240ee0c3a588f46fd466e2fc2196b02ef76586818",
+      "objective-work:64201d2f93dabb82306a2cd0ccd1206deaf9df735543e570debc90f407bcee1f",
+      "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931",
+      "objective-work:f22614cd95c7a7882f5774896b330760a5758a4aad64f23112f1ccf667dfaace",
+      "objective-work:fd3cfcda0dbf8fdd323b30adbf439501653893fc3417ea0c452d3bc270fbdf46"
+    ],
+    "state_counts": {
+      "active": 9
+    },
+    "terminal_goal_ids": []
+  },
+  "heap_schedule": [
+    {
+      "fib_priority": 999999,
+      "goal_id": "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931",
+      "graph_depth": 0,
+      "heap_index": 0,
+      "output_count": 0,
+      "parents": [],
+      "priority": "P2",
+      "priority_rank": 2,
+      "required_evidence_count": 0,
+      "sort_key": [
+        999999,
+        2,
+        0,
+        0,
+        "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931"
+      ],
+      "status": "active",
+      "title": "Current WORLD legal corpus to LegalIR to Lean 4 mission",
+      "track": "ops",
+      "work_surface_score": 0
+    },
+    {
+      "fib_priority": 999999,
+      "goal_id": "objective-work:0674a8a48007b8e1282a68fdefdaa0186fe980fd06bb802afd43c26307ea0c74",
+      "graph_depth": 1,
+      "heap_index": 1,
+      "output_count": 0,
+      "parents": [
+        "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931"
+      ],
+      "priority": "P2",
+      "priority_rank": 2,
+      "required_evidence_count": 0,
+      "sort_key": [
+        999999,
+        2,
+        0,
+        1,
+        "objective-work:0674a8a48007b8e1282a68fdefdaa0186fe980fd06bb802afd43c26307ea0c74"
+      ],
+      "status": "active",
+      "title": "Phase 5 \u2014 Establish a stronger decoder baseline",
+      "track": "ops",
+      "work_surface_score": 0
+    },
+    {
+      "fib_priority": 999999,
+      "goal_id": "objective-work:2d8ae263ed1986f98d8143ee309faacc41e5420f2961e2f32197d8839021bcb2",
+      "graph_depth": 1,
+      "heap_index": 2,
+      "output_count": 0,
+      "parents": [
+        "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931"
+      ],
+      "priority": "P2",
+      "priority_rank": 2,
+      "required_evidence_count": 0,
+      "sort_key": [
+        999999,
+        2,
+        0,
+        1,
+        "objective-work:2d8ae263ed1986f98d8143ee309faacc41e5420f2961e2f32197d8839021bcb2"
+      ],
+      "status": "active",
+      "title": "Phase 7 \u2014 Continual learning and proof feedback",
+      "track": "ops",
+      "work_surface_score": 0
+    },
+    {
+      "fib_priority": 999999,
+      "goal_id": "objective-work:2d910586cc7372fb6751e8c747849babb74362f1d6a25e62ae7d305532626bdb",
+      "graph_depth": 1,
+      "heap_index": 3,
+      "output_count": 0,
+      "parents": [
+        "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931"
+      ],
+      "priority": "P2",
+      "priority_rank": 2,
+      "required_evidence_count": 0,
+      "sort_key": [
+        999999,
+        2,
+        0,
+        1,
+        "objective-work:2d910586cc7372fb6751e8c747849babb74362f1d6a25e62ae7d305532626bdb"
+      ],
+      "status": "active",
+      "title": "Phase 3 \u2014 Strengthen legal IR and preservation",
+      "track": "ops",
+      "work_surface_score": 0
+    },
+    {
+      "fib_priority": 999999,
+      "goal_id": "objective-work:4b9b233535b5edb079581019d1d080b28316551880f44a7f1d07ae15067609e9",
+      "graph_depth": 1,
+      "heap_index": 4,
+      "output_count": 0,
+      "parents": [
+        "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931"
+      ],
+      "priority": "P2",
+      "priority_rank": 2,
+      "required_evidence_count": 0,
+      "sort_key": [
+        999999,
+        2,
+        0,
+        1,
+        "objective-work:4b9b233535b5edb079581019d1d080b28316551880f44a7f1d07ae15067609e9"
+      ],
+      "status": "active",
+      "title": "Phase 2 \u2014 Complete statutory semantic admission",
+      "track": "ops",
+      "work_surface_score": 0
+    },
+    {
+      "fib_priority": 999999,
+      "goal_id": "objective-work:4f1f97a1b0a2d62bfd9fc0e240ee0c3a588f46fd466e2fc2196b02ef76586818",
+      "graph_depth": 1,
+      "heap_index": 5,
+      "output_count": 0,
+      "parents": [
+        "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931"
+      ],
+      "priority": "P2",
+      "priority_rank": 2,
+      "required_evidence_count": 0,
+      "sort_key": [
+        999999,
+        2,
+        0,
+        1,
+        "objective-work:4f1f97a1b0a2d62bfd9fc0e240ee0c3a588f46fd466e2fc2196b02ef76586818"
+      ],
+      "status": "active",
+      "title": "Phase 4 \u2014 Improve contrastive retrieval",
+      "track": "ops",
+      "work_surface_score": 0
+    },
+    {
+      "fib_priority": 999999,
+      "goal_id": "objective-work:64201d2f93dabb82306a2cd0ccd1206deaf9df735543e570debc90f407bcee1f",
+      "graph_depth": 1,
+      "heap_index": 6,
+      "output_count": 0,
+      "parents": [
+        "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931"
+      ],
+      "priority": "P2",
+      "priority_rank": 2,
+      "required_evidence_count": 0,
+      "sort_key": [
+        999999,
+        2,
+        0,
+        1,
+        "objective-work:64201d2f93dabb82306a2cd0ccd1206deaf9df735543e570debc90f407bcee1f"
+      ],
+      "status": "active",
+      "title": "Phase 1 \u2014 Fix proof-validation correctness",
+      "track": "ops",
+      "work_surface_score": 0
+    },
+    {
+      "fib_priority": 999999,
+      "goal_id": "objective-work:f22614cd95c7a7882f5774896b330760a5758a4aad64f23112f1ccf667dfaace",
+      "graph_depth": 1,
+      "heap_index": 7,
+      "output_count": 0,
+      "parents": [
+        "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931"
+      ],
+      "priority": "P2",
+      "priority_rank": 2,
+      "required_evidence_count": 0,
+      "sort_key": [
+        999999,
+        2,
+        0,
+        1,
+        "objective-work:f22614cd95c7a7882f5774896b330760a5758a4aad64f23112f1ccf667dfaace"
+      ],
+      "status": "active",
+      "title": "Phase 6 \u2014 Bidirectional reconstruction and semantic fidelity",
+      "track": "ops",
+      "work_surface_score": 0
+    },
+    {
+      "fib_priority": 999999,
+      "goal_id": "objective-work:fd3cfcda0dbf8fdd323b30adbf439501653893fc3417ea0c452d3bc270fbdf46",
+      "graph_depth": 1,
+      "heap_index": 8,
+      "output_count": 0,
+      "parents": [
+        "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931"
+      ],
+      "priority": "P2",
+      "priority_rank": 2,
+      "required_evidence_count": 0,
+      "sort_key": [
+        999999,
+        2,
+        0,
+        1,
+        "objective-work:fd3cfcda0dbf8fdd323b30adbf439501653893fc3417ea0c452d3bc270fbdf46"
+      ],
+      "status": "active",
+      "title": "Phase 8 \u2014 Benchmarking and CI",
+      "track": "ops",
+      "work_surface_score": 0
+    }
+  ],
+  "objective_path": "/home/barberb/lift_coding/.worktrees/legal-ir-autoencoder-v1/ipfs_datasets_py/logic/autoformal/WORLD-OBJECTIVE-HEAP.md",
+  "schema": "ipfs_accelerate_py.agent_supervisor.objectives.objective_graph",
+  "thought_graph": {
+    "edge_count": 0,
+    "edges": [],
+    "node_count": 9,
+    "nodes": [
+      {
+        "goal_id": "objective-work:0674a8a48007b8e1282a68fdefdaa0186fe980fd06bb802afd43c26307ea0c74",
+        "id": "goal:objective-work:0674a8a48007b8e1282a68fdefdaa0186fe980fd06bb802afd43c26307ea0c74",
+        "kind": "goal",
+        "priority": "P2",
+        "status": "active",
+        "thought": "## Phase 5 \u2014 Establish a stronger decoder baseline **Priority: High after reviewed targets exist** Reuse current source-span and compact formula decoders. Implement the minimum necessary integration for a pretrained source-conditioned decoder producing the existing canonical typed LegalIR. Compare: A. Existing source-span decoder. B. Existing retrieval-conditioned decoder. C. Rich-context retrieval-conditioned decoder. D. Pretrained decoder fine-tuned on accepted source/IR pairs. E. Teacher-augmented decoder using training data whose licenses permit the intended use. F. Optional additional encoder representations or fusion. Hold reviewed populations, allowed context, inference budget, and evaluation criteria constant wherever possible. Preserve the original source spans alongside learned features. Verify that full output structure can express the intended normative provision before fitting. Do not discard difficult clauses to fit a shorter output budget. Support autonomous BOS-to-EOS generation and count incomplete outputs and abstentions. Do not run expensive training or external paid models without the repository's existing explicit authorization and resource-admission procedures.; {\"byte_end_exclusive\":12952,\"byte_start\":11732,\"document_bytes\":19053,\"document_path\":\"/tmp/world-legal-current-objective-v01.md\",\"document_sha256\":\"56b2ac3e807af1fa2c0f349b7dbb0bb2d6d64290f6334e1edb68f7fc06351019\",\"slice_bytes\":1220,\"slice_sha256\":\"ac5bdf1f4953e583764e566a2e5e7b3e89644b0657b4a190760cd9b66cf396c8\"}",
+        "title": "Phase 5 \u2014 Establish a stronger decoder baseline",
+        "track": "ops"
+      },
+      {
+        "goal_id": "objective-work:2d8ae263ed1986f98d8143ee309faacc41e5420f2961e2f32197d8839021bcb2",
+        "id": "goal:objective-work:2d8ae263ed1986f98d8143ee309faacc41e5420f2961e2f32197d8839021bcb2",
+        "kind": "goal",
+        "priority": "P2",
+        "status": "active",
+        "thought": "## Phase 7 \u2014 Continual learning and proof feedback **Priority: Medium, after a trusted evaluation corpus** Reuse existing mixed-replay, checkpoint, optimizer, proof-feedback, and model-registry components. Implement explicit versioned transitions when new reviewed examples are admitted. The system must support: - New accepted formalizations. - Corrected interpretations. - Superseded statutes and definitions. - Negative counterexamples. - Retained earlier training examples. - Periodic supervised optimization. - Exact checkpoint/provenance tracking. - Regression and catastrophic-forgetting evaluation. Immediate library/retrieval updates should not require retraining model weights. Treat `lake build` and proof outcomes as discrete verification signals, suitable for accepted-example selection, repair trajectories, preference learning, or later RL. Do not pretend the compiler supplies an ordinary differentiable gradient. Ensure that proof success cannot compensate for an incorrect translation. ### Experimental weight-space programming Do not rewrite large pretrained model weights directly as a primary optimization method. If useful, add a separately gated experiment for small routing, ranking, or adapter components. Compare the method against conventional supervised updates and explicit rules, with retention/regression tests. Do not promote experimental weight patches without independent evaluation.; {\"byte_end_exclusive\":15462,\"byte_start\":14027,\"document_bytes\":19053,\"document_path\":\"/tmp/world-legal-current-objective-v01.md\",\"document_sha256\":\"56b2ac3e807af1fa2c0f349b7dbb0bb2d6d64290f6334e1edb68f7fc06351019\",\"slice_bytes\":1435,\"slice_sha256\":\"e9618bb4d993b56e10240a9382d9bea120732f23102489b051e5479228a76b3b\"}",
+        "title": "Phase 7 \u2014 Continual learning and proof feedback",
+        "track": "ops"
+      },
+      {
+        "goal_id": "objective-work:2d910586cc7372fb6751e8c747849babb74362f1d6a25e62ae7d305532626bdb",
+        "id": "goal:objective-work:2d910586cc7372fb6751e8c747849babb74362f1d6a25e62ae7d305532626bdb",
+        "kind": "goal",
+        "priority": "P2",
+        "status": "active",
+        "thought": "## Phase 3 \u2014 Strengthen legal IR and preservation **Priority: High** Inspect: - `logic/legal_ir/` - `legal_native_ast_preservation.py` - Existing relational, counting, deontic, temporal, and definition-scope implementations. Determine the minimum missing representational and compiler interfaces required for the selected pilot. The complete legal IR must preserve, where supported: - Multiple predicates and ordered arguments. - Types and binder scope. - Actor and institutional roles. - Obligations, prohibitions, and permissions. - Conditions and exceptions. - Quantities and cardinality. - Temporal triggers and deadlines. - Governing definitions. - Jurisdiction, version, and interpretation context. Extend independent AST-to-Lean semantic-preservation checks beyond the existing limited unary fragment as required by the pilot. Use an independently defined interpretation/denotation. Avoid proving preservation by simply assuming the generated statement or desired equivalence. Add mutation tests showing that changing actor roles, quantifier scope, modality, exceptions, or cardinality is detected. Unsupported constructs must fail explicitly rather than being silently omitted. Preserve existing Lean project generation, incremental checking, and invalidation machinery.; {\"byte_end_exclusive\":10192,\"byte_start\":8899,\"document_bytes\":19053,\"document_path\":\"/tmp/world-legal-current-objective-v01.md\",\"document_sha256\":\"56b2ac3e807af1fa2c0f349b7dbb0bb2d6d64290f6334e1edb68f7fc06351019\",\"slice_bytes\":1293,\"slice_sha256\":\"66279cbc0add7c66a8817263828072df3e6389c8f59f24041a7a77e6e47d0c0e\"}",
+        "title": "Phase 3 \u2014 Strengthen legal IR and preservation",
+        "track": "ops"
+      },
+      {
+        "goal_id": "objective-work:4b9b233535b5edb079581019d1d080b28316551880f44a7f1d07ae15067609e9",
+        "id": "goal:objective-work:4b9b233535b5edb079581019d1d080b28316551880f44a7f1d07ae15067609e9",
+        "kind": "goal",
+        "priority": "P2",
+        "status": "active",
+        "thought": "## Phase 2 \u2014 Complete statutory semantic admission **Priority: Critical** Inspect the existing source, review, and admission owners, including: - `corpus_source_bindings.py` - `legal_norm_content_adjudication_v1.py` - `legal_span_consumer_binding.py` - Existing definition-use and source-correspondence modules. The repository already distinguishes authenticated evidence from legally accepted meaning. Preserve that distinction. Implement the missing positive transition from **complete, independently reviewed statutory meaning** to eligible formalization, training, and evaluation artifacts. An accepted record should bind: - Exact source bytes, spans, and revisions. - Governing legal edition and applicability context. - Explicitly selected interpretation. - Complete typed legal IR. - Definition and cross-reference dependencies. - Independent review outcome. - Permitted training/evaluation/proof uses. - Exact provenance and revocation/invalidation dependencies. Do not fabricate missing legal interpretations, reviewers, approvals, or governing-definition decisions. If substantive review is unavailable, implement and test the transition with explicitly fictional fixtures and retain real statutory records as pending. ### End-to-end pilot Reuse the existing Title 10 pilot involving \u00a7101, \u00a77213, and \u00a77214. Target one complete normative provision, its governing definition, and two genuinely distinct statutory uses. Existing partial interpretations and unresolved conditions must remain visible. Do not count two interpretations of one paragraph as two independent statutory uses. Once genuinely reviewed inputs are available, the path should produce: Source \u2192 reviewed meaning \u2192 typed LegalIR \u2192 semantic graph \u2192 Lean module \u2192 checked artifact \u2192 admitted corpus entry. Extend existing contracts rather than build another importer, graph system, or corpus manager.; {\"byte_end_exclusive\":8899,\"byte_start\":6988,\"document_bytes\":19053,\"document_path\":\"/tmp/world-legal-current-objective-v01.md\",\"document_sha256\":\"56b2ac3e807af1fa2c0f349b7dbb0bb2d6d64290f6334e1edb68f7fc06351019\",\"slice_bytes\":1911,\"slice_sha256\":\"d98df721516996528411e945df7615a7f6deb345bf9b1f079110838dbc5e186f\"}",
+        "title": "Phase 2 \u2014 Complete statutory semantic admission",
+        "track": "ops"
+      },
+      {
+        "goal_id": "objective-work:4f1f97a1b0a2d62bfd9fc0e240ee0c3a588f46fd466e2fc2196b02ef76586818",
+        "id": "goal:objective-work:4f1f97a1b0a2d62bfd9fc0e240ee0c3a588f46fd466e2fc2196b02ef76586818",
+        "kind": "goal",
+        "priority": "P2",
+        "status": "active",
+        "thought": "## Phase 4 \u2014 Improve contrastive retrieval **Priority: High** Inspect: - `legal_joint_retrieval.py` - `legal_structured_retrieval.py` - `alignment_masked_contrastive.py` - Existing source and formal embedding producers. The repository already implements contrastive retrieval and a masked multi-positive loss. Connect the existing masked objective to an eligible training route using admitted semantic relation labels. Support: - Multiple correct formalizations. - Equivalent representations. - Explicitly incompatible interpretations. - Unknown or unreviewed relationships. - Jurisdiction/version-specific applicability. - Reusable but noncontrolling analogies. Unknown pairs must not become automatic negatives. Retain a distinction between: 1. Retrieval of legally applicable authorities. 2. Retrieval of semantically corresponding source/formalization pairs. 3. Retrieval of structurally useful examples and proof dependencies. Start with current GTE representations. Compare lexical retrieval, existing embeddings, and learned alignment on fixed data. Do not immediately combine every encoder. ### Rich retrieval context The current structured retrieval representation loses important information such as argument roles, ordering, and qualifier values. Implement an optional source-conditioned retrieval profile that can provide complete permitted examples, typed ASTs, definitions, and source links to the decoder. Retain the existing compact histogram/vector paths as baselines. Prevent reference-target leakage.; {\"byte_end_exclusive\":11732,\"byte_start\":10192,\"document_bytes\":19053,\"document_path\":\"/tmp/world-legal-current-objective-v01.md\",\"document_sha256\":\"56b2ac3e807af1fa2c0f349b7dbb0bb2d6d64290f6334e1edb68f7fc06351019\",\"slice_bytes\":1540,\"slice_sha256\":\"99cb4b4f83639622df83581847f22f6812cf20c8d5854182728d6757b5249265\"}",
+        "title": "Phase 4 \u2014 Improve contrastive retrieval",
+        "track": "ops"
+      },
+      {
+        "goal_id": "objective-work:64201d2f93dabb82306a2cd0ccd1206deaf9df735543e570debc90f407bcee1f",
+        "id": "goal:objective-work:64201d2f93dabb82306a2cd0ccd1206deaf9df735543e570debc90f407bcee1f",
+        "kind": "goal",
+        "priority": "P2",
+        "status": "active",
+        "thought": "## Phase 1 \u2014 Fix proof-validation correctness **Priority: Critical** ### 1.1 Generic Lean backend Inspect: `logic/backends/kernel/lean.py` Investigate whether proof acceptance can be incorrectly established through: - An arbitrary or unapproved axiom. - A theorem report belonging to another declaration. - Ambiguous or multiple theorem reports. - A clean report appearing elsewhere in the compiler output. - Source constructs missed by lexical screening. - Incomplete binding between the requested obligation and verified declaration. Implement strict validation that binds the expected declaration, proposition, proof dependencies, and approved axiom policy. Do not infer acceptance from an unrelated successful compiler report. Reject `sorry`, `admit`, and any unapproved proof dependencies. Distinguish source-based diagnostics from elaborated Lean dependency evidence. Reuse stricter existing canonical autoformal validation where appropriate. ### 1.2 Proof-cache integrity Inspect: `logic/legal_ir/proof_cache.py` Ensure cached proof reuse is bound to: - Source and artifact identity. - Exact formal obligation. - Formal assumptions. - Declaration and proposition identity. - Backend and toolchain profile. - Applicable interpretation and dependency versions. A receipt that is merely associated with an artifact must not be promoted to proof of that artifact. Create negative tests for changed source digests, obligations, assumptions, declarations, and toolchain identities. **Acceptance:** all reproduced false acceptances are rejected; existing positive behavior remains valid; relevant native Lean tests pass when the toolchain is available. Do not claim a native result from mocked compiler output.; {\"byte_end_exclusive\":6988,\"byte_start\":5255,\"document_bytes\":19053,\"document_path\":\"/tmp/world-legal-current-objective-v01.md\",\"document_sha256\":\"56b2ac3e807af1fa2c0f349b7dbb0bb2d6d64290f6334e1edb68f7fc06351019\",\"slice_bytes\":1733,\"slice_sha256\":\"fff2a2a9ea0d628ac243402627317ec4cf520086fe904bacf871714ba8392675\"}",
+        "title": "Phase 1 \u2014 Fix proof-validation correctness",
+        "track": "ops"
+      },
+      {
+        "goal_id": "objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931",
+        "id": "goal:objective-work:7349f6ebb2f397e3fc3605983fae41b1fe1de24621100e199104b67fe82ee931",
+        "kind": "goal",
+        "priority": "P2",
+        "status": "active",
+        "thought": "# Current WORLD legal corpus to LegalIR to Lean 4 mission This is the current objective input selected by Root for preparation of the existing supervisor refill. The user's repeated worldwide clarification supersedes the earlier United States-only mission scope. The U.S. Code and the existing Title 10 pilot remain required pilots within the worldwide mission. The full eight-phase implementation specification follows, with exactly one scope sentence updated. Every correctness, review, preservation, training, evaluation and delivery requirement remains. Completed legacy-board tasks are historical implementation evidence; 145 completed tasks do not establish mission completion. Preserve source bytes, spans, governing context, jurisdiction, original language, edition, selected interpretation, definition identities and versioned dependencies. Unknown legal applicability and pending review remain unknown. Lean compilation alone does not establish source-faithfulness or legal correctness. No fabricated reviews, accepted-corpus entries, scientific results or convergence. Reference pilot datasets supplied by the user: - https://huggingface.co/datasets/justicedao/ipfs_uscode - https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache - https://huggingface.co/datasets/justicedao/uscode-autoformal-entity-cache For the first bounded refill preparation use the current input/claimed-unit map at /tmp/world-legal-existing-supervisor-mission-context-v01.json. It names existing owners and one unclaimed private v4 quantity-capacity candidate. Preserve all 145 completed task identities and history. Do not duplicate active decoder, math, documentation or recovery work, and do not infer a restart, Source overlay, model run or board mutation from this objective file alone. Bind any actual operation through the existing live refill/submission owner and its current configuration/resource contract. ## Eight-phase specification # Codex Task: Implement the Remaining Legal Autoformalization Architecture ## Repository https://github.com/endomorphosis/ipfs_datasets_py Primary locations: - `ipfs_datasets_py/logic/autoformal/` - `ipfs_datasets_py/logic/legal_ir/` - `ipfs_datasets_py/logic/formalization/autoencoder/` - `ipfs_datasets_py/optimizers/logic_theorem_optimizer/` - `ipfs_datasets_py/logic/backends/kernel/` - `tests/unit/logic/autoformal/` Reference audit commit: `4201f0248e76187de1b2bd23b286e5bd9e3c6d2f`. Work from the current checkout and reconcile any later changes. Do not assume the reference commit remains HEAD. ## Mission Advance our existing neuro-symbolic legal autoformalization framework toward a continuously improving compiler capable of translating legal text into faithful, source-grounded formal logic, ultimately supporting a versioned, compositional Lean 4 corpus of the world's legal materials across jurisdictions and source languages. Our intended architecture combines: 1. Natural-language source spans and their legal context. 2. Learned representations from GTE and potentially Leanstral. 3. Contrastively aligned natural-language and formal-logic representations. 4. Retrieval of existing definitions, predicates, formalizations, and proofs. 5. A compact, source-conditioned legal-IR decoder. 6. Bidirectional natural-language \u2194 formal-logic reconstruction. 7. Deterministic IR-to-Lean compilation. 8. Kernel-checked proofs and counterexample-driven repair. 9. Continual learning over accepted examples, corrections, and proof memory. 10. Versioned provenance, legal interpretation review, and semantic-fidelity evaluation. Prior literature includes: - ProofBridge: https://arxiv.org/html/2510.15681v1 - Catala: https://doi.org/10.1145/3473582 - FormalAlign: https://proceedings.iclr.cc/paper_files/paper/2025/file/fceedf8c9c0ff51f41b9fe0294ef0070-Paper-Conference.pdf - LegalRuleML: https://docs.oasis-open.org/legalruleml/legalruleml-core-spec/v1.0/os/legalruleml-core-spec-v1.0-os.html - Weight-space programming: https://rikiyat.github.io/blog/weight-space-programming/ The goal is not merely successful Lean compilation. It is faithful preservation of legal meaning, including actors, modalities, exceptions, conditions, scope, definitions, temporal applicability, and assumptions. ## First: inspect and reconcile the existing code Before implementation: 1. Read all applicable `AGENTS.md` files. 2. Read `logic/autoformal/README.md`. 3. Read `logic/autoformal/docs/HANDOFF.md`, `ARCHITECTURE.md`, `TRAINING_HISTORY.md`, `BACKLOG.json`, and the indexed work catalog. 4. Identify canonical implementation owners and existing tests. 5. Reproduce reported defects before modifying their code. 6. Determine whether current HEAD already resolves any proposed gap. Do not duplicate existing implementations, create parallel supervisor systems, or replace working numerical machinery. Extend existing owners and tests. Preserve task IDs, source identities, immutable receipts, checkpoint provenance, historical failures, and approved runtime/resource constraints. The earlier audit reported 166 passing focused tests and two reproduced proof-evidence problems. Treat those as findings to verify, not as proof that the current checkout necessarily has the same defects. ## Phase 1 \u2014 Fix proof-validation correctness **Priority: Critical** ### 1.1 Generic Lean backend Inspect: `logic/backends/kernel/lean.py` Investigate whether proof acceptance can be incorrectly established through: - An arbitrary or unapproved axiom. - A theorem report belonging to another declaration. - Ambiguous or multiple theorem reports. - A clean report appearing elsewhere in the compiler output. - Source constructs missed by lexical screening. - Incomplete binding between the requested obligation and verified declaration. Implement strict validation that binds the expected declaration, proposition, proof dependencies, and approved axiom policy. Do not infer acceptance from an unrelated successful compiler report. Reject `sorry`, `admit`, and any unapproved proof dependencies. Distinguish source-based diagnostics from elaborated Lean dependency evidence. Reuse stricter existing canonical autoformal validation where appropriate. ### 1.2 Proof-cache integrity Inspect: `logic/legal_ir/proof_cache.py` Ensure cached proof reuse is bound to: - Source and artifact identity. - Exact formal obligation. - Formal assumptions. - Declaration and proposition identity. - Backend and toolchain profile. - Applicable interpretation and dependency versions. A receipt that is merely associated with an artifact must not be promoted to proof of that artifact. Create negative tests for changed source digests, obligations, assumptions, declarations, and toolchain identities. **Acceptance:** all reproduced false acceptances are rejected; existing positive behavior remains valid; relevant native Lean tests pass when the toolchain is available. Do not claim a native result from mocked compiler output. ## Phase 2 \u2014 Complete statutory semantic admission **Priority: Critical** Inspect the existing source, review, and admission owners, including: - `corpus_source_bindings.py` - `legal_norm_content_adjudication_v1.py` - `legal_span_consumer_binding.py` - Existing definition-use and source-correspondence modules. The repository already distinguishes authenticated evidence from legally accepted meaning. Preserve that distinction. Implement the missing positive transition from **complete, independently reviewed statutory meaning** to eligible formalization, training, and evaluation artifacts. An accepted record should bind: - Exact source bytes, spans, and revisions. - Governing legal edition and applicability context. - Explicitly selected interpretation. - Complete typed legal IR. - Definition and cross-reference dependencies. - Independent review outcome. - Permitted training/evaluation/proof uses. - Exact provenance and revocation/invalidation dependencies. Do not fabricate missing legal interpretations, reviewers, approvals, or governing-definition decisions. If substantive review is unavailable, implement and test the transition with explicitly fictional fixtures and retain real statutory records as pending. ### End-to-end pilot Reuse the existing Title 10 pilot involving \u00a7101, \u00a77213, and \u00a77214. Target one complete normative provision, its governing definition, and two genuinely distinct statutory uses. Existing partial interpretations and unresolved conditions must remain visible. Do not count two interpretations of one paragraph as two independent statutory uses. Once genuinely reviewed inputs are available, the path should produce: Source \u2192 reviewed meaning \u2192 typed LegalIR \u2192 semantic graph \u2192 Lean module \u2192 checked artifact \u2192 admitted corpus entry. Extend existing contracts rather than build another importer, graph system, or corpus manager. ## Phase 3 \u2014 Strengthen legal IR and preservation **Priority: High** Inspect: - `logic/legal_ir/` - `legal_native_ast_preservation.py` - Existing relational, counting, deontic, temporal, and definition-scope implementations. Determine the minimum missing representational and compiler interfaces required for the selected pilot. The complete legal IR must preserve, where supported: - Multiple predicates and ordered arguments. - Types and binder scope. - Actor and institutional roles. - Obligations, prohibitions, and permissions. - Conditions and exceptions. - Quantities and cardinality. - Temporal triggers and deadlines. - Governing definitions. - Jurisdiction, version, and interpretation context. Extend independent AST-to-Lean semantic-preservation checks beyond the existing limited unary fragment as required by the pilot. Use an independently defined interpretation/denotation. Avoid proving preservation by simply assuming the generated statement or desired equivalence. Add mutation tests showing that changing actor roles, quantifier scope, modality, exceptions, or cardinality is detected. Unsupported constructs must fail explicitly rather than being silently omitted. Preserve existing Lean project generation, incremental checking, and invalidation machinery. ## Phase 4 \u2014 Improve contrastive retrieval **Priority: High** Inspect: - `legal_joint_retrieval.py` - `legal_structured_retrieval.py` - `alignment_masked_contrastive.py` - Existing source and formal embedding producers. The repository already implements contrastive retrieval and a masked multi-positive loss. Connect the existing masked objective to an eligible training route using admitted semantic relation labels. Support: - Multiple correct formalizations. - Equivalent representations. - Explicitly incompatible interpretations. - Unknown or unreviewed relationships. - Jurisdiction/version-specific applicability. - Reusable but noncontrolling analogies. Unknown pairs must not become automatic negatives. Retain a distinction between: 1. Retrieval of legally applicable authorities. 2. Retrieval of semantically corresponding source/formalization pairs. 3. Retrieval of structurally useful examples and proof dependencies. Start with current GTE representations. Compare lexical retrieval, existing embeddings, and learned alignment on fixed data. Do not immediately combine every encoder. ### Rich retrieval context The current structured retrieval representation loses important information such as argument roles, ordering, and qualifier values. Implement an optional source-conditioned retrieval profile that can provide complete permitted examples, typed ASTs, definitions, and source links to the decoder. Retain the existing compact histogram/vector paths as baselines. Prevent reference-target leakage. ## Phase 5 \u2014 Establish a stronger decoder baseline **Priority: High after reviewed targets exist** Reuse current source-span and compact formula decoders. Implement the minimum necessary integration for a pretrained source-conditioned decoder producing the existing canonical typed LegalIR. Compare: A. Existing source-span decoder. B. Existing retrieval-conditioned decoder. C. Rich-context retrieval-conditioned decoder. D. Pretrained decoder fine-tuned on accepted source/IR pairs. E. Teacher-augmented decoder using training data whose licenses permit the intended use. F. Optional additional encoder representations or fusion. Hold reviewed populations, allowed context, inference budget, and evaluation criteria constant wherever possible. Preserve the original source spans alongside learned features. Verify that full output structure can express the intended normative provision before fitting. Do not discard difficult clauses to fit a shorter output budget. Support autonomous BOS-to-EOS generation and count incomplete outputs and abstentions. Do not run expensive training or external paid models without the repository's existing explicit authorization and resource-admission procedures. ## Phase 6 \u2014 Bidirectional reconstruction and semantic fidelity **Priority: High** Reuse existing IR rendering, decompilation, and text-round-trip owners. Support and evaluate: Natural language \u2192 LegalIR \u2192 normalized legal language. LegalIR \u2192 legal language \u2192 LegalIR. Keep separate measurements for: - Original UTF-8 byte restoration. - Canonical prose reconstruction. - Semantic equivalence. - Complete typed-AST fidelity. - Source dependence. - Proof validity. Do not equate byte-perfect recovery with legal interpretation correctness. Prevent the reverse decoder from copying hidden original-text information while ostensibly reconstructing it from formal semantics. Create paired semantic tests covering: - Must versus may. - Obligations versus observed compliance. - Quantifier scope. - Changed actors. - Exception presence and scope. - Calendar versus business days. - Different legal effective dates. - Cardinality boundaries. - Missing or conflicting governing definitions. Require source-faithfulness tests in addition to Lean build success. ## Phase 7 \u2014 Continual learning and proof feedback **Priority: Medium, after a trusted evaluation corpus** Reuse existing mixed-replay, checkpoint, optimizer, proof-feedback, and model-registry components. Implement explicit versioned transitions when new reviewed examples are admitted. The system must support: - New accepted formalizations. - Corrected interpretations. - Superseded statutes and definitions. - Negative counterexamples. - Retained earlier training examples. - Periodic supervised optimization. - Exact checkpoint/provenance tracking. - Regression and catastrophic-forgetting evaluation. Immediate library/retrieval updates should not require retraining model weights. Treat `lake build` and proof outcomes as discrete verification signals, suitable for accepted-example selection, repair trajectories, preference learning, or later RL. Do not pretend the compiler supplies an ordinary differentiable gradient. Ensure that proof success cannot compensate for an incorrect translation. ### Experimental weight-space programming Do not rewrite large pretrained model weights directly as a primary optimization method. If useful, add a separately gated experiment for small routing, ranking, or adapter components. Compare the method against conventional supervised updates and explicit rules, with retention/regression tests. Do not promote experimental weight patches without independent evaluation. ## Phase 8 \u2014 Benchmarking and CI **Priority: High** Reuse existing semantic mutation, source-census, grouped-split, formal-preservation, and evaluation modules. Add missing integrations so that actual producer outputs are independently tied to their: - Source population. - Inference context. - Encoder/decoder checkpoint. - Retrieved examples. - Selected output. - Formal checks. - Reviewed reference target. Evaluate on source/dependency-grouped held-out cases. Report: 1. Complete source coverage. 2. Exact typed-AST accuracy. 3. Semantic facet accuracy. 4. Formal validity. 5. Legal source-correspondence accuracy. 6. Counterexample/scenario correctness. 7. Abstention and unsupported rates. 8. Previous-task retention. 9. Training and inference compute. 10. Total cost per correctly accepted formalization. Enable a pinned native Lean CI job for the affected autoformalization paths, reusing existing tests. Extend existing corpus-release validation to require consistent source, IR, graph, proof, dependency, and version manifests. Do not equate a successful graph export, cached receipt, or mock Lean fixture with a verified statutory corpus. ## Implementation constraints - Use existing canonical owners. - Follow `AGENTS.md` and maintained handoff/task records. - Preserve old checkpoint and source identities. - Keep historical failures and receipts. - Avoid duplicate architecture, task queues, or monitoring. - Do not broaden execution permissions or reset exhausted budgets. - Never fabricate legal reviews or validation results. - Keep unsupported legal semantics explicitly unresolved. - Do not merge unreviewed teacher outputs into gold labels. - Do not add unapproved axioms to force Lean success. - Use a fresh, exact test/evidence record for every new qualification. - Preserve backward compatibility unless the relevant defect requires a documented change. ## Execution instructions **Do not stop after producing a plan. Implement the highest-priority verified gaps.** Work in this order: 1. Reproduce and resolve Phase 1 correctness defects. 2. Implement Phase 2 admission contracts with realistic negative controls. 3. Advance the existing statutory pilot as far as actual reviewed evidence permits. 4. Extend semantic preservation and evaluation. 5. Integrate the existing contrastive-learning components. 6. Add the minimum useful decoder/continual-learning experiments. For each substantial change: - Identify the existing owner and task. - Explain the precise gap. - Modify the canonical implementation. - Add positive and adversarial tests. - Run the relevant tests. - Record what was verified and what remains unverified. - Update existing documentation and handoff records in place. If an implementation depends on unavailable legal judgment, model assets, native resources, or authorization, complete the independently testable software work and leave the dependent scientific/operational claim blocked. Do not represent partial completion as end-to-end success. ## Final deliverables Provide: 1. A summary of implemented changes. 2. Exact changed files and relevant commits. 3. Tests run, including failures and unavailable tests. 4. Resolved correctness defects. 5. Remaining semantic, graph, proof, and model-training gaps. 6. Experimental results, if genuinely measured. 7. The next smallest actionable task under the existing supervisor/backlog. **Success means a demonstrably more correct and better-integrated legal autoformalization pipeline\u2014not simply more modules, more passing fixture tests, or more generated Lean code.**; {\"byte_end_exclusive\":19053,\"byte_start\":0,\"document_bytes\":19053,\"document_path\":\"/tmp/world-legal-current-objective-v01.md\",\"document_sha256\":\"56b2ac3e807af1fa2c0f349b7dbb0bb2d6d64290f6334e1edb68f7fc06351019\",\"slice_bytes\":19053,\"slice_sha256\":\"56b2ac3e807af1fa2c0f349b7dbb0bb2d6d64290f6334e1edb68f7fc06351019\"}",
+        "title": "Current WORLD legal corpus to LegalIR to Lean 4 mission",
+        "track": "ops"
+      },
+      {
+        "goal_id": "objective-work:f22614cd95c7a7882f5774896b330760a5758a4aad64f23112f1ccf667dfaace",
+        "id": "goal:objective-work:f22614cd95c7a7882f5774896b330760a5758a4aad64f23112f1ccf667dfaace",
+        "kind": "goal",
+        "priority": "P2",
+        "status": "active",
+        "thought": "## Phase 6 \u2014 Bidirectional reconstruction and semantic fidelity **Priority: High** Reuse existing IR rendering, decompilation, and text-round-trip owners. Support and evaluate: Natural language \u2192 LegalIR \u2192 normalized legal language. LegalIR \u2192 legal language \u2192 LegalIR. Keep separate measurements for: - Original UTF-8 byte restoration. - Canonical prose reconstruction. - Semantic equivalence. - Complete typed-AST fidelity. - Source dependence. - Proof validity. Do not equate byte-perfect recovery with legal interpretation correctness. Prevent the reverse decoder from copying hidden original-text information while ostensibly reconstructing it from formal semantics. Create paired semantic tests covering: - Must versus may. - Obligations versus observed compliance. - Quantifier scope. - Changed actors. - Exception presence and scope. - Calendar versus business days. - Different legal effective dates. - Cardinality boundaries. - Missing or conflicting governing definitions. Require source-faithfulness tests in addition to Lean build success.; {\"byte_end_exclusive\":14027,\"byte_start\":12952,\"document_bytes\":19053,\"document_path\":\"/tmp/world-legal-current-objective-v01.md\",\"document_sha256\":\"56b2ac3e807af1fa2c0f349b7dbb0bb2d6d64290f6334e1edb68f7fc06351019\",\"slice_bytes\":1075,\"slice_sha256\":\"a8e4c7802d700d85201ef933b4790e5ba2ed97ee315c96d4bc86815c393c42e5\"}",
+        "title": "Phase 6 \u2014 Bidirectional reconstruction and semantic fidelity",
+        "track": "ops"
+      },
+      {
+        "goal_id": "objective-work:fd3cfcda0dbf8fdd323b30adbf439501653893fc3417ea0c452d3bc270fbdf46",
+        "id": "goal:objective-work:fd3cfcda0dbf8fdd323b30adbf439501653893fc3417ea0c452d3bc270fbdf46",
+        "kind": "goal",
+        "priority": "P2",
+        "status": "active",
+        "thought": "## Phase 8 \u2014 Benchmarking and CI **Priority: High** Reuse existing semantic mutation, source-census, grouped-split, formal-preservation, and evaluation modules. Add missing integrations so that actual producer outputs are independently tied to their: - Source population. - Inference context. - Encoder/decoder checkpoint. - Retrieved examples. - Selected output. - Formal checks. - Reviewed reference target. Evaluate on source/dependency-grouped held-out cases. Report: 1. Complete source coverage. 2. Exact typed-AST accuracy. 3. Semantic facet accuracy. 4. Formal validity. 5. Legal source-correspondence accuracy. 6. Counterexample/scenario correctness. 7. Abstention and unsupported rates. 8. Previous-task retention. 9. Training and inference compute. 10. Total cost per correctly accepted formalization. Enable a pinned native Lean CI job for the affected autoformalization paths, reusing existing tests. Extend existing corpus-release validation to require consistent source, IR, graph, proof, dependency, and version manifests. Do not equate a successful graph export, cached receipt, or mock Lean fixture with a verified statutory corpus.; {\"byte_end_exclusive\":16625,\"byte_start\":15462,\"document_bytes\":19053,\"document_path\":\"/tmp/world-legal-current-objective-v01.md\",\"document_sha256\":\"56b2ac3e807af1fa2c0f349b7dbb0bb2d6d64290f6334e1edb68f7fc06351019\",\"slice_bytes\":1163,\"slice_sha256\":\"42c05d1cfc8c82fc8b708bdb449de0fb3e61425cd4666e8bc15361f6edd0fcf8\"}",
+        "title": "Phase 8 \u2014 Benchmarking and CI",
+        "track": "ops"
+      }
+    ],
+    "schema": "ipfs_accelerate_py.agent_supervisor.objective_thought_graph"
+  }
+}
