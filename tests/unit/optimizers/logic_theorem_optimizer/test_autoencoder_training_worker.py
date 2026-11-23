@@ -10619,9 +10619,10 @@ def test_digest_omitted_vertical_generation_keeps_raw_wire_and_strict_assembly(m
     assert torch.equal(torch.get_rng_state(),rng)
 
 
-def _digest_omitted_Qwen_local_fixture(tmp_path):
+def _digest_omitted_Qwen_local_fixture(tmp_path, *, fixed_json_schema_subwords=False):
     from types import SimpleNamespace
-    old = _reviewed_chatml_local_asset_fixture(tmp_path, local_model_profile="builtin-qwen2-bfloat16/v1", max_sequence_tokens=8192)
+    old = _reviewed_chatml_local_asset_fixture(tmp_path, local_model_profile="builtin-qwen2-bfloat16/v1",
+        max_sequence_tokens=8192, fixed_json_schema_subwords=fixed_json_schema_subwords)
     backend = worker.TorchReviewedDecoderBackend(old.backend.model,old.backend.optimizer,old.backend.tokenizer,
         architecture=old.backend.architecture,max_sequence_tokens=8192,pretrained=False,
         model_profile="builtin-qwen2-bfloat16/v1",training_conditioning_profile=worker.REVIEWED_DIGEST_OMITTED_CHATML_PROFILE,
@@ -10872,3 +10873,1898 @@ def test_digest_omitted_vertical_producer_preserves_nullable_raw_text_dispositio
     payload=fixture.evaluation._producer_payload(artifact)
     assert [row["outcome"] for row in payload["producer_outputs"]]==[outcome]*len(fixture.rows)
     assert all(row["candidate"]==candidate for row in payload["producer_outputs"])
+
+
+def _tokenizer_pure_summary_declared_maintained_fixture(tmp_path, monkeypatch):
+    """Exercise the contract/cache boundary without constructing a real tokenizer."""
+    import hashlib
+    from ipfs_datasets_py.logic.autoformal import training_cycle_inputs as inputs
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_training_worker as worker
+    implementation = tmp_path / "pure-summary-implementation.data"
+    implementation.write_bytes(b"I" * 4096)
+    reference = {"path": str(implementation), "bytes": 4096,
+                 "sha256": hashlib.sha256(implementation.read_bytes()).hexdigest()}
+    payload = {"schema": "reviewed-decoder-tokenizer-pipeline/v1", "kind": "huggingface_fast",
+               "backend": {"declared_unit_fixture": True}, "frontend": {"declared_unit_fixture": True},
+               "implementation": [reference],
+               "transport": {"body_only": True, "truncation": False, "padding": False}}
+    raw = inputs._reviewed_wire(payload)
+    state = {"raw": raw, "serialized": 0, "full_parses": 0, "auth_calls": 0,
+             "auth_objects": [], "change_ids": False}
+    tokenizer = object.__new__(worker.ReviewedPretrainedTokenizer)
+    tokenizer.bos_token_id, tokenizer.eos_token_id, tokenizer.vocab_size = 1, 2, 259
+    def serialize(self):
+        assert self is tokenizer
+        state["serialized"] += 1
+        if state["change_ids"]:
+            self.eos_token_id = 7
+        return state["raw"]
+    old_json = inputs._reviewed_json
+    def parse(value):
+        if value == state["raw"]:
+            state["full_parses"] += 1
+        return old_json(value)
+    old_auth = inputs._reviewed_decoder_tokenizer_implementation
+    def authenticate(implementation_rows):
+        state["auth_calls"] += 1
+        state["auth_objects"].append(implementation_rows)
+        return old_auth(implementation_rows)
+    monkeypatch.setattr(worker.ReviewedPretrainedTokenizer, "pipeline_serialization", serialize)
+    monkeypatch.setattr(inputs, "_reviewed_json", parse)
+    monkeypatch.setattr(inputs, "_reviewed_decoder_tokenizer_implementation", authenticate)
+    monkeypatch.setattr(inputs, "_REVIEWED_DECODER_HF_PIPELINE_SUMMARY_CACHE", {})
+    return inputs, tokenizer, implementation, payload, state
+
+
+def test_reviewed_tokenizer_pure_summary_warm_cache_keeps_serialization_and_file_auth(tmp_path, monkeypatch):
+    inputs, tokenizer, implementation, payload, state = _tokenizer_pure_summary_declared_maintained_fixture(tmp_path, monkeypatch)
+    first = inputs._reviewed_decoder_tokenizer_contract(tokenizer)
+    expected = dict(first)
+    first["pipeline_sha256"] = "caller mutation"
+    state["auth_objects"][0][0]["sha256"] = "caller mutation"
+    second = inputs._reviewed_decoder_tokenizer_contract(tokenizer)
+    assert second == expected and first is not second
+    assert state["serialized"] == state["auth_calls"] == 2
+    assert state["full_parses"] == 1
+    assert state["auth_objects"][0] is not state["auth_objects"][1]
+    cache = inputs._REVIEWED_DECODER_HF_PIPELINE_SUMMARY_CACHE
+    assert len(cache) == 1
+    summary = next(iter(cache.values()))
+    assert type(summary) is tuple and tuple(type(item) for item in summary) == (str, bytes, str, int)
+    assert implementation.read_bytes() == b"I" * 4096
+
+
+def test_reviewed_tokenizer_pure_summary_cache_still_authenticates_dirty_mmap(tmp_path, monkeypatch):
+    import mmap
+    import os
+    import pytest
+    inputs, tokenizer, implementation, payload, state = _tokenizer_pure_summary_declared_maintained_fixture(tmp_path, monkeypatch)
+    fd = os.open(implementation, os.O_RDWR)
+    try:
+        with mmap.mmap(fd, 4096, access=mmap.ACCESS_WRITE) as mapped:
+            mapped[0] = ord("A")
+            import hashlib
+            payload["implementation"][0]["sha256"] = hashlib.sha256(implementation.read_bytes()).hexdigest()
+            state["raw"] = inputs._reviewed_wire(payload)
+            inputs._reviewed_decoder_tokenizer_contract(tokenizer)
+            # Another write to the same dirty page can leave file metadata
+            # unchanged. Regardless of filesystem timestamp policy, content
+            # authentication must run even on the structural-cache hit.
+            mapped[1] = ord("B")
+            with pytest.raises(ValueError, match="SourceChanged"):
+                inputs._reviewed_decoder_tokenizer_contract(tokenizer)
+            assert state["serialized"] == state["auth_calls"] == 2
+            assert state["full_parses"] == 1
+    finally:
+        os.close(fd)
+
+
+def test_reviewed_tokenizer_pure_summary_cache_eviction_and_uncached_eligibility(tmp_path, monkeypatch):
+    inputs, tokenizer, implementation, payload, state = _tokenizer_pure_summary_declared_maintained_fixture(tmp_path, monkeypatch)
+    originals = []
+    for variant in range(3):
+        payload["backend"]["variant"] = variant
+        state["raw"] = inputs._reviewed_wire(payload)
+        originals.append(state["raw"])
+        inputs._reviewed_decoder_tokenizer_contract(tokenizer)
+        assert len(inputs._REVIEWED_DECODER_HF_PIPELINE_SUMMARY_CACHE) <= 2
+    assert originals[0] not in inputs._REVIEWED_DECODER_HF_PIPELINE_SUMMARY_CACHE
+    state["raw"] = originals[0]
+    before = state["full_parses"]
+    inputs._reviewed_decoder_tokenizer_contract(tokenizer)
+    assert state["full_parses"] == before + 1
+    # Lower only the eligibility threshold in this small unit control. Larger
+    # otherwise-valid bytes must still pass uncached validation.
+    monkeypatch.setattr(inputs, "_REVIEWED_DECODER_HF_PIPELINE_SUMMARY_CACHE", {})
+    monkeypatch.setattr(inputs, "_REVIEWED_DECODER_HF_PIPELINE_SUMMARY_MAX_RAW_BYTES", len(state["raw"]) - 1)
+    before = state["full_parses"]
+    a = inputs._reviewed_decoder_tokenizer_contract(tokenizer)
+    b = inputs._reviewed_decoder_tokenizer_contract(tokenizer)
+    assert a == b and state["full_parses"] == before + 2
+    assert not inputs._REVIEWED_DECODER_HF_PIPELINE_SUMMARY_CACHE
+
+
+import pytest as _tokenizer_pure_summary_pytest
+
+@_tokenizer_pure_summary_pytest.mark.parametrize("mutation", ["ids", "schema", "transport", "implementation_sha"])
+def test_reviewed_tokenizer_pure_summary_cache_preserves_refusals(tmp_path, monkeypatch, mutation):
+    inputs, tokenizer, implementation, payload, state = _tokenizer_pure_summary_declared_maintained_fixture(tmp_path, monkeypatch)
+    inputs._reviewed_decoder_tokenizer_contract(tokenizer)
+    if mutation == "ids":
+        state["change_ids"] = True
+    elif mutation == "schema":
+        payload["schema"] = "wrong"
+    elif mutation == "transport":
+        payload["transport"]["padding"] = True
+    else:
+        payload["implementation"][0]["sha256"] = "0" * 64
+    state["raw"] = inputs._reviewed_wire(payload)
+    with _tokenizer_pure_summary_pytest.raises(ValueError):
+        inputs._reviewed_decoder_tokenizer_contract(tokenizer)
+
+
+_BINDING_DERIVATION_CACHE_SERIALIZATION_OBSERVER = None
+
+
+def _binding_derivation_cache_observed_serialization(self):
+    # Module-level instrumentation has no opaque callable in an authenticated
+    # method closure. The original serializer and every production guard run.
+    original_serialize, state = _BINDING_DERIVATION_CACHE_SERIALIZATION_OBSERVER
+    state["serializations"] += 1
+    if state["on_serialize"] is not None:
+        state["on_serialize"](state["serializations"])
+    if "observed" in state:
+        state["observed"].append(True)
+    raw = original_serialize(self)
+    state["raw"] = raw
+    return raw
+
+
+def _binding_derivation_cache_actual_fast_fixture(monkeypatch):
+    """Use the existing real native fixture; observe unchanged serialization/auth."""
+    _, backend, _ = _actual_fast_reviewed_backend_fixture()
+    tokenizer = backend.tokenizer
+    state = dict(serializations=0, full_parses=0, vocabulary_serializations=0,
+                 file_auth_calls=0, raw=None, on_serialize=None)
+    original_serialize = worker.ReviewedPretrainedTokenizer.pipeline_serialization
+    original_parse, original_wire = worker._parse_json, worker._json_bytes
+    original_auth = worker._reviewed_tokenizer_implementation_file
+    monkeypatch.setitem(globals(), "_BINDING_DERIVATION_CACHE_SERIALIZATION_OBSERVER",
+        (original_serialize, state))
+    def parse(raw):
+        if raw == state["raw"]:
+            state["full_parses"] += 1
+        return original_parse(raw)
+    def wire(value):
+        if type(value) is dict and set(value) == {"model_type", "vocab", "added_tokens"}:
+            state["vocabulary_serializations"] += 1
+        return original_wire(value)
+    def authenticate(path):
+        state["file_auth_calls"] += 1
+        return original_auth(path)
+    monkeypatch.setattr(worker.ReviewedPretrainedTokenizer, "pipeline_serialization",
+        _binding_derivation_cache_observed_serialization)
+    monkeypatch.setattr(worker, "_parse_json", parse)
+    monkeypatch.setattr(worker, "_json_bytes", wire)
+    monkeypatch.setattr(worker, "_reviewed_tokenizer_implementation_file", authenticate)
+    monkeypatch.setattr(worker, "_REVIEWED_TOKENIZER_BINDING_DERIVATION_CACHE", {})
+    return tokenizer, state
+
+
+def test_reviewed_binding_derivation_cache_warm_keeps_two_actual_serializations_and_file_auth(monkeypatch):
+    tokenizer, state = _binding_derivation_cache_actual_fast_fixture(monkeypatch)
+    first = tokenizer.binding_metadata()
+    auth_per_call = state["file_auth_calls"]
+    first["tokenizer_id"] = "caller mutation"
+    second = tokenizer.binding_metadata()
+    payload = json.loads(state["raw"])
+    canonical = lambda value: json.dumps(value, sort_keys=True, ensure_ascii=True,
+        separators=(",", ":"), allow_nan=False).encode("utf-8")
+    backend = payload["backend"]["serialization"]
+    vocabulary = dict(model_type=backend["model"].get("type"),
+        vocab=backend["model"]["vocab"], added_tokens=backend["added_tokens"])
+    expected = dict(tokenizer_id="reviewed-tokenizer:huggingface_fast:" + hashlib.sha256(canonical(dict(
+        kind="huggingface_fast", implementation=payload["implementation"], transport=payload["transport"]))).hexdigest(),
+        vocabulary_sha256="sha256:" + hashlib.sha256(canonical(vocabulary)).hexdigest(),
+        configuration_sha256="sha256:" + hashlib.sha256(state["raw"]).hexdigest(),
+        bos_token_id=tokenizer.bos_token_id, eos_token_id=tokenizer.eos_token_id, vocab_size=tokenizer.vocab_size)
+    assert second == expected and first is not second and first["tokenizer_id"] == "caller mutation"
+    assert state["serializations"] == 4 and auth_per_call > 0
+    assert state["file_auth_calls"] == 2 * auth_per_call
+    assert state["full_parses"] == state["vocabulary_serializations"] == 1
+    cache = worker._REVIEWED_TOKENIZER_BINDING_DERIVATION_CACHE
+    assert len(cache) == 1
+    summary = next(iter(cache.values()))
+    assert type(summary) is tuple and len(summary) == 4 and all(type(item) is str for item in summary)
+
+
+@pytest.mark.parametrize("change", ["mapping", "normalizer", "frontend_configuration"])
+def test_reviewed_binding_derivation_cache_tracks_actual_vocab_and_frontend_bytes(monkeypatch, change):
+    tokenizer, state = _binding_derivation_cache_actual_fast_fixture(monkeypatch)
+    before = tokenizer.binding_metadata()
+    _change_actual_fast_reviewed_pipeline(tokenizer, change)
+    after = tokenizer.binding_metadata()
+    assert after["configuration_sha256"] != before["configuration_sha256"]
+    assert (after["vocabulary_sha256"] != before["vocabulary_sha256"]) == (change == "mapping")
+    assert state["serializations"] == 4 and state["full_parses"] == 2
+
+
+@pytest.mark.parametrize("change", ["frontend_configuration", "wrapper_ids"])
+def test_reviewed_binding_derivation_cache_refuses_change_at_actual_second_serialization(monkeypatch, change):
+    tokenizer, state = _binding_derivation_cache_actual_fast_fixture(monkeypatch)
+    tokenizer.binding_metadata()
+    def alter(count):
+        if count == 4:
+            if change == "wrapper_ids":
+                tokenizer.bos_token_id = 256
+            else:
+                _change_actual_fast_reviewed_pipeline(tokenizer, change)
+    state["on_serialize"] = alter
+    with pytest.raises(worker.TrainingJobValidationError, match="pipeline changed during binding derivation"):
+        tokenizer.binding_metadata()
+    assert state["serializations"] == 4 and state["full_parses"] == 1
+
+
+def test_reviewed_binding_derivation_cache_reads_fresh_live_wrapper_ids(monkeypatch):
+    tokenizer, state = _binding_derivation_cache_actual_fast_fixture(monkeypatch)
+    before = tokenizer.binding_metadata()
+    tokenizer.bos_token_id, tokenizer.eos_token_id = 255, 256
+    after = tokenizer.binding_metadata()
+    assert after["bos_token_id"] == 255 and after["eos_token_id"] == 256
+    assert after["vocab_size"] == tokenizer.vocab_size == before["vocab_size"]
+    assert after["configuration_sha256"] != before["configuration_sha256"]
+    assert state["serializations"] == 4 and state["full_parses"] == 2
+
+
+def test_reviewed_binding_derivation_cache_two_entries_and_uncached_eligibility(monkeypatch):
+    tokenizer, state = _binding_derivation_cache_actual_fast_fixture(monkeypatch)
+    originals = []
+    for variant in range(3):
+        tokenizer.tokenizer.model_max_length = 2048 + variant
+        tokenizer.binding_metadata()
+        originals.append(state["raw"])
+        assert len(worker._REVIEWED_TOKENIZER_BINDING_DERIVATION_CACHE) <= 2
+    assert originals[0] not in worker._REVIEWED_TOKENIZER_BINDING_DERIVATION_CACHE
+    tokenizer.tokenizer.model_max_length = 2048
+    old_parses = state["full_parses"]
+    tokenizer.binding_metadata()
+    assert state["full_parses"] == old_parses + 1
+    # A smaller eligibility threshold exercises the same valid uncached path
+    # without allocating a large test payload or changing validation capacity.
+    monkeypatch.setattr(worker, "_REVIEWED_TOKENIZER_BINDING_DERIVATION_CACHE", {})
+    monkeypatch.setattr(worker, "_REVIEWED_TOKENIZER_BINDING_DERIVATION_MAX_RAW_BYTES", len(state["raw"]) - 1)
+    old_parses = state["full_parses"]
+    first = tokenizer.binding_metadata()
+    second = tokenizer.binding_metadata()
+    assert first == second and state["full_parses"] == old_parses + 2
+    assert not worker._REVIEWED_TOKENIZER_BINDING_DERIVATION_CACHE
+
+
+def test_reviewed_binding_derivation_cache_keeps_actual_fixed_byte_fallback_uncached(monkeypatch):
+    _, backend, _ = _torch_reviewed_backend_fixture()
+    tokenizer = backend.tokenizer
+    assert tokenizer.allow_fictional_fixture is True
+    original = worker.ReviewedPretrainedTokenizer.pipeline_serialization
+    observed = []
+    monkeypatch.setitem(globals(), "_BINDING_DERIVATION_CACHE_SERIALIZATION_OBSERVER",
+        (original, dict(serializations=0, raw=None, on_serialize=None, observed=observed)))
+    monkeypatch.setattr(worker.ReviewedPretrainedTokenizer, "pipeline_serialization",
+        _binding_derivation_cache_observed_serialization)
+    monkeypatch.setattr(worker, "_REVIEWED_TOKENIZER_BINDING_DERIVATION_CACHE", {})
+    monkeypatch.setattr(worker, "_reviewed_tokenizer_binding_derivation",
+        lambda raw: pytest.fail("fixed-byte fixture entered HF derivation cache"))
+    first = tokenizer.binding_metadata()
+    second = tokenizer.binding_metadata()
+    assert first == second and first is not second and len(observed) == 4
+    assert not worker._REVIEWED_TOKENIZER_BINDING_DERIVATION_CACHE
+
+
+# Explicit SAME-objective migration controls; all earlier owning bytes retained.
+# These are authored normal-owning tests and are not author-executed evidence.
+
+
+
+
+_DIGEST_CACHE_EPOCH_ORIGINAL_SOURCE_REVERSE_EDITS = {'worker': {'current_bytes': 586659, 'current_sha256': '348fe95f15ee03d8039c1171b30d228400416f3a6fa40462f64592139ba54963', 'old_bytes': 501761, 'old_sha256': '65d55a34f097a4b673464ef59b87942274e65eb5083ea79d01759f8df16372f2', 'edits': [(522, 524, '354e1b9f27c86d8880b0b35fb84db632e9f5868e5388b8a7c9a91f8426eb5747', ''), (708, 710, '1f0385c799371c4ff8afa0d8d3303ee2ef5b5c4c60244ec0baf876fbc1967db2', '        expected_schema = (REVIEWED_DIGEST_OMITTED_JOB_SCHEMA if type(self) is ReviewedDigestOmittedDecoderTrainingJobSpec else\n'), (740, 741, '075a82f098ed510f6bf63cc173a0e5d2673b3afbd6ad1e845f1229a388843341', '                identity["target_codec"] != (REVIEWED_DIGEST_OMITTED_TARGET_CODEC if type(self) is ReviewedDigestOmittedDecoderTrainingJobSpec else "complete-reviewed-norm-json/v2") or identity["source_conditioned"] is not True or\n'), (763, 765, 'ef478ff69b00d271fd8fcd851077e95d99174a2b3d2d1ad16f25fb21403cf681', '        expected_schema = (REVIEWED_DIGEST_OMITTED_JOB_SCHEMA if cls is ReviewedDigestOmittedDecoderTrainingJobSpec else\n'), (768, 769, 'b992357525d86ada83d9624191a359486459c283006e61e832b7af4548cee2c3', '        if cls in (ReviewedMixedDecoderTrainingJobSpec, ReviewedDigestOmittedDecoderTrainingJobSpec) and data.get("admission_profile") != REVIEWED_MIXED_ADMISSION_PROFILE:\n'), (1093, 1095, '4da911db2c899651a768f8126c2aca74867183eae192a5020e4226e72fdb9bfe', ''), (1098, 1100, '3115405bc9d41fd9fd4b8f8b59b68bfa83b3390f150f338b3d149135d961e3d6', '    digest_omitted = type(spec) is ReviewedDigestOmittedDecoderTrainingJobSpec\n    mixed = type(spec) in (ReviewedMixedDecoderTrainingJobSpec, ReviewedDigestOmittedDecoderTrainingJobSpec)\n'), (1215, 1226, 'a7507317b80b5d0ff3b74a94d34d8fd314175ffe6b6cceb400765941cdf04bd4', ''), (1367, 1371, 'f9748493a60d48b8b2dff94ae1361be698bdb376f5f67bd3efe1e7e1172a8331', ''), (1411, 1415, 'd2aa52f052aac73c668fe8483fa8f84ad98df63091759c245a92ecdfa4dba304', ''), (1869, 1870, 'd07600258492252531b9911417302996a2334c57bb88dc93205d0a2120afb768', '    if type(spec) in (ReviewedDecoderTrainingJobSpec, ReviewedMixedDecoderTrainingJobSpec, ReviewedDigestOmittedDecoderTrainingJobSpec):\n'), (2407, 2408, 'd07600258492252531b9911417302996a2334c57bb88dc93205d0a2120afb768', '    if type(spec) in (ReviewedDecoderTrainingJobSpec, ReviewedMixedDecoderTrainingJobSpec, ReviewedDigestOmittedDecoderTrainingJobSpec):\n'), (2418, 2419, 'de81f7ab082ecffcb65d48580361f35e900e47cca49cbae92ec77fae8f991b9b', '    if not isinstance(spec, TrainingJobSpec) and type(spec) not in (ReviewedDecoderTrainingJobSpec, ReviewedMixedDecoderTrainingJobSpec, ReviewedDigestOmittedDecoderTrainingJobSpec):\n'), (2539, 2576, 'cb7914e515628a1a6ccca2a27ed6794a46f94677e33f937d1248bbb1fd809aa4', ''), (2748, 2771, '65465bea90ace34f9e023b2b5d7c0a2859c093d9b405925eb90a7f39740ad9d7', '        pipeline = _parse_json(raw)\n        if pipeline["kind"] == "huggingface_fast":\n            backend = pipeline["backend"]["serialization"]\n            model = backend["model"]\n            if type(model) is not dict or "vocab" not in model or type(model["vocab"]) not in (dict, list):\n                raise TrainingJobValidationError("complete actual model vocabulary required for binding")\n            vocabulary = {"model_type": model.get("type"), "vocab": model["vocab"],\n                          "added_tokens": backend["added_tokens"]}\n'), (2772, 2776, 'b51bc283d66d390f16997f83f404334d857ef990572d592f88080a7142dcaec3', '            backend = pipeline["backend"]\n            if (type(backend.get("byte_to_id")) is not list or len(backend["byte_to_id"]) != 256 or\n                    len(set(backend["byte_to_id"])) != 256 or\n                    any(type(value) is not int or not 0 <= value < self.vocab_size for value in backend["byte_to_id"])):\n                raise TrainingJobValidationError("complete fixed-byte vocabulary required for fixture binding")\n            vocabulary = {"byte_to_id": backend["byte_to_id"], "added_tokens": backend.get("added_tokens", [])}\n        metadata = {"tokenizer_id": "reviewed-tokenizer:" + pipeline["kind"] + ":" +\n                _digest(_json_bytes({"kind": pipeline["kind"], "implementation": pipeline["implementation"],\n                                    "transport": pipeline["transport"]})),\n            "vocabulary_sha256": "sha256:" + _digest(_json_bytes(vocabulary)),\n            "configuration_sha256": "sha256:" + _digest(raw),\n            "bos_token_id": self.bos_token_id, "eos_token_id": self.eos_token_id, "vocab_size": self.vocab_size}\n'), (3115, 3116, '47bb7fd17e8096452219e5416d21a27e56cceff5c444458270294684470e15cb', '                 max_sequence_tokens, pretrained, gradient_clip=1.0, model_profile=None, training_conditioning_profile=None, target_codec="complete-reviewed-norm-json/v2"):\n'), (3132, 3137, '24c26f635ea9cf6545d3834a803fc7cf0c34a183c12631551d2a2b410d70e977', ''), (3263, 3265, '2164da20bbb9364f0eacd649d67deacb6503c2fc02991f54c655d185a5a18a41', ''), (5003, 5004, 'b2788cad4fc0ee1a84a938db72cb5bbb935036eaab0a52f06fbf9f03de5d18ca', '        _source_epoch_migration=None, _target_codec="complete-reviewed-norm-json/v2"):\n'), (5016, 5018, '82f0e59fe26acf4b12c9849d497a406d652804a7c4a9eb02e4191c28be305521', '    if digest_omitted and (_admission_version != "v3" or _source_epoch_migration is not None):\n'), (5019, 5030, '6670d1622ef8433719131469923fc799a4778ac635dd18a0201bab5ab777c1c0', ''), (5077, 5079, '9da7935976bc2ffd20ea974ea0c3845a8ffb7704da2b239da4ad9a01c4e46155', ''), (5337, 5339, '769dc6a7e48d5497bdab5e9eb7b8110d6f7db6dcb8edc75886f62805f936dd18', '            **({"target_codec": _target_codec} if digest_omitted else {}))\n'), (5342, 5346, '66ebe1da322e756be713ddab97627894223ac4dc7186423ef4297d346a713ed8', '        if _source_epoch_migration is not None:\n'), (5383, 5388, 'd03ecec47d8da349f795448588f51feeefd7ef17d642f8470dea28b2462cea8b', ''), (5612, 5613, '4e14cdddb2ee7f97d7f329656f68211cfeb5f477735a51eabf0fe7521129af99', 'def _reviewed_epoch_dependencies(reference, old_manifest, old_config_sha, old_pipeline_sha, backend):\n'), (5620, 5633, '96ed1bd46eb145894baa50c3d23043148ac5c0c79f0dae14191bdeb5c55c7bb7', '    fields = {"schema", "association_scope", "old_checkpoint_manifest_sha256", "old_configuration_sha256",\n              "old_tokenizer_pipeline_sha256", "old_source_sha256", "implementation"}\n    _reviewed_epoch_need(type(snapshot) is dict and set(snapshot) == fields\n        and snapshot["schema"] == "reviewed-decoder-migration-dependency-snapshot/v1"\n        and snapshot["association_scope"] == "declared-current-cohort-before-Source-transition-not-historical-execution-attestation/v1"\n        and snapshot["old_checkpoint_manifest_sha256"] == old_manifest["artifact_sha256"]\n        and snapshot["old_configuration_sha256"] == old_config_sha\n        and snapshot["old_tokenizer_pipeline_sha256"] == old_pipeline_sha\n        and snapshot["old_source_sha256"] == old_manifest["producer_pins"],\n        "frozen dependency snapshot does not bind the actual old pair/configuration")\n'), (6886, 6887, 'cc5e3b4db8d88833bc33d2b80e220de3a50443a067cfd16981bdd541b385227e', 'def _reviewed_train_resume_epoch_restore(backend,model_raw,optimizer_raw,context,registry,current_admission_provider,current):\n'), (6888, 6889, 'f4006f0149a18bfb8d88af3d2046cd0a6f187e6e4c5371eb1a9744d7548695a9', '    from collections import OrderedDict\n    _reviewed_epoch_need(type(backend)is TorchReviewedDecoderBackend,"exact current backend required")\n    spec=context["spec"]\n    checked=_reviewed_train_resume_epoch_context(spec,\n        CheckpointArtifact.from_dict(context["old_configuration_artifact"]),\n        CheckpointArtifact.from_dict(context["old_pipeline_artifact"]),\n        CheckpointArtifact.from_dict(context["current_configuration_artifact"]),\n        CheckpointArtifact.from_dict(context["source_contract_artifact"]))\n    context.clear();context.update(checked);current()\n    _reviewed_epoch_need(_json_bytes(backend._configuration())==_json_bytes(context["current_configuration"]),\n        "constructed TRAIN-resume current configuration differs")\n    _reviewed_epoch_authenticate_assets(spec,backend)\n    current_raw=backend.tokenizer.pipeline_serialization()\n    proof=_reviewed_epoch_pipeline_proof(context["old_pipeline_raw"],current_raw,context["sources"],\n        context["contract"]["old_source_sha256"],context["contract"]["current_source_sha256"])\n    _reviewed_epoch_need(proof["current_contract"]==context["current_configuration"]["tokenizer"]\n        and proof["current_binding"]==context["current_configuration"]["tokenizer_binding"],\n        "actual new pipeline/config identity differs")\n    dependency=_reviewed_epoch_dependencies(context["contract"]["dependency_snapshot_artifact"],\n        {**context["old_manifest"],"artifact_sha256":spec.parent_checkpoint_artifact.sha256},\n        context["contract"]["old_configuration_sha256"],context["contract"]["old_tokenizer_pipeline_sha256"],backend)\n    prepared=_reviewed_epoch_prepare_binding(spec,registry,backend.tokenizer,current_admission_provider)\n    _reviewed_epoch_binding_proof(context["old_population_binding"],prepared["receipt"],context["contract"])\n    _reviewed_epoch_need(prepared["receipt"]["tokenizer_contract"]==proof["current_contract"],"current same-T3 input preparation differs")\n    current()\n    model,optimizer=_reviewed_epoch_old_pair(backend,model_raw,optimizer_raw,context["old_configuration"],context["old_manifest"]["progress"]["optimizer_steps"])\n    _reviewed_epoch_need(bool(optimizer["state"]["state"])==(context["origin_kind"]=="trained3"),\n        "pristine must have empty Adam; trained3 must retain actual nonempty Adam")\n    state=OrderedDict(model["state"]);state._metadata=model["state_metadata"]\n    backend.model.load_state_dict(state,strict=True);current()\n    backend.optimizer.load_state_dict(optimizer["state"]);current()\n    backend._torch().set_rng_state(optimizer["cpu_rng"]);backend._optimizer_steps=optimizer["optimizer_steps"];current()\n    live_model=backend._model_state()\n    live_optimizer={"state":backend.optimizer.state_dict(),"optimizer_steps":backend._optimizer_steps,\n        "cpu_rng":backend._torch().get_rng_state(),"device_rng":None}\n    _reviewed_epoch_need(_reviewed_epoch_pair_equal(backend,model,optimizer,live_model,live_optimizer),\n        "TRAIN-resume bridge actual model/Adam/RNG transfer differs")\n    derivative=backend.snapshot_checkpoint()\n    new_model,new_optimizer=backend._load_pair(derivative["model_state"],derivative["optimizer_state"])\n    _reviewed_epoch_need(_reviewed_epoch_pair_equal(backend,model,optimizer,new_model,new_optimizer),\n        "TRAIN-resume new-format pair changed actual numerical halves or progress")\n    current()\n    _reviewed_epoch_need(backend.tokenizer.pipeline_serialization()==current_raw\n        and _reviewed_epoch_dependencies(context["contract"]["dependency_snapshot_artifact"],\n            {**context["old_manifest"],"artifact_sha256":spec.parent_checkpoint_artifact.sha256},\n            context["contract"]["old_configuration_sha256"],context["contract"]["old_tokenizer_pipeline_sha256"],backend)==dependency,\n        "current pipeline/runtime cohort changed during transfer")\n    context.update(current_pipeline_raw=current_raw,current_training_binding=prepared["receipt"],\n        pipeline_proof=proof,derivative_pair=derivative,\n        dependency_scope="declared_current_cohort_before_after_Source_transition_not_historical_execution_attestation")\n    return derivative["model_state"],derivative["optimizer_state"]\n'), (6890, 6891, 'f6b33a2f8248d6e2968397e918dea33a8654bebbc49c6aaf1ea8b403131e5c9d', 'def _reviewed_train_resume_epoch_validate_receipt(reference,backend,*,expected_spec=None):\n'), (6892, 6893, 'e416e330232faedb20282cfbd4fb9a18c623e8534611b972f20e3ef68f51fae1', '    receipt,_=_reviewed_epoch_document(reference,limit=8*1024**2)\n    fields={"schema","profile","old_checkpoint_manifest","old_configuration_artifact","old_pipeline_artifact",\n        "current_configuration_artifact","source_contract_artifact","current_pipeline_artifact",\n        "derivative_model_checkpoint","derivative_optimizer_checkpoint","target_job_spec","migrated_training_binding",\n        "original_progress","pipeline_proof","source_projection_sha256","dependency_scope",\n        "historical_dependency_execution_requalified","model_Adam_steps_RNG_and_progress_preserved",\n        "qualified","promotion_performed","legal_meaning_verified","convergence_proved","corpus_admitted",\n        "new_checkpoint_lineage_id","new_base_version_id","origin_kind","training_resume_eligible"}\n    _reviewed_epoch_need(type(receipt)is dict and set(receipt)==fields\n        and receipt["schema"]==REVIEWED_DECODER_TRAIN_RESUME_EPOCH_RECEIPT_SCHEMA\n        and receipt["profile"]==REVIEWED_DECODER_TRAIN_RESUME_EPOCH_PROFILE and receipt["training_resume_eligible"]is True\n        and receipt["historical_dependency_execution_requalified"]is False\n        and receipt["model_Adam_steps_RNG_and_progress_preserved"]is True\n        and all(receipt[key]is False for key in("qualified","promotion_performed","legal_meaning_verified","convergence_proved","corpus_admitted")),\n        "closed nonauthorizing TRAIN-resume migration receipt required")\n    spec=_reviewed_epoch_receipt_spec(receipt,None,backend)\n    if expected_spec is not None:\n        _reviewed_epoch_need(type(expected_spec)is ReviewedMixedDecoderTrainingJobSpec,\n            "explicit TRAIN-resume target spec required")\n        original_spec, next_spec = spec.to_dict(), expected_spec.to_dict()\n        mutable = {"job_id","run_id","output_directory","max_steps","max_seconds",\n            "parent_checkpoint_artifact","base_model_checkpoint","base_optimizer_checkpoint",\n            "checkpoint_lineage_id","base_version_id"}\n        _reviewed_epoch_need(set(original_spec)==set(next_spec)\n            and all(original_spec[key]==next_spec[key]for key in original_spec if key not in mutable),\n            "TRAIN-resume numerical/data/context/configuration target changed")\n    _reviewed_epoch_need(asdict(spec.parent_checkpoint_artifact)==receipt["old_checkpoint_manifest"],"TRAIN-resume original pair metadata changed")\n    context=_reviewed_train_resume_epoch_context(spec,\n        CheckpointArtifact.from_dict(receipt["old_configuration_artifact"]),\n        CheckpointArtifact.from_dict(receipt["old_pipeline_artifact"]),\n        CheckpointArtifact.from_dict(receipt["current_configuration_artifact"]),\n        CheckpointArtifact.from_dict(receipt["source_contract_artifact"]))\n    if expected_spec is not None:\n        _reviewed_epoch_need(expected_spec.checkpoint_lineage_id==context["new_checkpoint_lineage_id"]\n            and expected_spec.base_version_id==context["new_base_version_id"],\n            "TRAIN-resume target lineage/version differs")\n    _reviewed_epoch_need(receipt["new_checkpoint_lineage_id"]==context["new_checkpoint_lineage_id"]\n        and receipt["new_base_version_id"]==context["new_base_version_id"]\n        and receipt["origin_kind"]==context["origin_kind"]\n        and receipt["original_progress"]==context["old_manifest"]["progress"]\n        and receipt["dependency_scope"]=="declared_current_cohort_before_after_Source_transition_not_historical_execution_attestation",\n        "TRAIN-resume lineage/version/original progress/scope differs")\n    _reviewed_epoch_authenticate_assets(spec,backend)\n    _reviewed_epoch_need(_json_bytes(backend._configuration())==_json_bytes(context["current_configuration"]),"TRAIN-resume live complete config changed")\n    current_raw=_reviewed_decoder_artifact(CheckpointArtifact.from_dict(receipt["current_pipeline_artifact"]),limit=MAX_REVIEWED_TOKENIZER_PIPELINE_BYTES)\n    _reviewed_epoch_need(current_raw==backend.tokenizer.pipeline_serialization(),"new actual tokenizer pipeline changed")\n    proof=_reviewed_epoch_pipeline_proof(context["old_pipeline_raw"],current_raw,context["sources"],\n        context["contract"]["old_source_sha256"],context["contract"]["current_source_sha256"])\n    _reviewed_epoch_need(proof==receipt["pipeline_proof"]and receipt["source_projection_sha256"]==context["sources"]["projection_sha256"],"TRAIN-resume pipeline/Source proof differs")\n    _reviewed_epoch_binding_proof(context["old_population_binding"],receipt["migrated_training_binding"],context["contract"])\n    _reviewed_epoch_need(receipt["migrated_training_binding"]["tokenizer_contract"]==proof["current_contract"],"TRAIN-resume new population pipeline differs")\n    _reviewed_epoch_dependencies(context["contract"]["dependency_snapshot_artifact"],\n        {**context["old_manifest"],"artifact_sha256":spec.parent_checkpoint_artifact.sha256},\n        context["contract"]["old_configuration_sha256"],context["contract"]["old_tokenizer_pipeline_sha256"],backend)\n    limit=backend._checkpoint_byte_limit()\n    old_model,old_optimizer=_reviewed_epoch_old_pair(backend,\n        _reviewed_decoder_artifact(spec.base_model_checkpoint,limit=limit),\n        _reviewed_decoder_artifact(spec.base_optimizer_checkpoint,limit=limit),context["old_configuration"],\n        context["old_manifest"]["progress"]["optimizer_steps"])\n    _reviewed_epoch_need(bool(old_optimizer["state"]["state"])==(context["origin_kind"]=="trained3"),"TRAIN-resume old Adam origin mismatch")\n    new_model,new_optimizer=backend._load_pair(\n        _reviewed_decoder_artifact(CheckpointArtifact.from_dict(receipt["derivative_model_checkpoint"]),limit=limit),\n        _reviewed_decoder_artifact(CheckpointArtifact.from_dict(receipt["derivative_optimizer_checkpoint"]),limit=limit))\n    _reviewed_epoch_need(_reviewed_epoch_pair_equal(backend,old_model,old_optimizer,new_model,new_optimizer),\n        "TRAIN-resume actual old/new model/Adam/RNG/progress differ")\n    return receipt\n'), (6894, 6895, '560249928ac6f4bbd80657b919f882c19b73634096e5c5dfce97dd0d4e82a150', 'def migrate_local_reviewed_decoder_train_resume_source_epoch_v5(spec, *, registry, current_admission_provider,\n        execution_guard, asset_policy_guard, recipe_artifact, model_config_artifact,\n        tokenizer_artifact, license_artifact, old_configuration_artifact,\n        old_tokenizer_pipeline_artifact, current_configuration_artifact,\n        compatibility_contract_artifact, output_directory, max_model_bytes,\n        runtime_profile="builtin-qwen2-bfloat16/v1"):\n'), (6902, 6903, '609bf9476fc386789d3c42c8d6c4c03eff6d67d2f62e9bbbecabd6fb72b3cd50', '    import gc\n    import stat\n    _reviewed_epoch_need(runtime_profile == "builtin-qwen2-bfloat16/v1" and all(callable(value) for value in\n        (current_admission_provider,execution_guard,asset_policy_guard)), "existing live guards required")\n    _reviewed_epoch_need(type(spec) is ReviewedMixedDecoderTrainingJobSpec\n        and tokenizer_artifact == spec.tokenizer_artifact and license_artifact == spec.license_artifact\n        and recipe_artifact in spec.backend_artifacts and model_config_artifact in spec.backend_artifacts\n        and recipe_artifact != model_config_artifact,\n        "loader recipe/configuration/tokenizer/license must be the exact declared old assets")\n    execution_guard()\n    policy = {"schema":"reviewed-decoder-source-epoch-migration-policy/v1",\n        "target_job_spec":spec.to_dict(), "old_configuration":asdict(old_configuration_artifact),\n        "old_pipeline":asdict(old_tokenizer_pipeline_artifact),\n        "current_configuration":asdict(current_configuration_artifact),\n        "source_contract":asdict(compatibility_contract_artifact),\n        "profile":REVIEWED_DECODER_TRAIN_RESUME_EPOCH_PROFILE,\n        "migration_requested":True, "training_resume_requested":True,"training_requested":False,"downloads_requested":False,\n        "resource_grant_requested":False,"promotion_requested":False}\n    asset_policy_guard(_parse_json(_json_bytes(policy)))\n    context = _reviewed_train_resume_epoch_context(spec,old_configuration_artifact,old_tokenizer_pipeline_artifact,\n        current_configuration_artifact,compatibility_contract_artifact)\n    output = Path(output_directory)\n    _reviewed_epoch_need(output.is_absolute() and not os.path.lexists(output)\n        and output.parent.resolve(strict=True)==output.parent\n        and output != Path(spec.output_directory)\n        and all(stat.S_ISDIR(parent.lstat().st_mode) for parent in output.parents),\n        "distinct fresh ordinary migration output directory required")\n    import torch\n    entry_rng = torch.get_rng_state().clone()\n    succeeded = False\n    try:\n        runtime, internal_receipt = _load_local_reviewed_decoder_runtime(\n            registry=registry,current_admission_provider=current_admission_provider,\n            execution_guard=execution_guard,asset_policy_guard=asset_policy_guard,\n            recipe_artifact=recipe_artifact,model_config_artifact=model_config_artifact,\n            tokenizer_artifact=tokenizer_artifact,license_artifact=license_artifact,\n            model_checkpoint=spec.base_model_checkpoint,optimizer_checkpoint=spec.base_optimizer_checkpoint,\n            expected_backend_identity=_thaw(spec.backend_identity),\n            expected_source_sha256=_thaw(spec.expected_source_sha256),\n            expected_admission_inputs_sha256=spec.expected_admission_inputs_sha256,\n            max_model_bytes=max_model_bytes,_admission_version="v3",_runtime_profile=runtime_profile,\n            _source_epoch_migration=context)\n        execution_guard()\n        _reviewed_epoch_need(runtime.backend.restored_checkpoint_matches(\n            context["derivative_pair"]["model_state"],context["derivative_pair"]["optimizer_state"]),\n            "current pair changed before publication")\n        output.mkdir(mode=0o700,exist_ok=False)\n        model = _write_exclusive(output/"model.checkpoint",context["derivative_pair"]["model_state"])\n        optimizer = _write_exclusive(output/"optimizer.checkpoint",context["derivative_pair"]["optimizer_state"])\n        pipeline = _write_exclusive(output/"current-tokenizer-pipeline.json",context["current_pipeline_raw"])\n        receipt = {"schema":REVIEWED_DECODER_TRAIN_RESUME_EPOCH_RECEIPT_SCHEMA,\n            "profile":REVIEWED_DECODER_TRAIN_RESUME_EPOCH_PROFILE,\n            "old_checkpoint_manifest":asdict(spec.parent_checkpoint_artifact),\n            "old_configuration_artifact":context["old_configuration_artifact"],\n            "old_pipeline_artifact":context["old_pipeline_artifact"],\n            "current_configuration_artifact":context["current_configuration_artifact"],\n            "source_contract_artifact":context["source_contract_artifact"],\n            "current_pipeline_artifact":pipeline,"derivative_model_checkpoint":model,\n            "derivative_optimizer_checkpoint":optimizer,"target_job_spec":spec.to_dict(),\n            "migrated_training_binding":context["current_training_binding"],\n            "original_progress":context["old_manifest"]["progress"],\n            "new_checkpoint_lineage_id":context["new_checkpoint_lineage_id"],\n            "new_base_version_id":context["new_base_version_id"],"origin_kind":"trained3",\n            "training_resume_eligible":True,\n            "pipeline_proof":context["pipeline_proof"],\n            "source_projection_sha256":context["sources"]["projection_sha256"],\n            "dependency_scope":context["dependency_scope"],\n            "historical_dependency_execution_requalified":False,\n            "model_Adam_steps_RNG_and_progress_preserved":True,\n            "qualified":False,"promotion_performed":False,"legal_meaning_verified":False,\n            "convergence_proved":False,"corpus_admitted":False}\n        receipt_ref = _write_exclusive(output/"source-epoch-TRAIN-resume-migration.json",_json_bytes(receipt))\n        original = context["old_manifest"]\n        manifest = {**original,"schema":REVIEWED_DECODER_SOURCE_EPOCH_CHECKPOINT_SCHEMA,\n            "checkpoint_lineage_id":context["new_checkpoint_lineage_id"],\n            "base_version_id":context["new_base_version_id"],\n            "backend_identity":_thaw(spec.backend_identity),\n            "producer_pins":_thaw(spec.expected_source_sha256),\n            "training_binding":context["current_training_binding"],\n            "model_state":model,"optimizer_state":optimizer,\n            "token_budgets":{"max_source_tokens":spec.max_source_tokens,"max_target_tokens":spec.max_target_tokens,\n                "tokenizer_contract":context["current_training_binding"]["tokenizer_contract"]},\n            "parent_checkpoint_sha256":spec.parent_checkpoint_artifact.sha256,\n            "continuation_profile":spec.continuation_profile,"optimizer_step_offset":0,\n            "stage_continuation":None,"source_epoch_migration":receipt_ref}\n        manifest_ref = _write_exclusive(output/"reviewed-decoder-checkpoint.json",_json_bytes(manifest))\n        # Drop the first live model before the genuinely ordinary current loader\n        # constructs another. It sees only current-format derivative artifacts.\n        del runtime\n        context.pop("derivative_pair")\n        gc.collect()\n        runtime, load_receipt = load_local_reviewed_decoder_runtime_v3(\n            admission_profile=spec.admission_profile,registry=registry,\n            current_admission_provider=current_admission_provider,execution_guard=execution_guard,\n            asset_policy_guard=asset_policy_guard,recipe_artifact=recipe_artifact,\n            model_config_artifact=model_config_artifact,tokenizer_artifact=tokenizer_artifact,\n            license_artifact=license_artifact,model_checkpoint=CheckpointArtifact.from_dict(model),\n            optimizer_checkpoint=CheckpointArtifact.from_dict(optimizer),\n            expected_backend_identity=_thaw(spec.backend_identity),\n            expected_source_sha256=_thaw(spec.expected_source_sha256),\n            expected_admission_inputs_sha256=spec.expected_admission_inputs_sha256,\n            max_model_bytes=max_model_bytes,runtime_profile=runtime_profile)\n        _reviewed_train_resume_epoch_validate_receipt(receipt_ref,runtime.backend,expected_spec=None)\n        prepared = _reviewed_epoch_prepare_binding(spec,registry,runtime.tokenizer,current_admission_provider)\n        _reviewed_epoch_need(prepared["receipt"] == context["current_training_binding"],\n            "ordinary current admission/input binding changed after derivative reload")\n        new_spec = spec.to_dict()\n        new_spec.update(checkpoint_lineage_id=context["new_checkpoint_lineage_id"],\n            base_version_id=context["new_base_version_id"],parent_checkpoint_artifact=manifest_ref,\n            base_model_checkpoint=model,base_optimizer_checkpoint=optimizer)\n        _reviewed_train_resume_epoch_validate_receipt(receipt_ref,runtime.backend,\n            expected_spec=ReviewedMixedDecoderTrainingJobSpec.from_dict(new_spec))\n        result = {"schema":"reviewed-decoder-TRAIN-resume-source-epoch-migration-operation/v1",\n            "training_resume_eligible":True,"new_checkpoint_lineage_id":context["new_checkpoint_lineage_id"],\n            "new_base_version_id":context["new_base_version_id"],\n            "migration_receipt":receipt_ref,"candidate":manifest_ref,\n            "model_checkpoint":model,"optimizer_checkpoint":optimizer,"next_job_spec":new_spec,\n            "worker_progress":dict(original["progress"]),"ordinary_current_loader":load_receipt,\n            "qualified":False,"promotion_performed":False,"training_performed":False,\n            "resource_granted":False,"historical_dependency_execution_requalified":False}\n        execution_guard()\n        _reviewed_train_resume_epoch_validate_receipt(receipt_ref,runtime.backend,expected_spec=None)\n        _reviewed_epoch_need(runtime.backend.restored_checkpoint_matches(\n            _reviewed_decoder_artifact(CheckpointArtifact.from_dict(model),limit=runtime.backend._checkpoint_byte_limit()),\n            _reviewed_decoder_artifact(CheckpointArtifact.from_dict(optimizer),limit=runtime.backend._checkpoint_byte_limit())),\n            "live derivative pair changed during final callback/provenance validation")\n        _reviewed_epoch_need(runtime.backend.identity()==_thaw(spec.backend_identity)\n            and _reviewed_decoder_source_pins(admission_profile=spec.admission_profile)==_thaw(spec.expected_source_sha256),\n            "current backend or Source changed before migration publication")\n        _write_exclusive(output/"receipt.json",_json_bytes(result))\n        directory_fd=os.open(output,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW)\n        try:os.fsync(directory_fd)\n        finally:os.close(directory_fd)\n        succeeded=True\n        return runtime,result\n    except BaseException as error:\n        if output.exists():\n            try:_write_exclusive(output/"failure.json",_json_bytes({\n                "schema":"reviewed-decoder-TRAIN-resume-source-epoch-migration-failure/v1",\n                "error_type":type(error).__name__,"partial_output_preserved":True,\n                "old_artifacts_rewritten":False,"qualified":False,"promotion_performed":False}))\n            except BaseException as publication_error:\n                error.add_note("failed to retain migration failure metadata: "+type(publication_error).__name__)\n        raise\n    finally:\n        if not succeeded:torch.set_rng_state(entry_rng)\n'), (6932, 6933, '12c5defec2b129e29758295a436dc85bcee9569b5d57739a26be28b907ef007a', '        runtime_profile="builtin-t5-gpt2-float32/v1"):\n'), (6943, 6945, '40fc7d70a02b3c687e591fca9d8565ea1eb4178ac276e8cef88536cefd7653d0', '        _admission_version="v3", _runtime_profile=runtime_profile, _target_codec=REVIEWED_DIGEST_OMITTED_TARGET_CODEC)\n'), (6947, 7770, '35433e837cf73024ccb34936349668db0400d316d9baf67f0306eb64a7905d72', '')]}, 'inputs': {'current_bytes': 177467, 'current_sha256': '88125051a7b1d0dcc887f772faa750fa13b8a2141693679a62e2bd5e97e92db3', 'old_bytes': 173503, 'old_sha256': '7fbcfeb40e6f0d68537d0601169fbc208c3b6ca36273d786a85d876720323afb', 'edits': [(1243, 1291, '2b0c0d4598ba73e0354cc7dc84ba0f0cbe89f3effc0aede39751b3725de8d508', ''), (1315, 1331, '1a138b233e48cd397eff8ecd207a910d4e0df8ed3c74d5c4155a2053fc6e27d6', '    pipeline = _reviewed_json(raw)\n')]}}
+
+def _digest_cache_epoch_original_sources():
+    """Recover exact pinned old bytes by verified source edits, not a new model."""
+    from ipfs_datasets_py.logic.autoformal import training_cycle_inputs as inputs
+    originals={}
+    for role,path in(('worker',worker.__file__),('inputs',inputs.__file__)):
+        raw=Path(path).read_bytes();rule=_DIGEST_CACHE_EPOCH_ORIGINAL_SOURCE_REVERSE_EDITS[role]
+        assert len(raw)==rule['current_bytes'] and hashlib.sha256(raw).hexdigest()==rule['current_sha256']
+        lines=raw.decode('utf-8').splitlines(keepends=True)
+        for lo,hi,expected,replacement in reversed(rule['edits']):
+            assert hashlib.sha256(''.join(lines[lo:hi]).encode('utf-8')).hexdigest()==expected
+            lines[lo:hi]=[replacement]
+        original=''.join(lines).encode('utf-8')
+        assert len(original)==rule['old_bytes'] and hashlib.sha256(original).hexdigest()==rule['old_sha256']
+        originals[role]=original
+    return originals['worker'],originals['inputs']
+
+
+def _digest_cache_epoch_current_capacity(local, mixed, old_inputs):
+    """Measure CURRENT complete public inputs; never substitute historical rows."""
+    assert local.backend._optimizer_steps == 0 and not local.backend.optimizer.state
+    assert local.backend.max_sequence_tokens == 8192
+    assert local.backend.training_conditioning_profile == worker.REVIEWED_DIGEST_OMITTED_CHATML_PROFILE
+    offered = dict(mixed.data.kwargs)
+    # The existing mixed fixture uses these generous preparation-only bounds.
+    # They are not the subsequent job's declared token capacities or context.
+    assert offered['max_source_tokens'] == offered['max_target_tokens'] == 65536
+    offered.update(tokenizer=local.backend.tokenizer,
+        stage_artifact=mixed.payload['stage_artifact'],
+        expected_stage_sha256=mixed.payload['stage_artifact']['sha256'])
+    prepared = old_inputs.prepare_reviewed_mixed_decoder_digest_omitted_inputs_v1(
+        mixed.data.registry, **offered)
+    records = prepared['records']
+    assert records and [row['id']for row in records] == [row['id']for row in mixed.data.rows]
+    assert prepared['receipt']['target_codec'] == worker.REVIEWED_DIGEST_OMITTED_TARGET_CODEC
+    assert len(records) == len(mixed.data.rows) == 3
+    capacities = dict(max_source_tokens=max(len(row['source_token_ids'])for row in records),
+        max_target_tokens=max(len(row['target_token_ids'])for row in records))
+    observations = []
+    for raw, row in zip(mixed.data.rows, records, strict=True):
+        assert row['unit_id'] == raw['unit_id']
+        assert old_inputs.assemble_reviewed_decoder_digest_omitted_target(row['target_json'],
+            target_codec=worker.REVIEWED_DIGEST_OMITTED_TARGET_CODEC) == raw['canonical_ir']
+        source, target = row['source_token_ids'], row['target_token_ids']
+        assert len(source) >= 3 and len(target) >= 3
+        assert local.backend.tokenizer.decode(list(source[1:-1])) == row['source_wire']
+        assert local.backend.tokenizer.decode(list(target[1:-1])) == row['target_json']
+        frame = local.backend._chatml_frame(row['source_wire'],
+            local.backend.training_conditioning_profile, local.backend._pipeline_contract())
+        used = len(frame) + len(target) - 1
+        assert used <= local.backend.max_sequence_tokens, 'complete actual ChatML+target must fit before any update'
+        observations.append(dict(id=row['id'],unit_id=row['unit_id'],
+            canonical_target_bytes=len(worker._json_bytes(raw['canonical_ir'])),
+            canonical_target_sha256=hashlib.sha256(worker._json_bytes(raw['canonical_ir'])).hexdigest(),
+            projected_target_bytes=len(row['target_json'].encode('utf-8')),
+            projected_target_sha256=hashlib.sha256(row['target_json'].encode('utf-8')).hexdigest(),
+            source_wire_bytes=len(row['source_wire'].encode('utf-8')),
+            source_wire_sha256=hashlib.sha256(row['source_wire'].encode('utf-8')).hexdigest(),
+            source_tokens=len(source),target_tokens=len(target),chatml_frame_tokens=len(frame),
+            complete_training_tokens=used,context_tokens=local.backend.max_sequence_tokens))
+    # This unchanged public backend guard independently validates full token
+    # roundtrips, strict target reconstruction and actual complete frame fit.
+    local.backend.validate_training_records(records, **capacities)
+    assert local.backend._optimizer_steps == 0 and not local.backend.optimizer.state
+    event = dict(event='DIGEST_CACHE_FIXTURE_CURRENT_PUBLIC_CAPACITY_PREPARED',
+        target_codec=worker.REVIEWED_DIGEST_OMITTED_TARGET_CODEC,
+        conditioning_profile=worker.REVIEWED_DIGEST_OMITTED_CHATML_PROFILE,
+        capacities=capacities,rows=observations,optimizer_steps_before_training=0)
+    raw_event = json.dumps(event,sort_keys=True,separators=(',',':'))
+    assert len(raw_event.encode('utf-8')) <= 8192
+    print(raw_event,flush=True)  # Counts, row IDs and commitments only; no text/tokens/targets.
+    return capacities, observations
+
+
+def _digest_cache_epoch_real_qwen_fixture(tmp_path, monkeypatch, *, pristine=False, current_cohort=False):
+    import contextlib,importlib.util,sys
+    from copy import deepcopy
+    from types import SimpleNamespace
+    from ipfs_datasets_py.logic.autoformal import training_cycle_inputs as current_inputs
+    from ipfs_datasets_py.logic import autoformal as input_package
+    from ipfs_datasets_py.optimizers import logic_theorem_optimizer as worker_package
+    current_worker=worker
+    archive=tmp_path/'actual-old-cache-origin';archive.mkdir()
+    old_worker_raw,old_inputs_raw=_digest_cache_epoch_original_sources()
+    assert hashlib.sha256(old_worker_raw).hexdigest()=='65d55a34f097a4b673464ef59b87942274e65eb5083ea79d01759f8df16372f2'
+    assert hashlib.sha256(old_inputs_raw).hexdigest()=='7fbcfeb40e6f0d68537d0601169fbc208c3b6ca36273d786a85d876720323afb'
+    old_worker_ref=_complete_reviewed_artifact(archive/'worker.py',old_worker_raw)
+    old_inputs_ref=_complete_reviewed_artifact(archive/'inputs.py',old_inputs_raw)
+    def load_original(name,path):
+        selected=importlib.util.spec_from_file_location(name,path)
+        module=importlib.util.module_from_spec(selected)
+        return selected,module
+    old_worker_spec,old_worker=load_original(current_worker.__name__,old_worker_ref['path'])
+    old_inputs_spec,old_inputs=load_original(current_inputs.__name__,old_inputs_ref['path'])
+    @contextlib.contextmanager
+    def original_scope():
+        with monkeypatch.context()as selected:
+            selected.setitem(sys.modules,current_worker.__name__,old_worker)
+            selected.setattr(worker_package,'autoencoder_training_worker',old_worker)
+            selected.setitem(sys.modules,current_inputs.__name__,old_inputs)
+            selected.setattr(input_package,'training_cycle_inputs',old_inputs)
+            selected.setitem(globals(),'worker',old_worker)
+            yield
+    with original_scope():
+        old_worker_spec.loader.exec_module(old_worker)
+        old_inputs_spec.loader.exec_module(old_inputs)
+        assets=tmp_path/'original-assets';assets.mkdir()
+        local=_digest_omitted_Qwen_local_fixture(assets,fixed_json_schema_subwords=True)
+        jobs=tmp_path/'original-job';jobs.mkdir()
+        mixed=_reviewed_mixed_worker_fixture(jobs,batch_size=1,backend=local.backend,
+            tokenizer=local.backend.tokenizer,two_components=False)
+        capacities,capacity_observations=_digest_cache_epoch_current_capacity(local,mixed,old_inputs)
+        payload=mixed.payload
+        payload.update(schema_version=old_worker.REVIEWED_DIGEST_OMITTED_JOB_SCHEMA,
+            checkpoint_lineage_id='fixture:original-digest-TRAIN3',base_version_id='fixture:original-digest-pristine',
+            tokenizer_artifact=old_worker.asdict(local.options['tokenizer_artifact']),
+            license_artifact=old_worker.asdict(local.options['license_artifact']),
+            backend_artifacts=[old_worker.asdict(local.options[k])for k in('recipe_artifact','model_config_artifact')],
+            batch_size=1,seed=1729,max_steps=3,max_seconds=3600,
+            max_source_tokens=capacities['max_source_tokens'],max_target_tokens=capacities['max_target_tokens'])
+        parent=json.loads(Path(payload['parent_checkpoint_artifact']['path']).read_bytes())
+        parent.update(schema=old_worker.REVIEWED_DIGEST_OMITTED_CHECKPOINT_SCHEMA,
+            checkpoint_lineage_id=payload['checkpoint_lineage_id'],base_version_id=payload['base_version_id'],
+            assets=[payload[k]for k in('model_artifact','tokenizer_artifact','license_artifact')]+payload['backend_artifacts'],
+            token_budgets={'max_source_tokens':capacities['max_source_tokens'],
+                'max_target_tokens':capacities['max_target_tokens'],
+                'tokenizer_contract':old_inputs._reviewed_decoder_tokenizer_contract(local.backend.tokenizer)})
+        payload['parent_checkpoint_artifact']=_complete_reviewed_artifact(jobs/'original-digest-pristine.json',old_worker._json_bytes(parent))
+        old_spec=old_worker.TrainingJobSpec.from_dict(payload)
+        if pristine:
+            assert parent['progress']=={'epochs_completed':0,'row_cursor':0,'optimizer_steps':0}
+            assert parent['training_binding']is None and parent['parent_checkpoint_sha256']is None
+            offered=dict(mixed.data.kwargs,tokenizer=local.backend.tokenizer,
+                stage_artifact=payload['stage_artifact'],expected_stage_sha256=payload['stage_artifact']['sha256'],
+                **capacities)
+            prospective=old_inputs.prepare_reviewed_mixed_decoder_digest_omitted_inputs_v1(
+                mixed.data.registry,**offered)
+            prior=dict(candidate=payload['parent_checkpoint_artifact'],model_checkpoint=payload['base_model_checkpoint'],
+                optimizer_checkpoint=payload['base_optimizer_checkpoint'],complete_training_binding=prospective['receipt'])
+            assert local.backend._optimizer_steps==0 and not local.backend.optimizer.state
+        else:
+            prior=old_worker.execute_training_job(old_spec,reviewed_runtime=mixed.runtime)
+            assert prior['initial_progress']=={'epochs_completed':0,'row_cursor':0,'optimizer_steps':0}
+            assert prior['worker_progress']=={'epochs_completed':1,'row_cursor':0,'optimizer_steps':3}
+            assert local.backend._optimizer_steps==3 and local.backend.optimizer.state
+        configuration=local.backend._configuration()
+        pipeline=local.backend.tokenizer.pipeline_serialization()
+        old_source5=old_worker._reviewed_decoder_source_pins(admission_profile=old_spec.admission_profile)
+        population=prior['complete_training_binding']
+        expected_model=deepcopy(local.backend._model_state())
+        expected_optimizer=deepcopy(local.backend.optimizer.state_dict())
+        expected_rng=local.torch.get_rng_state().clone()
+    assert worker is current_worker and sys.modules[current_worker.__name__]is current_worker
+    assert sys.modules[current_inputs.__name__]is current_inputs
+    targetdir=tmp_path/'current-assets';targetdir.mkdir()
+    target=_digest_omitted_Qwen_local_fixture(targetdir,fixed_json_schema_subwords=True)
+    assert target.backend.tokenizer._fast_backend()[0].get_vocab() == local.backend.tokenizer._fast_backend()[0].get_vocab()
+    assert target.backend.model.config.to_dict() == local.backend.model.config.to_dict()
+    unmarked_target=SimpleNamespace(backend=target.backend)
+    current_source_for_marker=worker._reviewed_decoder_source_pins(admission_profile=old_spec.admission_profile)
+    profile=worker.REVIEWED_DIGEST_CACHE_PRISTINE_EPOCH_PROFILE if pristine else worker.REVIEWED_DIGEST_CACHE_EPOCH_PROFILE
+    marker=worker._reviewed_digest_cache_epoch_marker(prior['candidate']['sha256'],current_source_for_marker,
+        hashlib.sha256(worker._json_bytes(population)).hexdigest(),_profile=profile)
+    unmarked=target.backend
+    target.backend=worker.TorchReviewedDecoderBackend(unmarked.model,unmarked.optimizer,unmarked.tokenizer,
+        architecture=unmarked.architecture,max_sequence_tokens=unmarked.max_sequence_tokens,
+        pretrained=unmarked.pretrained,gradient_clip=unmarked.gradient_clip,model_profile=unmarked.model_profile,
+        training_conditioning_profile=unmarked.training_conditioning_profile,target_codec=unmarked.target_codec,
+        cache_source_epoch_marker=marker)
+    def artifact(name,value,raw=False):
+        return worker.CheckpointArtifact.from_dict(_complete_reviewed_artifact(tmp_path/name,value if raw else worker._json_bytes(value)))
+    old_config_ref=artifact('old-complete-config.json',configuration)
+    old_pipeline_ref=artifact('old-complete-tokenizer-pipeline.json',pipeline,raw=True)
+    current_config=target.backend._configuration()
+    current_config_ref=artifact('current-complete-config.json',current_config)
+    population_ref=artifact('original-digest-T3-binding.json',population)
+    current_source5=worker._reviewed_decoder_source_pins(admission_profile=old_spec.admission_profile)
+    current_payload=dict(old_spec.to_dict(),output_directory=str(tmp_path/'unused-training-output'),
+        parent_checkpoint_artifact=prior['candidate'],base_model_checkpoint=prior['model_checkpoint'],
+        base_optimizer_checkpoint=prior['optimizer_checkpoint'],backend_identity=target.backend.identity(),
+        expected_source_sha256=current_source5)
+    spec=worker.TrainingJobSpec.from_dict(current_payload)
+    current_refs={key:{'path':str(path),'bytes':Path(path).stat().st_size,
+        'sha256':hashlib.sha256(Path(path).read_bytes()).hexdigest()}
+        for key,path in(('worker',worker.__file__),('inputs',current_inputs.__file__))}
+    dependencies={'torch':'torch','torch_native':'torch._C','torch_serialization':'torch.serialization',
+        'torch_optimizer_base':'torch.optim.optimizer','model_class':type(target.backend.model).__module__,
+        'model_config_class':type(target.backend.model.config).__module__,
+        'optimizer_class':type(target.backend.optimizer).__module__,'transformers_modeling_utils':'transformers.modeling_utils'}
+    dependencies={role:{'path':str(Path(sys.modules[name].__file__)),
+        'bytes':Path(sys.modules[name].__file__).stat().st_size,
+        'sha256':hashlib.sha256(Path(sys.modules[name].__file__).read_bytes()).hexdigest()}
+        for role,name in dependencies.items()}
+    snapshot=dict(schema='reviewed-decoder-migration-dependency-snapshot/v1',
+        association_scope='declared-current-cohort-before-Source-transition-not-historical-execution-attestation/v1',
+        old_checkpoint_manifest_sha256=prior['candidate']['sha256'],old_configuration_sha256=old_config_ref.sha256,
+        old_tokenizer_pipeline_sha256=old_pipeline_ref.sha256,old_source_sha256=old_source5,implementation=dependencies)
+    if current_cohort:
+        snapshot.update(schema=worker.REVIEWED_DIGEST_CACHE_CURRENT_COHORT_SNAPSHOT_SCHEMA,
+            association_scope=worker.REVIEWED_DIGEST_CACHE_CURRENT_COHORT_SCOPE,current_source_sha256=current_source5)
+    dependency_ref=artifact('actual-declared-current-cohort.json',snapshot)
+    contract=dict(schema=worker.REVIEWED_DIGEST_CACHE_EPOCH_CONTRACT_SCHEMA,
+        profile=profile,old_checkpoint_manifest_sha256=prior['candidate']['sha256'],
+        old_configuration_sha256=old_config_ref.sha256,current_configuration_sha256=current_config_ref.sha256,
+        old_tokenizer_pipeline_sha256=old_pipeline_ref.sha256,old_source_sha256=old_source5,
+        current_source_sha256=current_source5,old_source_artifacts={'worker':old_worker_ref,'inputs':old_inputs_ref},
+        current_source_artifacts=current_refs,dependency_snapshot_artifact=worker.asdict(dependency_ref),
+        old_training_binding_artifact=worker.asdict(population_ref))
+    if current_cohort:
+        contract.update(schema=worker.REVIEWED_DIGEST_CACHE_CURRENT_COHORT_CONTRACT_SCHEMA,
+            dependency_association_scope=worker.REVIEWED_DIGEST_CACHE_CURRENT_COHORT_SCOPE)
+    options={k:worker.CheckpointArtifact.from_dict(old_worker.asdict(local.options[k]))
+        for k in('recipe_artifact','model_config_artifact','tokenizer_artifact','license_artifact')}
+    options.update(registry=mixed.runtime.registry,current_admission_provider=mixed.runtime.current_admission_provider,
+        execution_guard=lambda:None,asset_policy_guard=lambda value:None,old_configuration_artifact=old_config_ref,
+        old_tokenizer_pipeline_artifact=old_pipeline_ref,current_configuration_artifact=current_config_ref,
+        compatibility_contract_artifact=artifact('closed-cache-source-contract.json',contract),
+        output_directory=str(tmp_path/'NEW-same-digest-cache-migration'),max_model_bytes=64*1024**2,
+        runtime_profile='builtin-qwen2-bfloat16/v1')
+    originals={key:Path(prior[key]['path']).read_bytes()for key in('candidate','model_checkpoint','optimizer_checkpoint')}
+    return SimpleNamespace(spec=spec,options=options,contract=contract,snapshot=snapshot,artifact=artifact,
+        prior=prior,originals=originals,original_scope=original_scope,original_worker=old_worker,
+        original_runtime=mixed.runtime,original_spec=old_spec,target=target,unmarked_target=unmarked_target,current_config=current_config,
+        expected_model=expected_model,expected_optimizer=expected_optimizer,expected_rng=expected_rng,
+        measured_capacities=capacities,capacity_observations=capacity_observations)
+
+
+def test_digest_cache_epoch_same_objective_update_matches_original_public_executor(tmp_path,monkeypatch):
+    from copy import deepcopy
+    f=_digest_cache_epoch_real_qwen_fixture(tmp_path,monkeypatch)
+    before=json.loads(f.originals['candidate'])
+    with f.original_scope():
+        old=f.original_worker
+        baseline_payload=f.original_spec.to_dict()
+        baseline_payload.update(parent_checkpoint_artifact=f.prior['candidate'],base_model_checkpoint=f.prior['model_checkpoint'],
+            base_optimizer_checkpoint=f.prior['optimizer_checkpoint'],max_steps=1,
+            output_directory=str(tmp_path/'original-uninterrupted-update4'))
+        baseline=old.execute_training_job(old.TrainingJobSpec.from_dict(baseline_payload),reviewed_runtime=f.original_runtime)
+        expected_model=deepcopy(f.original_runtime.backend._model_state())
+        expected_Adam=deepcopy(f.original_runtime.backend.optimizer.state_dict())
+        expected_rng=f.target.torch.get_rng_state().clone()
+    migration=worker.migrate_local_reviewed_decoder_digest_cache_source_epoch_v1(f.spec,**f.options)
+    runtime,reloaded=_digest_cache_epoch_reload_artifacts(f,migration)
+    assert migration['training_performed']is False and migration['training_resume_eligible']is True
+    receipt=json.loads(Path(migration['migration_receipt']['path']).read_bytes())
+    assert receipt['profile']==worker.REVIEWED_DIGEST_CACHE_EPOCH_PROFILE
+    assert receipt['old_checkpoint_manifest']==f.prior['candidate']
+    assert receipt['original_progress']==before['progress']=={'epochs_completed':1,'row_cursor':0,'optimizer_steps':3}
+    next_payload=migration['next_job_spec'];next_payload.update(max_steps=1,output_directory=str(tmp_path/'cache-current-update4'))
+    spec=worker.TrainingJobSpec.from_dict(next_payload)
+    assert type(spec)is worker.ReviewedDigestCacheEpochTrainingJobSpec
+    continued=worker.execute_training_job(spec,reviewed_runtime=runtime)
+    assert continued['initial_progress']=={'epochs_completed':1,'row_cursor':0,'optimizer_steps':3}
+    assert continued['worker_progress']==baseline['worker_progress']=={'epochs_completed':1,'row_cursor':1,'optimizer_steps':4}
+    assert runtime.backend._same(runtime.backend._model_state(),expected_model)
+    assert runtime.backend._same(runtime.backend.optimizer.state_dict(),expected_Adam)
+    assert f.target.torch.equal(f.target.torch.get_rng_state(),expected_rng)
+    assert runtime.backend._optimizer_steps==4 and runtime.backend.optimizer.state
+    candidate=json.loads(Path(continued['candidate']['path']).read_bytes())
+    assert candidate['schema']==worker.REVIEWED_DIGEST_CACHE_EPOCH_CHECKPOINT_SCHEMA
+    assert candidate['cache_source_epoch_migration']==migration['migration_receipt']
+    assert candidate['cache_epoch_parent_checkpoint_artifact']==migration['candidate']
+    assert candidate['checkpoint_lineage_id']!=before['checkpoint_lineage_id']
+    assert candidate['base_version_id']!=before['base_version_id']
+    assert continued['promotion_performed']is continued['convergence_proved']is False
+    assert all(Path(f.prior[k]['path']).read_bytes()==raw for k,raw in f.originals.items())
+
+
+def test_digest_cache_epoch_migration_is_zero_updates_and_ordinary_reload(tmp_path,monkeypatch):
+    f=_digest_cache_epoch_real_qwen_fixture(tmp_path,monkeypatch)
+    monkeypatch.setattr(worker.TorchReviewedDecoderBackend,'train_batch',lambda *a,**kw:pytest.fail('migration trained'))
+    result=worker.migrate_local_reviewed_decoder_digest_cache_source_epoch_v1(f.spec,**f.options)
+    runtime,reloaded=_digest_cache_epoch_reload_artifacts(f,result)
+    assert result['training_performed']is False and result['ordinary_current_loader']['matched_pair']is True
+    assert result['ordinary_current_loader']['optimizer_steps']==3
+    assert runtime.backend._same(runtime.backend._model_state(),f.expected_model)
+    assert runtime.backend._same(runtime.backend.optimizer.state_dict(),f.expected_optimizer)
+    assert f.target.torch.equal(f.target.torch.get_rng_state(),f.expected_rng)
+    assert all(Path(f.prior[k]['path']).read_bytes()==raw for k,raw in f.originals.items())
+
+
+@pytest.mark.parametrize('damage',['codec','learning_rate','seed','source','pipeline','population','dependency','wrong_half','profile'])
+def test_digest_cache_epoch_refuses_unreviewed_objective_source_or_pair_before_publication(tmp_path,monkeypatch,damage):
+    from copy import deepcopy
+    f=_digest_cache_epoch_real_qwen_fixture(tmp_path,monkeypatch)
+    options=dict(f.options);contract=deepcopy(f.contract);payload=f.spec.to_dict()
+    if damage in('codec','learning_rate'):
+        config=deepcopy(f.current_config)
+        if damage=='codec':config['target_codec']='complete-reviewed-norm-json/v2'
+        else:config['optimizer_groups'][0]['lr']*=2
+        options['current_configuration_artifact']=f.artifact('wrong-current-config.json',config)
+        contract['current_configuration_sha256']=options['current_configuration_artifact'].sha256
+        payload['backend_identity']=worker._reviewed_digest_cache_epoch_identity(config,contract['current_source_sha256']['worker'])
+    elif damage=='seed':payload['seed']=1730
+    elif damage=='source':contract['old_source_sha256']['worker']='0'*64
+    elif damage=='pipeline':
+        p=Path(options['old_tokenizer_pipeline_artifact'].path);p.write_bytes(p.read_bytes()+b' ')
+    elif damage=='population':
+        old=json.loads(Path(contract['old_training_binding_artifact']['path']).read_bytes())
+        old['source_contexts_sha256']='0'*64
+        contract['old_training_binding_artifact']=worker.asdict(f.artifact('wrong-original-population.json',old))
+    elif damage=='dependency':
+        snapshot=deepcopy(f.snapshot);del snapshot['implementation']['torch_native']
+        contract['dependency_snapshot_artifact']=worker.asdict(f.artifact('missing-runtime-dependency.json',snapshot))
+    elif damage=='wrong_half':payload['base_optimizer_checkpoint']=worker.asdict(f.target.options['optimizer_checkpoint'])
+    else:contract['profile']=worker.REVIEWED_DECODER_TRAIN_RESUME_EPOCH_PROFILE
+    options['compatibility_contract_artifact']=f.artifact('modified-cache-contract.json',contract)
+    entry_rng=f.target.torch.get_rng_state().clone()
+    with pytest.raises((worker.TrainingJobValidationError,ValueError)):
+        worker.migrate_local_reviewed_decoder_digest_cache_source_epoch_v1(worker.TrainingJobSpec.from_dict(payload),**options)
+    assert not Path(options['output_directory']).exists()
+    assert f.target.torch.equal(f.target.torch.get_rng_state(),entry_rng)
+    assert all(Path(f.prior[k]['path']).read_bytes()==raw for k,raw in f.originals.items())
+
+
+@pytest.mark.parametrize('damage',['missing_receipt','receipt_tamper','parent_link','receipt_relabel'])
+def test_digest_cache_epoch_later_resume_requires_bound_ancestry_before_updates(tmp_path,monkeypatch,damage):
+    f=_digest_cache_epoch_real_qwen_fixture(tmp_path,monkeypatch)
+    migration=worker.migrate_local_reviewed_decoder_digest_cache_source_epoch_v1(f.spec,**f.options)
+    runtime,reloaded=_digest_cache_epoch_reload_artifacts(f,migration)
+    payload=dict(migration['next_job_spec'],max_steps=1,output_directory=str(tmp_path/'forbidden-resume'))
+    monkeypatch.setattr(worker.TorchReviewedDecoderBackend,'train_batch',lambda *a,**kw:pytest.fail('bad ancestry trained'))
+    if damage=='missing_receipt':payload.pop('cache_source_epoch_migration')
+    elif damage=='receipt_tamper':
+        receipt=json.loads(Path(migration['migration_receipt']['path']).read_bytes());receipt['original_progress']['optimizer_steps']=0
+        payload['cache_source_epoch_migration']=worker.asdict(f.artifact('tampered-migration-receipt.json',receipt))
+    else:
+        manifest=json.loads(Path(migration['candidate']['path']).read_bytes())
+        if damage=='parent_link':manifest['parent_checkpoint_sha256']='0'*64
+        else:manifest['cache_source_epoch_migration']=f.prior['candidate']
+        payload['parent_checkpoint_artifact']=worker.asdict(f.artifact('tampered-cache-candidate.json',manifest))
+    with pytest.raises((worker.TrainingJobValidationError,ValueError,TypeError)):
+        worker.execute_training_job(worker.TrainingJobSpec.from_dict(payload),reviewed_runtime=runtime)
+    assert not Path(payload['output_directory']).exists()
+    assert runtime.backend._optimizer_steps==3
+    assert all(Path(f.prior[k]['path']).read_bytes()==raw for k,raw in f.originals.items())
+
+
+def test_digest_cache_epoch_late_denial_preserves_originals_and_partial(tmp_path,monkeypatch):
+    f=_digest_cache_epoch_real_qwen_fixture(tmp_path,monkeypatch)
+    output=Path(f.options['output_directory']);entry_rng=f.target.torch.get_rng_state().clone()
+    error=RuntimeError('declared late current-admission/execution denial')
+    def guard():
+        if output.exists():raise error
+    options=dict(f.options,execution_guard=guard)
+    with pytest.raises(RuntimeError)as caught:
+        worker.migrate_local_reviewed_decoder_digest_cache_source_epoch_v1(f.spec,**options)
+    assert caught.value is error and output.exists()
+    assert json.loads((output/'failure.json').read_bytes())['partial_output_preserved']is True
+    assert not(output/'receipt.json').exists()
+    assert f.target.torch.equal(f.target.torch.get_rng_state(),entry_rng)
+    assert all(Path(f.prior[k]['path']).read_bytes()==raw for k,raw in f.originals.items())
+
+
+def test_digest_cache_epoch_projection_retains_exact_numerical_and_interface_delta():
+    from ipfs_datasets_py.logic.autoformal import training_cycle_inputs as inputs
+    old_worker,old_inputs=_digest_cache_epoch_original_sources()
+    current=Path(worker.__file__).read_bytes();current_inputs=Path(inputs.__file__).read_bytes()
+    proof=worker._reviewed_digest_cache_epoch_projection(old_worker,current,old_inputs,current_inputs)
+    assert proof['numerical_and_all_other_old_AST_exact']is True
+    changed=current.replace(b'self.optimizer.step()',b'self.optimizer.step(); self.optimizer.step()',1)
+    with pytest.raises(worker.TrainingJobValidationError):
+        worker._reviewed_digest_cache_epoch_projection(old_worker,changed,old_inputs,current_inputs)
+
+
+def test_digest_cache_epoch_validated_Qwen_cap_reaches_every_paired_state_read(tmp_path,monkeypatch):
+    f=_digest_cache_epoch_real_qwen_fixture(tmp_path,monkeypatch)
+    assert f.target.backend._checkpoint_byte_limit()==2*1024**3
+    generic=_torch_reviewed_backend_fixture()[1]
+    assert generic._checkpoint_byte_limit()==worker.MAX_REVIEWED_DECODER_STATE_BYTES==512*1024**2
+    original=worker._reviewed_decoder_artifact;observed=[]
+    def read(reference,*,limit=worker.MAX_CHECKPOINT_BYTES,load=True):
+        observed.append((reference.path,limit,load))
+        return original(reference,limit=limit,load=load)
+    monkeypatch.setattr(worker,'_reviewed_decoder_artifact',read)
+    result=worker.migrate_local_reviewed_decoder_digest_cache_source_epoch_v1(f.spec,**f.options)
+    runtime,reloaded=_digest_cache_epoch_reload_artifacts(f,result)
+    paired_paths={f.prior[k]['path']for k in('model_checkpoint','optimizer_checkpoint')}
+    paired_paths.update(result[k]['path']for k in('model_checkpoint','optimizer_checkpoint'))
+    actual=[row for row in observed if row[0]in paired_paths]
+    assert {row[0]for row in actual}==paired_paths
+    assert actual and all(limit==2*1024**3 for _,limit,_ in actual)
+    assert result['ordinary_current_loader']['supported_profile']['max_model_bytes']==2*1024**3
+    assert runtime.backend._checkpoint_byte_limit()==2*1024**3
+    assert all(Path(f.prior[k]['path']).read_bytes()==raw for k,raw in f.originals.items())
+
+
+@pytest.mark.parametrize('attack',['ordinary_live_spec','unmarked_identity_loader','marked_identity_loader'])
+def test_digest_cache_epoch_numeric_marker_prevents_manifest_type_or_lineage_downgrade(tmp_path,monkeypatch,attack):
+    f=_digest_cache_epoch_real_qwen_fixture(tmp_path,monkeypatch)
+    migration=worker.migrate_local_reviewed_decoder_digest_cache_source_epoch_v1(f.spec,**f.options)
+    runtime,reloaded=_digest_cache_epoch_reload_artifacts(f,migration)
+    assert runtime.backend.cache_source_epoch_marker is not None
+    original_bytes={key:Path(migration[key]['path']).read_bytes()for key in('model_checkpoint','optimizer_checkpoint')}
+    if attack=='ordinary_live_spec':
+        manifest=json.loads(Path(migration['candidate']['path']).read_bytes())
+        manifest.pop('cache_source_epoch_migration');manifest.pop('cache_epoch_parent_checkpoint_artifact')
+        manifest.update(schema=worker.REVIEWED_DIGEST_OMITTED_CHECKPOINT_SCHEMA,
+            checkpoint_lineage_id='ordinary:renamed-without-reserved-prefix',base_version_id='ordinary:renamed-base')
+        relabeled=f.artifact('metadata-only-renamed-manifest.json',manifest)
+        payload=dict(migration['next_job_spec']);payload.pop('cache_source_epoch_migration')
+        payload.update(schema_version=worker.REVIEWED_DIGEST_OMITTED_JOB_SCHEMA,
+            checkpoint_lineage_id=manifest['checkpoint_lineage_id'],base_version_id=manifest['base_version_id'],
+            parent_checkpoint_artifact=worker.asdict(relabeled),max_steps=1,output_directory=str(tmp_path/'downgraded-must-not-train'))
+        monkeypatch.setattr(worker.TorchReviewedDecoderBackend,'train_batch',lambda *a,**kw:pytest.fail('marked ordinary job trained'))
+        with pytest.raises(worker.TrainingJobValidationError,match='marked numeric pair'):
+            worker.execute_training_job(worker.TrainingJobSpec.from_dict(payload),reviewed_runtime=runtime)
+        assert not Path(payload['output_directory']).exists()
+    else:
+        identity=(f.unmarked_target.backend.identity()if attack=='unmarked_identity_loader'else runtime.backend.identity())
+        options={key:f.options[key]for key in('registry','current_admission_provider','execution_guard','asset_policy_guard',
+            'recipe_artifact','model_config_artifact','tokenizer_artifact','license_artifact','max_model_bytes','runtime_profile')}
+        options.update(admission_profile=f.spec.admission_profile,model_checkpoint=worker.CheckpointArtifact.from_dict(migration['model_checkpoint']),
+            optimizer_checkpoint=worker.CheckpointArtifact.from_dict(migration['optimizer_checkpoint']),
+            expected_backend_identity=identity,expected_source_sha256=worker._thaw(f.spec.expected_source_sha256),
+            expected_admission_inputs_sha256=f.spec.expected_admission_inputs_sha256)
+        with pytest.raises(worker.TrainingJobValidationError):
+            worker.load_local_reviewed_decoder_digest_omitted_runtime_v1(**options)
+    assert runtime.backend._optimizer_steps==3
+    assert all(Path(migration[key]['path']).read_bytes()==raw for key,raw in original_bytes.items())
+    assert all(Path(f.prior[key]['path']).read_bytes()==raw for key,raw in f.originals.items())
+
+
+def test_digest_cache_epoch_marked_reload_requires_validated_receipt(tmp_path,monkeypatch):
+    f=_digest_cache_epoch_real_qwen_fixture(tmp_path,monkeypatch)
+    migration=worker.migrate_local_reviewed_decoder_digest_cache_source_epoch_v1(f.spec,**f.options)
+    runtime,reloaded=_digest_cache_epoch_reload_artifacts(f,migration)
+    options={key:f.options[key]for key in('registry','current_admission_provider','execution_guard','asset_policy_guard',
+        'recipe_artifact','model_config_artifact','tokenizer_artifact','license_artifact','max_model_bytes','runtime_profile')}
+    options.update(admission_profile=f.spec.admission_profile,model_checkpoint=worker.CheckpointArtifact.from_dict(migration['model_checkpoint']),
+        optimizer_checkpoint=worker.CheckpointArtifact.from_dict(migration['optimizer_checkpoint']),
+        expected_backend_identity=runtime.backend.identity(),expected_source_sha256=worker._thaw(f.spec.expected_source_sha256),
+        expected_admission_inputs_sha256=f.spec.expected_admission_inputs_sha256,
+        cache_source_epoch_migration=worker.CheckpointArtifact.from_dict(migration['migration_receipt']))
+    current,receipt=worker.load_local_reviewed_decoder_digest_omitted_runtime_v1(**options)
+    assert receipt['matched_pair']is True and receipt['optimizer_steps']==3
+    assert current.backend.cache_source_epoch_marker==runtime.backend.cache_source_epoch_marker
+    assert receipt['cache_source_epoch_migration']==migration['migration_receipt']
+    options['cache_source_epoch_migration']=worker.CheckpointArtifact.from_dict(f.prior['candidate'])
+    with pytest.raises(worker.TrainingJobValidationError):
+        worker.load_local_reviewed_decoder_digest_omitted_runtime_v1(**options)
+
+
+@pytest.mark.parametrize('revoker',['execution_guard','identity'])
+def test_digest_cache_epoch_late_admission_only_revocation_prevents_final_publication(tmp_path,monkeypatch,revoker):
+    from copy import deepcopy
+    import sys
+    f=_digest_cache_epoch_real_qwen_fixture(tmp_path,monkeypatch)
+    output=Path(f.options['output_directory'])
+    state=dict(revoked=False,provider_after_revocation=0,publisher_guards=0,
+        binding_entered=0,binding_passed=0,fresh_entered=0,events=[],provider_refusal_phases=[])
+    publisher_code=worker._migrate_local_reviewed_decoder_epoch_family.__code__
+    original_provider=f.options['current_admission_provider']
+    original_guard=f.options['execution_guard']
+    original_binding=worker._reviewed_digest_cache_epoch_prepare_binding
+    original_fresh=worker._reviewed_digest_cache_epoch_fresh_admission
+    def provider():
+        current=deepcopy(original_provider())
+        if state['revoked']:
+            state['provider_after_revocation']+=1
+            state['provider_refusal_phases'].append(sys._getframe(1).f_code.co_name)
+            # Genuine mixed preparation returns component_id -> admitted inputs.
+            # Mutate its actual signed-registry snapshot; never invent a keyset.
+            assert type(current)is dict and len(current)==1
+            _,admitted=next(iter(current.items()))
+            assert type(admitted)is dict and type(admitted['registry'])is dict
+            registry=admitted['registry']
+            assert type(registry['keys'])is list and registry['keys']
+            assert type(registry['revocation_generation'])is int
+            assert 'revoked_at_utc'in registry['keys'][0]and registry['keys'][0]['revoked_at_utc']is None
+            registry['keys'][0]['revoked_at_utc']='2026-01-01T00:00:00Z'
+            registry['revocation_generation']+=1
+        return current
+    def binding_spy(*args,**kwargs):
+        direct=sys._getframe(1).f_code is publisher_code
+        if direct:
+            state['binding_entered']+=1
+            state['events'].append('publisher_binding_enter:'+str(state['binding_entered']))
+        value=original_binding(*args,**kwargs)
+        if direct:
+            state['binding_passed']+=1
+            state['events'].append('publisher_binding_pass:'+str(state['binding_passed']))
+        return value
+    def fresh_spy(*args,**kwargs):
+        assert sys._getframe(1).f_code is publisher_code
+        state['fresh_entered']+=1
+        state['events'].append('final_fresh_admission_enter')
+        return original_fresh(*args,**kwargs)
+    monkeypatch.setattr(worker,'_reviewed_digest_cache_epoch_prepare_binding',binding_spy)
+    monkeypatch.setattr(worker,'_reviewed_digest_cache_epoch_fresh_admission',fresh_spy)
+    def guard():
+        original_guard()
+        if sys._getframe(1).f_code is publisher_code:
+            state['publisher_guards']+=1
+            state['events'].append('publisher_guard:'+str(state['publisher_guards']))
+            if revoker=='execution_guard'and state['binding_passed']==1:
+                assert state['publisher_guards']==3 and state['binding_entered']==1
+                state['revoked']=True
+                state['events'].append('revoked_by_final_direct_guard')
+    if revoker=='identity':
+        original_identity=worker.TorchReviewedDecoderBackend.identity
+        def identity(self):
+            value=original_identity(self)
+            if sys._getframe(1).f_code is publisher_code:
+                assert state['publisher_guards']==3 and state['binding_entered']==state['binding_passed']==2
+                state['revoked']=True
+                state['events'].append('revoked_by_final_direct_identity')
+            return value
+        monkeypatch.setattr(worker.TorchReviewedDecoderBackend,'identity',identity)
+    options=dict(f.options,current_admission_provider=provider,execution_guard=guard)
+    with pytest.raises((worker.TrainingJobValidationError,ValueError))as caught:
+        worker.migrate_local_reviewed_decoder_digest_cache_source_epoch_v1(f.spec,**options)
+    assert state['revoked']and state['provider_after_revocation']>0
+    assert state['publisher_guards']==3 and state['binding_entered']==2
+    if revoker=='execution_guard':
+        # The real next fresh post-guard preparation catches revocation; it is
+        # earlier than the final identity/provider boundary, so do not relabel it.
+        assert state['binding_passed']==1 and state['fresh_entered']==0
+        assert state['provider_refusal_phases']==['_reviewed_digest_cache_epoch_prepare_binding']
+    else:
+        assert state['binding_passed']==2 and state['fresh_entered']==1
+        assert state['provider_refusal_phases']==['_reviewed_digest_cache_epoch_fresh_admission']
+    assert 'admission'in str(caught.value).lower()
+    assert output.exists()and(output/'failure.json').exists()and not(output/'receipt.json').exists()
+    assert all(Path(f.prior[key]['path']).read_bytes()==raw for key,raw in f.originals.items())
+    event=json.dumps(dict(event='DIGEST_CACHE_LATE_ADMISSION_REFUSAL_PHASE',revoker=revoker,
+        events=state['events'],binding_passed=state['binding_passed'],
+        provider_refusal_phases=state['provider_refusal_phases'],
+        error_type=type(caught.value).__name__),sort_keys=True,separators=(',',':'))
+    assert len(event.encode('utf-8'))<=4096
+    print(event,flush=True)
+
+
+def _digest_cache_epoch_reload_artifacts(fixture, artifacts):
+    assert type(artifacts)is dict and artifacts['artifact_only']is True
+    assert artifacts['live_runtime_returned']is False and artifacts['live_runtime_state_at_return_claimed']is False
+    assert artifacts['requires_validated_profile_reload']is True
+    assert artifacts['immutable_artifact_finalization']['all_bound_bytes_and_full9_unchanged']is True
+    worker._json_bytes(artifacts)  # A model/runtime object cannot enter the artifact result.
+    options={key:fixture.options[key]for key in('registry','current_admission_provider','execution_guard','asset_policy_guard',
+        'recipe_artifact','model_config_artifact','tokenizer_artifact','license_artifact','max_model_bytes','runtime_profile')}
+    options.update(admission_profile=fixture.spec.admission_profile,
+        model_checkpoint=worker.CheckpointArtifact.from_dict(artifacts['model_checkpoint']),
+        optimizer_checkpoint=worker.CheckpointArtifact.from_dict(artifacts['optimizer_checkpoint']),
+        expected_backend_identity=worker._thaw(fixture.spec.backend_identity),
+        expected_source_sha256=worker._thaw(fixture.spec.expected_source_sha256),
+        expected_admission_inputs_sha256=fixture.spec.expected_admission_inputs_sha256,
+        cache_source_epoch_migration=worker.CheckpointArtifact.from_dict(artifacts['migration_receipt']))
+    return worker.load_local_reviewed_decoder_digest_omitted_runtime_v1(**options)
+
+
+@pytest.mark.parametrize('changed_artifact',['derivative_half','private_archived_source'])
+def test_digest_cache_epoch_final_provider_cannot_change_published_artifact_bytes(tmp_path,monkeypatch,changed_artifact):
+    import sys
+    f=_digest_cache_epoch_real_qwen_fixture(tmp_path,monkeypatch)
+    output=Path(f.options['output_directory']);original_provider=f.options['current_admission_provider'];state={'changed':False}
+    def provider():
+        current=original_provider()
+        if sys._getframe(1).f_code.co_name=='_reviewed_digest_cache_epoch_fresh_admission':
+            # The source case modifies ONLY this test's recovered archive;
+            # it never writes the installed/private-current worker file.
+            path=(output/'model.checkpoint'if changed_artifact=='derivative_half'else
+                Path(f.contract['old_source_artifacts']['worker']['path']))
+            path.write_bytes(path.read_bytes()+b'\n# callback byte change\n');state['changed']=True
+        return current
+    options=dict(f.options,current_admission_provider=provider)
+    with pytest.raises(worker.TrainingJobValidationError,match='immutable artifact changed'):
+        worker.migrate_local_reviewed_decoder_digest_cache_source_epoch_v1(f.spec,**options)
+    assert state['changed']and(output/'failure.json').exists()and not(output/'receipt.json').exists()
+    assert all(Path(f.prior[key]['path']).read_bytes()==raw for key,raw in f.originals.items())
+
+
+def test_digest_cache_epoch_discarded_live_mutation_does_not_change_returned_artifacts(tmp_path,monkeypatch):
+    import sys
+    f=_digest_cache_epoch_real_qwen_fixture(tmp_path,monkeypatch)
+    captured=[];original_loader=worker.load_local_reviewed_decoder_digest_omitted_runtime_v1
+    def loader(**options):
+        runtime,receipt=original_loader(**options);captured.append(runtime.backend);return runtime,receipt
+    monkeypatch.setattr(worker,'load_local_reviewed_decoder_digest_omitted_runtime_v1',loader)
+    original_provider=f.options['current_admission_provider'];state={'mutated_discarded_object':False}
+    def provider():
+        current=original_provider()
+        if sys._getframe(1).f_code.co_name=='_reviewed_digest_cache_epoch_fresh_admission':
+            assert captured
+            with f.target.torch.no_grad():next(captured[-1].model.parameters()).add_(1)
+            state['mutated_discarded_object']=True
+        return current
+    artifacts=worker.migrate_local_reviewed_decoder_digest_cache_source_epoch_v1(f.spec,
+        **dict(f.options,current_admission_provider=provider))
+    assert state['mutated_discarded_object']and type(artifacts)is dict
+    assert artifacts['artifact_only']is True and artifacts['live_runtime_returned']is False
+    assert artifacts['live_runtime_state_at_return_claimed']is False
+    worker._json_bytes(artifacts)
+    # A subsequent ordinary validated reload is explicit and reconstructs the
+    # closed serialized state; the discarded callback-mutated object is unused.
+    restored,receipt=_digest_cache_epoch_reload_artifacts(f,artifacts)
+    assert receipt['matched_pair']is True and receipt['optimizer_steps']==3
+    assert restored.backend._same(restored.backend._model_state(),f.expected_model)
+    assert restored.backend._same(restored.backend.optimizer.state_dict(),f.expected_optimizer)
+    assert all(Path(f.prior[key]['path']).read_bytes()==raw for key,raw in f.originals.items())
+
+
+
+def test_digest_cache_pristine_migration_is_zero_updates_and_explicit_ordinary_reload(tmp_path,monkeypatch):
+    f=_digest_cache_epoch_real_qwen_fixture(tmp_path,monkeypatch,pristine=True)
+    monkeypatch.setattr(worker.TorchReviewedDecoderBackend,'train_batch',lambda *a,**k:pytest.fail('pristine migration trained'))
+    result=worker.migrate_local_reviewed_decoder_digest_cache_pristine_source_epoch_v1(f.spec,**f.options)
+    runtime,_=_digest_cache_epoch_reload_artifacts(f,result)
+    receipt=json.loads(Path(result['migration_receipt']['path']).read_bytes())
+    assert receipt['profile']==worker.REVIEWED_DIGEST_CACHE_PRISTINE_EPOCH_PROFILE
+    assert receipt['origin_kind']=='pristine0'
+    assert receipt['original_progress']=={'epochs_completed':0,'row_cursor':0,'optimizer_steps':0}
+    assert result['training_performed']is False and result['worker_progress']==receipt['original_progress']
+    assert result['ordinary_current_loader']['optimizer_steps']==runtime.backend._optimizer_steps==0
+    assert not runtime.backend.optimizer.state
+    assert runtime.backend._same(runtime.backend._model_state(),f.expected_model)
+    assert runtime.backend._same(runtime.backend.optimizer.state_dict(),f.expected_optimizer)
+    assert f.target.torch.equal(f.target.torch.get_rng_state(),f.expected_rng)
+    assert all(Path(f.prior[k]['path']).read_bytes()==raw for k,raw in f.originals.items())
+
+
+def test_digest_cache_pristine_one_update_matches_original_public_executor(tmp_path,monkeypatch):
+    from copy import deepcopy
+    f=_digest_cache_epoch_real_qwen_fixture(tmp_path,monkeypatch,pristine=True)
+    with f.original_scope():
+        original=dict(f.original_spec.to_dict(),max_steps=1,output_directory=str(tmp_path/'old-pristine-update1'))
+        baseline=f.original_worker.execute_training_job(f.original_worker.TrainingJobSpec.from_dict(original),reviewed_runtime=f.original_runtime)
+        model=deepcopy(f.original_runtime.backend._model_state())
+        Adam=deepcopy(f.original_runtime.backend.optimizer.state_dict())
+        rng=f.target.torch.get_rng_state().clone()
+    migrated=worker.migrate_local_reviewed_decoder_digest_cache_pristine_source_epoch_v1(f.spec,**f.options)
+    runtime,_=_digest_cache_epoch_reload_artifacts(f,migrated)
+    q=dict(migrated['next_job_spec'],max_steps=1,output_directory=str(tmp_path/'current-pristine-update1'))
+    actual=worker.execute_training_job(worker.TrainingJobSpec.from_dict(q),reviewed_runtime=runtime)
+    assert actual['initial_progress']=={'epochs_completed':0,'row_cursor':0,'optimizer_steps':0}
+    assert actual['worker_progress']==baseline['worker_progress']=={'epochs_completed':0,'row_cursor':1,'optimizer_steps':1}
+    assert actual['cache_source_epoch_profile']==worker.REVIEWED_DIGEST_CACHE_PRISTINE_EPOCH_PROFILE
+    assert runtime.backend._same(runtime.backend._model_state(),model)
+    assert runtime.backend._same(runtime.backend.optimizer.state_dict(),Adam)
+    assert f.target.torch.equal(f.target.torch.get_rng_state(),rng)
+    assert all(Path(f.prior[k]['path']).read_bytes()==raw for k,raw in f.originals.items())
+
+
+@pytest.mark.parametrize('damage',['progress','historical_binding','parent'])
+def test_digest_cache_pristine_refuses_progress_or_historical_training_claims(tmp_path,monkeypatch,damage):
+    import dataclasses
+    f=_digest_cache_epoch_real_qwen_fixture(tmp_path,monkeypatch,pristine=True)
+    parent=json.loads(f.originals['candidate'])
+    if damage=='progress':parent['progress']['optimizer_steps']=1
+    elif damage=='historical_binding':parent['training_binding']=f.contract['old_training_binding_artifact']
+    else:parent['parent_checkpoint_sha256']='0'*64
+    changed=f.artifact('not-pristine-origin.json',parent)
+    spec=dataclasses.replace(f.spec,parent_checkpoint_artifact=changed)
+    with pytest.raises(worker.TrainingJobValidationError,match='pristine cache origin'):
+        worker._reviewed_digest_cache_pristine_epoch_context(spec,*[f.options[k]for k in(
+            'old_configuration_artifact','old_tokenizer_pipeline_artifact','current_configuration_artifact','compatibility_contract_artifact')])
+    assert not Path(f.options['output_directory']).exists()
+
+
+def test_digest_cache_pristine_profile_cannot_be_used_as_TRAIN3(tmp_path,monkeypatch):
+    f=_digest_cache_epoch_real_qwen_fixture(tmp_path,monkeypatch,pristine=True)
+    with pytest.raises(worker.TrainingJobValidationError,match='completed T3/steps3'):
+        worker.migrate_local_reviewed_decoder_digest_cache_source_epoch_v1(f.spec,**f.options)
+    assert not Path(f.options['output_directory']).exists()
+
+
+def test_digest_cache_pristine_marked_reload_refuses_missing_receipt(tmp_path,monkeypatch):
+    f=_digest_cache_epoch_real_qwen_fixture(tmp_path,monkeypatch,pristine=True)
+    result=worker.migrate_local_reviewed_decoder_digest_cache_pristine_source_epoch_v1(f.spec,**f.options)
+    options={k:f.options[k]for k in('registry','current_admission_provider','execution_guard','asset_policy_guard',
+        'recipe_artifact','model_config_artifact','tokenizer_artifact','license_artifact','max_model_bytes','runtime_profile')}
+    options.update(admission_profile=f.spec.admission_profile,
+        model_checkpoint=worker.CheckpointArtifact.from_dict(result['model_checkpoint']),
+        optimizer_checkpoint=worker.CheckpointArtifact.from_dict(result['optimizer_checkpoint']),
+        expected_backend_identity=worker._thaw(f.spec.backend_identity),expected_source_sha256=worker._thaw(f.spec.expected_source_sha256),
+        expected_admission_inputs_sha256=f.spec.expected_admission_inputs_sha256)
+    with pytest.raises(worker.TrainingJobValidationError):
+        worker.load_local_reviewed_decoder_digest_omitted_runtime_v1(**options)
+
+
+
+@pytest.mark.parametrize('pristine',[False,True])
+def test_digest_cache_current_cohort_explicit_scope_restores_and_reloads_exact_pair(tmp_path,monkeypatch,pristine):
+    f=_digest_cache_epoch_real_qwen_fixture(tmp_path,monkeypatch,pristine=pristine,current_cohort=True)
+    migrate=worker.migrate_local_reviewed_decoder_digest_cache_pristine_source_epoch_v1 if pristine else worker.migrate_local_reviewed_decoder_digest_cache_source_epoch_v1
+    result=migrate(f.spec,**f.options)
+    runtime,_=_digest_cache_epoch_reload_artifacts(f,result)
+    receipt=json.loads(Path(result['migration_receipt']['path']).read_bytes())
+    assert receipt['dependency_scope']==worker.REVIEWED_DIGEST_CACHE_CURRENT_COHORT_SCOPE
+    assert receipt['historical_dependency_execution_requalified']is False
+    assert receipt['original_progress']['optimizer_steps']==(0 if pristine else 3)
+    assert runtime.backend._same(runtime.backend._model_state(),f.expected_model)
+    assert runtime.backend._same(runtime.backend.optimizer.state_dict(),f.expected_optimizer)
+    assert f.target.torch.equal(f.target.torch.get_rng_state(),f.expected_rng)
+    assert all(Path(f.prior[k]['path']).read_bytes()==raw for k,raw in f.originals.items())
+
+
+@pytest.mark.parametrize('damage',['missing_role','extra_role','wrong_identity','scope','current_Source','old_Source','old_config','extra_field','missing_current_Source'])
+def test_digest_cache_current_cohort_refuses_unbound_metadata(tmp_path,monkeypatch,damage):
+    from copy import deepcopy
+    f=_digest_cache_epoch_real_qwen_fixture(tmp_path,monkeypatch,pristine=True,current_cohort=True)
+    snapshot=deepcopy(f.snapshot)
+    if damage=='missing_role':snapshot['implementation'].pop('torch')
+    elif damage=='extra_role':snapshot['implementation']['extra']=dict(snapshot['implementation']['torch'])
+    elif damage=='wrong_identity':snapshot['implementation']['model_config_class']['sha256']='0'*64
+    elif damage=='scope':snapshot['association_scope']='declared-current-cohort-before-Source-transition-not-historical-execution-attestation/v1'
+    elif damage=='current_Source':snapshot['current_source_sha256']['worker']='0'*64
+    elif damage=='old_Source':snapshot['old_source_sha256']['worker']='0'*64
+    elif damage=='old_config':snapshot['old_configuration_sha256']='0'*64
+    elif damage=='extra_field':snapshot['unreviewed']=True
+    else:snapshot.pop('current_source_sha256')
+    snapshot_ref=f.artifact('changed-current-cohort.json',snapshot)
+    contract=dict(f.contract,dependency_snapshot_artifact=worker.asdict(snapshot_ref))
+    options=dict(f.options,compatibility_contract_artifact=f.artifact('changed-current-cohort-contract.json',contract))
+    with pytest.raises(worker.TrainingJobValidationError):
+        worker.migrate_local_reviewed_decoder_digest_cache_pristine_source_epoch_v1(f.spec,**options)
+    assert not(Path(f.options['output_directory'])/'receipt.json').exists()
+    assert all(Path(f.prior[k]['path']).read_bytes()==raw for k,raw in f.originals.items())
+
+
+def test_digest_cache_current_cohort_rechecks_actual_module_origin_after_first_check(tmp_path,monkeypatch):
+    import sys
+    f=_digest_cache_epoch_real_qwen_fixture(tmp_path,monkeypatch,pristine=True,current_cohort=True)
+    module=sys.modules[type(f.target.backend.model.config).__module__]
+    original=worker._reviewed_epoch_dependencies;passes=[]
+    def observed(*args,**kwargs):
+        result=original(*args,**kwargs)
+        if kwargs.get('_current_cache_contract')is not None:
+            passes.append(result)
+            if len(passes)==1:monkeypatch.setattr(module,'__file__',str(tmp_path/'changed-config-cohort.py'))
+        return result
+    monkeypatch.setattr(worker,'_reviewed_epoch_dependencies',observed)
+    with pytest.raises(worker.TrainingJobValidationError,match='runtime dependency origin differs'):
+        worker.migrate_local_reviewed_decoder_digest_cache_pristine_source_epoch_v1(f.spec,**f.options)
+    assert len(passes)==1  # First was genuine; the second real check refused.
+    assert not(Path(f.options['output_directory'])/'receipt.json').exists()
+    assert all(Path(f.prior[k]['path']).read_bytes()==raw for k,raw in f.originals.items())
+
+
+def test_digest_cache_current_cohort_ordinary_reload_rechecks_actual_module_origin(tmp_path,monkeypatch):
+    import sys
+    f=_digest_cache_epoch_real_qwen_fixture(tmp_path,monkeypatch,pristine=True,current_cohort=True)
+    result=worker.migrate_local_reviewed_decoder_digest_cache_pristine_source_epoch_v1(f.spec,**f.options)
+    module=sys.modules[type(f.target.backend.model.config).__module__]
+    monkeypatch.setattr(module,'__file__',str(tmp_path/'changed-reload-config-cohort.py'))
+    with pytest.raises(worker.TrainingJobValidationError,match='runtime dependency origin differs'):
+        _digest_cache_epoch_reload_artifacts(f,result)
+    assert all(Path(f.prior[k]['path']).read_bytes()==raw for k,raw in f.originals.items())
+
+
+"""Fictional, pure-Python scaffolding for the actual owner generation loop.
+
+This module does not import Torch, a model, the worker, a codec, or project code.
+The caller supplies the actual loaded worker and scripted authored token choices.
+No target, reference, candidate or decoder prefix enters the generation records.
+The real worker generate_batch / target-codec profile check, real source-wire /
+token checks, and real strict output assembler are left untouched.
+
+Only _torch, _configuration, _assert_pipeline and _preserve_readonly_state are
+fictional instance scaffolding. These controls do NOT qualify real numeric model
+execution, pretrained/native tokenization, pipeline authentication, ownership,
+checkpoint restoration, legal meaning, or resource / execution authority.
+Unsupported tensor operations fail rather than pretending to implement Torch.
+The fragment defines helpers only; importing it performs no generation.
+"""
+
+from contextlib import contextmanager
+from copy import deepcopy
+import json
+from types import SimpleNamespace
+
+
+class _ByteTokenizer:
+    bos_token_id = 256
+    eos_token_id = 257
+    vocab_size = 258
+
+    def __init__(self, trace, counters):
+        self._trace = trace
+        self._counters = counters
+
+    def encode(self, text):
+        if type(text) is not str:
+            raise TypeError('fictional byte transport requires a string')
+        result = list(text.encode('utf-8', errors='strict'))
+        self._counters['tokenizer_encode_calls'] += 1
+        self._trace.append(('tokenizer.encode', text, tuple(result)))
+        return result
+
+    def decode(self, token_ids):
+        if type(token_ids) is not list or any(
+                type(value) is not int or not 0 <= value < 256
+                for value in token_ids):
+            raise KeyError('fictional byte body token required')
+        self._counters['tokenizer_decode_calls'] += 1
+        self._trace.append(('tokenizer.decode', tuple(token_ids)))
+        # Partial UTF-8 raises the genuine stdlib UnicodeDecodeError. Nothing is
+        # replaced, stripped, padded, canonicalized, or assembled here.
+        return bytes(token_ids).decode('utf-8', errors='strict')
+
+
+class _TokenTensor:
+    def __init__(self, rows, *, dtype, device):
+        if (type(rows) is not list or not rows or
+                any(type(row) is not list for row in rows) or
+                len({len(row) for row in rows}) != 1 or
+                any(type(value) is not int for row in rows for value in row)):
+            raise TypeError('fictional token tensor requires rectangular integer rows')
+        self._rows = tuple(tuple(row) for row in rows)
+        self.shape = (len(rows), len(rows[0]))
+        self.dtype = dtype
+        self.device = device
+
+    def tolist(self):
+        return [list(row) for row in self._rows]
+
+    def detach(self):
+        return self
+
+    def cpu(self):
+        return self
+
+
+class _Scalar:
+    def __init__(self, value, trace, counters):
+        self._value = value
+        self._trace = trace
+        self._counters = counters
+
+    def item(self):
+        self._counters['argmax_item_calls'] += 1
+        self._trace.append(('logits.argmax.item', self._value))
+        return self._value
+
+
+class _LastPositionLogits:
+    def __init__(self, token, trace, counters, *, device):
+        self._token = token
+        self._trace = trace
+        self._counters = counters
+        self.device = device
+        self.shape = (258,)
+
+    def argmax(self):
+        self._counters['logit_argmax_calls'] += 1
+        self._trace.append(('logits.argmax', self._token))
+        return _Scalar(self._token, self._trace, self._counters)
+
+
+class _Logits:
+    def __init__(self, positions, token, trace, counters, *, device,
+                 finite=True, floating=True):
+        self.shape = (1, positions, 258)
+        self.device = device
+        self.finite = finite
+        self.floating = floating
+        self._token = token
+        self._trace = trace
+        self._counters = counters
+
+    def __getitem__(self, index):
+        if index != (0, -1):
+            raise NotImplementedError('only the actual owner last-position view is implemented')
+        self._trace.append(('logits.last_position', 0, -1))
+        return _LastPositionLogits(self._token, self._trace, self._counters,
+                                  device=self.device)
+
+
+class _FiniteFlags:
+    def __init__(self, finite):
+        self._finite = finite
+
+    def all(self):
+        return self._finite
+
+
+class _FakeTorch:
+    long = 'fictional:long'
+
+    def __init__(self, trace, counters, device):
+        self._trace = trace
+        self._counters = counters
+        self._device = device
+
+    def tensor(self, rows, *, dtype, device):
+        if dtype != self.long or device != self._device:
+            raise TypeError('unexpected fictional tensor dtype/device')
+        result = _TokenTensor(rows, dtype=dtype, device=device)
+        self._counters['tensor_calls'] += 1
+        self._trace.append(('torch.tensor', tuple(tuple(row) for row in rows),
+                            dtype, device))
+        return result
+
+    def ones_like(self, value):
+        if type(value) is not _TokenTensor:
+            raise TypeError('fictional ones_like requires an owned token tensor')
+        self._counters['ones_like_calls'] += 1
+        self._trace.append(('torch.ones_like', value.shape))
+        return _TokenTensor([[1] * value.shape[1] for _ in range(value.shape[0])],
+                            dtype=value.dtype, device=value.device)
+
+    def is_tensor(self, value):
+        result = type(value) in (_TokenTensor, _Logits)
+        self._trace.append(('torch.is_tensor', result))
+        return result
+
+    def is_floating_point(self, value):
+        result = type(value) is _Logits and value.floating is True
+        self._trace.append(('torch.is_floating_point', result))
+        return result
+
+    def isfinite(self, value):
+        if type(value) is not _Logits or type(value.finite) is not bool:
+            raise TypeError('fictional finite flags require owned logits')
+        self._counters['finite_checks'] += 1
+        self._trace.append(('torch.isfinite', value.shape, value.finite))
+        return _FiniteFlags(value.finite)
+
+    @contextmanager
+    def no_grad(self):
+        self._trace.append(('torch.no_grad.enter',))
+        try:
+            yield
+        finally:
+            self._trace.append(('torch.no_grad.exit',))
+
+
+class _ScriptedModel:
+    """Return one authored argmax per actual fixture forward; no real model."""
+
+    def __init__(self, script, trace, counters, device):
+        self._script = tuple(script)
+        self._trace = trace
+        self._counters = counters
+        self._device = device
+        self.calls = []
+        self.training = True
+        self.finite = True
+        self.floating = True
+
+    def train(self, mode):
+        if type(mode) is not bool:
+            raise TypeError('fictional mode requires bool')
+        self.training = mode
+        self._trace.append(('fake_model.train', mode))
+        return self
+
+    def __call__(self, **arguments):
+        if set(arguments) != {'input_ids', 'attention_mask'}:
+            raise AssertionError('causal full-prefix fixture forbids labels/cache/extra inputs')
+        ids, mask = arguments['input_ids'], arguments['attention_mask']
+        if (type(ids) is not _TokenTensor or type(mask) is not _TokenTensor or
+                ids.shape != mask.shape or ids.shape[0] != 1 or
+                any(value != 1 for row in mask.tolist() for value in row)):
+            raise AssertionError('fictional full source/prefix and ones mask required')
+        index = len(self.calls)
+        if index >= len(self._script):
+            raise AssertionError('authored fixture logits script exhausted; no implicit continuation')
+        token = self._script[index]
+        call = {'input_ids': ids.tolist(), 'attention_mask': mask.tolist(),
+                'script_index': index, 'authored_argmax': token}
+        self.calls.append(call)
+        self._counters['fake_model_forward_calls'] += 1
+        self._trace.append(('fake_model.forward', index,
+                            tuple(tuple(row) for row in call['input_ids']), token))
+        return SimpleNamespace(logits=_Logits(ids.shape[1], token, self._trace,
+            self._counters, device=self._device, finite=self.finite,
+            floating=self.floating))
+
+
+def make_fake_generation_fixture(worker, script, *, max_sequence_tokens=65536):
+    """Build a fresh object.__new__ fixture for the supplied actual worker.
+
+    ``script`` contains only fictional model choices (authored body byte IDs plus
+    an explicit suffix). The caller creates that authored body independently.
+    The script is never passed as a target/reference/prefix input to the backend.
+    Invoke ``fixture.backend.generate_batch`` directly, with ``fixture.records``
+    and ``fixture.execution_guard``. Use a fresh fixture for each run; there is
+    no replay/reset helper or implicit token when the script is exhausted.
+    """
+    if (type(script) not in (list, tuple) or not script or
+            any(type(value) is not int or not 0 <= value < 258 for value in script)):
+        raise ValueError('explicit nonempty authored 258-token-domain script required')
+    if type(max_sequence_tokens) is not int or not 3 <= max_sequence_tokens <= 262144:
+        raise ValueError('use the existing owner context bounds')
+    trace = []
+    counters = {name: 0 for name in (
+        'tokenizer_encode_calls', 'tokenizer_decode_calls', 'tensor_calls',
+        'ones_like_calls', 'finite_checks', 'logit_argmax_calls',
+        'argmax_item_calls', 'fake_model_forward_calls', 'configuration_calls',
+        'fictional_pipeline_checks', 'execution_guard_calls',
+        'guard_source_snapshots', 'readonly_entries', 'readonly_exits')}
+    tokenizer = _ByteTokenizer(trace, counters)
+    device = 'fictional:cpu'
+    fake_torch = _FakeTorch(trace, counters, device)
+    model = _ScriptedModel(script, trace, counters, device)
+    optimizer = object()
+    backend = object.__new__(worker.TorchReviewedDecoderBackend)
+    backend.model = model
+    backend.optimizer = optimizer
+    backend.tokenizer = tokenizer
+    backend.model_profile = None
+    backend.architecture = 'causal_lm'
+    backend.target_codec = worker.REVIEWED_DIGEST_OMITTED_TARGET_CODEC
+    backend.training_conditioning_profile = None
+    backend.max_sequence_tokens = max_sequence_tokens
+    backend._optimizer_steps = 0
+    contract = {'bos_token_id': 256, 'eos_token_id': 257, 'vocab_size': 258}
+    encode_owner, decode_owner = _ByteTokenizer.encode, _ByteTokenizer.decode
+
+    def configuration():
+        counters['configuration_calls'] += 1
+        trace.append(('fictional.configuration',))
+        return {'tokenizer': dict(contract), 'model_config': {'vocab_size': 258}}
+
+    def assert_pipeline(expected):
+        counters['fictional_pipeline_checks'] += 1
+        trace.append(('fictional.pipeline', tuple(sorted(expected.items()))))
+        current = {'bos_token_id': tokenizer.bos_token_id,
+                   'eos_token_id': tokenizer.eos_token_id,
+                   'vocab_size': tokenizer.vocab_size}
+        if (expected != contract or current != contract or
+                backend.tokenizer is not tokenizer or
+                getattr(tokenizer.encode, '__func__', None) is not encode_owner or
+                getattr(tokenizer.decode, '__func__', None) is not decode_owner):
+            raise worker.TrainingJobValidationError('fictional tokenizer transport changed')
+
+    @contextmanager
+    def preserve_readonly_state(*, projected_model):
+        if projected_model is not False:
+            raise AssertionError('this fixture provides no native projected-model path')
+        counters['readonly_entries'] += 1
+        trace.append(('fictional.readonly.enter', projected_model))
+        original_identity = (id(model), id(optimizer))
+        original_mode = model.training
+
+        def owner_identity():
+            # Actual generate_batch compares this result to the original tuple.
+            # IDs are intentionally not added to the deterministic trace.
+            return (id(backend.model), id(backend.optimizer))
+        try:
+            yield device, owner_identity, original_identity
+        finally:
+            model.training = original_mode
+            counters['readonly_exits'] += 1
+            trace.append(('fictional.readonly.exit',))
+
+    backend._torch = lambda: fake_torch
+    backend._configuration = configuration
+    backend._assert_pipeline = assert_pipeline
+    backend._preserve_readonly_state = preserve_readonly_state
+    source = {
+        'profile': 'reviewed-source-selection-context/v2',
+        'source_text': 'A fixture participant may submit a notice.',
+        'governing_context': {
+            'jurisdiction': 'fixture:jurisdiction',
+            'instrument_id': 'fixture:instrument',
+            'governing_edition': 'fixture:edition',
+            'legal_as_of_utc': '2026-01-02T00:00:00Z',
+            'valid_from_utc': '2026-01-01T00:00:00Z',
+            'valid_until_utc': None},
+        'source_binding': {
+            'source_version_cid': 'fixture:source',
+            'occurrence_cid': 'fixture:occurrence',
+            'document_revision': 'fixture:revision'},
+        'selection_context': {
+            'schema': 'caller-known-interpretation-selection/v1',
+            'interpretation_id': 'fixture:known-interpretation',
+            'selection_mode': 'identifier_only'}}
+    wire = json.dumps(source, sort_keys=True, separators=(',', ':'), allow_nan=False)
+    source_ids = [tokenizer.bos_token_id, *tokenizer.encode(wire), tokenizer.eos_token_id]
+    records = [{'id': 'fixture:source-only-row', 'unit_id': 'fixture:source-only-unit',
+                'source_wire': wire, 'source_token_ids': source_ids}]
+    guard_source_snapshots = []
+
+    def execution_guard():
+        counters['execution_guard_calls'] += 1
+        counters['guard_source_snapshots'] += 1
+        trace.append(('execution_guard', counters['execution_guard_calls']))
+        # This is a caller-guard snapshot, NOT a substituted or instrumented
+        # public source validator. The real owner still checks the actual rows.
+        guard_source_snapshots.append(deepcopy(records))
+
+    return SimpleNamespace(
+        backend=backend, records=records, tokenizer=tokenizer, model=model,
+        torch=fake_torch, trace=trace, counters=counters,
+        execution_guard=execution_guard, guard_source_snapshots=guard_source_snapshots,
+        qualification={
+            'actual_owner_generate_batch_retained': True,
+            'actual_target_codec_profile_check_retained': True,
+            'codec_or_JSON_or_source_validator_stubbed': False,
+            'real_model_or_native_tokenizer_qualified': False,
+            'real_pipeline_authentication_qualified': False,
+            'real_state_restoration_qualified': False,
+            'legal_or_execution_authority_granted': False})
+
+
+# Entirely authored structural-codec fixture; no corpus/reference/training data.
+import copy as _authored_codec_copy
+import json as _authored_codec_json
+import unittest as _authored_codec_unittest
+
+from ipfs_datasets_py.logic.autoformal import training_cycle_inputs as _authored_codec_inputs
+from ipfs_datasets_py.logic.syntax_core.ast import TypedExpression as _AuthoredTypedExpression
+from ipfs_datasets_py.logic.syntax_core.ast import mk_true as _authored_mk_true
+from ipfs_datasets_py.logic.syntax_core.ast import mk_false as _authored_mk_false
+from ipfs_datasets_py.logic.syntax_core.signatures import (
+    propositional_signature as _authored_propositional_signature,
+)
+
+
+def _authored_digest_omitted_formula_target(truth=True):
+    """Public formula schema only; fictional IDs convey no legal admission."""
+    if type(truth) is not bool:
+        raise ValueError("ordinary Boolean fixture choice required")
+    signature = _authored_propositional_signature(
+        "signature:authored-digest-omitted-empty", (),
+    )
+    root = (_authored_mk_true if truth else _authored_mk_false)(
+        "node:authored-digest-omitted-boolean",
+    )
+    expression = _AuthoredTypedExpression(
+        expression_id="expression:authored-digest-omitted-boolean",
+        root=root, signature=signature,
+    )
+    return {
+        "profile": "fictional-authored-structural-formula/v1",
+        "typed_expression": expression.to_dict(),
+        "argument_roles": [],
+        "assumptions": [],
+        "governing_context": {
+            "jurisdiction": "fictional:codec-fixture",
+            "instrument_id": "fictional:codec-fixture-only",
+            "governing_edition": "fictional:edition-1",
+            "legal_as_of_utc": "2020-01-01T00:00:00Z",
+            "valid_from_utc": "2020-01-01T00:00:00Z",
+            "valid_until_utc": None,
+        },
+        "interpretation_id": "fictional:structural-codec-only",
+        "source_binding": {
+            "source_version_cid": "fictional:authored-source-version",
+            "occurrence_cid": "fictional:authored-occurrence",
+            "document_revision": "fictional:revision-1",
+        },
+        "definition_uses": [],
+        "cross_references": [],
+    }
+
+
+def _authored_digest_omitted_model_wire(value):
+    # Framing only. The actual production codec performs every validation.
+    return _authored_codec_json.dumps(
+        value, ensure_ascii=True, sort_keys=True,
+        separators=(",", ":"), allow_nan=False,
+    )
+
+
+class AuthoredDigestOmittedStructuralCodecTests(_authored_codec_unittest.TestCase):
+    def test_authored_canonical_formula_uses_real_public_codec(self):
+        target = _authored_digest_omitted_formula_target(True)
+        codec = _authored_codec_inputs.REVIEWED_DECODER_DIGEST_OMITTED_TARGET_CODEC
+        model_wire = _authored_codec_inputs.encode_reviewed_decoder_digest_omitted_target(
+            target, target_codec=codec,
+        )
+        offered = _authored_codec_json.loads(model_wire)
+        self.assertNotIn("content_digest", offered["typed_expression"])
+        self.assertEqual(set(offered), set(target))
+        assembled = _authored_codec_inputs.assemble_reviewed_decoder_digest_omitted_target(
+            model_wire, target_codec=codec,
+        )
+        self.assertEqual(assembled, target)
+        projected = _authored_codec_copy.deepcopy(assembled)
+        del projected["typed_expression"]["content_digest"]
+        self.assertEqual(_authored_digest_omitted_model_wire(projected), model_wire)
+
+    def test_authored_valid_truth_mutation_is_preserved_not_reference_checked(self):
+        true_target = _authored_digest_omitted_formula_target(True)
+        false_target = _authored_digest_omitted_formula_target(False)
+        codec = _authored_codec_inputs.REVIEWED_DECODER_DIGEST_OMITTED_TARGET_CODEC
+        original_wire = _authored_codec_inputs.encode_reviewed_decoder_digest_omitted_target(
+            true_target, target_codec=codec,
+        )
+        offered = _authored_codec_json.loads(original_wire)
+        self.assertEqual(offered["typed_expression"]["root"]["kind"], "true")
+        offered["typed_expression"]["root"]["kind"] = "false"
+        mutated_wire = _authored_digest_omitted_model_wire(offered)
+        assembled = _authored_codec_inputs.assemble_reviewed_decoder_digest_omitted_target(
+            mutated_wire, target_codec=codec,
+        )
+        self.assertEqual(assembled, false_target)
+        self.assertNotEqual(assembled, true_target)
+        self.assertNotEqual(
+            assembled["typed_expression"]["content_digest"],
+            true_target["typed_expression"]["content_digest"],
+        )
+        self.assertEqual(assembled["typed_expression"]["root"]["kind"], "false")
+        self.assertEqual(
+            {key: value for key, value in assembled.items() if key != "typed_expression"},
+            {key: value for key, value in true_target.items() if key != "typed_expression"},
+        )
+        projected = _authored_codec_copy.deepcopy(assembled)
+        del projected["typed_expression"]["content_digest"]
+        self.assertEqual(_authored_digest_omitted_model_wire(projected), mutated_wire)
+
+    def test_authored_malformed_incomplete_and_type_invalid_wires_refuse(self):
+        target = _authored_digest_omitted_formula_target(True)
+        codec = _authored_codec_inputs.REVIEWED_DECODER_DIGEST_OMITTED_TARGET_CODEC
+        valid_wire = _authored_codec_inputs.encode_reviewed_decoder_digest_omitted_target(
+            target, target_codec=codec,
+        )
+        offered = _authored_codec_json.loads(valid_wire)
+        incomplete = _authored_codec_copy.deepcopy(offered)
+        del incomplete["cross_references"]
+        wrong_type = _authored_codec_copy.deepcopy(offered)
+        wrong_type["typed_expression"]["root"]["arguments"] = "not-a-sequence"
+        cases = (
+            ("malformed_json", valid_wire[:-1]),
+            ("missing_ninth_field", _authored_digest_omitted_model_wire(incomplete)),
+            ("type_invalid_ast_arguments", _authored_digest_omitted_model_wire(wrong_type)),
+        )
+        for label, wire in cases:
+            with self.subTest(label=label):
+                with self.assertRaises(ValueError):
+                    _authored_codec_inputs.assemble_reviewed_decoder_digest_omitted_target(
+                        wire, target_codec=codec,
+                    )
+
+    def test_authored_even_correct_supplied_digest_is_forbidden(self):
+        target = _authored_digest_omitted_formula_target(True)
+        codec = _authored_codec_inputs.REVIEWED_DECODER_DIGEST_OMITTED_TARGET_CODEC
+        actual_digest = target["typed_expression"]["content_digest"]
+        for supplied in (actual_digest, "", None):
+            with self.subTest(supplied_digest=supplied):
+                offered = _authored_codec_copy.deepcopy(target)
+                offered["typed_expression"]["content_digest"] = supplied
+                wire = _authored_digest_omitted_model_wire(offered)
+                with self.assertRaisesRegex(ValueError, "omit content_digest entirely"):
+                    _authored_codec_inputs.assemble_reviewed_decoder_digest_omitted_target(
+                        wire, target_codec=codec,
+                    )
+
+
+from types import SimpleNamespace as _CodecTerminalNamespace
+from unittest.mock import patch as _codec_terminal_patch
+
+
+class ReviewedCodecTerminalGenerationTests(_authored_codec_unittest.TestCase):
+    """Pure scripted-logit controls; no native/pipeline/restoration authority."""
+
+    def _body(self, truth=True):
+        target = _authored_digest_omitted_formula_target(truth)
+        wire = _authored_codec_inputs.encode_reviewed_decoder_digest_omitted_target(
+            target, target_codec=worker.REVIEWED_DIGEST_OMITTED_TARGET_CODEC)
+        return target, wire
+
+    def _run(self, script, *, terminal=True, budget=None, seconds=None):
+        fixture = make_fake_generation_fixture(worker, script)
+        kwargs = {} if terminal is False else {
+            "terminal_profile": worker.REVIEWED_DECODER_CANONICAL_TERMINAL_PROFILE}
+        if seconds is not None:
+            kwargs["max_generation_seconds"] = seconds
+        rows = fixture.backend.generate_batch(
+            fixture.records, max_output_tokens=len(script) + 1 if budget is None else budget,
+            execution_guard=fixture.execution_guard, **kwargs)
+        self.assertEqual(len(rows), 1)
+        return fixture, rows[0]
+
+    def test_next_forward_selection_constrains_eos_after_public_codec_body(self):
+        target, body = self._body()
+        tokens = list(body.encode("utf-8"))
+        fixture, row = self._run([*tokens, ord("!")])
+        self.assertEqual(row["outcome"], "complete")
+        self.assertEqual(row["candidate"], target)
+        self.assertEqual(row["generated_text"], body)
+        self.assertEqual(row["generated_token_ids"], [256, *tokens, 257])
+        self.assertEqual(fixture.counters["fake_model_forward_calls"], len(tokens) + 1)
+        # The last forward offered !; EOS is constrained, never misreported as
+        # the unobserved unconstrained argmax or appended without a forward.
+        self.assertEqual(fixture.counters["logit_argmax_calls"], len(tokens))
+        self.assertEqual(fixture.counters["argmax_item_calls"], len(tokens))
+
+    def test_semantically_changed_canonical_body_remains_structurally_terminal(self):
+        true_target, true_wire = self._body(True)
+        false_target, false_wire = self._body(False)
+        self.assertNotEqual(true_target, false_target)
+        self.assertNotEqual(true_wire, false_wire)
+        for body in (true_wire, false_wire):
+            with self.subTest(body_kind=_authored_codec_json.loads(body)["typed_expression"]["root"]["kind"]):
+                self.assertTrue(worker._reviewed_decoder_codec_terminal_body(
+                    body, target_codec=worker.REVIEWED_DIGEST_OMITTED_TARGET_CODEC,
+                    terminal_profile=worker.REVIEWED_DECODER_CANONICAL_TERMINAL_PROFILE))
+
+    def test_incomplete_shallow_and_invalid_typed_bodies_do_not_become_terminal(self):
+        target, wire = self._body()
+        shallow = _authored_codec_json.loads(wire)
+        shallow["typed_expression"]["root"] = {"kind": "predicate", "name": "invented"}
+        supplied = _authored_digest_omitted_model_wire(target)
+        for text in (wire[:-1], "{}", _authored_digest_omitted_model_wire(shallow), supplied, "", None):
+            with self.subTest(value_type=type(text).__name__):
+                self.assertFalse(worker._reviewed_decoder_codec_terminal_body(
+                    text, target_codec=worker.REVIEWED_DIGEST_OMITTED_TARGET_CODEC,
+                    terminal_profile=worker.REVIEWED_DECODER_CANONICAL_TERMINAL_PROFILE))
+
+    def test_unsupported_terminal_profiles_and_codec_refuse_before_forward(self):
+        for profile in (False, "", "unknown-terminal/v1", 1, {}, []):
+            fixture = make_fake_generation_fixture(worker, [257])
+            with self.subTest(profile_type=type(profile).__name__):
+                with self.assertRaises(worker.TrainingJobValidationError):
+                    fixture.backend.generate_batch(fixture.records, max_output_tokens=2,
+                        execution_guard=fixture.execution_guard, terminal_profile=profile)
+                self.assertEqual(fixture.counters["fake_model_forward_calls"], 0)
+        fixture = make_fake_generation_fixture(worker, [257])
+        fixture.backend.target_codec = "complete-reviewed-norm-json/v2"
+        with self.assertRaises(worker.TrainingJobValidationError):
+            fixture.backend.generate_batch(fixture.records, max_output_tokens=2,
+                execution_guard=fixture.execution_guard,
+                terminal_profile=worker.REVIEWED_DECODER_CANONICAL_TERMINAL_PROFILE)
+        self.assertEqual(fixture.counters["fake_model_forward_calls"], 0)
+
+    def test_early_eos_invalid_body_and_partial_utf8_dispositions_are_unchanged(self):
+        cases = [([257], "abstained", "empty_output"),
+                 ([ord("{"), 257], "invalid", "invalid_complete_norm_json"),
+                 ([0xC3, 257], "invalid", "invalid_output_transport")]
+        for script, outcome, reason in cases:
+            with self.subTest(script=script):
+                _, plain = self._run(script, terminal=False)
+                _, selected = self._run(script)
+                self.assertEqual(selected, plain)
+                self.assertEqual(selected["outcome"], outcome)
+                self.assertEqual(selected["reason"], reason)
+
+    def test_no_eos_is_appended_without_a_remaining_output_slot(self):
+        _, body = self._body()
+        tokens = list(body.encode("utf-8"))
+        fixture, row = self._run([*tokens, ord("!")], budget=len(tokens) + 1)
+        self.assertEqual(row["outcome"], "incomplete")
+        self.assertEqual(row["reason"], "output_limit_without_eos")
+        self.assertEqual(row["generated_token_ids"], [256, *tokens])
+        self.assertIsNone(row["candidate"])
+        self.assertEqual(fixture.counters["fake_model_forward_calls"], len(tokens))
+
+    def test_no_eos_is_appended_after_cooperative_time_expiry(self):
+        _, body = self._body()
+        tokens = list(body.encode("utf-8"))
+        readings = iter([0.0] * (len(tokens) + 1) + [1.0])
+        clock = _CodecTerminalNamespace(monotonic=lambda: next(readings))
+        with _codec_terminal_patch.object(worker, "time", clock):
+            fixture, row = self._run([*tokens, ord("!")], seconds=1.0)
+        self.assertEqual(row["outcome"], "incomplete")
+        self.assertEqual(row["reason"], "generation_time_limit_without_eos")
+        self.assertEqual(row["generated_token_ids"], [256, *tokens])
+        self.assertIsNone(row["candidate"])
+        self.assertEqual(fixture.counters["fake_model_forward_calls"], len(tokens))
+
+    def test_default_omission_and_none_have_exact_call_traces_and_no_clock(self):
+        def forbidden_clock():
+            raise AssertionError("untimed generation must not sample a clock")
+        traces, outputs, counters = [], [], []
+        with _codec_terminal_patch.object(worker, "time", _CodecTerminalNamespace(monotonic=forbidden_clock)):
+            for explicit_none in (False, True):
+                fixture = make_fake_generation_fixture(worker, [ord("{"), 257])
+                kwargs = {"terminal_profile": None} if explicit_none else {}
+                outputs.append(fixture.backend.generate_batch(fixture.records,
+                    max_output_tokens=3, execution_guard=fixture.execution_guard, **kwargs))
+                traces.append(fixture.trace)
+                counters.append(dict(fixture.counters))
+        self.assertEqual(outputs[0], outputs[1])
+        self.assertEqual(traces[0], traces[1])
+        self.assertEqual(counters[0], counters[1])
+        self.assertEqual(counters[0]["fake_model_forward_calls"], 2)
+        self.assertEqual(counters[0]["logit_argmax_calls"], 2)
+
+    def test_source_mutation_after_real_codec_refuses_before_eos_selection(self):
+        _, body = self._body()
+        tokens = list(body.encode("utf-8"))
+        fixture = make_fake_generation_fixture(worker, [*tokens, ord("!")])
+        actual = worker._reviewed_decoder_codec_terminal_body
+
+        def mutate_after_real_validation(text, **kwargs):
+            valid = actual(text, **kwargs)
+            if valid:
+                fixture.records[0]["source_wire"] += " "
+            return valid
+
+        with _codec_terminal_patch.object(worker, "_reviewed_decoder_codec_terminal_body", mutate_after_real_validation):
+            with self.assertRaises(worker.TrainingJobValidationError):
+                fixture.backend.generate_batch(fixture.records, max_output_tokens=len(tokens) + 2,
+                    execution_guard=fixture.execution_guard,
+                    terminal_profile=worker.REVIEWED_DECODER_CANONICAL_TERMINAL_PROFILE)
+        self.assertEqual(fixture.counters["fake_model_forward_calls"], len(tokens) + 1)
+        self.assertEqual(fixture.counters["logit_argmax_calls"], len(tokens))
+        self.assertEqual(fixture.counters["readonly_exits"], 1)
+
+    def test_terminal_policy_is_closed_and_previous_policy_stays_exact(self):
+        previous = {
+            "schema": worker.REVIEWED_DIGEST_OMITTED_GENERATION_POLICY_SCHEMA,
+            "generation_profile": "builtin-qwen2-dynamic-kv/v1",
+            "conditioning_profile": worker.REVIEWED_DIGEST_OMITTED_CHATML_PROFILE,
+            "max_generation_seconds": 1200,
+            "context_budget_profile": worker.REVIEWED_QWEN2_CONTEXT_BUDGET_PROFILE,
+            "target_codec": worker.REVIEWED_DIGEST_OMITTED_TARGET_CODEC,
+        }
+        selected = dict(previous, schema=worker.REVIEWED_DIGEST_OMITTED_TERMINAL_POLICY_SCHEMA,
+                        terminal_profile=worker.REVIEWED_DECODER_CANONICAL_TERMINAL_PROFILE)
+        self.assertEqual(worker._reviewed_decoder_generation_policy(previous), previous)
+        self.assertEqual(worker._reviewed_decoder_generation_policy(selected), selected)
+        invalid = [dict(previous, terminal_profile=worker.REVIEWED_DECODER_CANONICAL_TERMINAL_PROFILE),
+                   {key: value for key, value in selected.items() if key != "terminal_profile"},
+                   dict(selected, terminal_profile=None), dict(selected, target_codec="complete-reviewed-norm-json/v2"),
+                   dict(selected, hidden_reference={}), dict(selected, max_generation_seconds=False)]
+        for policy in invalid:
+            with self.subTest(keys=sorted(policy)):
+                with self.assertRaises(worker.TrainingJobValidationError):
+                    worker._reviewed_decoder_generation_policy(policy)
+
+    def test_full_source_and_output_capacity_is_not_reduced_by_terminal_assumption(self):
+        fixture = make_fake_generation_fixture(worker, [257])
+        fixture.backend.max_sequence_tokens = len(fixture.records[0]["source_token_ids"]) + 2
+        with self.assertRaises(worker.TrainingJobValidationError):
+            fixture.backend.generate_batch(fixture.records, max_output_tokens=3,
+                execution_guard=fixture.execution_guard,
+                terminal_profile=worker.REVIEWED_DECODER_CANONICAL_TERMINAL_PROFILE)
+        self.assertEqual(fixture.counters["fake_model_forward_calls"], 0)
+
+
+# Pure saved-Source controls for the explicit terminal-to-complete348 inverse.
+# These are source/projection tests, not marked-parent or model eligibility tests.
+_CLOSED_TERMINAL_TRUSTED_GLUE_SHA256 = "0817f0b1455e3219df66e55ec3ae8cdc35cf4c72413408ce1a988229b8d90625"
+_CLOSED_TERMINAL_PRIOR_WORKER_BYTES = 586659
+_CLOSED_TERMINAL_PRIOR_WORKER_SHA256 = "348fe95f15ee03d8039c1171b30d228400416f3a6fa40462f64592139ba54963"
+_CLOSED_TERMINAL_CURRENT_INPUT_BYTES = 177467
+_CLOSED_TERMINAL_CURRENT_INPUT_SHA256 = "88125051a7b1d0dcc887f772faa750fa13b8a2141693679a62e2bd5e97e92db3"
+_CLOSED_TERMINAL_GLUE_BEGIN = b"\n# Closed terminal source proof glue, version 1.\n"
+_CLOSED_TERMINAL_GLUE_END = b"\n# End closed terminal source proof glue, version 1.\n"
+
+
+def _closed_terminal_source_proof_current_bytes():
+    raw = Path(worker.__file__).read_bytes()
+    assert type(raw) is bytes and raw.count(_CLOSED_TERMINAL_GLUE_BEGIN) == 1
+    assert raw.count(_CLOSED_TERMINAL_GLUE_END) == 1
+    return raw
+
+
+def _closed_terminal_source_proof_original_pair(prior_worker, current_inputs):
+    """Apply the existing exact edits only after recovering complete pinned348."""
+    originals = {}
+    for role, raw in (("worker", prior_worker), ("inputs", current_inputs)):
+        rule = _DIGEST_CACHE_EPOCH_ORIGINAL_SOURCE_REVERSE_EDITS[role]
+        assert len(raw) == rule["current_bytes"] and hashlib.sha256(raw).hexdigest() == rule["current_sha256"]
+        lines = raw.decode("utf-8").splitlines(keepends=True)
+        for lo, hi, expected, replacement in reversed(rule["edits"]):
+            assert hashlib.sha256("".join(lines[lo:hi]).encode("utf-8")).hexdigest() == expected
+            lines[lo:hi] = [replacement]
+        old = "".join(lines).encode("utf-8")
+        assert len(old) == rule["old_bytes"] and hashlib.sha256(old).hexdigest() == rule["old_sha256"]
+        originals[role] = old
+    return originals["worker"], originals["inputs"]
+
+
+def _closed_terminal_source_proof_effectful_glue_change(raw):
+    """Change unexecuted candidate source text inside the inverse's own body."""
+    import ast
+    lines = raw.decode("utf-8").splitlines(keepends=True)
+    tree = ast.parse(raw)
+    selected = [node for node in tree.body if isinstance(node, ast.FunctionDef)
+                and node.name == "_reviewed_digest_cache_terminal_source_inverse"]
+    assert len(selected) == 1 and selected[0].body
+    node = selected[0].body[0]
+    offset = sum(len(line.encode("utf-8")) for line in lines[:node.lineno - 1])
+    start, end = raw.index(_CLOSED_TERMINAL_GLUE_BEGIN), raw.index(_CLOSED_TERMINAL_GLUE_END)
+    assert start < offset < end
+    insertion = b" " * node.col_offset + b"raise RuntimeError('untrusted candidate-local source proof')\n"
+    changed = raw[:offset] + insertion + raw[offset:]
+    ast.parse(changed)  # Valid Python source, never compiled/executed here.
+    return changed
+
+
+def _closed_terminal_source_proof_candidate_block_hash(raw):
+    """Hash only the declared candidate block with its one claim zeroed."""
+    import re
+    start = raw.index(_CLOSED_TERMINAL_GLUE_BEGIN)
+    end = raw.index(_CLOSED_TERMINAL_GLUE_END) + len(_CLOSED_TERMINAL_GLUE_END)
+    block = raw[start:end]
+    matches = list(re.finditer(rb"(?m)^_REVIEWED_DIGEST_CACHE_TERMINAL_GLUE_SHA256 = '([0-9a-f]{64})'$", block))
+    assert len(matches) == 1
+    match = matches[0]
+    zeroed = block[:match.start(1)] + b"0" * 64 + block[match.end(1):]
+    digest = hashlib.sha256(zeroed).hexdigest().encode("ascii")
+    return start + match.start(1), start + match.end(1), digest
+
+
+def test_closed_terminal_source_inverse_recovers_complete_prior_and_is_idempotent():
+    current = _closed_terminal_source_proof_current_bytes()
+    prior = worker._reviewed_digest_cache_terminal_source_inverse(current)
+    assert type(prior) is bytes and len(prior) == _CLOSED_TERMINAL_PRIOR_WORKER_BYTES
+    assert hashlib.sha256(prior).hexdigest() == _CLOSED_TERMINAL_PRIOR_WORKER_SHA256
+    assert worker._reviewed_digest_cache_terminal_source_inverse(prior) == prior
+    assert Path(worker.__file__).read_bytes() == current
+
+
+def test_closed_terminal_source_projection_preserves_history_and_binds_actual_current():
+    from ipfs_datasets_py.logic.autoformal import training_cycle_inputs as inputs
+    current = _closed_terminal_source_proof_current_bytes()
+    prior = worker._reviewed_digest_cache_terminal_source_inverse(current)
+    current_inputs = Path(inputs.__file__).read_bytes()
+    assert len(current_inputs) == _CLOSED_TERMINAL_CURRENT_INPUT_BYTES
+    assert hashlib.sha256(current_inputs).hexdigest() == _CLOSED_TERMINAL_CURRENT_INPUT_SHA256
+    old_worker, old_inputs = _closed_terminal_source_proof_original_pair(prior, current_inputs)
+    historical = worker._reviewed_digest_cache_epoch_projection(old_worker, prior, old_inputs, current_inputs)
+    assert historical["current_worker_sha256"] == _CLOSED_TERMINAL_PRIOR_WORKER_SHA256
+    assert historical["numerical_and_all_other_old_AST_exact"] is True
+    actual = worker._reviewed_digest_cache_epoch_projection(old_worker, current, old_inputs, current_inputs)
+    assert actual["schema"] == "reviewed-digest-cache-closed-terminal-source-projection/v1"
+    assert actual["current_worker_sha256"] == hashlib.sha256(current).hexdigest()
+    assert actual["recovered_complete_prior_worker_sha256"] == _CLOSED_TERMINAL_PRIOR_WORKER_SHA256
+    assert actual["historical_source_projection"] == historical
+    canonical = json.dumps(historical, sort_keys=True, ensure_ascii=True,
+                           separators=(",", ":"), allow_nan=False).encode("utf-8")
+    assert actual["historical_source_projection_sha256"] == hashlib.sha256(canonical).hexdigest()
+    assert actual["terminal_generation_code_changed"] is True
+    assert actual["historical_execution_requalified"] is False
+    assert actual["marked_parent_continuation_enabled"] is False
+    # Exact old numerical projection is a nested historical claim only.
+    assert "numerical_and_all_other_old_AST_exact" not in actual
+
+
+def test_closed_terminal_source_inverse_refuses_changed_historical_origin():
+    prior = worker._reviewed_digest_cache_terminal_source_inverse(_closed_terminal_source_proof_current_bytes())
+    assert hashlib.sha256(prior).hexdigest() == _CLOSED_TERMINAL_PRIOR_WORKER_SHA256
+    with pytest.raises(worker.TrainingJobValidationError):
+        worker._reviewed_digest_cache_terminal_source_inverse(prior + b"\n")
+
+
+def test_closed_terminal_source_inverse_refuses_effectful_glue_even_with_recomputed_claim():
+    current = _closed_terminal_source_proof_current_bytes()
+    lo, hi, genuine = _closed_terminal_source_proof_candidate_block_hash(current)
+    assert current[lo:hi] == genuine == _CLOSED_TERMINAL_TRUSTED_GLUE_SHA256.encode("ascii")
+    changed = _closed_terminal_source_proof_effectful_glue_change(current)
+    with pytest.raises(worker.TrainingJobValidationError):
+        worker._reviewed_digest_cache_terminal_source_inverse(changed)
+    lo, hi, revised = _closed_terminal_source_proof_candidate_block_hash(changed)
+    assert revised != genuine
+    self_rehashed = changed[:lo] + revised + changed[hi:]
+    check_lo, check_hi, checked = _closed_terminal_source_proof_candidate_block_hash(self_rehashed)
+    assert self_rehashed[check_lo:check_hi] == checked == revised
+    # A syntactically valid candidate-local digest cannot replace loaded trust.
+    with pytest.raises(worker.TrainingJobValidationError):
+        worker._reviewed_digest_cache_terminal_source_inverse(self_rehashed)
+
+
+def test_closed_terminal_source_inverse_refuses_hash_literal_mutation():
+    current = _closed_terminal_source_proof_current_bytes()
+    lo, hi, genuine = _closed_terminal_source_proof_candidate_block_hash(current)
+    assert current[lo:hi] == genuine == _CLOSED_TERMINAL_TRUSTED_GLUE_SHA256.encode("ascii")
+    replacement = (b"0" if genuine[:1] != b"0" else b"1") + genuine[1:]
+    changed = current[:lo] + replacement + current[hi:]
+    with pytest.raises(worker.TrainingJobValidationError):
+        worker._reviewed_digest_cache_terminal_source_inverse(changed)
+
+
+def test_closed_terminal_source_inverse_refuses_dispatch_mutation():
+    current = _closed_terminal_source_proof_current_bytes()
+    dispatch = (b"    if (b'\\nREVIEWED_DIGEST_OMITTED_TERMINAL_POLICY_SCHEMA = ' in current_worker\n"
+                b"            or b'\\n# Closed terminal source proof glue, version 1.\\n' in current_worker):\n"
+                b"        return _reviewed_digest_cache_terminal_projection(old_worker,current_worker,old_inputs,current_inputs)\n")
+    assert current.count(dispatch) == 1
+    changed_dispatch = dispatch.replace(b"return _reviewed_digest_cache_terminal_projection(",
+                                        b"return _reviewed_digest_cache_epoch_projection(", 1)
+    assert changed_dispatch != dispatch
+    changed = current.replace(dispatch, changed_dispatch, 1)
+    with pytest.raises(worker.TrainingJobValidationError):
+        worker._reviewed_digest_cache_terminal_source_inverse(changed)
+
+
+def test_closed_terminal_source_inverse_refuses_terminal_body_mutation():
+    import ast
+    current = _closed_terminal_source_proof_current_bytes()
+    tree = ast.parse(current)
+    functions = [node for node in tree.body if isinstance(node, ast.FunctionDef)
+                 and node.name == "_reviewed_decoder_codec_terminal_body"]
+    assert len(functions) == 1
+    node = functions[0]
+    lines = current.decode("utf-8").splitlines(keepends=True)
+    selected = "".join(lines[node.lineno - 1:node.end_lineno])
+    anchor = "def _reviewed_decoder_codec_terminal_body("
+    assert selected.count(anchor) == 1
+    changed_function = selected.replace(anchor, "def _unreviewed_decoder_codec_terminal_body(", 1)
+    lines[node.lineno - 1:node.end_lineno] = [changed_function]
+    with pytest.raises(worker.TrainingJobValidationError):
+        worker._reviewed_digest_cache_terminal_source_inverse("".join(lines).encode("utf-8"))
+
+
+def test_closed_terminal_source_inverse_refuses_unrelated_prior_source_mutation():
+    current = _closed_terminal_source_proof_current_bytes()
+    start = current.index(_CLOSED_TERMINAL_GLUE_BEGIN)
+    anchor = b"return hashlib.sha256"
+    assert anchor in current[:start]
+    before = current[:start].replace(anchor, b"return hashlib.sha512", 1)
+    changed = before + current[start:]
+    assert changed != current
+    with pytest.raises(worker.TrainingJobValidationError):
+        worker._reviewed_digest_cache_terminal_source_inverse(changed)

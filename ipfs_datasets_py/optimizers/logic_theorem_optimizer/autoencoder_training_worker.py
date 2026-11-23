@@ -520,6 +520,8 @@ class TrainingJobSpec:
 
     @classmethod
     def from_dict(cls, value: Any) -> "TrainingJobSpec | ReviewedDecoderTrainingJobSpec":
+        if isinstance(value, Mapping) and value.get("schema_version") == REVIEWED_DIGEST_CACHE_EPOCH_JOB_SCHEMA:
+            return ReviewedDigestCacheEpochTrainingJobSpec.from_dict(value)
         if isinstance(value, Mapping) and value.get("schema_version") == REVIEWED_DIGEST_OMITTED_JOB_SCHEMA:
             return ReviewedDigestOmittedDecoderTrainingJobSpec.from_dict(value)
         if isinstance(value, Mapping) and value.get("schema_version") == REVIEWED_MIXED_DECODER_SCHEMA_VERSION:
@@ -653,6 +655,8 @@ REVIEWED_DIGEST_OMITTED_WORKER_RECEIPT_SCHEMA = "reviewed-digest-omitted-decoder
 REVIEWED_DIGEST_OMITTED_TARGET_CODEC = "complete-reviewed-norm-digest-omitted-json/v1"
 REVIEWED_DIGEST_OMITTED_CHATML_PROFILE = "qwen2-chatml-digest-omitted-legal-ir/v1"
 REVIEWED_DIGEST_OMITTED_GENERATION_POLICY_SCHEMA = "reviewed-decoder-digest-omitted-generation-policy/v1"
+REVIEWED_DIGEST_OMITTED_TERMINAL_POLICY_SCHEMA = "reviewed-decoder-digest-omitted-terminal-generation-policy/v1"
+REVIEWED_DECODER_CANONICAL_TERMINAL_PROFILE = "digest-omitted-canonical-body-eos/v1"
 REVIEWED_DIGEST_OMITTED_RECIPE_SCHEMA = "reviewed-local-digest-omitted-decoder-recipe/v1"
 REVIEWED_MIXED_ADMISSION_PROFILE = "complete-reviewed-mixed-sort-norm-admission/v3"
 REVIEWED_MIXED_DECODER_RECEIPT_SCHEMA = "reviewed-mixed-legal-ir-decoder-worker-receipt/v1"
@@ -704,7 +708,8 @@ class ReviewedDecoderTrainingJobSpec:
         output = Path(self.output_directory)
         if not output.is_absolute() or ".." in output.parts:
             raise TrainingJobValidationError("reviewed decoder output must be a plain absolute path")
-        expected_schema = (REVIEWED_DIGEST_OMITTED_JOB_SCHEMA if type(self) is ReviewedDigestOmittedDecoderTrainingJobSpec else
+        expected_schema = (REVIEWED_DIGEST_CACHE_EPOCH_JOB_SCHEMA if type(self) is ReviewedDigestCacheEpochTrainingJobSpec else
+            REVIEWED_DIGEST_OMITTED_JOB_SCHEMA if type(self) is ReviewedDigestOmittedDecoderTrainingJobSpec else
             REVIEWED_MIXED_DECODER_SCHEMA_VERSION if type(self) is ReviewedMixedDecoderTrainingJobSpec else REVIEWED_DECODER_SCHEMA_VERSION)
         if self.schema_version != expected_schema:
             raise TrainingJobValidationError("explicit complete reviewed decoder schema required")
@@ -735,7 +740,7 @@ class ReviewedDecoderTrainingJobSpec:
             _text(identity[name], "reviewed_decoder.backend_identity." + name)
         if (type(identity["implementation_sha256"]) is not str or
                 re.fullmatch(r"[0-9a-f]{64}", identity["implementation_sha256"]) is None or
-                identity["target_codec"] != (REVIEWED_DIGEST_OMITTED_TARGET_CODEC if type(self) is ReviewedDigestOmittedDecoderTrainingJobSpec else "complete-reviewed-norm-json/v2") or identity["source_conditioned"] is not True or
+                identity["target_codec"] != (REVIEWED_DIGEST_OMITTED_TARGET_CODEC if type(self) in (ReviewedDigestOmittedDecoderTrainingJobSpec, ReviewedDigestCacheEpochTrainingJobSpec) else "complete-reviewed-norm-json/v2") or identity["source_conditioned"] is not True or
                 type(identity["pretrained"]) is not bool):
             raise TrainingJobValidationError("complete source-conditioned target backend required")
         if type(self.allow_fictional_fixture) is not bool or not identity["pretrained"] and not self.allow_fictional_fixture:
@@ -758,11 +763,12 @@ class ReviewedDecoderTrainingJobSpec:
     @classmethod
     def from_dict(cls, value: Any) -> "ReviewedDecoderTrainingJobSpec":
         data = _object(value, {field.name for field in fields(cls)}, "reviewed decoder job")
-        expected_schema = (REVIEWED_DIGEST_OMITTED_JOB_SCHEMA if cls is ReviewedDigestOmittedDecoderTrainingJobSpec else
+        expected_schema = (REVIEWED_DIGEST_CACHE_EPOCH_JOB_SCHEMA if cls is ReviewedDigestCacheEpochTrainingJobSpec else
+            REVIEWED_DIGEST_OMITTED_JOB_SCHEMA if cls is ReviewedDigestOmittedDecoderTrainingJobSpec else
             REVIEWED_MIXED_DECODER_SCHEMA_VERSION if cls is ReviewedMixedDecoderTrainingJobSpec else REVIEWED_DECODER_SCHEMA_VERSION)
         if data.get("schema_version") != expected_schema:
             raise TrainingJobValidationError("explicit reviewed decoder schema required")
-        if cls in (ReviewedMixedDecoderTrainingJobSpec, ReviewedDigestOmittedDecoderTrainingJobSpec) and data.get("admission_profile") != REVIEWED_MIXED_ADMISSION_PROFILE:
+        if cls in (ReviewedMixedDecoderTrainingJobSpec, ReviewedDigestOmittedDecoderTrainingJobSpec, ReviewedDigestCacheEpochTrainingJobSpec) and data.get("admission_profile") != REVIEWED_MIXED_ADMISSION_PROFILE:
             raise TrainingJobValidationError("explicit mixed-sort admission V3 profile required")
         for name in ("stage_artifact", "exposure_artifact", "source_contexts_artifact", "model_artifact",
                 "tokenizer_artifact", "license_artifact", "base_model_checkpoint", "base_optimizer_checkpoint",
@@ -1087,11 +1093,13 @@ def _execute_reviewed_decoder_job(spec: ReviewedDecoderTrainingJobSpec, runtime:
     from ...logic.autoformal import training_cycle_inputs as inputs
     if type(runtime) is not ReviewedDecoderRuntime:
         raise TrainingJobValidationError("explicit reviewed decoder runtime required before model work")
+    if type(spec) is ReviewedDigestCacheEpochTrainingJobSpec or (type(runtime.backend) is TorchReviewedDecoderBackend and runtime.backend.cache_source_epoch_marker is not None):
+        _reviewed_digest_cache_epoch_require_job(spec, runtime.backend)
     prepared = None
     continuation_replay = None
     checkpoint_limit = MAX_REVIEWED_DECODER_STATE_BYTES
-    digest_omitted = type(spec) is ReviewedDigestOmittedDecoderTrainingJobSpec
-    mixed = type(spec) in (ReviewedMixedDecoderTrainingJobSpec, ReviewedDigestOmittedDecoderTrainingJobSpec)
+    digest_omitted = type(spec) in (ReviewedDigestOmittedDecoderTrainingJobSpec, ReviewedDigestCacheEpochTrainingJobSpec)
+    mixed = type(spec) in (ReviewedMixedDecoderTrainingJobSpec, ReviewedDigestOmittedDecoderTrainingJobSpec, ReviewedDigestCacheEpochTrainingJobSpec)
     checkpoint_schema = REVIEWED_DIGEST_OMITTED_CHECKPOINT_SCHEMA if digest_omitted else REVIEWED_DECODER_CHECKPOINT_SCHEMA
     admission_profile = spec.admission_profile if mixed else None
     guard_calls = {"execution": 0, "asset_policy": 0, "current_admission": 0}
@@ -1207,6 +1215,17 @@ def _execute_reviewed_decoder_job(spec: ReviewedDecoderTrainingJobSpec, runtime:
     if spec.parent_checkpoint_artifact is not None:
         parent_raw = _reviewed_decoder_artifact(spec.parent_checkpoint_artifact)
         parent = _parse_json(parent_raw)
+        if type(spec) is ReviewedDigestCacheEpochTrainingJobSpec:
+            parent = _reviewed_digest_cache_epoch_ancestry(spec, runtime.backend, parent, data["receipt"])
+            frozen_cache_parent = _json_bytes(parent)
+            def replay_cache_epoch(binding):
+                observed = _reviewed_decoder_artifact(spec.parent_checkpoint_artifact)
+                if observed != parent_raw:
+                    raise TrainingJobValidationError("digest cache ancestry parent changed")
+                normalized = _reviewed_digest_cache_epoch_ancestry(spec, runtime.backend, _parse_json(observed), binding)
+                if _json_bytes(normalized) != frozen_cache_parent:
+                    raise TrainingJobValidationError("digest cache ancestry changed during execution")
+            continuation_replay = replay_cache_epoch
         if continuation_enabled:
             continuation_state = _reviewed_mixed_decoder_continuation_state(spec, runtime.registry,
                 spec.parent_checkpoint_artifact, parent, data["receipt"], migration_backend=runtime.backend)
@@ -1348,6 +1367,10 @@ def _execute_reviewed_decoder_job(spec: ReviewedDecoderTrainingJobSpec, runtime:
             if source_epoch_migration is not None:
                 checkpoint.update(schema=REVIEWED_DECODER_SOURCE_EPOCH_CHECKPOINT_SCHEMA,
                     source_epoch_migration=source_epoch_migration)
+        if type(spec) is ReviewedDigestCacheEpochTrainingJobSpec:
+            checkpoint.update(schema=REVIEWED_DIGEST_CACHE_EPOCH_CHECKPOINT_SCHEMA,
+                cache_source_epoch_migration=asdict(spec.cache_source_epoch_migration),
+                cache_epoch_parent_checkpoint_artifact=asdict(spec.parent_checkpoint_artifact))
         current()
         checkpoint_ref = _write_exclusive(output / "reviewed-decoder-checkpoint.json", _json_bytes(checkpoint))
         _reviewed_decoder_artifact(CheckpointArtifact.from_dict(checkpoint_ref))
@@ -1388,6 +1411,10 @@ def _execute_reviewed_decoder_job(spec: ReviewedDecoderTrainingJobSpec, runtime:
         if source_epoch_migration is not None:
             receipt["source_epoch_migration"] = source_epoch_migration
             receipt["checkpoint_schema"] = REVIEWED_DECODER_SOURCE_EPOCH_CHECKPOINT_SCHEMA
+        if type(spec) is ReviewedDigestCacheEpochTrainingJobSpec:
+            receipt.update(cache_source_epoch_migration=asdict(spec.cache_source_epoch_migration),
+                checkpoint_schema=REVIEWED_DIGEST_CACHE_EPOCH_CHECKPOINT_SCHEMA,
+                cache_source_epoch_profile=_thaw(runtime.backend.cache_source_epoch_marker)["profile"])
         if mixed:
             receipt["admission_profile"] = admission_profile
         _write_exclusive(output / "receipt.json", _json_bytes(receipt))
@@ -1842,7 +1869,7 @@ def _execute(spec: TrainingJobSpec, trainer: Callable[..., Mapping[str, Any]] | 
              reduce_native_targets: bool = False,
              reviewed_runtime: ReviewedDecoderRuntime | None = None) -> dict[str, Any]:
     global _PROCESS_SOURCE_HASHES
-    if type(spec) in (ReviewedDecoderTrainingJobSpec, ReviewedMixedDecoderTrainingJobSpec, ReviewedDigestOmittedDecoderTrainingJobSpec):
+    if type(spec) in (ReviewedDecoderTrainingJobSpec, ReviewedMixedDecoderTrainingJobSpec, ReviewedDigestOmittedDecoderTrainingJobSpec, ReviewedDigestCacheEpochTrainingJobSpec):
         if trainer is not None or defer_target_hydration_gc or reduce_native_targets:
             raise TrainingJobValidationError("legacy trainer/hydration flags cannot select complete reviewed decoder execution")
         return _execute_reviewed_decoder_job(spec, reviewed_runtime, job_file_sha256)
@@ -2380,7 +2407,7 @@ def _execute_training_job(spec: TrainingJobSpec, *, trainer: Callable[..., Mappi
                           defer_target_hydration_gc: bool = False,
                           reduce_native_targets: bool = False,
                           reviewed_runtime: ReviewedDecoderRuntime | None = None) -> dict[str, Any]:
-    if type(spec) in (ReviewedDecoderTrainingJobSpec, ReviewedMixedDecoderTrainingJobSpec, ReviewedDigestOmittedDecoderTrainingJobSpec):
+    if type(spec) in (ReviewedDecoderTrainingJobSpec, ReviewedMixedDecoderTrainingJobSpec, ReviewedDigestOmittedDecoderTrainingJobSpec, ReviewedDigestCacheEpochTrainingJobSpec):
         if trainer is not None or defer_target_hydration_gc or reduce_native_targets:
             raise TrainingJobValidationError("legacy trainer/hydration flags cannot select complete reviewed decoder execution")
         if type(reviewed_runtime) is not ReviewedDecoderRuntime:
@@ -2391,7 +2418,7 @@ def _execute_training_job(spec: TrainingJobSpec, *, trainer: Callable[..., Mappi
         raise TrainingJobValidationError("reduce_native_targets must be boolean")
     if reduce_native_targets and trainer is not None:
         raise TrainingJobValidationError("target reduction requires the native spawned worker without an injected trainer")
-    if not isinstance(spec, TrainingJobSpec) and type(spec) not in (ReviewedDecoderTrainingJobSpec, ReviewedMixedDecoderTrainingJobSpec, ReviewedDigestOmittedDecoderTrainingJobSpec):
+    if not isinstance(spec, TrainingJobSpec) and type(spec) not in (ReviewedDecoderTrainingJobSpec, ReviewedMixedDecoderTrainingJobSpec, ReviewedDigestOmittedDecoderTrainingJobSpec, ReviewedDigestCacheEpochTrainingJobSpec):
         raise TrainingJobValidationError("spec must be a TrainingJobSpec or explicit reviewed decoder spec")
     if not _JOB_LOCK.acquire(blocking=False):
         raise TrainingJobValidationError("only one training job may run per worker process")
@@ -2512,6 +2539,43 @@ def _reviewed_tokenizer_method(method):
             keyword_defaults=_reviewed_tokenizer_configuration(getattr(function, "__kwdefaults__", None)),
             closure=_reviewed_tokenizer_configuration(tuple(cell.cell_contents for cell in (getattr(function, "__closure__", None) or ()))))
     return identity
+
+
+_REVIEWED_TOKENIZER_BINDING_DERIVATION_MAX_RAW_BYTES = 16 * 1024 * 1024
+_REVIEWED_TOKENIZER_BINDING_DERIVATION_MAX_ENTRIES = 2
+_REVIEWED_TOKENIZER_BINDING_DERIVATION_CACHE = {}
+_REVIEWED_TOKENIZER_BINDING_DERIVATION_LOCK = threading.RLock()
+
+
+def _reviewed_tokenizer_binding_derivation(raw):
+    """Cache only immutable derivations of already freshly serialized HF bytes."""
+    eligible = type(raw) is bytes and len(raw) <= _REVIEWED_TOKENIZER_BINDING_DERIVATION_MAX_RAW_BYTES
+    if eligible:
+        with _REVIEWED_TOKENIZER_BINDING_DERIVATION_LOCK:
+            cached = _REVIEWED_TOKENIZER_BINDING_DERIVATION_CACHE.get(raw)
+            if cached is not None:
+                _REVIEWED_TOKENIZER_BINDING_DERIVATION_CACHE.pop(raw)
+                _REVIEWED_TOKENIZER_BINDING_DERIVATION_CACHE[raw] = cached
+                return cached
+    pipeline = _parse_json(raw)
+    if pipeline["kind"] != "huggingface_fast":
+        return None
+    backend = pipeline["backend"]["serialization"]
+    model = backend["model"]
+    if type(model) is not dict or "vocab" not in model or type(model["vocab"]) not in (dict, list):
+        raise TrainingJobValidationError("complete actual model vocabulary required for binding")
+    vocabulary = {"model_type": model.get("type"), "vocab": model["vocab"],
+                  "added_tokens": backend["added_tokens"]}
+    derived = (pipeline["kind"], "reviewed-tokenizer:" + pipeline["kind"] + ":" +
+        _digest(_json_bytes({"kind": pipeline["kind"], "implementation": pipeline["implementation"],
+                            "transport": pipeline["transport"]})),
+        "sha256:" + _digest(_json_bytes(vocabulary)), "sha256:" + _digest(raw))
+    if eligible:
+        with _REVIEWED_TOKENIZER_BINDING_DERIVATION_LOCK:
+            _REVIEWED_TOKENIZER_BINDING_DERIVATION_CACHE[raw] = derived
+            while len(_REVIEWED_TOKENIZER_BINDING_DERIVATION_CACHE) > _REVIEWED_TOKENIZER_BINDING_DERIVATION_MAX_ENTRIES:
+                del _REVIEWED_TOKENIZER_BINDING_DERIVATION_CACHE[next(iter(_REVIEWED_TOKENIZER_BINDING_DERIVATION_CACHE))]
+    return derived
 
 
 class ReviewedPretrainedTokenizer:
@@ -2684,27 +2748,34 @@ class ReviewedPretrainedTokenizer:
         code are already bound there, avoiding a recursive self-hash.
         """
         raw = self.pipeline_serialization()
-        pipeline = _parse_json(raw)
-        if pipeline["kind"] == "huggingface_fast":
-            backend = pipeline["backend"]["serialization"]
-            model = backend["model"]
-            if type(model) is not dict or "vocab" not in model or type(model["vocab"]) not in (dict, list):
-                raise TrainingJobValidationError("complete actual model vocabulary required for binding")
-            vocabulary = {"model_type": model.get("type"), "vocab": model["vocab"],
-                          "added_tokens": backend["added_tokens"]}
+        derived = (None if self.allow_fictional_fixture else _reviewed_tokenizer_binding_derivation(raw))
+        if derived is None:
+            pipeline = _parse_json(raw)
+            if pipeline["kind"] == "huggingface_fast":
+                backend = pipeline["backend"]["serialization"]
+                model = backend["model"]
+                if type(model) is not dict or "vocab" not in model or type(model["vocab"]) not in (dict, list):
+                    raise TrainingJobValidationError("complete actual model vocabulary required for binding")
+                vocabulary = {"model_type": model.get("type"), "vocab": model["vocab"],
+                              "added_tokens": backend["added_tokens"]}
+            else:
+                backend = pipeline["backend"]
+                if (type(backend.get("byte_to_id")) is not list or len(backend["byte_to_id"]) != 256 or
+                        len(set(backend["byte_to_id"])) != 256 or
+                        any(type(value) is not int or not 0 <= value < self.vocab_size for value in backend["byte_to_id"])):
+                    raise TrainingJobValidationError("complete fixed-byte vocabulary required for fixture binding")
+                vocabulary = {"byte_to_id": backend["byte_to_id"], "added_tokens": backend.get("added_tokens", [])}
+            metadata = {"tokenizer_id": "reviewed-tokenizer:" + pipeline["kind"] + ":" +
+                    _digest(_json_bytes({"kind": pipeline["kind"], "implementation": pipeline["implementation"],
+                                        "transport": pipeline["transport"]})),
+                "vocabulary_sha256": "sha256:" + _digest(_json_bytes(vocabulary)),
+                "configuration_sha256": "sha256:" + _digest(raw),
+                "bos_token_id": self.bos_token_id, "eos_token_id": self.eos_token_id, "vocab_size": self.vocab_size}
         else:
-            backend = pipeline["backend"]
-            if (type(backend.get("byte_to_id")) is not list or len(backend["byte_to_id"]) != 256 or
-                    len(set(backend["byte_to_id"])) != 256 or
-                    any(type(value) is not int or not 0 <= value < self.vocab_size for value in backend["byte_to_id"])):
-                raise TrainingJobValidationError("complete fixed-byte vocabulary required for fixture binding")
-            vocabulary = {"byte_to_id": backend["byte_to_id"], "added_tokens": backend.get("added_tokens", [])}
-        metadata = {"tokenizer_id": "reviewed-tokenizer:" + pipeline["kind"] + ":" +
-                _digest(_json_bytes({"kind": pipeline["kind"], "implementation": pipeline["implementation"],
-                                    "transport": pipeline["transport"]})),
-            "vocabulary_sha256": "sha256:" + _digest(_json_bytes(vocabulary)),
-            "configuration_sha256": "sha256:" + _digest(raw),
-            "bos_token_id": self.bos_token_id, "eos_token_id": self.eos_token_id, "vocab_size": self.vocab_size}
+            _, tokenizer_id, vocabulary_sha256, configuration_sha256 = derived
+            metadata = {"tokenizer_id": tokenizer_id, "vocabulary_sha256": vocabulary_sha256,
+                        "configuration_sha256": configuration_sha256,
+                        "bos_token_id": self.bos_token_id, "eos_token_id": self.eos_token_id, "vocab_size": self.vocab_size}
         if self.pipeline_serialization() != raw:
             raise TrainingJobValidationError("tokenizer pipeline changed during binding derivation")
         return metadata
@@ -3044,7 +3115,7 @@ class TorchReviewedDecoderBackend:
     """
 
     def __init__(self, model, optimizer, tokenizer, *, architecture,
-                 max_sequence_tokens, pretrained, gradient_clip=1.0, model_profile=None, training_conditioning_profile=None, target_codec="complete-reviewed-norm-json/v2"):
+                 max_sequence_tokens, pretrained, gradient_clip=1.0, model_profile=None, training_conditioning_profile=None, target_codec="complete-reviewed-norm-json/v2", cache_source_epoch_marker=None):
         if architecture not in {"encoder_decoder", "causal_lm"}:
             raise TrainingJobValidationError("explicit supported pretrained decoder architecture required")
         if type(max_sequence_tokens) is not int or not 3 <= max_sequence_tokens <= 262144:
@@ -3061,6 +3132,11 @@ class TorchReviewedDecoderBackend:
             raise TrainingJobValidationError("explicit supported Torch decoder model profile required")
         if type(target_codec) is not str or target_codec not in {"complete-reviewed-norm-json/v2", REVIEWED_DIGEST_OMITTED_TARGET_CODEC}:
             raise TrainingJobValidationError("explicit supported target codec required")
+        if cache_source_epoch_marker is not None:
+            if target_codec != REVIEWED_DIGEST_OMITTED_TARGET_CODEC or model_profile != "builtin-qwen2-bfloat16/v1" or architecture != "causal_lm":
+                raise TrainingJobValidationError("cache marker requires the explicit same-digest Qwen profile")
+            cache_source_epoch_marker = _reviewed_digest_cache_epoch_validate_marker(cache_source_epoch_marker)
+        self.cache_source_epoch_marker = (_freeze(cache_source_epoch_marker) if cache_source_epoch_marker is not None else None)
         self.target_codec = target_codec
         self.training_conditioning_profile = _reviewed_training_conditioning_profile(
             training_conditioning_profile, architecture, model_profile)
@@ -3187,6 +3263,8 @@ class TorchReviewedDecoderBackend:
                 "buffer_schema": [{"name": name, "shape": list(value.shape), "dtype": str(value.dtype),
                                    "device": str(value.device)} for name, value in self.model.named_buffers()],
                 "optimizer_groups": groups, "torch_version": str(self._torch().__version__)}
+        if self.cache_source_epoch_marker is not None:
+            configuration["cache_source_epoch_marker"] = _thaw(self.cache_source_epoch_marker)
         rotary = dict(self.model.named_modules()).get("model.rotary_emb")
         if (rotary is not None and "original_inv_freq" not in rotary._buffers and
                 ((type(self.model).__module__, type(self.model).__qualname__) ==
@@ -3793,7 +3871,7 @@ class TorchReviewedDecoderBackend:
 
     def generate_batch(self, records, *, max_output_tokens, execution_guard,
                        generation_profile="full-prefix/v1", conditioning_profile="raw-source-bos/v1",
-                       max_generation_seconds=None, context_budget_profile=None):
+                       max_generation_seconds=None, context_budget_profile=None, terminal_profile=None):
         """Greedy BOS-to-EOS inference on the caller-owned model.
 
         The original five-key source-only v2 remains unchanged. A separate
@@ -3822,12 +3900,22 @@ class TorchReviewedDecoderBackend:
         native forward plus its checks can overrun this cooperative budget.
         Observed EOS remains valid; caller/resource errors are never converted
         into time-limit outputs. None preserves the original untimed behavior.
+        A separate explicit terminal profile can restrict a NEXT guarded forward
+        selection to EOS after the generated body passes the existing strict
+        digest-omitted codec. This is constrained selection, not an observed
+        unconstrained model argmax. It never adds EOS after a budget/time exit,
+        repairs a body, or judges source faithfulness. None leaves greedy calls
+        and decoding traces unchanged.
         """
         if not callable(execution_guard):
             raise TrainingJobValidationError("caller-owned generation execution guard required")
         if type(max_output_tokens) is not int or not 2 <= max_output_tokens <= 65536:
             raise TrainingJobValidationError("finite generation budget including BOS and EOS required")
         self._assert_target_codec_profile()
+        if terminal_profile is not None and (
+                type(terminal_profile) is not str or terminal_profile != REVIEWED_DECODER_CANONICAL_TERMINAL_PROFILE
+                or self.target_codec != REVIEWED_DIGEST_OMITTED_TARGET_CODEC):
+            raise TrainingJobValidationError("explicit digest-omitted canonical terminal profile required")
         if (conditioning_profile == REVIEWED_DIGEST_OMITTED_CHATML_PROFILE) != (
                 self.target_codec == REVIEWED_DIGEST_OMITTED_TARGET_CODEC and self.model_profile == "builtin-qwen2-bfloat16/v1"):
             raise TrainingJobValidationError("generation codec and conditioning profile differ")
@@ -4127,7 +4215,21 @@ class TorchReviewedDecoderBackend:
                                 or not bool(torch.isfinite(logits).all())):
                             raise TrainingJobValidationError("finite last-position Llama logits with exact vocabulary required" if llama_model else
                                 "finite full-prefix generation logits with exact vocabulary required")
-                        token = int(logits[0, -1].argmax().item())
+                        terminal_eos = False
+                        if terminal_profile is not None and len(generated) > 1:
+                            try:
+                                terminal_text = self.tokenizer.decode(list(generated[1:]))
+                            except (UnicodeError, KeyError):
+                                current()
+                            else:
+                                current()
+                                terminal_eos = _reviewed_decoder_codec_terminal_body(
+                                    terminal_text, target_codec=self.target_codec, terminal_profile=terminal_profile)
+                                current()
+                        # The finite logits above belong to this actual forward.
+                        # An explicit singleton EOS constraint is not its raw
+                        # unconstrained argmax and is never a posthoc append.
+                        token = eos if terminal_eos else int(logits[0, -1].argmax().item())
                         if qwen2_model and not 0 <= token < vocab:
                             raise TrainingJobValidationError("native Qwen2 argmax outside tokenizer token domain")
                         generated.append(token)
@@ -4171,8 +4273,38 @@ class TorchReviewedDecoderBackend:
 __all__ += ["ReviewedPretrainedTokenizer", "TorchReviewedDecoderBackend"]
 
 
+def _reviewed_decoder_codec_terminal_body(model_wire, *, target_codec, terminal_profile):
+    """Recognize only a complete generated body using the existing public codec.
+
+    A valid semantic mutation remains eligible. No source/reference/gold,
+    dependency resolver, repaired output or legal correctness enters here.
+    Invalid/incomplete bodies simply keep the normal next-token selection.
+    """
+    if (type(terminal_profile) is not str or terminal_profile != REVIEWED_DECODER_CANONICAL_TERMINAL_PROFILE
+            or type(target_codec) is not str or target_codec != REVIEWED_DIGEST_OMITTED_TARGET_CODEC):
+        raise TrainingJobValidationError("explicit matching codec terminal profile required")
+    if type(model_wire) is not str:
+        return False
+    from ...logic.autoformal.training_cycle_inputs import assemble_reviewed_decoder_digest_omitted_target
+    try:
+        assemble_reviewed_decoder_digest_omitted_target(model_wire, target_codec=target_codec)
+    except (ValueError, TypeError, UnicodeError, RecursionError):
+        return False
+    return True
+
+
 def _reviewed_decoder_generation_policy(value):
     """Closed opt-in inference DATA, never execution or legal-use authority."""
+    if type(value) is dict and value.get("schema") == REVIEWED_DIGEST_OMITTED_TERMINAL_POLICY_SCHEMA:
+        fields = {"schema", "generation_profile", "conditioning_profile", "max_generation_seconds",
+                  "context_budget_profile", "target_codec", "terminal_profile"}
+        if (set(value) != fields or type(value["terminal_profile"]) is not str
+                or value["terminal_profile"] != REVIEWED_DECODER_CANONICAL_TERMINAL_PROFILE):
+            raise TrainingJobValidationError("closed explicit digest-omitted terminal generation policy required")
+        previous = {key: item for key, item in value.items() if key != "terminal_profile"}
+        previous["schema"] = REVIEWED_DIGEST_OMITTED_GENERATION_POLICY_SCHEMA
+        _reviewed_decoder_generation_policy(previous)
+        return _parse_json(_json_bytes(value))
     if type(value) is dict and value.get("schema") == REVIEWED_DIGEST_OMITTED_GENERATION_POLICY_SCHEMA:
         if (set(value) != {"schema", "generation_profile", "conditioning_profile", "max_generation_seconds", "context_budget_profile", "target_codec"}
                 or type(value["target_codec"]) is not str or value["target_codec"] != REVIEWED_DIGEST_OMITTED_TARGET_CODEC
@@ -4281,9 +4413,9 @@ def _make_reviewed_decoder_source_producer(runtime, *, binding, rows, split_mani
          "explicit supported producer codec required")
     digest_omitted = _target_codec == REVIEWED_DIGEST_OMITTED_TARGET_CODEC
     generation_copy = None if generation_policy is None else _reviewed_decoder_generation_policy(generation_policy)
-    need((generation_copy is not None and generation_copy["schema"] == REVIEWED_DIGEST_OMITTED_GENERATION_POLICY_SCHEMA) == digest_omitted,
+    need((generation_copy is not None and generation_copy["schema"] in {REVIEWED_DIGEST_OMITTED_GENERATION_POLICY_SCHEMA, REVIEWED_DIGEST_OMITTED_TERMINAL_POLICY_SCHEMA}) == digest_omitted,
          "explicit matching producer codec and generation policy required")
-    qwen2_generation = generation_copy is not None and generation_copy["schema"] in {"reviewed-decoder-generation-policy/v2", REVIEWED_DIGEST_OMITTED_GENERATION_POLICY_SCHEMA}
+    qwen2_generation = generation_copy is not None and generation_copy["schema"] in {"reviewed-decoder-generation-policy/v2", REVIEWED_DIGEST_OMITTED_GENERATION_POLICY_SCHEMA, REVIEWED_DIGEST_OMITTED_TERMINAL_POLICY_SCHEMA}
     context_token_limit = (REVIEWED_QWEN2_EXPANDED_CONTEXT_MAX_TOKENS if qwen2_generation
         and generation_copy["context_budget_profile"] == REVIEWED_QWEN2_EXPANDED_CONTEXT_BUDGET_PROFILE
         else REVIEWED_QWEN2_CONTEXT_MAX_TOKENS if qwen2_generation else REVIEWED_GENERATION_CONTEXT_MAX_TOKENS)
@@ -4444,7 +4576,9 @@ def _make_reviewed_decoder_source_producer(runtime, *, binding, rows, split_mani
         if qwen2_generation:
             policy["runtime_profile"] = "builtin-qwen2-bfloat16/v1"
     if digest_omitted:
-        policy.update(schema="reviewed-decoder-digest-omitted-source-producer-policy/v1",
+        policy.update(schema=("reviewed-decoder-digest-omitted-terminal-source-producer-policy/v1"
+            if generation_copy["schema"] == REVIEWED_DIGEST_OMITTED_TERMINAL_POLICY_SCHEMA else
+            "reviewed-decoder-digest-omitted-source-producer-policy/v1"),
             output_derivation={"schema": "reviewed-digest-omitted-output-assembly/v1", "target_codec": _target_codec,
                 "only_computed_field": "typed_expression.content_digest", "other_default_filling": False})
         observation["schema"] = "reviewed-decoder-digest-omitted-source-producer-observation/v1"
@@ -4724,7 +4858,9 @@ def _make_reviewed_decoder_source_producer(runtime, *, binding, rows, split_mani
             shared_context_schema=shared_schema)
     commitment_sha = _digest(wire(commitment))
     observation.update(input_commitment=commitment, input_commitment_sha256=commitment_sha,
-        input_profile_id=("reviewed-decoder-digest-omitted-producer/v1:" if digest_omitted else "reviewed-decoder-qwen2-profiled-producer/v1:" if qwen2_generation
+        input_profile_id=("reviewed-decoder-digest-omitted-terminal-producer/v1:"
+                          if digest_omitted and generation_copy["schema"] == REVIEWED_DIGEST_OMITTED_TERMINAL_POLICY_SCHEMA
+                          else "reviewed-decoder-digest-omitted-producer/v1:" if digest_omitted else "reviewed-decoder-qwen2-profiled-producer/v1:" if qwen2_generation
                           else "reviewed-decoder-profiled-producer/v1:" if generation_copy is not None
                           else "reviewed-decoder-rich-TRAIN-producer/v1:" if context_enabled
                           else "reviewed-decoder-source-producer/v2:" if admission_profile
@@ -4779,6 +4915,8 @@ def _make_reviewed_decoder_source_producer(runtime, *, binding, rows, split_mani
                 ("generation_profile", "conditioning_profile", "max_generation_seconds")} if generation_copy is not None else {})
             if qwen2_generation:
                 generation_options["context_budget_profile"] = generation_copy["context_budget_profile"]
+            if generation_copy is not None and generation_copy["schema"] == REVIEWED_DIGEST_OMITTED_TERMINAL_POLICY_SCHEMA:
+                generation_options["terminal_profile"] = generation_copy["terminal_profile"]
             generated = backend.generate_batch(records, max_output_tokens=max_output_tokens, execution_guard=current,
                 **generation_options)
             need(wire(arguments) == arguments_raw and wire(records) == records_raw,
@@ -4925,7 +5063,7 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
         tokenizer_artifact, license_artifact, model_checkpoint, optimizer_checkpoint,
         expected_backend_identity, expected_source_sha256,
         expected_admission_inputs_sha256, max_model_bytes, _admission_version, _runtime_profile,
-        _source_epoch_migration=None, _target_codec="complete-reviewed-norm-json/v2"):
+        _source_epoch_migration=None, _target_codec="complete-reviewed-norm-json/v2", _cache_epoch_migration_artifact=None):
     """Load an explicitly profiled built-in CPU decoder and paired state.
 
     The caller owns live execution, license/asset policy and current admission.
@@ -4938,8 +5076,20 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
     if type(_target_codec) is not str or _target_codec not in {"complete-reviewed-norm-json/v2", REVIEWED_DIGEST_OMITTED_TARGET_CODEC}:
         raise TrainingJobValidationError("explicit local loader target codec required")
     digest_omitted = _target_codec == REVIEWED_DIGEST_OMITTED_TARGET_CODEC
-    if digest_omitted and (_admission_version != "v3" or _source_epoch_migration is not None):
+    if digest_omitted and (_admission_version != "v3" or (_source_epoch_migration is not None and
+            (type(_source_epoch_migration) is not dict or _source_epoch_migration.get("profile") not in (REVIEWED_DIGEST_CACHE_EPOCH_PROFILE, REVIEWED_DIGEST_CACHE_PRISTINE_EPOCH_PROFILE)))):
         raise TrainingJobValidationError("digest-omitted loader requires fresh current-source admission; no old-objective migration")
+    if digest_omitted and _source_epoch_migration is not None:
+        _reviewed_digest_cache_epoch_loader_context(_source_epoch_migration, model_checkpoint,
+            optimizer_checkpoint, expected_backend_identity, expected_source_sha256, expected_admission_inputs_sha256)
+    cache_epoch_marker = None
+    if _cache_epoch_migration_artifact is not None:
+        if not digest_omitted or _source_epoch_migration is not None:
+            raise TrainingJobValidationError("cache receipt is exclusive to marked same-digest reload")
+        cache_epoch_marker = _reviewed_digest_cache_epoch_load_receipt(_cache_epoch_migration_artifact,
+            expected_backend_identity, expected_source_sha256, expected_admission_inputs_sha256)
+    elif digest_omitted and _source_epoch_migration is not None:
+        cache_epoch_marker = _source_epoch_migration["current_configuration"]["cache_source_epoch_marker"]
     if type(_runtime_profile) is not str or _runtime_profile not in {"builtin-t5-gpt2-float32/v1", "builtin-llama-bfloat16/v1", "builtin-qwen2-bfloat16/v1"}:
         raise TrainingJobValidationError("explicit supported local decoder runtime profile required")
     qwen2_profile = _runtime_profile == "builtin-qwen2-bfloat16/v1"
@@ -4987,6 +5137,8 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
             else (REVIEWED_DECODER_READONLY_EPOCH_PROFILE
             if type(_source_epoch_migration) is dict and _source_epoch_migration.get("profile") == REVIEWED_DECODER_READONLY_EPOCH_PROFILE
             else REVIEWED_DECODER_SOURCE_EPOCH_PROFILE))
+    if digest_omitted and _source_epoch_migration is not None:
+        policy["source_epoch_migration_profile"] = _source_epoch_migration["profile"]
     if llama_profile:
         policy["runtime_profile"] = _runtime_profile
     if admission_profile is not None:
@@ -5245,11 +5397,15 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
             pretrained=recipe["pretrained"], gradient_clip=recipe["gradient_clip"],
             **({"model_profile": _runtime_profile} if qwen2_profile else {}),
             **({"training_conditioning_profile": recipe["training_conditioning_profile"]} if training_recipe else {}),
-            **({"target_codec": _target_codec} if digest_omitted else {}))
+            **({"target_codec": _target_codec} if digest_omitted else {}),
+            **({"cache_source_epoch_marker": cache_epoch_marker} if cache_epoch_marker is not None else {}))
         if backend.identity() != identity:
             raise TrainingJobValidationError("local constructed decoder backend identity differs")
         current()
-        if _source_epoch_migration is not None:
+        if digest_omitted and _source_epoch_migration is not None:
+            model_raw, optimizer_raw = _reviewed_digest_cache_epoch_restore(backend, model_raw, optimizer_raw,
+                _source_epoch_migration, registry, current_admission_provider, current)
+        elif _source_epoch_migration is not None:
             model_raw, optimizer_raw = _reviewed_epoch_restore(backend, model_raw, optimizer_raw,
                 _source_epoch_migration, registry, current_admission_provider, current)
         backend.restore_checkpoint(model_raw, optimizer_raw, execution_guard=current)
@@ -5287,6 +5443,11 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
         if _source_epoch_migration is not None:
             receipt["explicit_source_epoch_migration_performed"] = True
         current()
+        if _cache_epoch_migration_artifact is not None:
+            _reviewed_digest_cache_epoch_validate_receipt(asdict(_cache_epoch_migration_artifact), backend, expected_spec=None)
+            receipt["cache_source_epoch_migration"] = asdict(_cache_epoch_migration_artifact)
+            receipt["cache_source_epoch_marker"] = _thaw(backend.cache_source_epoch_marker)
+            current()
         if backend.identity() != identity or not backend.restored_checkpoint_matches(model_raw, optimizer_raw):
             raise TrainingJobValidationError("loaded decoder pair changed after final policy guard")
         receipt["guard_calls"] = dict(guards)
@@ -5511,7 +5672,7 @@ def _reviewed_epoch_pipeline_proof(old_raw, current_raw, sources, old_pins, curr
     return {"old_contract": old_contract, "current_contract": current_contract,
         "old_binding": old_binding, "current_binding": current_binding, "method_proofs": proofs}
 
-def _reviewed_epoch_dependencies(reference, old_manifest, old_config_sha, old_pipeline_sha, backend):
+def _reviewed_epoch_dependencies(reference, old_manifest, old_config_sha, old_pipeline_sha, backend, *, _current_cache_contract=None):
     """Authenticate an explicit frozen pre-adoption dependency snapshot.
 
     This covers a fixed declared runtime set, not transitive-library attestation.
@@ -5519,16 +5680,19 @@ def _reviewed_epoch_dependencies(reference, old_manifest, old_config_sha, old_pi
     """
     import sys
     snapshot, _ = _reviewed_epoch_document(reference, limit=1024**2)
-    fields = {"schema", "association_scope", "old_checkpoint_manifest_sha256", "old_configuration_sha256",
-              "old_tokenizer_pipeline_sha256", "old_source_sha256", "implementation"}
-    _reviewed_epoch_need(type(snapshot) is dict and set(snapshot) == fields
-        and snapshot["schema"] == "reviewed-decoder-migration-dependency-snapshot/v1"
-        and snapshot["association_scope"] == "declared-current-cohort-before-Source-transition-not-historical-execution-attestation/v1"
-        and snapshot["old_checkpoint_manifest_sha256"] == old_manifest["artifact_sha256"]
-        and snapshot["old_configuration_sha256"] == old_config_sha
-        and snapshot["old_tokenizer_pipeline_sha256"] == old_pipeline_sha
-        and snapshot["old_source_sha256"] == old_manifest["producer_pins"],
-        "frozen dependency snapshot does not bind the actual old pair/configuration")
+    if _current_cache_contract is None:
+        fields = {"schema", "association_scope", "old_checkpoint_manifest_sha256", "old_configuration_sha256",
+                  "old_tokenizer_pipeline_sha256", "old_source_sha256", "implementation"}
+        _reviewed_epoch_need(type(snapshot) is dict and set(snapshot) == fields
+            and snapshot["schema"] == "reviewed-decoder-migration-dependency-snapshot/v1"
+            and snapshot["association_scope"] == "declared-current-cohort-before-Source-transition-not-historical-execution-attestation/v1"
+            and snapshot["old_checkpoint_manifest_sha256"] == old_manifest["artifact_sha256"]
+            and snapshot["old_configuration_sha256"] == old_config_sha
+            and snapshot["old_tokenizer_pipeline_sha256"] == old_pipeline_sha
+            and snapshot["old_source_sha256"] == old_manifest["producer_pins"],
+            "frozen dependency snapshot does not bind the actual old pair/configuration")
+    else:
+        _reviewed_digest_cache_current_dependency_metadata(snapshot,old_manifest,old_config_sha,old_pipeline_sha,_current_cache_contract)
     modules = {"torch": "torch", "torch_native": "torch._C", "torch_serialization": "torch.serialization",
         "torch_optimizer_base": "torch.optim.optimizer", "model_class": type(backend.model).__module__,
         "model_config_class": type(backend.model.config).__module__, "optimizer_class": type(backend.optimizer).__module__,
@@ -6782,135 +6946,15 @@ def _reviewed_train_resume_epoch_context(spec, old_configuration_artifact, old_t
         "current_configuration_artifact": asdict(current_configuration_artifact),
         "source_contract_artifact": contract_ref}
 
-def _reviewed_train_resume_epoch_restore(backend,model_raw,optimizer_raw,context,registry,current_admission_provider,current):
+def _reviewed_train_resume_epoch_restore(backend, model_raw, optimizer_raw, context, registry, current_admission_provider, current):
     """Existing paired transfer with exact equality, new proof, no numeric updates."""
-    from collections import OrderedDict
-    _reviewed_epoch_need(type(backend)is TorchReviewedDecoderBackend,"exact current backend required")
-    spec=context["spec"]
-    checked=_reviewed_train_resume_epoch_context(spec,
-        CheckpointArtifact.from_dict(context["old_configuration_artifact"]),
-        CheckpointArtifact.from_dict(context["old_pipeline_artifact"]),
-        CheckpointArtifact.from_dict(context["current_configuration_artifact"]),
-        CheckpointArtifact.from_dict(context["source_contract_artifact"]))
-    context.clear();context.update(checked);current()
-    _reviewed_epoch_need(_json_bytes(backend._configuration())==_json_bytes(context["current_configuration"]),
-        "constructed TRAIN-resume current configuration differs")
-    _reviewed_epoch_authenticate_assets(spec,backend)
-    current_raw=backend.tokenizer.pipeline_serialization()
-    proof=_reviewed_epoch_pipeline_proof(context["old_pipeline_raw"],current_raw,context["sources"],
-        context["contract"]["old_source_sha256"],context["contract"]["current_source_sha256"])
-    _reviewed_epoch_need(proof["current_contract"]==context["current_configuration"]["tokenizer"]
-        and proof["current_binding"]==context["current_configuration"]["tokenizer_binding"],
-        "actual new pipeline/config identity differs")
-    dependency=_reviewed_epoch_dependencies(context["contract"]["dependency_snapshot_artifact"],
-        {**context["old_manifest"],"artifact_sha256":spec.parent_checkpoint_artifact.sha256},
-        context["contract"]["old_configuration_sha256"],context["contract"]["old_tokenizer_pipeline_sha256"],backend)
-    prepared=_reviewed_epoch_prepare_binding(spec,registry,backend.tokenizer,current_admission_provider)
-    _reviewed_epoch_binding_proof(context["old_population_binding"],prepared["receipt"],context["contract"])
-    _reviewed_epoch_need(prepared["receipt"]["tokenizer_contract"]==proof["current_contract"],"current same-T3 input preparation differs")
-    current()
-    model,optimizer=_reviewed_epoch_old_pair(backend,model_raw,optimizer_raw,context["old_configuration"],context["old_manifest"]["progress"]["optimizer_steps"])
-    _reviewed_epoch_need(bool(optimizer["state"]["state"])==(context["origin_kind"]=="trained3"),
-        "pristine must have empty Adam; trained3 must retain actual nonempty Adam")
-    state=OrderedDict(model["state"]);state._metadata=model["state_metadata"]
-    backend.model.load_state_dict(state,strict=True);current()
-    backend.optimizer.load_state_dict(optimizer["state"]);current()
-    backend._torch().set_rng_state(optimizer["cpu_rng"]);backend._optimizer_steps=optimizer["optimizer_steps"];current()
-    live_model=backend._model_state()
-    live_optimizer={"state":backend.optimizer.state_dict(),"optimizer_steps":backend._optimizer_steps,
-        "cpu_rng":backend._torch().get_rng_state(),"device_rng":None}
-    _reviewed_epoch_need(_reviewed_epoch_pair_equal(backend,model,optimizer,live_model,live_optimizer),
-        "TRAIN-resume bridge actual model/Adam/RNG transfer differs")
-    derivative=backend.snapshot_checkpoint()
-    new_model,new_optimizer=backend._load_pair(derivative["model_state"],derivative["optimizer_state"])
-    _reviewed_epoch_need(_reviewed_epoch_pair_equal(backend,model,optimizer,new_model,new_optimizer),
-        "TRAIN-resume new-format pair changed actual numerical halves or progress")
-    current()
-    _reviewed_epoch_need(backend.tokenizer.pipeline_serialization()==current_raw
-        and _reviewed_epoch_dependencies(context["contract"]["dependency_snapshot_artifact"],
-            {**context["old_manifest"],"artifact_sha256":spec.parent_checkpoint_artifact.sha256},
-            context["contract"]["old_configuration_sha256"],context["contract"]["old_tokenizer_pipeline_sha256"],backend)==dependency,
-        "current pipeline/runtime cohort changed during transfer")
-    context.update(current_pipeline_raw=current_raw,current_training_binding=prepared["receipt"],
-        pipeline_proof=proof,derivative_pair=derivative,
-        dependency_scope="declared_current_cohort_before_after_Source_transition_not_historical_execution_attestation")
-    return derivative["model_state"],derivative["optimizer_state"]
+    return _reviewed_epoch_family_restore(backend, model_raw, optimizer_raw, context, registry, current_admission_provider, current, _family=REVIEWED_DECODER_TRAIN_RESUME_EPOCH_PROFILE)
 
-def _reviewed_train_resume_epoch_validate_receipt(reference,backend,*,expected_spec=None):
+def _reviewed_train_resume_epoch_validate_receipt(reference, backend, *, expected_spec=None):
     """Recompute every proof and actual old/current pair; no receipt-only waiver."""
-    receipt,_=_reviewed_epoch_document(reference,limit=8*1024**2)
-    fields={"schema","profile","old_checkpoint_manifest","old_configuration_artifact","old_pipeline_artifact",
-        "current_configuration_artifact","source_contract_artifact","current_pipeline_artifact",
-        "derivative_model_checkpoint","derivative_optimizer_checkpoint","target_job_spec","migrated_training_binding",
-        "original_progress","pipeline_proof","source_projection_sha256","dependency_scope",
-        "historical_dependency_execution_requalified","model_Adam_steps_RNG_and_progress_preserved",
-        "qualified","promotion_performed","legal_meaning_verified","convergence_proved","corpus_admitted",
-        "new_checkpoint_lineage_id","new_base_version_id","origin_kind","training_resume_eligible"}
-    _reviewed_epoch_need(type(receipt)is dict and set(receipt)==fields
-        and receipt["schema"]==REVIEWED_DECODER_TRAIN_RESUME_EPOCH_RECEIPT_SCHEMA
-        and receipt["profile"]==REVIEWED_DECODER_TRAIN_RESUME_EPOCH_PROFILE and receipt["training_resume_eligible"]is True
-        and receipt["historical_dependency_execution_requalified"]is False
-        and receipt["model_Adam_steps_RNG_and_progress_preserved"]is True
-        and all(receipt[key]is False for key in("qualified","promotion_performed","legal_meaning_verified","convergence_proved","corpus_admitted")),
-        "closed nonauthorizing TRAIN-resume migration receipt required")
-    spec=_reviewed_epoch_receipt_spec(receipt,None,backend)
-    if expected_spec is not None:
-        _reviewed_epoch_need(type(expected_spec)is ReviewedMixedDecoderTrainingJobSpec,
-            "explicit TRAIN-resume target spec required")
-        original_spec, next_spec = spec.to_dict(), expected_spec.to_dict()
-        mutable = {"job_id","run_id","output_directory","max_steps","max_seconds",
-            "parent_checkpoint_artifact","base_model_checkpoint","base_optimizer_checkpoint",
-            "checkpoint_lineage_id","base_version_id"}
-        _reviewed_epoch_need(set(original_spec)==set(next_spec)
-            and all(original_spec[key]==next_spec[key]for key in original_spec if key not in mutable),
-            "TRAIN-resume numerical/data/context/configuration target changed")
-    _reviewed_epoch_need(asdict(spec.parent_checkpoint_artifact)==receipt["old_checkpoint_manifest"],"TRAIN-resume original pair metadata changed")
-    context=_reviewed_train_resume_epoch_context(spec,
-        CheckpointArtifact.from_dict(receipt["old_configuration_artifact"]),
-        CheckpointArtifact.from_dict(receipt["old_pipeline_artifact"]),
-        CheckpointArtifact.from_dict(receipt["current_configuration_artifact"]),
-        CheckpointArtifact.from_dict(receipt["source_contract_artifact"]))
-    if expected_spec is not None:
-        _reviewed_epoch_need(expected_spec.checkpoint_lineage_id==context["new_checkpoint_lineage_id"]
-            and expected_spec.base_version_id==context["new_base_version_id"],
-            "TRAIN-resume target lineage/version differs")
-    _reviewed_epoch_need(receipt["new_checkpoint_lineage_id"]==context["new_checkpoint_lineage_id"]
-        and receipt["new_base_version_id"]==context["new_base_version_id"]
-        and receipt["origin_kind"]==context["origin_kind"]
-        and receipt["original_progress"]==context["old_manifest"]["progress"]
-        and receipt["dependency_scope"]=="declared_current_cohort_before_after_Source_transition_not_historical_execution_attestation",
-        "TRAIN-resume lineage/version/original progress/scope differs")
-    _reviewed_epoch_authenticate_assets(spec,backend)
-    _reviewed_epoch_need(_json_bytes(backend._configuration())==_json_bytes(context["current_configuration"]),"TRAIN-resume live complete config changed")
-    current_raw=_reviewed_decoder_artifact(CheckpointArtifact.from_dict(receipt["current_pipeline_artifact"]),limit=MAX_REVIEWED_TOKENIZER_PIPELINE_BYTES)
-    _reviewed_epoch_need(current_raw==backend.tokenizer.pipeline_serialization(),"new actual tokenizer pipeline changed")
-    proof=_reviewed_epoch_pipeline_proof(context["old_pipeline_raw"],current_raw,context["sources"],
-        context["contract"]["old_source_sha256"],context["contract"]["current_source_sha256"])
-    _reviewed_epoch_need(proof==receipt["pipeline_proof"]and receipt["source_projection_sha256"]==context["sources"]["projection_sha256"],"TRAIN-resume pipeline/Source proof differs")
-    _reviewed_epoch_binding_proof(context["old_population_binding"],receipt["migrated_training_binding"],context["contract"])
-    _reviewed_epoch_need(receipt["migrated_training_binding"]["tokenizer_contract"]==proof["current_contract"],"TRAIN-resume new population pipeline differs")
-    _reviewed_epoch_dependencies(context["contract"]["dependency_snapshot_artifact"],
-        {**context["old_manifest"],"artifact_sha256":spec.parent_checkpoint_artifact.sha256},
-        context["contract"]["old_configuration_sha256"],context["contract"]["old_tokenizer_pipeline_sha256"],backend)
-    limit=backend._checkpoint_byte_limit()
-    old_model,old_optimizer=_reviewed_epoch_old_pair(backend,
-        _reviewed_decoder_artifact(spec.base_model_checkpoint,limit=limit),
-        _reviewed_decoder_artifact(spec.base_optimizer_checkpoint,limit=limit),context["old_configuration"],
-        context["old_manifest"]["progress"]["optimizer_steps"])
-    _reviewed_epoch_need(bool(old_optimizer["state"]["state"])==(context["origin_kind"]=="trained3"),"TRAIN-resume old Adam origin mismatch")
-    new_model,new_optimizer=backend._load_pair(
-        _reviewed_decoder_artifact(CheckpointArtifact.from_dict(receipt["derivative_model_checkpoint"]),limit=limit),
-        _reviewed_decoder_artifact(CheckpointArtifact.from_dict(receipt["derivative_optimizer_checkpoint"]),limit=limit))
-    _reviewed_epoch_need(_reviewed_epoch_pair_equal(backend,old_model,old_optimizer,new_model,new_optimizer),
-        "TRAIN-resume actual old/new model/Adam/RNG/progress differ")
-    return receipt
+    return _reviewed_epoch_family_validate_receipt(reference, backend, expected_spec=expected_spec, _family=REVIEWED_DECODER_TRAIN_RESUME_EPOCH_PROFILE)
 
-def migrate_local_reviewed_decoder_train_resume_source_epoch_v5(spec, *, registry, current_admission_provider,
-        execution_guard, asset_policy_guard, recipe_artifact, model_config_artifact,
-        tokenizer_artifact, license_artifact, old_configuration_artifact,
-        old_tokenizer_pipeline_artifact, current_configuration_artifact,
-        compatibility_contract_artifact, output_directory, max_model_bytes,
-        runtime_profile="builtin-qwen2-bfloat16/v1"):
+def migrate_local_reviewed_decoder_train_resume_source_epoch_v5(spec, *, registry, current_admission_provider, execution_guard, asset_policy_guard, recipe_artifact, model_config_artifact, tokenizer_artifact, license_artifact, old_configuration_artifact, old_tokenizer_pipeline_artifact, current_configuration_artifact, compatibility_contract_artifact, output_directory, max_model_bytes, runtime_profile='builtin-qwen2-bfloat16/v1'):
     """Migrate the exact original9d TRAIN3 pair to a NEW current train-resume version.
 
     Actual old pipeline and current dependency-cohort snapshots must be captured
@@ -6918,152 +6962,7 @@ def migrate_local_reviewed_decoder_train_resume_source_epoch_v5(spec, *, registr
     old-artifact rewrite, promotion or historical dependency requalification.
     The caller retains existing execution/resource/asset/admission ownership.
     """
-    import gc
-    import stat
-    _reviewed_epoch_need(runtime_profile == "builtin-qwen2-bfloat16/v1" and all(callable(value) for value in
-        (current_admission_provider,execution_guard,asset_policy_guard)), "existing live guards required")
-    _reviewed_epoch_need(type(spec) is ReviewedMixedDecoderTrainingJobSpec
-        and tokenizer_artifact == spec.tokenizer_artifact and license_artifact == spec.license_artifact
-        and recipe_artifact in spec.backend_artifacts and model_config_artifact in spec.backend_artifacts
-        and recipe_artifact != model_config_artifact,
-        "loader recipe/configuration/tokenizer/license must be the exact declared old assets")
-    execution_guard()
-    policy = {"schema":"reviewed-decoder-source-epoch-migration-policy/v1",
-        "target_job_spec":spec.to_dict(), "old_configuration":asdict(old_configuration_artifact),
-        "old_pipeline":asdict(old_tokenizer_pipeline_artifact),
-        "current_configuration":asdict(current_configuration_artifact),
-        "source_contract":asdict(compatibility_contract_artifact),
-        "profile":REVIEWED_DECODER_TRAIN_RESUME_EPOCH_PROFILE,
-        "migration_requested":True, "training_resume_requested":True,"training_requested":False,"downloads_requested":False,
-        "resource_grant_requested":False,"promotion_requested":False}
-    asset_policy_guard(_parse_json(_json_bytes(policy)))
-    context = _reviewed_train_resume_epoch_context(spec,old_configuration_artifact,old_tokenizer_pipeline_artifact,
-        current_configuration_artifact,compatibility_contract_artifact)
-    output = Path(output_directory)
-    _reviewed_epoch_need(output.is_absolute() and not os.path.lexists(output)
-        and output.parent.resolve(strict=True)==output.parent
-        and output != Path(spec.output_directory)
-        and all(stat.S_ISDIR(parent.lstat().st_mode) for parent in output.parents),
-        "distinct fresh ordinary migration output directory required")
-    import torch
-    entry_rng = torch.get_rng_state().clone()
-    succeeded = False
-    try:
-        runtime, internal_receipt = _load_local_reviewed_decoder_runtime(
-            registry=registry,current_admission_provider=current_admission_provider,
-            execution_guard=execution_guard,asset_policy_guard=asset_policy_guard,
-            recipe_artifact=recipe_artifact,model_config_artifact=model_config_artifact,
-            tokenizer_artifact=tokenizer_artifact,license_artifact=license_artifact,
-            model_checkpoint=spec.base_model_checkpoint,optimizer_checkpoint=spec.base_optimizer_checkpoint,
-            expected_backend_identity=_thaw(spec.backend_identity),
-            expected_source_sha256=_thaw(spec.expected_source_sha256),
-            expected_admission_inputs_sha256=spec.expected_admission_inputs_sha256,
-            max_model_bytes=max_model_bytes,_admission_version="v3",_runtime_profile=runtime_profile,
-            _source_epoch_migration=context)
-        execution_guard()
-        _reviewed_epoch_need(runtime.backend.restored_checkpoint_matches(
-            context["derivative_pair"]["model_state"],context["derivative_pair"]["optimizer_state"]),
-            "current pair changed before publication")
-        output.mkdir(mode=0o700,exist_ok=False)
-        model = _write_exclusive(output/"model.checkpoint",context["derivative_pair"]["model_state"])
-        optimizer = _write_exclusive(output/"optimizer.checkpoint",context["derivative_pair"]["optimizer_state"])
-        pipeline = _write_exclusive(output/"current-tokenizer-pipeline.json",context["current_pipeline_raw"])
-        receipt = {"schema":REVIEWED_DECODER_TRAIN_RESUME_EPOCH_RECEIPT_SCHEMA,
-            "profile":REVIEWED_DECODER_TRAIN_RESUME_EPOCH_PROFILE,
-            "old_checkpoint_manifest":asdict(spec.parent_checkpoint_artifact),
-            "old_configuration_artifact":context["old_configuration_artifact"],
-            "old_pipeline_artifact":context["old_pipeline_artifact"],
-            "current_configuration_artifact":context["current_configuration_artifact"],
-            "source_contract_artifact":context["source_contract_artifact"],
-            "current_pipeline_artifact":pipeline,"derivative_model_checkpoint":model,
-            "derivative_optimizer_checkpoint":optimizer,"target_job_spec":spec.to_dict(),
-            "migrated_training_binding":context["current_training_binding"],
-            "original_progress":context["old_manifest"]["progress"],
-            "new_checkpoint_lineage_id":context["new_checkpoint_lineage_id"],
-            "new_base_version_id":context["new_base_version_id"],"origin_kind":"trained3",
-            "training_resume_eligible":True,
-            "pipeline_proof":context["pipeline_proof"],
-            "source_projection_sha256":context["sources"]["projection_sha256"],
-            "dependency_scope":context["dependency_scope"],
-            "historical_dependency_execution_requalified":False,
-            "model_Adam_steps_RNG_and_progress_preserved":True,
-            "qualified":False,"promotion_performed":False,"legal_meaning_verified":False,
-            "convergence_proved":False,"corpus_admitted":False}
-        receipt_ref = _write_exclusive(output/"source-epoch-TRAIN-resume-migration.json",_json_bytes(receipt))
-        original = context["old_manifest"]
-        manifest = {**original,"schema":REVIEWED_DECODER_SOURCE_EPOCH_CHECKPOINT_SCHEMA,
-            "checkpoint_lineage_id":context["new_checkpoint_lineage_id"],
-            "base_version_id":context["new_base_version_id"],
-            "backend_identity":_thaw(spec.backend_identity),
-            "producer_pins":_thaw(spec.expected_source_sha256),
-            "training_binding":context["current_training_binding"],
-            "model_state":model,"optimizer_state":optimizer,
-            "token_budgets":{"max_source_tokens":spec.max_source_tokens,"max_target_tokens":spec.max_target_tokens,
-                "tokenizer_contract":context["current_training_binding"]["tokenizer_contract"]},
-            "parent_checkpoint_sha256":spec.parent_checkpoint_artifact.sha256,
-            "continuation_profile":spec.continuation_profile,"optimizer_step_offset":0,
-            "stage_continuation":None,"source_epoch_migration":receipt_ref}
-        manifest_ref = _write_exclusive(output/"reviewed-decoder-checkpoint.json",_json_bytes(manifest))
-        # Drop the first live model before the genuinely ordinary current loader
-        # constructs another. It sees only current-format derivative artifacts.
-        del runtime
-        context.pop("derivative_pair")
-        gc.collect()
-        runtime, load_receipt = load_local_reviewed_decoder_runtime_v3(
-            admission_profile=spec.admission_profile,registry=registry,
-            current_admission_provider=current_admission_provider,execution_guard=execution_guard,
-            asset_policy_guard=asset_policy_guard,recipe_artifact=recipe_artifact,
-            model_config_artifact=model_config_artifact,tokenizer_artifact=tokenizer_artifact,
-            license_artifact=license_artifact,model_checkpoint=CheckpointArtifact.from_dict(model),
-            optimizer_checkpoint=CheckpointArtifact.from_dict(optimizer),
-            expected_backend_identity=_thaw(spec.backend_identity),
-            expected_source_sha256=_thaw(spec.expected_source_sha256),
-            expected_admission_inputs_sha256=spec.expected_admission_inputs_sha256,
-            max_model_bytes=max_model_bytes,runtime_profile=runtime_profile)
-        _reviewed_train_resume_epoch_validate_receipt(receipt_ref,runtime.backend,expected_spec=None)
-        prepared = _reviewed_epoch_prepare_binding(spec,registry,runtime.tokenizer,current_admission_provider)
-        _reviewed_epoch_need(prepared["receipt"] == context["current_training_binding"],
-            "ordinary current admission/input binding changed after derivative reload")
-        new_spec = spec.to_dict()
-        new_spec.update(checkpoint_lineage_id=context["new_checkpoint_lineage_id"],
-            base_version_id=context["new_base_version_id"],parent_checkpoint_artifact=manifest_ref,
-            base_model_checkpoint=model,base_optimizer_checkpoint=optimizer)
-        _reviewed_train_resume_epoch_validate_receipt(receipt_ref,runtime.backend,
-            expected_spec=ReviewedMixedDecoderTrainingJobSpec.from_dict(new_spec))
-        result = {"schema":"reviewed-decoder-TRAIN-resume-source-epoch-migration-operation/v1",
-            "training_resume_eligible":True,"new_checkpoint_lineage_id":context["new_checkpoint_lineage_id"],
-            "new_base_version_id":context["new_base_version_id"],
-            "migration_receipt":receipt_ref,"candidate":manifest_ref,
-            "model_checkpoint":model,"optimizer_checkpoint":optimizer,"next_job_spec":new_spec,
-            "worker_progress":dict(original["progress"]),"ordinary_current_loader":load_receipt,
-            "qualified":False,"promotion_performed":False,"training_performed":False,
-            "resource_granted":False,"historical_dependency_execution_requalified":False}
-        execution_guard()
-        _reviewed_train_resume_epoch_validate_receipt(receipt_ref,runtime.backend,expected_spec=None)
-        _reviewed_epoch_need(runtime.backend.restored_checkpoint_matches(
-            _reviewed_decoder_artifact(CheckpointArtifact.from_dict(model),limit=runtime.backend._checkpoint_byte_limit()),
-            _reviewed_decoder_artifact(CheckpointArtifact.from_dict(optimizer),limit=runtime.backend._checkpoint_byte_limit())),
-            "live derivative pair changed during final callback/provenance validation")
-        _reviewed_epoch_need(runtime.backend.identity()==_thaw(spec.backend_identity)
-            and _reviewed_decoder_source_pins(admission_profile=spec.admission_profile)==_thaw(spec.expected_source_sha256),
-            "current backend or Source changed before migration publication")
-        _write_exclusive(output/"receipt.json",_json_bytes(result))
-        directory_fd=os.open(output,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW)
-        try:os.fsync(directory_fd)
-        finally:os.close(directory_fd)
-        succeeded=True
-        return runtime,result
-    except BaseException as error:
-        if output.exists():
-            try:_write_exclusive(output/"failure.json",_json_bytes({
-                "schema":"reviewed-decoder-TRAIN-resume-source-epoch-migration-failure/v1",
-                "error_type":type(error).__name__,"partial_output_preserved":True,
-                "old_artifacts_rewritten":False,"qualified":False,"promotion_performed":False}))
-            except BaseException as publication_error:
-                error.add_note("failed to retain migration failure metadata: "+type(publication_error).__name__)
-        raise
-    finally:
-        if not succeeded:torch.set_rng_state(entry_rng)
+    return _migrate_local_reviewed_decoder_epoch_family(spec, registry=registry, current_admission_provider=current_admission_provider, execution_guard=execution_guard, asset_policy_guard=asset_policy_guard, recipe_artifact=recipe_artifact, model_config_artifact=model_config_artifact, tokenizer_artifact=tokenizer_artifact, license_artifact=license_artifact, old_configuration_artifact=old_configuration_artifact, old_tokenizer_pipeline_artifact=old_tokenizer_pipeline_artifact, current_configuration_artifact=current_configuration_artifact, compatibility_contract_artifact=compatibility_contract_artifact, output_directory=output_directory, max_model_bytes=max_model_bytes, runtime_profile=runtime_profile, _family=REVIEWED_DECODER_TRAIN_RESUME_EPOCH_PROFILE)
 
 __all__ += ['migrate_local_reviewed_decoder_train_resume_source_epoch_v5', 'REVIEWED_DECODER_TRAIN_RESUME_EPOCH_PROFILE', 'REVIEWED_DECODER_TRAIN_RESUME_EPOCH_CONTRACT_SCHEMA', 'REVIEWED_DECODER_TRAIN_RESUME_EPOCH_RECEIPT_SCHEMA']
 
@@ -7093,7 +6992,7 @@ def load_local_reviewed_decoder_digest_omitted_runtime_v1(*, admission_profile, 
         tokenizer_artifact, license_artifact, model_checkpoint, optimizer_checkpoint,
         expected_backend_identity, expected_source_sha256,
         expected_admission_inputs_sha256, max_model_bytes,
-        runtime_profile="builtin-t5-gpt2-float32/v1"):
+        runtime_profile="builtin-t5-gpt2-float32/v1", cache_source_epoch_migration=None):
     """Load a local decoder only for the explicitly selected admission V3 domain."""
     if type(admission_profile) is not str or admission_profile != REVIEWED_MIXED_ADMISSION_PROFILE:
         raise TrainingJobValidationError("explicit mixed-sort admission V3 load profile required")
@@ -7104,6 +7003,904 @@ def load_local_reviewed_decoder_digest_omitted_runtime_v1(*, admission_profile, 
         model_checkpoint=model_checkpoint, optimizer_checkpoint=optimizer_checkpoint,
         expected_backend_identity=expected_backend_identity, expected_source_sha256=expected_source_sha256,
         expected_admission_inputs_sha256=expected_admission_inputs_sha256, max_model_bytes=max_model_bytes,
-        _admission_version="v3", _runtime_profile=runtime_profile, _target_codec=REVIEWED_DIGEST_OMITTED_TARGET_CODEC)
+        _admission_version="v3", _runtime_profile=runtime_profile, _target_codec=REVIEWED_DIGEST_OMITTED_TARGET_CODEC,
+        _cache_epoch_migration_artifact=cache_source_epoch_migration)
 
 __all__ += ["ReviewedDigestOmittedDecoderTrainingJobSpec", "REVIEWED_DIGEST_OMITTED_JOB_SCHEMA", "REVIEWED_DIGEST_OMITTED_WORKER_RECEIPT_SCHEMA", "REVIEWED_DIGEST_OMITTED_TARGET_CODEC", "REVIEWED_DIGEST_OMITTED_CHECKPOINT_SCHEMA", "REVIEWED_DIGEST_OMITTED_CHATML_PROFILE", "REVIEWED_DIGEST_OMITTED_GENERATION_POLICY_SCHEMA", "REVIEWED_DIGEST_OMITTED_RECIPE_SCHEMA", "load_local_reviewed_decoder_digest_omitted_runtime_v1", "make_reviewed_decoder_digest_omitted_source_producer_v1"]
+
+# Closed terminal source proof glue, version 1.
+_REVIEWED_DIGEST_CACHE_TERMINAL_GLUE_SHA256 = '0817f0b1455e3219df66e55ec3ae8cdc35cf4c72413408ce1a988229b8d90625'
+_REVIEWED_DIGEST_CACHE_TERMINAL_REVERSE_EDITS = ((657, 659, 'e94383d6690ebf6548066989f8e62b468a58766068a5c6e972e4c68d45386c6e', ''), (3873, 3874, '4fbaa579257e2d1381c3e6b92331ee82686347fc3e1f156051f530f01a05a381', '                       max_generation_seconds=None, context_budget_profile=None):\n'), (3902, 3908, '833b25981a132ee43d6402de465a5598af5fbbdfbb0819e5d1c9ebc384dd08ec', ''), (3914, 3918, '8cb362d016fba265be23d59c889f33e159d5da3b9fc7f838d58e6e2f7980a160', ''), (4217, 4232, '3aa1cecd578198a02118661cd0741f52b1b8122e43f3dfea76dd444a6d3e3961', '                        token = int(logits[0, -1].argmax().item())\n'), (4275, 4295, '8d151c135c4aa1807f8a6eaabcecba03dc369d7602b275bf7b05cf1466f3cb91', ''), (4297, 4307, '58089cb5c137cdf4f0fb986493f0dd67e2eecc19a40e78d0a84606ec737ee10e', ''), (4415, 4416, '64b1066850c107a888c2a91e90bc7007048454c59d48a03943b50c7557c838f0', '    need((generation_copy is not None and generation_copy["schema"] == REVIEWED_DIGEST_OMITTED_GENERATION_POLICY_SCHEMA) == digest_omitted,\n'), (4417, 4418, '45519e905796276255b041fefeb6637b24f0162b22bf6622fe12eaae3951c4d0', '    qwen2_generation = generation_copy is not None and generation_copy["schema"] in {"reviewed-decoder-generation-policy/v2", REVIEWED_DIGEST_OMITTED_GENERATION_POLICY_SCHEMA}\n'), (4578, 4581, '9445b3fed9660fdf34ad4e387d3edf57d0d814667d0c6bbd25118556ec994ab5', '        policy.update(schema="reviewed-decoder-digest-omitted-source-producer-policy/v1",\n'), (4860, 4863, '64c9c0ce7e67e976b659f52225778a4f1ee078585d49e67f84b526eaf93dc003', '        input_profile_id=("reviewed-decoder-digest-omitted-producer/v1:" if digest_omitted else "reviewed-decoder-qwen2-profiled-producer/v1:" if qwen2_generation\n'), (4917, 4919, '3327b1aeaf40c2cbc114ed4edf41a66be7733efac3bd1ee0bd07ceb6121140db', ''))
+_REVIEWED_DIGEST_CACHE_TERMINAL_DISPATCH = "    if (b'\\nREVIEWED_DIGEST_OMITTED_TERMINAL_POLICY_SCHEMA = ' in current_worker\n            or b'\\n# Closed terminal source proof glue, version 1.\\n' in current_worker):\n        return _reviewed_digest_cache_terminal_projection(old_worker,current_worker,old_inputs,current_inputs)\n"
+
+
+def _reviewed_digest_cache_terminal_source_inverse(current_worker):
+    """Recover complete pinned prior bytes; this is content proof, not permission."""
+    need = _reviewed_epoch_need
+    need(type(current_worker) is bytes, 'exact terminal source bytes required')
+    prior_sha = '348fe95f15ee03d8039c1171b30d228400416f3a6fa40462f64592139ba54963'
+    if len(current_worker) == 586659 and _digest(current_worker) == prior_sha:
+        return current_worker
+    begin = b'\n# Closed terminal source proof glue, version 1.\n'
+    end = b'\n# End closed terminal source proof glue, version 1.\n'
+    if begin in current_worker or end in current_worker:
+        need(current_worker.count(begin) == 1 and current_worker.count(end) == 1,
+            'unique complete terminal source glue required')
+        lo = current_worker.index(begin)
+        hi = current_worker.index(end) + len(end)
+        need(hi > lo, 'terminal source glue boundaries differ')
+        block = current_worker[lo:hi]
+        assignment = b"\n_REVIEWED_DIGEST_CACHE_TERMINAL_GLUE_SHA256 = '"
+        need(block.count(assignment) == 1, 'terminal source glue commitment missing')
+        value_at = block.index(assignment) + len(assignment)
+        need(block[value_at:value_at + 64] == _REVIEWED_DIGEST_CACHE_TERMINAL_GLUE_SHA256.encode()
+            and block[value_at + 64:value_at + 66] == b"'\n",
+            'terminal source glue commitment differs')
+        normalized = block[:value_at] + b'0' * 64 + block[value_at + 64:]
+        need(_digest(normalized) == _REVIEWED_DIGEST_CACHE_TERMINAL_GLUE_SHA256,
+            'complete terminal source glue changed')
+        current_worker = current_worker[:lo] + current_worker[hi:]
+        dispatch = _REVIEWED_DIGEST_CACHE_TERMINAL_DISPATCH.encode()
+        need(current_worker.count(dispatch) == 1, 'unique terminal source dispatch required')
+        current_worker = current_worker.replace(dispatch, b'', 1)
+    need(len(current_worker) == 591227
+        and _digest(current_worker) == '6dc99f98868d69ce92c8a6218458bc9ee60d35faefc362ad42aaa8f69875a439',
+        'unsupported complete terminal source target')
+    lines = current_worker.decode().splitlines(keepends=True)
+    for lo,hi,expected,replacement in reversed(_REVIEWED_DIGEST_CACHE_TERMINAL_REVERSE_EDITS):
+        need(_digest(''.join(lines[lo:hi]).encode()) == expected,
+            'exact terminal source reversal slice differs')
+        lines[lo:hi] = [replacement]
+    recovered = ''.join(lines).encode()
+    need(len(recovered) == 586659 and _digest(recovered) == prior_sha,
+        'complete prior cache source recovery differs')
+    return recovered
+
+
+def _reviewed_digest_cache_terminal_projection(old_worker,current_worker,old_inputs,current_inputs):
+    """Compose a closed terminal inverse with the unchanged historical Source proof."""
+    prior = _reviewed_digest_cache_terminal_source_inverse(current_worker)
+    historical = _reviewed_digest_cache_epoch_projection(old_worker,prior,old_inputs,current_inputs)
+    return {
+        'schema':'reviewed-digest-cache-closed-terminal-source-projection/v1',
+        'old_worker_sha256':_digest(old_worker),
+        'current_worker_sha256':_digest(current_worker),
+        'old_inputs_sha256':_digest(old_inputs),
+        'current_inputs_sha256':_digest(current_inputs),
+        'recovered_complete_prior_worker_sha256':_digest(prior),
+        'terminal_source_worker_sha256':'6dc99f98868d69ce92c8a6218458bc9ee60d35faefc362ad42aaa8f69875a439',
+        'closed_terminal_glue_sha256':_REVIEWED_DIGEST_CACHE_TERMINAL_GLUE_SHA256,
+        'historical_source_projection':historical,
+        'historical_source_projection_sha256':_digest(_json_bytes(historical)),
+        'terminal_generation_code_changed':True,
+        'historical_execution_requalified':False,
+        'marked_parent_continuation_enabled':False,
+    }
+
+# End closed terminal source proof glue, version 1.
+
+# Explicit same-objective digest cache Source migration, version 1.
+# PRIVATE AUTHORING FRAGMENT. Copied into the existing worker, never a new module.
+REVIEWED_DIGEST_CACHE_EPOCH_PROFILE = 'digest-omitted-TRAIN3-to-pure-tokenizer-caches/v1'
+REVIEWED_DIGEST_CACHE_PRISTINE_EPOCH_PROFILE = 'digest-omitted-PRISTINE0-to-pure-tokenizer-caches/v1'
+REVIEWED_DIGEST_CACHE_CURRENT_COHORT_CONTRACT_SCHEMA = 'reviewed-digest-omitted-cache-source-compatibility/v2'
+REVIEWED_DIGEST_CACHE_CURRENT_COHORT_SNAPSHOT_SCHEMA = 'reviewed-decoder-migration-dependency-snapshot/v2'
+REVIEWED_DIGEST_CACHE_CURRENT_COHORT_SCOPE = 'declared-current-at-migration-cohort-not-historical-execution-attestation/v1'
+REVIEWED_DIGEST_CACHE_EPOCH_CONTRACT_SCHEMA = 'reviewed-digest-omitted-cache-source-compatibility/v1'
+REVIEWED_DIGEST_CACHE_EPOCH_RECEIPT_SCHEMA = 'reviewed-digest-omitted-cache-source-migration/v1'
+REVIEWED_DIGEST_CACHE_EPOCH_CHECKPOINT_SCHEMA = 'reviewed-digest-omitted-cache-source-checkpoint/v1'
+_REVIEWED_DIGEST_CACHE_EPOCH_BRIDGE_AST_SHA256 = '314e74be4c92fe2dcfd511345b2dc13b950c30571b2ae258d561c2aa8fd736a5'
+_REVIEWED_DIGEST_CACHE_EPOCH_REVERSE_EDITS = (('        if isinstance(value, Mapping) and value.get("schema_version") == REVIEWED_DIGEST_OMITTED_JOB_SCHEMA:', '        if isinstance(value, Mapping) and value.get("schema_version") == REVIEWED_DIGEST_CACHE_EPOCH_JOB_SCHEMA:\n            return ReviewedDigestCacheEpochTrainingJobSpec.from_dict(value)\n        if isinstance(value, Mapping) and value.get("schema_version") == REVIEWED_DIGEST_OMITTED_JOB_SCHEMA:', 1), ('        expected_schema = (REVIEWED_DIGEST_OMITTED_JOB_SCHEMA if type(self) is ReviewedDigestOmittedDecoderTrainingJobSpec else', '        expected_schema = (REVIEWED_DIGEST_CACHE_EPOCH_JOB_SCHEMA if type(self) is ReviewedDigestCacheEpochTrainingJobSpec else\n            REVIEWED_DIGEST_OMITTED_JOB_SCHEMA if type(self) is ReviewedDigestOmittedDecoderTrainingJobSpec else', 1), ('REVIEWED_DIGEST_OMITTED_TARGET_CODEC if type(self) is ReviewedDigestOmittedDecoderTrainingJobSpec else', 'REVIEWED_DIGEST_OMITTED_TARGET_CODEC if type(self) in (ReviewedDigestOmittedDecoderTrainingJobSpec, ReviewedDigestCacheEpochTrainingJobSpec) else', 1), ('        expected_schema = (REVIEWED_DIGEST_OMITTED_JOB_SCHEMA if cls is ReviewedDigestOmittedDecoderTrainingJobSpec else', '        expected_schema = (REVIEWED_DIGEST_CACHE_EPOCH_JOB_SCHEMA if cls is ReviewedDigestCacheEpochTrainingJobSpec else\n            REVIEWED_DIGEST_OMITTED_JOB_SCHEMA if cls is ReviewedDigestOmittedDecoderTrainingJobSpec else', 1), ('        if cls in (ReviewedMixedDecoderTrainingJobSpec, ReviewedDigestOmittedDecoderTrainingJobSpec) and data.get("admission_profile")', '        if cls in (ReviewedMixedDecoderTrainingJobSpec, ReviewedDigestOmittedDecoderTrainingJobSpec, ReviewedDigestCacheEpochTrainingJobSpec) and data.get("admission_profile")', 1), ('    digest_omitted = type(spec) is ReviewedDigestOmittedDecoderTrainingJobSpec', '    digest_omitted = type(spec) in (ReviewedDigestOmittedDecoderTrainingJobSpec, ReviewedDigestCacheEpochTrainingJobSpec)', 1), ('    mixed = type(spec) in (ReviewedMixedDecoderTrainingJobSpec, ReviewedDigestOmittedDecoderTrainingJobSpec)', '    mixed = type(spec) in (ReviewedMixedDecoderTrainingJobSpec, ReviewedDigestOmittedDecoderTrainingJobSpec, ReviewedDigestCacheEpochTrainingJobSpec)', 1), ('(ReviewedDecoderTrainingJobSpec, ReviewedMixedDecoderTrainingJobSpec, ReviewedDigestOmittedDecoderTrainingJobSpec)', '(ReviewedDecoderTrainingJobSpec, ReviewedMixedDecoderTrainingJobSpec, ReviewedDigestOmittedDecoderTrainingJobSpec, ReviewedDigestCacheEpochTrainingJobSpec)', 3), ('        parent = _parse_json(parent_raw)\n        if continuation_enabled:', '        parent = _parse_json(parent_raw)\n        if type(spec) is ReviewedDigestCacheEpochTrainingJobSpec:\n            parent = _reviewed_digest_cache_epoch_ancestry(spec, runtime.backend, parent, data["receipt"])\n            frozen_cache_parent = _json_bytes(parent)\n            def replay_cache_epoch(binding):\n                observed = _reviewed_decoder_artifact(spec.parent_checkpoint_artifact)\n                if observed != parent_raw:\n                    raise TrainingJobValidationError("digest cache ancestry parent changed")\n                normalized = _reviewed_digest_cache_epoch_ancestry(spec, runtime.backend, _parse_json(observed), binding)\n                if _json_bytes(normalized) != frozen_cache_parent:\n                    raise TrainingJobValidationError("digest cache ancestry changed during execution")\n            continuation_replay = replay_cache_epoch\n        if continuation_enabled:', 1), ('        current()\n        checkpoint_ref = _write_exclusive(output / "reviewed-decoder-checkpoint.json", _json_bytes(checkpoint))', '        if type(spec) is ReviewedDigestCacheEpochTrainingJobSpec:\n            checkpoint.update(schema=REVIEWED_DIGEST_CACHE_EPOCH_CHECKPOINT_SCHEMA,\n                cache_source_epoch_migration=asdict(spec.cache_source_epoch_migration),\n                cache_epoch_parent_checkpoint_artifact=asdict(spec.parent_checkpoint_artifact))\n        current()\n        checkpoint_ref = _write_exclusive(output / "reviewed-decoder-checkpoint.json", _json_bytes(checkpoint))', 1), ('        if mixed:\n            receipt["admission_profile"] = admission_profile', '        if type(spec) is ReviewedDigestCacheEpochTrainingJobSpec:\n            receipt.update(cache_source_epoch_migration=asdict(spec.cache_source_epoch_migration),\n                checkpoint_schema=REVIEWED_DIGEST_CACHE_EPOCH_CHECKPOINT_SCHEMA,\n                cache_source_epoch_profile=_thaw(runtime.backend.cache_source_epoch_marker)["profile"])\n        if mixed:\n            receipt["admission_profile"] = admission_profile', 1), ('    if digest_omitted and (_admission_version != "v3" or _source_epoch_migration is not None):\n        raise TrainingJobValidationError("digest-omitted loader requires fresh current-source admission; no old-objective migration")', '    if digest_omitted and (_admission_version != "v3" or (_source_epoch_migration is not None and\n            (type(_source_epoch_migration) is not dict or _source_epoch_migration.get("profile") not in (REVIEWED_DIGEST_CACHE_EPOCH_PROFILE, REVIEWED_DIGEST_CACHE_PRISTINE_EPOCH_PROFILE)))):\n        raise TrainingJobValidationError("digest-omitted loader requires fresh current-source admission; no old-objective migration")\n    if digest_omitted and _source_epoch_migration is not None:\n        _reviewed_digest_cache_epoch_loader_context(_source_epoch_migration, model_checkpoint,\n            optimizer_checkpoint, expected_backend_identity, expected_source_sha256, expected_admission_inputs_sha256)', 1), ('    if llama_profile:\n        policy["runtime_profile"] = _runtime_profile', '    if digest_omitted and _source_epoch_migration is not None:\n        policy["source_epoch_migration_profile"] = _source_epoch_migration["profile"]\n    if llama_profile:\n        policy["runtime_profile"] = _runtime_profile', 1), ('        if _source_epoch_migration is not None:\n            model_raw, optimizer_raw = _reviewed_epoch_restore(backend, model_raw, optimizer_raw,\n                _source_epoch_migration, registry, current_admission_provider, current)', '        if digest_omitted and _source_epoch_migration is not None:\n            model_raw, optimizer_raw = _reviewed_digest_cache_epoch_restore(backend, model_raw, optimizer_raw,\n                _source_epoch_migration, registry, current_admission_provider, current)\n        elif _source_epoch_migration is not None:\n            model_raw, optimizer_raw = _reviewed_epoch_restore(backend, model_raw, optimizer_raw,\n                _source_epoch_migration, registry, current_admission_provider, current)', 1), ('training_conditioning_profile=None, target_codec="complete-reviewed-norm-json/v2"):', 'training_conditioning_profile=None, target_codec="complete-reviewed-norm-json/v2", cache_source_epoch_marker=None):', 1), ('        self.target_codec = target_codec\n        self.training_conditioning_profile =', '        if cache_source_epoch_marker is not None:\n            if target_codec != REVIEWED_DIGEST_OMITTED_TARGET_CODEC or model_profile != "builtin-qwen2-bfloat16/v1" or architecture != "causal_lm":\n                raise TrainingJobValidationError("cache marker requires the explicit same-digest Qwen profile")\n            cache_source_epoch_marker = _reviewed_digest_cache_epoch_validate_marker(cache_source_epoch_marker)\n        self.cache_source_epoch_marker = (_freeze(cache_source_epoch_marker) if cache_source_epoch_marker is not None else None)\n        self.target_codec = target_codec\n        self.training_conditioning_profile =', 1), ('        rotary = dict(self.model.named_modules()).get("model.rotary_emb")', '        if self.cache_source_epoch_marker is not None:\n            configuration["cache_source_epoch_marker"] = _thaw(self.cache_source_epoch_marker)\n        rotary = dict(self.model.named_modules()).get("model.rotary_emb")', 1), ('    prepared = None\n    continuation_replay = None', '    if type(spec) is ReviewedDigestCacheEpochTrainingJobSpec or (type(runtime.backend) is TorchReviewedDecoderBackend and runtime.backend.cache_source_epoch_marker is not None):\n        _reviewed_digest_cache_epoch_require_job(spec, runtime.backend)\n    prepared = None\n    continuation_replay = None', 1), ('        _source_epoch_migration=None, _target_codec="complete-reviewed-norm-json/v2"):', '        _source_epoch_migration=None, _target_codec="complete-reviewed-norm-json/v2", _cache_epoch_migration_artifact=None):', 1), ('    if type(_runtime_profile) is not str or _runtime_profile not in {', '    cache_epoch_marker = None\n    if _cache_epoch_migration_artifact is not None:\n        if not digest_omitted or _source_epoch_migration is not None:\n            raise TrainingJobValidationError("cache receipt is exclusive to marked same-digest reload")\n        cache_epoch_marker = _reviewed_digest_cache_epoch_load_receipt(_cache_epoch_migration_artifact,\n            expected_backend_identity, expected_source_sha256, expected_admission_inputs_sha256)\n    elif digest_omitted and _source_epoch_migration is not None:\n        cache_epoch_marker = _source_epoch_migration["current_configuration"]["cache_source_epoch_marker"]\n    if type(_runtime_profile) is not str or _runtime_profile not in {', 1), ('            **({"target_codec": _target_codec} if digest_omitted else {}))', '            **({"target_codec": _target_codec} if digest_omitted else {}),\n            **({"cache_source_epoch_marker": cache_epoch_marker} if cache_epoch_marker is not None else {}))', 1), ('        if backend.identity() != identity or not backend.restored_checkpoint_matches(model_raw, optimizer_raw):', '        if _cache_epoch_migration_artifact is not None:\n            _reviewed_digest_cache_epoch_validate_receipt(asdict(_cache_epoch_migration_artifact), backend, expected_spec=None)\n            receipt["cache_source_epoch_migration"] = asdict(_cache_epoch_migration_artifact)\n            receipt["cache_source_epoch_marker"] = _thaw(backend.cache_source_epoch_marker)\n            current()\n        if backend.identity() != identity or not backend.restored_checkpoint_matches(model_raw, optimizer_raw):', 1), ('def load_local_reviewed_decoder_digest_omitted_runtime_v1(*, admission_profile, registry, current_admission_provider,\n        execution_guard, asset_policy_guard, recipe_artifact, model_config_artifact,\n        tokenizer_artifact, license_artifact, model_checkpoint, optimizer_checkpoint,\n        expected_backend_identity, expected_source_sha256,\n        expected_admission_inputs_sha256, max_model_bytes,\n        runtime_profile="builtin-t5-gpt2-float32/v1"):\n    """Load a local decoder only for the explicitly selected admission V3 domain."""\n    if type(admission_profile) is not str or admission_profile != REVIEWED_MIXED_ADMISSION_PROFILE:\n        raise TrainingJobValidationError("explicit mixed-sort admission V3 load profile required")\n    return _load_local_reviewed_decoder_runtime(registry=registry, current_admission_provider=current_admission_provider,\n        execution_guard=execution_guard, asset_policy_guard=asset_policy_guard,\n        recipe_artifact=recipe_artifact, model_config_artifact=model_config_artifact,\n        tokenizer_artifact=tokenizer_artifact, license_artifact=license_artifact,\n        model_checkpoint=model_checkpoint, optimizer_checkpoint=optimizer_checkpoint,\n        expected_backend_identity=expected_backend_identity, expected_source_sha256=expected_source_sha256,\n        expected_admission_inputs_sha256=expected_admission_inputs_sha256, max_model_bytes=max_model_bytes,\n        _admission_version="v3", _runtime_profile=runtime_profile, _target_codec=REVIEWED_DIGEST_OMITTED_TARGET_CODEC)', 'def load_local_reviewed_decoder_digest_omitted_runtime_v1(*, admission_profile, registry, current_admission_provider,\n        execution_guard, asset_policy_guard, recipe_artifact, model_config_artifact,\n        tokenizer_artifact, license_artifact, model_checkpoint, optimizer_checkpoint,\n        expected_backend_identity, expected_source_sha256,\n        expected_admission_inputs_sha256, max_model_bytes,\n        runtime_profile="builtin-t5-gpt2-float32/v1", cache_source_epoch_migration=None):\n    """Load a local decoder only for the explicitly selected admission V3 domain."""\n    if type(admission_profile) is not str or admission_profile != REVIEWED_MIXED_ADMISSION_PROFILE:\n        raise TrainingJobValidationError("explicit mixed-sort admission V3 load profile required")\n    return _load_local_reviewed_decoder_runtime(registry=registry, current_admission_provider=current_admission_provider,\n        execution_guard=execution_guard, asset_policy_guard=asset_policy_guard,\n        recipe_artifact=recipe_artifact, model_config_artifact=model_config_artifact,\n        tokenizer_artifact=tokenizer_artifact, license_artifact=license_artifact,\n        model_checkpoint=model_checkpoint, optimizer_checkpoint=optimizer_checkpoint,\n        expected_backend_identity=expected_backend_identity, expected_source_sha256=expected_source_sha256,\n        expected_admission_inputs_sha256=expected_admission_inputs_sha256, max_model_bytes=max_model_bytes,\n        _admission_version="v3", _runtime_profile=runtime_profile, _target_codec=REVIEWED_DIGEST_OMITTED_TARGET_CODEC,\n        _cache_epoch_migration_artifact=cache_source_epoch_migration)', 1), ('def _reviewed_epoch_dependencies(reference, old_manifest, old_config_sha, old_pipeline_sha, backend):', 'def _reviewed_epoch_dependencies(reference, old_manifest, old_config_sha, old_pipeline_sha, backend, *, _current_cache_contract=None):', 1), ('    fields = {"schema", "association_scope", "old_checkpoint_manifest_sha256", "old_configuration_sha256",\n              "old_tokenizer_pipeline_sha256", "old_source_sha256", "implementation"}\n    _reviewed_epoch_need(type(snapshot) is dict and set(snapshot) == fields\n        and snapshot["schema"] == "reviewed-decoder-migration-dependency-snapshot/v1"\n        and snapshot["association_scope"] == "declared-current-cohort-before-Source-transition-not-historical-execution-attestation/v1"\n        and snapshot["old_checkpoint_manifest_sha256"] == old_manifest["artifact_sha256"]\n        and snapshot["old_configuration_sha256"] == old_config_sha\n        and snapshot["old_tokenizer_pipeline_sha256"] == old_pipeline_sha\n        and snapshot["old_source_sha256"] == old_manifest["producer_pins"],\n        "frozen dependency snapshot does not bind the actual old pair/configuration")\n', '    if _current_cache_contract is None:\n        fields = {"schema", "association_scope", "old_checkpoint_manifest_sha256", "old_configuration_sha256",\n                  "old_tokenizer_pipeline_sha256", "old_source_sha256", "implementation"}\n        _reviewed_epoch_need(type(snapshot) is dict and set(snapshot) == fields\n            and snapshot["schema"] == "reviewed-decoder-migration-dependency-snapshot/v1"\n            and snapshot["association_scope"] == "declared-current-cohort-before-Source-transition-not-historical-execution-attestation/v1"\n            and snapshot["old_checkpoint_manifest_sha256"] == old_manifest["artifact_sha256"]\n            and snapshot["old_configuration_sha256"] == old_config_sha\n            and snapshot["old_tokenizer_pipeline_sha256"] == old_pipeline_sha\n            and snapshot["old_source_sha256"] == old_manifest["producer_pins"],\n            "frozen dependency snapshot does not bind the actual old pair/configuration")\n    else:\n        _reviewed_digest_cache_current_dependency_metadata(snapshot,old_manifest,old_config_sha,old_pipeline_sha,_current_cache_contract)\n', 1))
+_REVIEWED_DIGEST_CACHE_EPOCH_FAMILY_WRAPPERS = {'_reviewed_train_resume_epoch_restore': {'wrapper_AST_sha256': '4184d7296b1d57958d9c196575007ae9de3d64a3772fbcff951982a51894f056', 'old_AST_sha256': 'c3822e312a729015dd52e2712042e4834f5590354aecce6f0e21541b539a4914', 'old_raw_sha256': 'ed6aaa9b9c27bb09b53aaf00fa7bad7bec648cecb97e068565dcda301efccaff'}, '_reviewed_train_resume_epoch_validate_receipt': {'wrapper_AST_sha256': '209b39d954ac4da77d7f9a6095ff1ec42932d3fd6b2c9506c26ba3a475d4735f', 'old_AST_sha256': 'cbf826d91418031fe8f763b1946712346dded2e949f7efc78e9ad9e2b810cb13', 'old_raw_sha256': 'f198819931ab9f59d8186113d2f751f321c2fa95f32944b3dc29752f69711d8e'}, 'migrate_local_reviewed_decoder_train_resume_source_epoch_v5': {'wrapper_AST_sha256': 'c491f2fca9ee8579d965cd044da07872792bd9254f4c637f423a024d31ed671c', 'old_AST_sha256': 'dd39e27dfa3123363f1bb384ce64f36a7ca7b2edbb0dd7019e81037c153bbfae', 'old_raw_sha256': '2923f53b21466057bfbf78ce6b04d7d01a570933dcc68bf3e4ccaed11953fd7c'}}
+_REVIEWED_DIGEST_CACHE_EPOCH_CACHE_AST = {'worker': {'added': {'_reviewed_tokenizer_binding_derivation': '8792ee9a94604328211e8233aa7f5cd0e045b04ecb1dabd3c8ba6b7acd1bf75a'}, 'old_changed': 'd1596ff3ff39056eeb90498e55a9e2e2d1da84b97fa66e7eca95f9c5c2f03e50', 'new_changed': 'a8e7a73d60c9d82ef8fee669dc6b4a36f29e5bb0db61128381fb8783ffe57ff1', 'added_statements': ["Assign(targets=[Name(id='_REVIEWED_TOKENIZER_BINDING_DERIVATION_MAX_RAW_BYTES', ctx=Store())], value=BinOp(left=BinOp(left=Constant(value=16), op=Mult(), right=Constant(value=1024)), op=Mult(), right=Constant(value=1024)))", "Assign(targets=[Name(id='_REVIEWED_TOKENIZER_BINDING_DERIVATION_MAX_ENTRIES', ctx=Store())], value=Constant(value=2))", "Assign(targets=[Name(id='_REVIEWED_TOKENIZER_BINDING_DERIVATION_CACHE', ctx=Store())], value=Dict(keys=[], values=[]))", "Assign(targets=[Name(id='_REVIEWED_TOKENIZER_BINDING_DERIVATION_LOCK', ctx=Store())], value=Call(func=Attribute(value=Name(id='threading', ctx=Load()), attr='RLock', ctx=Load()), args=[], keywords=[]))"]}, 'inputs': {'added': {'_reviewed_decoder_hf_pipeline_summary': 'a93824dc73961b626919a2739bc0534c5b1076348d9b2d887dcd8aac51c5df3f'}, 'old_changed': 'dcd5f10e84c0dbf85d06f3f6e9fa0e69332f6d1e51bf1ac166561f8ba9e434ce', 'new_changed': 'b536336addd2d8c5c6ef09b7c65ca1f67cc5c9f72b80887de7eb8764a86e68e3', 'added_statements': ["Import(names=[alias(name='threading', asname='_reviewed_decoder_pipeline_cache_threading')])", "Assign(targets=[Name(id='_REVIEWED_DECODER_HF_PIPELINE_SUMMARY_CACHE', ctx=Store())], value=Dict(keys=[], values=[]))", "Assign(targets=[Name(id='_REVIEWED_DECODER_HF_PIPELINE_SUMMARY_LOCK', ctx=Store())], value=Call(func=Attribute(value=Name(id='_reviewed_decoder_pipeline_cache_threading', ctx=Load()), attr='Lock', ctx=Load()), args=[], keywords=[]))", "Assign(targets=[Name(id='_REVIEWED_DECODER_HF_PIPELINE_SUMMARY_MAX_ENTRIES', ctx=Store())], value=Constant(value=2))", "Assign(targets=[Name(id='_REVIEWED_DECODER_HF_PIPELINE_SUMMARY_MAX_RAW_BYTES', ctx=Store())], value=BinOp(left=Constant(value=16), op=Mult(), right=BinOp(left=Constant(value=1024), op=Pow(), right=Constant(value=2))))"]}}
+
+
+def _reviewed_digest_cache_epoch_projection(old_worker, current_worker, old_inputs, current_inputs):
+    """Reverse exact reviewed edits; no archived source or caller code executes."""
+    import ast
+    import copy
+    need = _reviewed_epoch_need
+    need(all(type(raw) is bytes for raw in (old_worker,current_worker,old_inputs,current_inputs)),
+        'exact source bytes required')
+    need(_digest(old_worker)=='65d55a34f097a4b673464ef59b87942274e65eb5083ea79d01759f8df16372f2'
+        and _digest(old_inputs)=='7fbcfeb40e6f0d68537d0601169fbc208c3b6ca36273d786a85d876720323afb'
+        and _digest(current_inputs)=='88125051a7b1d0dcc887f772faa750fa13b8a2141693679a62e2bd5e97e92db3',
+        'unsupported cache source origin/input target')
+    if (b'\nREVIEWED_DIGEST_OMITTED_TERMINAL_POLICY_SCHEMA = ' in current_worker
+            or b'\n# Closed terminal source proof glue, version 1.\n' in current_worker):
+        return _reviewed_digest_cache_terminal_projection(old_worker,current_worker,old_inputs,current_inputs)
+    marker=b'\n# Explicit same-objective digest cache Source migration, version 1.\n'
+    need(current_worker.count(marker)==1,'unique complete cache bridge required')
+    prefix, bridge=current_worker.split(marker,1)
+    body=ast.parse(bridge)
+    assignments=[n for n in body.body if isinstance(n,ast.Assign) and len(n.targets)==1
+        and isinstance(n.targets[0],ast.Name) and n.targets[0].id=='_REVIEWED_DIGEST_CACHE_EPOCH_BRIDGE_AST_SHA256']
+    need(len(assignments)==1 and isinstance(assignments[0].value,ast.Constant)
+        and assignments[0].value.value==_REVIEWED_DIGEST_CACHE_EPOCH_BRIDGE_AST_SHA256,
+        'closed bridge commitment differs')
+    assignments[0].value=ast.Constant('0'*64)
+    need(_digest(ast.dump(body,include_attributes=False).encode())==_REVIEWED_DIGEST_CACHE_EPOCH_BRIDGE_AST_SHA256,
+        'complete migration bridge implementation changed')
+    old_definitions={n.name:n for n in ast.parse(old_worker).body if isinstance(n,ast.FunctionDef)}
+    for name,rule in _REVIEWED_DIGEST_CACHE_EPOCH_FAMILY_WRAPPERS.items():
+        current_definitions={n.name:n for n in ast.parse(prefix).body if isinstance(n,ast.FunctionDef)}
+        old_node,current_node=old_definitions[name],current_definitions[name]
+        old_text=ast.get_source_segment(old_worker.decode(),old_node)
+        current_text=ast.get_source_segment(prefix.decode(),current_node)
+        need(_digest(ast.dump(old_node,include_attributes=False).encode())==rule['old_AST_sha256']
+            and _digest(old_text.encode())==rule['old_raw_sha256']
+            and _digest(ast.dump(current_node,include_attributes=False).encode())==rule['wrapper_AST_sha256']
+            and prefix.count(current_text.encode())==1,'exact historical family wrapper changed')
+        prefix=prefix.replace(current_text.encode(),old_text.encode(),1)
+    for old,new,count in reversed(_REVIEWED_DIGEST_CACHE_EPOCH_REVERSE_EDITS):
+        need(prefix.count(new.encode())==count,'exact migration dispatch edit changed')
+        prefix=prefix.replace(new.encode(),old.encode(),count)
+    need(_digest(prefix)=='93ce5efa62a999a681a8e00ce75cf87b6c697428c8b7037abbd5bb7275afe3f6',
+        'migration reversal did not recover exact qualified cache worker')
+    dump=lambda node:ast.dump(node,include_attributes=False)
+    for role,old_raw,new_raw in (('worker',old_worker,prefix),('inputs',old_inputs,current_inputs)):
+        old_tree,new_tree=ast.parse(old_raw),ast.parse(new_raw)
+        rules=_REVIEWED_DIGEST_CACHE_EPOCH_CACHE_AST[role]
+        def named(tree):
+            result={}
+            for n in tree.body:
+                if isinstance(n,(ast.FunctionDef,ast.ClassDef)):
+                    need(n.name not in result,'duplicate cache source definition');result[n.name]=n
+            return result
+        od,nd=named(old_tree),named(new_tree)
+        for name,h in rules['added'].items():
+            need(name in nd and _digest(dump(nd[name]).encode())==h,'exact cache helper changed')
+            new_tree.body.remove(nd[name])
+        if role=='worker':
+            om={n.name:n for n in od['ReviewedPretrainedTokenizer'].body if isinstance(n,ast.FunctionDef)}
+            nm={n.name:n for n in nd['ReviewedPretrainedTokenizer'].body if isinstance(n,ast.FunctionDef)}
+            old,new=om['binding_metadata'],nm['binding_metadata']
+            need(_digest(dump(old).encode())==rules['old_changed'] and _digest(dump(new).encode())==rules['new_changed'],
+                'exact binding derivation delta changed')
+            index=nd['ReviewedPretrainedTokenizer'].body.index(new)
+            nd['ReviewedPretrainedTokenizer'].body[index]=copy.deepcopy(old)
+        else:
+            old,new=od['_reviewed_decoder_tokenizer_contract'],nd['_reviewed_decoder_tokenizer_contract']
+            need(_digest(dump(old).encode())==rules['old_changed'] and _digest(dump(new).encode())==rules['new_changed'],
+                'exact pipeline summary delta changed')
+            new_tree.body[new_tree.body.index(new)]=copy.deepcopy(old)
+        for encoded in rules['added_statements']:
+            found=[n for n in new_tree.body if dump(n)==encoded]
+            need(len(found)==1,'exact cache global/import delta changed');new_tree.body.remove(found[0])
+        need(dump(old_tree)==dump(new_tree),'unrelated source/numerical/tokenizer default changed')
+    return {'schema':'reviewed-digest-cache-exact-source-projection/v1',
+        'old_worker_sha256':_digest(old_worker),'cache_worker_sha256':_digest(prefix),
+        'current_worker_sha256':_digest(current_worker),'old_inputs_sha256':_digest(old_inputs),
+        'current_inputs_sha256':_digest(current_inputs),
+        'closed_bridge_AST_sha256':_REVIEWED_DIGEST_CACHE_EPOCH_BRIDGE_AST_SHA256,
+        'numerical_and_all_other_old_AST_exact':True}
+
+
+def _reviewed_digest_cache_epoch_sources(contract, origin, spec, *, _profile=REVIEWED_DIGEST_CACHE_EPOCH_PROFILE):
+    from ...logic.autoformal import training_cycle_inputs as inputs
+    need=_reviewed_epoch_need
+    need(_profile in (REVIEWED_DIGEST_CACHE_EPOCH_PROFILE, REVIEWED_DIGEST_CACHE_PRISTINE_EPOCH_PROFILE),'closed digest cache origin profile required')
+    fields={'schema','profile','old_checkpoint_manifest_sha256','old_configuration_sha256',
+        'current_configuration_sha256','old_tokenizer_pipeline_sha256','old_source_sha256',
+        'current_source_sha256','old_source_artifacts','current_source_artifacts',
+        'dependency_snapshot_artifact','old_training_binding_artifact'}
+    if type(contract)is dict and contract.get('schema')==REVIEWED_DIGEST_CACHE_CURRENT_COHORT_CONTRACT_SCHEMA:
+        need(set(contract)==fields|{'dependency_association_scope'} and contract['profile']==_profile
+            and contract['dependency_association_scope']==REVIEWED_DIGEST_CACHE_CURRENT_COHORT_SCOPE,'closed explicit current-at-migration digest contract required')
+    else:
+        need(type(contract)is dict and set(contract)==fields
+            and contract['schema']==REVIEWED_DIGEST_CACHE_EPOCH_CONTRACT_SCHEMA
+            and contract['profile']==_profile,'closed same-digest cache contract required')
+    old,new=contract['old_source_sha256'],contract['current_source_sha256']
+    need(type(old)is type(new)is dict and set(old)==set(new)==REVIEWED_DECODER_SOURCE_NAMES
+        and old==origin['producer_pins']and new==_thaw(spec.expected_source_sha256)
+        and contract['old_checkpoint_manifest_sha256']==spec.parent_checkpoint_artifact.sha256
+        and all(old[k]==new[k]for k in ('consumer','admission','splits'))
+        and _reviewed_decoder_source_pins(admission_profile=spec.admission_profile)==new,
+        'exact old/current Source5 and unchanged common producers required')
+    oldrefs,newrefs=contract['old_source_artifacts'],contract['current_source_artifacts']
+    need(type(oldrefs)is type(newrefs)is dict and set(oldrefs)==set(newrefs)=={'worker','inputs'},
+        'both exact physical source pairs required')
+    oldraw,newraw={},{}
+    for key in ('worker','inputs'):
+        oldraw[key]=_reviewed_decoder_artifact(CheckpointArtifact.from_dict(oldrefs[key]),limit=2*1024**2)
+        newraw[key]=_reviewed_decoder_artifact(CheckpointArtifact.from_dict(newrefs[key]),limit=2*1024**2)
+        need(_digest(oldraw[key])==old[key]and _digest(newraw[key])==new[key],'source body digest differs')
+    need(Path(newrefs['worker']['path'])==Path(__file__)
+        and Path(newrefs['inputs']['path'])==Path(inputs.__file__),'current physical cache source origin differs')
+    projection=_reviewed_digest_cache_epoch_projection(oldraw['worker'],newraw['worker'],oldraw['inputs'],newraw['inputs'])
+    return {'old_worker':oldraw['worker'],'current_worker':newraw['worker'],
+        'old_inputs':oldraw['inputs'],'current_inputs':newraw['inputs'],
+        'projection_sha256':_digest(_json_bytes(projection)),'cache_projection':projection}
+
+
+def _reviewed_digest_cache_epoch_identity(configuration, worker_sha):
+    return {'backend_id':'torch-digest-omitted-reviewed-decoder/v1:'+_digest(_json_bytes(configuration)),
+        'implementation_sha256':worker_sha,'checkpoint_format':'torch-weights-only-digest-omitted-reviewed-state-pair/v1',
+        'target_codec':REVIEWED_DIGEST_OMITTED_TARGET_CODEC,'source_conditioned':True,
+        'pretrained':configuration['pretrained_declaration']}
+
+
+def _reviewed_digest_cache_epoch_prepare_binding(spec, registry, tokenizer, current_admission_provider):
+    from ...logic.autoformal import training_cycle_inputs as inputs
+    exposure_raw=_reviewed_decoder_artifact(spec.exposure_artifact)
+    contexts_raw=_reviewed_decoder_artifact(spec.source_contexts_artifact)
+    exposure,contexts=_parse_json(exposure_raw),_parse_json(contexts_raw)
+    _reviewed_epoch_need(_json_bytes(exposure)==exposure_raw and _json_bytes(contexts)==contexts_raw,
+        'canonical exact digest context/exposure required')
+    return inputs.prepare_reviewed_mixed_decoder_digest_omitted_inputs_v1(registry,
+        admission_profile=spec.admission_profile,stage_artifact=asdict(spec.stage_artifact),
+        expected_stage_sha256=spec.stage_artifact.sha256,current_admission_inputs=current_admission_provider(),
+        expected_admission_inputs_sha256=spec.expected_admission_inputs_sha256,
+        exposure_records=exposure,expected_exposure_sha256=spec.exposure_artifact.sha256,
+        source_contexts=contexts,expected_source_contexts_sha256=spec.source_contexts_artifact.sha256,
+        split_config=_thaw(spec.split_config),expected_split_config_sha256=spec.expected_split_config_sha256,
+        tokenizer=tokenizer,max_source_tokens=spec.max_source_tokens,max_target_tokens=spec.max_target_tokens,
+        allow_fictional_fixture=spec.allow_fictional_fixture)
+
+
+def _reviewed_digest_cache_epoch_binding_proof(old, current, contract):
+    need=_reviewed_epoch_need
+    need(type(old)is type(current)is dict and set(old)==set(current)
+        and old.get('schema')==current.get('schema')=='reviewed-decoder-digest-omitted-training-input-receipt/v1'
+        and old.get('target_codec')==current.get('target_codec')==REVIEWED_DIGEST_OMITTED_TARGET_CODEC,
+        'complete same-objective digest receipt fields required')
+    for key in set(old)-{'implementation','tokenizer_contract'}:
+        need(_json_bytes(old[key])==_json_bytes(current[key]),'digest population/context/token/admission drift: '+key)
+    old_impl,new_impl=dict(old['implementation']),dict(current['implementation'])
+    oldkeys=[k for k,v in old_impl.items()if v==contract['old_source_sha256']['inputs']]
+    newkeys=[k for k,v in new_impl.items()if v==contract['current_source_sha256']['inputs']]
+    need(len(oldkeys)==len(newkeys)==1,'unique exact input implementation binding required')
+    old_impl.pop(oldkeys[0]);new_impl.pop(newkeys[0])
+    need(old_impl==new_impl,'unrelated input dependency changed')
+
+
+def _reviewed_digest_cache_epoch_context(spec, old_configuration_artifact, old_tokenizer_pipeline_artifact,
+        current_configuration_artifact, compatibility_contract_artifact, *, _origin_kind='trained3'):
+    need=_reviewed_epoch_need
+    need(_origin_kind in ('trained3','pristine0'),'closed digest cache origin required')
+    profile=REVIEWED_DIGEST_CACHE_PRISTINE_EPOCH_PROFILE if _origin_kind=='pristine0' else REVIEWED_DIGEST_CACHE_EPOCH_PROFILE
+    need(type(spec)is ReviewedDigestOmittedDecoderTrainingJobSpec and spec.continuation_profile is None
+        and getattr(spec,'cache_source_epoch_migration',None)is None,'explicit unmigrated same-digest job required')
+    contract_ref=asdict(compatibility_contract_artifact)
+    contract,_=_reviewed_epoch_document(contract_ref,limit=2*1024**2)
+    old,old_raw=_reviewed_epoch_document(asdict(spec.parent_checkpoint_artifact),limit=4*1024**2)
+    common={'schema','checkpoint_lineage_id','base_version_id','backend_identity','assets','training_binding',
+        'model_state','optimizer_state','progress','batch_size','seed','parent_checkpoint_sha256',
+        'producer_pins','token_budgets','qualified','promotion_performed'}
+    need(type(old)is dict and set(old)==common and old['schema']==REVIEWED_DIGEST_OMITTED_CHECKPOINT_SCHEMA
+        and old['qualified']is False and old['promotion_performed']is False,'original unmigrated digest checkpoint required')
+    need(old['model_state']==asdict(spec.base_model_checkpoint)and old['optimizer_state']==asdict(spec.base_optimizer_checkpoint)
+        and old['checkpoint_lineage_id']==spec.checkpoint_lineage_id and old['base_version_id']==spec.base_version_id
+        and old['assets']==[asdict(x)for x in(spec.model_artifact,spec.tokenizer_artifact,spec.license_artifact,*spec.backend_artifacts)]
+        and type(old['batch_size'])is int and old['batch_size']==spec.batch_size==1
+        and type(old['seed'])is int and old['seed']==spec.seed==1729,'unchanged exact pair/assets/lineage/batch/seed required')
+    if _origin_kind == 'pristine0':
+        population,_=_reviewed_epoch_document(contract['old_training_binding_artifact'],limit=4*1024**2)
+        _reviewed_digest_cache_pristine_origin(old,population,spec.stage_artifact.sha256)
+    else:
+        progress=old['progress'];population=old['training_binding']
+        need(type(progress)is dict and progress=={'epochs_completed':1,'row_cursor':0,'optimizer_steps':3}
+            and all(type(x)is int for x in progress.values())and type(population)is dict
+            and population.get('schema')=='reviewed-decoder-digest-omitted-training-input-receipt/v1'
+            and population.get('target_codec')==REVIEWED_DIGEST_OMITTED_TARGET_CODEC
+            and type(population.get('record_count'))is int and population['record_count']==3
+            and population.get('stage_artifact_sha256')==spec.stage_artifact.sha256,
+            'original same-objective completed T3/steps3 population required')
+    sources=_reviewed_digest_cache_epoch_sources(contract,old,spec,_profile=profile)
+    bound,_=_reviewed_epoch_document(contract['old_training_binding_artifact'],limit=4*1024**2)
+    need(bound==population,'original full population/context/target projection binding differs')
+    old_config,old_config_raw=_reviewed_epoch_document(asdict(old_configuration_artifact),limit=4*1024**2)
+    new_config,new_config_raw=_reviewed_epoch_document(asdict(current_configuration_artifact),limit=4*1024**2)
+    old_pipeline=_reviewed_decoder_artifact(old_tokenizer_pipeline_artifact,limit=MAX_REVIEWED_TOKENIZER_PIPELINE_BYTES)
+    _,token_contract,token_binding=_reviewed_epoch_pipeline(old_pipeline)
+    need(contract['old_configuration_sha256']==_digest(old_config_raw)
+        and contract['current_configuration_sha256']==_digest(new_config_raw)
+        and contract['old_tokenizer_pipeline_sha256']==_digest(old_pipeline),'actual complete configs/pipeline differ')
+    expected_marker=_reviewed_digest_cache_epoch_marker(spec.parent_checkpoint_artifact.sha256,contract['current_source_sha256'],contract['old_training_binding_artifact']['sha256'],_profile=profile)
+    need('cache_source_epoch_marker'not in old_config and new_config.get('cache_source_epoch_marker')==expected_marker
+        and set(new_config)==set(old_config)|{'cache_source_epoch_marker'}and all(_json_bytes(old_config[k])==_json_bytes(new_config[k])
+        for k in old_config if k not in {'tokenizer','tokenizer_binding'}),
+        'numeric/recipe/profile/optimizer/dependency configuration changed')
+    need(old_config.get('device')==new_config.get('device')=='cpu'
+        and old_config.get('model_profile')==new_config.get('model_profile')=='builtin-qwen2-bfloat16/v1'
+        and old_config.get('architecture')==new_config.get('architecture')=='causal_lm'
+        and old_config.get('target_codec')==new_config.get('target_codec')==REVIEWED_DIGEST_OMITTED_TARGET_CODEC
+        and old_config.get('training_conditioning_profile')==new_config.get('training_conditioning_profile')==REVIEWED_DIGEST_OMITTED_CHATML_PROFILE
+        and old_config.get('tokenizer')==token_contract and old_config.get('tokenizer_binding')==token_binding
+        and old['backend_identity']==_reviewed_digest_cache_epoch_identity(old_config,contract['old_source_sha256']['worker'])
+        and _thaw(spec.backend_identity)==_reviewed_digest_cache_epoch_identity(new_config,contract['current_source_sha256']['worker']),
+        'same digest CPU BF16 Qwen/ChatML identity and complete tokenizer contract required')
+    need(old['token_budgets']=={'max_source_tokens':spec.max_source_tokens,'max_target_tokens':spec.max_target_tokens,'tokenizer_contract':token_contract}
+        and population.get('tokenizer_contract')==token_contract,'same complete tokenizer budget binding required')
+    version=_digest(_json_bytes({'profile':profile,
+        'old_manifest':spec.parent_checkpoint_artifact.sha256,'current_source':contract['current_source_sha256'],
+        'population':contract['old_training_binding_artifact']['sha256']}))
+    return {'profile':profile,'origin_kind':_origin_kind,
+        'new_checkpoint_lineage_id':'digest-cache-source-lineage:'+version,'new_base_version_id':'digest-cache-source-version:'+version,
+        'old_population_binding':population,'spec':spec,'old_manifest':old,'old_manifest_raw':old_raw,
+        'old_configuration':old_config,'current_configuration':new_config,'old_pipeline_raw':old_pipeline,
+        'contract':contract,'sources':sources,'old_configuration_artifact':asdict(old_configuration_artifact),
+        'old_pipeline_artifact':asdict(old_tokenizer_pipeline_artifact),
+        'current_configuration_artifact':asdict(current_configuration_artifact),'source_contract_artifact':contract_ref}
+
+
+def _reviewed_digest_cache_epoch_receipt_spec(receipt, old_manifest, backend):
+    spec=ReviewedDigestOmittedDecoderTrainingJobSpec.from_dict(receipt['target_job_spec'])
+    _reviewed_epoch_need(type(backend)is TorchReviewedDecoderBackend and backend.identity()==_thaw(spec.backend_identity),
+        'receipt requires actual same-objective current backend')
+    return spec
+
+
+def _reviewed_digest_cache_epoch_ancestry(spec, backend, manifest, current_binding):
+    """Mandatory bounded replay for root and EVERY subsequent digest resume."""
+    need=_reviewed_epoch_need
+    reference=getattr(spec,'cache_source_epoch_migration',None)
+    need(type(reference)is CheckpointArtifact,'explicit exact cache migration receipt artifact required')
+    receipt=_reviewed_digest_cache_epoch_validate_receipt(asdict(reference),backend,expected_spec=spec)
+    common={'schema','checkpoint_lineage_id','base_version_id','backend_identity','assets','training_binding',
+        'model_state','optimizer_state','progress','batch_size','seed','parent_checkpoint_sha256',
+        'producer_pins','token_budgets','qualified','promotion_performed'}
+    extra={'cache_source_epoch_migration','cache_epoch_parent_checkpoint_artifact'}
+    latest=_parse_json(_json_bytes(manifest));node=latest;seen=set();observed=[];later=None
+    for depth in range(128):
+        need(type(node)is dict and set(node)==common|extra
+            and node['schema']==REVIEWED_DIGEST_CACHE_EPOCH_CHECKPOINT_SCHEMA
+            and node['cache_source_epoch_migration']==asdict(reference)
+            and node['checkpoint_lineage_id']==spec.checkpoint_lineage_id==receipt['new_checkpoint_lineage_id']
+            and node['base_version_id']==spec.base_version_id==receipt['new_base_version_id']
+            and node['backend_identity']==_thaw(spec.backend_identity)
+            and node['producer_pins']==_thaw(spec.expected_source_sha256)
+            and node['training_binding']==current_binding==receipt['migrated_training_binding']
+            and node['assets']==[asdict(x)for x in(spec.model_artifact,spec.tokenizer_artifact,spec.license_artifact,*spec.backend_artifacts)]
+            and node['token_budgets']=={'max_source_tokens':spec.max_source_tokens,'max_target_tokens':spec.max_target_tokens,'tokenizer_contract':current_binding['tokenizer_contract']}
+            and type(node['batch_size'])is int and node['batch_size']==spec.batch_size
+            and type(node['seed'])is int and node['seed']==spec.seed
+            and node['qualified']is False and node['promotion_performed']is False,'closed same-digest cache checkpoint ancestry differs')
+        progress=node['progress']
+        need(type(progress)is dict and set(progress)=={'epochs_completed','row_cursor','optimizer_steps'}
+            and all(type(x)is int and 0<=x<=10**9 for x in progress.values())
+            and progress['row_cursor']<3 and progress['row_cursor']%spec.batch_size==0
+            and progress['optimizer_steps']==progress['epochs_completed']*math.ceil(3/spec.batch_size)+progress['row_cursor']//spec.batch_size
+            and progress['optimizer_steps']>=receipt['original_progress']['optimizer_steps']
+            and(later is None or later>progress['optimizer_steps']),'cache ancestry rewinds/relabels optimizer progress')
+        CheckpointArtifact.from_dict(node['model_state']);CheckpointArtifact.from_dict(node['optimizer_state'])
+        parent=asdict(CheckpointArtifact.from_dict(node['cache_epoch_parent_checkpoint_artifact']))
+        need(parent['sha256']==node['parent_checkpoint_sha256']and parent['sha256']not in seen,'cache ancestry parent/cycle differs')
+        seen.add(parent['sha256'])
+        if parent==receipt['old_checkpoint_manifest']:
+            need(node['model_state']==receipt['derivative_model_checkpoint']
+                and node['optimizer_state']==receipt['derivative_optimizer_checkpoint']
+                and progress==receipt['original_progress'],'cache root numerical pair/progress differs')
+            break
+        later=progress['optimizer_steps']
+        node,raw=_reviewed_epoch_document(parent,limit=4*1024**2);observed.append((parent,raw))
+        need(sum(len(raw)for _,raw in observed)<=16*1024**2,'cache ancestry metadata byte capacity exceeded')
+    else:raise TrainingJobValidationError('cache ancestry depth capacity exceeded')
+    for parent,raw in observed:
+        need(_reviewed_decoder_artifact(CheckpointArtifact.from_dict(parent),limit=4*1024**2)==raw,'cache ancestry changed during replay')
+    normalized=dict(latest,schema=REVIEWED_DIGEST_OMITTED_CHECKPOINT_SCHEMA)
+    for key in extra:normalized.pop(key)
+    return normalized
+
+
+REVIEWED_DIGEST_CACHE_EPOCH_JOB_SCHEMA = 'reviewed-mixed-digest-omitted-cache-source-job/v1'
+_REVIEWED_DIGEST_CACHE_EPOCH_RECEIPT_FIELDS = frozenset({'schema', 'profile', 'old_checkpoint_manifest', 'old_configuration_artifact', 'old_pipeline_artifact', 'current_configuration_artifact', 'source_contract_artifact', 'current_pipeline_artifact', 'derivative_model_checkpoint', 'derivative_optimizer_checkpoint', 'target_job_spec', 'migrated_training_binding', 'original_progress', 'pipeline_proof', 'source_projection_sha256', 'dependency_scope', 'historical_dependency_execution_requalified', 'model_Adam_steps_RNG_and_progress_preserved', 'qualified', 'promotion_performed', 'legal_meaning_verified', 'convergence_proved', 'corpus_admitted', 'new_checkpoint_lineage_id', 'new_base_version_id', 'origin_kind', 'training_resume_eligible'})
+
+
+def _reviewed_digest_cache_epoch_marker(origin_sha256, current_source_sha256, population_sha256, *, _profile=REVIEWED_DIGEST_CACHE_EPOCH_PROFILE):
+    _reviewed_epoch_need(_profile in (REVIEWED_DIGEST_CACHE_EPOCH_PROFILE, REVIEWED_DIGEST_CACHE_PRISTINE_EPOCH_PROFILE),'closed digest cache marker profile required')
+    _reviewed_epoch_need(type(origin_sha256)is type(population_sha256)is str
+        and re.fullmatch('[0-9a-f]{64}',origin_sha256)is not None
+        and re.fullmatch('[0-9a-f]{64}',population_sha256)is not None
+        and type(current_source_sha256)is dict and set(current_source_sha256)==REVIEWED_DECODER_SOURCE_NAMES
+        and all(type(value)is str and re.fullmatch('[0-9a-f]{64}',value)is not None for value in current_source_sha256.values()),
+        'exact source/parent/population marker commitments required')
+    version=_digest(_json_bytes({'profile':_profile,
+        'old_manifest':origin_sha256,'current_source':current_source_sha256,'population':population_sha256}))
+    return {'schema':'reviewed-digest-cache-source-marker/v1','profile':_profile,
+        'origin_checkpoint_sha256':origin_sha256,'lineage_sha256':version}
+
+
+def _reviewed_digest_cache_epoch_validate_marker(value):
+    _reviewed_epoch_need(type(value)is dict and set(value)=={'schema','profile','origin_checkpoint_sha256','lineage_sha256'}
+        and value['schema']=='reviewed-digest-cache-source-marker/v1'
+        and value['profile'] in (REVIEWED_DIGEST_CACHE_EPOCH_PROFILE, REVIEWED_DIGEST_CACHE_PRISTINE_EPOCH_PROFILE)
+        and all(type(value[key])is str and re.fullmatch('[0-9a-f]{64}',value[key])is not None
+            for key in('origin_checkpoint_sha256','lineage_sha256')),'closed immutable digest cache marker required')
+    return dict(value)
+
+
+def _reviewed_digest_cache_epoch_require_job(spec, backend):
+    _reviewed_epoch_need(type(spec)is ReviewedDigestCacheEpochTrainingJobSpec
+        and type(backend)is TorchReviewedDecoderBackend
+        and backend.cache_source_epoch_marker is not None,
+        'marked numeric pair requires explicit typed cache receipt and ancestry job')
+    _reviewed_digest_cache_epoch_validate_marker(_thaw(backend.cache_source_epoch_marker))
+
+
+def _reviewed_digest_cache_epoch_load_receipt(reference, expected_identity, expected_pins, expected_admission):
+    """Pre-model receipt/context proof; numerical receipt proof follows restore."""
+    need=_reviewed_epoch_need
+    need(type(reference)is CheckpointArtifact,'explicit exact cache receipt artifact required for marked loader')
+    receipt,_=_reviewed_epoch_document(asdict(reference),limit=8*1024**2)
+    profile=receipt.get('profile') if type(receipt)is dict else None
+    context_builder=_reviewed_digest_cache_epoch_context_for_profile(profile)
+    fields=_REVIEWED_DIGEST_CACHE_EPOCH_RECEIPT_FIELDS
+    need(type(receipt)is dict and set(receipt)==fields
+        and receipt['schema']==REVIEWED_DIGEST_CACHE_EPOCH_RECEIPT_SCHEMA
+        and receipt['profile']==profile
+        and receipt['training_resume_eligible']is True and receipt['origin_kind']==('pristine0' if profile==REVIEWED_DIGEST_CACHE_PRISTINE_EPOCH_PROFILE else 'trained3')
+        and receipt['historical_dependency_execution_requalified']is False
+        and receipt['model_Adam_steps_RNG_and_progress_preserved']is True
+        and all(receipt[key]is False for key in('qualified','promotion_performed','legal_meaning_verified','convergence_proved','corpus_admitted')),
+        'closed nonauthorizing cache receipt required before marked construction')
+    spec=ReviewedDigestOmittedDecoderTrainingJobSpec.from_dict(receipt['target_job_spec'])
+    context=context_builder(spec,
+        CheckpointArtifact.from_dict(receipt['old_configuration_artifact']),
+        CheckpointArtifact.from_dict(receipt['old_pipeline_artifact']),
+        CheckpointArtifact.from_dict(receipt['current_configuration_artifact']),
+        CheckpointArtifact.from_dict(receipt['source_contract_artifact']))
+    need(receipt['old_checkpoint_manifest']==asdict(spec.parent_checkpoint_artifact)
+        and receipt['new_checkpoint_lineage_id']==context['new_checkpoint_lineage_id']
+        and receipt['new_base_version_id']==context['new_base_version_id']
+        and receipt['original_progress']==context['old_manifest']['progress']
+        and _thaw(spec.backend_identity)==expected_identity
+        and _thaw(spec.expected_source_sha256)==expected_pins
+        and spec.expected_admission_inputs_sha256==expected_admission,
+        'marked load receipt/context/source/admission differs')
+    return _reviewed_digest_cache_epoch_validate_marker(context['current_configuration']['cache_source_epoch_marker'])
+
+
+def _reviewed_digest_cache_epoch_fresh_admission(spec, current_admission_provider, binding):
+    # Import the already-pinned ordinary owner before the LAST external callback.
+    from . import legal_span_consumer_binding as consumer
+    fresh=current_admission_provider()
+    actual=consumer.reviewed_admission_inputs_sha256(fresh)
+    _reviewed_epoch_need(actual==spec.expected_admission_inputs_sha256
+        and actual==binding['admission_inputs_sha256'],
+        'current digest admission revoked after final execution callback')
+
+
+
+def _reviewed_digest_cache_epoch_artifact_inventory(spec, context, model, optimizer, pipeline, receipt, manifest, state_cap):
+    """Finite explicit files read by this migration and its public preparation.
+
+    Capture before the last external callback. No new registry interface or
+    interpretation of arbitrary document-shaped references is introduced.
+    """
+    from ...logic.autoformal import training_cycle_inputs as inputs
+    from ...logic.autoformal import legal_reviewed_norm_admission_v3 as admission
+    from . import legal_span_consumer_binding as consumer, legal_ir_eval_splits as splits
+    need=_reviewed_epoch_need
+    need(type(state_cap)is int and state_cap==2*1024**3,'validated omitted-Qwen state cap required')
+    rows={}
+    stamp=lambda info:tuple(getattr(info,key)for key in('st_dev','st_ino','st_mode','st_nlink','st_uid','st_gid','st_size','st_mtime_ns','st_ctime_ns'))
+    def add(reference, limit):
+        reference=reference if type(reference)is CheckpointArtifact else CheckpointArtifact.from_dict(reference)
+        path=Path(reference.path)
+        existing=rows.get(reference.path)
+        if existing is not None:
+            need(existing[0]==reference,'one physical artifact has conflicting commitments')
+            return
+        need(len(rows)<128,'finite explicit artifact inventory capacity exceeded')
+        before=stamp(path.lstat())
+        _reviewed_decoder_artifact(reference,limit=limit,load=False)
+        after=stamp(path.lstat())
+        need(before==after,'artifact inventory changed during initial authentication')
+        rows[reference.path]=(reference,limit,after)
+    for reference in(spec.base_model_checkpoint,spec.base_optimizer_checkpoint,model,optimizer):add(reference,state_cap)
+    for reference in(spec.model_artifact,*spec.backend_artifacts):add(reference,state_cap)
+    for reference in(spec.tokenizer_artifact,spec.license_artifact):add(reference,MAX_CHECKPOINT_BYTES)
+    for reference,limit in((spec.parent_checkpoint_artifact,4*1024**2),
+        (context['old_configuration_artifact'],4*1024**2),(context['current_configuration_artifact'],4*1024**2),
+        (context['old_pipeline_artifact'],MAX_REVIEWED_TOKENIZER_PIPELINE_BYTES),
+        (context['source_contract_artifact'],2*1024**2),(pipeline,MAX_REVIEWED_TOKENIZER_PIPELINE_BYTES),
+        (receipt,8*1024**2),(manifest,4*1024**2),
+        (context['contract']['old_training_binding_artifact'],4*1024**2),
+        (context['contract']['dependency_snapshot_artifact'],1024**2)):
+        add(reference,limit)
+    for key in('old_source_artifacts','current_source_artifacts'):
+        for reference in context['contract'][key].values():add(reference,2*1024**2)
+    dependency,_=_reviewed_epoch_document(context['contract']['dependency_snapshot_artifact'],limit=1024**2)
+    for reference in dependency['implementation'].values():add(reference,16*1024**2)
+    modules={'worker':__file__,'inputs':inputs.__file__,'consumer':consumer.__file__,
+        'admission':admission.__file__,'splits':splits.__file__}
+    for key,path in modules.items():
+        add({'path':str(Path(path)),'bytes':Path(path).lstat().st_size,
+            'sha256':_thaw(spec.expected_source_sha256)[key]},MAX_CHECKPOINT_BYTES)
+    for reference in(spec.exposure_artifact,spec.source_contexts_artifact):add(reference,inputs.MAX_REVIEWED_ARTIFACT_BYTES)
+    # These are exactly the stage/parent references read by the existing
+    # _prepare_reviewed_decoder_training_inputs path; rows are not interpreted.
+    add(spec.stage_artifact,inputs.MAX_REVIEWED_ARTIFACT_BYTES)
+    stage=_parse_json(_reviewed_decoder_artifact(spec.stage_artifact,limit=inputs.MAX_REVIEWED_ARTIFACT_BYTES))
+    def add_transport(reference):
+        add(reference,inputs.MAX_REVIEWED_ARTIFACT_BYTES)
+        value=_parse_json(_reviewed_decoder_artifact(CheckpointArtifact.from_dict(reference),limit=inputs.MAX_REVIEWED_ARTIFACT_BYTES))
+        need(value['schema']=='reviewed-cycle-admission-input-transport/v2','exact owned admission transport required')
+        for leaf in value['byte_leaves']:
+            if leaf['kind']=='artifact_bytes':add(leaf['artifact'],inputs.MAX_REVIEWED_ARTIFACT_BYTES)
+    for key in('rows_artifact','split_manifest_artifact','history_artifact'):
+        add(stage[key],inputs.MAX_REVIEWED_ARTIFACT_BYTES)
+    if stage.get('admission_transport_artifact')is not None:add_transport(stage['admission_transport_artifact'])
+    if stage['parent_artifact']is not None:
+        parent_ref=CheckpointArtifact.from_dict(stage['parent_artifact']);add(parent_ref,inputs.MAX_REVIEWED_ARTIFACT_BYTES)
+        parent=_parse_json(_reviewed_decoder_artifact(parent_ref,limit=inputs.MAX_REVIEWED_ARTIFACT_BYTES))
+        for key in('rows_artifact','history_artifact'):
+            if parent.get(key)is not None:add(parent[key],inputs.MAX_REVIEWED_ARTIFACT_BYTES)
+        if parent.get('admission_transport_artifact')is not None:add_transport(parent['admission_transport_artifact'])
+    return tuple(rows.values())
+
+
+def _reviewed_digest_cache_epoch_close_artifacts(inventory):
+    """After the final provider: plain bounded reader/full9 checks ONLY."""
+    stamp=lambda info:tuple(getattr(info,key)for key in('st_dev','st_ino','st_mode','st_nlink','st_uid','st_gid','st_size','st_mtime_ns','st_ctime_ns'))
+    closed=[]
+    for reference,limit,initial in inventory:
+        path=Path(reference.path)
+        _reviewed_epoch_need(stamp(path.lstat())==initial,'immutable artifact changed after final provider')
+        _reviewed_decoder_artifact(reference,limit=limit,load=False)
+        _reviewed_epoch_need(stamp(path.lstat())==initial,'immutable artifact changed during final byte closure')
+        closed.append({'artifact':asdict(reference),'per_file_byte_limit':limit,
+            'full9_before_final_provider':[str(value)for value in initial],
+            'full9_and_SHA_equal_after_final_provider':True})
+    return {'schema':'reviewed-digest-cache-source-artifact-finalization/v1',
+        'artifacts':closed,'artifact_count':len(closed),'all_bound_bytes_and_full9_unchanged':True,
+        'live_backend_returned':False,'live_state_at_return_verified':False,
+        'scope':'Numerical equality was verified before final provider and transfers only to unchanged authenticated published bytes. A discarded live object is not part of this result.'}
+@dataclass(frozen=True)
+class ReviewedDigestCacheEpochTrainingJobSpec(ReviewedDigestOmittedDecoderTrainingJobSpec):
+    """Explicit same-objective cache epoch; receipt identity is a real field."""
+    cache_source_epoch_migration: CheckpointArtifact = field(kw_only=True)
+    schema_version: str = REVIEWED_DIGEST_CACHE_EPOCH_JOB_SCHEMA
+
+    def __post_init__(self):
+        if type(self.cache_source_epoch_migration) is not CheckpointArtifact:
+            raise TrainingJobValidationError('exact mandatory digest cache migration receipt required')
+        super().__post_init__()
+
+    @classmethod
+    def from_dict(cls, value):
+        data = dict(_object(value, {item.name for item in fields(cls)}, 'digest cache source job'))
+        data['cache_source_epoch_migration'] = CheckpointArtifact.from_dict(data.get('cache_source_epoch_migration'))
+        return super().from_dict(data)
+
+    def to_dict(self):
+        value = super().to_dict()
+        value['cache_source_epoch_migration'] = asdict(self.cache_source_epoch_migration)
+        return value
+
+def _reviewed_digest_cache_epoch_loader_context(context, model_checkpoint, optimizer_checkpoint, backend_identity, source_pins, admission_sha):
+    _reviewed_epoch_need(type(context) is dict and context.get('profile') in (REVIEWED_DIGEST_CACHE_EPOCH_PROFILE, REVIEWED_DIGEST_CACHE_PRISTINE_EPOCH_PROFILE), 'explicit same-digest cache migration context required')
+    checked = _reviewed_digest_cache_epoch_context_for_profile(context['profile'])(context['spec'], CheckpointArtifact.from_dict(context['old_configuration_artifact']), CheckpointArtifact.from_dict(context['old_pipeline_artifact']), CheckpointArtifact.from_dict(context['current_configuration_artifact']), CheckpointArtifact.from_dict(context['source_contract_artifact']))
+    spec = checked['spec']
+    _reviewed_epoch_need(set(context) == set(checked) and all((context[key] == checked[key] for key in checked)) and (spec.base_model_checkpoint == model_checkpoint) and (spec.base_optimizer_checkpoint == optimizer_checkpoint) and (_thaw(spec.backend_identity) == backend_identity) and (_thaw(spec.expected_source_sha256) == source_pins) and (spec.expected_admission_inputs_sha256 == admission_sha), 'cache loader request/context is not the exact authenticated migration spec')
+    context.clear()
+    context.update(checked)
+
+def _reviewed_epoch_family_restore(backend, model_raw, optimizer_raw, context, registry, current_admission_provider, current, *, _family):
+    """Existing paired transfer with exact equality, new proof, no numeric updates."""
+    if _family == REVIEWED_DECODER_TRAIN_RESUME_EPOCH_PROFILE:
+        _context_builder, _prepare_binding, _binding_proof = (_reviewed_train_resume_epoch_context, _reviewed_epoch_prepare_binding, _reviewed_epoch_binding_proof)
+    elif _family == REVIEWED_DIGEST_CACHE_EPOCH_PROFILE:
+        _context_builder, _prepare_binding, _binding_proof = (_reviewed_digest_cache_epoch_context, _reviewed_digest_cache_epoch_prepare_binding, _reviewed_digest_cache_epoch_binding_proof)
+    elif _family == REVIEWED_DIGEST_CACHE_PRISTINE_EPOCH_PROFILE:
+        _context_builder, _prepare_binding, _binding_proof = (_reviewed_digest_cache_pristine_epoch_context, _reviewed_digest_cache_epoch_prepare_binding, _reviewed_digest_cache_epoch_binding_proof)
+    else:
+        raise TrainingJobValidationError('closed existing migration family required')
+    from collections import OrderedDict
+    _reviewed_epoch_need(type(backend) is TorchReviewedDecoderBackend, 'exact current backend required')
+    spec = context['spec']
+    checked = _context_builder(spec, CheckpointArtifact.from_dict(context['old_configuration_artifact']), CheckpointArtifact.from_dict(context['old_pipeline_artifact']), CheckpointArtifact.from_dict(context['current_configuration_artifact']), CheckpointArtifact.from_dict(context['source_contract_artifact']))
+    context.clear()
+    context.update(checked)
+    current()
+    _reviewed_epoch_need(_json_bytes(backend._configuration()) == _json_bytes(context['current_configuration']), 'constructed TRAIN-resume current configuration differs')
+    _reviewed_epoch_authenticate_assets(spec, backend)
+    current_raw = backend.tokenizer.pipeline_serialization()
+    proof = _reviewed_epoch_pipeline_proof(context['old_pipeline_raw'], current_raw, context['sources'], context['contract']['old_source_sha256'], context['contract']['current_source_sha256'])
+    _reviewed_epoch_need(proof['current_contract'] == context['current_configuration']['tokenizer'] and proof['current_binding'] == context['current_configuration']['tokenizer_binding'], 'actual new pipeline/config identity differs')
+    dependency = _reviewed_epoch_family_dependencies(context,backend,_family=_family)
+    prepared = _prepare_binding(spec, registry, backend.tokenizer, current_admission_provider)
+    _binding_proof(context['old_population_binding'], prepared['receipt'], context['contract'])
+    _reviewed_epoch_need(prepared['receipt']['tokenizer_contract'] == proof['current_contract'], 'current same-T3 input preparation differs')
+    current()
+    model, optimizer = _reviewed_epoch_old_pair(backend, model_raw, optimizer_raw, context['old_configuration'], context['old_manifest']['progress']['optimizer_steps'])
+    _reviewed_epoch_need(bool(optimizer['state']['state']) == (context['origin_kind'] == 'trained3'), 'pristine must have empty Adam; trained3 must retain actual nonempty Adam')
+    state = OrderedDict(model['state'])
+    state._metadata = model['state_metadata']
+    backend.model.load_state_dict(state, strict=True)
+    current()
+    backend.optimizer.load_state_dict(optimizer['state'])
+    current()
+    backend._torch().set_rng_state(optimizer['cpu_rng'])
+    backend._optimizer_steps = optimizer['optimizer_steps']
+    current()
+    live_model = backend._model_state()
+    live_optimizer = {'state': backend.optimizer.state_dict(), 'optimizer_steps': backend._optimizer_steps, 'cpu_rng': backend._torch().get_rng_state(), 'device_rng': None}
+    _reviewed_epoch_need(_reviewed_epoch_pair_equal(backend, model, optimizer, live_model, live_optimizer), 'TRAIN-resume bridge actual model/Adam/RNG transfer differs')
+    derivative = backend.snapshot_checkpoint()
+    new_model, new_optimizer = backend._load_pair(derivative['model_state'], derivative['optimizer_state'])
+    _reviewed_epoch_need(_reviewed_epoch_pair_equal(backend, model, optimizer, new_model, new_optimizer), 'TRAIN-resume new-format pair changed actual numerical halves or progress')
+    current()
+    _reviewed_epoch_need(backend.tokenizer.pipeline_serialization() == current_raw and _reviewed_epoch_family_dependencies(context,backend,_family=_family) == dependency, 'current pipeline/runtime cohort changed during transfer')
+    context.update(current_pipeline_raw=current_raw, current_training_binding=prepared['receipt'], pipeline_proof=proof, derivative_pair=derivative, dependency_scope=_reviewed_epoch_family_dependency_scope(context,_family=_family))
+    return (derivative['model_state'], derivative['optimizer_state'])
+
+def _reviewed_epoch_family_validate_receipt(reference, backend, *, expected_spec=None, _family):
+    """Recompute every proof and actual old/current pair; no receipt-only waiver."""
+    if _family == REVIEWED_DECODER_TRAIN_RESUME_EPOCH_PROFILE:
+        _receipt_schema, _profile, _receipt_spec, _expected_spec_type, _context_builder, _binding_proof = (REVIEWED_DECODER_TRAIN_RESUME_EPOCH_RECEIPT_SCHEMA, REVIEWED_DECODER_TRAIN_RESUME_EPOCH_PROFILE, _reviewed_epoch_receipt_spec, ReviewedMixedDecoderTrainingJobSpec, _reviewed_train_resume_epoch_context, _reviewed_epoch_binding_proof)
+    elif _family == REVIEWED_DIGEST_CACHE_EPOCH_PROFILE:
+        _receipt_schema, _profile, _receipt_spec, _expected_spec_type, _context_builder, _binding_proof = (REVIEWED_DIGEST_CACHE_EPOCH_RECEIPT_SCHEMA, REVIEWED_DIGEST_CACHE_EPOCH_PROFILE, _reviewed_digest_cache_epoch_receipt_spec, ReviewedDigestCacheEpochTrainingJobSpec, _reviewed_digest_cache_epoch_context, _reviewed_digest_cache_epoch_binding_proof)
+    elif _family == REVIEWED_DIGEST_CACHE_PRISTINE_EPOCH_PROFILE:
+        _receipt_schema, _profile, _receipt_spec, _expected_spec_type, _context_builder, _binding_proof = (REVIEWED_DIGEST_CACHE_EPOCH_RECEIPT_SCHEMA, REVIEWED_DIGEST_CACHE_PRISTINE_EPOCH_PROFILE, _reviewed_digest_cache_epoch_receipt_spec, ReviewedDigestCacheEpochTrainingJobSpec, _reviewed_digest_cache_pristine_epoch_context, _reviewed_digest_cache_epoch_binding_proof)
+    else:
+        raise TrainingJobValidationError('closed existing migration family required')
+    receipt, _ = _reviewed_epoch_document(reference, limit=8 * 1024 ** 2)
+    fields = {'schema', 'profile', 'old_checkpoint_manifest', 'old_configuration_artifact', 'old_pipeline_artifact', 'current_configuration_artifact', 'source_contract_artifact', 'current_pipeline_artifact', 'derivative_model_checkpoint', 'derivative_optimizer_checkpoint', 'target_job_spec', 'migrated_training_binding', 'original_progress', 'pipeline_proof', 'source_projection_sha256', 'dependency_scope', 'historical_dependency_execution_requalified', 'model_Adam_steps_RNG_and_progress_preserved', 'qualified', 'promotion_performed', 'legal_meaning_verified', 'convergence_proved', 'corpus_admitted', 'new_checkpoint_lineage_id', 'new_base_version_id', 'origin_kind', 'training_resume_eligible'}
+    _reviewed_epoch_need(type(receipt) is dict and set(receipt) == fields and (receipt['schema'] == _receipt_schema) and (receipt['profile'] == _profile) and (receipt['training_resume_eligible'] is True) and (receipt['historical_dependency_execution_requalified'] is False) and (receipt['model_Adam_steps_RNG_and_progress_preserved'] is True) and all((receipt[key] is False for key in ('qualified', 'promotion_performed', 'legal_meaning_verified', 'convergence_proved', 'corpus_admitted'))), 'closed nonauthorizing TRAIN-resume migration receipt required')
+    spec = _receipt_spec(receipt, None, backend)
+    if expected_spec is not None:
+        _reviewed_epoch_need(type(expected_spec) is _expected_spec_type, 'explicit TRAIN-resume target spec required')
+        original_spec, next_spec = (spec.to_dict(), expected_spec.to_dict())
+        if _family in (REVIEWED_DIGEST_CACHE_EPOCH_PROFILE, REVIEWED_DIGEST_CACHE_PRISTINE_EPOCH_PROFILE):
+            _reviewed_epoch_need(next_spec.pop('cache_source_epoch_migration') == asdict(CheckpointArtifact.from_dict(reference)) and next_spec['schema_version'] == REVIEWED_DIGEST_CACHE_EPOCH_JOB_SCHEMA, 'typed cache resume receipt/schema differs')
+            next_spec['schema_version'] = original_spec['schema_version']
+        mutable = {'job_id', 'run_id', 'output_directory', 'max_steps', 'max_seconds', 'parent_checkpoint_artifact', 'base_model_checkpoint', 'base_optimizer_checkpoint', 'checkpoint_lineage_id', 'base_version_id'}
+        _reviewed_epoch_need(set(original_spec) == set(next_spec) and all((original_spec[key] == next_spec[key] for key in original_spec if key not in mutable)), 'TRAIN-resume numerical/data/context/configuration target changed')
+    _reviewed_epoch_need(asdict(spec.parent_checkpoint_artifact) == receipt['old_checkpoint_manifest'], 'TRAIN-resume original pair metadata changed')
+    context = _context_builder(spec, CheckpointArtifact.from_dict(receipt['old_configuration_artifact']), CheckpointArtifact.from_dict(receipt['old_pipeline_artifact']), CheckpointArtifact.from_dict(receipt['current_configuration_artifact']), CheckpointArtifact.from_dict(receipt['source_contract_artifact']))
+    if expected_spec is not None:
+        _reviewed_epoch_need(expected_spec.checkpoint_lineage_id == context['new_checkpoint_lineage_id'] and expected_spec.base_version_id == context['new_base_version_id'], 'TRAIN-resume target lineage/version differs')
+    _reviewed_epoch_need(receipt['new_checkpoint_lineage_id'] == context['new_checkpoint_lineage_id'] and receipt['new_base_version_id'] == context['new_base_version_id'] and (receipt['origin_kind'] == context['origin_kind']) and (receipt['original_progress'] == context['old_manifest']['progress']) and (receipt['dependency_scope'] == _reviewed_epoch_family_dependency_scope(context,_family=_family)), 'TRAIN-resume lineage/version/original progress/scope differs')
+    _reviewed_epoch_authenticate_assets(spec, backend)
+    _reviewed_epoch_need(_json_bytes(backend._configuration()) == _json_bytes(context['current_configuration']), 'TRAIN-resume live complete config changed')
+    current_raw = _reviewed_decoder_artifact(CheckpointArtifact.from_dict(receipt['current_pipeline_artifact']), limit=MAX_REVIEWED_TOKENIZER_PIPELINE_BYTES)
+    _reviewed_epoch_need(current_raw == backend.tokenizer.pipeline_serialization(), 'new actual tokenizer pipeline changed')
+    proof = _reviewed_epoch_pipeline_proof(context['old_pipeline_raw'], current_raw, context['sources'], context['contract']['old_source_sha256'], context['contract']['current_source_sha256'])
+    _reviewed_epoch_need(proof == receipt['pipeline_proof'] and receipt['source_projection_sha256'] == context['sources']['projection_sha256'], 'TRAIN-resume pipeline/Source proof differs')
+    _binding_proof(context['old_population_binding'], receipt['migrated_training_binding'], context['contract'])
+    _reviewed_epoch_need(receipt['migrated_training_binding']['tokenizer_contract'] == proof['current_contract'], 'TRAIN-resume new population pipeline differs')
+    _reviewed_epoch_family_dependencies(context,backend,_family=_family)
+    limit = backend._checkpoint_byte_limit()
+    old_model, old_optimizer = _reviewed_epoch_old_pair(backend, _reviewed_decoder_artifact(spec.base_model_checkpoint, limit=limit), _reviewed_decoder_artifact(spec.base_optimizer_checkpoint, limit=limit), context['old_configuration'], context['old_manifest']['progress']['optimizer_steps'])
+    _reviewed_epoch_need(bool(old_optimizer['state']['state']) == (context['origin_kind'] == 'trained3'), 'TRAIN-resume old Adam origin mismatch')
+    new_model, new_optimizer = backend._load_pair(_reviewed_decoder_artifact(CheckpointArtifact.from_dict(receipt['derivative_model_checkpoint']), limit=limit), _reviewed_decoder_artifact(CheckpointArtifact.from_dict(receipt['derivative_optimizer_checkpoint']), limit=limit))
+    _reviewed_epoch_need(_reviewed_epoch_pair_equal(backend, old_model, old_optimizer, new_model, new_optimizer), 'TRAIN-resume actual old/new model/Adam/RNG/progress differ')
+    return receipt
+
+def _migrate_local_reviewed_decoder_epoch_family(spec, *, registry, current_admission_provider, execution_guard, asset_policy_guard, recipe_artifact, model_config_artifact, tokenizer_artifact, license_artifact, old_configuration_artifact, old_tokenizer_pipeline_artifact, current_configuration_artifact, compatibility_contract_artifact, output_directory, max_model_bytes, runtime_profile='builtin-qwen2-bfloat16/v1', _family):
+    """Migrate the exact original9d TRAIN3 pair to a NEW current train-resume version.
+
+    Actual old pipeline and current dependency-cohort snapshots must be captured
+    BEFORE Source adoption. No fresh vendor import, fitting, counter/RNG reset,
+    old-artifact rewrite, promotion or historical dependency requalification.
+    The caller retains existing execution/resource/asset/admission ownership.
+    """
+    if _family == REVIEWED_DECODER_TRAIN_RESUME_EPOCH_PROFILE:
+        _migration_spec_type, _context_builder, _profile, _receipt_schema, _validate_receipt, _load_current, _next_type, _prepare_binding = (ReviewedMixedDecoderTrainingJobSpec, _reviewed_train_resume_epoch_context, REVIEWED_DECODER_TRAIN_RESUME_EPOCH_PROFILE, REVIEWED_DECODER_TRAIN_RESUME_EPOCH_RECEIPT_SCHEMA, _reviewed_train_resume_epoch_validate_receipt, load_local_reviewed_decoder_runtime_v3, ReviewedMixedDecoderTrainingJobSpec, _reviewed_epoch_prepare_binding)
+    elif _family == REVIEWED_DIGEST_CACHE_EPOCH_PROFILE:
+        _migration_spec_type, _context_builder, _profile, _receipt_schema, _validate_receipt, _load_current, _next_type, _prepare_binding = (ReviewedDigestOmittedDecoderTrainingJobSpec, _reviewed_digest_cache_epoch_context, REVIEWED_DIGEST_CACHE_EPOCH_PROFILE, REVIEWED_DIGEST_CACHE_EPOCH_RECEIPT_SCHEMA, _reviewed_digest_cache_epoch_validate_receipt, load_local_reviewed_decoder_digest_omitted_runtime_v1, ReviewedDigestCacheEpochTrainingJobSpec, _reviewed_digest_cache_epoch_prepare_binding)
+    elif _family == REVIEWED_DIGEST_CACHE_PRISTINE_EPOCH_PROFILE:
+        _migration_spec_type, _context_builder, _profile, _receipt_schema, _validate_receipt, _load_current, _next_type, _prepare_binding = (ReviewedDigestOmittedDecoderTrainingJobSpec, _reviewed_digest_cache_pristine_epoch_context, REVIEWED_DIGEST_CACHE_PRISTINE_EPOCH_PROFILE, REVIEWED_DIGEST_CACHE_EPOCH_RECEIPT_SCHEMA, _reviewed_digest_cache_epoch_validate_receipt, load_local_reviewed_decoder_digest_omitted_runtime_v1, ReviewedDigestCacheEpochTrainingJobSpec, _reviewed_digest_cache_epoch_prepare_binding)
+    else:
+        raise TrainingJobValidationError('closed existing migration family required')
+    import gc
+    import stat
+    _reviewed_epoch_need(runtime_profile == 'builtin-qwen2-bfloat16/v1' and all((callable(value) for value in (current_admission_provider, execution_guard, asset_policy_guard))), 'existing live guards required')
+    _reviewed_epoch_need(type(spec) is _migration_spec_type and tokenizer_artifact == spec.tokenizer_artifact and (license_artifact == spec.license_artifact) and (recipe_artifact in spec.backend_artifacts) and (model_config_artifact in spec.backend_artifacts) and (recipe_artifact != model_config_artifact), 'loader recipe/configuration/tokenizer/license must be the exact declared old assets')
+    execution_guard()
+    policy = {'schema': 'reviewed-decoder-source-epoch-migration-policy/v1', 'target_job_spec': spec.to_dict(), 'old_configuration': asdict(old_configuration_artifact), 'old_pipeline': asdict(old_tokenizer_pipeline_artifact), 'current_configuration': asdict(current_configuration_artifact), 'source_contract': asdict(compatibility_contract_artifact), 'profile': _profile, 'migration_requested': True, 'training_resume_requested': True, 'training_requested': False, 'downloads_requested': False, 'resource_grant_requested': False, 'promotion_requested': False}
+    asset_policy_guard(_parse_json(_json_bytes(policy)))
+    context = _context_builder(spec, old_configuration_artifact, old_tokenizer_pipeline_artifact, current_configuration_artifact, compatibility_contract_artifact)
+    output = Path(output_directory)
+    _reviewed_epoch_need(output.is_absolute() and (not os.path.lexists(output)) and (output.parent.resolve(strict=True) == output.parent) and (output != Path(spec.output_directory)) and all((stat.S_ISDIR(parent.lstat().st_mode) for parent in output.parents)), 'distinct fresh ordinary migration output directory required')
+    import torch
+    entry_rng = torch.get_rng_state().clone()
+    succeeded = False
+    try:
+        runtime, internal_receipt = _load_local_reviewed_decoder_runtime(registry=registry, current_admission_provider=current_admission_provider, execution_guard=execution_guard, asset_policy_guard=asset_policy_guard, recipe_artifact=recipe_artifact, model_config_artifact=model_config_artifact, tokenizer_artifact=tokenizer_artifact, license_artifact=license_artifact, model_checkpoint=spec.base_model_checkpoint, optimizer_checkpoint=spec.base_optimizer_checkpoint, expected_backend_identity=_thaw(spec.backend_identity), expected_source_sha256=_thaw(spec.expected_source_sha256), expected_admission_inputs_sha256=spec.expected_admission_inputs_sha256, max_model_bytes=max_model_bytes, _admission_version='v3', _runtime_profile=runtime_profile, _source_epoch_migration=context, **{'_target_codec': REVIEWED_DIGEST_OMITTED_TARGET_CODEC} if _family in (REVIEWED_DIGEST_CACHE_EPOCH_PROFILE, REVIEWED_DIGEST_CACHE_PRISTINE_EPOCH_PROFILE) else {})
+        execution_guard()
+        _reviewed_epoch_need(runtime.backend.restored_checkpoint_matches(context['derivative_pair']['model_state'], context['derivative_pair']['optimizer_state']), 'current pair changed before publication')
+        output.mkdir(mode=448, exist_ok=False)
+        model = _write_exclusive(output / 'model.checkpoint', context['derivative_pair']['model_state'])
+        optimizer = _write_exclusive(output / 'optimizer.checkpoint', context['derivative_pair']['optimizer_state'])
+        pipeline = _write_exclusive(output / 'current-tokenizer-pipeline.json', context['current_pipeline_raw'])
+        receipt = {'schema': _receipt_schema, 'profile': _profile, 'old_checkpoint_manifest': asdict(spec.parent_checkpoint_artifact), 'old_configuration_artifact': context['old_configuration_artifact'], 'old_pipeline_artifact': context['old_pipeline_artifact'], 'current_configuration_artifact': context['current_configuration_artifact'], 'source_contract_artifact': context['source_contract_artifact'], 'current_pipeline_artifact': pipeline, 'derivative_model_checkpoint': model, 'derivative_optimizer_checkpoint': optimizer, 'target_job_spec': spec.to_dict(), 'migrated_training_binding': context['current_training_binding'], 'original_progress': context['old_manifest']['progress'], 'new_checkpoint_lineage_id': context['new_checkpoint_lineage_id'], 'new_base_version_id': context['new_base_version_id'], 'origin_kind': context['origin_kind'], 'training_resume_eligible': True, 'pipeline_proof': context['pipeline_proof'], 'source_projection_sha256': context['sources']['projection_sha256'], 'dependency_scope': context['dependency_scope'], 'historical_dependency_execution_requalified': False, 'model_Adam_steps_RNG_and_progress_preserved': True, 'qualified': False, 'promotion_performed': False, 'legal_meaning_verified': False, 'convergence_proved': False, 'corpus_admitted': False}
+        receipt_ref = _write_exclusive(output / 'source-epoch-TRAIN-resume-migration.json', _json_bytes(receipt))
+        original = context['old_manifest']
+        if _family in (REVIEWED_DIGEST_CACHE_EPOCH_PROFILE, REVIEWED_DIGEST_CACHE_PRISTINE_EPOCH_PROFILE):
+            manifest = {**original, 'schema': REVIEWED_DIGEST_CACHE_EPOCH_CHECKPOINT_SCHEMA, 'checkpoint_lineage_id': context['new_checkpoint_lineage_id'], 'base_version_id': context['new_base_version_id'], 'backend_identity': _thaw(spec.backend_identity), 'producer_pins': _thaw(spec.expected_source_sha256), 'training_binding': context['current_training_binding'], 'model_state': model, 'optimizer_state': optimizer, 'token_budgets': {'max_source_tokens': spec.max_source_tokens, 'max_target_tokens': spec.max_target_tokens, 'tokenizer_contract': context['current_training_binding']['tokenizer_contract']}, 'parent_checkpoint_sha256': spec.parent_checkpoint_artifact.sha256, 'cache_source_epoch_migration': receipt_ref, 'cache_epoch_parent_checkpoint_artifact': asdict(spec.parent_checkpoint_artifact)}
+        else:
+            manifest = {**original, 'schema': REVIEWED_DECODER_SOURCE_EPOCH_CHECKPOINT_SCHEMA, 'checkpoint_lineage_id': context['new_checkpoint_lineage_id'], 'base_version_id': context['new_base_version_id'], 'backend_identity': _thaw(spec.backend_identity), 'producer_pins': _thaw(spec.expected_source_sha256), 'training_binding': context['current_training_binding'], 'model_state': model, 'optimizer_state': optimizer, 'token_budgets': {'max_source_tokens': spec.max_source_tokens, 'max_target_tokens': spec.max_target_tokens, 'tokenizer_contract': context['current_training_binding']['tokenizer_contract']}, 'parent_checkpoint_sha256': spec.parent_checkpoint_artifact.sha256, 'continuation_profile': spec.continuation_profile, 'optimizer_step_offset': 0, 'stage_continuation': None, 'source_epoch_migration': receipt_ref}
+        manifest_ref = _write_exclusive(output / 'reviewed-decoder-checkpoint.json', _json_bytes(manifest))
+        del runtime
+        context.pop('derivative_pair')
+        gc.collect()
+        runtime, load_receipt = _load_current(admission_profile=spec.admission_profile, registry=registry, current_admission_provider=current_admission_provider, execution_guard=execution_guard, asset_policy_guard=asset_policy_guard, recipe_artifact=recipe_artifact, model_config_artifact=model_config_artifact, tokenizer_artifact=tokenizer_artifact, license_artifact=license_artifact, model_checkpoint=CheckpointArtifact.from_dict(model), optimizer_checkpoint=CheckpointArtifact.from_dict(optimizer), expected_backend_identity=_thaw(spec.backend_identity), expected_source_sha256=_thaw(spec.expected_source_sha256), expected_admission_inputs_sha256=spec.expected_admission_inputs_sha256, max_model_bytes=max_model_bytes, runtime_profile=runtime_profile, **{'cache_source_epoch_migration': CheckpointArtifact.from_dict(receipt_ref)} if _family in (REVIEWED_DIGEST_CACHE_EPOCH_PROFILE, REVIEWED_DIGEST_CACHE_PRISTINE_EPOCH_PROFILE) else {})
+        _validate_receipt(receipt_ref, runtime.backend, expected_spec=None)
+        prepared = _prepare_binding(spec, registry, runtime.tokenizer, current_admission_provider)
+        _reviewed_epoch_need(prepared['receipt'] == context['current_training_binding'], 'ordinary current admission/input binding changed after derivative reload')
+        new_spec = spec.to_dict()
+        if _family in (REVIEWED_DIGEST_CACHE_EPOCH_PROFILE, REVIEWED_DIGEST_CACHE_PRISTINE_EPOCH_PROFILE):
+            new_spec.update(schema_version=REVIEWED_DIGEST_CACHE_EPOCH_JOB_SCHEMA, cache_source_epoch_migration=receipt_ref)
+        new_spec.update(checkpoint_lineage_id=context['new_checkpoint_lineage_id'], base_version_id=context['new_base_version_id'], parent_checkpoint_artifact=manifest_ref, base_model_checkpoint=model, base_optimizer_checkpoint=optimizer)
+        _validate_receipt(receipt_ref, runtime.backend, expected_spec=_next_type.from_dict(new_spec))
+        result = {'schema': 'reviewed-digest-omitted-cache-source-artifact-migration-operation/v1' if _family in (REVIEWED_DIGEST_CACHE_EPOCH_PROFILE, REVIEWED_DIGEST_CACHE_PRISTINE_EPOCH_PROFILE) else 'reviewed-decoder-TRAIN-resume-source-epoch-migration-operation/v1', 'training_resume_eligible': True, 'new_checkpoint_lineage_id': context['new_checkpoint_lineage_id'], 'new_base_version_id': context['new_base_version_id'], 'migration_receipt': receipt_ref, 'candidate': manifest_ref, 'model_checkpoint': model, 'optimizer_checkpoint': optimizer, 'next_job_spec': new_spec, 'worker_progress': dict(original['progress']), 'ordinary_current_loader': load_receipt, 'qualified': False, 'promotion_performed': False, 'training_performed': False, 'resource_granted': False, 'historical_dependency_execution_requalified': False}
+        execution_guard()
+        _validate_receipt(receipt_ref, runtime.backend, expected_spec=None)
+        if _family in (REVIEWED_DIGEST_CACHE_EPOCH_PROFILE, REVIEWED_DIGEST_CACHE_PRISTINE_EPOCH_PROFILE):
+            prepared = _prepare_binding(spec, registry, runtime.tokenizer, current_admission_provider)
+        _reviewed_epoch_need(runtime.backend.restored_checkpoint_matches(_reviewed_decoder_artifact(CheckpointArtifact.from_dict(model), limit=runtime.backend._checkpoint_byte_limit()), _reviewed_decoder_artifact(CheckpointArtifact.from_dict(optimizer), limit=runtime.backend._checkpoint_byte_limit())), 'live derivative pair changed during final callback/provenance validation')
+        _reviewed_epoch_need(runtime.backend.identity() == _thaw(spec.backend_identity) and _reviewed_decoder_source_pins(admission_profile=spec.admission_profile) == _thaw(spec.expected_source_sha256), 'current backend or Source changed before migration publication')
+        if _family in (REVIEWED_DIGEST_CACHE_EPOCH_PROFILE, REVIEWED_DIGEST_CACHE_PRISTINE_EPOCH_PROFILE):
+            _reviewed_epoch_need(prepared['receipt'] == context['current_training_binding'], 'final current digest binding changed')
+            final_inventory = _reviewed_digest_cache_epoch_artifact_inventory(spec, context, model, optimizer, pipeline, receipt_ref, manifest_ref, runtime.backend._checkpoint_byte_limit())
+            del runtime
+            gc.collect()
+            _reviewed_digest_cache_epoch_fresh_admission(spec, current_admission_provider, prepared['receipt'])
+            result['immutable_artifact_finalization'] = _reviewed_digest_cache_epoch_close_artifacts(final_inventory)
+            result.update(artifact_only=True, live_runtime_returned=False, live_runtime_state_at_return_claimed=False, requires_validated_profile_reload=True, numerical_pair_verified_before_final_provider=True, final_current_admission_and_binding_rechecked=True)
+        _write_exclusive(output / 'receipt.json', _json_bytes(result))
+        directory_fd = os.open(output, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+        try:
+            os.fsync(directory_fd)
+        finally:
+            os.close(directory_fd)
+        succeeded = True
+        if _family in (REVIEWED_DIGEST_CACHE_EPOCH_PROFILE, REVIEWED_DIGEST_CACHE_PRISTINE_EPOCH_PROFILE):
+            return result
+        return (runtime, result)
+    except BaseException as error:
+        if output.exists():
+            try:
+                _write_exclusive(output / 'failure.json', _json_bytes({'schema': 'reviewed-digest-omitted-cache-source-migration-failure/v1' if _family in (REVIEWED_DIGEST_CACHE_EPOCH_PROFILE, REVIEWED_DIGEST_CACHE_PRISTINE_EPOCH_PROFILE) else 'reviewed-decoder-TRAIN-resume-source-epoch-migration-failure/v1', 'error_type': type(error).__name__, 'partial_output_preserved': True, 'old_artifacts_rewritten': False, 'qualified': False, 'promotion_performed': False}))
+            except BaseException as publication_error:
+                error.add_note('failed to retain migration failure metadata: ' + type(publication_error).__name__)
+        raise
+    finally:
+        if not succeeded:
+            torch.set_rng_state(entry_rng)
+
+def _reviewed_digest_cache_epoch_restore(backend, model_raw, optimizer_raw, context, registry, current_admission_provider, current):
+    """Existing paired transfer with exact equality, new proof, no numeric updates."""
+    return _reviewed_epoch_family_restore(backend, model_raw, optimizer_raw, context, registry, current_admission_provider, current, _family=context['profile'])
+
+def _reviewed_digest_cache_epoch_validate_receipt(reference, backend, *, expected_spec=None):
+    """Recompute every proof and actual old/current pair; no receipt-only waiver."""
+    marker=_reviewed_digest_cache_epoch_validate_marker(_thaw(backend.cache_source_epoch_marker))
+    return _reviewed_epoch_family_validate_receipt(reference, backend, expected_spec=expected_spec, _family=marker['profile'])
+
+def migrate_local_reviewed_decoder_digest_cache_source_epoch_v1(spec, *, registry, current_admission_provider, execution_guard, asset_policy_guard, recipe_artifact, model_config_artifact, tokenizer_artifact, license_artifact, old_configuration_artifact, old_tokenizer_pipeline_artifact, current_configuration_artifact, compatibility_contract_artifact, output_directory, max_model_bytes, runtime_profile='builtin-qwen2-bfloat16/v1'):
+    """Artifact-only same-digest TRAIN3 migration; explicit validated reload required; no live runtime or authority grant."""
+    return _migrate_local_reviewed_decoder_epoch_family(spec, registry=registry, current_admission_provider=current_admission_provider, execution_guard=execution_guard, asset_policy_guard=asset_policy_guard, recipe_artifact=recipe_artifact, model_config_artifact=model_config_artifact, tokenizer_artifact=tokenizer_artifact, license_artifact=license_artifact, old_configuration_artifact=old_configuration_artifact, old_tokenizer_pipeline_artifact=old_tokenizer_pipeline_artifact, current_configuration_artifact=current_configuration_artifact, compatibility_contract_artifact=compatibility_contract_artifact, output_directory=output_directory, max_model_bytes=max_model_bytes, runtime_profile=runtime_profile, _family=REVIEWED_DIGEST_CACHE_EPOCH_PROFILE)
+__all__ += ['ReviewedDigestCacheEpochTrainingJobSpec','REVIEWED_DIGEST_CACHE_EPOCH_JOB_SCHEMA','REVIEWED_DIGEST_CACHE_EPOCH_PROFILE','REVIEWED_DIGEST_CACHE_EPOCH_CONTRACT_SCHEMA','REVIEWED_DIGEST_CACHE_EPOCH_RECEIPT_SCHEMA','REVIEWED_DIGEST_CACHE_EPOCH_CHECKPOINT_SCHEMA','migrate_local_reviewed_decoder_digest_cache_source_epoch_v1']
+
+
+def _reviewed_digest_cache_pristine_origin(origin, prospective, stage_sha256):
+    """A zero-update origin has no historical training population or parent.
+
+    The separately committed T3 receipt is prospective input equivalence DATA;
+    it never asserts that this pristine numerical pair performed those updates.
+    """
+    need=_reviewed_epoch_need
+    progress=origin.get('progress') if type(origin)is dict else None
+    need(type(progress)is dict and progress=={'epochs_completed':0,'row_cursor':0,'optimizer_steps':0}
+        and all(type(value)is int for value in progress.values())
+        and origin.get('training_binding')is None and origin.get('parent_checkpoint_sha256')is None,
+        'pristine cache origin requires exact zero progress and no historical population/parent')
+    need(type(prospective)is dict
+        and prospective.get('schema')=='reviewed-decoder-digest-omitted-training-input-receipt/v1'
+        and prospective.get('target_codec')==REVIEWED_DIGEST_OMITTED_TARGET_CODEC
+        and type(prospective.get('record_count'))is int and prospective['record_count']==3
+        and prospective.get('stage_artifact_sha256')==stage_sha256,
+        'separate same-objective prospective T3 input binding required')
+
+
+def _reviewed_digest_cache_pristine_epoch_context(spec, old_configuration_artifact,
+        old_tokenizer_pipeline_artifact, current_configuration_artifact, compatibility_contract_artifact):
+    return _reviewed_digest_cache_epoch_context(spec,old_configuration_artifact,
+        old_tokenizer_pipeline_artifact,current_configuration_artifact,compatibility_contract_artifact,
+        _origin_kind='pristine0')
+
+
+def _reviewed_digest_cache_epoch_context_for_profile(profile):
+    if profile==REVIEWED_DIGEST_CACHE_EPOCH_PROFILE:
+        return _reviewed_digest_cache_epoch_context
+    if profile==REVIEWED_DIGEST_CACHE_PRISTINE_EPOCH_PROFILE:
+        return _reviewed_digest_cache_pristine_epoch_context
+    raise TrainingJobValidationError('closed same-digest TRAIN3 or PRISTINE0 cache profile required')
+
+
+def migrate_local_reviewed_decoder_digest_cache_pristine_source_epoch_v1(spec, *, registry,
+        current_admission_provider, execution_guard, asset_policy_guard, recipe_artifact,
+        model_config_artifact, tokenizer_artifact, license_artifact, old_configuration_artifact,
+        old_tokenizer_pipeline_artifact, current_configuration_artifact, compatibility_contract_artifact,
+        output_directory, max_model_bytes, runtime_profile='builtin-qwen2-bfloat16/v1'):
+    """Explicit pristine0 artifact migration; zero updates; validated reload required."""
+    return _migrate_local_reviewed_decoder_epoch_family(spec,registry=registry,
+        current_admission_provider=current_admission_provider,execution_guard=execution_guard,
+        asset_policy_guard=asset_policy_guard,recipe_artifact=recipe_artifact,
+        model_config_artifact=model_config_artifact,tokenizer_artifact=tokenizer_artifact,
+        license_artifact=license_artifact,old_configuration_artifact=old_configuration_artifact,
+        old_tokenizer_pipeline_artifact=old_tokenizer_pipeline_artifact,
+        current_configuration_artifact=current_configuration_artifact,
+        compatibility_contract_artifact=compatibility_contract_artifact,output_directory=output_directory,
+        max_model_bytes=max_model_bytes,runtime_profile=runtime_profile,
+        _family=REVIEWED_DIGEST_CACHE_PRISTINE_EPOCH_PROFILE)
+
+
+__all__ += ['REVIEWED_DIGEST_CACHE_PRISTINE_EPOCH_PROFILE',
+    'migrate_local_reviewed_decoder_digest_cache_pristine_source_epoch_v1']
+
+
+
+def _reviewed_digest_cache_current_dependency_metadata(snapshot, old_manifest,
+        old_config_sha, old_pipeline_sha, contract):
+    """Explicit present-cohort DATA; never a reconstructed past observation."""
+    need=_reviewed_epoch_need
+    fields={'schema','profile','old_checkpoint_manifest_sha256','old_configuration_sha256',
+        'current_configuration_sha256','old_tokenizer_pipeline_sha256','old_source_sha256',
+        'current_source_sha256','old_source_artifacts','current_source_artifacts',
+        'dependency_snapshot_artifact','old_training_binding_artifact','dependency_association_scope'}
+    need(type(contract)is dict and set(contract)==fields
+        and contract['schema']==REVIEWED_DIGEST_CACHE_CURRENT_COHORT_CONTRACT_SCHEMA
+        and contract['profile']in(REVIEWED_DIGEST_CACHE_EPOCH_PROFILE,REVIEWED_DIGEST_CACHE_PRISTINE_EPOCH_PROFILE)
+        and contract['dependency_association_scope']==REVIEWED_DIGEST_CACHE_CURRENT_COHORT_SCOPE,
+        'explicit closed digest current-cohort compatibility contract required')
+    need(type(old_manifest)is dict and old_manifest.get('schema')==REVIEWED_DIGEST_OMITTED_CHECKPOINT_SCHEMA
+        and old_manifest.get('backend_identity',{}).get('target_codec')==REVIEWED_DIGEST_OMITTED_TARGET_CODEC,
+        'current-cohort scope is exclusive to the same digest objective')
+    source_fields=REVIEWED_DECODER_SOURCE_NAMES
+    old_source,current_source=contract['old_source_sha256'],contract['current_source_sha256']
+    need(type(old_source)is type(current_source)is dict and set(old_source)==set(current_source)==source_fields
+        and all(type(value)is str and re.fullmatch('[0-9a-f]{64}',value)is not None
+            for mapping in(old_source,current_source)for value in mapping.values())
+        and old_source==old_manifest['producer_pins']
+        and contract['old_checkpoint_manifest_sha256']==old_manifest['artifact_sha256']
+        and contract['old_configuration_sha256']==old_config_sha
+        and contract['old_tokenizer_pipeline_sha256']==old_pipeline_sha,
+        'current-cohort contract old/current source and saved pair commitments differ')
+    fields={'schema','association_scope','old_checkpoint_manifest_sha256','old_configuration_sha256',
+        'old_tokenizer_pipeline_sha256','old_source_sha256','current_source_sha256','implementation'}
+    need(type(snapshot)is dict and set(snapshot)==fields
+        and snapshot['schema']==REVIEWED_DIGEST_CACHE_CURRENT_COHORT_SNAPSHOT_SCHEMA
+        and snapshot['association_scope']==REVIEWED_DIGEST_CACHE_CURRENT_COHORT_SCOPE
+        and snapshot['old_checkpoint_manifest_sha256']==old_manifest['artifact_sha256']
+        and snapshot['old_configuration_sha256']==old_config_sha
+        and snapshot['old_tokenizer_pipeline_sha256']==old_pipeline_sha
+        and snapshot['old_source_sha256']==old_source and snapshot['current_source_sha256']==current_source,
+        'current-at-migration cohort does not bind exact old pair and current Source5')
+
+
+def _reviewed_epoch_family_dependencies(context, backend, *, _family):
+    contract=context['contract'];spec=context['spec']
+    if _family in(REVIEWED_DIGEST_CACHE_EPOCH_PROFILE,REVIEWED_DIGEST_CACHE_PRISTINE_EPOCH_PROFILE) and contract.get('schema')==REVIEWED_DIGEST_CACHE_CURRENT_COHORT_CONTRACT_SCHEMA:
+        _reviewed_epoch_need(context['profile']==_family,'current cohort digest family differs')
+        return _reviewed_epoch_dependencies(contract['dependency_snapshot_artifact'],
+            {**context['old_manifest'],'artifact_sha256':spec.parent_checkpoint_artifact.sha256},
+            contract['old_configuration_sha256'],contract['old_tokenizer_pipeline_sha256'],backend,
+            _current_cache_contract=contract)
+    _reviewed_epoch_need(_family in(REVIEWED_DECODER_TRAIN_RESUME_EPOCH_PROFILE,
+        REVIEWED_DIGEST_CACHE_EPOCH_PROFILE,REVIEWED_DIGEST_CACHE_PRISTINE_EPOCH_PROFILE),
+        'closed existing dependency-reader family required')
+    return _reviewed_epoch_dependencies(contract['dependency_snapshot_artifact'],
+        {**context['old_manifest'],'artifact_sha256':spec.parent_checkpoint_artifact.sha256},
+        contract['old_configuration_sha256'],contract['old_tokenizer_pipeline_sha256'],backend)
+
+
+def _reviewed_epoch_family_dependency_scope(context, *, _family):
+    if _family in(REVIEWED_DIGEST_CACHE_EPOCH_PROFILE,REVIEWED_DIGEST_CACHE_PRISTINE_EPOCH_PROFILE) and context['contract'].get('schema')==REVIEWED_DIGEST_CACHE_CURRENT_COHORT_CONTRACT_SCHEMA:
+        _reviewed_epoch_need(context['profile']==_family
+            and context['contract']['dependency_association_scope']==REVIEWED_DIGEST_CACHE_CURRENT_COHORT_SCOPE,
+            'authenticated current cohort scope differs')
+        return REVIEWED_DIGEST_CACHE_CURRENT_COHORT_SCOPE
+    _reviewed_epoch_need(_family in(REVIEWED_DECODER_TRAIN_RESUME_EPOCH_PROFILE,
+        REVIEWED_DIGEST_CACHE_EPOCH_PROFILE,REVIEWED_DIGEST_CACHE_PRISTINE_EPOCH_PROFILE),
+        'closed existing dependency scope family required')
+    return 'declared_current_cohort_before_after_Source_transition_not_historical_execution_attestation'
+
+
+__all__ += ['REVIEWED_DIGEST_CACHE_CURRENT_COHORT_CONTRACT_SCHEMA',
+    'REVIEWED_DIGEST_CACHE_CURRENT_COHORT_SNAPSHOT_SCHEMA','REVIEWED_DIGEST_CACHE_CURRENT_COHORT_SCOPE']
