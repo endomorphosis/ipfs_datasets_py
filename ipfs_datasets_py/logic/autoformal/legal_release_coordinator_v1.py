@@ -175,7 +175,7 @@ MAX_CLOSURE_ARTIFACT_TOTAL_BYTES_V3 = 48 * 1024**2
 
 
 def _validate_uscode_release_byte_closure(request_raw: bytes, *, expected_request_sha256: str, reviewed_version: int, _captured_native_context=None,
-        _native_transport="chunk-index/v1") -> dict:
+        _native_transport="chunk-index/v1", original_parent_handle=None, _original_parent_context=None) -> dict:
     """Replay exact local package, source/IR/graph/dependency/Lean-text custody.
 
     The request uses the existing bounded plain-value replay codec, including
@@ -184,6 +184,27 @@ def _validate_uscode_release_byte_closure(request_raw: bytes, *, expected_reques
     readback exists. The current join/native owners retain their missing
     correspondence and original-parent prerequisites; readiness stays false.
     """
+    parent_context = None
+    parent_callback_states = None
+    if original_parent_handle is not None or _original_parent_context is not None:
+        _release_v3_policy()
+        if original_parent_handle is not None:
+            entry_guard = _release_original_parent_entry_guard_v3
+            if (entry_guard is not _RELEASE_ORIGINAL_PARENT_ENTRY_GUARD_V3
+                    or entry_guard.__code__ is not _RELEASE_ORIGINAL_PARENT_ENTRY_CODE_V3):
+                raise ReleaseCoordinatorError("original-parent coordinator entry generation changed: entry guard")
+            entry_guard()
+        _need(original_parent_handle is None or reviewed_version == 3, "original parent requires the explicit V3 domain")
+        _need(original_parent_handle is not None or _original_parent_context is None,
+              "original-parent context cannot replace its opaque handle")
+        parent_context = (_original_parent_context if _original_parent_context is not None
+            else _release_original_parent_context_v3(original_parent_handle)) if original_parent_handle is not None else None
+        if parent_context is not None:
+            _release_original_parent_fence_v3(parent_context)
+            _need(parent_context[1] is original_parent_handle, "same original opaque parent handle required")
+        parent_callback_states = (_release_callback_states_v3((_release_original_parent_context_v3,
+            _release_original_parent_fence_v3, _release_original_parent_authentication_v3))
+            if parent_context is not None else None)
     from . import corpus_contracts as contracts
     from . import corpus_norm_definition_adapter as graphs
     from . import legal_corpus_definition_use_lake_v2 as wire
@@ -229,6 +250,10 @@ def _validate_uscode_release_byte_closure(request_raw: bytes, *, expected_reques
             current = (admissions.validate_reviewed_norm_admission_v3, graphs.validate_reviewed_norm_graph_v3,
                 native.validate_reviewed_norm_preservation_native_v3, native.validate_reviewed_norm_preservation_native_receipt_v3)
             _release_callback_fence_v3(current, callback_states)
+        if parent_context is not None:
+            _release_callback_fence_v3((_release_original_parent_context_v3,
+                _release_original_parent_fence_v3, _release_original_parent_authentication_v3), parent_callback_states)
+            _release_original_parent_fence_v3(parent_context)
     from . import legal_source_span_entity_join_v1 as joins
     from ...processors.legal_data import uscode_hf_release as hf
     from ...processors.legal_data.uscode_release_schema import require_immutable_revision
@@ -398,7 +423,11 @@ def _validate_uscode_release_byte_closure(request_raw: bytes, *, expected_reques
               for row in intake["files"]), "HF package/selected source metadata bytes differ")
     native_report = None
     transport_report = None
+    parent_authentication = None
     selection = request["native"]
+    if parent_context is not None:
+        _need(type(selection) is dict and selection.get("observation_profile") == "retained-native-observation/v1",
+              "original parent requires the complete retained-native V3 packet selection")
     _need(reviewed_version != 4 or selection is None,
           "physical V4 source replay cannot acquire Native authority from packet bytes")
     if selection is not None and (reviewed_version == 1 or direct):
@@ -435,6 +464,14 @@ def _validate_uscode_release_byte_closure(request_raw: bytes, *, expected_reques
             expected_preservation_sha256=pins["preservation"], expected_graph_sha256=pins["graph"],
             expected_admission_sha256=pins["admission"], toolchain=replay["toolchain"],
             observation_profile=selection["observation_profile"], **kwargs)
+        if parent_context is not None:
+            version_fence()
+            parent_authentication = _release_original_parent_authentication_v3(parent_context,
+                packet, preparation, graph, admission, args, kwargs, native_report=native_report,
+                receipt_sha256=hashlib.sha256(receipt_raw).hexdigest(),
+                packet_sha256=selection["expected_packet_sha256"], binary_sha256=selection["expected_binary_sha256"],
+                preservation_sha256=pins["preservation"], graph_sha256=pins["graph"],
+                admission_sha256=pins["admission"], toolchain=replay["toolchain"], contracts=contracts)
     _need(set(materials) == required, "unreferenced or omitted artifact population")
     if _captured_native_context is not None:
         _need(reviewed_version in (3, 4) and type(_captured_native_context) is list
@@ -483,6 +520,12 @@ def _validate_uscode_release_byte_closure(request_raw: bytes, *, expected_reques
             release_eligible=False, statutory_meaning_proved=False, gold_verified=False,
             original_success_authenticated=False, source_kernel_receipt_authenticated=False,
             admission_mask=0, release_mask=0, gold_mask=0, training_mask=0, evaluation_gold_mask=0)
+        if parent_authentication is not None:
+            report.update(profile=_BYTE_PARENT_PROFILE_V3, original_parent_handle_consumed=True,
+                native_receipt_authenticated=True, original_native_parent_custody_verified=True,
+                original_success_authenticated=True, original_parent_evidence=parent_authentication,
+                blockers=[item for item in report["blockers"]
+                    if item != "original_admitted_native_parent_custody_not_established"])
     version_fence()
     return report
 
@@ -502,7 +545,7 @@ REVIEWED_PHYSICAL_CROSSWALK_PROFILE = "identity-text-complete-reviewed-graph/v1"
 
 
 def _validate_uscode_release_physical_closure(request_raw: bytes, *, expected_request_sha256: str,
-        reviewed_version: int, _observe_checked_context=None, _native_transport="chunk-index/v1") -> dict:
+        reviewed_version: int, _observe_checked_context=None, _native_transport="chunk-index/v1", original_parent_handle=None) -> dict:
     """Replay a reviewed, exact physical law/span/entity-to-IR component.
 
     Crosswalk bytes are versioned cross-reference dependencies of every reviewed
@@ -512,6 +555,22 @@ def _validate_uscode_release_physical_closure(request_raw: bytes, *, expected_re
     are read through their existing owners while independent open descriptors
     retain byte/stat custody. This is no remote, native or corpus admission.
     """
+    parent_context = None
+    parent_callback_states = None
+    if original_parent_handle is not None:
+        _release_v3_policy()
+        if original_parent_handle is not None:
+            entry_guard = _release_original_parent_entry_guard_v3
+            if (entry_guard is not _RELEASE_ORIGINAL_PARENT_ENTRY_GUARD_V3
+                    or entry_guard.__code__ is not _RELEASE_ORIGINAL_PARENT_ENTRY_CODE_V3):
+                raise ReleaseCoordinatorError("original-parent coordinator entry generation changed: entry guard")
+            entry_guard()
+        _need(original_parent_handle is None or reviewed_version == 3, "original parent requires the explicit V3 domain")
+        parent_context = (_release_original_parent_context_v3(original_parent_handle)
+            if original_parent_handle is not None else None)
+        parent_callback_states = (_release_callback_states_v3((_release_original_parent_context_v3,
+            _release_original_parent_fence_v3, _release_original_parent_authentication_v3))
+            if parent_context is not None else None)
     from contextlib import ExitStack, contextmanager
     import os
     import stat
@@ -609,6 +668,10 @@ def _validate_uscode_release_physical_closure(request_raw: bytes, *, expected_re
               "physical delegate callback changed during complete replay")
         if reviewed_version in (3, 4):
             _release_callback_fence_v3(current, physical_callback_states)
+        if parent_context is not None:
+            _release_callback_fence_v3((_release_original_parent_context_v3,
+                _release_original_parent_fence_v3, _release_original_parent_authentication_v3), parent_callback_states)
+            _release_original_parent_fence_v3(parent_context)
 
     def same(left, right):
         return _canonical(left) == _canonical(right)
@@ -718,6 +781,10 @@ def _validate_uscode_release_physical_closure(request_raw: bytes, *, expected_re
     core_sha = hashlib.sha256(core_raw).hexdigest()
 
     def core_replay(capture=None):
+        if parent_context is not None:
+            return core_validator(core_raw, expected_request_sha256=core_sha,
+                _captured_native_context=capture, _native_transport=_native_transport,
+                original_parent_handle=original_parent_handle, _original_parent_context=parent_context)
         if reviewed_version in (3, 4):
             return core_validator(core_raw, expected_request_sha256=core_sha,
                 _captured_native_context=capture, _native_transport=_native_transport)
@@ -1080,7 +1147,8 @@ def _validate_uscode_release_physical_closure(request_raw: bytes, *, expected_re
                     raise observer_error
                 closed = closed_state["report"]
             report = dict(closed)
-            report.update(schema=report_schema, profile=profile,
+            report.update(schema=report_schema,
+                profile=CLOSURE_PARENT_PROFILE_V3 if parent_context is not None else profile,
                 request_sha256=expected_request_sha256,
                 artifacts=[{key: row[key] for key in ("artifact_id", "family", "sha256", "bytes")} for row in rows],
                 blockers=[blocker for blocker in closed["blockers"]
@@ -1309,15 +1377,40 @@ def _release_native_packet_v3(selection, materials, required, contracts, wire):
 
 
 def _validate_uscode_release_byte_closure_v3(request_raw: bytes, *, expected_request_sha256: str,
-        _captured_native_context=None, _native_transport="chunk-index/v1") -> dict:
+        _captured_native_context=None, _native_transport="chunk-index/v1",
+        original_parent_handle=None, _original_parent_context=None) -> dict:
+    if original_parent_handle is None and _original_parent_context is None:
+        return _validate_uscode_release_byte_closure(request_raw, expected_request_sha256=expected_request_sha256, reviewed_version=3,
+                _captured_native_context=_captured_native_context, _native_transport=_native_transport)
+    if original_parent_handle is not None:
+        entry_guard = _release_original_parent_entry_guard_v3
+        if (entry_guard is not _RELEASE_ORIGINAL_PARENT_ENTRY_GUARD_V3
+                or entry_guard.__code__ is not _RELEASE_ORIGINAL_PARENT_ENTRY_CODE_V3):
+            raise ReleaseCoordinatorError("original-parent coordinator entry generation changed: entry guard")
+        entry_guard()
     return _validate_uscode_release_byte_closure(request_raw, expected_request_sha256=expected_request_sha256, reviewed_version=3,
-        _captured_native_context=_captured_native_context, _native_transport=_native_transport)
+        _captured_native_context=_captured_native_context, _native_transport=_native_transport,
+        original_parent_handle=original_parent_handle, _original_parent_context=_original_parent_context)
 
 
-def validate_uscode_release_closure_v3(request_raw: bytes, *, expected_request_sha256: str) -> dict:
-    """Replay complete V3 physical/IR/graph/retained bytes without parent grants."""
+def validate_uscode_release_closure_v3(request_raw: bytes, *, expected_request_sha256: str,
+        original_parent_handle=None) -> dict:
+    """Replay V3 bytes; optionally consume one actual in-process A parent handle.
+
+    None retains the existing retained-only path. The request wire cannot supply
+    the opaque handle, and replay grants no new execution, release or legal authority.
+    """
     _release_v3_policy()
-    return _validate_uscode_release_physical_closure(request_raw, expected_request_sha256=expected_request_sha256, reviewed_version=3)
+    if original_parent_handle is None:
+        return _validate_uscode_release_physical_closure(request_raw, expected_request_sha256=expected_request_sha256, reviewed_version=3)
+    if original_parent_handle is not None:
+        entry_guard = _release_original_parent_entry_guard_v3
+        if (entry_guard is not _RELEASE_ORIGINAL_PARENT_ENTRY_GUARD_V3
+                or entry_guard.__code__ is not _RELEASE_ORIGINAL_PARENT_ENTRY_CODE_V3):
+            raise ReleaseCoordinatorError("original-parent coordinator entry generation changed: entry guard")
+        entry_guard()
+    return _validate_uscode_release_physical_closure(request_raw, expected_request_sha256=expected_request_sha256,
+        reviewed_version=3, original_parent_handle=original_parent_handle)
 
 
 def validate_reviewed_physical_realization_context_v1(request_raw: bytes, *,
@@ -1719,6 +1812,163 @@ def validate_reviewed_physical_realization_context_v2(request_raw: bytes, *,
 
 
 
+_BYTE_PARENT_PROFILE_V3 = "reviewed-norm-v3-original-parent-byte-replay/v1"
+
+
+CLOSURE_PARENT_PROFILE_V3 = "reviewed-norm-v3-physical-three-cache-original-parent-replay/v1"
+
+
+def _release_original_parent_fence_v3(context):
+    """Recheck the original A owner and the same issued process/thread entry.
+
+    This uses the existing owner, not a task-selected callable or importer.
+    Callable snapshots cover cooperative drift, not hostile Python isolation.
+    """
+    entry_guard = _release_original_parent_entry_guard_v3
+    if (entry_guard is not _RELEASE_ORIGINAL_PARENT_ENTRY_GUARD_V3
+            or entry_guard.__code__ is not _RELEASE_ORIGINAL_PARENT_ENTRY_CODE_V3):
+        raise ReleaseCoordinatorError("original-parent coordinator entry generation changed: entry guard")
+    entry_guard()
+    import sys
+    from types import ModuleType
+    _need(type(context) is tuple and len(context) == 4, "closed original-parent context required")
+    owner, handle, entry, states = context
+    name = "ipfs_accelerate_py.agent_supervisor.rescue.repair_candidate_owners"
+    _need(type(owner) is ModuleType and owner.__name__ == name and sys.modules.get(name) is owner
+          and owner.__spec__ is not None and owner.__spec__.origin == owner.__file__,
+          "normal original-parent owner module required")
+    callbacks = (getattr(owner, "_reviewed_parent_guard", None),
+        getattr(owner, "_reviewed_parent_capability_entry", None),
+        getattr(owner, "load_parent_verified_reviewed_preservation_v3", None))
+    _release_callback_fence_v3(callbacks, states)
+    _need(callbacks[0] is owner._REVIEWED_PARENT_GUARD_OBJECT
+          and callbacks[0].__code__ is owner._REVIEWED_PARENT_GUARD_CODE,
+          "original-parent owner guard changed")
+    callbacks[0]()
+    _need(callbacks[1](handle) is entry, "same original issued parent handle required")
+    _need((_BYTE_PARENT_PROFILE_V3, CLOSURE_PARENT_PROFILE_V3) == (
+        "reviewed-norm-v3-original-parent-byte-replay/v1",
+        "reviewed-norm-v3-physical-three-cache-original-parent-replay/v1"),
+        "closed original-parent coordinator profiles required")
+
+
+def _release_original_parent_context_v3(handle):
+    """Authenticate the opaque A handle before parsing physical/native DATA."""
+    entry_guard = _release_original_parent_entry_guard_v3
+    if (entry_guard is not _RELEASE_ORIGINAL_PARENT_ENTRY_GUARD_V3
+            or entry_guard.__code__ is not _RELEASE_ORIGINAL_PARENT_ENTRY_CODE_V3):
+        raise ReleaseCoordinatorError("original-parent coordinator entry generation changed: entry guard")
+    entry_guard()
+    from types import FunctionType
+    from ipfs_accelerate_py.agent_supervisor.rescue import repair_candidate_owners as owner
+    guard, capability = owner._reviewed_parent_guard, owner._reviewed_parent_capability_entry
+    _need(guard is owner._REVIEWED_PARENT_GUARD_OBJECT
+          and guard.__code__ is owner._REVIEWED_PARENT_GUARD_CODE,
+          "original-parent owner guard changed")
+    guard()
+    # Constructor/copy/JSON values cannot manufacture this private issued entry.
+    entry = capability(handle)
+    # Read only the immutable evidence held by the original issued entry.
+    # A genuine legacy V1 handle is authentic but belongs to another domain.
+    evidence = owner.json_object(entry[4])
+    _need(type(evidence) is dict and type(evidence.get("binding")) is dict
+          and evidence["binding"].get("schema") == "reviewed-preservation-native-binding/v3",
+          "original parent capability belongs to another reviewed native domain")
+    loader = getattr(owner, "load_parent_verified_reviewed_preservation_v3", None)
+    _need(type(loader) is FunctionType, "explicit original-parent V3 loader unavailable")
+    states = _release_callback_states_v3((guard, capability, loader))
+    context = (owner, handle, entry, states)
+    _release_original_parent_fence_v3(context)
+    return context
+
+
+def _release_original_parent_authentication_v3(context, packet, preparation, graph, admission, args, kwargs,
+        *, native_report, receipt_sha256, packet_sha256, binary_sha256, preservation_sha256,
+        graph_sha256, admission_sha256, toolchain, contracts):
+    """Consume the existing opaque parent through A's exact V3 native loader."""
+    entry_guard = _release_original_parent_entry_guard_v3
+    if (entry_guard is not _RELEASE_ORIGINAL_PARENT_ENTRY_GUARD_V3
+            or entry_guard.__code__ is not _RELEASE_ORIGINAL_PARENT_ENTRY_CODE_V3):
+        raise ReleaseCoordinatorError("original-parent coordinator entry generation changed: entry guard")
+    entry_guard()
+    _release_original_parent_fence_v3(context)
+    loader = context[3][2][0]
+    authenticated = loader(context[1], packet, preparation, graph, admission, *args,
+        expected_receipt_sha256=receipt_sha256, expected_packet_sha256=packet_sha256,
+        expected_binary_sha256=binary_sha256, expected_preservation_sha256=preservation_sha256,
+        expected_graph_sha256=graph_sha256, expected_admission_sha256=admission_sha256,
+        toolchain=toolchain, **kwargs)
+    _release_original_parent_fence_v3(context)
+    _need(type(authenticated) is dict and authenticated.get("schema") == "reviewed-preservation-admitted-parent-success/v3"
+          and authenticated.get("profile") == "original-admitted-parent-exact-reviewed-native-custody/v3",
+          "exact original-parent V3 result required")
+    for field in ("original_success_authenticated", "native_execution_authenticated",
+                  "original_admitted_parent_custody_authenticated", "retained_observations_consistent"):
+        _need(authenticated.get(field) is True, "original-parent native authentication missing: " + field)
+    commitments = {"retained_receipt_sha256": receipt_sha256, "retained_packet_sha256": packet_sha256,
+        "preparation_sha256": preservation_sha256, "graph_sha256": graph_sha256,
+        "admission_sha256": admission_sha256}
+    _need(all(authenticated.get(key) == value for key, value in commitments.items())
+          and authenticated.get("packet_inventory") == native_report["packet_inventory"]
+          and authenticated.get("producer_pins") == native_report["producer_pins"],
+          "original-parent packet or current reviewed component differs")
+    for field in ("native_execution_performed", "olean_kernel_rechecked", "release_ready", "Lean_admitted"):
+        _need(authenticated.get(field) is False, "original-parent replay cannot add execution or admission")
+    for field in ("training_mask", "evaluation_gold_mask"):
+        _need(type(authenticated.get(field)) is int and authenticated[field] == 0,
+              "original-parent replay cannot grant training or gold")
+    for field in ("parent_request_sha256", "parent_closeout_sha256", "parent_durability_sha256"):
+        contracts.require_sha256(authenticated.get(field), field)
+    _need(type(authenticated.get("record_cid")) is str and bool(authenticated["record_cid"]),
+          "sealed original-parent replay result required")
+    return {"schema": authenticated["schema"], "profile": authenticated["profile"],
+        "record_cid": authenticated["record_cid"], **commitments,
+        "parent_request_sha256": authenticated["parent_request_sha256"],
+        "parent_closeout_sha256": authenticated["parent_closeout_sha256"],
+        "parent_durability_sha256": authenticated["parent_durability_sha256"],
+        "packet_file_count": len(authenticated["packet_inventory"])}
+
+
+def _release_original_parent_entry_guard_v3():
+    """Check the import-completion generation before any opt-in delegation.
+
+    The original source/profile owner still pins this normal module. These
+    finite function/code/default bindings detect cooperative substitution;
+    they do not claim isolation against hostile arbitrary Python memory.
+    Retained-only calls never enter this guard or resolve the A owner.
+    """
+    from types import FunctionType
+    for name, original, code, defaults, keywords, keyword_items in _RELEASE_ORIGINAL_PARENT_ENTRY_STATES_V3:
+        current = globals().get(name)
+        current_keywords = current.__kwdefaults__ if type(current) is FunctionType else None
+        if not (type(current) is FunctionType and current is original
+                and current.__code__ is code and current.__defaults__ is defaults
+                and current_keywords is keywords
+                and (current_keywords is None or type(current_keywords) is dict)
+                and set(current_keywords or {}) == {key for key, _ in keyword_items}
+                and all((current_keywords or {})[key] is value for key, value in keyword_items)):
+            raise ReleaseCoordinatorError("original-parent coordinator entry generation changed: " + name)
+
+
+_RELEASE_ORIGINAL_PARENT_ENTRY_NAMES_V3 = (
+    "_need", "_release_v3_policy", "_release_callback_states_v3", "_release_callback_fence_v3",
+    "_release_original_parent_context_v3", "_release_original_parent_fence_v3",
+    "_release_original_parent_authentication_v3", "_validate_uscode_release_byte_closure",
+    "_validate_uscode_release_physical_closure", "_validate_uscode_release_byte_closure_v3",
+    "validate_uscode_release_closure_v3")
+
+
+_RELEASE_ORIGINAL_PARENT_ENTRY_STATES_V3 = tuple((name, globals()[name], globals()[name].__code__,
+    globals()[name].__defaults__, globals()[name].__kwdefaults__, tuple((globals()[name].__kwdefaults__ or {}).items()))
+    for name in _RELEASE_ORIGINAL_PARENT_ENTRY_NAMES_V3)
+
+
+_RELEASE_ORIGINAL_PARENT_ENTRY_GUARD_V3 = _release_original_parent_entry_guard_v3
+
+
+_RELEASE_ORIGINAL_PARENT_ENTRY_CODE_V3 = _release_original_parent_entry_guard_v3.__code__
+
+
 # Cold, fixed same-repository implementation bindings for the private join.
 # The public wire entry points remain retained-only and confer no parent custody.
 from . import corpus_contracts as _joined_owner_contracts_v1
@@ -1753,10 +2003,10 @@ _JOIN_LOADED_OWNER_GUARD_V1 = _joined_owner_contracts_v1._capture_loaded_owner_g
         "CLOSURE_REQUEST_SCHEMA_V4", "CLOSURE_SCHEMA_V4", "CLOSURE_PROFILE_V4",
         "_BYTE_REQUEST_SCHEMA_V4", "_BYTE_SCHEMA_V4", "_BYTE_PROFILE_V4",
         "REVIEWED_PHYSICAL_CROSSWALK_SCHEMA",
-        "REVIEWED_PHYSICAL_CROSSWALK_PROFILE", "CLOSURE_PROFILE_V3_DIRECT", "_BYTE_PROFILE_V3_DIRECT", "_BYTE_REQUEST_SCHEMA_V3", "_BYTE_SCHEMA_V3", "_BYTE_PROFILE_V3", "NATIVE_PACKET_INDEX_SCHEMA_V3", "NATIVE_PACKET_INDEX_PROFILE_V3", "NATIVE_PACKET_CODEC_V3"),
+        "REVIEWED_PHYSICAL_CROSSWALK_PROFILE", "CLOSURE_PROFILE_V3_DIRECT", "_BYTE_PROFILE_V3_DIRECT", "_BYTE_REQUEST_SCHEMA_V3", "_BYTE_SCHEMA_V3", "_BYTE_PROFILE_V3", "NATIVE_PACKET_INDEX_SCHEMA_V3", "NATIVE_PACKET_INDEX_PROFILE_V3", "NATIVE_PACKET_CODEC_V3", 'CLOSURE_PARENT_PROFILE_V3', '_BYTE_PARENT_PROFILE_V3'),
     alias_names=("hashlib", "json", "Path", "_sys", "_types", "__builtins__", "__loader__", "__spec__",
         "_joined_owner_contracts_v1", "_joined_law_owner_v1", "_joined_coordinate_owner_v1",
         "_joined_entity_owner_v1", "_joined_sentence_owner_v1", "_joined_byte_owner_v1",
         "_joined_meta_owner_v1", "_JOIN_RELEASE_OWNER_MODULES_V1",
         "_JOIN_RELEASE_BINDING_HELPER_V1", "_JOIN_RELEASE_REGISTRY_HELPER_V1",
-        "_JOIN_RELEASE_REGISTRY_ANCHOR_V1", "_JOIN_RELEASE_EXTERNAL_BINDINGS_V1"))
+        "_JOIN_RELEASE_REGISTRY_ANCHOR_V1", "_JOIN_RELEASE_EXTERNAL_BINDINGS_V1", '_RELEASE_ORIGINAL_PARENT_ENTRY_CODE_V3', '_RELEASE_ORIGINAL_PARENT_ENTRY_GUARD_V3', '_RELEASE_ORIGINAL_PARENT_ENTRY_NAMES_V3', '_RELEASE_ORIGINAL_PARENT_ENTRY_STATES_V3'))
