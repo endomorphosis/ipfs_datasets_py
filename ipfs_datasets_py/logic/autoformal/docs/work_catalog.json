@@ -23658,6 +23658,79 @@
       "root": "ipfs_datasets",
       "scope": "Genuine v07 same-process/thread A handle consumed and original 83-file Native receipt authenticated through existing D local engineering replay for one fictional three-unit control only. Fresh D1 v08, ordinary28, observer63/live sources, actual clear and both immutable registries remain separately bound. Earlier v06 D failure and all prior source epochs retained. D closure/release/legal/remote/source-kernel/training flags false; two blockers preserved.",
       "status": "GENUINE_V07_FICTIONAL_THREE_UNIT_LOCAL_ENGINEERING_A_TO_D_QUALIFIED_BINDING_CLEARED"
+    },
+    {
+      "CI": {
+        "actual_publication_receipt": {
+          "bytes": 4800,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/actual-CI-origin-main-three-repository-final-closeout-v01.json",
+          "sha256": "ab0676a7be712bf56338f6ea04590e7365b7b5fff4e2603d60c3a53685d3581e"
+        },
+        "closed_facts_fragment": {
+          "bytes": 1936,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/maintained-guides-CI-closed-facts.fragment.md.DATA",
+          "sha256": "ceef8326c027ad9942cebbdc140dc822a3bd99bf6bf79023aceb493f16cfabc4"
+        },
+        "descriptor": {
+          "bytes": 1512,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/maintained-guides-CI-fragment-descriptor-v01.json",
+          "sha256": "6186fe52c0e3f050aea5476cb0a583e66389128472aebe9e403aa65793127a77"
+        },
+        "hosted_CI_or_billing_claimed": false,
+        "static_cases_passed": 21,
+        "workflow": ".github/workflows/legal-v2-reasoner-ci.yml"
+      },
+      "id": "published-ci-and-original-parent-v3-ordinary27-20261123",
+      "not_granted": [
+        "genuine A-issued Native-positive qualification",
+        "new compiler/model/service/release operation",
+        "statutory/legal or corpus acceptance",
+        "training/convergence benefit",
+        "full eight-phase goal completion"
+      ],
+      "ordinary27": {
+        "Source_A_D_resource_parent_cleanup": true,
+        "Source_rows": 1181,
+        "all_three_named_FD_meters_accepted": true,
+        "current_A_HEAD": "de4d5a62b6fac2df61769a6461c2ada97f788208",
+        "current_D_HEAD": "e88e21eed18ac588cce062d62f609d9738fbdfd7",
+        "current_D_tree": "2886e0104ec2c8093559a127543391fdb639d135",
+        "definition_case_vector": [
+          1,
+          5,
+          4,
+          3,
+          1,
+          12,
+          1
+        ],
+        "duration_seconds": null,
+        "errors": 0,
+        "failures": 0,
+        "full_meta_path_or_runtime_sys_path_archive_claimed": false,
+        "named_FD_bytes": 56753204,
+        "outside_named_FD_IO": "UNKNOWN",
+        "owned_hooks_restored": true,
+        "owned_terminal_exit": 0,
+        "passed": 27,
+        "receipt": {
+          "bytes": 4418,
+          "path": "/tmp/Reader-D27-actual-fixture-reasoning-closure-private-v01/known1181-literal-preparation-private-v01/actual-Root-selected-known1181-metered-bindings-v15/actual1181-qualified27-owned-terminal-ledger-companion-v15.json",
+          "sha256": "3275a5c7a80c96960ede22630781ee4af232cf8b8ebbfa0fa8e07dae70c108be"
+        },
+        "skipped": 0,
+        "tests": 27,
+        "typed_subreport_counts": "UNKNOWN",
+        "unique_class_method_pairs": 27
+      },
+      "preservation": {
+        "all_old_selected_evidence_prefix": 505,
+        "old_Phase5_fields_and_task_statuses_unchanged": true,
+        "ordered_components": 126,
+        "ordered_tasks": 24
+      },
+      "scope": "One consolidated maintained-guide update: published existing CI trigger coverage plus selected authored original-parent-v3 ordinary software cohort. Existing legal/scientific/native-positive statuses remain unchanged.",
+      "status": "PUBLISHED_CI_SCOPE_AND_AUTHORED_ORDINARY27_SOFTWARE_QUALIFIED"
     }
   ]
 }

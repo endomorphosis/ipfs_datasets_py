@@ -3393,3 +3393,28 @@ corpus release is established. V3 remains an explicit local replay path.
 
 
 Publication reconciliation adds no new runtime or legal qualification.
+
+
+## 2026-11-23: published CI scope and original-parent v3 ordinary software check
+
+This single maintained-record update joins the closed CI publication and the selected authored original-parent v3 software check. Existing task statuses, component ownership, historical evidence and Phase 5 scientific fields remain unchanged.
+
+Phase 8 — affected-path Native Lean CI integration (2026-11-23)
+
+The existing `.github/workflows/legal-v2-reasoner-ci.yml` now selects pushes and pull requests targeting `main` or `develop` when relevant legal formalization, compiler, retrieval, proof, fixture, test, or workflow paths change. Both event filters include `ipfs_datasets_py/logic/**` and `tests/unit/logic/**`, preserving coverage for the actual typed AST, parser, family emitter, TDFOL, formalization, and proof dependencies. Manual `workflow_dispatch` remains available.
+
+The patch adds exactly 100 lines inside `on`. Every job and every byte outside that block is unchanged, including pinned Lean 4.34.1, admission controls, shard validation, timeouts, resource budgets, and existing Native tests. The existing Native matrix steps are reachable for matched events; no new workflow, job, enrollment flag, or controller was introduced.
+
+Verification: the original ten static checks and eleven dependency-path checks passed (21 parent checks, zero failures/errors/skips), with three separate mutation controls. Earlier failing trigger/path checks are retained. These are static checks and do not establish a hosted CI or Native Lean result. No CI dispatch or CI polling was performed for publication.
+
+The guarded workflow replacement and separate readback completed with Source closure and no errors. The committed workflow is 62,773 bytes, SHA256 `8f2b612fd27c59249a9e38d5107271413ecc61ebaad2b1f6eb24ff3516b12ecd`.
+
+Published by ordinary fast-forward pushes: datasets `e88e21eed18ac588cce062d62f609d9738fbdfd7`; hallucinate `3c660dcea2f23a733fb91e105a69216d8278a667`; lift_coding `d7498fa17e585bce48da255c45284bdbf62d3e0a`. Remote heads, parent gitlinks, and clean publication checkouts were verified. The change configures affected-path checking; it does not establish completion of the legal corpus, legal review, model fidelity, or the full eight-phase programme.
+
+The selected seven-definition ordinary cohort completed 27 distinct class/method cases: 27 passed, with zero failures, errors or skips. The per-definition vector was 1/5/4/3/1/12/1. It used the published D code at `e88e21eed18ac588cce062d62f609d9738fbdfd7` and A code at `de4d5a62b6fac2df61769a6461c2ada97f788208`, with 1,181 actual captured Source rows and finite 21-origin/43-path preflight. The scoped A fixture loader resolved the actual A scripts initializer and installer; their compiled hashes and the fixture hash matched the captured Source. No Source authentication violations remained.
+
+The owned process exited 0 after both Source contexts, resources and parent workspace closed. All three declared direct-FD meters were accepted, totaling 56,753,204 bytes. The three owned loader/rewrite hooks were restored. Full `sys.meta_path` restoration and an archived runtime `sys.path` matrix are not claimed; the observed meta-path lists differ. Duration and typed subreport counts are unavailable, and IO outside the named FD readers remains unknown. Earlier refusals and conservative unknown-IO debits remain retained.
+
+This result qualifies only those authored ordinary software fixtures. It supplies no genuine A-issued Native-positive, real compiler/service/model operation, statutory/legal or corpus acceptance, training/convergence benefit, or full eight-phase completion. Those existing gates remain open.
+
+Closed software evidence: `/tmp/Reader-D27-actual-fixture-reasoning-closure-private-v01/known1181-literal-preparation-private-v01/actual-Root-selected-known1181-metered-bindings-v15/actual1181-qualified27-owned-terminal-ledger-companion-v15.json` (4418 bytes; SHA-256 `3275a5c7a80c96960ede22630781ee4af232cf8b8ebbfa0fa8e07dae70c108be`). The single joint catalog evidence ID is `published-ci-and-original-parent-v3-ordinary27-20261123`.
