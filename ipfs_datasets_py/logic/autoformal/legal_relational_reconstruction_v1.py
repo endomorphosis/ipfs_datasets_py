@@ -72,8 +72,12 @@ def _pin(value, label):
     _need(type(value) is str and _SHA.fullmatch(value), "independent SHA256 required: " + label)
 
 
-def _copy(value, maximum):
+def _copy(value, maximum, *, capacity_profile=None):
     """Detach bounded finite ordinary JSON without invoking supplied objects."""
+    if capacity_profile is not None:
+        from ..legal_ir.extended_decompiler import _prose_capacity_json
+        return _prose_capacity_json(value, maximum=maximum, detached=True,
+                                    capacity_profile=capacity_profile)
     remaining, nodes = maximum, MAX_JSON_NODES
 
     def visit(item, depth):
@@ -116,7 +120,10 @@ def _copy(value, maximum):
     return visit(value, 0)
 
 
-def _wire(value, maximum):
+def _wire(value, maximum, *, capacity_profile=None):
+    if capacity_profile is not None:
+        from ..legal_ir.extended_decompiler import _prose_capacity_json
+        return _prose_capacity_json(value, maximum=maximum, capacity_profile=capacity_profile)
     checked = _copy(value, maximum)
     try:
         raw = json.dumps(checked, sort_keys=True, separators=(",", ":"),
@@ -231,16 +238,18 @@ def _trusted_pins(owners):
     return pins
 
 
-def _signature(expression):
-    result = _copy(expression.signature.to_dict(), MAX_REQUEST_BYTES)
+def _signature(expression, *, capacity_profile=None):
+    options = {} if capacity_profile is None else {"capacity_profile": capacity_profile}
+    result = _copy(expression.signature.to_dict(), MAX_REQUEST_BYTES, **options)
     del result["signature_id"]
-    result["sorts"] = sorted(result["sorts"], key=lambda row: _wire(row, MAX_REQUEST_BYTES))
-    result["symbols"] = sorted(result["symbols"], key=lambda row: _wire(row, MAX_REQUEST_BYTES))
+    result["sorts"] = sorted(result["sorts"], key=lambda row: _wire(row, MAX_REQUEST_BYTES, **options))
+    result["symbols"] = sorted(result["symbols"], key=lambda row: _wire(row, MAX_REQUEST_BYTES, **options))
     return result
 
 
-def _roles(report):
-    return sorted(_copy(report["argument_roles"], MAX_REQUEST_BYTES), key=lambda row: row["symbol"])
+def _roles(report, *, capacity_profile=None):
+    options = {} if capacity_profile is None else {"capacity_profile": capacity_profile}
+    return sorted(_copy(report["argument_roles"], MAX_REQUEST_BYTES, **options), key=lambda row: row["symbol"])
 
 
 def _resolve(expression, path):
@@ -522,7 +531,7 @@ __all__ = ["RelationalReconstructionError", "prepare_relational_reconstruction_c
 PROSE_RECONSTRUCTION_SCHEMA = "legal-relational-prose-reconstruction/v1"
 
 
-def _prose_typed_projection(expression):
+def _prose_typed_projection(expression, *, capacity_profile=None):
     """All typed content except transport IDs and declaration-set ordering.
 
     Binder names, binder nesting, child order, sorted domains, extension payloads
@@ -530,10 +539,11 @@ def _prose_typed_projection(expression):
     signature IDs are deliberately not smuggled through human-readable prose.
     Exact full serialized equality is reported separately from this projection.
     """
-    result = _copy(expression.to_dict(), MAX_REQUEST_BYTES)
+    options = {} if capacity_profile is None else {"capacity_profile": capacity_profile}
+    result = _copy(expression.to_dict(), MAX_REQUEST_BYTES, **options)
     del result["expression_id"]
     del result["content_digest"]
-    result["signature"] = _signature(expression)
+    result["signature"] = _signature(expression, **options)
 
     def visit(node):
         del node["node_id"]
@@ -550,31 +560,33 @@ def _prose_typed_projection(expression):
 
 
 def compare_relational_prose_structure_v1(reference, candidate, *,
-        reference_argument_roles, candidate_argument_roles, profile):
+        reference_argument_roles, candidate_argument_roles, profile, capacity_profile=None):
     """Compare two complete supported typed structures, without legal authority.
 
     Validation and realization cover each whole input independently. This is a
     typed syntax comparison, not an independent interpretation/denotation proof.
     Declaration order is canonicalized; ordered argument roles are never sorted.
     """
-    from ..legal_ir.extended_decompiler import decompile_relational
+    from ..legal_ir.extended_decompiler import decompile_relational, _prose_capacity_options
+
+    capacity_options = _prose_capacity_options(profile, capacity_profile)
 
     reference_prose = decompile_relational(reference,
-        argument_roles=reference_argument_roles, profile=profile)
+        argument_roles=reference_argument_roles, profile=profile, **capacity_options)
     candidate_prose = decompile_relational(candidate,
-        argument_roles=candidate_argument_roles, profile=profile)
-    reference_roles = _roles({"argument_roles": reference_argument_roles})
-    candidate_roles = _roles({"argument_roles": candidate_argument_roles})
+        argument_roles=candidate_argument_roles, profile=profile, **capacity_options)
+    reference_roles = _roles({"argument_roles": reference_argument_roles}, **capacity_options)
+    candidate_roles = _roles({"argument_roles": candidate_argument_roles}, **capacity_options)
     return {
         "exact_typed_expression_equal": reference.to_dict() == candidate.to_dict(),
-        "typed_structure_equal": (_prose_typed_projection(reference) == _prose_typed_projection(candidate)
+        "typed_structure_equal": (_prose_typed_projection(reference, **capacity_options) == _prose_typed_projection(candidate, **capacity_options)
                                  and reference_roles == candidate_roles),
         "canonical_prose_equal": reference_prose == candidate_prose,
         "argument_roles_equal": reference_roles == candidate_roles,
     }
 
 
-def prepare_relational_prose_reconstruction_v1(expression, *, argument_roles, profile):
+def prepare_relational_prose_reconstruction_v1(expression, *, argument_roles, profile, capacity_profile=None):
     """Run source-withheld AST → controlled legal prose → existing typed AST.
 
     Only typed content and declared roles reach the realizer; the inverse receives
@@ -582,17 +594,18 @@ def prepare_relational_prose_reconstruction_v1(expression, *, argument_roles, pr
     This engineering diagnostic cannot establish source correspondence, legal
     equivalence, proof validity, or performance on an evaluated population.
     """
-    from ..legal_ir.extended_decompiler import decompile_relational
+    from ..legal_ir.extended_decompiler import decompile_relational, PARAMETRIC_COUNTED_PROSE_PROFILE, _prose_capacity_options
     from ..legal_ir.extended_compiler import compile_relational
 
-    prose = decompile_relational(expression, argument_roles=argument_roles, profile=profile)
-    reconstructed = compile_relational(prose, profile=profile)
+    capacity_options = _prose_capacity_options(profile, capacity_profile)
+    prose = decompile_relational(expression, argument_roles=argument_roles, profile=profile, **capacity_options)
+    reconstructed = compile_relational(prose, profile=profile, **capacity_options)
     _need(reconstructed is not None, "complete emitted controlled prose did not reconstruct")
     candidate, candidate_roles = reconstructed
     comparison = compare_relational_prose_structure_v1(expression, candidate,
-        reference_argument_roles=argument_roles, candidate_argument_roles=candidate_roles, profile=profile)
+        reference_argument_roles=argument_roles, candidate_argument_roles=candidate_roles, profile=profile, **capacity_options)
     _need(comparison["typed_structure_equal"], "complete emitted typed structure differs")
-    return {
+    result = {
         "schema": PROSE_RECONSTRUCTION_SCHEMA, "profile": profile,
         "status": "supported_authored_typed_prose_reconstructed",
         "normalized_prose": prose,
@@ -613,10 +626,15 @@ def prepare_relational_prose_reconstruction_v1(expression, *, argument_roles, pr
         "limitations": [
             "Canonical prose is controlled authored language, not arbitrary statutory prose.",
             "Exact typed serialization, normalized typed structure and original source bytes are separate measurements.",
-            "The fixed-three count macro reuses its existing exact canonical expansion; other counting semantics are not inferred.",
+            ("The parametric count macro recognizes only the complete authored at-most expansion within its existing producer capacities; other counting semantics are not inferred."
+             if profile == PARAMETRIC_COUNTED_PROSE_PROFILE else
+             "The fixed-three count macro reuses its existing exact canonical expansion; other counting semantics are not inferred."),
             "Unknown extensions, metadata, ranges, unused predicates and unsupported binder forms refuse the whole input.",
         ],
     }
+    if capacity_options:
+        result["capacity_profile"] = capacity_profile
+    return result
 
 
 _GOVERNING_FIELDS = ("governing_context", "definition_uses")

@@ -280,8 +280,80 @@ PARAMETRIC_SCHEMA = "legal-counted-frame-threshold-report/v3"
 PARAMETRIC_PROFILE = "authored-at-most-nat-distinct-per-event-and-time/v3"
 
 
+PARAMETRIC_EXPANDED_CAPACITY_PROFILE = "counted-nat-expanded-capacity/v1"
+
+
+def _parametric_capacity(capacity_profile):
+    if capacity_profile is None:
+        return dict(max_nodes=4096, max_depth=32, max_bytes=131072,
+                    max_json_depth=64, max_json_items=20000)
+    _need(type(capacity_profile) is str and capacity_profile == PARAMETRIC_EXPANDED_CAPACITY_PROFILE,
+          "explicit recognized parametric capacity profile required")
+    return dict(max_nodes=1024, max_depth=128, max_bytes=1048576,
+                max_json_depth=256, max_json_items=65536)
+
+
+def _parametric_capacity_owner():
+    # Reuse the existing bounded JSON owner, rather than another codec.
+    from . import legal_native_ast_preservation as preservation
+    path = _SELF_PATH.with_name("legal_native_ast_preservation.py")
+    _need(type(getattr(preservation, "__file__", None)) is str
+          and Path(preservation.__file__).absolute() == path
+          and hashlib.sha256(path.read_bytes()).hexdigest() == preservation._SELF_PIN,
+          "exact existing bounded preservation JSON owner required")
+    return preservation
+
+
+def _parametric_wire(base, value, maximum=None, *, capacity_profile=None):
+    if capacity_profile is None:
+        return (base._compact_wire(value) if maximum is None
+                else base._compact_wire(value, maximum))
+    capacities = _parametric_capacity(capacity_profile)
+    maximum = capacities["max_bytes"] if maximum is None else maximum
+    _need(type(maximum) is int and 0 < maximum <= capacities["max_bytes"],
+          "bounded selected parametric JSON byte capacity required")
+    return _parametric_capacity_owner()._wire(value, maximum,
+        max_json_depth=capacities["max_json_depth"])
+
+
+def _parametric_read_json(base, raw, maximum, *, capacity_profile=None):
+    if capacity_profile is None:
+        return base._read_json(raw, maximum, "threshold report")
+    capacities = _parametric_capacity(capacity_profile)
+    _need(type(maximum) is int and 0 < maximum <= capacities["max_bytes"],
+          "bounded selected parametric JSON byte capacity required")
+    return _parametric_capacity_owner()._parse(raw, maximum,
+        max_json_depth=capacities["max_json_depth"])
+
+
+def _parametric_capture(base, value, *, capacity_profile=None):
+    if capacity_profile is None:
+        return base._compact_capture(value)
+    capacities = _parametric_capacity(capacity_profile)
+    raw = _parametric_wire(base, value, capacities["max_bytes"], capacity_profile=capacity_profile)
+    return _parametric_read_json(base, raw, capacities["max_bytes"], capacity_profile=capacity_profile)
+
+
+def _parametric_owners(base, capacity_profile):
+    owners = _owners(base)
+    if capacity_profile is None:
+        return owners
+    _parametric_capacity(capacity_profile)
+    preservation = _parametric_capacity_owner()
+    pins = dict(owners[-1])
+    pins[str(_SELF_PATH.with_name("legal_native_ast_preservation.py"))] = preservation._SELF_PIN
+    return (*owners[:-1], pins)
+
+
+def _parametric_fence(base, pins, capacity_profile):
+    if capacity_profile is None:
+        return _fence(base, pins)
+    _need(_base() is base and _parametric_owners(base, capacity_profile)[-1] == pins,
+          "expanded parametric operation sources changed")
+
+
 def _parametric_budget(maximum, *, max_nodes=4096, max_depth=32, max_bytes=131072,
-                       max_json_depth=64, max_json_items=20000):
+                       max_json_depth=64, max_json_items=20000, capacity_profile=None):
     """Preflight existing preservation capacities before any expansion/import.
 
     This accepts a semantic Nat, not a new small semantic threshold panel.
@@ -289,6 +361,14 @@ def _parametric_budget(maximum, *, max_nodes=4096, max_depth=32, max_bytes=13107
     capacities can refuse an otherwise meaningful threshold without truncation.
     The byte estimate bounds the fixed ASCII names/metadata used below.
     """
+    if capacity_profile is not None:
+        _need(all(type(value) is int for value in (max_nodes, max_depth, max_bytes, max_json_depth, max_json_items))
+              and (max_nodes, max_depth, max_bytes, max_json_depth, max_json_items)
+              == (4096, 32, 131072, 64, 20000),
+              "selected capacity profile owns its exact finite bounds")
+        capacities = _parametric_capacity(capacity_profile)
+        max_nodes, max_depth, max_bytes, max_json_depth, max_json_items = (
+            capacities[key] for key in ("max_nodes", "max_depth", "max_bytes", "max_json_depth", "max_json_items"))
     _need(type(maximum) is int and maximum >= 0, "plain natural threshold required")
     _need(all(type(v) is int and v > 0 for v in (max_nodes, max_depth, max_bytes, max_json_depth, max_json_items)),
           "positive existing capacity bounds required")
@@ -302,32 +382,38 @@ def _parametric_budget(maximum, *, max_nodes=4096, max_depth=32, max_bytes=13107
     _need(nodes <= max_nodes and depth <= max_depth and estimated_bytes <= max_bytes
           and json_depth <= max_json_depth and json_items <= max_json_items,
           "parametric threshold exceeds existing AST/depth/byte capacity")
-    return dict(maximum=maximum, object_variables=objects, equality_pairs=pairs,
+    result = dict(maximum=maximum, object_variables=objects, equality_pairs=pairs,
                 ast_nodes=nodes, ast_depth=depth, expression_bytes_upper_bound=estimated_bytes,
                 json_depth_upper_bound=json_depth, json_items_upper_bound=json_items)
+    if capacity_profile is not None:
+        result["capacity_profile"] = capacity_profile
+    return result
 
 
-def _parametric_declaration(base, maximum):
-    _parametric_budget(maximum)
+def _parametric_declaration(base, maximum, *, capacity_profile=None):
+    _parametric_budget(maximum, capacity_profile=capacity_profile)
     request = base._declaration()
     request.update(schema=PARAMETRIC_REQUEST_SCHEMA, maximum=maximum,
                    object_variables=["x" + str(i) for i in range(maximum + 1)])
+    if capacity_profile is not None:
+        request["capacity_profile"] = capacity_profile
     return request
 
 
 def _parametric_parse(base, request_raw, expected_request_sha256):
     request = base._compact_parse(request_raw, expected_request_sha256, "parametric threshold request")
     _need(type(request) is dict, "closed parametric threshold request required")
-    _parametric_budget(request.get("maximum"))
-    expected = _parametric_declaration(base, request["maximum"])
+    capacity_profile = request.get("capacity_profile")
+    _parametric_budget(request.get("maximum"), capacity_profile=capacity_profile)
+    expected = _parametric_declaration(base, request["maximum"], capacity_profile=capacity_profile)
     base._keys(request, expected, "parametric threshold request")
     _need(base._compact_wire(request) == base._compact_wire(expected),
           "unsupported or altered parametric threshold declaration")
     return request
 
 
-def _parametric_expression(ast, signatures, maximum):
-    _parametric_budget(maximum)
+def _parametric_expression(ast, signatures, maximum, *, capacity_profile=None):
+    _parametric_budget(maximum, capacity_profile=capacity_profile)
     if maximum:
         return _expression(ast, signatures, maximum)
     sorts = {name: signatures.LogicSort(name) for name in ("Object", "EventFrame", "TimeFrame")}
@@ -350,9 +436,9 @@ def _parametric_expression(ast, signatures, maximum):
     return ast.TypedExpression("authored:counted-threshold:expression", body, signature), []
 
 
-def _parametric_lean_body(maximum):
+def _parametric_lean_body(maximum, *, capacity_profile=None):
     """Specialize the same sorted counting expansion; this is not a proof."""
-    _parametric_budget(maximum)
+    _parametric_budget(maximum, capacity_profile=capacity_profile)
     names = ["x" + str(i) for i in range(maximum + 1)]
     def fold(items, operator):
         if not items:
@@ -369,11 +455,11 @@ def _parametric_lean_body(maximum):
         + fold(members, "∧") + " → " + fold(equalities, "∨") + "\n")
 
 
-def authored_counted_threshold_request_v3(maximum):
+def authored_counted_threshold_request_v3(maximum, *, capacity_profile=None):
     """Explicit authored Nat declaration, subject to unchanged capacities."""
-    _parametric_budget(maximum)
+    _parametric_budget(maximum, capacity_profile=capacity_profile)
     base = _base()
-    request = _parametric_declaration(base, maximum)
+    request = _parametric_declaration(base, maximum, capacity_profile=capacity_profile)
     raw = base._compact_wire(request, base.MAX_REQUEST_BYTES)
     _parametric_parse(base, raw, hashlib.sha256(raw).hexdigest())
     _need(_base() is base, "parametric construction sources changed")
@@ -406,25 +492,31 @@ def _parametric_request_preflight(request_raw, expected_request_sha256):
         raise ValueError("bounded ordinary parametric request JSON required") from error
     _need(type(request) is dict and request.get("schema") == PARAMETRIC_REQUEST_SCHEMA,
           "explicit parametric request schema required")
-    return _parametric_budget(request.get("maximum"))
+    return _parametric_budget(request.get("maximum"), capacity_profile=request.get("capacity_profile"))
 
 def prepare_counted_threshold_v3(request_raw, *, expected_request_sha256):
     """Opt-in expanded Nat threshold; actual proof execution remains separate."""
     _parametric_request_preflight(request_raw, expected_request_sha256)
     base = _base()
     request = _parametric_parse(base, request_raw, expected_request_sha256)
-    budget = _parametric_budget(request["maximum"])
-    ast, signatures, algebra, contracts, fol, before = _owners(base)
+    capacity_profile = request.get("capacity_profile")
+    capacities = _parametric_capacity(capacity_profile)
+    budget = _parametric_budget(request["maximum"], capacity_profile=capacity_profile)
+    def wire(value, maximum=None):
+        return _parametric_wire(base, value, maximum, capacity_profile=capacity_profile)
+    ast, signatures, algebra, contracts, fol, before = _parametric_owners(base, capacity_profile)
     try:
-        expression, pairs = _parametric_expression(ast, signatures, request["maximum"])
+        expression, pairs = _parametric_expression(ast, signatures, request["maximum"], capacity_profile=capacity_profile)
         _need(expression.is_formula and not expression.root.free_variable_names(),
               "closed typed threshold formula required")
         mapping, binders = _ledger(expression)
-        _need(len(base._compact_wire(expression.to_dict(), base.MAX_REQUEST_BYTES)) <= budget["expression_bytes_upper_bound"],
+        _need(len(wire(expression.to_dict(), capacities["max_bytes"])) <= budget["expression_bytes_upper_bound"],
               "complete parametric expression exceeds conservative byte preflight")
         syntax = base._grouped_syntax(expression.signature, fol)
         canonical = syntax.print(expression)
-        limits = contracts.ParseLimits(max_input_bytes=16384, max_tokens=2048, max_depth=64,
+        limits = contracts.ParseLimits(max_input_bytes=(16384 if capacity_profile is None else 1048576),
+            max_tokens=(2048 if capacity_profile is None else 8192),
+            max_depth=(64 if capacity_profile is None else 128),
             max_diagnostics=8, max_ambiguities=8, max_time_ms=1000, max_memory_bytes=8388608)
         first = syntax.parse_text(canonical, document_id="doc:counted-threshold:first",
                                   expression_id="expr:counted-threshold:first", limits=limits)
@@ -453,18 +545,18 @@ def prepare_counted_threshold_v3(request_raw, *, expected_request_sha256):
         authority = dict(base.AUTHORITY)
         authority["permitted_inference_context_verified"] = False
         authority["varied_reviewed_target_population_verified"] = False
-        lean_body = _parametric_lean_body(maximum)
+        lean_body = _parametric_lean_body(maximum, capacity_profile=capacity_profile)
         report = dict(schema=PARAMETRIC_SCHEMA, profile=PARAMETRIC_PROFILE,
             status="authored_unreviewed_parametric_counted_threshold_prepared",
             request=request, request_raw_utf8=request_raw.decode("utf-8"),
             request_sha256=expected_request_sha256, maximum=maximum,
             typed_expression=expression.to_dict(), typed_expression_content_digest=expression.content_digest,
-            typed_expression_sha256=hashlib.sha256(base._compact_wire(expression.to_dict())).hexdigest(),
+            typed_expression_sha256=hashlib.sha256(wire(expression.to_dict())).hexdigest(),
             frame=request["frame"], membership=request["membership"], distinctness=request["distinctness"],
             identity_pairs=[list(pair) for pair in pairs], structural_mapping=mapping,
             binder_ledger=binders, counts=counts, canonical_fol=canonical,
             canonical_fol_sha256=hashlib.sha256(canonical.encode()).hexdigest(),
-            signature_context=context, signature_context_sha256=hashlib.sha256(base._compact_wire(context)).hexdigest(),
+            signature_context=context, signature_context_sha256=hashlib.sha256(wire(context)).hexdigest(),
             signature_context_role="authored_syntactic_context_permission_unreviewed",
             fol_receipt=dict(notation=fol.CANONICAL_FOL_NOTATION_ID,
                 notation_version=fol.CANONICAL_FOL_NOTATION_VERSION,
@@ -474,8 +566,8 @@ def prepare_counted_threshold_v3(request_raw, *, expected_request_sha256):
                 original_to_first_alpha_equivalent=True, first_to_second_alpha_equivalent=True,
                 original_to_second_alpha_equivalent=True, canonical_print_stable=True,
                 parse_limits=limits.to_dict(),
-                first_root_sha256=hashlib.sha256(base._compact_wire(first.root.to_dict())).hexdigest(),
-                second_root_sha256=hashlib.sha256(base._compact_wire(second.root.to_dict())).hexdigest()),
+                first_root_sha256=hashlib.sha256(wire(first.root.to_dict())).hexdigest(),
+                second_root_sha256=hashlib.sha256(wire(second.root.to_dict())).hexdigest()),
             producer_pins=before, lowering_route="existing_typed_FOL_to_parametric_threshold_Lean_text",
             lean_body=lean_body, lean_body_sha256=hashlib.sha256(lean_body.encode()).hexdigest(),
             parametric_budget=budget,
@@ -494,36 +586,41 @@ def prepare_counted_threshold_v3(request_raw, *, expected_request_sha256):
                 "Expanded AST cost is quadratic; finite existing capacities can refuse without changing mathematical counting semantics.",
                 "Lean text is generated but unexecuted; no native proof, legal meaning or model qualification is supplied.",
             ])
-        raw = base._compact_wire(report)
-        result = base._compact_capture(report)
-        _need(base._compact_wire(result) == raw, "threshold report changed during serialization")
+        if capacity_profile is not None:
+            report["capacity_profile"] = capacity_profile
+        raw = wire(report)
+        result = _parametric_capture(base, report, capacity_profile=capacity_profile)
+        _need(wire(result) == raw, "threshold report changed during serialization")
         return result
     finally:
-        _fence(base, before)
+        _parametric_fence(base, before, capacity_profile)
 
 
 def validate_counted_threshold_v3(report, request_raw, *, expected_request_sha256,
                                 expected_report_sha256):
     """Compare a pinned report against complete original-request regeneration."""
-    _parametric_request_preflight(request_raw, expected_request_sha256)
+    budget = _parametric_request_preflight(request_raw, expected_request_sha256)
+    capacity_profile = budget.get("capacity_profile")
     base = _base()
+    def wire(value):
+        return _parametric_wire(base, value, capacity_profile=capacity_profile)
     _parametric_parse(base, request_raw, expected_request_sha256)
     base._digest(expected_report_sha256, "threshold report")
     if type(report) is bytes:
-        captured = base._compact_capture(base._read_json(report, base.MAX_REPORT_BYTES, "threshold report"))
+        captured = _parametric_capture(base, _parametric_read_json(base, report, base.MAX_REPORT_BYTES, capacity_profile=capacity_profile), capacity_profile=capacity_profile)
     else:
-        captured = base._compact_capture(report)
+        captured = _parametric_capture(base, report, capacity_profile=capacity_profile)
     _need(type(captured) is dict, "ordinary threshold report or exact JSON bytes required")
-    offered_raw = base._compact_wire(captured)
+    offered_raw = wire(captured)
     _need(hashlib.sha256(offered_raw).hexdigest() == expected_report_sha256,
           "threshold report SHA256 mismatch")
     regenerated = prepare_counted_threshold_v3(request_raw, expected_request_sha256=expected_request_sha256)
-    _need(base._compact_wire(regenerated) == offered_raw,
+    _need(wire(regenerated) == offered_raw,
           "threshold report differs from complete original request replay")
     # Closing observations cover caller-owned dictionaries too; generated text
     # or an offered producer path never chooses another file or implementation.
     if type(report) is not bytes:
-        _need(base._compact_wire(report) == offered_raw, "offered threshold report changed during replay")
+        _need(wire(report) == offered_raw, "offered threshold report changed during replay")
     _need(_base() is base, "threshold replay sources changed")
     return regenerated
 
@@ -784,3 +881,6 @@ def validate_counted_quantity_v4(report, request_raw, *, expected_request_sha256
 __all__ += ["QUANTITY_REQUEST_SCHEMA", "QUANTITY_SCHEMA", "QUANTITY_PROFILE",
             "authored_counted_quantity_request_v4", "prepare_counted_quantity_v4",
             "validate_counted_quantity_v4"]
+
+
+__all__ += ["PARAMETRIC_EXPANDED_CAPACITY_PROFILE"]

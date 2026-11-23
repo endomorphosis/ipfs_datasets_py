@@ -1966,3 +1966,61 @@ def test_positive_quantity_preservation_leaves_v3_legacy_project_replay_exact():
     assert _prepare_parametric_counted(legacy)==prior
     assert _validate_parametric_counted(legacy,prior)==prior
     assert manifest(prior)['profile']==owner.PARAMETRIC_COUNTED_PROFILE
+
+
+
+def test_expanded_counted_nat_capacity_keeps_frozen_default_proof_strings():
+    profile = owner.PARAMETRIC_EXPANDED_CAPACITY_PROFILE
+    with pytest.raises(ValueError):owner._parametric_counted_dimensions(10)
+    assert owner._parametric_counted_dimensions(10, capacity_profile=profile) == (287, 69)
+    for maximum in (0, 1, 3, 4, 5):
+        assert owner._parametric_counted_collision_proof(maximum) == owner._parametric_counted_collision_proof(maximum, capacity_profile=None)
+    text = owner._parametric_counted_collision_proof(10, capacity_profile=profile)
+    assert 'thresholdCollisionBound 10 member' in text
+    assert '#print axioms threshold_collision_equivalence' in text
+    assert all(token not in text for token in ('Classical.', 'sorry', 'admit', 'axiom '))
+
+
+def test_expanded_counted_nat_public_preparation_retains_exact_capacity_commitment():
+    from ipfs_datasets_py.logic.autoformal import legal_counted_frame_threshold_v2 as counted
+    profile = counted.PARAMETRIC_EXPANDED_CAPACITY_PROFILE
+    request = counted.authored_counted_threshold_request_v3(10, capacity_profile=profile)
+    raw = canonical(request)
+    report = counted.prepare_counted_threshold_v3(raw, expected_request_sha256=sha(raw))
+    prepared = owner.prepare_counted_threshold_ast_preservation(report, raw,
+        expected_report_sha256=sha(canonical(report)), expected_request_sha256=sha(raw), toolchain=TOOLCHAIN)
+    meta = manifest(prepared)
+    assert meta['capacity_profile'] == profile
+    assert meta['support_profile']['max_ast_depth'] == 128
+    assert meta['support_profile']['max_json_depth'] == 256
+    assert meta['support_profile']['max_json_items'] == 65536
+    assert len(prepared.files) == 7 and len(meta['theorems']) == 4
+    assert owner.validate_counted_threshold_ast_preservation(prepared, report, raw,
+        expected_preparation_sha256=owner.preparation_sha256(prepared), expected_report_sha256=sha(canonical(report)),
+        expected_request_sha256=sha(raw), toolchain=TOOLCHAIN) == prepared
+    damaged = deepcopy(report); damaged['capacity_profile'] = None
+    with pytest.raises(ValueError):owner.prepare_counted_threshold_ast_preservation(damaged, raw,
+        expected_report_sha256=sha(canonical(damaged)), expected_request_sha256=sha(raw), toolchain=TOOLCHAIN)
+
+
+def test_expanded_counted_nat_public_project_selects_bounded_native_recursion_only_when_opted_in():
+    from ipfs_datasets_py.logic.autoformal import legal_counted_frame_threshold_v2 as counted
+    option = "set_option maxRecDepth 8192\n"
+    profile = counted.PARAMETRIC_EXPANDED_CAPACITY_PROFILE
+    request = counted.authored_counted_threshold_request_v3(10, capacity_profile=profile)
+    raw = canonical(request)
+    report = counted.prepare_counted_threshold_v3(raw, expected_request_sha256=sha(raw))
+    prepared = owner.prepare_counted_threshold_ast_preservation(report, raw,
+        expected_report_sha256=sha(canonical(report)), expected_request_sha256=sha(raw), toolchain=TOOLCHAIN)
+    meta, files = manifest(prepared), dict(prepared.files)
+    instance_path = meta["expected_modules"][2].replace(".", "/") + ".lean"
+    assert files[instance_path].startswith("import " + meta["expected_modules"][1] + "\n" + option)
+    assert files[instance_path].count(option) == 1
+    assert meta["file_sha256"][instance_path] == sha(files[instance_path].encode())
+    assert len(files) == 7 and len(meta["theorems"]) == 4
+    assert owner.validate_counted_threshold_ast_preservation(prepared, report, raw,
+        expected_preparation_sha256=owner.preparation_sha256(prepared), expected_report_sha256=sha(canonical(report)),
+        expected_request_sha256=sha(raw), toolchain=TOOLCHAIN) == prepared
+    for maximum in (0, 4):
+        default = _prepare_parametric_counted(_parametric_counted_capture(maximum))
+        assert all(option not in body for name, body in default.files if name.endswith(".lean"))

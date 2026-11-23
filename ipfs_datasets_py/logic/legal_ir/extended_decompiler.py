@@ -90,6 +90,7 @@ def decompile_extended(ir: ExtendedLegalIR, *, profile: str = EXTENDED_REALIZER_
 # Separate opt-in contracts: these do not widen the literal-slot v2 default.
 RELATIONAL_PROSE_PROFILE = "source-withheld-typed-relational-legal-prose/v1"
 COUNTED_PROSE_PROFILE = "source-withheld-fixed-three-counted-legal-prose/v1"
+PARAMETRIC_COUNTED_PROSE_PROFILE = "source-withheld-authored-parametric-counted-legal-prose/v1"
 _COUNTED_PROSE_SENTENCE = (
     "(for each event of type EventFrame and time of type TimeFrame, "
     "at most 3 distinct objects of type Object satisfy Member with "
@@ -97,7 +98,59 @@ _COUNTED_PROSE_SENTENCE = (
 )
 
 
-def _relational_prose_input(expression, argument_roles, profile):
+def _prose_capacity_options(profile, capacity_profile):
+    """Select only the existing explicit counted capacity; keep legacy calls exact."""
+    if capacity_profile is None:
+        return {}
+    if type(profile) is not str or profile != PARAMETRIC_COUNTED_PROSE_PROFILE:
+        raise ValueError("explicit capacity requires the authored parametric counted prose profile")
+    from ..autoformal import legal_counted_frame_threshold_v2 as threshold
+    threshold._parametric_capacity(capacity_profile)
+    return {"capacity_profile": capacity_profile}
+
+
+def _prose_capacity_json(value, *, capacity_profile, maximum=None, detached=False):
+    """Reuse the existing preservation codec under the exact selected finite bounds."""
+    from ..autoformal import legal_counted_frame_threshold_v2 as threshold
+    if capacity_profile is None:
+        raise ValueError("explicit existing counted capacity required")
+    capacities = threshold._parametric_capacity(capacity_profile)
+    maximum = capacities["max_bytes"] if maximum is None else maximum
+    if type(maximum) is not int or not 0 < maximum <= capacities["max_bytes"]:
+        raise ValueError("bounded selected parametric JSON byte capacity required")
+    owner = threshold._parametric_capacity_owner()
+    bounds = {"max_json_depth": capacities["max_json_depth"],
+              "max_json_items": capacities["max_json_items"]}
+    raw = owner._wire(value, maximum, **bounds)
+    return owner._parse(raw, maximum, **bounds) if detached else raw
+
+
+def _parametric_counted_value(expression, *, capacity_profile=None):
+    """Recognize the complete existing authored threshold form, modulo transport IDs.
+
+    This is a bounded syntax recognizer, not a legal or semantic-equivalence proof.
+    Binder names, ordering, sorts, membership arguments and every equality remain
+    exact. Reuse the producer's finite preflight before expanding any expectation.
+    """
+    from ..syntax_core import ast, signatures
+    from ..autoformal import legal_counted_frame_threshold_v2 as threshold
+    from ..autoformal.legal_relational_reconstruction_v1 import _prose_typed_projection
+
+    capacity_options = _prose_capacity_options(PARAMETRIC_COUNTED_PROSE_PROFILE, capacity_profile)
+    maximum = -3  # event, time, and maximum + 1 object binders
+    node = expression.root
+    while node.kind is ast.NodeKind.FORALL:
+        if len(node.binders) != 1 or len(node.arguments) != 1:
+            raise ValueError("complete authored counted threshold binders required")
+        maximum += 1
+        node = node.arguments[0]
+    expected, _ = threshold._parametric_expression(ast, signatures, maximum, **capacity_options)
+    if _prose_typed_projection(expression, **capacity_options) != _prose_typed_projection(expected, **capacity_options):
+        raise ValueError("complete authored counted threshold structure required")
+    return maximum
+
+
+def _relational_prose_input(expression, argument_roles, profile, *, capacity_profile=None):
     """Reuse canonical authored-fragment validation, without a native operation.
 
     No original text, source binding, source range or arbitrary metadata channel
@@ -109,17 +162,27 @@ def _relational_prose_input(expression, argument_roles, profile):
     from ..syntax_core import ast, signatures
     from ..autoformal import legal_relational_norm_v1 as relational
 
+    capacity_options = _prose_capacity_options(profile, capacity_profile)
     if type(expression) is not ast.TypedExpression:
         raise ValueError("canonical TypedExpression required")
-    if type(profile) is not str or profile not in (RELATIONAL_PROSE_PROFILE, COUNTED_PROSE_PROFILE):
+    if type(profile) is not str or profile not in (
+            RELATIONAL_PROSE_PROFILE, COUNTED_PROSE_PROFILE, PARAMETRIC_COUNTED_PROSE_PROFILE):
         raise ValueError("explicit supported relational prose profile required")
     if type(argument_roles) is not list:
         raise ValueError("complete ordinary ordered argument role ledger required")
     try:
         request = {"expression": expression.to_dict(), "argument_roles": argument_roles}
-        relational._wire(request, relational.MAX_REQUEST_BYTES)
+        if capacity_options:
+            _prose_capacity_json(request, **capacity_options)
+        else:
+            relational._wire(request, relational.MAX_REQUEST_BYTES)
     except (TypeError, KeyError, UnicodeError, RecursionError) as error:
         raise ValueError("bounded complete typed expression and roles required") from error
+    if profile == PARAMETRIC_COUNTED_PROSE_PROFILE:
+        if argument_roles != [{"symbol": "Member", "roles": ["object", "event", "time"]}]:
+            raise ValueError("exact counted membership roles required")
+        _parametric_counted_value(expression, **capacity_options)
+        return expression, {"Member": ["object", "event", "time"]}
     if profile == COUNTED_PROSE_PROFILE:
         from ..autoformal import legal_counted_frame_v1 as counted
         counted._preflight_expression(request["expression"])
@@ -134,21 +197,24 @@ def _relational_prose_input(expression, argument_roles, profile):
     return checked, {row["symbol"]: list(row["roles"]) for row in argument_roles}
 
 
-def decompile_relational(expression, *, argument_roles, profile: str) -> str:
+def decompile_relational(expression, *, argument_roles, profile: str, capacity_profile=None) -> str:
     """Realize the complete supported typed structure as controlled legal prose.
 
     This source-withheld interface receives only an existing TypedExpression and
     its complete declared argument roles. O/P/F are explicit modal operators,
     not observations of compliance. Conditions and exceptions retain their
     Boolean/negation scope; no legal applicability or modal axioms are inferred.
-    The count profile recognizes only the existing exact fixed-three expansion.
+    The legacy count profile recognizes only the existing fixed-three expansion.
+    The separate authored parametric profile retains the producer's current finite
+    AST/depth/byte limits and refuses other syntax instead of dropping clauses.
     The relational profile also retains supported generic quantifier/equality
     expansions, without assigning them a new counting interpretation.
     """
     from ..syntax_core import ast, signatures
     from ..autoformal import legal_relational_norm_v1 as relational
 
-    checked, roles = _relational_prose_input(expression, argument_roles, profile)
+    capacity_options = _prose_capacity_options(profile, capacity_profile)
+    checked, roles = _relational_prose_input(expression, argument_roles, profile, **capacity_options)
     predicates = {symbol.name: symbol for symbol in checked.signature.symbols}
     seen_ids, seen_binders, used = set(), set(), set()
     node_count = 0
@@ -233,7 +299,10 @@ def decompile_relational(expression, *, argument_roles, profile: str) -> str:
             return "(it is " + word + " that " + visit(extension.children[0], bound, depth + 1) + ")"
         raise ValueError("unsupported relational construct; whole realization refused")
 
-    if profile == COUNTED_PROSE_PROFILE:
+    if profile == PARAMETRIC_COUNTED_PROSE_PROFILE:
+        maximum = _parametric_counted_value(checked, **capacity_options)
+        body = _COUNTED_PROSE_SENTENCE.replace("at most 3 distinct", "at most " + str(maximum) + " distinct", 1)
+    elif profile == COUNTED_PROSE_PROFILE:
         body = _COUNTED_PROSE_SENTENCE
     else:
         body = visit(checked.root, {}, 0)

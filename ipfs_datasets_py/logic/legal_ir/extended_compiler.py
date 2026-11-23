@@ -270,7 +270,7 @@ class _RelationalProseReader(_ClauseReader):
         return node
 
 
-def compile_relational(text: str, *, profile: str):
+def compile_relational(text: str, *, profile: str, capacity_profile=None):
     """Parse one entire supported controlled legal span, or abstain as a whole.
 
     The result is ``(TypedExpression, argument_roles)`` using the existing AST.
@@ -279,10 +279,13 @@ def compile_relational(text: str, *, profile: str):
     unsupported clauses and every unconsumed character refuse the whole input.
     """
     from .extended_decompiler import (RELATIONAL_PROSE_PROFILE, COUNTED_PROSE_PROFILE,
-        _COUNTED_PROSE_SENTENCE, decompile_relational)
+        PARAMETRIC_COUNTED_PROSE_PROFILE,
+        _COUNTED_PROSE_SENTENCE, _prose_capacity_options, decompile_relational)
 
-    if type(profile) is not str or profile not in (RELATIONAL_PROSE_PROFILE, COUNTED_PROSE_PROFILE):
+    if type(profile) is not str or profile not in (
+            RELATIONAL_PROSE_PROFILE, COUNTED_PROSE_PROFILE, PARAMETRIC_COUNTED_PROSE_PROFILE):
         raise ValueError("explicit supported relational prose profile required")
+    capacity_options = _prose_capacity_options(profile, capacity_profile)
     if type(text) is not str or not text.strip():
         raise ValueError("source must be nonempty text")
     if len(text) > MAX_RENDERED_UTF8_BYTES:
@@ -292,10 +295,22 @@ def compile_relational(text: str, *, profile: str):
             return None
         from ..syntax_core import ast, signatures
         reader = _RelationalProseReader(text, ast, signatures)
-        family, logic_profile = (("first_order", "many_sorted") if profile == COUNTED_PROSE_PROFILE
+        family, logic_profile = (("first_order", "many_sorted") if profile in (
+                                    COUNTED_PROSE_PROFILE, PARAMETRIC_COUNTED_PROSE_PROFILE)
                                  else ("tdfol", "tdfol_default"))
         signature = reader.declarations(family, logic_profile)
-        if profile == COUNTED_PROSE_PROFILE:
+        if profile == PARAMETRIC_COUNTED_PROSE_PROFILE:
+            from ..autoformal import legal_counted_frame_threshold_v2 as threshold
+            prefix, suffix = _COUNTED_PROSE_SENTENCE.split("3", 1)
+            reader.take(prefix)
+            number = re.match(r"(?:0|[1-9][0-9]*)", reader.text[reader.position:])
+            if number is None:
+                return None
+            reader.position += len(number[0])
+            reader.take(suffix)
+            fixed, _ = threshold._parametric_expression(ast, signatures, int(number[0]), **capacity_options)
+            root, signature = fixed.root, fixed.signature
+        elif profile == COUNTED_PROSE_PROFILE:
             from ..autoformal import legal_counted_frame_v1 as counted
             reader.take(_COUNTED_PROSE_SENTENCE)
             fixed = counted._fixed_expression(ast, signatures)
@@ -312,7 +327,7 @@ def compile_relational(text: str, *, profile: str):
         roles = [{"symbol": name, "roles": list(reader.roles[name])} for name in sorted(reader.roles)]
         # This reuses the complete canonical-fragment validator and also rejects
         # alternate spelling/order rather than repair, truncate or silently skip.
-        if decompile_relational(expression, argument_roles=roles, profile=profile) != text:
+        if decompile_relational(expression, argument_roles=roles, profile=profile, **capacity_options) != text:
             return None
         return expression, roles
     except (ValueError, TypeError, KeyError, UnicodeError, RecursionError):

@@ -800,3 +800,58 @@ def test_positive_quantity_opt_in_keeps_every_existing_threshold_profile_replay_
         assert getattr(subject,'validate_counted_threshold_v'+str(version))(report,raw,
             expected_request_sha256=sha(raw),expected_report_sha256=sha(wire(report))) == report
     assert {'authored_counted_quantity_request_v4','prepare_counted_quantity_v4','validate_counted_quantity_v4'} <= set(subject.__all__)
+
+
+
+# Explicit capacity-only opt-in; mathematical expansion/default wire stay unchanged.
+def test_expanded_nat_capacity_is_explicit_and_unknown_null_profiles_refuse(monkeypatch):
+    profile = subject.PARAMETRIC_EXPANDED_CAPACITY_PROFILE
+    default = subject.authored_counted_threshold_request_v3(4)
+    assert 'capacity_profile' not in default
+    assert default == subject.authored_counted_threshold_request_v3(4, capacity_profile=None)
+    for value in ('unknown', False, {}, 1):
+        with pytest.raises(ValueError):
+            subject.authored_counted_threshold_request_v3(10, capacity_profile=value)
+    request = subject.authored_counted_threshold_request_v3(10, capacity_profile=profile)
+    assert request['capacity_profile'] == profile and request['maximum'] == 10
+    altered = deepcopy(default); altered['capacity_profile'] = None
+    raw = wire(altered)
+    with pytest.raises(ValueError):
+        subject.prepare_counted_threshold_v3(raw, expected_request_sha256=sha(raw))
+    monkeypatch.setattr(subject, '_base', lambda: pytest.fail('overbudget reached base owner'))
+    with pytest.raises(ValueError):subject.authored_counted_threshold_request_v3(10)
+    with pytest.raises(ValueError):subject.authored_counted_threshold_request_v3(14, capacity_profile=profile)
+
+
+def test_expanded_nat_ten_replays_real_ir_full_fol_and_same_cardinality():
+    profile = subject.PARAMETRIC_EXPANDED_CAPACITY_PROFILE
+    request = subject.authored_counted_threshold_request_v3(10, capacity_profile=profile)
+    raw = wire(request)
+    report = subject.prepare_counted_threshold_v3(raw, expected_request_sha256=sha(raw))
+    assert report['maximum'] == 10 and report['capacity_profile'] == profile
+    assert report['counts']['nodes'] == 287 and report['parametric_budget']['ast_depth'] == 69
+    assert ast.TypedExpression.from_dict(report['typed_expression']).to_dict() == report['typed_expression']
+    assert report['fol_receipt']['binary_connective_grouping_preserved'] is True
+    assert subject.validate_counted_threshold_v3(report, raw,
+        expected_request_sha256=sha(raw), expected_report_sha256=sha(wire(report))) == report
+    assert subject.validate_counted_threshold_v3(wire(report), raw,
+        expected_request_sha256=sha(raw), expected_report_sha256=sha(wire(report))) == report
+    damaged = deepcopy(report); damaged['capacity_profile'] = 'unknown'
+    with pytest.raises(ValueError):subject.validate_counted_threshold_v3(damaged, raw,
+        expected_request_sha256=sha(raw), expected_report_sha256=sha(wire(damaged)))
+    assert not any(report['authority'].values())
+
+
+def test_expanded_nat_capacity_does_not_change_default_replay():
+    request = subject.authored_counted_threshold_request_v3(4)
+    raw = wire(request)
+    prior = subject.prepare_counted_threshold_v3(raw, expected_request_sha256=sha(raw))
+    subject.authored_counted_threshold_request_v3(10, capacity_profile=subject.PARAMETRIC_EXPANDED_CAPACITY_PROFILE)
+    assert subject.prepare_counted_threshold_v3(raw, expected_request_sha256=sha(raw)) == prior
+    assert 'capacity_profile' not in prior
+
+
+def test_expanded_capacity_private_numeric_overrides_remain_plain_integers():
+    profile = subject.PARAMETRIC_EXPANDED_CAPACITY_PROFILE
+    for key,value in (("max_nodes",4096.0),("max_depth",32.0),("max_bytes",131072.0),("max_json_depth",64.0),("max_json_items",20000.0)):
+        with pytest.raises(ValueError):subject._parametric_budget(10,capacity_profile=profile,**{key:value})

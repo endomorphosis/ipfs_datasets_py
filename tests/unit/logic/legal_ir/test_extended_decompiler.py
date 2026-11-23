@@ -1106,3 +1106,417 @@ def test_existing_tdfol_business_day_candidate_retains_legacy_constraint_identit
         "relation": "after", "unit": "business_days",
         "constraint_id": "tdfol-deadline:ce72a7b410cd7d7da95088be",
     }]
+
+
+import unittest as _parametric_unittest
+
+
+class TestAuthoredParametricCountedProse(_parametric_unittest.TestCase):
+    """Authored syntax cycles; no statutory, proof or learned-model acceptance."""
+
+    PROFILE = "source-withheld-authored-parametric-counted-legal-prose/v1"
+
+    @staticmethod
+    def case(maximum):
+        from ipfs_datasets_py.logic.syntax_core import ast, signatures
+        from ipfs_datasets_py.logic.autoformal import legal_counted_frame_threshold_v2 as threshold
+        expression, _ = threshold._parametric_expression(ast, signatures, maximum)
+        return expression, [{"symbol": "Member", "roles": ["object", "event", "time"]}]
+
+    def test_complete_threshold_cycles_use_existing_reconstruction_and_score_owners(self):
+        from ipfs_datasets_py.logic.autoformal.legal_relational_reconstruction_v1 import (
+            prepare_relational_prose_reconstruction_v1)
+        from ipfs_datasets_py.logic.formalization.autoencoder.ir_legal_text_roundtrip import (
+            score_relational_legal_text_roundtrip)
+        for maximum in (0, 1, 3, 4, 5):
+            with self.subTest(maximum=maximum):
+                expression, roles = self.case(maximum)
+                before = deepcopy(expression.to_dict())
+                report = prepare_relational_prose_reconstruction_v1(
+                    expression, argument_roles=roles, profile=self.PROFILE)
+                self.assertIn("at most " + str(maximum) + " distinct", report["normalized_prose"])
+                self.assertTrue(report["measurements"]["typed_structure_equal"])
+                self.assertTrue(report["measurements"]["canonical_prose_fixed_point"])
+                self.assertFalse(report["measurements"]["source_semantics_verified"])
+                self.assertEqual(report["training_mask"], 0)
+                self.assertEqual(report["evaluation_gold_mask"], 0)
+                score = score_relational_legal_text_roundtrip(expression,
+                    report["normalized_prose"], reference_argument_roles=roles, profile=self.PROFILE)
+                self.assertTrue(score["measurements"]["complete_typed_structure_exact"])
+                self.assertFalse(score["measurements"]["semantic_equivalence_verified"])
+                self.assertFalse(score["measurements"]["source_correspondence_verified"])
+                self.assertFalse(score["authority"]["admitted"])
+                self.assertEqual(expression.to_dict(), before)
+
+    def test_visible_cardinality_change_is_not_an_exact_roundtrip(self):
+        from ipfs_datasets_py.logic.legal_ir.extended_decompiler import decompile_relational
+        from ipfs_datasets_py.logic.formalization.autoencoder.ir_legal_text_roundtrip import (
+            score_relational_legal_text_roundtrip)
+        expression, roles = self.case(4)
+        prose = decompile_relational(expression, argument_roles=roles, profile=self.PROFILE)
+        candidate = prose.replace("at most 4 distinct", "at most 3 distinct", 1)
+        score = score_relational_legal_text_roundtrip(expression, candidate,
+            reference_argument_roles=roles, profile=self.PROFILE)
+        self.assertEqual(score["supported_count"], 1)
+        self.assertFalse(score["measurements"]["complete_typed_structure_exact"])
+        self.assertFalse(score["measurements"]["canonical_prose_exact"])
+
+    def test_transport_ids_are_not_hidden_in_prose(self):
+        from ipfs_datasets_py.logic.syntax_core import ast
+        from ipfs_datasets_py.logic.legal_ir.extended_decompiler import decompile_relational
+        expression, roles = self.case(4)
+        changed = expression.to_dict()
+        changed["expression_id"] = "unrelated:transport:expression"
+        changed["signature"]["signature_id"] = "unrelated:transport:signature"
+        changed["content_digest"] = ""
+
+        def rename(node):
+            node["node_id"] = "unrelated:" + node["node_id"]
+            for child in node["arguments"]:
+                rename(child)
+
+        rename(changed["root"])
+        renamed = ast.TypedExpression.from_dict(changed)
+        self.assertEqual(decompile_relational(expression, argument_roles=roles, profile=self.PROFILE),
+                         decompile_relational(renamed, argument_roles=roles, profile=self.PROFILE))
+
+    def test_quantifier_mutation_is_refused_without_dropping_typed_content(self):
+        from ipfs_datasets_py.logic.syntax_core import ast
+        from ipfs_datasets_py.logic.legal_ir.extended_decompiler import decompile_relational
+        expression, roles = self.case(4)
+        changed = expression.to_dict()
+        changed["root"]["kind"] = "exists"
+        changed["content_digest"] = ""
+        mutated = ast.TypedExpression.from_dict(changed)
+        before = deepcopy(mutated.to_dict())
+        with self.assertRaises(ValueError):
+            decompile_relational(mutated, argument_roles=roles, profile=self.PROFILE)
+        self.assertEqual(mutated.to_dict(), before)
+
+    def test_ordered_roles_and_visible_declarations_are_not_discarded(self):
+        from ipfs_datasets_py.logic.legal_ir.extended_decompiler import decompile_relational
+        from ipfs_datasets_py.logic.legal_ir.extended_compiler import compile_relational
+        expression, roles = self.case(4)
+        prose = decompile_relational(expression, argument_roles=roles, profile=self.PROFILE)
+        wrong = [{"symbol": "Member", "roles": ["event", "object", "time"]}]
+        with self.assertRaises(ValueError):
+            decompile_relational(expression, argument_roles=wrong, profile=self.PROFILE)
+        changed = prose.replace("Predicate Member: object", "Predicate Member: event", 1)
+        self.assertIsNone(compile_relational(changed, profile=self.PROFILE))
+
+    def test_invalid_threshold_spelling_operator_and_suffix_abstain_wholly(self):
+        from ipfs_datasets_py.logic.legal_ir.extended_decompiler import decompile_relational
+        from ipfs_datasets_py.logic.legal_ir.extended_compiler import compile_relational
+        expression, roles = self.case(4)
+        prose = decompile_relational(expression, argument_roles=roles, profile=self.PROFILE)
+        for numeral in ("-1", "+4", "04", "4.0", "True"):
+            with self.subTest(numeral=numeral):
+                self.assertIsNone(compile_relational(prose.replace("at most 4 distinct",
+                    "at most " + numeral + " distinct", 1), profile=self.PROFILE))
+        self.assertIsNone(compile_relational(prose.replace("at most", "at least", 1), profile=self.PROFILE))
+        self.assertIsNone(compile_relational(prose + " Extra clause.", profile=self.PROFILE))
+
+    def test_existing_capacity_refuses_before_expansion_without_a_semantic_ceiling(self):
+        from ipfs_datasets_py.logic.legal_ir.extended_decompiler import decompile_relational
+        from ipfs_datasets_py.logic.legal_ir.extended_compiler import compile_relational
+        with self.assertRaisesRegex(ValueError, "capacity"):
+            self.case(10)
+        expression, roles = self.case(4)
+        prose = decompile_relational(expression, argument_roles=roles, profile=self.PROFILE)
+        self.assertIsNone(compile_relational(prose.replace("at most 4 distinct",
+            "at most 10 distinct", 1), profile=self.PROFILE))
+
+    def test_legacy_relational_profile_retains_its_independent_fixture(self):
+        from ipfs_datasets_py.logic.legal_ir.extended_decompiler import (
+            decompile_relational, RELATIONAL_PROSE_PROFILE)
+        from ipfs_datasets_py.logic.legal_ir.extended_compiler import compile_relational
+        expression, roles = _prose_fixture()
+        prose = decompile_relational(expression, argument_roles=roles, profile=RELATIONAL_PROSE_PROFILE)
+        self.assertIn("it is obligatory", prose)
+        reconstructed = compile_relational(prose, profile=RELATIONAL_PROSE_PROFILE)
+        self.assertIsNotNone(reconstructed)
+        self.assertEqual(decompile_relational(reconstructed[0], argument_roles=reconstructed[1],
+            profile=RELATIONAL_PROSE_PROFILE), prose)
+        counted, counted_roles = self.case(4)
+        with self.assertRaises(ValueError):
+            decompile_relational(counted, argument_roles=counted_roles, profile=RELATIONAL_PROSE_PROFILE)
+
+    def test_same_binder_count_cannot_hide_changed_names_missing_equalities_or_metadata(self):
+        from ipfs_datasets_py.logic.syntax_core import ast
+        from ipfs_datasets_py.logic.legal_ir.extended_decompiler import decompile_relational
+        expression, roles = self.case(4)
+        variants = []
+        renamed = expression.to_dict()
+
+        def rename(node):
+            for binder in node["binders"]:
+                if binder["name"] == "x0":
+                    binder["name"] = "individual"
+            if node["kind"] == "variable" and node["symbol"] == "x0":
+                node["symbol"] = "individual"
+            for child in node["arguments"]:
+                rename(child)
+
+        rename(renamed["root"])
+        variants.append(("renamed_bound_variable", renamed))
+        missing = expression.to_dict()
+        body = missing["root"]
+        while body["kind"] == "forall":
+            body = body["arguments"][0]
+        self.assertEqual(body["kind"], "implies")
+        self.assertEqual(body["arguments"][1]["kind"], "or")
+        body["arguments"][1] = body["arguments"][1]["arguments"][0]
+        variants.append(("missing_equality_pair", missing))
+        annotated = expression.to_dict()
+        annotated["root"]["metadata"] = {"source_text": "hidden original wording"}
+        variants.append(("unrepresented_metadata", annotated))
+        for name, value in variants:
+            with self.subTest(mutation=name):
+                value["content_digest"] = ""
+                mutated = ast.TypedExpression.from_dict(value)
+                before = deepcopy(mutated.to_dict())
+                with self.assertRaises(ValueError):
+                    decompile_relational(mutated, argument_roles=roles, profile=self.PROFILE)
+                self.assertEqual(mutated.to_dict(), before)
+
+
+class TestAuthoredParametricCountedDefaultBoundary(_parametric_unittest.TestCase):
+    """Current finite default frontier, not a semantic cardinality ceiling."""
+
+    PROFILE = TestAuthoredParametricCountedProse.PROFILE
+
+    def test_last_default_admitted_value_keeps_complete_source_withheld_cycle(self):
+        from ipfs_datasets_py.logic.legal_ir.extended_compiler import compile_relational
+        from ipfs_datasets_py.logic.autoformal.legal_relational_reconstruction_v1 import (
+            _prose_typed_projection, prepare_relational_prose_reconstruction_v1)
+        from ipfs_datasets_py.logic.formalization.autoencoder.ir_legal_text_roundtrip import (
+            score_relational_legal_text_roundtrip)
+
+        expression, roles = TestAuthoredParametricCountedProse.case(5)
+        before = deepcopy(expression.to_dict())
+        report = prepare_relational_prose_reconstruction_v1(
+            expression, argument_roles=roles, profile=self.PROFILE)
+        prose = report["normalized_prose"]
+        self.assertIn("at most 5 distinct", prose)
+        # Only the visible prose and the public profile enter the inverse.
+        reconstructed = compile_relational(prose, profile=self.PROFILE)
+        self.assertIsNotNone(reconstructed)
+        self.assertEqual(_prose_typed_projection(reconstructed[0]),
+                         _prose_typed_projection(expression))
+        self.assertEqual(reconstructed[1], roles)
+        score = score_relational_legal_text_roundtrip(
+            expression, prose, reference_argument_roles=roles, profile=self.PROFILE)
+        self.assertTrue(report["measurements"]["typed_structure_equal"])
+        self.assertTrue(report["measurements"]["canonical_prose_fixed_point"])
+        self.assertTrue(score["measurements"]["complete_typed_structure_exact"])
+        self.assertFalse(score["measurements"]["semantic_equivalence_verified"])
+        self.assertFalse(score["measurements"]["source_correspondence_verified"])
+        self.assertFalse(score["authority"]["admitted"])
+        self.assertEqual(report["training_mask"], 0)
+        self.assertEqual(report["evaluation_gold_mask"], 0)
+        self.assertEqual(expression.to_dict(), before)
+
+    def test_first_default_resource_refusal_abstains_without_partial_prose(self):
+        from ipfs_datasets_py.logic.autoformal import legal_counted_frame_threshold_v2 as threshold
+        from ipfs_datasets_py.logic.legal_ir.extended_decompiler import decompile_relational
+        from ipfs_datasets_py.logic.legal_ir.extended_compiler import compile_relational
+
+        expression, roles = TestAuthoredParametricCountedProse.case(5)
+        before = deepcopy(expression.to_dict())
+        threshold._parametric_budget(5)
+        with self.assertRaisesRegex(ValueError, "capacity"):
+            threshold._parametric_budget(6)
+        with self.assertRaisesRegex(ValueError, "capacity"):
+            TestAuthoredParametricCountedProse.case(6)
+        prose = decompile_relational(expression, argument_roles=roles, profile=self.PROFILE)
+        refused = prose.replace("at most 5 distinct", "at most 6 distinct", 1)
+        self.assertNotEqual(refused, prose)
+        self.assertIsNone(compile_relational(refused, profile=self.PROFILE))
+        self.assertEqual(expression.to_dict(), before)
+
+    def test_valid_visible_quantity_mutation_at_boundary_is_a_different_typed_value(self):
+        from ipfs_datasets_py.logic.legal_ir.extended_decompiler import decompile_relational
+        from ipfs_datasets_py.logic.legal_ir.extended_compiler import compile_relational
+        from ipfs_datasets_py.logic.autoformal.legal_relational_reconstruction_v1 import (
+            _prose_typed_projection)
+        from ipfs_datasets_py.logic.formalization.autoencoder.ir_legal_text_roundtrip import (
+            score_relational_legal_text_roundtrip)
+
+        expression, roles = TestAuthoredParametricCountedProse.case(5)
+        before = deepcopy(expression.to_dict())
+        prose = decompile_relational(expression, argument_roles=roles, profile=self.PROFILE)
+        changed = prose.replace("at most 5 distinct", "at most 4 distinct", 1)
+        reconstructed = compile_relational(changed, profile=self.PROFILE)
+        self.assertIsNotNone(reconstructed)
+        self.assertEqual(reconstructed[1], roles)
+        self.assertNotEqual(_prose_typed_projection(reconstructed[0]),
+                            _prose_typed_projection(expression))
+        score = score_relational_legal_text_roundtrip(
+            expression, changed, reference_argument_roles=roles, profile=self.PROFILE)
+        self.assertEqual(score["supported_count"], 1)
+        self.assertFalse(score["measurements"]["complete_typed_structure_exact"])
+        self.assertFalse(score["measurements"]["canonical_prose_exact"])
+        self.assertFalse(score["measurements"]["semantic_equivalence_verified"])
+        self.assertFalse(score["measurements"]["source_correspondence_verified"])
+        self.assertFalse(score["authority"]["admitted"])
+        self.assertEqual(expression.to_dict(), before)
+
+
+class TestAuthoredParametricCountedExpandedCapacity(_parametric_unittest.TestCase):
+    """Explicit existing resource profile, with unchanged default and legal masks."""
+
+    PROFILE = TestAuthoredParametricCountedProse.PROFILE
+    CAPACITY = "counted-nat-expanded-capacity/v1"
+
+    @staticmethod
+    def expanded_case(maximum=10):
+        from ipfs_datasets_py.logic.syntax_core import ast, signatures
+        from ipfs_datasets_py.logic.autoformal import legal_counted_frame_threshold_v2 as threshold
+        expression, _ = threshold._parametric_expression(
+            ast, signatures, maximum,
+            capacity_profile=TestAuthoredParametricCountedExpandedCapacity.CAPACITY)
+        return expression, [{"symbol": "Member", "roles": ["object", "event", "time"]}]
+
+    def test_explicit_existing_capacity_preserves_complete_n10_cycle_and_score(self):
+        from ipfs_datasets_py.logic.legal_ir.extended_compiler import compile_relational
+        from ipfs_datasets_py.logic.autoformal.legal_relational_reconstruction_v1 import (
+            _prose_typed_projection, prepare_relational_prose_reconstruction_v1)
+        from ipfs_datasets_py.logic.formalization.autoencoder.ir_legal_text_roundtrip import (
+            score_relational_legal_text_roundtrip)
+
+        expression, roles = self.expanded_case()
+        before = deepcopy(expression.to_dict())
+        report = prepare_relational_prose_reconstruction_v1(
+            expression, argument_roles=roles, profile=self.PROFILE, capacity_profile=self.CAPACITY)
+        prose = report["normalized_prose"]
+        self.assertIn("at most 10 distinct", prose)
+        # Resource capacity is explicit; reference AST and source text are absent.
+        candidate = compile_relational(prose, profile=self.PROFILE, capacity_profile=self.CAPACITY)
+        self.assertIsNotNone(candidate)
+        self.assertEqual(candidate[1], roles)
+        self.assertEqual(_prose_typed_projection(expression, capacity_profile=self.CAPACITY),
+                         _prose_typed_projection(candidate[0], capacity_profile=self.CAPACITY))
+        self.assertTrue(report["measurements"]["typed_structure_equal"])
+        self.assertTrue(report["measurements"]["canonical_prose_fixed_point"])
+        self.assertFalse(report["original_source_available_to_realizer"])
+        self.assertFalse(report["serialized_ast_available_to_inverse"])
+        self.assertEqual(report["capacity_profile"], self.CAPACITY)
+        score = score_relational_legal_text_roundtrip(
+            expression, prose, reference_argument_roles=roles, profile=self.PROFILE,
+            capacity_profile=self.CAPACITY, original_text="unrelated original wording")
+        self.assertTrue(score["measurements"]["complete_typed_structure_exact"])
+        self.assertFalse(score["measurements"]["original_utf8_exact"])
+        self.assertFalse(score["original_source_available_to_inverse"])
+        self.assertFalse(score["reference_target_available_to_inverse"])
+        self.assertFalse(score["measurements"]["semantic_equivalence_verified"])
+        self.assertFalse(score["measurements"]["source_correspondence_verified"])
+        self.assertFalse(score["authority"]["admitted"])
+        self.assertEqual(score["capacity_profile"], self.CAPACITY)
+        self.assertEqual(score["training_mask"], 0)
+        self.assertEqual(score["evaluation_gold_mask"], 0)
+        self.assertEqual(expression.to_dict(), before)
+
+    def test_none_retains_default_wire_and_expansion_is_never_implicit(self):
+        from ipfs_datasets_py.logic.legal_ir.extended_decompiler import decompile_relational
+        from ipfs_datasets_py.logic.legal_ir.extended_compiler import compile_relational
+        from ipfs_datasets_py.logic.autoformal.legal_relational_reconstruction_v1 import (
+            prepare_relational_prose_reconstruction_v1)
+        from ipfs_datasets_py.logic.formalization.autoencoder.ir_legal_text_roundtrip import (
+            score_relational_legal_text_roundtrip)
+
+        expression, roles = TestAuthoredParametricCountedProse.case(5)
+        default = prepare_relational_prose_reconstruction_v1(
+            expression, argument_roles=roles, profile=self.PROFILE)
+        explicit_none = prepare_relational_prose_reconstruction_v1(
+            expression, argument_roles=roles, profile=self.PROFILE, capacity_profile=None)
+        self.assertEqual(default, explicit_none)
+        self.assertNotIn("capacity_profile", default)
+        prose = default["normalized_prose"]
+        self.assertEqual(compile_relational(prose, profile=self.PROFILE)[0].to_dict(),
+                         compile_relational(prose, profile=self.PROFILE, capacity_profile=None)[0].to_dict())
+        score = score_relational_legal_text_roundtrip(
+            expression, prose, reference_argument_roles=roles, profile=self.PROFILE)
+        self.assertEqual(score, score_relational_legal_text_roundtrip(
+            expression, prose, reference_argument_roles=roles, profile=self.PROFILE, capacity_profile=None))
+        self.assertNotIn("capacity_profile", score)
+        expanded, expanded_roles = self.expanded_case()
+        with self.assertRaises(ValueError):
+            decompile_relational(expanded, argument_roles=expanded_roles, profile=self.PROFILE)
+        visible_ten = prose.replace("at most 5 distinct", "at most 10 distinct", 1)
+        self.assertIsNone(compile_relational(visible_ten, profile=self.PROFILE))
+        self.assertIsNone(compile_relational(visible_ten, profile=self.PROFILE, capacity_profile=None))
+
+    def test_expanded_quantity_roles_sorts_and_unrepresented_metadata_stay_distinct(self):
+        from ipfs_datasets_py.logic.syntax_core import ast
+        from ipfs_datasets_py.logic.legal_ir.extended_decompiler import decompile_relational
+        from ipfs_datasets_py.logic.legal_ir.extended_compiler import compile_relational
+        from ipfs_datasets_py.logic.formalization.autoencoder.ir_legal_text_roundtrip import (
+            score_relational_legal_text_roundtrip)
+
+        expression, roles = self.expanded_case()
+        before = deepcopy(expression.to_dict())
+        prose = decompile_relational(expression, argument_roles=roles,
+            profile=self.PROFILE, capacity_profile=self.CAPACITY)
+        changed = prose.replace("at most 10 distinct", "at most 9 distinct", 1)
+        self.assertIsNotNone(compile_relational(changed, profile=self.PROFILE, capacity_profile=self.CAPACITY))
+        score = score_relational_legal_text_roundtrip(expression, changed,
+            reference_argument_roles=roles, profile=self.PROFILE, capacity_profile=self.CAPACITY)
+        self.assertEqual(score["supported_count"], 1)
+        self.assertFalse(score["measurements"]["complete_typed_structure_exact"])
+        self.assertFalse(score["measurements"]["canonical_prose_exact"])
+        for changed in (
+                prose.replace("Predicate Member: object", "Predicate Member: event", 1),
+                prose.replace("of type Object", "of type EventFrame", 1)):
+            with self.subTest(visible_mutation=changed):
+                self.assertIsNone(compile_relational(changed, profile=self.PROFILE,
+                                                     capacity_profile=self.CAPACITY))
+        annotated = expression.to_dict()
+        annotated["root"]["metadata"] = {"source_text": "hidden original wording"}
+        annotated["content_digest"] = ""
+        with self.assertRaises(ValueError):
+            decompile_relational(ast.TypedExpression.from_dict(annotated), argument_roles=roles,
+                profile=self.PROFILE, capacity_profile=self.CAPACITY)
+        self.assertEqual(expression.to_dict(), before)
+
+    def test_invalid_mismatched_and_unbounded_capacity_inputs_refuse(self):
+        from ipfs_datasets_py.logic.syntax_core import ast, signatures
+        from ipfs_datasets_py.logic.autoformal import legal_counted_frame_threshold_v2 as threshold
+        from ipfs_datasets_py.logic.legal_ir.extended_decompiler import (
+            decompile_relational, RELATIONAL_PROSE_PROFILE)
+        from ipfs_datasets_py.logic.legal_ir.extended_compiler import compile_relational
+        from ipfs_datasets_py.logic.autoformal.legal_relational_reconstruction_v1 import (
+            prepare_relational_prose_reconstruction_v1)
+        from ipfs_datasets_py.logic.formalization.autoencoder.ir_legal_text_roundtrip import (
+            score_relational_legal_text_roundtrip)
+
+        expression, roles = TestAuthoredParametricCountedProse.case(5)
+        prose = decompile_relational(expression, argument_roles=roles, profile=self.PROFILE)
+        for capacity in (True, False, -1, 1000000, "", "unlimited", {}, {"max_depth": 1000000}):
+            with self.subTest(invalid_capacity=capacity):
+                with self.assertRaises(ValueError):
+                    decompile_relational(expression, argument_roles=roles,
+                        profile=self.PROFILE, capacity_profile=capacity)
+                with self.assertRaises(ValueError):
+                    compile_relational(prose, profile=self.PROFILE, capacity_profile=capacity)
+                with self.assertRaises(ValueError):
+                    prepare_relational_prose_reconstruction_v1(expression, argument_roles=roles,
+                        profile=self.PROFILE, capacity_profile=capacity)
+                with self.assertRaises(ValueError):
+                    score_relational_legal_text_roundtrip(expression, prose, reference_argument_roles=roles,
+                        profile=self.PROFILE, capacity_profile=capacity)
+        for callback in (
+                lambda: decompile_relational(expression, argument_roles=roles,
+                    profile=RELATIONAL_PROSE_PROFILE, capacity_profile=self.CAPACITY),
+                lambda: compile_relational(prose, profile=RELATIONAL_PROSE_PROFILE, capacity_profile=self.CAPACITY),
+                lambda: prepare_relational_prose_reconstruction_v1(expression, argument_roles=roles,
+                    profile=RELATIONAL_PROSE_PROFILE, capacity_profile=self.CAPACITY),
+                lambda: score_relational_legal_text_roundtrip(expression, prose, reference_argument_roles=roles,
+                    profile=RELATIONAL_PROSE_PROFILE, capacity_profile=self.CAPACITY)):
+            with self.assertRaises(ValueError):
+                callback()
+        for maximum in (-1, True, 1000000):
+            with self.subTest(invalid_or_resource_refused_maximum=maximum):
+                with self.assertRaises(ValueError):
+                    threshold._parametric_expression(ast, signatures, maximum, capacity_profile=self.CAPACITY)
+        huge = prose.replace("at most 5 distinct", "at most 1000000 distinct", 1)
+        self.assertIsNone(compile_relational(huge, profile=self.PROFILE, capacity_profile=self.CAPACITY))

@@ -497,7 +497,7 @@ __all__ = ["SCHEMA", "LegalTextRoundTripError", "score_legal_original_text_round
 
 def score_relational_legal_text_roundtrip(reference_expression, candidate_text, *,
         reference_argument_roles, profile, original_text=None,
-        reference_governing_fields=None, candidate_governing_fields=None):
+        reference_governing_fields=None, candidate_governing_fields=None, capacity_profile=None):
     """Score one complete opt-in controlled-prose prediction against typed content.
 
     Original source is optional and remains exclusively on the scoring side.
@@ -510,12 +510,17 @@ def score_relational_legal_text_roundtrip(reference_expression, candidate_text, 
     Mutable reference/role/governing inputs are detached and fenced; changes
     during scoring refuse the report rather than mix observation epochs.
     """
-    from ipfs_datasets_py.logic.legal_ir.extended_decompiler import decompile_relational
+    from ipfs_datasets_py.logic.legal_ir.extended_decompiler import (
+        decompile_relational, _prose_capacity_options, _prose_capacity_json)
     from ipfs_datasets_py.logic.legal_ir.extended_compiler import compile_relational
     from ipfs_datasets_py.logic.autoformal.legal_relational_reconstruction_v1 import (
         compare_relational_governing_fields_v1,
         compare_relational_prose_structure_v1,
     )
+
+    capacity_options = _prose_capacity_options(profile, capacity_profile)
+    input_wire = (_raw if not capacity_options else
+        lambda value: _prose_capacity_json(value, **capacity_options))
 
     _require(type(candidate_text) is str, "candidate prose text required")
     _require(original_text is None or type(original_text) is str, "optional original source text required")
@@ -540,7 +545,7 @@ def score_relational_legal_text_roundtrip(reference_expression, candidate_text, 
             "reference_governing": original_reference_governing,
             "candidate_governing": original_candidate_governing}
 
-    frozen = _raw(original_inputs())
+    frozen = input_wire(original_inputs())
     detached = json.loads(frozen)
     reference_expression = ast.TypedExpression.from_dict(detached["expression"])
     reference_argument_roles = detached["roles"]
@@ -551,7 +556,7 @@ def score_relational_legal_text_roundtrip(reference_expression, candidate_text, 
         current = {"expression": reference_expression.to_dict(), "roles": reference_argument_roles,
             "reference_governing": reference_governing_fields,
             "candidate_governing": candidate_governing_fields}
-        _require(_raw(original_inputs()) == frozen and _raw(current) == frozen,
+        _require(input_wire(original_inputs()) == frozen and input_wire(current) == frozen,
                  "relational roundtrip inputs changed during scoring")
 
     governing_comparison = None
@@ -559,17 +564,17 @@ def score_relational_legal_text_roundtrip(reference_expression, candidate_text, 
         governing_comparison = compare_relational_governing_fields_v1(
             reference_governing_fields, candidate_governing_fields)
     reference_prose = decompile_relational(reference_expression,
-        argument_roles=reference_argument_roles, profile=profile)
+        argument_roles=reference_argument_roles, profile=profile, **capacity_options)
     input_fence()
-    candidate = compile_relational(candidate_text, profile=profile) if candidate_text.strip() else None
+    candidate = compile_relational(candidate_text, profile=profile, **capacity_options) if candidate_text.strip() else None
     comparison = dict.fromkeys(("exact_typed_expression_equal", "typed_structure_equal",
                                  "canonical_prose_equal", "argument_roles_equal"), False)
     normalized_candidate = None
     if candidate is not None:
         expression, roles = candidate
         comparison = compare_relational_prose_structure_v1(reference_expression, expression,
-            reference_argument_roles=reference_argument_roles, candidate_argument_roles=roles, profile=profile)
-        normalized_candidate = decompile_relational(expression, argument_roles=roles, profile=profile)
+            reference_argument_roles=reference_argument_roles, candidate_argument_roles=roles, profile=profile, **capacity_options)
+        normalized_candidate = decompile_relational(expression, argument_roles=roles, profile=profile, **capacity_options)
     byte_exact = None if original_bytes is None else candidate_bytes == original_bytes
     result = {
         "schema": "legal-relational-text-roundtrip-score/v1", "profile": profile,
@@ -597,6 +602,8 @@ def score_relational_legal_text_roundtrip(reference_expression, candidate_text, 
     }
     if governing_comparison is not None:
         result["governing_fields_comparison"] = governing_comparison
+    if capacity_options:
+        result["capacity_profile"] = capacity_profile
     input_fence()
     return result
 

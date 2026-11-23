@@ -85,14 +85,17 @@ def _pin(value, label):
           "independent lowercase SHA256 required: " + label)
 
 
-def _wire(value, maximum):
+def _wire(value, maximum, *, max_json_depth=96, max_json_items=100_000):
     """Bound ordinary finite JSON without importing operation owners."""
-    remaining, nodes = maximum, 100_000
+    _need(type(max_json_depth) is int and 0 < max_json_depth <= 256
+          and type(max_json_items) is int and 0 < max_json_items <= 100_000,
+          "finite existing preservation JSON capacities required")
+    remaining, nodes = maximum, max_json_items
 
     def visit(item, depth):
         nonlocal remaining, nodes
         nodes -= 1
-        _need(nodes >= 0 and depth <= 96, "preservation JSON node/depth bound exceeded")
+        _need(nodes >= 0 and depth <= max_json_depth, "preservation JSON node/depth bound exceeded")
         if type(item) is dict:
             remaining -= 2 + 2 * len(item)
             for key, child in item.items():
@@ -132,7 +135,7 @@ def _wire(value, maximum):
     return raw
 
 
-def _parse(raw, maximum):
+def _parse(raw, maximum, *, max_json_depth=96, max_json_items=100_000):
     _need(type(raw) is bytes and 0 < len(raw) <= maximum,
           "bounded original preservation JSON bytes required")
 
@@ -151,7 +154,7 @@ def _parse(raw, maximum):
                            parse_constant=constant)
     except (ValueError, UnicodeError, RecursionError) as error:
         raise ValueError("invalid bounded preservation JSON bytes") from error
-    _wire(value, maximum)
+    _wire(value, maximum, max_json_depth=max_json_depth, max_json_items=max_json_items)
     return value
 
 
@@ -2534,22 +2537,39 @@ def thresholdFinCases {n : Nat} {motive : Fin (n + 1) → Sort u}
 ''')
 
 
-def _parametric_counted_dimensions(maximum):
+PARAMETRIC_EXPANDED_CAPACITY_PROFILE = "counted-nat-expanded-capacity/v1"
+
+
+def _parametric_counted_capacity(capacity_profile):
+    if capacity_profile is None:
+        return dict(max_nodes=MAX_AST_NODES, max_depth=MAX_AST_DEPTH,
+                    max_bytes=131072, max_json_depth=64, max_json_items=20000)
+    _need(type(capacity_profile) is str and capacity_profile == PARAMETRIC_EXPANDED_CAPACITY_PROFILE,
+          "explicit recognized counted capacity profile required")
+    return dict(max_nodes=1024, max_depth=128, max_bytes=1048576,
+                max_json_depth=256, max_json_items=65536)
+
+
+def _parametric_counted_dimensions(maximum, *, capacity_profile=None):
     """Check derived expansion size before allocating syntax or proof text."""
-    _need(type(maximum) is int and 0 <= maximum <= MAX_AST_NODES,
+    capacities = _parametric_counted_capacity(capacity_profile)
+    _need(type(maximum) is int and 0 <= maximum <= capacities["max_nodes"],
           "natural counted threshold exceeds existing preservation capacity")
     size, pairs = maximum + 1, maximum * (maximum + 1) // 2
     nodes = 9 if maximum == 0 else 2 * maximum * maximum + 8 * maximum + 7
     depth = 5 if maximum == 0 else max(size + pairs + 3, 2 * size + 3)
-    _need(nodes <= MAX_AST_NODES and depth <= MAX_AST_DEPTH
-          and 2 * depth + 4 <= 64 and 128 * nodes + 4096 <= 20000,
+    _need(nodes <= capacities["max_nodes"] and depth <= capacities["max_depth"]
+          and 2 * depth + 4 <= capacities["max_json_depth"]
+          and 128 * nodes + 4096 <= capacities["max_json_items"]
+          and (capacity_profile is None or 8192 + 512 * nodes <= capacities["max_bytes"]),
           "counted threshold expansion exceeds existing node/depth/JSON capacity")
     return nodes, depth
 
 
-def _parametric_counted_source_syntax(root, maximum):
+def _parametric_counted_source_syntax(root, maximum, *, capacity_profile=None):
     """Walk actual v3 constructors with independent finite resource bounds."""
-    expected_nodes, _ = _parametric_counted_dimensions(maximum)
+    capacities = _parametric_counted_capacity(capacity_profile)
+    expected_nodes, _ = _parametric_counted_dimensions(maximum, capacity_profile=capacity_profile)
     count, identifiers = 0, set()
     sorts = {"Object": "object", "EventFrame": "event", "TimeFrame": "time"}
 
@@ -2573,7 +2593,7 @@ def _parametric_counted_source_syntax(root, maximum):
               and value["node_id"] not in identifiers, "distinct bounded counted node IDs required")
         count += 1
         identifiers.add(value["node_id"])
-        _need(count <= MAX_AST_NODES and depth <= MAX_AST_DEPTH, "bounded counted threshold AST required")
+        _need(count <= capacities["max_nodes"] and depth <= capacities["max_depth"], "bounded counted threshold AST required")
         _need(value["schema_version"] == "syntax-logic-node/v1" and value["metadata"] == {}
               and type(value["symbol"]) is str and type(value["arguments"]) is list
               and type(value["binders"]) is list, "exact unannotated counted node required")
@@ -2652,14 +2672,14 @@ def _parametric_counted_pins(owners, counted, checked):
     return pins
 
 
-def _parametric_counted_collision_proof(maximum):
+def _parametric_counted_collision_proof(maximum, *, capacity_profile=None):
     """Generate an unexecuted constructive, per-instance Fin proof candidate.
 
     Direct constructor elimination enumerates finite indices; Object remains an
     arbitrary type. The only decide terms compare closed finite indices.
     No proposition asserting a cardinality or equivalence is supplied as input.
     """
-    _parametric_counted_dimensions(maximum)
+    _parametric_counted_dimensions(maximum, capacity_profile=capacity_profile)
     size = maximum + 1
     variables = ["x" + str(i) for i in range(size)]
     pairs = [(i, j) for i in range(size) for j in range(i + 1, size)]
@@ -2770,7 +2790,11 @@ def prepare_counted_threshold_ast_preservation(report, request_raw: bytes, *,
     """Prepare v3 exact-value/denotation obligations; perform no native build."""
     _pin(expected_report_sha256, "complete counted threshold report")
     _pin(expected_request_sha256, "complete counted threshold request")
-    report_raw = _wire(report, MAX_RECORD_BYTES)
+    capacity_profile = report.get("capacity_profile") if type(report) is dict else None
+    capacities = _parametric_counted_capacity(capacity_profile)
+    def wire(value, maximum):
+        return _wire(value, maximum, max_json_depth=(96 if capacity_profile is None else 256))
+    report_raw = wire(report, MAX_RECORD_BYTES)
     _need(_sha(report_raw) == expected_report_sha256, "independent counted threshold report pin differs")
     _need(type(request_raw) is bytes and 0 < len(request_raw) <= MAX_RECORD_BYTES // 8
           and _sha(request_raw) == expected_request_sha256, "independent bounded counted threshold request pin differs")
@@ -2787,14 +2811,17 @@ def prepare_counted_threshold_ast_preservation(report, request_raw: bytes, *,
           "exact authored parametric counted replay required")
     _need(type(checked["authority"]) is dict and not any(checked["authority"].values()),
           "parametric counted preparation grants no authority")
+    _need(checked.get("capacity_profile") == capacity_profile
+          and request.get("capacity_profile") == capacity_profile,
+          "counted capacity request/report commitment differs")
     maximum = checked["maximum"]
     owners = _owners()
     _, emitter, contracts = owners
     producers = _parametric_counted_pins(owners, counted, checked)
     expression = checked["typed_expression"]
-    typed, count = _parametric_counted_source_syntax(expression["root"], maximum)
+    typed, count = _parametric_counted_source_syntax(expression["root"], maximum, capacity_profile=capacity_profile)
     actual, semantics = _counted_json_value(expression), PARAMETRIC_COUNTED_SEMANTICS
-    instance = COUNTED_PROJECT_ROOT + ".Instance" + _sha(_wire({
+    instance = COUNTED_PROJECT_ROOT + ".Instance" + _sha(wire({
         "profile": PARAMETRIC_COUNTED_PROFILE, "report_sha256": expected_report_sha256,
         "request_sha256": expected_request_sha256, "semantics_sha256": _sha(semantics.encode()),
     }, MAX_RECORD_BYTES))
@@ -2816,7 +2843,7 @@ def prepare_counted_threshold_ast_preservation(report, request_raw: bytes, *,
         + "    (member : Object → EventFrame → TimeFrame → Prop) :\n"
         + "    thresholdDenote member typedCountedThresholdAst emptyCountedEnvironment ↔ countedAtMostThreshold member := by\n"
         + "  exact Iff.intro (fun h => h) (fun h => h)\n#print axioms threshold_denotation_matches_lowering\n"
-        + _parametric_counted_collision_proof(maximum))
+        + _parametric_counted_collision_proof(maximum, capacity_profile=capacity_profile))
     inputs = {"schema": PARAMETRIC_COUNTED_INPUT_SCHEMA, "profile": PARAMETRIC_COUNTED_PROFILE,
         "counted_report": checked, "counted_report_sha256": expected_report_sha256,
         "original_request_raw_utf8": request_raw.decode("utf-8"), "original_request_sha256": expected_request_sha256,
@@ -2825,11 +2852,18 @@ def prepare_counted_threshold_ast_preservation(report, request_raw: bytes, *,
     files = {
         "lakefile.toml": 'name = "legal_native_ast_preservation"\nversion = "0.1.0"\n\n[[lean_lib]]\nname = "legal"\nroots = ["LegalCountedAstPreservation"]\n',
         "lean-toolchain": toolchain + "\n",
-        "preservation-inputs.json": _wire(inputs, 4 * MAX_RECORD_BYTES).decode() + "\n",
+        "preservation-inputs.json": wire(inputs, 4 * MAX_RECORD_BYTES).decode() + "\n",
         modules[0].replace(".", "/") + ".lean": _file(COUNTED_PROJECT_ROOT, [], emitter.PRELUDE),
         modules[1].replace(".", "/") + ".lean": _file(COUNTED_PROJECT_ROOT, imports[modules[1]], semantics),
         instance.replace(".", "/") + ".lean": _file(instance, imports[instance], body),
         COUNTED_PROJECT_ROOT + ".lean": "import " + instance + "\n"}
+    if capacity_profile is not None:
+        instance_path = instance.replace(".", "/") + ".lean"
+        import_prefix = "".join("import " + module + "\n" for module in imports[instance])
+        _need(files[instance_path].startswith(import_prefix),
+              "counted instance imports changed before finite native capacity selection")
+        files[instance_path] = (import_prefix + "set_option maxRecDepth 8192\n"
+                                + files[instance_path][len(import_prefix):])
     _need(len(files) == MAX_FILES and len(set(modules)) == MAX_MODULES
           and sum(len(text.encode()) for text in files.values()) <= MAX_PROJECT_BYTES,
           "complete counted threshold preservation project exceeds existing bounds")
@@ -2841,6 +2875,7 @@ def prepare_counted_threshold_ast_preservation(report, request_raw: bytes, *,
         "typed_expression_content_digest": expression["content_digest"], "lean_body_sha256": checked["lean_body_sha256"],
         "actual_typed_lean_value_sha256": _sha(actual.encode()), "typed_counted_lean_value_sha256": _sha(typed.encode()),
         "semantics_sha256": _sha(semantics.encode()), "prelude_sha256": _sha(emitter.PRELUDE.encode()),
+        **({"capacity_profile": capacity_profile} if capacity_profile is not None else {}),
         "typed_ast_node_count": count, "typed_predicates": ["Member"],
         "expected_modules": modules, "module_imports": imports,
         "file_sha256": {name: _sha(text.encode()) for name, text in sorted(files.items())},
@@ -2859,8 +2894,8 @@ def prepare_counted_threshold_ast_preservation(report, request_raw: bytes, *,
             "predicate": "Member", "predicate_arity": 3, "ordered_argument_roles": ["object", "event", "time"],
             "operators": ["False", "∧", "∨", "→", "="], "quantifiers": ["∀"],
             "closed_only": True, "named_lexical_shadowing": False, "event_time_policy": "per_event_and_time",
-            "native_TDFOL_route_used": False, "max_ast_nodes": MAX_AST_NODES, "max_ast_depth": MAX_AST_DEPTH,
-            "max_project_bytes": MAX_PROJECT_BYTES, "max_json_depth": 64, "max_json_items": 20000},
+            "native_TDFOL_route_used": False, "max_ast_nodes": capacities["max_nodes"], "max_ast_depth": capacities["max_depth"],
+            "max_project_bytes": MAX_PROJECT_BYTES, "max_json_depth": capacities["max_json_depth"], "max_json_items": capacities["max_json_items"]},
         "proof_candidate": {"status": "UNQUALIFIED_NOT_EXECUTED", "native_execution": False,
             "kernel_checked": False, "extra_axioms_requested": [],
             "remaining": "Actual Lean syntax/elaboration, four theorem proofs and their exact axiom reports require the existing admitted native owner."},
@@ -2870,10 +2905,10 @@ def prepare_counted_threshold_ast_preservation(report, request_raw: bytes, *,
         "producer_pins": producers, "counted_producer_pins": checked["producer_pins"],
         "preparation_only": True, "authority": dict(AUTHORITY), "training_mask": 0, "evaluation_gold_mask": 0,
         **FALSE_FLAGS})
-    _need(_wire(report, MAX_RECORD_BYTES) == report_raw, "caller counted threshold report changed during preservation preparation")
+    _need(wire(report, MAX_RECORD_BYTES) == report_raw, "caller counted threshold report changed during preservation preparation")
     _need(_parametric_counted_pins(owners, counted, checked) == producers,
           "counted threshold preservation owners changed during preparation")
-    preparation = NativeAstPreservationPreparation(_wire(manifest, MAX_RECORD_BYTES).decode(), tuple(sorted(files.items())))
+    preparation = NativeAstPreservationPreparation(wire(manifest, MAX_RECORD_BYTES).decode(), tuple(sorted(files.items())))
     preparation_sha256(preparation)
     return preparation
 
