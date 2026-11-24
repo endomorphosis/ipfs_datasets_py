@@ -1985,6 +1985,259 @@
         "path": "/tmp/Root-7213-existing-canonical-typed-roundtrip-actual-v144/Root-actual-7213-existing-typed-roundtrip-qualified-Source-resource-closed-small-v145.json",
         "sha256": "a033fb9e1357067d850c6adcc294f4fc32cd54df13240318dd29f5f7de0e53f1"
       }
+    },
+    "current_user_goal_v4_fixture_and_lexical_tokenless_engineering_milestone511_20261124": {
+      "catalog_evidence_id": "v4-fixture-and-lexical-tokenless-engineering-milestone511-20261124",
+      "catalog_evidence_ordinal": 511,
+      "closed_facts_reference": {
+        "path": "/tmp/guide511-single-existing-private-rhobh1aj/one-existing-guide511-closed-facts-and-claim-context.json",
+        "bytes": 9987,
+        "sha256": "f4b8323dedaebe67cb711d2aaca90284970f64d03992339fe4035ab4cf7ca33c"
+      },
+      "closed_engineering_facts": {
+        "LIR20": {
+          "actual_owningfile_Torch_run": false,
+          "behavior": "Reviewed lexical baseline abstains on source text without tokens from the existing tokenization contract; actual source identity is retained and other modes retain their existing branch behavior.",
+          "current_V4_helper_preserved": true,
+          "exact_original_lexical_suffix_bytes": 1668,
+          "new_lexical_definition": 1,
+          "old_public_test_definitions_preserved": 39,
+          "private_same12": {
+            "after": {
+              "controls": 12,
+              "failed": 0,
+              "passed": 12
+            },
+            "before": {
+              "controls": 12,
+              "failed": 5,
+              "passed": 7
+            },
+            "neural_tensor_projection_ranking_fit_or_numerical_run": false,
+            "old8_historical_not_rerun_or_counted": true,
+            "report": {
+              "bytes": 13202,
+              "path": "/tmp/LIR20-lexical-currentV4-integration-private-v169-_5qcdjco/actual-NEW12-private-lexical-before-after-scope-result.json",
+              "sha256": "b656f829631854b3c7c16de1420e9016706b339d6b09dbfba9ac5d090271b6ee"
+            },
+            "scope": "Actual full retrieve and actual BM25 AST; fictional checkpoint-integrity/replay/lane/split/vector-array boundaries and Torch tensor sentinel. No project or Torch imports.",
+            "stdlib_BM25_score_sanity": [
+              "empty-token query has tied zero ranks",
+              "ASCII match has positive rank"
+            ]
+          },
+          "product_before": {
+            "bytes": 74693,
+            "path": "/tmp/LIR20-lexical-currentV4-integration-private-v169-_5qcdjco/legal_joint_retrieval.exact-current-before.py.DATA",
+            "sha256": "0ccc01562f0e54ceaeb4145a4fad1585a8870e7e1cd77d3e3b412ef115d400fd"
+          },
+          "product_post": {
+            "bytes": 74852,
+            "path": "/tmp/LIR20-lexical-currentV4-integration-private-v169-_5qcdjco/legal_joint_retrieval.lexical.after.py.DATA",
+            "sha256": "b60874c3e8260f926cbd5eab18018c183417b594b9937a167854dbe45fcf9bac"
+          },
+          "test_before_currentV4": {
+            "bytes": 64098,
+            "path": "/tmp/LIR20-lexical-currentV4-integration-private-v169-_5qcdjco/current-published-V4-test.HELD",
+            "sha256": "c23aadaa392b64c2e97235ab63f3eb8d70786f4a2dff7f1892a254af0c479f6f"
+          },
+          "test_post_currentV4_plus_lexical": {
+            "bytes": 65766,
+            "path": "/tmp/LIR20-lexical-currentV4-integration-private-v169-_5qcdjco/test_legal_joint_retrieval.current-V4-plus-lexical.after.py.DATA",
+            "sha256": "163d81acf27e16b6d31145b3d78133578fa65646bacf2a83a4c9898a6124ccc5"
+          },
+          "validation_packet": {
+            "bytes": 5888,
+            "path": "/tmp/LIR20-lexical-currentV4-integration-private-v169-_5qcdjco/sealed-LIR20-exact-two-post-integration-with-NEW12-private-validation.json",
+            "sha256": "9f933030bc908bb3f1c3249698d057c055b8db71756a5a69d595685ff4237bf3"
+          },
+          "whole_owner_checkpoint_binding": "Whole legal_joint_retrieval.py hash still enforced;0ccc->b608 intentionally invalidates old implementation pins. No checkpoint read/rewrite/relabel/restore or numerical requalification occurred."
+        },
+        "Root_future_guide_Source_CAS_Git_clock_ledger_selection": null,
+        "V4_fixture": {
+          "actual_private_same9": {
+            "after": {
+              "errors": 0,
+              "failed": 0,
+              "passed": 9,
+              "skips": 0
+            },
+            "before": {
+              "errors": 0,
+              "failed": 7,
+              "passed": 2,
+              "skips": 0
+            }
+          },
+          "current_public_Torch_V4_run": false,
+          "packet": {
+            "bytes": 5056,
+            "path": "/tmp/V4-fixture-refresh-dispatch-private-v168-brhc4rkc/sealed-minimal-existing-V4-fixture-dispatch-private-fix.json",
+            "sha256": "4f487a1c949223fcbe85600482114daf1e604db3302bcec389c60d2fea391755"
+          },
+          "published_D_before_lexical": "ade03ff800c4162882997dcb5597100e41a36ae1",
+          "published_H_before_lexical": "d9c71ad597b4b1d2f11083afc1c564aaba03f520",
+          "published_Root_before_lexical": "6c32ae44ae1d286b4bf65c0d689b4f696ddf688e",
+          "scope": "Mechanical owning-fixture dispatch: explicitv4 refresh branch rather than falling back to v2; v3/v2 behavior and all39 old publictest definitions retained."
+        },
+        "actual_Source2": {
+          "Source_closed": true,
+          "actual_IO": {
+            "bytes": 16473908,
+            "captures": 89
+          },
+          "all_stage_FDs_closed": true,
+          "compact": {
+            "bytes": 3738,
+            "path": "/tmp/Root-LIR20-lexical-existing-Source2-CAS-actual-v178-izwwqdmp/Root-LIR20-two-installed-Source-closed-small-v178.json",
+            "sha256": "0dd31f12c942df850fc7deb7e5892babce2645666509148d37903fd00e3c39f9"
+          },
+          "errors": [],
+          "full_Root_envelope_retained": 67108864,
+          "full_receipt": {
+            "bytes": 71930,
+            "path": "/tmp/Root-LIR20-lexical-existing-Source2-CAS-actual-v178-izwwqdmp/actual-output/actual-existing-two-Python-code-CAS-receipt.json",
+            "sha256": "8d24c445269694246c211fa1b50d3754b09cf467ab90af7d9dac9a3a4058b9f9"
+          },
+          "installed": [
+            {
+              "bytes": 74852,
+              "full9": {
+                "st_ctime_ns": "1795536203131559664",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70042522",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795536202505585821",
+                "st_nlink": "1",
+                "st_size": "74852",
+                "st_uid": "1000"
+              },
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_joint_retrieval.py",
+              "sha256": "b60874c3e8260f926cbd5eab18018c183417b594b9937a167854dbe45fcf9bac"
+            },
+            {
+              "bytes": 65766,
+              "full9": {
+                "st_ctime_ns": "1795536203718564424",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70042527",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795536202508711366",
+                "st_nlink": "1",
+                "st_size": "65766",
+                "st_uid": "1000"
+              },
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_joint_retrieval.py",
+              "sha256": "163d81acf27e16b6d31145b3d78133578fa65646bacf2a83a4c9898a6124ccc5"
+            }
+          ],
+          "module_closed": true,
+          "remaining_stages": [],
+          "staged_before_first_effect": true,
+          "uncertain_FDs": []
+        },
+        "actual_publication": {
+          "D_tree": "d9207d9c0b34726b9e46a64c89e62e6d077da6a1",
+          "all4_materialized_stores_clean": true,
+          "force_or_tag_push": false,
+          "gitlinks_joined": true,
+          "new_Source_SDK_tests_CI_model_runtime": false,
+          "normal_FF_pushes": {
+            "datasets": {
+              "from": "ade03ff800c4162882997dcb5597100e41a36ae1",
+              "porcelain": " \t2d3d1475b3aebfc22efe26370a0c015b02ff145b:refs/heads/main\tade03ff800..2d3d1475b3",
+              "rc": 0,
+              "ref": "refs/heads/main",
+              "to": "2d3d1475b3aebfc22efe26370a0c015b02ff145b"
+            },
+            "hallucinate": {
+              "from": "d9c71ad597b4b1d2f11083afc1c564aaba03f520",
+              "porcelain": " \t7a7192f116d610f89071db882bf1ec4ed9664c7d:refs/heads/main\td9c71ad..7a7192f",
+              "rc": 0,
+              "ref": "refs/heads/main",
+              "to": "7a7192f116d610f89071db882bf1ec4ed9664c7d"
+            },
+            "root": {
+              "from": "6c32ae44ae1d286b4bf65c0d689b4f696ddf688e",
+              "porcelain": " \tf7e9e19dd9856e937a36e27ee1f2b1a8adb35e82:refs/heads/main\t6c32ae44ae..f7e9e19dd9",
+              "rc": 0,
+              "ref": "refs/heads/main",
+              "to": "f7e9e19dd9856e937a36e27ee1f2b1a8adb35e82"
+            }
+          },
+          "origin_main_after": {
+            "accelerate": "88c0d9f82f66aaddbb01344c9f85236e92a5dc88",
+            "datasets": "2d3d1475b3aebfc22efe26370a0c015b02ff145b",
+            "hallucinate": "7a7192f116d610f89071db882bf1ec4ed9664c7d",
+            "root": "f7e9e19dd9856e937a36e27ee1f2b1a8adb35e82"
+          },
+          "other_gitlinks_and_A_preserved": true,
+          "receipt": {
+            "bytes": 4985,
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-LIR20-two-code-three-FF-publication-small-v178.json",
+            "sha256": "a44f46d32b43b00df5e65a6c5f7f1d30ad37a866d35e5a283637c4df50f6b7c0"
+          }
+        },
+        "catalog_after": 511,
+        "catalog_before": 510,
+        "migration_key": "current_user_goal_v4_fixture_and_lexical_tokenless_engineering_milestone511_20261124",
+        "preservation_requirement": {
+          "all_old_JSON_values_unchanged": true,
+          "components": 126,
+          "old_catalog_records": 510,
+          "task_status_dependencies_acceptance_unchanged": true,
+          "tasks": 24,
+          "whole_MD_prefixes_unchanged": true
+        },
+        "record_id": "v4-fixture-and-lexical-tokenless-engineering-milestone511-20261124",
+        "retained_claim_context": {
+          "active": {
+            "full_claim_bytes": 17769168896,
+            "records": 23
+          },
+          "nonreleased": {
+            "full_claim_bytes": 77055315136,
+            "records": 589
+          },
+          "retained": {
+            "full_claim_bytes": 59286146240,
+            "records": 566
+          },
+          "scope": "Unchanged locked-ledger reservation-claim metadata; not current filesystem usage,117.199s capacity-refusal measurements, process liveness or releaseauthority. No ledger mutation/UUIDretirement; original custody/effect fences remain unclosed. V4/Torch remains unrun under the originalcapacity policy.",
+          "summary": {
+            "bytes": 31978,
+            "path": "/tmp/Phase4-managed-disk-lowering-private-v143/actual-retained-claims-attribution-summary-v170.json",
+            "sha256": "46e8615eaaee9fd81114431dbcdc911ea3dde69ab2b51bee30e192cc7af614f6"
+          }
+        },
+        "schema": "one-existing-four-guide511-closed-engineering-facts/v1",
+        "scope_limits": {
+          "all_prior_failures_costs_and_full_envelopes_retained": true,
+          "checkpoint_identity_weakened": false,
+          "current_public_Torch_V4_unrun": true,
+          "legal_meaning_definition_review_training_gold_proof_admission": false,
+          "new_neural_numerical_Native_compiler_model_training_hosted_CI_qualification": false,
+          "physical_IO_accounting_complete": false,
+          "private_cohorts_not_pooled": true,
+          "whole_phase_or_eight_phase_completion": false
+        }
+      },
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY",
+      "private9_and_private12_are_distinct_cohorts_not_pooled": true,
+      "public_owningfile_Torch_V4_run_claimed": false,
+      "task_component_status_deps_acceptance_unchanged": true,
+      "all_prior_failures_costs_full_envelopes_and_incomplete_physical_IO_preserved": true,
+      "not_granted": [
+        "Statutory meaning, governing definition/applicability or independent interpretation approval",
+        "Training/gold/proof/source-bound norm admission",
+        "Current public owning-file/Torch/V4 qualification or neural tensor projection/ranking/fit",
+        "New Native/compiler/model/training/hosted-CI qualification",
+        "Whole-phase or full-eight-phase completion",
+        "Ledger mutation, UUID retirement, release authority or closure of original custody/effect fences"
+      ],
+      "full_eight_phase_goal_remains_open": true
     }
   },
   "programme_goal_hierarchy": {
