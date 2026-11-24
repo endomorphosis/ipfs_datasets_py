@@ -10479,3 +10479,224 @@ def test_pre_child_v5_postgrant_ledger_lock_rechecks_current_custody(private_con
         patch.setitem(globals(), '_closed_pre_child_fixture', _closed_pre_child_v5_postgrant_ledger_lock_fixture)
         patch.setitem(globals(), '_assert_closed_pre_child_unknown', _assert_closed_pre_child_v5_unknown)
         test_pre_child_closed_native_inspection_rechecks_current_custody(private_control, patch, fault)
+
+# Initial-entry refusal controls use the existing canonical CLI loader and the
+# real public validation/host modules above. The constructor, locks/scheduler,
+# source-pin marker and request-shape boundary are explicit unit fixtures;
+# open/__enter__/_read/to_dict and the CLI producer/classifier remain real.
+import ast as _pre_entry_ast
+import contextlib as _pre_entry_contextlib
+import types as _pre_entry_types
+import unittest as _pre_entry_unittest
+
+_pre_entry_fixture_meter = {'fixture_read_bytes': 0}
+
+
+class _PreResourceEntryPublicFixture:
+    def __init__(self, tmp_path, monkeypatch):
+        self.root = tmp_path
+        self.request_path = tmp_path / 'entry-request.json'
+        self.ledger_path = tmp_path / 'entry-ledger.json'
+        self.cli, self.cli_path = _lifecycle_launcher_module()
+        self.cli_source = self.cli_path.read_bytes()
+        self.project = self.cli.ROOT
+        self.host, self.sdk = native_disk, validation
+        self.guard_changed = False
+        self.writes = self.native = 0
+        self.mode = 'read_refusal'
+        self.fixture_ledger = {'schema': native_disk.SCHEMA, 'roots': [],
+            'limit_bytes': 280000000000, 'reservations': {}}
+        _write_json(self.ledger_path, self.fixture_ledger)
+        self.value = {'schema': 'owned-validation-request/v5',
+            'source_sha256': {str(self.cli_path): hashlib.sha256(self.cli_source).hexdigest()},
+            'ordinary_scratch_profile': {'schema': 'owned-validation-ordinary-scratch-live/v1'},
+            'storage_bytes': 16777216, 'attempt_directory': str(tmp_path/'attempt'),
+            'outputs': {}, 'cpu_slots': 1, 'memory_mb': 1536,
+            'child_process_slots': 4, 'expected_scheduler_policy_sha256': 'f'*64,
+            'process_scope': 'sampled_birth_bound_descendants'}
+        self.raw = json.dumps(self.value, sort_keys=True).encode()
+        self.pin = hashlib.sha256(self.raw).hexdigest()
+        self.request_path.write_bytes(self.raw)
+        self.modules = {'candidate': self.cli}
+        self.events = {key: key == 'owner_open_attempted' for key in self.cli._PRE_GRANT_EVENTS}
+        self.outcome = dict(schema='owned-validation-result/v1', request_sha256=self.pin,
+            executed_checks=[], returncode=None, completed=False, admitted=False,
+            Lean_admitted=False, authority_granted=False, model_weights_downloaded=False,
+            watchdog_errors=[], received_signals=[])
+        self._install_declared_boundaries(monkeypatch)
+
+    def _install_declared_boundaries(self, monkeypatch):
+        fx = self
+        cls = validation.ValidationResourceReservation
+
+        def fixture_constructor(owner):
+            owner.ledger_path = fx.ledger_path
+            owner.root_identities = []
+            owner.storage_limit_bytes = 250000000000
+            owner.storage_bytes = 16777216
+            owner.memory_mb, owner.cpu_slots, owner.child_process_slots = 1536, 1, 4
+            owner.reservation_id = 'fictional-initial-entry-owner'
+            owner._owner_pid = os.getpid()
+            owner._owner_identity = native_disk._process(os.getpid())
+            owner._lease = owner._record = owner._child = owner._cleanup_error = None
+            owner._entered = owner._opened = owner._opening = False
+            owner._started = owner._admission_started = None
+            owner._startup_original_profile = None
+            owner._startup_open_attempted = False
+            owner._scheduler_state_path = owner._attempt = None
+            owner._last_process_observation = owner._physical_profile = None
+            owner._live_inventory_profile = None
+            owner._require_existing_ledger = True
+            owner._ordinary_scratch_profile = {'schema': 'owned-validation-ordinary-scratch-live/v1'}
+            owner._ordinary_scratch_absences = 0
+            owner._live_inventory_active = False
+            owner.request_sha256 = fx.pin
+            owner._cleanup_failure_observations = []
+            owner._cleanup_failure_observation_overflow = False
+
+        @_pre_entry_contextlib.contextmanager
+        def fixture_empty_scope(owner):
+            yield
+
+        def fixture_write(owner, ledger):
+            fx.writes += 1
+            if fx.mode == 'read_during_write':
+                _write_json(fx.ledger_path, dict(ledger, limit_bytes=280000000000))
+                owner._read()
+            raise native_disk.DaemonResourceError('disk ledger storage scope differs')
+
+        def fixture_acquire(owner, *args):
+            fx.native += 1
+            raise native_disk.DaemonResourceError('disk ledger storage scope differs')
+
+        def fixture_source_guard(value):
+            if fx.guard_changed or value['source_sha256'] != fx.value['source_sha256']:
+                raise RuntimeError('fixture Source pin changed')
+
+        monkeypatch.setattr(cls, '__init__', fixture_constructor)
+        for name in ('_admission_scope', '_admission_cleanup_scope', '_locked'):
+            monkeypatch.setattr(cls, name, fixture_empty_scope)
+        monkeypatch.setattr(cls, '_guard_inputs', lambda owner: None)
+        monkeypatch.setattr(cls, 'tracks_descendants', property(lambda owner: True))
+        monkeypatch.setattr(cls, '_scheduler_identity', lambda owner: (
+            _pre_entry_types.SimpleNamespace(value='validation'), 'canonical_validation'))
+        monkeypatch.setattr(cls, '_validate_new_reservation', lambda owner, ledger: None)
+        monkeypatch.setattr(cls, '_account', lambda owner, *args, **kwargs: {})
+        monkeypatch.setattr(cls, '_retain', lambda owner, *args, **kwargs: None)
+        monkeypatch.setattr(cls, '_write', fixture_write)
+        monkeypatch.setattr(cls, '_acquire_native_lease', fixture_acquire)
+        monkeypatch.setattr(native_disk.native_deadlines, '_check_resource_operation_deadline', lambda: None)
+        monkeypatch.setattr(self.cli, '_lifecycle_source_guard', fixture_source_guard)
+        monkeypatch.setattr(self.cli, '_ordinary_scratch_no_child_request_shape',
+            lambda value, raw: json.loads(raw) == value and value['schema'] == 'owned-validation-request/v5')
+        # No project package/module replacement or AST extraction is performed.
+        # The canonical snapshot implementation reads the actual CLI/request.
+
+    def close(self):
+        pass  # tmp_path and monkeypatch retain their original pytest ownership.
+
+    def fail_open(self):
+        owner = self.sdk.ValidationResourceReservation()
+        owner.request_sha256 = self.pin
+        try:
+            owner.open()
+        except self.host.DaemonResourceError as error:
+            return owner, error, dict(self.outcome, error_type=type(error).__name__, error=str(error))
+        raise AssertionError('fixture must refuse')
+
+    def produce(self, label=None, owner=None, error=None, outcome=None, events=None):
+        function = getattr(self.cli, '_pre_resource_entry_refusal_terminal', None)
+        if function is None:
+            return None
+        if owner is None:
+            owner, error, outcome = self.fail_open()
+        try:
+            return function(owner, self.value, self.raw, self.request_path, self.pin,
+                self.ledger_path, events or self.events, error, outcome)
+        except BaseException:
+            return None  # Same original main-finally primary-failure boundary.
+
+    def reference(self):
+        terminal = self.produce('candidate')
+        assert type(terminal) is dict, 'candidate reference producer failed'
+        return terminal
+
+    def classify(self, terminal, **changes):
+        arguments = dict(expected_request_sha256=self.pin, owner_pid=os.getpid(),
+            owner_birth=native_disk._process(os.getpid())['birth'], returncode=1,
+            expected_resource_ledger=str(self.ledger_path))
+        arguments.update(changes)
+        return self.cli.classify_owned_validation_source_custody(terminal, self.raw, **arguments)
+
+
+@pytest.fixture
+def _pre_resource_entry_public_case(request, tmp_path, monkeypatch):
+    case = _PreResourceEntryPublicFixture(tmp_path, monkeypatch)
+    request.instance._pre_resource_entry_fixture = case
+    yield
+
+
+@pytest.mark.usefixtures('_pre_resource_entry_public_case')
+class TestCLIInitialReadRefusalControls(_pre_entry_unittest.TestCase):
+    def setUp(self):self.fx=self._pre_resource_entry_fixture
+    def tearDown(self):self.fx.close()
+    def unknown(self,t,**kw):
+        self.assertEqual(self.fx.classify(t,**kw),{'verdict':'requires_original_native_cleanup','source_custody_closed':False,'storage_release_authorized':False})
+    def test_actual_scope_refusal_reports_constructed_owner(self):
+        t=self.fx.produce();self.assertIsInstance(t,dict);self.assertIs(t['source_custody_lifecycle']['owner_state']['constructed'],True)
+    def test_scope_mismatch_remains_refused_without_write_or_native(self):
+        t=self.fx.produce();self.assertIsInstance(t,dict);self.assertEqual(self.fx.writes,0);self.assertEqual(self.fx.native,0)
+        raw=self.fx.ledger_path.read_bytes();_pre_entry_fixture_meter['fixture_read_bytes']+=len(raw);self.assertEqual(json.loads(raw)['limit_bytes'],280000000000)
+    def test_copied_message_without_live_frames_is_unknown(self):
+        o=self.fx.sdk.ValidationResourceReservation();e=self.fx.host.DaemonResourceError('disk ledger storage scope differs')
+        self.assertIsNone(self.fx.produce(owner=o,error=e,outcome=self.fx.outcome))
+    def mutate_owner(self,key,value):
+        o,e,out=self.fx.fail_open();setattr(o,key,value);self.assertIsNone(self.fx.produce(owner=o,error=e,outcome=out))
+    def test_entered_owner_is_unknown(self):self.mutate_owner('_entered',True)
+    def test_opened_owner_is_unknown(self):self.mutate_owner('_opened',True)
+    def test_record_created_is_unknown(self):self.mutate_owner('_record',{})
+    def test_native_lease_is_unknown(self):self.mutate_owner('_lease',object())
+    def test_child_attached_is_unknown(self):self.mutate_owner('_child',{})
+    def test_open_returned_event_is_unknown(self):
+        o,e,out=self.fx.fail_open();events=dict(self.fx.events,owner_open_returned=True);self.assertIsNone(self.fx.produce(owner=o,error=e,outcome=out,events=events))
+    def test_child_attempt_event_is_unknown(self):
+        o,e,out=self.fx.fail_open();events=dict(self.fx.events,child_launch_attempted=True);self.assertIsNone(self.fx.produce(owner=o,error=e,outcome=out,events=events))
+    def test_uncertain_write_is_unknown(self):
+        good=dict(self.fx.fixture_ledger,limit_bytes=250000000000);self.fx.ledger_path.write_text(json.dumps(good));self.fx.mode='write_failure'
+        o,e,out=self.fx.fail_open();self.assertGreater(self.fx.writes,0);self.assertIsNone(self.fx.produce(owner=o,error=e,outcome=out))
+    def test_read_during_uncertain_write_cannot_reuse_initial_read(self):
+        good=dict(self.fx.fixture_ledger,limit_bytes=250000000000);self.fx.ledger_path.write_text(json.dumps(good));self.fx.mode='read_during_write'
+        o,e,out=self.fx.fail_open();self.assertGreater(self.fx.writes,0);self.assertIsNone(self.fx.produce(owner=o,error=e,outcome=out))
+    def test_post_native_state_is_unknown(self):
+        o,e,out=self.fx.fail_open();o._entered=True;o._lease=object();self.assertIsNone(self.fx.produce(owner=o,error=e,outcome=out))
+    def test_changed_actual_owner_identity_is_unknown(self):
+        o,e,out=self.fx.fail_open();o._owner_identity=dict(o._owner_identity,birth='0');self.assertIsNone(self.fx.produce(owner=o,error=e,outcome=out))
+    def test_changed_Source_guard_is_unknown(self):
+        o,e,out=self.fx.fail_open();self.fx.guard_changed=True;self.assertIsNone(self.fx.produce(owner=o,error=e,outcome=out))
+    def test_consumer_recognizes_exact_live_V5_refusal(self):
+        t=self.fx.reference();self.assertEqual(self.fx.classify(t),{'verdict':'proven_original_no_child_no_native_grant','source_custody_closed':True,'storage_release_authorized':False})
+    def test_consumer_rejects_wrong_owner(self):
+        self.unknown(self.fx.reference(),owner_pid=os.getpid()+1)
+    def test_consumer_rejects_constructor_false_fiction(self):
+        t=self.fx.reference();t['source_custody_lifecycle']['owner_state']['constructed']=False;self.unknown(t)
+    def test_consumer_rejects_unverified_trace(self):
+        t=self.fx.reference();t['source_custody_lifecycle']['entry_refusal_observation']['live_trace_verified']=False;self.unknown(t)
+    def test_consumer_rejects_record(self):
+        t=self.fx.reference();t['reservation']['record']={};self.unknown(t)
+    def test_consumer_rejects_native_grant(self):
+        t=self.fx.reference();t['reservation']['resource_lease']={};self.unknown(t)
+    def test_consumer_rejects_child_attempt(self):
+        t=self.fx.reference();t['source_custody_lifecycle']['events']['child_launch_attempted']=True;self.unknown(t)
+    def test_consumer_rejects_storage_release(self):
+        t=self.fx.reference();t['source_custody_lifecycle']['storage']['release_authorized']=True;self.unknown(t)
+    def test_consumer_rejects_missing_Source_guard(self):
+        t=self.fx.reference();t['source_custody_lifecycle']['source_guards']['source_pins_unchanged']=False;self.unknown(t)
+    def test_consumer_rejects_wrong_producer_pin(self):
+        t=self.fx.reference();t['source_custody_lifecycle']['producer']['sha256']='0'*64;self.unknown(t)
+    def test_consumer_rejects_unexpected_signal_returncode(self):
+        self.unknown(self.fx.reference(),returncode=-2)
+    def test_main_calls_new_producer_after_existing_refusals(self):
+        tree=_pre_entry_ast.parse(self.fx.cli_source)
+        main=next(n for n in tree.body if isinstance(n,_pre_entry_ast.FunctionDef) and n.name=='main')
+        calls=[n.func.id for n in _pre_entry_ast.walk(main) if isinstance(n,_pre_entry_ast.Call) and isinstance(n.func,_pre_entry_ast.Name)]
+        self.assertIn('_pre_resource_entry_refusal_terminal',calls)

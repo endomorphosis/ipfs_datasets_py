@@ -629,7 +629,8 @@ def _complete_preentry_terminal_shape(terminal, request_pin):
     kind = witness.get('schema')
     observation = ('capacity_observation' if kind == PRE_GRANT_CAPACITY_REFUSAL_SCHEMA else
                    'lock_observation' if kind == PRE_GRANT_LOCK_REFUSAL_SCHEMA else
-                   'ledger_write_bound_observation' if kind == PRE_GRANT_LEDGER_BOUND_REFUSAL_SCHEMA else None)
+                   'ledger_write_bound_observation' if kind == PRE_GRANT_LEDGER_BOUND_REFUSAL_SCHEMA else
+                   'entry_refusal_observation' if kind == PRE_RESOURCE_ENTRY_REFUSAL_SCHEMA else None)
     return (observation is not None and set(witness) == {'schema','stage','request_sha256','producer',
         'owner','ledger_path','events','owner_state',observation,'native_grant','storage','source_guards'}
         and witness.get('request_sha256') == request_pin
@@ -934,6 +935,116 @@ def _pre_grant_ledger_bound_refusal_terminal(owner, value, request_raw, request_
         source_custody_lifecycle=witness)
 
 
+
+PRE_RESOURCE_ENTRY_REFUSAL_SCHEMA = 'owned-validation-pre-resource-entry-refusal/v1'
+
+
+def _resource_entry_refusal_observation(value):
+    fields = {'schema', 'boundary', 'error_type', 'error', 'owner_constructed',
+              'live_trace_verified', 'initial_ledger_returned',
+              'record_construction_reached', 'native_acquire_reached'}
+    return (type(value) is dict and set(value) == fields
+        and value['schema'] == 'owned-validation-initial-ledger-read-refusal/v1'
+        and value['boundary'] == 'initial_ledger_read'
+        and value['error_type'] == 'DaemonResourceError'
+        and type(value['error']) is str and 0 < len(value['error']) <= 1024
+        and all(type(value[key]) is bool for key in
+            ('owner_constructed', 'live_trace_verified', 'initial_ledger_returned',
+             'record_construction_reached', 'native_acquire_reached'))
+        and value['owner_constructed'] is True and value['live_trace_verified'] is True
+        and value['initial_ledger_returned'] is False
+        and value['record_construction_reached'] is False
+        and value['native_acquire_reached'] is False)
+
+
+def _pre_resource_entry_refusal_terminal(owner, value, request_raw, request_path,
+        request_pin, resource_ledger, events, failure, outcome):
+    """Observe a constructed owner's actual first-read refusal, never a constructor fiction."""
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_daemon_resources as host
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.validation_run_resources import ValidationResourceReservation
+    if (value.get('schema') != 'owned-validation-request/v5'
+            or type(owner) is not ValidationResourceReservation
+            or type(failure) is not host.DaemonResourceError
+            or type(failure.args) is not tuple or len(failure.args) != 1
+            or type(failure.args[0]) is not str or not 0 < len(failure.args[0]) <= 1024
+            or str(failure) != failure.args[0]
+            or owner._entered is not False or owner._opened is not False
+            or owner._record is not None or owner._lease is not None or owner._child is not None
+            or owner._opening is not False or owner._started is not None
+            or type(events) is not dict or set(events) != _PRE_GRANT_EVENTS
+            or any(type(flag) is not bool for flag in events.values())
+            or events != {key: key == 'owner_open_attempted' for key in _PRE_GRANT_EVENTS}):
+        return None
+    validation_module = sys.modules.get(ValidationResourceReservation.__module__)
+    expected_host = ROOT/'ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py'
+    expected_validation = expected_host.with_name('validation_run_resources.py')
+    if (Path(host.__file__).resolve() != expected_host or validation_module is None
+            or Path(validation_module.__file__).resolve() != expected_validation):
+        return None
+    enter, initial_read = host.DaemonResourceReservation.__enter__, host.DaemonResourceReservation._read
+    functions = ((ValidationResourceReservation.open, validation_module, expected_validation),
+        (enter, host, expected_host),
+        (ValidationResourceReservation._read, validation_module, expected_validation),
+        (initial_read, host, expected_host))
+    if any(fn.__globals__ is not module.__dict__ or fn.__code__.co_filename != str(path)
+           for fn, module, path in functions):
+        return None
+    frames, trace, last = {}, failure.__traceback__, None
+    while trace is not None:
+        last = trace
+        for fn, module, _ in functions:
+            if (trace.tb_frame.f_code is fn.__code__ and trace.tb_frame.f_globals is module.__dict__
+                    and trace.tb_frame.f_locals.get('self') is owner):
+                if fn.__code__ in frames:
+                    return None
+                frames[fn.__code__] = trace.tb_frame
+        trace = trace.tb_next
+    if (set(frames) != {fn.__code__ for fn, _, _ in functions}
+            or last is None or last.tb_frame.f_code is not initial_read.__code__):
+        return None
+    # The first read has not returned: no ledger or record local can exist yet.
+    # A read from uncertain first-write/cleanup code cannot reuse this boundary.
+    entry_locals = frames[enter.__code__].f_locals
+    if 'ledger' in entry_locals or 'record' in entry_locals:
+        return None
+    observation = dict(schema='owned-validation-initial-ledger-read-refusal/v1',
+        boundary='initial_ledger_read', error_type='DaemonResourceError', error=str(failure),
+        owner_constructed=True, live_trace_verified=True, initial_ledger_returned=False,
+        record_construction_reached=False, native_acquire_reached=False)
+    if not _resource_entry_refusal_observation(observation):
+        return None
+    reservation = owner.to_dict()
+    if (reservation.get('status') != 'not_entered' or reservation.get('record') is not None
+            or reservation.get('resource_lease') is not None
+            or reservation.get('process_observation') is not None
+            or reservation.get('cleanup_error') is not None):
+        return None
+    identity = host._process(os.getpid())
+    if (identity is None or any(identity[key] != owner._owner_identity[key] for key in ('pid', 'birth'))
+            or snapshot(request_path) != request_raw):
+        return None
+    _lifecycle_source_guard(value)
+    producer = str(Path(__file__).resolve())
+    witness = dict(schema=PRE_RESOURCE_ENTRY_REFUSAL_SCHEMA,
+        stage='owner_open_initial_ledger_read_refused_before_record',
+        request_sha256=request_pin,
+        producer={'path': producer, 'sha256': value['source_sha256'].get(producer)},
+        owner={key: identity[key] for key in ('pid', 'birth')},
+        ledger_path=str(resource_ledger), events=dict(events),
+        owner_state={'constructed': True, 'entered': owner._entered, 'opened': owner._opened,
+            'record_created': owner._record is not None, 'native_lease_created': owner._lease is not None,
+            'child_attached': owner._child is not None},
+        entry_refusal_observation=observation,
+        native_grant={'status': 'not_requested_before_resource_entry'},
+        storage={'status': 'not_entered', 'release_authorized': False},
+        source_guards={'request_unchanged': True, 'source_pins_unchanged': True,
+            'owner_identity_unchanged': True, 'errors': []})
+    return dict(schema='owned-validation-failure-terminal/v1', request_sha256=request_pin,
+        completed=False, admitted=False, Lean_admitted=False, failure=outcome,
+        reservation=reservation, process_cleanup_error=None, owner_exit_error=None,
+        source_custody_lifecycle=witness)
+
+
 def classify_owned_validation_source_custody(terminal, request_raw, *,
         expected_request_sha256, owner_pid, owner_birth, returncode, expected_resource_ledger):
     """Prove only explicit original no-child/no-native source-custody closure.
@@ -985,6 +1096,53 @@ def classify_owned_validation_source_custody(terminal, request_raw, *,
             phase_owner = reservation['startup_clock_profile']['original_owner']
             need(type(phase_owner) is dict and type(phase_owner.get('pid')) is int
                  and phase_owner.get('pid') == owner_pid and phase_owner.get('birth') == owner_birth)
+        if type(witness) is dict and witness.get('schema') == PRE_RESOURCE_ENTRY_REFUSAL_SCHEMA:
+            need(value['schema'] == 'owned-validation-request/v5' and returncode == 1)
+            need(set(witness) == {'schema', 'stage', 'request_sha256', 'producer', 'owner',
+                'ledger_path', 'events', 'owner_state', 'entry_refusal_observation',
+                'native_grant', 'storage', 'source_guards'})
+            need(witness['stage'] == 'owner_open_initial_ledger_read_refused_before_record'
+                and witness['request_sha256'] == expected_request_sha256
+                and witness['owner'] == {'pid': owner_pid, 'birth': owner_birth}
+                and witness['ledger_path'] == expected_resource_ledger)
+            producer = str(Path(__file__).resolve())
+            producer_pin = value['source_sha256'].get(producer)
+            need(type(producer_pin) is str
+                and witness['producer'] == {'path': producer, 'sha256': producer_pin}
+                and hashlib.sha256(snapshot(producer, 4*1024*1024)).hexdigest() == producer_pin)
+            _lifecycle_source_guard(value)
+            _live_no_native_sdk_receipt(value, request_raw, expected_request_sha256, reservation, need)
+            observation = witness['entry_refusal_observation']
+            need(_resource_entry_refusal_observation(observation))
+            need(type(failure) is dict and failure.get('schema') == 'owned-validation-result/v1'
+                and failure.get('request_sha256') == expected_request_sha256
+                and failure.get('error_type') == 'DaemonResourceError'
+                and failure.get('error') == observation['error']
+                and failure.get('executed_checks') == [] and failure.get('returncode') is None
+                and failure.get('watchdog_errors') == [] and failure.get('received_signals') == []
+                and all(failure.get(key) is False for key in ('completed', 'admitted', 'Lean_admitted',
+                    'authority_granted', 'model_weights_downloaded')))
+            need(type(reservation) is dict and reservation.get('schema') == 'daemon-resource-reservations-v1'
+                and reservation.get('status') == 'not_entered' and reservation.get('record') is None
+                and reservation.get('resource_lease') is None and reservation.get('cleanup_error') is None
+                and reservation.get('process_observation') is None
+                and reservation.get('ledger_path') == expected_resource_ledger
+                and reservation.get('scheduler_lane') == 'validation'
+                and reservation.get('workload') == 'canonical_validation')
+            need(witness['owner_state'] == {'constructed': True, 'entered': False, 'opened': False,
+                'record_created': False, 'native_lease_created': False, 'child_attached': False}
+                and all(type(flag) is bool for flag in witness['owner_state'].values()))
+            need(type(witness['events']) is dict and set(witness['events']) == _PRE_GRANT_EVENTS
+                and all(type(flag) is bool for flag in witness['events'].values())
+                and witness['events'] == {key: key == 'owner_open_attempted' for key in _PRE_GRANT_EVENTS})
+            need(witness['native_grant'] == {'status': 'not_requested_before_resource_entry'}
+                and witness['storage'] == {'status': 'not_entered', 'release_authorized': False}
+                and witness['source_guards'] == {'request_unchanged': True, 'source_pins_unchanged': True,
+                    'owner_identity_unchanged': True, 'errors': []}
+                and all(type(witness['source_guards'][key]) is bool for key in
+                    ('request_unchanged', 'source_pins_unchanged', 'owner_identity_unchanged')))
+            return dict(verdict='proven_original_no_child_no_native_grant', source_custody_closed=True,
+                        storage_release_authorized=False)
         if type(witness) is dict and witness.get('schema') == PRE_GRANT_CAPACITY_REFUSAL_SCHEMA:
             from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_daemon_resources as host
             need(set(witness) == {'schema', 'stage', 'request_sha256', 'producer', 'owner',
@@ -2566,6 +2724,10 @@ def main(argv=None):
                             lifecycle_events, failure, outcome)
                     if terminal is None:
                         terminal = _pre_grant_ledger_bound_refusal_terminal(owner, value, raw,
+                            args.request, args.expected_request_sha256, args.resource_ledger,
+                            lifecycle_events, failure, outcome)
+                    if terminal is None:
+                        terminal = _pre_resource_entry_refusal_terminal(owner, value, raw,
                             args.request, args.expected_request_sha256, args.resource_ledger,
                             lifecycle_events, failure, outcome)
                     if terminal is not None:
