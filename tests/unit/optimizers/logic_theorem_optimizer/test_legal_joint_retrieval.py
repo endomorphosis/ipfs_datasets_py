@@ -486,7 +486,9 @@ def _reviewed_structural_query_fixture(owner, original, *, query=None,
     artifact_id = inputs["body"]["ledger_id"] + ":split"
     next(row for row in inputs["dependency_manifest"]["artifacts"] if row["artifact_id"] == artifact_id)["artifact_sha256"] = split_sha
     case["observed_artifacts"][artifact_id] = split_sha
-    if admission_version == "v3":
+    if admission_version == "v4":
+        owner._refresh_reviewed_pair_ledger(case, "v4")
+    elif admission_version == "v3":
         owner.refresh_reviewed_pair_ledger_v3(case)
     else:
         owner.refresh_reviewed_pair_ledger_v2(case)
