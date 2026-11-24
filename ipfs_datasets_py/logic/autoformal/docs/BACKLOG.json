@@ -1881,6 +1881,110 @@
       },
       "task_component_status_deps_acceptance_unchanged": true,
       "full_eight_phase_goal_remains_open": true
+    },
+    "current_user_goal_managed_disk_lowering37_and_typed7213_engineering_milestone510_20261124": {
+      "actual_capacity_refusal": {
+        "Original_or_test_or_model_or_reservation_or_retry": false,
+        "Source_A_D_closed_before420": true,
+        "V4_RED1_or_liveV4_executed": false,
+        "all204_source_pins_no_drift": true,
+        "all_records": 3424,
+        "calls": 1,
+        "elapsed_seconds": 117.199,
+        "fresh_locked_post_read_verified": true,
+        "generic_capacity_error_subbranch_not_recorded": true,
+        "ledger_unchanged": true,
+        "outcome": "DaemonResourceError: storage reservation capacity exceeded",
+        "outer_rc": 2,
+        "raw_SHA256": "a640b378b4ee84ba2fdd20eb5b5ee83afe596f9f04425b9f48bacf0d0951aacb",
+        "stored_cap_bytes": 280000000000,
+        "successful_reconciliation": false,
+        "target_default_bytes": 250000000000
+      },
+      "all_prior_failures_costs_and_incomplete_physical_IO_preserved": true,
+      "catalog_evidence_id": "managed-disk-lowering37-and-typed7213-engineering-milestone510-20261124",
+      "catalog_evidence_ordinal": 510,
+      "closed_facts_reference": {
+        "bytes": 4924,
+        "path": "/tmp/guide509-existing-four-private-compose-v131-irg3i1ib/guide510-private-parent-author/one-existing-guide510-combined-closed-facts-capsule.json",
+        "sha256": "1f88ec42dafea3c23b9f28b041ed2fd2ce14ad8600fa7dc800930c1213de0b02"
+      },
+      "counts_attached_to_distinct_commits_not_combined": true,
+      "current_closed_code_publication": {
+        "D": "48a1df131fb7f2a66b7b57bfb98647b91dbd308a",
+        "H": "9883cf1806122d070750edd351475480b3f11fbb",
+        "Root": "2f292b5e90b52176410a1f27ac5346d8769aaf40",
+        "Root_verified_remote_clean_gitlinks": true,
+        "receipt_SHA256": "3fa5158de8003a43200b8e52460ba64b1bc6a24959934965c7e620fc32e49820",
+        "receipt_bytes": 5140,
+        "receipt_path_not_held": true
+      },
+      "full_eight_phase_goal_remains_open": true,
+      "managed_disk_implementation_facts": {
+        "bytes": 4013,
+        "path": "/tmp/Phase4-managed-disk-lowering-private-v143/one-final-guide-consolidation-qualified37-and-actual-capacity-refusal-facts-v165.json",
+        "sha256": "6a76cb4b3a6c08dc48f60c996c4ae64680ca8425b368d121f01fba5a838d5fd1"
+      },
+      "managed_disk_qualification": {
+        "COLLECT_RUN_JUnit_order_equal": true,
+        "D_HEAD": "48a1df131fb7f2a66b7b57bfb98647b91dbd308a",
+        "all_Source_resource_parent_cleanup_closed": true,
+        "compiled_owner_SHA256": "51bec0e627e266595229dee298f22c7bdcf82bb5876eb2da1efd5f3655fbe585",
+        "errors": 0,
+        "failed_collect153_zero_tests_zero_credit": true,
+        "failures": 0,
+        "functions": 14,
+        "private37_is_separate": true,
+        "rewritten_owning_test_source_SHA256": "b2f0f2d8651c39c4521eb30f44d6a12036c08df8efaa6b142fdeac6307a0e5fd",
+        "skips": 0,
+        "subreports": 0,
+        "suite_time_seconds": 0.791,
+        "unique_physical_cases": 37
+      },
+      "not_granted": [
+        "Statutory meaning or independent interpretation approval",
+        "Governing definition/application or source-bound norm admission",
+        "Native/Lean/compiler/model/training/gold/hosted-CI qualification",
+        "Successful host-policy lowering or productive V4 case",
+        "Whole-phase or full-eight-phase completion"
+      ],
+      "separate_typed7213": {
+        "A_HEAD": "88c0d9f82f66aaddbb01344c9f85236e92a5dc88",
+        "D_HEAD": "8aa66fac886a1f6a916372ec89729334e6740aee",
+        "SDK_child_pid": 1116500,
+        "Source_A_D_closed": true,
+        "actual_result": {
+          "bytes": 59297,
+          "path": "/tmp/Root-7213-existing-canonical-typed-roundtrip-actual-v144/actual-output/actual-7213-existing-typed-roundtrip-result.json",
+          "sha256": "3b79af1b19440d5b91da2faab01eb38771c8262ae0c53fc5c54bcd5e5536b0ad"
+        },
+        "actual_scope": "Existing canonical TypedExpression constructor/from_dict/to_dict exact wire roundtrip only; no relational lowerer/native prover/model call",
+        "all_review_legal_definition_applicability_training_gold_proof_flags": false,
+        "child_elapsed_seconds": 0.6659962274134159,
+        "child_returncode": 0,
+        "evaluation_gold_mask": 0,
+        "leader_reaped": true,
+        "parent_pid": 1116127,
+        "parent_released": true,
+        "request": {
+          "bytes": 18543,
+          "path": "/tmp/Root-7213-existing-canonical-typed-roundtrip-actual-v144/actual-output/actual-7213-existing-unreviewed-request.json",
+          "sha256": "d476c4930f17d1d539f87b3a63e60d70a1ff1fbce63e8c9da971c052edb09499"
+        },
+        "source_binding": null,
+        "source_bound_norm": false,
+        "training_mask": 0,
+        "unresolved_choices": "Single P over all assignment/transfer by to/from alternatives; approval necessary only; Officer definition predicate distinct; same Corps referent; no assigning actor invented. Modal/quantifier/event/definition/applicability/meaning choices remain unreviewed, not legal findings.",
+        "workspace_removed": true
+      },
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY",
+      "successful_policy_lowering_or_productive_V4_claimed": false,
+      "task_component_status_deps_acceptance_unchanged": true,
+      "typed7213_compact": {
+        "bytes": 4010,
+        "path": "/tmp/Root-7213-existing-canonical-typed-roundtrip-actual-v144/Root-actual-7213-existing-typed-roundtrip-qualified-Source-resource-closed-small-v145.json",
+        "sha256": "a033fb9e1357067d850c6adcc294f4fc32cd54df13240318dd29f5f7de0e53f1"
+      }
     }
   },
   "programme_goal_hierarchy": {
