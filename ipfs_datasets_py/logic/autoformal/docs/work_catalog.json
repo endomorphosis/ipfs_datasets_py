@@ -24709,6 +24709,271 @@
         "Ledger mutation, UUID retirement, release authority or closure of original custody/effect fences"
       ],
       "full_eight_phase_goal_remains_open": true
+    },
+    {
+      "id": "generic-recovery-expected-ledger-limit-ordinary21-engineering-milestone512-20261124",
+      "evidence_ordinal": 512,
+      "path": "/tmp/guide512-json-private-author-3vzas43b/one-existing-guide512-closed-engineering-facts.json",
+      "observed_bytes": 11047,
+      "observed_sha256": "057177c282c352380e382e0bde1c116268a6a60af8c0dd7e1462c5ef213f7f41",
+      "root": "artifact_workspace",
+      "required_for_catalog_check": false,
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY",
+      "scope": "Existing generic recovery expected-ledger-limit core:21 unique ordinary source-bound owning controls,0 failures/errors/skips/duplicates, closed Source/resource/parent custody, and three normal FF code publications. Private21 remains a separate cohort. The optional admin-only header comparison preserves legacy None behavior and exact existing contracts; this records no real ledger/cap operation or host eligibility.",
+      "backlog_crosslink": {
+        "path": "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
+        "container": "migration",
+        "key": "current_user_goal_generic_recovery_expected_ledger_limit_ordinary21_engineering_milestone512_20261124"
+      },
+      "closed_engineering_facts": {
+        "schema": "one-existing-four-guide512-closed-engineering-facts/v1",
+        "record_id": "generic-recovery-expected-ledger-limit-ordinary21-engineering-milestone512-20261124",
+        "migration_key": "current_user_goal_generic_recovery_expected_ledger_limit_ordinary21_engineering_milestone512_20261124",
+        "catalog_before": 511,
+        "catalog_after": 512,
+        "ordinary_public21": {
+          "JUnit": {
+            "bytes": 4612,
+            "path": "/tmp/Root-LIR23-ordinary21-actual-READ-selected-v185-ad23tifd/actual-output/generic-recovery-ledger-cap21-run-result0-output1.bin",
+            "sha256": "87947090ff6b96ca9ac4462b4f2dbfc6190ff63d1e121b398ce35c2c909342c0"
+          },
+          "Native_Lean_or_model_training_or_statutory_admission": false,
+          "Source_closed": true,
+          "Source_envelope_retained": 134217728,
+          "actual_READ": {
+            "bytes": 19184,
+            "path": "/tmp/Root-LIR23-fresh18-existing-SourceREAD-actual-v183-huy_olqh/Root-actual-fresh18-READ-bound-ordinary21-small-v183.json",
+            "sha256": "201c5deb11b4effadbd972ffbbe43a41a46597966c7ecb25c6d5b8f7c421452f"
+          },
+          "actual_compiled_core_sha256": "d2b7abf195e1e9d656392b477ebad25d28963669e6f1b0fac1e1ad0bade9dfed",
+          "actual_host_record_eligibility": false,
+          "actual_owning_test_rewrite_source_sha256": "ed337607e173ea972bd00bee74d9e1bcfa5ee98954504212c67cbedbc0ce3384",
+          "actual_parent_release_return": true,
+          "all_prior_failures_and_costs_retained": true,
+          "binding": {
+            "bytes": 166298,
+            "path": "/tmp/Root-LIR23-ordinary21-actual-READ-selected-v185-ad23tifd/actual-output/generic-recovery-ledger-cap21-run-result0-output0.bin",
+            "sha256": "a316180dbdf9233b011551be51ed756c504c70a7534f81221fc973f4f1b184d4"
+          },
+          "core_normal_source_bound": true,
+          "duplicates": 0,
+          "errors": [],
+          "errors_count": 0,
+          "failures": 0,
+          "full_report": {
+            "bytes": 775003,
+            "path": "/tmp/Root-LIR23-ordinary21-actual-READ-selected-v185-ad23tifd/actual-output/complete-published-D-generic-recovery-ledger-cap21-existing-owner-report.json",
+            "sha256": "de721be0987f6dc0cc90077acfc76e95be1076f23dd08e19d90dd5ac6b38eb77"
+          },
+          "independent_roster": {
+            "bytes": 4361,
+            "path": "/tmp/LIR23-retained-capacity-existing-owner-source-v180-x3rt52pr/expected-public-existing-core-cap21-roster.json",
+            "sha256": "60482b84117db542fce14dcc85736622154daa6974427f0976aafe8b77047110"
+          },
+          "local_freeze": {
+            "D_HEAD": "e1f27b2f6a19e3a56b1624babbf57b0a7b15b152",
+            "D_tree": "c730faca8a6e568a78af044781b036f969879e86",
+            "bytes": 4513,
+            "clean_all4": true,
+            "no_push": true,
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-LIR23-corecap-local-candidate-frozen-no-push-v181.json",
+            "sha256": "b868c9bf8a316f694c6c68dd4f41526ca5c3303f07d039197f0b3c5224a5ce33"
+          },
+          "old_owning_cases_not_executed": true,
+          "only_new21_actual_ordinary_source_bound_tests": true,
+          "owning_test_actual_source_AST_code_execution_witness": true,
+          "physical_IO_accounting_complete": false,
+          "private21_and_public21_not_pooled": true,
+          "qualification_complete": true,
+          "real_managed_ledger_reconciliation_or_cap_change_selected": false,
+          "resource_cleanup_confirmed": true,
+          "schema": "actual-LIR23-resource21-qualified-Source-resource-closed-small/v185",
+          "scope": "ordinary selected resource fixtures on frozen e1, positive fictional ledger and adversarial refusals; Native resource execution is not Lean/model/legal qualification",
+          "skips": 0,
+          "unique_physical_cases": 21
+        },
+        "ordinary_public21_compact": {
+          "path": "/tmp/Root-LIR23-ordinary21-actual-READ-selected-v185-ad23tifd/Root-LIR23-ordinary21-qualified-Source-resource-closed-small-v185.json",
+          "bytes": 3146,
+          "sha256": "c3849d1ec516bacbc17d36bebbcca36dd09faff4831774f026bea6c6ad946da3"
+        },
+        "actual_three_FF_publication": {
+          "actual_host_record_eligibility_or_Lean_legal_grant": false,
+          "all_other_gitlinks_and_accelerate_preserved": true,
+          "force_or_tag_push": false,
+          "gitlink_updates": {
+            "hallucinate": {
+              "ipfs_datasets_py": {
+                "from": "0749418e5229f410b82db97c269250d3e044472c",
+                "to": "e1f27b2f6a19e3a56b1624babbf57b0a7b15b152"
+              }
+            },
+            "root": {
+              "external/ipfs_datasets": {
+                "from": "0749418e5229f410b82db97c269250d3e044472c",
+                "to": "e1f27b2f6a19e3a56b1624babbf57b0a7b15b152"
+              },
+              "hallucinate_app": {
+                "from": "80be21a8004aa7856cf0f6b8ec0749ac973d8f10",
+                "to": "60021e8ea19a85b2e5caf6de4ad0bf053581958d"
+              }
+            }
+          },
+          "local_after": {
+            "accelerate": {
+              "head": "88c0d9f82f66aaddbb01344c9f85236e92a5dc88",
+              "index_and_worktree_clean": true,
+              "tree": "416a953630c9ba7ef521fd87bf821f075b052efc"
+            },
+            "datasets": {
+              "head": "e1f27b2f6a19e3a56b1624babbf57b0a7b15b152",
+              "index_and_worktree_clean": true,
+              "tree": "c730faca8a6e568a78af044781b036f969879e86"
+            },
+            "hallucinate": {
+              "head": "60021e8ea19a85b2e5caf6de4ad0bf053581958d",
+              "index_and_worktree_clean": true,
+              "tree": "10f5e1dad9093bc0a63b251d19ea08930aba81af"
+            },
+            "root": {
+              "head": "38e8e0c9a5140ab5d16efdf35cdc38797a9ca92d",
+              "index_and_worktree_clean": true,
+              "tree": "d9bbf6fb70d56baa4c2fd854cf8aee96f1af81bb"
+            }
+          },
+          "new_Source_test_model_or_CI_invocation": false,
+          "origin_main_after": {
+            "accelerate": "88c0d9f82f66aaddbb01344c9f85236e92a5dc88",
+            "datasets": "e1f27b2f6a19e3a56b1624babbf57b0a7b15b152",
+            "hallucinate": "60021e8ea19a85b2e5caf6de4ad0bf053581958d",
+            "root": "38e8e0c9a5140ab5d16efdf35cdc38797a9ca92d"
+          },
+          "origin_main_before": {
+            "accelerate": "88c0d9f82f66aaddbb01344c9f85236e92a5dc88",
+            "datasets": "0749418e5229f410b82db97c269250d3e044472c",
+            "hallucinate": "80be21a8004aa7856cf0f6b8ec0749ac973d8f10",
+            "root": "698e4cabbcf755f249768a873a7aacda5cb3c59a"
+          },
+          "origin_urls": {
+            "accelerate": "https://github.com/endomorphosis/ipfs_accelerate_py.git",
+            "datasets": "https://github.com/endomorphosis/ipfs_datasets_py.git",
+            "hallucinate": "https://github.com/endomorphosis/hallucinate_app.git",
+            "root": "https://github.com/endomorphosis/lift_coding.git"
+          },
+          "push_order": [
+            "datasets",
+            "hallucinate",
+            "root"
+          ],
+          "pushes": {
+            "datasets": {
+              "from": "0749418e5229f410b82db97c269250d3e044472c",
+              "porcelain": " \te1f27b2f6a19e3a56b1624babbf57b0a7b15b152:refs/heads/main\t0749418e52..e1f27b2f6a",
+              "rc": 0,
+              "ref": "refs/heads/main",
+              "to": "e1f27b2f6a19e3a56b1624babbf57b0a7b15b152"
+            },
+            "hallucinate": {
+              "from": "80be21a8004aa7856cf0f6b8ec0749ac973d8f10",
+              "porcelain": " \t60021e8ea19a85b2e5caf6de4ad0bf053581958d:refs/heads/main\t80be21a..60021e8",
+              "rc": 0,
+              "ref": "refs/heads/main",
+              "to": "60021e8ea19a85b2e5caf6de4ad0bf053581958d"
+            },
+            "root": {
+              "from": "698e4cabbcf755f249768a873a7aacda5cb3c59a",
+              "porcelain": " \t38e8e0c9a5140ab5d16efdf35cdc38797a9ca92d:refs/heads/main\t698e4cabbc..38e8e0c9a5",
+              "rc": 0,
+              "ref": "refs/heads/main",
+              "to": "38e8e0c9a5140ab5d16efdf35cdc38797a9ca92d"
+            }
+          },
+          "qualification": {
+            "JUnit": {
+              "bytes": 4612,
+              "path": "/tmp/Root-LIR23-ordinary21-actual-READ-selected-v185-ad23tifd/actual-output/generic-recovery-ledger-cap21-run-result0-output1.bin",
+              "sha256": "87947090ff6b96ca9ac4462b4f2dbfc6190ff63d1e121b398ce35c2c909342c0"
+            },
+            "Source_resource_and_parent_closed": true,
+            "bytes": 3146,
+            "duplicates": 0,
+            "errors": 0,
+            "failures": 0,
+            "path": "/tmp/Root-LIR23-ordinary21-actual-READ-selected-v185-ad23tifd/Root-LIR23-ordinary21-qualified-Source-resource-closed-small-v185.json",
+            "private21_not_pooled": true,
+            "scope": "ordinary selected resource fixtures on frozen e1, positive fictional ledger and adversarial refusals; Native resource execution is not Lean/model/legal qualification",
+            "sha256": "c3849d1ec516bacbc17d36bebbcca36dd09faff4831774f026bea6c6ad946da3",
+            "skips": 0,
+            "unique_public_passes": 21
+          },
+          "real_managed_ledger_or_cap_operation": false,
+          "schema": "LIR23-corecap-ordinary21-GitHub-publication/v185",
+          "selected_blobs": {
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_resource_recovery.py": {
+              "blob": "eb6388cac544c9e9fb6340cef53cca26ff0fafab",
+              "bytes": 263400,
+              "sha256": "d2b7abf195e1e9d656392b477ebad25d28963669e6f1b0fac1e1ad0bade9dfed"
+            },
+            "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_resource_recovery.py": {
+              "blob": "8359394ca1be95b9fb2bfccb8633b5ad060ae2c4",
+              "bytes": 648256,
+              "sha256": "ed337607e173ea972bd00bee74d9e1bcfa5ee98954504212c67cbedbc0ce3384"
+            }
+          }
+        },
+        "actual_publication_compact": {
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-LIR23-corecap-ordinary21-three-FF-publication-small-v185.json",
+          "bytes": 4876,
+          "sha256": "4b907e4cc586610fe296ba4eb912bcde772821d6c80e3ed10acb2b09b116c088"
+        },
+        "implementation_scope": {
+          "owner": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_resource_recovery.py",
+          "owning_test": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_resource_recovery.py",
+          "optional_expected_ledger_limit": "Admin-only optional expected-ledger-limit comparison requires the explicit ledger header; None preserves legacy behavior.",
+          "preserved_contracts": "MAX250, census, custody, inventory and records remain exact.",
+          "dedicated_wrappers": {
+            "count": 4,
+            "automatically_enabled": false
+          },
+          "historical_160_and_two_ID_operations_generalized": false
+        },
+        "private21_is_separate_not_pooled": true,
+        "closed_parent_lease": "36398048ee9440488fb6f25970bdb371",
+        "retained_limits": {
+          "actual_real_ledger_reconciliation_or_cap_change": false,
+          "host_record_eligibility_or_claim_release_authority": false,
+          "original_custody_fences_closed_by_this_evidence": false,
+          "storage_policy_block_fully_resolved": false,
+          "current_public_LIR20_Torch_V4_run": false,
+          "new_Lean_Native_model_training_legal_or_corpus_admission": false,
+          "whole_phase_or_eight_phase_completion": false,
+          "physical_IO_accounting_complete": false,
+          "all_prior_failures_costs_full_envelopes_and_historical_scopes_preserved": true
+        },
+        "preservation_requirement": {
+          "tasks": 24,
+          "components": 126,
+          "old_catalog_records": 511,
+          "all_old_JSON_values_and_list_prefixes": true,
+          "task_status_dependencies_acceptance_unchanged": true
+        },
+        "future_guide_Source_CAS_Git_clock_ledger_selection": null
+      },
+      "preservation": {
+        "all_old_JSON_values_and_list_prefixes": true,
+        "ordered_tasks": 24,
+        "ordered_components": 126,
+        "prior_selected_evidence_prefix": 511,
+        "task_status_dependencies_acceptance_unchanged": true
+      },
+      "not_granted": [
+        "Real managed-ledger reconciliation, cap change, host eligibility or claim-release authority",
+        "Resolution of the full storage-policy block or closure of original custody fences",
+        "Current public LIR20 owning-file/Torch/V4 qualification",
+        "Lean/Native/model/training/statutory meaning, review, gold or corpus admission",
+        "Whole-phase or full-eight-phase completion"
+      ],
+      "full_eight_phase_goal_remains_open": true
     }
   ]
 }
