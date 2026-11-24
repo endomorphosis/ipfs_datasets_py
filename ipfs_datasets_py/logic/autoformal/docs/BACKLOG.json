@@ -1714,6 +1714,67 @@
         "all_24_ordered_tasks_and_status_dependencies_acceptance": true,
         "all_506_previous_catalog_records": true
       }
+    },
+    "current_user_goal_autonomous_handoff_identity_and_independent_metadata_milestone508_20261124": {
+      "catalog_evidence_id": "autonomous-handoff-identity-and-independent-metadata-normal57-normal25-milestone508-20261124",
+      "catalog_evidence_ordinal": 508,
+      "status": "CLOSED_SOFTWARE_QUALIFICATION_AND_PUBLICATION_SCOPE_ONLY",
+      "Gate57_accounting": {
+        "unique_parents": 57,
+        "passing_subreports": 111,
+        "raw_reports": 168,
+        "failures": 0,
+        "errors": 0,
+        "skips": 0,
+        "counts_are_separate_from_watchdog25": true
+      },
+      "watchdog25_accounting": {
+        "unique_parents": 25,
+        "passing_subreports": 0,
+        "raw_reports": 25,
+        "failures": 0,
+        "errors": 0,
+        "skips": 0,
+        "real_DB_integration_case_seconds": 3.002,
+        "counts_are_separate_from_Gate57": true
+      },
+      "Gate57_small_closeout": {
+        "path": "/tmp/Root-selected-current-Gate57-normal-v43/Root-Gate57-actual-ordinary-small-closeout-v43.json",
+        "bytes": 2876,
+        "sha256": "eb03537ac032ea8433bd47ccbdcedfff5465f7ec462b293bdf47710fb7e7382f"
+      },
+      "watchdog25_small_closeout": {
+        "path": "/tmp/Root-selected-native-watchdog-normal25-corrected-v58/Root-corrected-normal25-actual-small-closeout-v58.json",
+        "bytes": 3553,
+        "sha256": "1dfb1048fc82869e3c62f5df373a1260db94a66caf36f9726b0ad57d69da74cd"
+      },
+      "closed_child_first_publication": {
+        "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-qualified-watchdog25-three-repository-FF-publication-v58.json",
+        "bytes": 4319,
+        "sha256": "aeabb9cce3d82b94c4d837fcc48cdfceb70b62fcf1d906a987b81b0695814cb8"
+      },
+      "published_heads": {
+        "A": "88c0d9f82f66aaddbb01344c9f85236e92a5dc88",
+        "H": "0f6eb8e3337002accc647f481b46f930c6a7abeb",
+        "Root": "c701ab2730b2bee49d98daf7e10e56dc18c6bf29",
+        "D": "4ccc8917b2168db8e11f54c5aadd4ca267f1c488"
+      },
+      "historical_failed_invocations_retained": {
+        "v49": "ROOT str/Path data-binding preflight failed before Source/SDK; zero tests, original failure retained.",
+        "v50": "RUN exceeded the unchanged 64 MiB workspace in the final DB case; 24 console passes did not qualify the full cohort; original abort retained.",
+        "v52": "Actual 24 PASS/1 FAIL/0 errors/skips: the fictional fixture attempted public in_progress insertion and correctly hit the Native packet admission guard; original failure retained.",
+        "correction": "Invocation-only tmp_path retention of failed cases addressed completed passing DB-directory pressure; resource limits, selected tests, assertions and Native admission guard were unchanged. The corrected fixture explicitly models a fictional legacy/interrupted projection using an owned temporary DB transaction after the public insertion refusal and no-row assertion."
+      },
+      "completion_legal_admission_or_execution_granted": false,
+      "full_eight_phase_goal_remains_open": true,
+      "pending": "Real statutory admission and physical paired decode remain pending; no legal-meaning, model-training, Native Lean or hosted-CI conclusion follows from these ordinary software tests.",
+      "unchanged": {
+        "all_24_ordered_tasks_and_status_dependencies_acceptance": true,
+        "all_126_components_and_statuses": true,
+        "all_507_previous_catalog_records": true,
+        "Phase5_scientific_fields_and_all_other_JSON_values": true,
+        "entire_old_Markdown_byte_prefixes": true
+      }
     }
   },
   "programme_goal_hierarchy": {
@@ -1903,7 +1964,7 @@
         "not_a_formalized_provision_count": true,
         "total": 145
       },
-      "first_scientific_delivery": "One complete norm, governing definition and two genuinely distinct operative physical uses; then20\u201340 connected provisions, closed dependency components and all members of the selected manifest.",
+      "first_scientific_delivery": "One complete norm, governing definition and two genuinely distinct operative physical uses; then20–40 connected provisions, closed dependency components and all members of the selected manifest.",
       "governing_edition_or_legal_asof_selected": false,
       "next_existing_task": {
         "alias": "LIR-0201",
@@ -2532,7 +2593,7 @@
     },
     "expansion_milestones": [
       "reviewed norm/governing definition/two distinct operative uses",
-      "20\u201340 connected provisions",
+      "20–40 connected provisions",
       "bounded dependency components over every pinned occurrence"
     ],
     "historical_attempt_rearming_authorized": false,
@@ -4893,7 +4954,7 @@
     },
     {
       "acceptance_criteria": [
-        "Approximately20\u201340 provisions cover actual definitions and users within a bounded profile.",
+        "Approximately20–40 provisions cover actual definitions and users within a bounded profile.",
         "Semantic dependency clusters, near duplicates and amendments have declared split handling."
       ],
       "actual_pilot_selection_qualified": false,
@@ -4957,7 +5018,7 @@
           "sha256": "61a870668a9cd7dfcfbd5f418e49569029ddf024f2fb7df7eca7de431495434b"
         },
         "minimal_profile_decision_sequence": [
-          "Review source/edition/roles/applicability and exact \u00a7101(a)/(b)/(c)/(d)/(e)/(f) preamble attachments first.",
+          "Review source/edition/roles/applicability and exact §101(a)/(b)/(c)/(d)/(e)/(f) preamble attachments first.",
           "Select one bounded reviewed term/body/sense and an actual reviewed use in scope, or explicitly record that no use witness is yet available.",
           "Decide whether a scoped multi-occurrence means-only candidate can use existing typed owners; otherwise add only the reviewed constructor and applicability support the chosen case needs.",
           "Keep includes/excludes, construction, anaphora and unresolved references as first-class pending contributions until their meanings and attachments are independently reviewed.",
@@ -5412,7 +5473,7 @@
           "sha256": "61a870668a9cd7dfcfbd5f418e49569029ddf024f2fb7df7eca7de431495434b"
         },
         "minimal_profile_decision_sequence": [
-          "Review source/edition/roles/applicability and exact \u00a7101(a)/(b)/(c)/(d)/(e)/(f) preamble attachments first.",
+          "Review source/edition/roles/applicability and exact §101(a)/(b)/(c)/(d)/(e)/(f) preamble attachments first.",
           "Select one bounded reviewed term/body/sense and an actual reviewed use in scope, or explicitly record that no use witness is yet available.",
           "Decide whether a scoped multi-occurrence means-only candidate can use existing typed owners; otherwise add only the reviewed constructor and applicability support the chosen case needs.",
           "Keep includes/excludes, construction, anaphora and unresolved references as first-class pending contributions until their meanings and attachments are independently reviewed.",
@@ -7026,7 +7087,7 @@
           "sha256": "61a870668a9cd7dfcfbd5f418e49569029ddf024f2fb7df7eca7de431495434b"
         },
         "minimal_profile_decision_sequence": [
-          "Review source/edition/roles/applicability and exact \u00a7101(a)/(b)/(c)/(d)/(e)/(f) preamble attachments first.",
+          "Review source/edition/roles/applicability and exact §101(a)/(b)/(c)/(d)/(e)/(f) preamble attachments first.",
           "Select one bounded reviewed term/body/sense and an actual reviewed use in scope, or explicitly record that no use witness is yet available.",
           "Decide whether a scoped multi-occurrence means-only candidate can use existing typed owners; otherwise add only the reviewed constructor and applicability support the chosen case needs.",
           "Keep includes/excludes, construction, anaphora and unresolved references as first-class pending contributions until their meanings and attachments are independently reviewed.",
@@ -8336,7 +8397,7 @@
           "sha256": "61a870668a9cd7dfcfbd5f418e49569029ddf024f2fb7df7eca7de431495434b"
         },
         "minimal_profile_decision_sequence": [
-          "Review source/edition/roles/applicability and exact \u00a7101(a)/(b)/(c)/(d)/(e)/(f) preamble attachments first.",
+          "Review source/edition/roles/applicability and exact §101(a)/(b)/(c)/(d)/(e)/(f) preamble attachments first.",
           "Select one bounded reviewed term/body/sense and an actual reviewed use in scope, or explicitly record that no use witness is yet available.",
           "Decide whether a scoped multi-occurrence means-only candidate can use existing typed owners; otherwise add only the reviewed constructor and applicability support the chosen case needs.",
           "Keep includes/excludes, construction, anaphora and unresolved references as first-class pending contributions until their meanings and attachments are independently reviewed.",
@@ -9648,7 +9709,7 @@
           "sha256": "61a870668a9cd7dfcfbd5f418e49569029ddf024f2fb7df7eca7de431495434b"
         },
         "minimal_profile_decision_sequence": [
-          "Review source/edition/roles/applicability and exact \u00a7101(a)/(b)/(c)/(d)/(e)/(f) preamble attachments first.",
+          "Review source/edition/roles/applicability and exact §101(a)/(b)/(c)/(d)/(e)/(f) preamble attachments first.",
           "Select one bounded reviewed term/body/sense and an actual reviewed use in scope, or explicitly record that no use witness is yet available.",
           "Decide whether a scoped multi-occurrence means-only candidate can use existing typed owners; otherwise add only the reviewed constructor and applicability support the chosen case needs.",
           "Keep includes/excludes, construction, anaphora and unresolved references as first-class pending contributions until their meanings and attachments are independently reviewed.",
@@ -10738,7 +10799,7 @@
         "0a219c86e29e3adcd8c067f6c6e7bb456929584d"
       ],
       "implementation_receipt": "artifacts/legal-corpus-definition-resolution-20261014-01/implementation-receipt.json",
-      "implemented_scope": "Exact caller-selected section-local definition/category binding is represented by composition-scoped symbols and a validated USES_DEFINITION edge; graph records preserve open context and the full declared native AST. Added declared-partition lookup wrapper delegating existing scoped LegalIR symbol resolver with exact externally pinned table/query bytes and versioned matching policy. Records resolved/unresolved/ambiguous/unavailable outcomes, conservative complete searched-route table commitments, known-empty versus unavailable content and strict contradiction refusal for selected kind/document/scope. Existing reverse dependency owner reopens positive/negative lookup descendants for new competitors or newly available definitions while unsearched partitions preserve lookup identity. Retained40:3318\u21923301 missing target stays unavailable; no semantic binding edge, statutory applicability or review authority is invented.",
+      "implemented_scope": "Exact caller-selected section-local definition/category binding is represented by composition-scoped symbols and a validated USES_DEFINITION edge; graph records preserve open context and the full declared native AST. Added declared-partition lookup wrapper delegating existing scoped LegalIR symbol resolver with exact externally pinned table/query bytes and versioned matching policy. Records resolved/unresolved/ambiguous/unavailable outcomes, conservative complete searched-route table commitments, known-empty versus unavailable content and strict contradiction refusal for selected kind/document/scope. Existing reverse dependency owner reopens positive/negative lookup descendants for new competitors or newly available definitions while unsearched partitions preserve lookup identity. Retained40:3318→3301 missing target stays unavailable; no semantic binding edge, statutory applicability or review authority is invented.",
       "latest_lookup_contract_commit": "0a219c86e29e3adcd8c067f6c6e7bb456929584d",
       "latest_lookup_contract_receipt": "artifacts/legal-corpus-definition-resolution-20261014-01/implementation-receipt.json",
       "lookup_dependency_profile": "complete_supplied_tables_conservative_not_exact_search_trace",
@@ -13443,7 +13504,29 @@
           "no_automatic_checkpoint_or_Source_epoch_migration": true
         }
       },
-      "physical_definition_realization_bridge_20261120": {"evidence_id": "physical-definition-realization-bridge-ordinary-software-Native-pending-20261120", "evidence_index": {"path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/physical-definition-realization-bridge-four-guide-proposal-v02/physical-definition-realization-bridge-evidence-index-v02.json", "bytes": 32191, "sha256": "9e7b7b535cd30456926e1aa2231d5756aea7fa5bcb41df19b3e78bb37b329338"}, "status": "selected_ordinary_software_qualified_actual_Native_PENDING", "A_ordinary_cases": 25, "A_Source_epoch": "4cb7b26b08dc428264d8681f3a6b13f6dd9d25656bbed2b89b07155212548538", "R_ordinary_cases": 32, "R_Source_epoch": "e13951d5af86367283ca16f4698fce39e9ffa541dd3fd9a3b2bb70577eaea493", "actual_Native": "PENDING", "protocol_A4_to_internal_native5_not_flag_alias": true, "all_authority_false": true, "training_mask": 0, "evaluation_gold_mask": 0, "each_owner_retains_its_existing_opaque_factory": true, "A_and_R_opaque_classes_and_factories_are_distinct": true, "original_A_parent_handle_passed_directly_to_physical_facade": true, "preparation_collector": "ordinary_metadata_failure_a709_then_startup56_observation42d3_only", "repaired_collector_pass_observed": false}
+      "physical_definition_realization_bridge_20261120": {
+        "evidence_id": "physical-definition-realization-bridge-ordinary-software-Native-pending-20261120",
+        "evidence_index": {
+          "path": "/tmp/codex-origin-main-reconciliation-20261118-gytue816/ordinary-main-epoch-v01/Phase4-current-source-owner-review-v01/physical-definition-realization-bridge-four-guide-proposal-v02/physical-definition-realization-bridge-evidence-index-v02.json",
+          "bytes": 32191,
+          "sha256": "9e7b7b535cd30456926e1aa2231d5756aea7fa5bcb41df19b3e78bb37b329338"
+        },
+        "status": "selected_ordinary_software_qualified_actual_Native_PENDING",
+        "A_ordinary_cases": 25,
+        "A_Source_epoch": "4cb7b26b08dc428264d8681f3a6b13f6dd9d25656bbed2b89b07155212548538",
+        "R_ordinary_cases": 32,
+        "R_Source_epoch": "e13951d5af86367283ca16f4698fce39e9ffa541dd3fd9a3b2bb70577eaea493",
+        "actual_Native": "PENDING",
+        "protocol_A4_to_internal_native5_not_flag_alias": true,
+        "all_authority_false": true,
+        "training_mask": 0,
+        "evaluation_gold_mask": 0,
+        "each_owner_retains_its_existing_opaque_factory": true,
+        "A_and_R_opaque_classes_and_factories_are_distinct": true,
+        "original_A_parent_handle_passed_directly_to_physical_facade": true,
+        "preparation_collector": "ordinary_metadata_failure_a709_then_startup56_observation42d3_only",
+        "repaired_collector_pass_observed": false
+      }
     },
     {
       "acceptance_criteria": [
@@ -20310,7 +20393,7 @@
         "Explicit V3 complete mixed-sort endpoint/pair-review/mask contracts: workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-reviewed-mixed-pair-source-v01/qualification-summary.json;20 direct in-memory owning contracts, no pytest/model/fit; existing joint trainer/checkpoint/current-index integration pending.",
         "V3 joint trainer/checkpoint/current-index source integration: workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-reviewed-mixed-joint-source-v01/progress-summary.json;14 direct preallocation and20 pair/mask regressions pass, no numerical execution;7-case original-owner request prepared, not started.",
         "Closed seven-case V3 joint-retriever numerical qualification: workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-reviewed-mixed-joint-source-v01/numerical-qualification-summary.json;3 V3+4 V2 pytest cases, actual0/3 Adam steps and48 changed scalars, exact JSON restore/current-index/refusal,193pins/133compiled, original1MiB released; earlier failures preserved, rich adapter and real-asset quality remain pending.",
-        "Native384 receipt-lane transport and explicit CPUfloat32 repair in both existing loaders:192 full owning-file cases pass, actual GTE6source receipts/cached path agree, original1MiB durably released. workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-native384-lane-source-v01/qualification-summary.json; complete formal wires2576\u20134310tokens exceed raw512; explicit full-formal handling and native joint quality comparison pending.",
+        "Native384 receipt-lane transport and explicit CPUfloat32 repair in both existing loaders:192 full owning-file cases pass, actual GTE6source receipts/cached path agree, original1MiB durably released. workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-native384-lane-source-v01/qualification-summary.json; complete formal wires2576–4310tokens exceed raw512; explicit full-formal handling and native joint quality comparison pending.",
         "Opt-in byte480 complete-input chunk receipts:270 full owning-file cases pass; actual92 native GTE chunk vectors cover every byte of6 complete fictional IR inputs, max253 tokens, raw512 refusal retained. workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-native384-complete-chunk-source-v01/qualification-summary.json; original8MiB durably released; composed parent vectors, native joint fit and quality comparison remain pending.",
         "Explicit complete native384 parent composition:364 whole five-file cases pass;92 actual GTE chunks ->6 byte-weighted mean/L2/f32 fictional formal parents;32MiB durably released. workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-native384-composition-source-v01/qualification-summary.json; current raw-only reviewed route remains closed, native joint fitting and quality comparison pending.",
         "Explicit reviewed V3 complete native384 composition opt-in: 602 full six-file cases; fictional declared-vector actual one-step Torch fit/restore/query/revocation; six original32MiB promises durably released. workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-reviewed-composition-source-v01/qualification-summary.json; actual GTE joint fitting and heldout quality remain pending.",
@@ -20321,7 +20404,7 @@
         "Explicit lossless shared_json_v2:90 scoped cases/six closed durable owners; all9 actual GTE-ranked complete-context local T5 forwards fit4096 tokens with unchanged1536MiB profile;9 fixture abstentions, live postforward TRAIN revocation and policy denials, independent complete wire/token/payload/dispatch/rank and common numeric-state readback. workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-shorttag-source-v01/qualification-summary.json; physical original-parent CLI v2, pretrained/full-output quality and statutory/corpus gates remain pending.",
         "Physical shared_json_v2 CLI:24 case executions/23 distinct selections/six original durable owners across two fixture source generations; actual persisted local T5/Adam restore,3 complete-example source inputs/3 abstentions, original parent finish/wait/post-child review-policy-byte checks, late TRAIN revocation and preserved policy denial. workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-shorttag-cli-source-v01/qualification-summary.json; declared-vector preparation only, actual GTE physical artifact join and pretrained/legal quality remain pending.",
         "Qualified actual-GTE artifacts to physical CLI:five selected cases/three closed durable original owners; original encoder/projection/ranking identities preserved, complete source/IR context and exact dispatch receipts independently joined, real local T5 restore/three abstentions and original parent finish checks. workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-actual-GTE-CLI-source-v01/qualification-summary.json; pretrained/full-output quality and real statutory gates remain pending.",
-        "Actual cached GPT2 full-target preflight:one selected case/durable original closeout; six complete targets require1900\u20133025 tokens and none fits1024; twelve independent byte-BPE counts match. No model execution, shortening or quality claim. workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-pretrained-capacity-source-v01/qualification-summary.json; longer-context permitted tokenizer/model compatibility next.",
+        "Actual cached GPT2 full-target preflight:one selected case/durable original closeout; six complete targets require1900–3025 tokens and none fits1024; twelve independent byte-BPE counts match. No model execution, shortening or quality claim. workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-pretrained-capacity-source-v01/qualification-summary.json; longer-context permitted tokenizer/model compatibility next.",
         "Pinned SmolLM2 complete-target preflight:two selected cases and distinct metadata/validation original durable closeouts; source-only3/3 fit8192, rich0/3 fit4096 and2/3 causal pairs fit8192; BF16 tensor bytes fit512MiB, float32 do not. Actual fast-tokenizer contract and12 independent BPE checks pass; old GPT2 report exact. workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-Smollm-capacity-source-v01/qualification-summary.json; explicit Llama/BF16 runtime and rich-capacity resolution next, no weight/model/meaning qualification.",
         "Explicit Llama/BF16 local runtime:52 selected loader cases/two durable original owners, independent pair/dispatch readback, default v1 float32 controls and original failed8MiB preserved. workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-llama-BF16-runtime-source-v01/qualification-summary.json; original-parent profile wiring, actual pretrained/full outputs, rich capacity, semantic and corpus gates remain open.",
         "BF16 original-parent CLI v5/v6:75 selected cases/seven durable original owners, six real local-fixture abstentions, exact full-context dispatch/readback and parent revocation/policy/byte fences. Native last-position logits avoid unnecessary full-vocabulary prefix projection with selected nonzero parity and unchanged limits. workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-llama-BF16-CLI-source-v01/qualification-summary.json; failed1/8MiB retained; actual pretrained weights/full outputs, rich tokenizer capacity and statutory/corpus gates remain open.",
@@ -20386,7 +20469,7 @@
       },
       "next_actions": [
         " The saved-only eight-trained-case/800-position selector audit docs/autoformalization/evidence/legal-ir-cp128-saved-selector-audit-20261023.json records grammar replacing raw top1 at800/800 positions,0 scope winner overrides,8 budget winner overrides,632 final singleton choices and168 real postbudget branches; raw-score changes did not change recorded eligible winners. Reuse these traces before another full generation/fit. Require target-choice rank/margin and modality/ordered-argument progress at source-sensitive branches, plus a context-fixed conditioning control before attributing row insensitivity to the latent. First close reviewed complete real-law targets, governing definition/two distinct physical uses and independently permitted source context; keep all unknown meaning/native-space/eligibility masks0 and preserve the partial-zero failures.",
-        "Reuse the saved predicate-only1\u21924/67\u219270 arithmetic and scope-limited completed four-row regression. The latter has one case/three phases,10 updates,12 GRU forwards and1,074 equal BOS coordinates; absent planned preflight/execution-control files remain absent. Neither supplies autonomous/statutory gain. Fill only the eight missing matched reference cells through a separately qualified consumer, then compare conditioning policies on reviewed complete targets with fixed common metrics and source/definition-grouped splits.",
+        "Reuse the saved predicate-only1→4/67→70 arithmetic and scope-limited completed four-row regression. The latter has one case/three phases,10 updates,12 GRU forwards and1,074 equal BOS coordinates; absent planned preflight/execution-control files remain absent. Neither supplies autonomous/statutory gain. Fill only the eight missing matched reference cells through a separately qualified consumer, then compare conditioning policies on reviewed complete targets with fixed common metrics and source/definition-grouped splits.",
         "Reuse the separately qualified pure forced-singleton policy (41 authored cases/123 phases; bounded local feasibility only) and the explicit persistent v2 consumer. The separate [accepted consumer qualification](https://github.com/endomorphosis/ipfs_datasets_py/blob/main/docs/autoformalization/evidence/legal-ir-compact-persistent-forced-lookahead-generation-20261023.json) passed2 cases/6 phases and retained4 calls across2 exposed authored source rows and both conditioning modes, with unchanged weights/inputs,100-ID cap and horizon8. All4 outputs blocked: typed candidates, exact token-ID matches and exact compact-content matches remain0/4. Emitted lengths are31/31 for every_step and49/49 for first_step. Actual work was162 GRU forwards including2 independent BOS references,160 selections,6 model constructions/12 state installations and zero training/optimizer work. All4 outputs were durable before reference comparison; original source/native/storage custody closed. This delays the retained dead end without establishing a valid completion, conditioning winner or reconstruction gain. The pure portable's earlier combined-bundle-pending flag remains a historical cutoff; this accepted consumer and joint source selection supersede that queue state without changing the pure qualification scope. Preserve failed observer attempts and every old policy/profile/source/weight/context. The original pre-v3 next step was to qualify a bounded branch-aware completion witness or beam with the same retained weights, contexts and100-ID cap before more fitting or a cap raise; the accepted v3 consumer now supersedes that implementation/comparison step, while the original branches/horizons remain unknown. Keep reviewed complete source/context/AST targets, source/definition-grouped evaluation, native compatibility, four-width task/schema checkpoints and new-schema batch/graph admission as separate gates.",
         "Reuse the separate pure v3 `find_completion_witness` owner after its own accepted qualification: The [accepted pure-v3 qualification](https://github.com/endomorphosis/ipfs_datasets_py/blob/main/docs/autoformalization/evidence/legal-ir-compact-branch-completion-witness-20261023.json) passed 41 authored cases / 123 phases, including a genuine branching-positive fixture and an independently closed finite negative tree. Both bounded BOS diagnostics remain UNKNOWN: one predicate used 24 inspections with 43 unresolved frontier roots; two predicates used 32 with 57. Neither produced a typed witness, and the default 256-inspection BOS query remains unrun. Original source/native/storage custody closed, with 12 retained files / 730,289 bytes. The source census has 27 module entries representing 25 unique physical origins (two initializer aliases), 4 namespaces and 26 checked compile-buffer/exec-filename sources; code-object identity and full public-package/environment behavior remain unqualified. WITNESS is a typed syntactic certificate, DEAD_END is exhaustive relative to the original policy, and every cutoff remains UNKNOWN. It changes no mask, selector, model profile, checkpoint or retained inputs. The numerical v2 cohort remains0/4 typed/exact IR. Select further ordering or runtime integration from actual bounded diagnostics; separately qualify any new consumer with fixed retained weights/contexts/100-ID cap and explicit cumulative search/forward budgets. Do not use a witness as a learned target or model-generated suffix. Preserve reviewed source/definition/distinct-use targets, grouped evaluation and graph/Lean gates. Per-query caps establish no full-generation affordability. Require a cumulative grammar-work budget and an explicit witness-backed selection/carried-suffix policy: retain UNKNOWN choices and separate proof tokens from model tokens. Share pure witnesses across widths only on exact IR family/schema/version/codec/context/prefix/budget/pinned-source identity, without merging model inventories or checkpoints. No cache/registry implementation is included.",
         "Reuse the published legal_compact_content_persistent_runtime_v3 source SHA256 9c19f559f15e4e612f911af1e116643a383bc5617c756b05df88eb85015e2a5b and its accepted four-call outputs under the exact retained checkpoints, contexts and codec, 32 inspections per decision, 1,024 per generation and 100-new-ID settings. The incremental runtime and fixed-weight comparison are complete; no implementation or repeated cohort is pending because the owner was previously unpublished. Preserve the separate pure selector/core and genuine consumer scopes and every blocked/exhausted output. Next separately scoped work is cost profiling, per-call independent durable observations or reviewed complete source/context/AST targets with independently permitted conditioning and grouped evaluation. Keep native-space compatibility, four-width task/schema checkpoints and downstream source/graph/Lean admission as separate gates; no fit or cap raise follows from the unchanged 0/4 result.",
@@ -21731,7 +21814,7 @@
         },
         "summary": "No headline count/geometry error found. The six-tensor325-active clean-F15 proposal is a coherent bounded hypothesis, not a demonstrated repair. Full co-error distributions remain primary-derived; exact new mask/target provenance, loss math, guarded gradients/parity and fixed success/comparator policy remain prerequisites. Execution readiness is not asserted."
       },
-      "source_sampling_precondition": "Pure whole-source sampler and134canonical\u00a7101paragraphinputs are implemented; original9literalunits and20rowcache remain separate. Obtain actual source/meaning decisions and eligible targets before statutory training/evaluation.",
+      "source_sampling_precondition": "Pure whole-source sampler and134canonical§101paragraphinputs are implemented; original9literalunits and20rowcache remain separate. Obtain actual source/meaning decisions and eligible targets before statutory training/evaluation.",
       "status": "in_progress",
       "supervisor_execution": {
         "execution_authorized_by_this_file": false,
@@ -21833,7 +21916,7 @@
         "Explicit lossless shared_json_v2:90 scoped cases/six closed durable owners; all9 actual GTE-ranked complete-context local T5 forwards fit4096 tokens with unchanged1536MiB profile;9 fixture abstentions, live postforward TRAIN revocation and policy denials, independent complete wire/token/payload/dispatch/rank and common numeric-state readback. workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-shorttag-source-v01/qualification-summary.json; physical original-parent CLI v2, pretrained/full-output quality and statutory/corpus gates remain pending.",
         "Physical shared_json_v2 CLI:24 case executions/23 distinct selections/six original durable owners across two fixture source generations; actual persisted local T5/Adam restore,3 complete-example source inputs/3 abstentions, original parent finish/wait/post-child review-policy-byte checks, late TRAIN revocation and preserved policy denial. workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-shorttag-cli-source-v01/qualification-summary.json; declared-vector preparation only, actual GTE physical artifact join and pretrained/legal quality remain pending.",
         "Qualified actual-GTE artifacts to physical CLI:five selected cases/three closed durable original owners; original encoder/projection/ranking identities preserved, complete source/IR context and exact dispatch receipts independently joined, real local T5 restore/three abstentions and original parent finish checks. workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-actual-GTE-CLI-source-v01/qualification-summary.json; pretrained/full-output quality and real statutory gates remain pending.",
-        "Actual cached GPT2 full-target preflight:one selected case/durable original closeout; six complete targets require1900\u20133025 tokens and none fits1024; twelve independent byte-BPE counts match. No model execution, shortening or quality claim. workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-pretrained-capacity-source-v01/qualification-summary.json; longer-context permitted tokenizer/model compatibility next.",
+        "Actual cached GPT2 full-target preflight:one selected case/durable original closeout; six complete targets require1900–3025 tokens and none fits1024; twelve independent byte-BPE counts match. No model execution, shortening or quality claim. workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-pretrained-capacity-source-v01/qualification-summary.json; longer-context permitted tokenizer/model compatibility next.",
         "Pinned SmolLM2 complete-target preflight:two selected cases and distinct metadata/validation original durable closeouts; source-only3/3 fit8192, rich0/3 fit4096 and2/3 causal pairs fit8192; BF16 tensor bytes fit512MiB, float32 do not. Actual fast-tokenizer contract and12 independent BPE checks pass; old GPT2 report exact. workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-Smollm-capacity-source-v01/qualification-summary.json; explicit Llama/BF16 runtime and rich-capacity resolution next, no weight/model/meaning qualification.",
         "Explicit Llama/BF16 local runtime:52 selected loader cases/two durable original owners, independent pair/dispatch readback, default v1 float32 controls and original failed8MiB preserved. workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-llama-BF16-runtime-source-v01/qualification-summary.json; original-parent profile wiring, actual pretrained/full outputs, rich capacity, semantic and corpus gates remain open.",
         "BF16 original-parent CLI v5/v6:75 selected cases/seven durable original owners, six real local-fixture abstentions, exact full-context dispatch/readback and parent revocation/policy/byte fences. Native last-position logits avoid unnecessary full-vocabulary prefix projection with selected nonzero parity and unchanged limits. workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-llama-BF16-CLI-source-v01/qualification-summary.json; failed1/8MiB retained; actual pretrained weights/full outputs, rich tokenizer capacity and statutory/corpus gates remain open.",
@@ -21950,7 +22033,7 @@
         "Actual Torch ranked complete three-example shared-context physical CLI:1 body passes/three actual T5 abstentions; original final accounting fails5692153B overcap, retains8MiB; Source/native/process closed. workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ranked-shared-context-source-v01/ranked-physical-progress-summary.json; whole-run qualification and prepared refusal cohorts pending real headroom.",
         "Current evaluator-source refresh prepares source-exact healthy-v05/late-train-v03/policy-v03 requests without execution; previous unexecuted requests superseded, prior physical body qualification does not transfer. workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-ranked-shared-context-source-v01/capacity-and-pending-source-readback-v01.json; actual cap remains5760964B exceeded; no promises or model evidence deleted.",
         "Authorized250GB cap and original-owner closed ranked shared physical CLI healthy/lateTRAINrevocation/policydenial:31 selected cases across4 cohorts, all durable releases. workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/authorized-cap-250GB-20261111-v01/qualification-summary.json; prior failed promises preserved; actual GTE/pretrained quality and real statutory gates remain pending.",
-        "Native384 receipt-lane transport and explicit CPUfloat32 repair in both existing loaders:192 full owning-file cases pass, actual GTE6source receipts/cached path agree, original1MiB durably released. workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-native384-lane-source-v01/qualification-summary.json; complete formal wires2576\u20134310tokens exceed raw512; explicit full-formal handling and native joint quality comparison pending.",
+        "Native384 receipt-lane transport and explicit CPUfloat32 repair in both existing loaders:192 full owning-file cases pass, actual GTE6source receipts/cached path agree, original1MiB durably released. workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-native384-lane-source-v01/qualification-summary.json; complete formal wires2576–4310tokens exceed raw512; explicit full-formal handling and native joint quality comparison pending.",
         "Opt-in byte480 complete-input chunk receipts:270 full owning-file cases pass; actual92 native GTE chunk vectors cover every byte of6 complete fictional IR inputs, max253 tokens, raw512 refusal retained. workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-native384-complete-chunk-source-v01/qualification-summary.json; original8MiB durably released; composed parent vectors, native joint fit and quality comparison remain pending.",
         "Explicit complete native384 parent composition:364 whole five-file cases pass;92 actual GTE chunks ->6 byte-weighted mean/L2/f32 fictional formal parents;32MiB durably released. workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-native384-composition-source-v01/qualification-summary.json; current raw-only reviewed route remains closed, native joint fitting and quality comparison pending.",
         "Explicit reviewed V3 complete native384 composition opt-in: 602 full six-file cases; fictional declared-vector actual one-step Torch fit/restore/query/revocation; six original32MiB promises durably released. workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-reviewed-composition-source-v01/qualification-summary.json; actual GTE joint fitting and heldout quality remain pending.",
@@ -21961,7 +22044,7 @@
         "Explicit lossless shared_json_v2:90 scoped cases/six closed durable owners; all9 actual GTE-ranked complete-context local T5 forwards fit4096 tokens with unchanged1536MiB profile;9 fixture abstentions, live postforward TRAIN revocation and policy denials, independent complete wire/token/payload/dispatch/rank and common numeric-state readback. workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-shorttag-source-v01/qualification-summary.json; physical original-parent CLI v2, pretrained/full-output quality and statutory/corpus gates remain pending.",
         "Physical shared_json_v2 CLI:24 case executions/23 distinct selections/six original durable owners across two fixture source generations; actual persisted local T5/Adam restore,3 complete-example source inputs/3 abstentions, original parent finish/wait/post-child review-policy-byte checks, late TRAIN revocation and preserved policy denial. workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-shorttag-cli-source-v01/qualification-summary.json; declared-vector preparation only, actual GTE physical artifact join and pretrained/legal quality remain pending.",
         "Qualified actual-GTE artifacts to physical CLI:five selected cases/three closed durable original owners; original encoder/projection/ranking identities preserved, complete source/IR context and exact dispatch receipts independently joined, real local T5 restore/three abstentions and original parent finish checks. workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-actual-GTE-CLI-source-v01/qualification-summary.json; pretrained/full-output quality and real statutory gates remain pending.",
-        "Actual cached GPT2 full-target preflight:one selected case/durable original closeout; six complete targets require1900\u20133025 tokens and none fits1024; twelve independent byte-BPE counts match. No model execution, shortening or quality claim. workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-pretrained-capacity-source-v01/qualification-summary.json; longer-context permitted tokenizer/model compatibility next.",
+        "Actual cached GPT2 full-target preflight:one selected case/durable original closeout; six complete targets require1900–3025 tokens and none fits1024; twelve independent byte-BPE counts match. No model execution, shortening or quality claim. workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-pretrained-capacity-source-v01/qualification-summary.json; longer-context permitted tokenizer/model compatibility next.",
         "Pinned SmolLM2 complete-target preflight:two selected cases and distinct metadata/validation original durable closeouts; source-only3/3 fit8192, rich0/3 fit4096 and2/3 causal pairs fit8192; BF16 tensor bytes fit512MiB, float32 do not. Actual fast-tokenizer contract and12 independent BPE checks pass; old GPT2 report exact. workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-Smollm-capacity-source-v01/qualification-summary.json; explicit Llama/BF16 runtime and rich-capacity resolution next, no weight/model/meaning qualification.",
         "Explicit Llama/BF16 local runtime:52 selected loader cases/two durable original owners, independent pair/dispatch readback, default v1 float32 controls and original failed8MiB preserved. workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-llama-BF16-runtime-source-v01/qualification-summary.json; original-parent profile wiring, actual pretrained/full outputs, rich capacity, semantic and corpus gates remain open.",
         "BF16 original-parent CLI v5/v6:75 selected cases/seven durable original owners, six real local-fixture abstentions, exact full-context dispatch/readback and parent revocation/policy/byte fences. Native last-position logits avoid unnecessary full-vocabulary prefix projection with selected nonzero parity and unchanged limits. workspace/test-logs/federal-corpus-audits/legal-ir-peer-revision-reconciliation-20261109-v01/legal-llama-BF16-CLI-source-v01/qualification-summary.json; failed1/8MiB retained; actual pretrained weights/full outputs, rich tokenizer capacity and statutory/corpus gates remain open.",
