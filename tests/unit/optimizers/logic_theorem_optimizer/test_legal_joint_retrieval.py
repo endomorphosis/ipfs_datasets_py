@@ -1045,3 +1045,36 @@ def test_reviewed_v4_source_query_preparation_retains_authenticated_context_set(
     assert case["preparation"] == original_preparation
     assert handoff["training_gold_mask"] == handoff["evaluation_gold_mask"] == 0
     assert handoff["legal_applicability_verified"] is handoff["controlling_authority"] is False
+
+
+
+def test_reviewed_lexical_baseline_abstains_on_source_without_tokens(
+        reviewed_trained, reviewed_fixture_owner, reviewed_case, monkeypatch):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import frame_bm25_selector as lexical
+
+    query = {
+        "id": "query:lexical-tokenless",
+        "split_sample_id": "sample:lexical-tokenless",
+        "source_text": "許可を申請する。",
+    }
+    case, query, lane, expected = _reviewed_structural_query_fixture(
+        reviewed_fixture_owner, reviewed_case, query=query)
+    assert lane["rows"][0]["status"] == "available"
+    checkpoint = reviewed_trained["checkpoint"]
+    model = retrieval.ReviewedLegalJointRetriever(
+        checkpoint, expected_checkpoint_sha256=retrieval.checkpoint_digest(checkpoint))
+
+    def unexpected_scoring(*args, **kwargs):
+        pytest.fail("tokenless lexical query reached scoring")
+
+    monkeypatch.setattr(lexical.BM25FrameSelector, "rank", unexpected_scoring)
+    monkeypatch.setattr(model._model, "forward", unexpected_scoring)
+    result = _structural_call(
+        model, reviewed_fixture_owner, case, query, lane, expected, mode="lexical", top_k=1)
+    row = result["rows"][0]
+    assert row["eligible_rows"] >= 1
+    assert row["source_sha256"] == hashlib.sha256(query["source_text"].encode("utf-8")).hexdigest()
+    assert row["status"] == "abstained" and row["abstention_reasons"] == ["lexical_query_unscorable"]
+    assert row["retrieved_ids"] == [] and row["context"] is None
+    assert result["retrieved_count"] == 0 and result["abstention_count"] == 1
+    assert result["model_forward_executed"] is False and model.checkpoint == checkpoint

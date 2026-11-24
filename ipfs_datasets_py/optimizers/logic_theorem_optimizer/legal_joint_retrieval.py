@@ -1018,6 +1018,18 @@ class ReviewedLegalJointRetriever:
                 if rule is None: eligible.append(index)
                 else: excluded.append({"id": endpoint["id"], "reason": rule})
             if len(eligible) < top_k: reasons.append("insufficient_permitted_training_examples")
+            if mode == "lexical" and not reasons:
+                _require(sum(len(lexical_texts[index].encode("utf-8")) for index in eligible)
+                         <= lexical_profile["max_document_bytes"], "lexical document byte budget exceeded")
+                selector = lexical.BM25FrameSelector([lexical.FrameCandidate(
+                    frame_id=endpoints[index]["id"], label=lexical_texts[index], domain="") for index in eligible],
+                    k1=lexical_profile["k1"], b=lexical_profile["b"])
+                query_terms = set(selector._tokenize(query["source_text"]))
+                if not query_terms:
+                    reasons.append("lexical_query_unscorable")
+                _require(sum(len(document) for document in selector._documents)
+                    * len(query_terms) <= lexical_profile["max_token_comparisons"],
+                    "lexical token comparison budget exceeded")
             if reasons:
                 results.append({"id": query["id"], "source_sha256": raw_source_sha256,
                     "status": "abstained", "abstention_reasons": reasons, "eligible_rows": len(eligible),
@@ -1030,14 +1042,6 @@ class ReviewedLegalJointRetriever:
             formal = torch.tensor([formal_rows[index] for index in eligible], dtype=torch.float32, device="cpu")
             with torch.no_grad():
                 if mode == "lexical":
-                    _require(sum(len(lexical_texts[index].encode("utf-8")) for index in eligible)
-                             <= lexical_profile["max_document_bytes"], "lexical document byte budget exceeded")
-                    selector = lexical.BM25FrameSelector([lexical.FrameCandidate(
-                        frame_id=endpoints[index]["id"], label=lexical_texts[index], domain="") for index in eligible],
-                        k1=lexical_profile["k1"], b=lexical_profile["b"])
-                    _require(sum(len(document) for document in selector._documents)
-                        * len(set(selector._tokenize(query["source_text"]))) <= lexical_profile["max_token_comparisons"],
-                        "lexical token comparison budget exceeded")
                     ranked_rows = selector.rank(query["source_text"], top_k=len(eligible))
                     positions = {endpoints[index]["id"]:position for position,index in enumerate(eligible)}
                     _require(len(ranked_rows) == len(eligible)
