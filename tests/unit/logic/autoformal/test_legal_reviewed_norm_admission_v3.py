@@ -476,3 +476,34 @@ def test_reviewed_v3_alternate_view_of_same_raw_paragraph_requires_distinct_use_
     with pytest.raises(ValueError, match=r"same raw|cross.view|physical.*(witness|coordinate)|distinct.*(use|view)"):
         sibling.prepare_reviewed_norm_admission_v3(
             case["declaration"], **prepare_args(case))
+
+
+@pytest.mark.parametrize("parent_edges", [
+    ((1, 2), (2, 1)),
+    ((0, 1),),
+    ((0, 2), (2, 1)),
+], ids=["parent-cycle", "parent-definition-cycle", "longer-mixed-cycle"])
+def test_reviewed_v3_refuses_cyclic_unit_dependencies(sibling, mixed_case, parent_edges):
+    units = mixed_case["declaration"]["units"]
+    assert [unit["kind"] for unit in units] == ["definition", "norm", "norm"]
+    for child, parent in parent_edges:
+        units[child]["parent_unit_ids"].append(units[parent]["unit_id"])
+    fixture.reviewed_refresh_manifest_v2(mixed_case)
+    kwargs = prepare_args(mixed_case)
+    # The artifact closure alone does not represent the cycle in legal units.
+    assert kwargs["dependency_manifest"]["cycles"] == []
+    with pytest.raises(ValueError, match="cyclic or unresolved reviewed governing dependency"):
+        sibling.prepare_reviewed_norm_admission_v3(mixed_case["declaration"], **kwargs)
+
+
+def test_reviewed_v3_preserves_acyclic_overlapping_unit_dependencies(sibling, mixed_case):
+    declaration = mixed_case["declaration"]
+    definition, first, second = declaration["units"]
+    first["parent_unit_ids"] = [definition["unit_id"]]
+    second["parent_unit_ids"] = [first["unit_id"], definition["unit_id"]]
+    assert [use["definition_unit_id"] for use in declaration["definition_uses"]] == [
+        definition["unit_id"], definition["unit_id"],
+    ]
+    report = prepare(sibling, mixed_case)
+    assert report["declaration"]["units"] == declaration["units"]
+    assert report["semantic_use_eligible"] is report["Lean_admitted"] is report["proof_authority"] is False
