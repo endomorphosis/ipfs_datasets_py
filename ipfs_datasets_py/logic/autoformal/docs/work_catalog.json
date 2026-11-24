@@ -24177,6 +24177,144 @@
         "old_Markdown_whole_byte_prefixes_preserved": true,
         "old_Phase5_scientific_fields_and_all_other_values_preserved": true
       }
+    },
+    {
+      "id": "statutory-context-source-constructors-cli-entry-refusal-engineering-milestone509-20261124",
+      "evidence_ordinal": 509,
+      "root": "artifact_workspace",
+      "path": "/tmp/Root-one-closed-engineering-guide-facts-v130.json",
+      "observed_bytes": 5600,
+      "observed_sha256": "4ece89351c09571a1ec17dd7958342160dc74c517f68a5492e2e7c073a097e83",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY",
+      "required_for_catalog_check": false,
+      "scope": "One consolidation of two revision-specific software qualifications/publications and unreviewed documentary source-constructor evidence. Counts remain attached to their exact tested revisions; no task, phase, legal or execution authority is promoted.",
+      "closed_engineering_facts": {
+        "CLI": {
+          "does_not_repair_storage_policy_or_qualify_live_V4": true,
+          "errors": 0,
+          "exact_tested_commit": "0f13cbc9b6c76926015e0b00d976e81f67397e0c",
+          "explicit_unit_boundaries": [
+            "constructor",
+            "locks",
+            "scheduler",
+            "request shape",
+            "Source guards"
+          ],
+          "failures": 0,
+          "problem": "A genuine resource-entry refusal before record/native/child effects could be treated as unknown by the parent, leaving its read scopes held; narrow actual-owner/live-frame refusal metadata now allows existing no-grant classification after genuine wait.",
+          "product_sha256": "0b83f1df27b38a77ddfacba35aa92370c253796343910e3e7615c1f4f6188572",
+          "public_unique_cases": 27,
+          "published": {
+            "A": "88c0d9f82f66aaddbb01344c9f85236e92a5dc88",
+            "D": "0f13cbc9b6c76926015e0b00d976e81f67397e0c",
+            "H": "e91c6b2a54f7d5f6bb00c78c235d4b4f8ee4ebdc",
+            "Root": "fcae986b1e8c89cf339462d9c3cf9af5e5b241cf",
+            "rc": 0,
+            "receipt": {
+              "bytes": 4256,
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-CLI2-ordinary27-three-FF-publication-small-v129.json",
+              "sha256": "4f7eab9939db4951455a9689bfd0e314f368056683afcebf63ccb2f097758d76"
+            },
+            "state": "actual3-FF-closed-remote-clean-joins-verified"
+          },
+          "qualification": {
+            "bytes": 2253,
+            "path": "/tmp/Root-CLI27-complete-ancestor-ordinary-actual-v128/Root-actual-public-CLI27-qualified-Source-resource-closed-small-v129.json",
+            "sha256": "1e2d1aec4c318aa9185408719cf775d888a53e9caaa5fe174789d2455e3d43b2"
+          },
+          "real_canonical_hook_and_resource_classes": true,
+          "separate_private_owned_wait1_not_pooled": true,
+          "skips": 0,
+          "test_sha256": "cf50e6ec9fd470b699c922ec7511e7c7c4805a5d5bbc5e0cd79471d57fa2fda7"
+        },
+        "D3": {
+          "errors": 0,
+          "exact_tested_commit": "bb982846f24cc116d5d86ac93f1533f94cae4389",
+          "failures": 0,
+          "operative_note_association_cases": 5,
+          "parser_cases": 43,
+          "problem": "GovInfo explicit statutory body-block continuation was omitted from its existing labeled owner; corrected only explicit compatible continuation, retaining whole views and rejecting notes/orphans/ambiguities.",
+          "product_sha256": "96bfd59e00771c77cfc045b9594f284a1ce95e968805764eb613a5b35ce065da",
+          "published": {
+            "A": "88c0d9f82f66aaddbb01344c9f85236e92a5dc88",
+            "D": "bb982846f24cc116d5d86ac93f1533f94cae4389",
+            "H": "274d49e4ed2abba1e3c414cd5d0eadff4b7f4f56",
+            "Root": "996d25a8d9b59b1ad747588e823e6a8ef56b4d24",
+            "rc": 0,
+            "receipt": {
+              "bytes": 4425,
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-D3-ordinary48-three-FF-publication-small-v119.json",
+              "sha256": "7f2e8a8bea9aab704731999b0b894056ee1275f7c2ffb06aa86a09c9288574f3"
+            },
+            "state": "actual3-FF-closed-remote-clean-joins-verified"
+          },
+          "qualification": {
+            "bytes": 2775,
+            "path": "/tmp/Root-ordinary48-complete-import-closure-actual-v117/Root-D3-ordinary48-qualified-Source-resource-closed-small-v119.json",
+            "sha256": "cc6ac234542388f33de6fa7794e5557cda23c72c2871cae4a6d41274ee1c09a3"
+          },
+          "skips": 0,
+          "unique_total": 48
+        },
+        "doc_scope": "One additive all-four maintained-guide consolidation only; preserve every old JSON value/list prefix and Markdown byte prefix; do not change task acceptance/deps or infer legal completion.",
+        "full_eight_phase_goal_incomplete": true,
+        "limits": {
+          "Phase4_V4_prefixed_RED1_not_reached_storage_policy_mismatch_280GB_vs250GB_not_mutated": true,
+          "actual_review_principals_and_governing_closure_still_required": true,
+          "all_prior_failures_costs_and_full_Source_envelopes_retained": true,
+          "do_not_claim_75_current_head_tests": true,
+          "do_not_pool_test_counts_across_distinct_commits": true,
+          "historical_CodeQL_billing_start_refusal_not_current_status": true,
+          "no_global_goal_completion_or_task_completion_from_these_facts": true,
+          "no_human_only_review_requirement_inferred": true,
+          "no_new_model_training_paid_model_prover_Native_backend_or_hosted_CI_claim": true,
+          "physical_IO_accounting_complete": false
+        },
+        "pilot_source": {
+          "b2_includes_not_forced_to_iff_or_counted_as_distinct_surface_use": true,
+          "edition": "2024 documentary",
+          "graph_IDs_and_corpus_CIDs_are_distinct_types": true,
+          "kind": "Source engineering only, unreviewed",
+          "legal_or_training_or_gold_masks": 0,
+          "not_current_2026_governing_assertion": true,
+          "old3858_Parquet_not_retagged": true,
+          "prior7214_constructor": {
+            "bytes": 11159,
+            "path": "/tmp/Root-actual-7214-corpus-source-constructor-v105/actual-output/actual-corpus-source-constructor-result.json",
+            "sha256": "5201dc89783239dba5b7ded963672d42a213f449b51457da852fd117efb1639d"
+          },
+          "remaining4_constructor": {
+            "bytes": 8831,
+            "path": "/tmp/Root-remaining4-corpus-source-actual-v111/Root-actual-remaining4-corpus-constructors-small-v115.json",
+            "sha256": "464d8a356b70ca7471e01f73afb3b262d6e3b2d82648530d0f012ef84c23fcc5"
+          },
+          "review_registry_signing_meaning_admission_invoked": false,
+          "scope_intro_is_context_not_norm": true,
+          "source_occurrences": 5,
+          "source_versions": 3,
+          "whole_views_raw_html_and_selected_geometry_preserved": true
+        },
+        "schema": "Root-closed-engineering-facts-for-one-maintained-guide-consolidation/v130"
+      },
+      "backlog_crosslink": {
+        "path": "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
+        "container": "migration",
+        "key": "current_user_goal_statutory_context_source_constructors_cli_entry_refusal_milestone509_20261124"
+      },
+      "preservation": {
+        "ordered_tasks": 24,
+        "ordered_components": 126,
+        "prior_selected_evidence_prefix": 508,
+        "all_old_JSON_values_and_list_prefixes": true,
+        "old_Markdown_complete_byte_prefixes": true
+      },
+      "not_granted": [
+        "legal meaning, statutory applicability or governing-edition approval",
+        "review authentication, signing, registry or admission authority",
+        "training/gold labels, learned benefit, model, paid-model, prover or Native-backend result",
+        "new hosted-CI result or completion of any whole phase/eight-phase goal"
+      ],
+      "full_eight_phase_goal_remains_open": true
     }
   ]
 }
