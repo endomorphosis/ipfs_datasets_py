@@ -29,7 +29,7 @@ import re
 import stat
 import time
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from enum import StrEnum
 from typing import Any, Final
 
@@ -584,6 +584,18 @@ class LeanKernelReceipt:
         payload["receipt_id"] = self.receipt_id
         return payload
 
+    def _theorem_witness(self) -> dict[str, Any]:
+        return {
+            "receipt_id": self.receipt_id,
+            "theorem_name": self.theorem_name,
+            "theorem_digest": self.theorem_digest,
+            "generated_proof_digest": self.generated_proof_digest,
+            "source_tree": self.source_tree.to_dict(),
+            "toolchain": self.toolchain.to_dict(),
+            "translation": self.translation.to_dict() if self.translation is not None else None,
+            "axiom_report": self.axiom_report.to_dict() if self.axiom_report is not None else None,
+        }
+
 
 @dataclass(frozen=True, slots=True)
 class LeanKernelOutcome:
@@ -595,6 +607,7 @@ class LeanKernelOutcome:
     receipt: LeanKernelReceipt
     capability: DualPlaneCapability
     interface_version: str = LEAN_KERNEL_BACKEND_VERSION
+    request: BackendRequest = field(kw_only=True, repr=False)
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -616,11 +629,34 @@ class LeanKernelOutcome:
             raise LeanKernelError(
                 f"unsupported Lean kernel interface: {self.interface_version!r}"
             )
+        if self.source_binding != self.receipt.source_binding:
+            raise LeanKernelError("outcome source binding does not match receipt")
+        if not isinstance(self.request, BackendRequest) or self.request.digest != self.request_digest:
+            raise LeanKernelError("outcome request does not match the originating backend request")
         if (
-            self.result.status is ResultStatus.PROVED
-            and not self.receipt.accepted
+            self.result.backend_id != self.receipt.toolchain.kernel_id
+            or self.result.result_id != _result_id(self.result.backend_id, self.request)
+            or self.result.assumptions != self.request.assumption_ids
+            or self.result.bounds != self.request.bounds
         ):
-            raise LeanKernelError("proved results require an accepted kernel receipt")
+            raise LeanKernelError("outcome result fields do not match its backend request")
+        if (self.result.status is ResultStatus.PROVED) != self.receipt.accepted:
+            raise LeanKernelError("outcome status does not match receipt acceptance")
+        metadata = self.result.metadata.to_dict()
+        if (
+            metadata.get("adapter_interface") != self.interface_version
+            or metadata.get("capability") != self.capability.to_dict()
+            or metadata.get("kernel_receipt") != self.receipt.to_dict()
+            or metadata.get("source_binding") != self.source_binding.to_dict()
+        ):
+            raise LeanKernelError("outcome result metadata does not match its proof evidence")
+        witness = self.result.witness.to_dict()
+        if (
+            witness.get("receipt_id") != self.receipt.receipt_id
+            or witness.get("theorem_name") != self.receipt.theorem_name
+            or (self.receipt.accepted and witness != self.receipt._theorem_witness())
+        ):
+            raise LeanKernelError("outcome result witness does not match its receipt")
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -1611,24 +1647,7 @@ class LeanKernelBackend:
                 if status is ResultStatus.PROVED
                 else EvidenceAuthority.BOUNDED
             ),
-            witness={
-                "receipt_id": receipt.receipt_id,
-                "theorem_name": receipt.theorem_name,
-                "theorem_digest": receipt.theorem_digest,
-                "generated_proof_digest": receipt.generated_proof_digest,
-                "source_tree": receipt.source_tree.to_dict(),
-                "toolchain": receipt.toolchain.to_dict(),
-                "translation": (
-                    receipt.translation.to_dict()
-                    if receipt.translation is not None
-                    else None
-                ),
-                "axiom_report": (
-                    receipt.axiom_report.to_dict()
-                    if receipt.axiom_report is not None
-                    else None
-                ),
-            },
+            witness=receipt._theorem_witness(),
             **common,
         )
 
@@ -1780,6 +1799,7 @@ class LeanKernelBackend:
                 diagnostics=receipt.diagnostics,
             )
             return LeanKernelOutcome(
+                request=request,
                 request_digest=request.digest,
                 source_binding=binding,
                 result=result,
@@ -1832,6 +1852,7 @@ class LeanKernelBackend:
                     diagnostics=receipt.diagnostics,
                 )
             return LeanKernelOutcome(
+                request=request,
                 request_digest=request.digest,
                 source_binding=binding,
                 result=result,
@@ -1874,6 +1895,7 @@ class LeanKernelBackend:
                 diagnostics=receipt.diagnostics,
             )
             return LeanKernelOutcome(
+                request=request,
                 request_digest=request.digest,
                 source_binding=binding,
                 result=result,
@@ -1991,6 +2013,7 @@ class LeanKernelBackend:
             ),
         )
         return LeanKernelOutcome(
+            request=request,
             request_digest=request.digest,
             source_binding=binding,
             result=result,

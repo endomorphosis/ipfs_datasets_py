@@ -1960,3 +1960,61 @@ def test_native_cache_fixture_loader_supplies_canonical_constructor_contract_wit
     assert "<module>" in calls
     assert owner._reviewed_fixture.__code__.co_filename == str(fixture_path)
     assert owner._legal_artifact.__code__.co_filename == str(fixture_path)
+
+
+@pytest.mark.parametrize("mutation", [
+    "different-result", "different-source", "contradictory-status",
+    "different-witness-receipt", "different-witness-theorem", "different-capability",
+])
+def test_lean_outcome_rejects_inconsistent_evidence(mutation):
+    from dataclasses import replace
+
+    outcome, _, request = _bound_lean_outcome()
+    assert outcome.result.status is ResultStatus.PROVED and outcome.receipt.accepted
+    assert replace(outcome).to_dict() == outcome.to_dict()
+    different, _, different_request = _bound_lean_outcome(
+        source="theorem another : True := by trivial\n", name="another")
+    assert different.receipt.accepted and request.digest != different_request.digest
+
+    if mutation == "different-result":
+        changes = {"result": different.result}
+    elif mutation == "different-source":
+        changes = {"source_binding": replace(
+            outcome.source_binding, source_digest=different.source_binding.source_digest)}
+    elif mutation == "contradictory-status":
+        changes = {"result": replace(outcome.result, status=ResultStatus.ERROR, reason="fixture error")}
+    elif mutation == "different-capability":
+        changes = {"capability": replace(
+            outcome.capability, native=KernelCapabilityState.unavailable(
+                plane=CapabilityPlane.NATIVE, kernel_id="lean", reason="fixture difference"))}
+    else:
+        key = "receipt_id" if mutation == "different-witness-receipt" else "theorem_digest"
+        witness = outcome.result.witness.to_dict()
+        witness[key] = different.result.witness[key]
+        changes = {"result": replace(outcome.result, witness=witness)}
+    with pytest.raises(LeanKernelError, match="outcome (?:source|result|status)"):
+        replace(outcome, **changes)
+
+
+@pytest.mark.parametrize("field", ["result_id", "assumptions", "bounds"])
+def test_lean_outcome_rejects_fields_from_another_request(field):
+    from dataclasses import replace
+
+    outcome, calls, request = _bound_lean_outcome()
+    fresh, _, second_request = _bound_lean_outcome(
+        source="theorem another : True := by trivial\n", name="another")
+    assert calls and request.digest != second_request.digest
+    assert outcome.receipt.accepted and fresh.receipt.accepted
+    assert outcome.result.assumptions == request.assumption_ids
+    assert outcome.result.bounds == request.bounds
+    if field == "result_id":
+        value = fresh.result.result_id
+    elif field == "assumptions":
+        value = (*request.assumption_ids, "assumption:other-fixture")
+    else:
+        value = replace(request.bounds, max_steps=request.bounds.max_steps + 1)
+    changed = replace(outcome.result, **{field: value})
+    assert getattr(changed, field) != getattr(outcome.result, field)
+    assert changed.metadata == outcome.result.metadata and changed.witness == outcome.result.witness
+    with pytest.raises(LeanKernelError, match="outcome result .*request"):
+        replace(outcome, result=changed)
