@@ -4459,3 +4459,215 @@ def test_auto_completed_current_V5_compact_summary_rejects_mixed_source_tuple(
     with pytest.raises(ValueError):
         cli._capacity_current_private_completed_ledger_evidence_v1(entry, ready, 'proof')
     assert case['ledger'].read_bytes() == before
+
+
+# Explicit existing-header binding for the original sampled-v1 recovery path.
+# These fixtures are entirely fictional and confer no host-ledger eligibility.
+from tests.unit.optimizers.logic_theorem_optimizer.test_autoencoder_daemon_resources import setup as sampled_header_setup
+from tests.unit.optimizers.logic_theorem_optimizer import test_autoencoder_resource_recovery as sampled_header_unit
+
+_SAMPLED_HEADER_OMITTED = object()
+
+
+def _sampled_header_case(sampled_header_setup, monkeypatch, header=280_000_000_000):
+    monkeypatch.setattr(recovery.resources, "MAX_STORAGE_BYTES", 250_000_000_000)
+    case = sampled_header_unit._sampled_validation_fixture(sampled_header_setup, monkeypatch)
+    data = json.loads(case["ledger"].read_bytes())
+    data["limit_bytes"] = header
+    case["ledger"].write_bytes(sampled_header_unit._sampled_wire(data))
+    case["terminal"]["reservation"]["storage_limit_bytes"] = header
+    case["parent"]["original_owner_custody"]["original_terminal"] = deepcopy(case["terminal"])
+    sampled_header_unit._sampled_seal(case)
+    return case
+
+
+def _sampled_header_call(case, operation, expected=_SAMPLED_HEADER_OMITTED, policy="administrative_closeout"):
+    if expected is _SAMPLED_HEADER_OMITTED:
+        case["args"].pop("expected_ledger_limit_bytes", None)
+    else:
+        case["args"]["expected_ledger_limit_bytes"] = expected
+    if operation == "inspect":
+        return sampled_header_unit._sampled_inspect(case)
+    return sampled_header_unit._sampled_reconcile(case, policy)
+
+
+def _sampled_header_unchanged(case, before):
+    assert case["ledger"].read_bytes() == before
+    assert recovery._durable_inventory(case["args"]["attempt_directory"]) == case["args"]["expected_artifacts"]
+    assert recovery.resources.MAX_STORAGE_BYTES == 250_000_000_000
+
+
+def test_sampled_v1_header_omitted_legacy_inspection(sampled_header_setup, monkeypatch):
+    case = _sampled_header_case(sampled_header_setup, monkeypatch, 250_000_000_000)
+    before = case["ledger"].read_bytes()
+    report = _sampled_header_call(case, "inspect")
+    assert report["ready"] is True
+    assert report["state_written"] is report["recovery_performed"] is report["admitted"] is False
+    _sampled_header_unchanged(case, before)
+
+
+def test_sampled_v1_header_none_keeps_inspection_constructor_shape(sampled_header_setup, monkeypatch):
+    case = _sampled_header_case(sampled_header_setup, monkeypatch, 250_000_000_000)
+    calls = []
+    original = recovery.resources.DaemonResourceReservation.__init__
+    def spy(owner, *args, **kwargs):
+        calls.append(dict(kwargs))
+        return original(owner, *args, **kwargs)
+    monkeypatch.setattr(recovery.resources.DaemonResourceReservation, "__init__", spy)
+    before = case["ledger"].read_bytes()
+    assert _sampled_header_call(case, "inspect", None)["ready"] is True
+    assert calls and all("storage_limit_bytes" not in row for row in calls)
+    _sampled_header_unchanged(case, before)
+
+
+def test_sampled_v1_header_omitted_legacy_closeout(sampled_header_setup, monkeypatch):
+    case = _sampled_header_case(sampled_header_setup, monkeypatch, 250_000_000_000)
+    report = _sampled_header_call(case, "reconcile")
+    after = json.loads(case["ledger"].read_bytes())
+    assert after["limit_bytes"] == recovery.resources.MAX_STORAGE_BYTES == 250_000_000_000
+    assert after["reservations"][case["args"]["reservation_id"]]["status"] == "released"
+    assert after["reservations"][case["prior_id"]] == case["prior"]
+    assert report["cap_changed"] is report["admitted"] is report["outputs_deleted"] is False
+
+
+def test_sampled_v1_header_none_keeps_closeout_constructor_shape(sampled_header_setup, monkeypatch):
+    case = _sampled_header_case(sampled_header_setup, monkeypatch, 250_000_000_000)
+    calls = []
+    original = recovery.resources.DaemonResourceReservation.__init__
+    def spy(owner, *args, **kwargs):
+        calls.append(dict(kwargs))
+        return original(owner, *args, **kwargs)
+    monkeypatch.setattr(recovery.resources.DaemonResourceReservation, "__init__", spy)
+    report = _sampled_header_call(case, "reconcile", None)
+    assert calls and all("storage_limit_bytes" not in row for row in calls)
+    assert report["cap_changed"] is report["admitted"] is False
+
+
+def test_sampled_v1_header_explicit_inspection_is_read_only(sampled_header_setup, monkeypatch):
+    case = _sampled_header_case(sampled_header_setup, monkeypatch)
+    before = case["ledger"].read_bytes()
+    report = _sampled_header_call(case, "inspect", 280_000_000_000)
+    assert report["ready"] is True and report["capacity_not_assessed"] is True
+    for key in ("state_written", "recovery_performed", "admitted", "native_release_performed", "historical_release_invented"):
+        assert report[key] is False
+    _sampled_header_unchanged(case, before)
+
+
+def test_sampled_v1_header_explicit_closeout_preserves_cap_artifacts_and_foreign_row(sampled_header_setup, monkeypatch):
+    case = _sampled_header_case(sampled_header_setup, monkeypatch)
+    inventory = recovery._durable_inventory(case["args"]["attempt_directory"])
+    report = _sampled_header_call(case, "reconcile", 280_000_000_000)
+    after = json.loads(case["ledger"].read_bytes())
+    assert after["limit_bytes"] == 280_000_000_000
+    assert recovery.resources.MAX_STORAGE_BYTES == 250_000_000_000
+    assert after["reservations"][case["args"]["reservation_id"]]["status"] == "released"
+    assert after["reservations"][case["prior_id"]] == case["prior"]
+    assert recovery._durable_inventory(case["args"]["attempt_directory"]) == inventory
+    assert report["capacity_policy"] == "administrative_closeout"
+    assert report["cap_changed"] is report["admitted"] is report["outputs_deleted"] is False
+
+
+def test_sampled_v1_header_no_optin_retains_actual_header_refusal(sampled_header_setup, monkeypatch):
+    case = _sampled_header_case(sampled_header_setup, monkeypatch)
+    before = case["ledger"].read_bytes()
+    for operation in ("inspect", "reconcile"):
+        for value in (_SAMPLED_HEADER_OMITTED, None):
+            with pytest.raises(recovery.resources.DaemonResourceError, match="disk ledger storage scope differs"):
+                _sampled_header_call(case, operation, value)
+            _sampled_header_unchanged(case, before)
+
+
+def test_sampled_v1_header_wrong_explicit_value_cannot_rebind_header(sampled_header_setup, monkeypatch):
+    case = _sampled_header_case(sampled_header_setup, monkeypatch)
+    before = case["ledger"].read_bytes()
+    for operation in ("inspect", "reconcile"):
+        with pytest.raises(recovery.resources.DaemonResourceError, match="disk ledger storage scope differs"):
+            _sampled_header_call(case, operation, 279_000_000_000)
+        _sampled_header_unchanged(case, before)
+
+
+def test_sampled_v1_header_rejects_nonpositive_nonint_and_overflow(sampled_header_setup, monkeypatch):
+    case = _sampled_header_case(sampled_header_setup, monkeypatch)
+    before = case["ledger"].read_bytes()
+    for value in (True, False, 0, -1, 280_000_000_000.0, "280000000000", [], {}, 1 << 63):
+        for operation in ("inspect", "reconcile"):
+            with pytest.raises(recovery.resources.DaemonResourceError, match="invalid expected ledger limit"):
+                _sampled_header_call(case, operation, value)
+            _sampled_header_unchanged(case, before)
+    assert case["scheduler_calls"] == []
+
+
+def test_sampled_v1_header_explicit_requires_administrative_policy_before_scheduler(sampled_header_setup, monkeypatch):
+    case = _sampled_header_case(sampled_header_setup, monkeypatch)
+    before = case["ledger"].read_bytes()
+    with pytest.raises(recovery.resources.DaemonResourceError, match="explicit ledger limit requires administrative_closeout"):
+        _sampled_header_call(case, "reconcile", 280_000_000_000, "require_capacity")
+    assert case["scheduler_calls"] == []
+    _sampled_header_unchanged(case, before)
+
+
+def test_sampled_v1_header_signed63_upper_bound_inspection(sampled_header_setup, monkeypatch):
+    case = _sampled_header_case(sampled_header_setup, monkeypatch, (1 << 63) - 1)
+    before = case["ledger"].read_bytes()
+    assert _sampled_header_call(case, "inspect", (1 << 63) - 1)["ready"] is True
+    _sampled_header_unchanged(case, before)
+
+
+def test_sampled_v1_header_does_not_bypass_missing_child_profile(sampled_header_setup, monkeypatch):
+    case = _sampled_header_case(sampled_header_setup, monkeypatch)
+    case["row"]["child"] = None
+    data = json.loads(case["ledger"].read_bytes())
+    data["reservations"][case["args"]["reservation_id"]] = case["row"]
+    case["ledger"].write_bytes(sampled_header_unit._sampled_wire(data))
+    case["terminal"]["reservation"]["record"] = deepcopy(case["row"])
+    case["parent"]["original_owner_custody"]["original_terminal"] = deepcopy(case["terminal"])
+    sampled_header_unit._sampled_seal(case)
+    before = case["ledger"].read_bytes()
+    for operation in ("inspect", "reconcile"):
+        with pytest.raises(recovery.resources.DaemonResourceError):
+            _sampled_header_call(case, operation, 280_000_000_000)
+        _sampled_header_unchanged(case, before)
+
+
+def test_sampled_v1_header_does_not_bypass_original_custody(sampled_header_setup, monkeypatch):
+    case = _sampled_header_case(sampled_header_setup, monkeypatch)
+    case["parent"]["original_owner_custody"]["original_native_compute_closed"] = False
+    sampled_header_unit._sampled_seal(case)
+    before = case["ledger"].read_bytes()
+    for operation in ("inspect", "reconcile"):
+        with pytest.raises(recovery.resources.DaemonResourceError):
+            _sampled_header_call(case, operation, 280_000_000_000)
+        _sampled_header_unchanged(case, before)
+
+
+def test_sampled_v1_header_does_not_bypass_live_owner(sampled_header_setup, monkeypatch):
+    case = _sampled_header_case(sampled_header_setup, monkeypatch)
+    case["process_table"][99999999] = dict(pid=99999999, birth="456", state="S",
+        parent_pid=1, group_pid=99999999, rss_bytes=4096)
+    before = case["ledger"].read_bytes()
+    for operation in ("inspect", "reconcile"):
+        with pytest.raises(recovery.resources.DaemonResourceError):
+            _sampled_header_call(case, operation, 280_000_000_000)
+        _sampled_header_unchanged(case, before)
+
+
+def test_sampled_v1_header_does_not_bypass_native_lease(sampled_header_setup, monkeypatch):
+    case = _sampled_header_case(sampled_header_setup, monkeypatch)
+    lease_id = case["row"]["native_lease_id"]
+    case["scheduler_state"]["leases"][lease_id] = dict(
+        lease_id=lease_id, request_id="validation:" + case["args"]["reservation_id"])
+    before = case["ledger"].read_bytes()
+    for operation in ("inspect", "reconcile"):
+        with pytest.raises(recovery.resources.DaemonResourceError):
+            _sampled_header_call(case, operation, 280_000_000_000)
+        _sampled_header_unchanged(case, before)
+
+
+def test_sampled_v1_header_does_not_bypass_proof_pin(sampled_header_setup, monkeypatch):
+    case = _sampled_header_case(sampled_header_setup, monkeypatch)
+    case["args"]["expected_proof_sha256"] = "0" * 64
+    before = case["ledger"].read_bytes()
+    for operation in ("inspect", "reconcile"):
+        with pytest.raises(recovery.resources.DaemonResourceError):
+            _sampled_header_call(case, operation, 280_000_000_000)
+        _sampled_header_unchanged(case, before)

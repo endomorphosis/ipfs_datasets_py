@@ -2425,7 +2425,7 @@ def inspect_sampled_validation_recovery_v1(ledger_path, *, roots, reservation_id
         expected_record_sha256, attempt_directory, expected_artifacts, proof_raw,
         expected_proof_sha256, expected_request_sha256, expected_terminal_sha256,
         expected_stdout_sha256, expected_parent_closeout_sha256, expected_producer_sha256, artifacts_durable=False,
-        ledger_lock_timeout_seconds=5):
+        ledger_lock_timeout_seconds=5, expected_ledger_limit_bytes=None):
     """Observe exact sampled recovery readiness without a census, grant or write.
 
     This is a current cooperative observation, not an authorization token. An
@@ -2440,14 +2440,14 @@ def inspect_sampled_validation_recovery_v1(ledger_path, *, roots, reservation_id
         ledger_path=ledger_path, roots=roots, reservation_id=reservation_id, expected_record_sha256=expected_record_sha256,
         attempt_directory=attempt_directory, expected_artifacts=expected_artifacts, artifacts_durable=artifacts_durable)
     return _inspect_sampled_validation_profile_v1(ledger_path, profile, roots,
-        reservation_id, expected_record_sha256, ledger_lock_timeout_seconds)
+        reservation_id, expected_record_sha256, ledger_lock_timeout_seconds, expected_ledger_limit_bytes)
 
 
 def reconcile_sampled_validation_reservation_v1(ledger_path, *, roots, reservation_id,
         expected_record_sha256, attempt_directory, expected_artifacts, proof_raw,
         expected_proof_sha256, expected_request_sha256, expected_terminal_sha256,
         expected_stdout_sha256, expected_parent_closeout_sha256, expected_producer_sha256, artifacts_durable=False,
-        capacity_policy="require_capacity", ledger_lock_timeout_seconds=5):
+        capacity_policy="require_capacity", ledger_lock_timeout_seconds=5, expected_ledger_limit_bytes=None):
     """Close one exact original sampled validation storage claim, preserving history.
 
     No native lease is acquired or released. Selected historical Popen-verified
@@ -2466,16 +2466,21 @@ def reconcile_sampled_validation_reservation_v1(ledger_path, *, roots, reservati
         attempt_directory=attempt_directory, expected_artifacts=expected_artifacts, artifacts_durable=artifacts_durable)
     return _reconcile_sampled_validation_profile_v1(ledger_path, profile, roots,
         reservation_id, expected_record_sha256, attempt_directory, artifacts_durable,
-        capacity_policy, ledger_lock_timeout_seconds)
+        capacity_policy, ledger_lock_timeout_seconds, expected_ledger_limit_bytes)
 
 
 
 
 def _inspect_sampled_validation_profile_v1(ledger_path, profile, roots,
-        reservation_id, expected_record_sha256, ledger_lock_timeout_seconds):
+        reservation_id, expected_record_sha256, ledger_lock_timeout_seconds, expected_ledger_limit_bytes=None):
+    if expected_ledger_limit_bytes is not None and (type(expected_ledger_limit_bytes) is not int
+            or not 0 < expected_ledger_limit_bytes < (1 << 63)):
+        raise resources.DaemonResourceError("invalid expected ledger limit")
+    storage_limit_binding = ({} if expected_ledger_limit_bytes is None else
+        {"storage_limit_bytes": expected_ledger_limit_bytes})
     _sampled_open_scheduler(profile)
     helper = resources.DaemonResourceReservation(ledger_path, roots=roots, storage_bytes=1, memory_mb=1,
-        require_existing_ledger=True, ledger_lock_timeout_seconds=ledger_lock_timeout_seconds)
+        require_existing_ledger=True, ledger_lock_timeout_seconds=ledger_lock_timeout_seconds, **storage_limit_binding)
     with _validation_inspection_lock(helper):
         ledger = helper._read()
         record = ledger["reservations"].get(reservation_id)
@@ -2504,7 +2509,14 @@ def _inspect_sampled_validation_profile_v1(ledger_path, profile, roots,
 
 def _reconcile_sampled_validation_profile_v1(ledger_path, profile, roots,
         reservation_id, expected_record_sha256, attempt_directory, artifacts_durable,
-        capacity_policy, ledger_lock_timeout_seconds):
+        capacity_policy, ledger_lock_timeout_seconds, expected_ledger_limit_bytes=None):
+    if expected_ledger_limit_bytes is not None:
+        if capacity_policy != "administrative_closeout":
+            raise resources.DaemonResourceError("explicit ledger limit requires administrative_closeout")
+        if type(expected_ledger_limit_bytes) is not int or not 0 < expected_ledger_limit_bytes < (1 << 63):
+            raise resources.DaemonResourceError("invalid expected ledger limit")
+    storage_limit_binding = ({} if expected_ledger_limit_bytes is None else
+        {"expected_ledger_limit_bytes": expected_ledger_limit_bytes})
     _unopened_need(profile["request"]["schema"] != _SAMPLED_V5_REQUEST_SCHEMA
         or capacity_policy == "administrative_closeout",
         "original sampled V5 recovery requires administrative_closeout")
@@ -2516,7 +2528,7 @@ def _reconcile_sampled_validation_profile_v1(ledger_path, profile, roots,
         expected_record_sha256=expected_record_sha256, attempt_directory=attempt_directory,
         expected_artifacts=profile["artifacts"], artifacts_durable=artifacts_durable,
         capacity_policy=capacity_policy, _sampled=profile,
-        _ledger_lock_timeout_seconds=ledger_lock_timeout_seconds)
+        _ledger_lock_timeout_seconds=ledger_lock_timeout_seconds, **storage_limit_binding)
 
 
 def inspect_manual_private_snapshot_validation_recovery_v1(ledger_path, *, roots, reservation_id,
