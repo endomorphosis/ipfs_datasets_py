@@ -16,6 +16,7 @@ from urllib.parse import urlsplit
 
 SCHEMA = "legal-official-statutory-context/v1"
 _BODY = re.compile(r"statutory-body(?:-(\d+)em)?\Z")
+_BODY_BLOCK = re.compile(r"statutory-body-block-(\d+)em\Z")
 _LABEL = re.compile(r"^\(([A-Za-z0-9]+)\)")
 _CUES = {
     "condition": r"\b(?:if|provided that|subject to|only if)\b",
@@ -149,11 +150,29 @@ def extract_document(raw: bytes, *, url: str, edition: int, legal_id: str) -> di
             notes.append(text)
             continue
         match = next((m for c in classes if (m := _BODY.fullmatch(c))), None)
-        kind = "codified_body" if match else "source_credit" if "source-credit" in classes else "notes_or_other"
-        if match and notes:
+        block_matches = [m for c in classes if (m := _BODY_BLOCK.fullmatch(c))]
+        continuation = block_matches[0] if block_matches else None
+        if continuation and (match or len(block_matches) != 1 or any(
+                c == "source-credit" or c.startswith("note-") for c in classes)):
+            raise ValueError("ambiguous codified block continuation classes")
+        kind = "codified_body" if match or continuation else "source_credit" if "source-credit" in classes else "notes_or_other"
+        if (match or continuation) and notes:
             raise ValueError("codified body cannot resume after note headings")
-        depth, label, path, parent = None, None, None, None
-        if match:
+        depth, label, path, parent, continuation_of = None, None, None, None, None
+        if continuation:
+            depth = int(continuation.group(1))
+            owner = next((row for row in reversed(paragraphs)
+                          if row["kind"] == "codified_body" and row["indent_depth"] == depth
+                          and row["subsection_path"] and "continuation_of" not in row
+                          and (depth, row["subsection_path"]) in stack), None)
+            if (_LABEL.match(text) or owner is None or not paragraphs
+                    or paragraphs[-1]["kind"] != "codified_body"):
+                raise ValueError("codified block continuation requires an unambiguous current labeled owner")
+            while stack and stack[-1][0] > depth:
+                stack.pop()
+            path, parent = owner["subsection_path"], owner["parent_path"]
+            continuation_of = owner["paragraph_index"]
+        elif match:
             depth = int(match.group(1) or 0)
             lead = _LABEL.match(text)
             label = lead.group(1) if lead else None
@@ -170,6 +189,9 @@ def extract_document(raw: bytes, *, url: str, edition: int, legal_id: str) -> di
                "note_headings": list(notes) if kind == "notes_or_other" else [],
                "linked_references": [{"text": normalize(a.get_text()), "href": a.get("href")}
                                      for a in tag.find_all("a", href=True)]}
+        if continuation_of is not None:
+            row["continuation_of"] = continuation_of
+            row["mapping_profile"] = "govinfo-explicit-body-block-continuation/v1"
         paragraphs.append(row)
         texts.append(text)
         position += len(text) + 1
@@ -183,16 +205,23 @@ def extract_document(raw: bytes, *, url: str, edition: int, legal_id: str) -> di
     blocks = []
     for index, row in enumerate(body):
         end = row["char_end"]
-        descendants = []
+        descendants, continuations = [], []
         for child in body[index + 1:]:
+            if child.get("continuation_of") == row["paragraph_index"]:
+                continuations.append(child["paragraph_index"])
+                end = child["char_end"]
+                continue
             if child["indent_depth"] <= row["indent_depth"]:
                 break
             descendants.append(child["paragraph_index"])
             end = child["char_end"]
-        blocks.append({"paragraph_index": row["paragraph_index"], "subsection_path": row["subsection_path"],
-                       "char_start": row["char_start"], "char_end": end,
-                       "descendant_paragraphs": descendants,
-                       "text_sha256": sha(document_text[row["char_start"]:end])})
+        block = {"paragraph_index": row["paragraph_index"], "subsection_path": row["subsection_path"],
+                 "char_start": row["char_start"], "char_end": end,
+                 "descendant_paragraphs": descendants,
+                 "text_sha256": sha(document_text[row["char_start"]:end])}
+        if continuations:
+            block["continuation_paragraphs"] = continuations
+        blocks.append(block)
     return {"schema": SCHEMA, "legal_id": legal_id, "edition": edition, "source_url": url,
             "heading": heading, "document_id": "govinfo-html-sha256:" + hashlib.sha256(raw).hexdigest(),
             "html_sha256": hashlib.sha256(raw).hexdigest(), "document_text": document_text,

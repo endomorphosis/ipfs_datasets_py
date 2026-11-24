@@ -1563,3 +1563,208 @@ def test_wire_graph_v3_detached_returned_report_stays_guarded_after_serializatio
     monkeypatch.setattr(eligibility, "validate_source_span_target_eligibility_v4", observe_replay)
     with pytest.raises(ValueError): _prepare_wire_graph_v3(case)
     assert changed == [True] and detached and len(replays) == 2
+
+
+# Exact retained official 2024 snapshot, not an independent legal review.
+# The tests below bind source occurrences only; applicability, definitions and
+# legal/meaning/training/evaluation admission remain unasserted.
+_OFFICIAL_7214_ASSOCIATION_HTML = (
+    b'<html><head><link rel="stylesheet" type="text/css" href="usc.css"/><title>U.S.C. Title 10 - ARMED FORCES</title></head><body>\n'
+    b'<span style="font-weight:bold;font-size:12pt;">10 U.S.C. </span><br/>\n'
+    b'<span style="font-size:10pt">United States Code, 2024 Edition</span><br/>\n'
+    b'<span style="font-size:10pt">Title 10 - ARMED FORCES</span><br/>\n'
+    b'<span style="font-size:10pt">Subtitle B - Army</span><br/>\n'
+    b'<span style="font-size:10pt">PART II - PERSONNEL</span><br/>\n'
+    b'<span style="font-size:10pt">CHAPTER 723 - SPECIAL APPOINTMENTS, ASSIGNMENTS, DETAILS, AND DUTIES</span><br/>\n'
+    b'<span style="font-size:10pt">Sec. 7214 - Corps of Engineers: detail of officers to assist Mayor of District of Columbia</span><br/>\n'
+    b'<span style="font-size:10pt">From the U.S. Government Publishing Office, <a href="http://www.gpo.gov">www.gpo.gov</a></span><br/><br/>\n'
+    b'<!-- documentid:10_7214  usckey:100000000721400000000000000000000 currentthrough:20250106 documentPDFPage:3007 -->\n'
+    b'<!-- itempath:/100/Subtitle B/PART II/CHAPTER 723/Sec. 7214 -->\n'
+    b'<!-- itemsortkey:100AEJY -->\n'
+    b'<!-- expcite:TITLE 10-ARMED FORCES!@!Subtitle B-Army!@!PART II-PERSONNEL!@!CHAPTER 723-SPECIAL APPOINTMENTS, ASSIGNMENTS, DETAILS, AND DUTIES!@!Sec. 7214 -->\n'
+    b'<!-- field-start:head -->\n'
+    b'<h3 class="section-head">&sect;7214. Corps of Engineers: detail of officers to assist Mayor of District of Columbia</h3>\n'
+    b'<!-- field-end:head -->\n'
+    b'<!-- field-start:statute -->\n'
+    b'<p class="statutory-body">The President may detail not more than three officers assigned to the Corps of Engineers to assist the Mayor of the District of Columbia in discharging his duties.</p>\n'
+    b'<!-- field-end:statute -->\n'
+    b'<!-- field-start:sourcecredit -->\n'
+    b'<p class="source-credit">(Aug. 10, 1956, ch. 1041, 70A Stat. 201, &sect;3534; Pub. L. 90&ndash;623, &sect;2(5), Oct. 22, 1968, 82 Stat. 1314; Pub. L. 96&ndash;513, title V, &sect;512(5)(A), (B), Dec. 12, 1980, 94 Stat. 2929; renumbered &sect;7214, Pub. L. 115&ndash;232, div. A, title VIII, &sect;808(b)(6), Aug. 13, 2018, 132 Stat. 1838.)</p>\n'
+    b'<!-- PDFPage:3008 --><!-- field-end:sourcecredit -->\n'
+    b'<!-- field-start:notes -->\n'
+    b'<!-- field-start:historicalandrevision-note -->\n'
+    b'<table class="uschistrev" cellspacing="0" width="700"><caption><cap-smallcap>Historical and Revision Notes</cap-smallcap></caption>\n'
+    b'<tr><th id="row0col0"><i>Revised section</i></th><th id="row0col1"><i>Source (U.S. Code)</i></th><th id="row0col2"><i>Source (Statutes at Large)</i></th></tr>\n'
+    b'<tr>\n'
+    b'<td class="left">3534(a)<p class="intabledata">3534(b) </p></td>\n'
+    b'<td class="middle">10:189 (less 1st sentence).<p class="intabledata">10:190. </p></td>\n'
+    b'<td class="right">June 11, 1878, ch. 180, &sect;2 (48th through 56th words of 1st sentence, and 2d sentence), 20 Stat. 103.</td>\n'
+    b'</tr>\n'
+    b'<tr>\n'
+    b'<td class="left">&#160; </td>\n'
+    b'<td class="middle"> </td>\n'
+    b'<td class="right">June 11, 1878, ch. 180, &sect;5 (last sentence); restated Aug. 7, 1894, ch. 232 (proviso under &quot;For Engineer\'s Office&quot;), 28 Stat. 246.</td>\n'
+    b'</tr>\n'
+    b'<tr>\n'
+    b'<td class="left">&#160; </td>\n'
+    b'<td class="middle"> </td>\n'
+    b'<td class="right">Mar. 3, 1881, ch. 134 (words after last semicolon of 1st par. under &quot;General Expenses&quot;), 21 Stat. 460.</td>\n'
+    b'</tr>\n'
+    b'<tr>\n'
+    b'<td class="left">&#160; </td>\n'
+    b'<td class="middle"> </td>\n'
+    b'<td class="right">Dec. 24, 1890, J. Res. 7 (last sentence), 26 Stat. 1113.</td>\n'
+    b'</tr>\n'
+    b'\n'
+    b'</table>\n'
+    b'\n'
+    b'<p class="note-body">In subsection (a), the words &quot;whose grade is above first lieutenant&quot; are substituted for the words &quot;from among the captains or officers of higher grade&quot;. The words &quot;in the discretion of&quot; and &quot;from time to time, from the Corps of Engineers, by the President, for this duty&quot; are omitted as surplusage. 10:189 (last sentence) is omitted as obsolete.</p>\n'
+    b'<p class="note-body">In subsections (a) and (b), the words &quot;assigned to&quot; are substituted for the word &quot;of&quot;, since, under section 3063 of this title, officers are assigned to, rather than commissioned in, the Corps of Engineers.</p>\n'
+    b'<p class="note-body">In subsection (b), the words &quot;assist that officer&quot; are substituted for the words &quot;act as assistants to said engineer commissioner&quot;. The words &quot;his duties&quot; are substituted for the words &quot;the special duties imposed upon him&quot;.</p>\n'
+    b'<br class="Q04" />\n'
+    b'<!-- field-end:historicalandrevision-note -->\n'
+    b'<!-- field-start:miscellaneous-note -->\n'
+    b'<h4 class="note-head"><strong>Editorial Notes</strong></h4>\n'
+    b'<!-- field-end:miscellaneous-note -->\n'
+    b'<!-- field-start:priorprovisions-note -->\n'
+    b'<h4 class="note-head">Prior Provisions</h4>\n'
+    b'<p class="note-body">A prior section 7214 was renumbered section 8614 of this title.</p>\n'
+    b'<p class="note-body">A prior section 7215, act Aug. 10, 1956, ch. 1041, 70A Stat. 445, authorized Secretary of the Navy to maintain and operate naval prisons and prison farms and to provide for subsistence, welfare, recreation, and education of naval prisoners, prior to repeal by Pub. L. 90&ndash;377, &sect;6(2), July 5, 1968, 82 Stat. 288.</p>\n'
+    b'<!-- field-end:priorprovisions-note -->\n'
+    b'<!-- field-start:amendment-note -->\n'
+    b'<h4 class="note-head">Amendments</h4>\n'
+    b'<p class="note-body"><b>2018</b>&mdash;Pub. L. 115&ndash;232 renumbered section 3534 of this title as this section.</p>\n'
+    b'<p class="note-body"><b>1980</b>&mdash;Pub. L. 96&ndash;513 substituted &quot;Mayor&quot; for &quot;Commissioner&quot; in section catchline and text.</p>\n'
+    b'<p class="note-body"><b>1968</b>&mdash;Pub. L. 90&ndash;623 substituted &quot;Corps of Engineers: detail of officers to assist Commissioner of District of Columbia&quot; for &quot;Engineer Commissioner of the District of Columbia; assistants: detail&quot; as section catchline and struck out provisions for the appointment of an Engineer Commissioner of the District of Columbia.</p>\n'
+    b'<br class="Q04" />\n'
+    b'<!-- field-end:amendment-note -->\n'
+    b'<!-- field-start:miscellaneous-note -->\n'
+    b'<h4 class="note-head"><strong>Statutory Notes and Related Subsidiaries</strong></h4>\n'
+    b'<!-- field-end:miscellaneous-note -->\n'
+    b'<!-- field-start:effectivedate-amendment-note -->\n'
+    b'<h4 class="note-head">Effective Date of 2018 Amendment</h4>\n'
+    b'<p class="note-body">Amendment by Pub. L. 115&ndash;232 effective Feb. 1, 2019, with provision for the coordination of amendments and special rule for certain redesignations, see section 800 of Pub. L. 115&ndash;232, set out as a note preceding section 3001 of this title.</p>\n'
+    b'<h4 class="note-head">Effective Date of 1980 Amendment</h4>\n'
+    b'<p class="note-body">Amendment by Pub. L. 96&ndash;513 effective Dec. 12, 1980, see section 701(b)(3) of Pub. L. 96&ndash;513, set out as a note under section 101 of this title.</p>\n'
+    b'<h4 class="note-head">Effective Date of 1968 Amendment</h4>\n'
+    b'<p class="note-body">Amendment by Pub. L. 90&ndash;623 intended to restate without substantive change the law in effect on Oct. 22, 1968, see section 6 of Pub. L. 90&ndash;623, set out as a note under section 5334 of Title 5, Government Organization and Employees.</p>\n'
+    b'<!-- field-end:effectivedate-amendment-note -->\n'
+    b'<!-- field-end:notes -->\n'
+    b'\n'
+    b'\n'
+    b'</body></html>'
+)
+
+_OFFICIAL_7214_ASSOCIATION_URL = 'https://www.govinfo.gov/content/pkg/USCODE-2024-title10/html/USCODE-2024-title10-subtitleB-partII-chap723-sec7214.htm'
+_OFFICIAL_7214_ASSOCIATION_HTML_SHA256 = '9c33986e216e85dbae33e58a3201bf3c02d3c4ff887d48e5ec524f8813c5842e'
+_OFFICIAL_7214_OPERATIVE_OCCURRENCE = 'legal-view-occurrence:sha256:f48205dfeef4b429d54ac38826be4393e6b036cff29811bade40d3e8ac636d8a'
+_OFFICIAL_7214_NOTE_OCCURRENCE = 'legal-view-occurrence:sha256:cd73c56cd188885d8ab62d681e950cdceaccec0f34d2ee5c1f3f58b4fd878726'
+_OFFICIAL_7214_OPERATIVE_TEXT = 'The President may detail not more than three officers assigned to the Corps of Engineers to assist the Mayor of the District of Columbia in discharging his duties.'
+
+
+def _official_7214_source_association_case(cache_id):
+    raw = _OFFICIAL_7214_ASSOCIATION_HTML
+    assert hashlib.sha256(raw).hexdigest() == _OFFICIAL_7214_ASSOCIATION_HTML_SHA256
+    document = context.extract_document(
+        raw, url=_OFFICIAL_7214_ASSOCIATION_URL, edition=2024,
+        legal_id="usc:us:10:7214",
+    )
+    operative_rows = [p for p in document["paragraphs"]
+                      if p["kind"] == "codified_body"
+                      and "statutory-body" in p["classes"]
+                      and p["text"] == _OFFICIAL_7214_OPERATIVE_TEXT]
+    note_rows = [p for p in document["paragraphs"]
+                 if p["kind"] == "notes_or_other"
+                 and "intabledata" in p["classes"] and p["text"] == "10:190."]
+    assert len(operative_rows) == len(note_rows) == 1
+    operative = context.source_selector(
+        document, raw, char_start=operative_rows[0]["char_start"],
+        char_end=operative_rows[0]["char_end"],
+    )
+    note = context.source_selector(
+        document, raw, char_start=note_rows[0]["char_start"],
+        char_end=note_rows[0]["char_end"],
+    )
+    assert operative["occurrence_id"] == _OFFICIAL_7214_OPERATIVE_OCCURRENCE
+    assert note["occurrence_id"] == _OFFICIAL_7214_NOTE_OCCURRENCE
+    assert operative["view_id"] == note["view_id"]
+    assert operative["occurrence_id"] != note["occurrence_id"]
+    scope = graphs.bind_scope(
+        jurisdiction="US-federal", instrument="USCode", edition=2024,
+        applicability="not_asserted", definition_scope="not_asserted",
+    )
+    row = {
+        "source_span_id": cache_id, "source_text": operative["text"],
+        "source_sha256": operative["text_sha256"],
+        "source_revision": "sha256:" + _OFFICIAL_7214_ASSOCIATION_HTML_SHA256,
+        "legal_id": document["legal_id"],
+    }
+    binding = subject.make_source_binding(
+        document, raw, document_revision=row["source_revision"], scope=scope,
+        candidate_selectors=[operative],
+        context_observation={"status": "unreviewed", "governing_dependencies_verified": False},
+        dependency_refs=(), evidence_refs=(),
+    )
+    return row, {cache_id: binding}, operative, note
+
+
+@pytest.mark.parametrize(
+    "cache_id", ["legacy-source-span:7214", _OFFICIAL_7214_OPERATIVE_OCCURRENCE],
+    ids=["legacy-cache-id", "occurrence-cache-id"],
+)
+def test_official_7214_operative_cache_row_rejects_historical_note_selector(cache_id):
+    row, bindings, operative, note = _official_7214_source_association_case(cache_id)
+    original_row = deepcopy(row)
+    matched, returned, issues = subject._bound_source(row, bindings)
+    assert issues == [] and matched["selector"] == operative
+    assert returned == bindings[cache_id]
+    if cache_id == "legacy-source-span:7214":
+        # Valid legacy cache identities are not globally equated with occurrence IDs.
+        assert cache_id != operative["occurrence_id"]
+    assert returned["context_observation"]["status"] == "unreviewed"
+    assert returned["context_observation"]["governing_dependencies_verified"] is False
+    assert returned["document"]["independently_reviewed"] is False
+    assert returned["document"]["source_semantics_verified"] is False
+    assert returned["document"]["training_qualified"] is False
+    assert returned["scope"]["applicability"] == "not_asserted"
+    assert returned["scope"]["definition_scope"] == "not_asserted"
+
+    # The genuine, internally coherent note selector addresses the SAME view.
+    # It must not substitute for the unchanged operative text/hash/cache row.
+    changed = deepcopy(bindings)
+    changed[cache_id]["candidate_selectors"] = [deepcopy(note)]
+    rejected, retained_binding, issues = subject._bound_source(row, changed)
+    assert rejected is None
+    assert retained_binding == changed[cache_id]
+    assert [issue["code"] for issue in issues] == ["invalid_independent_source_binding"]
+    assert row == original_row
+
+
+@pytest.mark.parametrize("damage", ["note-text-hash", "note-geometry", "note-occurrence-id"])
+def test_official_7214_selector_splice_cannot_retain_operative_identity(damage):
+    cache_id = "legacy-source-span:7214"
+    row, bindings, operative, note = _official_7214_source_association_case(cache_id)
+    original_row = deepcopy(row)
+    matched, _, issues = subject._bound_source(row, bindings)
+    assert issues == [] and matched["selector"] == operative
+    assert cache_id != operative["occurrence_id"]
+    changed = deepcopy(bindings)
+    selector = changed[cache_id]["candidate_selectors"][0]
+    if damage == "note-text-hash":
+        selector.update(text=note["text"], text_sha256=note["text_sha256"])
+        assert selector["occurrence_id"] == operative["occurrence_id"]
+    elif damage == "note-geometry":
+        for key in ("char_start", "char_end", "utf8_byte_start", "utf8_byte_end"):
+            selector[key] = note[key]
+        assert selector["occurrence_id"] == operative["occurrence_id"]
+        assert selector["text"] == operative["text"]
+    else:
+        selector["occurrence_id"] = note["occurrence_id"]
+        assert selector["text"] == operative["text"]
+        assert selector["char_start"] == operative["char_start"]
+        assert selector["char_end"] == operative["char_end"]
+    rejected, retained_binding, issues = subject._bound_source(row, changed)
+    assert rejected is None
+    assert retained_binding == changed[cache_id]
+    assert [issue["code"] for issue in issues] == ["invalid_independent_source_binding"]
+    assert row == original_row
