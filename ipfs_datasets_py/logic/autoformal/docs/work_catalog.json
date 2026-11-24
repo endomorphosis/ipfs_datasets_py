@@ -24974,6 +24974,518 @@
         "Whole-phase or full-eight-phase completion"
       ],
       "full_eight_phase_goal_remains_open": true
+    },
+    {
+      "id": "real-single-claim-closeout-and-independent-postcensus-engineering-milestone513-20261124",
+      "evidence_ordinal": 513,
+      "path": "/tmp/guide513-json-private-author-revision-v02-0les7fhf/one-existing-guide513-closed-engineering-facts.json",
+      "observed_bytes": 22466,
+      "observed_sha256": "c7dc0aa7069a860fd471f37aebd09e7afc726792babe7114b77889f542899698",
+      "root": "artifact_workspace",
+      "required_for_catalog_check": false,
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY",
+      "scope": "One actual128MiB c56 claim admin closeout and separate independent197 postcensus, preserving7files66655B, stored280GB header and all other rows/charges. The independent census charges261542146590B,11542146590B over MAX250GB. A distinct adopted V3 owning cohort passed28 unique ordinary software cases with0FES/duplicates0 and closed Source/resource/parent custody, then three normal FF publications closed through D5fae/Heb981/Rootb2f4. v203 failed before collection withzero tests. Wrapper cap gap,missing custody and Torch/V4 remain open; private V2 followup/Phase6/Main sampled-header work is unadopted.",
+      "backlog_crosslink": {
+        "path": "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
+        "container": "migration",
+        "key": "current_user_goal_real_single_claim_closeout_and_independent_postcensus_engineering_milestone513_20261124"
+      },
+      "closed_engineering_facts": {
+        "schema": "one-existing-four-guide513-closed-engineering-facts/v1",
+        "record_id": "real-single-claim-closeout-and-independent-postcensus-engineering-milestone513-20261124",
+        "migration_key": "current_user_goal_real_single_claim_closeout_and_independent_postcensus_engineering_milestone513_20261124",
+        "catalog_before": 512,
+        "catalog_after": 513,
+        "Root_closed_claim_and_postcensus_facts_reference": {
+          "path": "/tmp/Root-LIR23-real-one-claim-and-independent-postcensus-closed-v198-rilskx98/Root-single-c56-actual-write-and-independent-postcensus-small.json",
+          "bytes": 7390,
+          "sha256": "609cbd6aa6df8aeca61a67818540282b743f9c15be504fe1219c9af4c15914bb"
+        },
+        "actual_closed_operation_and_independent_postcensus": {
+          "API_projected_after_is_NOT_postwrite_measurement": {
+            "additional_requested_bytes": 0,
+            "capacity_satisfied": false,
+            "charged_bytes": 261542143365,
+            "filesystem_free_shortfall_bytes": 0,
+            "inventory": {
+              "apparent_bytes": 184621045957,
+              "entry_count": 3178005,
+              "special_file_count": 217,
+              "symlink_count": 9190
+            },
+            "limit_bytes": 250000000000,
+            "minimum_filesystem_free_bytes": 431097942016,
+            "observed_apparent_bytes": 184621045957,
+            "outstanding_full_reservations_bytes": 76921097408,
+            "over_limit_bytes": 11542143365,
+            "scope": "named_roots_only_apparent_bytes"
+          },
+          "Root_selected": true,
+          "Torch_V4_or_original_CLI_dispatched": false,
+          "actual_charged_reduction_bytes": 134214503,
+          "actual_claim_reduction_bytes": 134217728,
+          "actual_distinct_postcheck": {
+            "Source_closed": true,
+            "actual_raw_unchanged_during_postcheck": true,
+            "bytes": 7220,
+            "elapsed_seconds": 103.13476754259318,
+            "ledger_write_attempted": false,
+            "path": "/tmp/Root-c56-distinct-actual-postwrite-census-selected-v197-qu6ocamo/parent-closeout.json",
+            "postcheck_complete": true,
+            "process_reaped_rc0": true,
+            "sha256": "d419384a5d2fc52bb15359e753b331e5086f5552b52e4e7c7399c1d9438c1baf",
+            "source_drift": []
+          },
+          "actual_durable_artifact_bytes": 66655,
+          "actual_header_sha256": "335efdea7927a14f27a38d53e1c7ac2ae013c28f2ed5889203e12fe6c94f0653",
+          "actual_independent_postwrite_census": {
+            "additional_requested_bytes": 0,
+            "capacity_satisfied": false,
+            "charged_bytes": 261542146590,
+            "filesystem_free_shortfall_bytes": 0,
+            "inventory": {
+              "apparent_bytes": 184621049182,
+              "entry_count": 3178005,
+              "special_file_count": 217,
+              "symlink_count": 9190
+            },
+            "limit_bytes": 250000000000,
+            "minimum_filesystem_free_bytes": 431087820800,
+            "observed_apparent_bytes": 184621049182,
+            "outstanding_full_reservations_bytes": 76921097408,
+            "over_limit_bytes": 11542146590,
+            "scope": "named_roots_only_apparent_bytes"
+          },
+          "actual_ledger_growth_bytes": 3225,
+          "actual_other_reservations_sha256": "f71a0dacf36351defe0b652045939ceb9a99df350ec70eeb66c71ef17bd7b998",
+          "actual_public_API": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_resource_recovery.reconcile_retained_reservation",
+          "actual_write": {
+            "Source_closed": true,
+            "bytes": 24922,
+            "elapsed_seconds": 233.48450202401727,
+            "independent_postwrite_census_pending_at_that_stage": true,
+            "path": "/tmp/Root-c56-public-one-claim-reconciliation-selected-v196-bwjzq4d5/parent-closeout.json",
+            "process_reaped_rc0": true,
+            "sha256": "3a28b05294e109f0f61e02a160968a24648db091a77d9f8a376b7f2c4954a757",
+            "source_drift": [],
+            "write_complete": true
+          },
+          "all_prior_failures_and_spend_preserved": true,
+          "artifact_count": 7,
+          "artifact_hashes": [
+            {
+              "bytes": 934,
+              "path": "cache/disabled-symai/.symai/symai.config.json",
+              "sha256": "789f9af45d7a544b09333b85413f13afdc2de4d5e208aff4a61a0b9989526a38"
+            },
+            {
+              "bytes": 4436,
+              "path": "exports/pytest-junit.xml",
+              "sha256": "afdbb86abc71c4151b620ddd3666ab9403b55153d8d1a518f6aafdab946a56e1"
+            },
+            {
+              "bytes": 146,
+              "path": "exports/pytest-outcomes.json",
+              "sha256": "d3c5177104b35c848eebf45916289b64dd434da5712255dae9fb4a2c43abff43"
+            },
+            {
+              "bytes": 700,
+              "path": "logs/failure.json",
+              "sha256": "2203ec904ee615f48b45a6c65344c9a316765a14ded9a467abc605b6d68b6814"
+            },
+            {
+              "bytes": 49313,
+              "path": "logs/qualification.json",
+              "sha256": "e1f506397810f29e3a1385ea9eadd8ca687c5de220f2fe73b8478ab01bc0e936"
+            },
+            {
+              "bytes": 5728,
+              "path": "logs/stderr.log",
+              "sha256": "bf87f2583894dff9a273a41ea79c7e0e0681a304f64aba67018ce2626ad779db"
+            },
+            {
+              "bytes": 5398,
+              "path": "logs/stdout.log",
+              "sha256": "0cc3fa5bd7d40615a2e42108c87e32e1e28a259125649ff182cb383b9fe4f3fd"
+            }
+          ],
+          "artifacts_deleted": false,
+          "automatic_replay_or_retry_or_rollback_authorized": false,
+          "before_actual_census": {
+            "additional_requested_bytes": 0,
+            "capacity_satisfied": false,
+            "charged_bytes": 261676361093,
+            "filesystem_free_shortfall_bytes": 0,
+            "inventory": {
+              "apparent_bytes": 184621045957,
+              "entry_count": 3178005,
+              "special_file_count": 217,
+              "symlink_count": 9190
+            },
+            "limit_bytes": 250000000000,
+            "minimum_filesystem_free_bytes": 431136632832,
+            "observed_apparent_bytes": 184621045957,
+            "outstanding_full_reservations_bytes": 77055315136,
+            "over_limit_bytes": 11676361093,
+            "scope": "named_roots_only_apparent_bytes"
+          },
+          "cap_changed": false,
+          "code_reference": {
+            "current_inherited_D": "017fb546935826d4e8f13d314395f6053cee4d3f",
+            "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_resource_recovery.py",
+            "published_commit": "e1f27b2f6a19e3a56b1624babbf57b0a7b15b152",
+            "sha256": "d2b7abf195e1e9d656392b477ebad25d28963669e6f1b0fac1e1ad0bade9dfed"
+          },
+          "current_raw_sha256": "7c3f6257c6d94866351d6d0632993afa792398350daeb5ca6367c8106f67f7a8",
+          "current_record_sha256": "5286b8227211c9c94fab234275bd62fd1ab364d1dfbfbfd26cf00871eb6b916d",
+          "full_Source_envelopes_retained": {
+            "actual_write196": 201326592,
+            "current_Dindex_read": 16777216,
+            "current_ledger_read": 67108864,
+            "failed193": 201326592,
+            "independent_postcheck197": 201326592,
+            "inventory_census194": 201326592
+          },
+          "full_reservation_promise_removed_bytes": 134217728,
+          "ledger_other_rows_and_header_preserved": true,
+          "legal_Lean_training_gold_or_scope_acceptance": false,
+          "live_Root_handles": [],
+          "new_Native_resource_lease": false,
+          "new_status": "released",
+          "next_limits": "Remaining actual overage11542146590 bytes. Generic31 metadata candidates alone insufficient; sampled456 total13,645,119,488 requires original trusted request/terminal/producer/custody proofs and explicit header wrapper integration.3f19 remains ineligible; no stale/deadPID automatic release. Production statutory review trust still absent.",
+          "old_status": "retained",
+          "original_global_policy_bytes": 250000000000,
+          "original_policy_capacity_satisfied": false,
+          "physical_IO_accounting_complete": false,
+          "preserved_failure": {
+            "bytes": 3321,
+            "exact_invocation_correction": "fresh empty owned0700 prefix and explicit -I -B -X pycache_prefix; all helper functions unchanged",
+            "old_full192MiB_envelope_preserved": true,
+            "path": "/tmp/Root-c56-existing-inventory-and-census-selected-v193-vsgwz3y3/parent-closeout.json",
+            "sha256": "8b2e1073082552ead63ff7f3c55b40b44bf624ca19f69a31b57d2919582a2914"
+          },
+          "previous_record_sha256": "a9aeb6c8871b38f0fbc7c8a1fd8c12e8dc19112fc564a25a2209030ff165d067",
+          "public21_software_qualification_is_prior_and_separate": true,
+          "real_ledger_one_claim_operation": true,
+          "reservation_id": "c56fb18ba920468daf5582a49204dbc1",
+          "reservations_deleted": false,
+          "resource_profile_unchanged": {
+            "CPU": 1,
+            "Source_seconds": 60,
+            "child_slots": 4,
+            "memory_MiB": 1536,
+            "ordinary_scratch_bytes": 16777216,
+            "parent_seconds": 420,
+            "work_seconds": 300
+          },
+          "schema": "Root-current-single-claim-generic-reconciliation-and-independent-postcensus-closed/v1",
+          "stored_header_bytes": 280000000000,
+          "whole_eight_phase_goal_complete": false
+        },
+        "claim_engineering_scope": {
+          "actual196": "One128MiB c56 claim admin closeout; a single claim disposition, not a generalized release or eligibility grant.",
+          "actual197": "Separate independently charged postcensus after the actual write; the two prewrite API censuses remain projections.",
+          "preserved_files": 7,
+          "preserved_file_bytes": 66655,
+          "stored_ledger_header_bytes": 280000000000,
+          "all_other_rows_and_charges_unchanged": true,
+          "independent_postcensus_charged_bytes": 261542146590,
+          "MAX250_bytes": 250000000000,
+          "independent_postcensus_over_MAX250_bytes": 11542146590,
+          "ledger_growth_bytes": 3225,
+          "original_preflight193_missing_X_refusal_preserved": true,
+          "corrected_invocation": "-I -B -X with a fresh0700 invocation directory",
+          "Source_and_resource_custody_closed_and_no_source_drift": true,
+          "prior_public21_is_separate_historical_scope": true
+        },
+        "V3_ordinary28_qualification_reference": {
+          "path": "/tmp/Root-V3-ordinary28-matching-bootstrap-manifest-selected-v204-k4jibidt/Root-V3-ordinary28-qualified-Source-resource-closed-small-v204.json",
+          "bytes": 3768,
+          "sha256": "ea6e11eb31ef94cfbd30569e30efa7a2e6ce95a5268b89f98a34cfefc8b35378"
+        },
+        "V3_actual_ordinary28_qualification": {
+          "D_HEAD": "5fae066b5871d3fdf0b63dfbc4339c199ca6ffc1",
+          "D_tree": "60d337fdefb53e7f8d47bd08eafafbc963316d9f",
+          "Source_closed": true,
+          "actual_Source_context_closure": [
+            {
+              "entered": true,
+              "exit_returned": true,
+              "root": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/accelerate"
+            },
+            {
+              "entered": true,
+              "exit_returned": true,
+              "root": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets"
+            }
+          ],
+          "actual_normal_conftests": [
+            "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/conftest.py",
+            "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/tests/conftest.py",
+            "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/tests/unit/conftest.py"
+          ],
+          "actual_parent_release_return": true,
+          "actual_process": {
+            "exit_code": 0,
+            "reaped": true,
+            "session_id": 95455,
+            "terminal": true
+          },
+          "actual_pytest_ini": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/pytest.ini",
+          "actual_report": {
+            "bytes": 1004325,
+            "path": "/tmp/Root-V3-ordinary28-matching-bootstrap-manifest-selected-v204-k4jibidt/actual-output/complete-published-D-reviewed-v2-v3-unit-dependencies28-existing-owner-report.json",
+            "sha256": "d28f183394fb78c31d599e40b6b2f3cba360cb66fa0d152f6a112e82f1b23e82"
+          },
+          "actual_run_binding": {
+            "bytes": 233677,
+            "path": "/tmp/Root-V3-ordinary28-matching-bootstrap-manifest-selected-v204-k4jibidt/actual-output/reviewed-v2-v3-unit-dependencies28-run-result0-output0.bin",
+            "sha256": "c169b0a0d52170956c8cb3ebaeb53600688c5176b7e6e5ebaf6c4734e791c55e"
+          },
+          "all_Root_Source_SDK_Git_handles_closed": true,
+          "called_equals_collected": true,
+          "compiled_owner_SHA256": "65e8182c945669b0f891b03ab12b1d3bee27697d4443bd8df32861af7a931b05",
+          "current_Source_full_envelope_retained": 134217728,
+          "duplicates": 0,
+          "errors": 0,
+          "failures": 0,
+          "frozen_local_candidate": {
+            "bytes": 4103,
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-V3-reviewed-unit-cycle-two-file-local-freeze-v200.json",
+            "sha256": "9ee2df6809913d4234ccd6f9963607870d6e00cef1ba84c4f195b5a1ab4fa5ff"
+          },
+          "independent_unique_cases": 28,
+          "legal_or_Native_or_training_admission_claimed": false,
+          "old_attempt": {
+            "full_Source_cost_retained": 134217728,
+            "report": {
+              "bytes": 87026,
+              "path": "/tmp/Root-V3-ordinary28-actual-READ-selected-v203-bb5q91ja/actual-output/complete-published-D-reviewed-v2-v3-unit-dependencies28-existing-owner-report.json",
+              "sha256": "a15a18cb4c61c300333b60a2a04fc5db8a16bed4850a523dcc1b1d5086b2e755"
+            },
+            "v203": "Root bootstrap manifest DATA mismatch before collection;0tests;fullyclosed"
+          },
+          "owning_test_Source_AST_code_execution_SHA256": "6982e1f557db2ff140804287d9be4ba1ba0b72242038d058b9fcbdce3a009a05",
+          "physical_IO_accounting_complete": false,
+          "publication_release": "Sole publisher may now perform child-first normal FF D5fae then H and Root gitlinks only, preserving all other links; no test/source/model/CI replay.",
+          "qualification_complete": true,
+          "raw_JUnit": {
+            "bytes": 6390,
+            "path": "/tmp/Root-V3-ordinary28-matching-bootstrap-manifest-selected-v204-k4jibidt/actual-output/reviewed-v2-v3-unit-dependencies28-run-result0-output1.bin",
+            "sha256": "61b55e6b635add1bb1c75b98d7bd676d3292ec0b6a7e10efc58dfc02436fbfac"
+          },
+          "resource_cleanup_confirmed": true,
+          "schema": "Root-reviewed-V3-ordinary28-qualified-Source-resource-closed-small/v204",
+          "skips": 0
+        },
+        "V3_actual_three_FF_publication_reference": {
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-V3-reviewed-unit-cycle-ordinary28-three-FF-publication-small-v204.json",
+          "bytes": 6517,
+          "sha256": "09e1e15f917dea120e6c6e23563ea4f585989c2f32f4e2101f8946d7cc9f6206"
+        },
+        "V3_actual_three_FF_publication": {
+          "V2_follow_up_adopted": false,
+          "actual_push_outputs": {
+            "datasets": "To https://github.com/endomorphosis/ipfs_datasets_py.git\n \t5fae066b5871d3fdf0b63dfbc4339c199ca6ffc1:refs/heads/main\t017fb54693..5fae066b58\nDone",
+            "hallucinate": "To https://github.com/endomorphosis/hallucinate_app.git\n \teb981c0201aaed687b37668c6e88c642cc71b39a:refs/heads/main\t229da71..eb981c0\nDone",
+            "root": "To https://github.com/endomorphosis/lift_coding.git\n \tb2f400bbd4c804e84d7fedc7da6134575ff1e93b:refs/heads/main\tb6f6bac062..b2f400bbd4\nDone"
+          },
+          "force_or_tag_push": false,
+          "frozen_local_candidate": {
+            "bytes": 4103,
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-V3-reviewed-unit-cycle-two-file-local-freeze-v200.json",
+            "sha256": "9ee2df6809913d4234ccd6f9963607870d6e00cef1ba84c4f195b5a1ab4fa5ff"
+          },
+          "gitlink_updates": {
+            "hallucinate": {
+              "ipfs_datasets_py": {
+                "from": "017fb546935826d4e8f13d314395f6053cee4d3f",
+                "to": "5fae066b5871d3fdf0b63dfbc4339c199ca6ffc1"
+              }
+            },
+            "root": {
+              "external/ipfs_datasets": {
+                "from": "017fb546935826d4e8f13d314395f6053cee4d3f",
+                "to": "5fae066b5871d3fdf0b63dfbc4339c199ca6ffc1"
+              },
+              "hallucinate_app": {
+                "from": "229da710403f3373f0e32d9427ed0225badcb5d8",
+                "to": "eb981c0201aaed687b37668c6e88c642cc71b39a"
+              }
+            }
+          },
+          "guide513_installed": false,
+          "local_after": {
+            "accelerate": {
+              "head": "88c0d9f82f66aaddbb01344c9f85236e92a5dc88",
+              "index_and_worktree_clean": true,
+              "tree": "416a953630c9ba7ef521fd87bf821f075b052efc"
+            },
+            "datasets": {
+              "head": "5fae066b5871d3fdf0b63dfbc4339c199ca6ffc1",
+              "index_and_worktree_clean": true,
+              "tree": "60d337fdefb53e7f8d47bd08eafafbc963316d9f"
+            },
+            "hallucinate": {
+              "head": "eb981c0201aaed687b37668c6e88c642cc71b39a",
+              "index_and_worktree_clean": true,
+              "tree": "12bf3f11f9c9a439e72d54d42eb3956d1ed42cd7"
+            },
+            "root": {
+              "head": "b2f400bbd4c804e84d7fedc7da6134575ff1e93b",
+              "index_and_worktree_clean": true,
+              "tree": "27b14423cacdc810fcd74f471c9dcce6edf74dd4"
+            }
+          },
+          "new_Source_test_CI_model_or_Lean_invocation": false,
+          "origin_main_after": {
+            "accelerate": "88c0d9f82f66aaddbb01344c9f85236e92a5dc88",
+            "datasets": "5fae066b5871d3fdf0b63dfbc4339c199ca6ffc1",
+            "hallucinate": "eb981c0201aaed687b37668c6e88c642cc71b39a",
+            "root": "b2f400bbd4c804e84d7fedc7da6134575ff1e93b"
+          },
+          "origin_main_before": {
+            "accelerate": "88c0d9f82f66aaddbb01344c9f85236e92a5dc88",
+            "datasets": "017fb546935826d4e8f13d314395f6053cee4d3f",
+            "hallucinate": "229da710403f3373f0e32d9427ed0225badcb5d8",
+            "root": "b6f6bac06249bbcfecbc10d13d0d105e89a3b349"
+          },
+          "origin_urls": {
+            "accelerate": "https://github.com/endomorphosis/ipfs_accelerate_py.git",
+            "datasets": "https://github.com/endomorphosis/ipfs_datasets_py.git",
+            "hallucinate": "https://github.com/endomorphosis/hallucinate_app.git",
+            "root": "https://github.com/endomorphosis/lift_coding.git"
+          },
+          "other_gitlinks_and_accelerate_preserved": true,
+          "published_product_and_test": {
+            "ipfs_datasets_py/logic/autoformal/legal_reviewed_norm_admission_v3.py": {
+              "blob": "d700c6af5d4e1f91c9965763fc71347ea2236f3d",
+              "bytes": 30293,
+              "full9": {
+                "st_ctime_ns": "1795547923868938756",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70042528",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795547922596377826",
+                "st_nlink": "1",
+                "st_size": "30293",
+                "st_uid": "1000"
+              },
+              "mode": "100644",
+              "parent_blob": "b136aff35d34632657d111f647657dc0c9022707",
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/ipfs_datasets_py/logic/autoformal/legal_reviewed_norm_admission_v3.py",
+              "relative_path": "ipfs_datasets_py/logic/autoformal/legal_reviewed_norm_admission_v3.py",
+              "sha256": "65e8182c945669b0f891b03ab12b1d3bee27697d4443bd8df32861af7a931b05"
+            },
+            "tests/unit/logic/autoformal/test_legal_reviewed_norm_admission_v3.py": {
+              "blob": "6169507dd3bc8813c24501829f044235c509a207",
+              "bytes": 28883,
+              "full9": {
+                "st_ctime_ns": "1795547925074965303",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70042529",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795547922600637008",
+                "st_nlink": "1",
+                "st_size": "28883",
+                "st_uid": "1000"
+              },
+              "mode": "100644",
+              "parent_blob": "de47a249167d03c819329d8d64d3b90bd6f4bd52",
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/tests/unit/logic/autoformal/test_legal_reviewed_norm_admission_v3.py",
+              "relative_path": "tests/unit/logic/autoformal/test_legal_reviewed_norm_admission_v3.py",
+              "sha256": "6982e1f557db2ff140804287d9be4ba1ba0b72242038d058b9fcbdce3a009a05"
+            }
+          },
+          "push_order": [
+            "datasets",
+            "hallucinate",
+            "root"
+          ],
+          "qualification": {
+            "actual_F9_custody_and_resources_closed": true,
+            "bytes": 3768,
+            "errors": 0,
+            "failures": 0,
+            "passed": 28,
+            "path": "/tmp/Root-V3-ordinary28-matching-bootstrap-manifest-selected-v204-k4jibidt/Root-V3-ordinary28-qualified-Source-resource-closed-small-v204.json",
+            "physical_unique_tests": 28,
+            "prior_setup_failure": {
+              "full_Source_cost_retained": 134217728,
+              "report": {
+                "bytes": 87026,
+                "path": "/tmp/Root-V3-ordinary28-actual-READ-selected-v203-bb5q91ja/actual-output/complete-published-D-reviewed-v2-v3-unit-dependencies28-existing-owner-report.json",
+                "sha256": "a15a18cb4c61c300333b60a2a04fc5db8a16bed4850a523dcc1b1d5086b2e755"
+              },
+              "v203": "Root bootstrap manifest DATA mismatch before collection;0tests;fullyclosed"
+            },
+            "raw_JUnit": {
+              "bytes": 6390,
+              "path": "/tmp/Root-V3-ordinary28-matching-bootstrap-manifest-selected-v204-k4jibidt/actual-output/reviewed-v2-v3-unit-dependencies28-run-result0-output1.bin",
+              "sha256": "61b55e6b635add1bb1c75b98d7bd676d3292ec0b6a7e10efc58dfc02436fbfac"
+            },
+            "sha256": "ea6e11eb31ef94cfbd30569e30efa7a2e6ce95a5268b89f98a34cfefc8b35378",
+            "skips": 0
+          },
+          "schema": "actual-reviewed-V3-ordinary28-three-fast-forward-publication/v204",
+          "statutory_training_native_or_corpus_admission_claimed": false
+        },
+        "V3_current_published_heads": {
+          "accelerate": "88c0d9f82f66aaddbb01344c9f85236e92a5dc88",
+          "datasets": "5fae066b5871d3fdf0b63dfbc4339c199ca6ffc1",
+          "hallucinate": "eb981c0201aaed687b37668c6e88c642cc71b39a",
+          "root": "b2f400bbd4c804e84d7fedc7da6134575ff1e93b"
+        },
+        "V3_engineering_scope": {
+          "ordinary28_unique_passes": 28,
+          "failures": 0,
+          "errors": 0,
+          "skips": 0,
+          "duplicates": 0,
+          "adopted_and_ordinary_software_qualified": true,
+          "current_publication_closed": true,
+          "v203": "Root bootstrap manifest DATA mismatch before collection;zero tests,not a test RED; original failure and full Source costs retained.",
+          "new_legal_Native_or_training_admission": false
+        },
+        "retained_limits": {
+          "original_Torch_V4_run": false,
+          "claim_3f19_eligible": false,
+          "wrapper_cap_gap_resolved": false,
+          "missing_custody_resolved": false,
+          "V2_followup_adopted_or_qualified": false,
+          "Phase6_private_work_adopted_or_qualified": false,
+          "Main_sampled_header_private_work_adopted_or_qualified": false,
+          "new_model_Lean_Native_or_legal_acceptance": false,
+          "whole_phase_or_eight_phase_completion": false,
+          "all_Source_envelopes_prior_failures_and_costs_preserved": true,
+          "physical_IO_accounting_complete": false
+        },
+        "preservation_requirement": {
+          "tasks": 24,
+          "components": 126,
+          "old_catalog_records": 512,
+          "all_old_JSON_values_and_list_prefixes": true,
+          "task_status_dependencies_acceptance_unchanged": true
+        },
+        "future_guide_Source_CAS_Git_clock_ledger_selection": null
+      },
+      "preservation": {
+        "all_old_JSON_values_and_list_prefixes": true,
+        "ordered_tasks": 24,
+        "ordered_components": 126,
+        "prior_selected_evidence_prefix": 512,
+        "task_status_dependencies_acceptance_unchanged": true
+      },
+      "not_granted": [
+        "General claim release, claim3f19 eligibility, resolution of wrapper cap gap or missing custody",
+        "Productive Torch/V4 execution or new model/Lean/Native/legal qualification",
+        "Statutory meaning, independent interpretation, governing applicability, training/gold/proof/corpus admission",
+        "Adoption or current qualification for private V2 followup,Phase6 or Main sampled-header work",
+        "Whole-phase or full-eight-phase completion"
+      ],
+      "full_eight_phase_goal_remains_open": true
     }
   ]
 }
