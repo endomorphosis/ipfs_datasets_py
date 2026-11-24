@@ -499,6 +499,42 @@ def test_relational_score_original_byte_measurement_is_optional_and_same_row_joi
     assert wrong_structure_exact_bytes["measurements"]["joint_typed_structure_original_utf8_exact"] is False
 
 
+def test_relational_score_distinguishes_obligation_from_bare_assertion():
+    assertion_text = (
+        "Typed legal rule: tdfol/tdfol_default.\nTypes: Object.\n"
+        "Predicate Serve: server of type Object; addressee of type Object.\n"
+        "Rule: (for every officer of type Object, (there exists person of type Object such that "
+        "(Serve holds for server: officer of type Object; addressee: person of type Object)))."
+    )
+    obligation = _score_relational(_RELATIONAL_SCORE_TEXT)
+    assert obligation["status"] == "complete_candidate_scored"
+    assert obligation["measurements"]["complete_typed_structure_exact"] is True
+
+    assertion = _score_relational(assertion_text, original=assertion_text)
+    assert assertion["status"] == "complete_candidate_scored"
+    assert assertion["input_count"] == assertion["supported_count"] == 1
+    assert assertion["abstention_count"] == 0
+    assert assertion["normalized_reference_prose"] == _RELATIONAL_SCORE_TEXT
+    assert assertion["normalized_candidate_prose"] == assertion_text
+    measurements = assertion["measurements"]
+    assert measurements["argument_roles_exact"] is True
+    assert measurements["complete_typed_structure_exact"] is False
+    assert measurements["canonical_prose_exact"] is False
+    assert measurements["original_utf8_exact"] is True
+    assert measurements["joint_typed_structure_original_utf8_exact"] is False
+    assert all(value is False for value in assertion["authority"].values())
+    assert assertion["training_mask"] == assertion["evaluation_gold_mask"] == 0
+
+
+def test_relational_score_abstains_on_ordinary_past_tense_prose():
+    result = _score_relational("Every officer served some person.")
+    assert result["status"] == "unsupported_candidate_abstained"
+    assert result["input_count"] == result["abstention_count"] == 1
+    assert result["supported_count"] == 0
+    assert result["normalized_candidate_prose"] is None
+    assert result["measurements"]["complete_typed_structure_exact"] is False
+
+
 @pytest.mark.parametrize("candidate", ["", "   ", "An officer must serve a person.",
     _RELATIONAL_SCORE_TEXT + " Further obligations apply.",
     _RELATIONAL_SCORE_TEXT.replace("addressee: person", "server: person")])
