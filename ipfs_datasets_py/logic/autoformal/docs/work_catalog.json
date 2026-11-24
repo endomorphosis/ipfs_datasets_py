@@ -23731,6 +23731,121 @@
       },
       "scope": "One consolidated maintained-guide update: published existing CI trigger coverage plus selected authored original-parent-v3 ordinary software cohort. Existing legal/scientific/native-positive statuses remain unchanged.",
       "status": "PUBLISHED_CI_SCOPE_AND_AUTHORED_ORDINARY27_SOFTWARE_QUALIFIED"
+    },
+    {
+      "current_published_D_HEAD": "4cd912f4e4256bde28ae331d6ebbb239e44f2bd7",
+      "current_published_D_tree": "26c527d48b5f2f4c1ce034f7d76b73abb4bc38c4",
+      "historical_failed_setup_disposition": "Prior 1,197/1,198-row setup and refusal records remain historical. Their expectations are superseded only for this selected, closed 1,199-row/35-case qualification. Original receipts and charges remain retained.",
+      "id": "current-D4cd-P1-Native3-and-proofcache-normal35-milestone507-20261124",
+      "independent_readback": {
+        "bytes": 5745,
+        "path": "/tmp/Reader-P1-current-published-Source-and-assets-read-preparation-private-v01/Phase1.2-current-proofcache-ordinary-binding-private-v01/independent-closed-current1199-normal35-readback-oxls2stp/independent-current1199-normal35-closed-readback-v01.json",
+        "role": "normal35",
+        "sha256": "34ce9f1411c4612f752e04415c7fce99351fc6f4abfd56b83ad869f4ef7834cd"
+      },
+      "not_granted": [
+        "statutory/legal meaning review",
+        "real Title10 corpus admission",
+        "whole Phase1 or full eight-phase goal completion",
+        "new model quality or training benefit",
+        "hosted Native CI or service activation",
+        "new execution/admission authority"
+      ],
+      "observed_bytes": 1413045,
+      "observed_sha256": "aa9ada377f58a5220a83ef001e9b9881d0e593a25a98f427073a610a551d8d02",
+      "ordinary35": {
+        "JUnit": {
+          "bytes": 6164,
+          "full9": {
+            "st_ctime_ns": "1795486320878025405",
+            "st_dev": "66306",
+            "st_gid": "1000",
+            "st_ino": "62045840",
+            "st_mode": "33024",
+            "st_mtime_ns": "1795486320878025405",
+            "st_nlink": "1",
+            "st_size": "6164",
+            "st_uid": "1000"
+          },
+          "path": "/tmp/Reader-P1-current-published-Source-and-assets-read-preparation-private-v01/Phase1.2-current-proofcache-ordinary-binding-private-v01/actual-Root-selected-proofcache35-current1199-ordinary-v20/phase2-bridge27-run-result0-output1.bin",
+          "sha256": "dd8a6d0ec63ad942845d3b04257b383f343314388d9fa8f22cc850a49246c5ee"
+        },
+        "JUnit_seconds": 3.002,
+        "Source_resource_parent_home_cleanup_closed": true,
+        "binding": {
+          "bytes": 318231,
+          "full9": {
+            "st_ctime_ns": "1795486320874484776",
+            "st_dev": "66306",
+            "st_gid": "1000",
+            "st_ino": "62045839",
+            "st_mode": "33024",
+            "st_mtime_ns": "1795486320874484776",
+            "st_nlink": "1",
+            "st_size": "318231",
+            "st_uid": "1000"
+          },
+          "path": "/tmp/Reader-P1-current-published-Source-and-assets-read-preparation-private-v01/Phase1.2-current-proofcache-ordinary-binding-private-v01/actual-Root-selected-proofcache35-current1199-ordinary-v20/phase2-bridge27-run-result0-output0.bin",
+          "sha256": "516e43eb56382b364b16ca0c491b1c293286807fc4d6b5a33082692337d4684c"
+        },
+        "compiled_owner_SHA256": "fc7b97d6873f01e3c8073aaa215b456b1a6bcc83016ba7401ea36abb18351749",
+        "errors": 0,
+        "failures": 0,
+        "full_report": {
+          "bytes": 1413045,
+          "path": "/tmp/Reader-P1-current-published-Source-and-assets-read-preparation-private-v01/Phase1.2-current-proofcache-ordinary-binding-private-v01/actual-Root-selected-proofcache35-current1199-ordinary-v20/complete-published-D-phase2-bridge27-existing-owner-report.json",
+          "sha256": "aa9ada377f58a5220a83ef001e9b9881d0e593a25a98f427073a610a551d8d02"
+        },
+        "function_case_vector": [
+          1,
+          1,
+          1,
+          8,
+          6,
+          3,
+          6,
+          2,
+          7
+        ],
+        "normal_conftests": 3,
+        "parents": 35,
+        "qualification_scope": "selected ordinary proof-cache software fixtures, fictional proof receipts; no new Native invocation or legalmeaning/admission credit",
+        "raw_reports": 35,
+        "skips": 0,
+        "subreports": 0,
+        "test_SHA256": "efdd956ba61d5f001cf511078bb381ef93abab9cbbce1ff8e130bfbfc6a704a7"
+      },
+      "path": "/tmp/Reader-P1-current-published-Source-and-assets-read-preparation-private-v01/Phase1.2-current-proofcache-ordinary-binding-private-v01/actual-Root-selected-proofcache35-current1199-ordinary-v20/complete-published-D-phase2-bridge27-existing-owner-report.json",
+      "preservation": {
+        "all_old_records_and_task_component_statuses_unchanged": true,
+        "old_selected_evidence_prefix": 506,
+        "ordered_components": 126,
+        "ordered_tasks": 24
+      },
+      "prior_separate_Native3": {
+        "existing_exact_catalog_matches": [],
+        "no_additional_Native_command_count_claimed": true,
+        "not_newly_executed_by_ordinary35": true,
+        "receipt": {
+          "bytes": 8099,
+          "path": "/tmp/Reader-P1-current-published-Source-and-assets-read-preparation-private-v01/Native3-current-D4cd-1191-binding-v01/actual-current-D4cd-Native3-owned-terminal-small-v01.json",
+          "role": "Native3",
+          "sha256": "5bc470ccbfbd841e4a20aac552c7802ca86591a905a71e4fa362ee321dae4598"
+        },
+        "scope": "Prior separately closed current-D4cd receipt: two version commands and three compiler commands. The expected proposition was accepted; wrong-type and unapproved-dependency controls were refused. No additional Native invocation is counted."
+      },
+      "required_for_catalog_check": false,
+      "retained_source_population": {
+        "bound_origin_modules": 18,
+        "known_literal_required_paths": 20,
+        "outer_rows": 1199,
+        "proof_resource_safety_SHA256": "3655923785cb99409171caaba8c523354f03dbe8d82b6deb45a7b46db8394633",
+        "python_rows": 1194,
+        "runtime_telemetry_SHA256": "542f705867b93fcb138a117e1f5c97a144ad6635dc92c37bc5034eee5065ef63"
+      },
+      "root": "artifact_workspace",
+      "scope": "One consolidated P1 evidence update. Current-D4cd Native3 remains a prior separately closed compiler receipt; current1199 ordinary proof-cache35 is a software-fixture qualification with fictional proof receipts. No transfer to statutory meaning, real legal admission, whole Phase1, or full eight-phase completion.",
+      "status": "CURRENT_SELECTED_P1_NATIVE3_AND_ORDINARY_PROOFCACHE35_CLOSED_SCOPED"
     }
   ]
 }

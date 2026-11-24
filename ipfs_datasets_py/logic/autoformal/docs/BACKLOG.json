@@ -1655,6 +1655,65 @@
       },
       "scope": "One consolidated maintained-guide update: published existing CI trigger coverage plus selected authored original-parent-v3 ordinary software cohort. Existing legal/scientific/native-positive statuses remain unchanged.",
       "status": "PUBLISHED_CI_SCOPE_AND_AUTHORED_ORDINARY27_SOFTWARE_QUALIFIED"
+    },
+    "current_user_goal_current_D4cd_P1_Native3_and_normal35_milestone507_20261124": {
+      "catalog_evidence_id": "current-D4cd-P1-Native3-and-proofcache-normal35-milestone507-20261124",
+      "catalog_evidence_ordinal": 507,
+      "completion_legal_admission_or_execution_granted": false,
+      "current_published_D_HEAD": "4cd912f4e4256bde28ae331d6ebbb239e44f2bd7",
+      "historical_failed_setup_disposition": "Prior 1,197/1,198-row setup and refusal records remain historical. Their expectations are superseded only for this selected, closed 1,199-row/35-case qualification. Original receipts and charges remain retained.",
+      "normal35_full_report": {
+        "bytes": 1413045,
+        "path": "/tmp/Reader-P1-current-published-Source-and-assets-read-preparation-private-v01/Phase1.2-current-proofcache-ordinary-binding-private-v01/actual-Root-selected-proofcache35-current1199-ordinary-v20/complete-published-D-phase2-bridge27-existing-owner-report.json",
+        "sha256": "aa9ada377f58a5220a83ef001e9b9881d0e593a25a98f427073a610a551d8d02"
+      },
+      "normal35_independent_readback": {
+        "bytes": 5745,
+        "path": "/tmp/Reader-P1-current-published-Source-and-assets-read-preparation-private-v01/Phase1.2-current-proofcache-ordinary-binding-private-v01/independent-closed-current1199-normal35-readback-oxls2stp/independent-current1199-normal35-closed-readback-v01.json",
+        "role": "normal35",
+        "sha256": "34ce9f1411c4612f752e04415c7fce99351fc6f4abfd56b83ad869f4ef7834cd"
+      },
+      "normal35_parent_subreport_accounting": {
+        "JUnit_seconds": 3.002,
+        "errors": 0,
+        "failures": 0,
+        "function_case_vector": [
+          1,
+          1,
+          1,
+          8,
+          6,
+          3,
+          6,
+          2,
+          7
+        ],
+        "passing_subreports": 0,
+        "raw_reports": 35,
+        "skips": 0,
+        "unique_parents": 35
+      },
+      "prior_separate_Native3_receipt": {
+        "bytes": 8099,
+        "path": "/tmp/Reader-P1-current-published-Source-and-assets-read-preparation-private-v01/Native3-current-D4cd-1191-binding-v01/actual-current-D4cd-Native3-owned-terminal-small-v01.json",
+        "role": "Native3",
+        "sha256": "5bc470ccbfbd841e4a20aac552c7802ca86591a905a71e4fa362ee321dae4598"
+      },
+      "retained_source_population": {
+        "bound_origin_modules": 18,
+        "known_literal_required_paths": 20,
+        "outer_rows": 1199,
+        "proof_resource_safety_SHA256": "3655923785cb99409171caaba8c523354f03dbe8d82b6deb45a7b46db8394633",
+        "python_rows": 1194,
+        "runtime_telemetry_SHA256": "542f705867b93fcb138a117e1f5c97a144ad6635dc92c37bc5034eee5065ef63"
+      },
+      "status": "SELECTED_P1_RECEIPTS_CLOSED_SCOPE_ONLY",
+      "unchanged": {
+        "Phase5_scientific_fields": true,
+        "all_126_components_and_statuses": true,
+        "all_24_ordered_tasks_and_status_dependencies_acceptance": true,
+        "all_506_previous_catalog_records": true
+      }
     }
   },
   "programme_goal_hierarchy": {
