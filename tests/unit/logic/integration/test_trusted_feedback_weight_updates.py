@@ -844,3 +844,46 @@ def test_nested_feedback_guard_metadata_never_enters_real_update_payload(
     assert json.dumps(
         autoencoder.state.to_dict(), sort_keys=True, separators=(",", ":"), allow_nan=False
     ) != before
+
+
+
+@pytest.mark.parametrize("route", ["inner-guidance", "inner-feedback", "outer", "inner-alias", "wrong-index-value"])
+def test_typed_proof_feedback_cannot_update_an_unrelated_training_sample(samples, route) -> None:
+    train, holdout = samples
+    other = build_us_code_sample(
+        title="5", section="551-other-feedback-train",
+        text="A board may retain the filing while an application remains pending.")
+    assert len({train.sample_id, holdout.sample_id, other.sample_id}) == 3
+    versions = _versions()
+    record = _trusted_feedback_record_for_nested_envelope(train, versions)
+    autoencoder = AdaptiveModalAutoencoder()
+    before = json.dumps(autoencoder.state.to_dict(), sort_keys=True, allow_nan=False)
+    key = "feedback" if route == "inner-feedback" else "guidance"
+    item = _hammer(train.sample_id, "typed-proof-sample-guard", versions)
+    envelope = {"proof_feedback_record": record, key: item}
+    supplied = {train.sample_id: train, other.sample_id: other, holdout.sample_id: holdout}
+    ablation_train = train.sample_id
+    if route.startswith("inner-") and route != "inner-alias":
+        item["sample_id"] = ablation_train = other.sample_id
+    elif route == "outer":
+        envelope["sample_id"] = other.sample_id
+    elif route == "inner-alias":
+        item["training_sample_id"] = other.sample_id
+    else:
+        supplied[train.sample_id] = other
+
+    trainer = TrustedFeedbackTrainer(
+        autoencoder, expected_versions=versions,
+        config=TrustedFeedbackTrainerConfig(production_weight_writes_enabled=True))
+    report = trainer.train(
+        [envelope], supplied, ablation_evidence=_ablation(ablation_train, holdout.sample_id))
+
+    assert report.applied_count == 0, "unbound typed proof feedback reached a weight update"
+    assert report.guardrail_blocked_count == 1
+    assert report.block_reasons == {"proof_feedback_sample_mismatch": 1}
+    assert report.candidate_count == report.accounted_count == 1
+    assert not report.write_to_autoencoder_weights
+    assert not report.trainable_legal_ir_head_norms["nonzero_update"]
+    assert autoencoder.state.applied_leanstral_guidance_ids == []
+    assert autoencoder.state.applied_proof_feedback_ids == []
+    assert json.dumps(autoencoder.state.to_dict(), sort_keys=True, allow_nan=False) == before

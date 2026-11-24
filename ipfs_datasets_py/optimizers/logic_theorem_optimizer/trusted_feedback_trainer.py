@@ -343,10 +343,16 @@ class TrustedFeedbackTrainer:
 
                 snapshot = self.autoencoder.state.copy()
                 try:
+                    sample = samples_by_id[sample_id]
+                    if proof_record is not None and not _proof_feedback_sample_matches(
+                        proof_record, sample_id, sample, (item, *guard_layers)
+                    ):
+                        block("guardrail_blocked_count", "proof_feedback_sample_mismatch")
+                        continue
                     updated = _apply_bounded_sample_update(
                         self.autoencoder,
                         item,
-                        samples_by_id[sample_id],
+                        sample,
                         feedback_id=feedback_id,
                         learning_rate=step,
                     )
@@ -691,11 +697,35 @@ def _feedback_id(
     return "trusted-feedback-" + hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
+_FEEDBACK_SAMPLE_ID_FIELDS = ("sample_id", "training_sample_id", "legal_sample_id")
+
+
+def _proof_feedback_sample_matches(
+    record: LegalIRProofFeedbackRecord,
+    selected_id: str,
+    sample: Any,
+    layers: Sequence[Mapping[str, Any]],
+) -> bool:
+    # The typed route already defaults to this record identity. Envelope
+    # selectors and a caller's index cannot reassign its proof to other data.
+    expected_id = record.obligation_id
+    actual_id = (
+        sample.get("sample_id") or sample.get("id")
+        if isinstance(sample, Mapping)
+        else getattr(sample, "sample_id", None)
+    )
+    return selected_id == actual_id == expected_id and all(
+        str(layer.get(key) or "").strip() in ("", expected_id)
+        for layer in layers
+        for key in _FEEDBACK_SAMPLE_ID_FIELDS
+    )
+
+
 def _sample_id(
     item: Mapping[str, Any],
     record: Optional[LegalIRProofFeedbackRecord],
 ) -> str:
-    for key in ("sample_id", "training_sample_id", "legal_sample_id"):
+    for key in _FEEDBACK_SAMPLE_ID_FIELDS:
         value = str(item.get(key) or "").strip()
         if value:
             return value
