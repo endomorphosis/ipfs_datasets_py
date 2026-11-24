@@ -682,6 +682,76 @@ class DaemonResourceReservation:
                     "accounting": copy.deepcopy(accounting),
                     "reservation_or_scheduler_lease_acquired": False}
 
+
+    @classmethod
+    def lower_storage_limit(cls, ledger_path, *, roots, expected_limit_bytes,
+                            storage_limit_bytes, ledger_lock_timeout_seconds=30):
+        """Explicitly lower one stopped ledger's cap without discarding charges.
+
+        This does not reserve resources, change defaults, or relax the existing
+        increase-only migration. Historical records must remain readable at the
+        new cap, and full claims plus any retained external overage still count.
+        """
+        previous = _integer(expected_limit_bytes, "expected_limit_bytes", maximum=(1 << 63) - 1)
+        target = _integer(storage_limit_bytes, "storage_limit_bytes", maximum=(1 << 63) - 1)
+        if target >= previous:
+            raise DaemonResourceError("storage limit lowering must decrease capacity")
+        control = cls(ledger_path, roots=roots, storage_bytes=1, memory_mb=1,
+                      storage_limit_bytes=previous, require_existing_ledger=True,
+                      ledger_lock_timeout_seconds=ledger_lock_timeout_seconds)
+        with control._locked():
+            ledger = control._read()
+            original_records = copy.deepcopy(ledger["reservations"])
+
+            def refuse_live_owners():
+                for record in original_records.values():
+                    native_deadlines._check_resource_operation_deadline()
+                    if record["status"] == "released":
+                        continue
+                    owner = _process(record["owner_pid"])
+                    if owner is not None and owner["state"] != "Z":
+                        raise DaemonResourceError(
+                            "live disk ledger owner prevents storage limit lowering: "
+                            + str(record["reservation_id"]))
+                    if _group_usage(record.get("child"))["live_processes"]:
+                        raise DaemonResourceError(
+                            "live disk ledger child prevents storage limit lowering: "
+                            + str(record["reservation_id"]))
+
+            refuse_live_owners()
+            retained_external_overage = 0
+            for record in original_records.values():
+                native_deadlines._check_resource_operation_deadline()
+                # _read applies these same per-record bounds at the new cap.
+                # Refuse before writing if immutable history could not reopen.
+                _integer(record["storage_bytes"], "ledger storage_bytes", maximum=target)
+                charges = _external_charges(record, limit_bytes=target)
+                if record["status"] != "released":
+                    retained_external_overage += max(0, sum(charges.values()) - record["storage_bytes"])
+            lowered = copy.deepcopy(ledger)
+            lowered["limit_bytes"] = target
+            control.storage_limit_bytes = target
+            accounting = control._account(lowered, additional=retained_external_overage)
+            refuse_live_owners()
+            if lowered["reservations"] != original_records:
+                raise DaemonResourceError("storage limit lowering changed reservation records")
+            control._write(lowered)
+            if control._read() != lowered:
+                raise DaemonResourceError("storage limit lowering readback differs")
+            records_raw = json.dumps(original_records, sort_keys=True,
+                                     separators=(",", ":"), allow_nan=False).encode()
+            return {"schema": "daemon-resource-storage-limit-migration/v1",
+                    "ledger_path": str(control.ledger_path),
+                    "roots": copy.deepcopy(control.root_identities),
+                    "previous_limit_bytes": previous, "storage_limit_bytes": target,
+                    "reservation_count": len(original_records),
+                    "reservation_records_sha256": hashlib.sha256(records_raw).hexdigest(),
+                    "records_roots_history_and_charges_preserved": True,
+                    "live_nonreleased_owners_and_current_children_refused": True,
+                    "retained_external_overage_bytes": retained_external_overage,
+                    "accounting": copy.deepcopy(accounting),
+                    "reservation_or_scheduler_lease_acquired": False}
+
     def _scheduler_identity(self):
         """Private fixed-lane hook; the daemon public API stays HAMMER_LEAN."""
         return SCHEDULER_LANE, SCHEDULER_WORKLOAD

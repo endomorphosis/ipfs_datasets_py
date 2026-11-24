@@ -1960,3 +1960,202 @@ def test_configured_capacity_validates_large_named_charge_without_changing_legac
     with pytest.raises(resources.DaemonResourceError, match="storage_bytes"):
         resources.DaemonResourceReservation(ledger, roots=[root], storage_bytes=270_000_000_000, memory_mb=1)
     assert resources.MAX_STORAGE_BYTES == 250_000_000_000
+
+
+def _lowering_capacity_ledger(tmp_path):
+    root, ledger_path, old, _ = _configured_capacity_ledger(tmp_path)
+    old["limit_bytes"] = 280_000_000_000
+    raw = (json.dumps(old, sort_keys=True, separators=(",", ":")) + "\n").encode()
+    ledger_path.write_bytes(raw)
+    return root, ledger_path, old, raw
+
+
+def test_storage_limit_lowering_preserves_every_record_and_full_charges(tmp_path, monkeypatch):
+    import hashlib
+    root, ledger_path, old, raw = _lowering_capacity_ledger(tmp_path)
+    def no_lease(*args, **kwargs):
+        raise AssertionError("lowering must never acquire native resources")
+    monkeypatch.setattr(resources.DaemonResourceReservation, "_acquire_native_lease", no_lease)
+    receipt = resources.DaemonResourceReservation.lower_storage_limit(
+        ledger_path, roots=[root], expected_limit_bytes=280_000_000_000,
+        storage_limit_bytes=250_000_000_000)
+    current = json.loads(ledger_path.read_bytes())
+    assert current == {**old, "limit_bytes": 250_000_000_000}
+    records_raw = json.dumps(old["reservations"], sort_keys=True, separators=(",", ":")).encode()
+    assert receipt["reservation_records_sha256"] == hashlib.sha256(records_raw).hexdigest()
+    assert receipt["accounting"]["charged_bytes"] == 6003
+    assert receipt["accounting"]["outstanding_full_reservations_bytes"] == 6000
+    assert receipt["accounting"]["observed_apparent_bytes"] == 3
+    assert receipt["records_roots_history_and_charges_preserved"] is True
+    assert receipt["reservation_or_scheduler_lease_acquired"] is False
+    assert receipt["roots"] == old["roots"]
+    assert resources.MAX_STORAGE_BYTES == 250_000_000_000
+    assert ledger_path.read_bytes() != raw
+    reopened = resources.DaemonResourceReservation(
+        ledger_path, roots=[root], storage_bytes=1, memory_mb=1)
+    assert reopened._read() == current
+    assert reopened.to_dict()["resource_lease"] is None
+
+
+def test_storage_limit_lowering_exact_commitment_boundary_and_released_history(tmp_path):
+    root, ledger_path, old, _ = _lowering_capacity_ledger(tmp_path)
+    old["reservations"]["released"]["owner_pid"] = os.getpid()
+    ledger_path.write_text(json.dumps(old))
+    receipt = resources.DaemonResourceReservation.lower_storage_limit(
+        ledger_path, roots=[root], expected_limit_bytes=280_000_000_000,
+        storage_limit_bytes=6003)
+    assert receipt["accounting"]["charged_bytes"] == 6003
+    assert json.loads(ledger_path.read_bytes()) == {**old, "limit_bytes": 6003}
+
+
+def test_storage_limit_lowering_refuses_one_byte_below_full_commitment(tmp_path):
+    root, ledger_path, _, raw = _lowering_capacity_ledger(tmp_path)
+    with pytest.raises(resources.DaemonResourceError, match="capacity"):
+        resources.DaemonResourceReservation.lower_storage_limit(
+            ledger_path, roots=[root], expected_limit_bytes=280_000_000_000,
+            storage_limit_bytes=6002)
+    assert ledger_path.read_bytes() == raw
+
+
+@pytest.mark.parametrize("status", ["reserved", "active", "retained"])
+def test_storage_limit_lowering_refuses_live_owner_without_releasing_claim(tmp_path, status):
+    root, ledger_path, old, _ = _lowering_capacity_ledger(tmp_path)
+    old["reservations"][status]["owner_pid"] = os.getpid()
+    raw = json.dumps(old, sort_keys=True).encode()
+    ledger_path.write_bytes(raw)
+    with pytest.raises(resources.DaemonResourceError, match="live disk ledger owner"):
+        resources.DaemonResourceReservation.lower_storage_limit(
+            ledger_path, roots=[root], expected_limit_bytes=280_000_000_000,
+            storage_limit_bytes=250_000_000_000)
+    assert ledger_path.read_bytes() == raw
+
+
+def test_storage_limit_lowering_refuses_live_orphan_child_without_killing_it(tmp_path):
+    root, ledger_path, old, _ = _lowering_capacity_ledger(tmp_path)
+    child = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(60)"], start_new_session=True)
+    try:
+        identity = resources._process(child.pid)
+        assert identity is not None
+        old["reservations"]["retained"]["child"] = {"pid": child.pid, "birth": identity["birth"]}
+        raw = json.dumps(old, sort_keys=True).encode()
+        ledger_path.write_bytes(raw)
+        with pytest.raises(resources.DaemonResourceError, match="live disk ledger child"):
+            resources.DaemonResourceReservation.lower_storage_limit(
+                ledger_path, roots=[root], expected_limit_bytes=280_000_000_000,
+                storage_limit_bytes=250_000_000_000)
+        assert ledger_path.read_bytes() == raw and child.poll() is None
+    finally:
+        child.terminate()
+        child.wait(timeout=5)
+
+
+@pytest.mark.parametrize("expected,target", [
+    (True, 250_000_000_000), ("280000000000", 250_000_000_000),
+    (0, 250_000_000_000), (-1, 250_000_000_000),
+    (1 << 63, 250_000_000_000), (280_000_000_000, True),
+    (280_000_000_000, "250000000000"), (280_000_000_000, 1.5),
+    (280_000_000_000, 0), (280_000_000_000, -1),
+    (280_000_000_000, 1 << 63), (280_000_000_000, 280_000_000_000),
+    (280_000_000_000, 281_000_000_000),
+])
+def test_storage_limit_lowering_invalid_transition_has_no_write_or_lock(tmp_path, expected, target):
+    root, ledger_path, _, raw = _lowering_capacity_ledger(tmp_path)
+    with pytest.raises(resources.DaemonResourceError):
+        resources.DaemonResourceReservation.lower_storage_limit(
+            ledger_path, roots=[root], expected_limit_bytes=expected,
+            storage_limit_bytes=target)
+    assert ledger_path.read_bytes() == raw
+    assert not ledger_path.with_name(ledger_path.name + ".lock").exists()
+
+
+def test_storage_limit_lowering_refuses_stale_expected_cap_and_wrong_roots(tmp_path):
+    root, ledger_path, _, raw = _lowering_capacity_ledger(tmp_path)
+    with pytest.raises(resources.DaemonResourceError, match="storage scope differs"):
+        resources.DaemonResourceReservation.lower_storage_limit(
+            ledger_path, roots=[root], expected_limit_bytes=270_000_000_000,
+            storage_limit_bytes=250_000_000_000)
+    other = tmp_path / "unrelated"
+    other.mkdir()
+    with pytest.raises(resources.DaemonResourceError, match="storage scope differs"):
+        resources.DaemonResourceReservation.lower_storage_limit(
+            ledger_path, roots=[other], expected_limit_bytes=280_000_000_000,
+            storage_limit_bytes=250_000_000_000)
+    assert ledger_path.read_bytes() == raw
+
+
+def test_storage_limit_lowering_requires_existing_ledger_and_real_lock(tmp_path):
+    import fcntl
+    root, ledger_path, _, raw = _lowering_capacity_ledger(tmp_path)
+    lock = ledger_path.with_name(ledger_path.name + ".lock")
+    with lock.open("wb") as held:
+        fcntl.flock(held, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        with pytest.raises(resources.DaemonResourceError, match="disk ledger lock unavailable"):
+            resources.DaemonResourceReservation.lower_storage_limit(
+                ledger_path, roots=[root], expected_limit_bytes=280_000_000_000,
+                storage_limit_bytes=250_000_000_000, ledger_lock_timeout_seconds=0)
+        assert ledger_path.read_bytes() == raw
+    ledger_path.unlink()
+    with pytest.raises(resources.DaemonResourceError, match="disk ledger disappeared"):
+        resources.DaemonResourceReservation.lower_storage_limit(
+            ledger_path, roots=[root], expected_limit_bytes=280_000_000_000,
+            storage_limit_bytes=250_000_000_000)
+    assert not ledger_path.exists()
+
+
+def test_storage_limit_lowering_replace_failure_preserves_bytes_and_removes_temp(tmp_path, monkeypatch):
+    root, ledger_path, _, raw = _lowering_capacity_ledger(tmp_path)
+    def fail_replace(*args):
+        raise OSError("injected lowering replace failure")
+    monkeypatch.setattr(resources.os, "replace", fail_replace)
+    with pytest.raises(OSError, match="injected lowering replace failure"):
+        resources.DaemonResourceReservation.lower_storage_limit(
+            ledger_path, roots=[root], expected_limit_bytes=280_000_000_000,
+            storage_limit_bytes=250_000_000_000)
+    assert ledger_path.read_bytes() == raw
+    assert not list(tmp_path.glob(".daemon-reservation-*"))
+
+
+def test_storage_limit_lowering_keeps_filesystem_free_constraint(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+    root, ledger_path, _, raw = _lowering_capacity_ledger(tmp_path)
+    monkeypatch.setattr(resources.shutil, "disk_usage", lambda root: SimpleNamespace(free=5999))
+    with pytest.raises(resources.DaemonResourceError, match="capacity"):
+        resources.DaemonResourceReservation.lower_storage_limit(
+            ledger_path, roots=[root], expected_limit_bytes=280_000_000_000,
+            storage_limit_bytes=250_000_000_000)
+    assert ledger_path.read_bytes() == raw
+
+
+@pytest.mark.parametrize("field", ["reservation", "external_charge"])
+def test_storage_limit_lowering_cannot_make_retained_history_unreadable(tmp_path, field):
+    root, ledger_path, old, _ = _lowering_capacity_ledger(tmp_path)
+    if field == "reservation":
+        old["reservations"]["released"]["storage_bytes"] = 260_000_000_000
+    else:
+        old["reservations"]["released"]["external_charges"] = {"journal": 260_000_000_000}
+    raw = json.dumps(old, sort_keys=True).encode()
+    ledger_path.write_bytes(raw)
+    with pytest.raises(resources.DaemonResourceError):
+        resources.DaemonResourceReservation.lower_storage_limit(
+            ledger_path, roots=[root], expected_limit_bytes=280_000_000_000,
+            storage_limit_bytes=250_000_000_000)
+    assert ledger_path.read_bytes() == raw
+
+
+@pytest.mark.parametrize("fits", [True, False])
+def test_storage_limit_lowering_external_overage_is_retained_in_commitment(tmp_path, fits):
+    root, ledger_path, old, _ = _lowering_capacity_ledger(tmp_path)
+    old["reservations"]["reserved"]["external_charges"] = {"journal": 5000}
+    raw = json.dumps(old, sort_keys=True).encode()
+    ledger_path.write_bytes(raw)
+    kwargs = dict(roots=[root], expected_limit_bytes=280_000_000_000,
+                  storage_limit_bytes=10003 if fits else 10002)
+    if fits:
+        receipt = resources.DaemonResourceReservation.lower_storage_limit(ledger_path, **kwargs)
+        assert receipt["retained_external_overage_bytes"] == 4000
+        assert receipt["accounting"]["charged_bytes"] == 10003
+        assert json.loads(ledger_path.read_bytes()) == {**old, "limit_bytes": 10003}
+    else:
+        with pytest.raises(resources.DaemonResourceError, match="capacity"):
+            resources.DaemonResourceReservation.lower_storage_limit(ledger_path, **kwargs)
+        assert ledger_path.read_bytes() == raw
