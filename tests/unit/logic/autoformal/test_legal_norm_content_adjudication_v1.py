@@ -2013,3 +2013,99 @@ def test_reviewed_v2_alternate_view_of_same_raw_paragraph_requires_distinct_use_
     with pytest.raises(ValueError, match=r"same raw|cross.view|physical.*(witness|coordinate)|distinct.*(use|view)"):
         owner.prepare_reviewed_norm_admission_v2(
             case["declaration"], **reviewed_prepare_arguments_v2(case))
+
+
+
+@pytest.mark.parametrize("shape", ["parent-two", "parent-three", "governing-parent", "acyclic"])
+def test_reviewed_v2_checks_unit_dependencies_before_signed_admission(owner, reviewed_case_v2, shape):
+    from tests.unit.logic.autoformal.test_legal_reviewed_norm_admission_v3 import refresh_signed_reviews
+
+    case = reviewed_case_v2
+    definition, first, second = case["declaration"]["units"]
+    if shape == "parent-two":
+        first["parent_unit_ids"] = [second["unit_id"]]
+        second["parent_unit_ids"] = [first["unit_id"]]
+    elif shape == "parent-three":
+        definition["parent_unit_ids"] = [first["unit_id"]]
+        first["parent_unit_ids"] = [second["unit_id"]]
+        second["parent_unit_ids"] = [definition["unit_id"]]
+    elif shape == "governing-parent":
+        definition["parent_unit_ids"] = [first["unit_id"]]
+    else:
+        first["parent_unit_ids"] = [definition["unit_id"]]
+        second["parent_unit_ids"] = [first["unit_id"], definition["unit_id"]]
+    reviewed_refresh_manifest_v2(case)
+    assert case["manifest"]["cycles"] == case["manifest"]["missing_dependencies"] == []
+    arguments = reviewed_prepare_arguments_v2(case)
+    try:
+        case["preparation"] = owner.prepare_reviewed_norm_admission_v2(case["declaration"], **arguments)
+    except ValueError as error:
+        assert shape != "acyclic"
+        assert str(error) == "cyclic or unresolved reviewed governing dependency"
+        return
+    # A producer that accepts the cycle can issue a newly signed and replayable
+    # assessment for it. Verify this on the pre-fix owner before failing.
+    refresh_signed_reviews(case, owner)
+    report = assess_reviewed_fixture_v2(owner, case)
+    assert report["semantic_use_eligible"] and report["blockers"] == []
+    assert report["fixture_only"] and report["training_mask"] == report["evaluation_gold_mask"] == 0
+    replay_args, replay_options = reviewed_assessment_arguments_v2(owner, case)
+    assert owner.validate_reviewed_norm_admission_v2(
+        report, *replay_args, expected_report_sha256=norm.norm_review_sha256(report), **replay_options) == report
+    assert shape == "acyclic", "cyclic declaration reached signed V2 semantic eligibility"
+    assert case["preparation"]["declaration"]["units"] == case["declaration"]["units"]
+
+
+@pytest.mark.parametrize("versions, shared_id", [
+    (("fictional-crosswalk/v1", "fictional-crosswalk/v2"), True),
+    (("fictional-crosswalk/v2", "fictional-crosswalk/v1"), True),
+    (("fictional-crosswalk/v1", "fictional-crosswalk/v1"), True),
+    (("fictional-crosswalk/v1", "fictional-crosswalk/v2"), False),
+], ids=["shared-forward-conflict", "shared-reverse-conflict", "shared-equal", "distinct-identities"])
+def test_reviewed_v2_cross_reference_version_consistency(owner, reviewed_case_v2, versions, shared_id):
+    from tests.unit.logic.autoformal.test_legal_reviewed_norm_admission_v3 import (
+        assert_signatures_valid, refresh_signed_reviews,
+    )
+
+    case = reviewed_case_v2
+    declaration = case["declaration"]
+    artifact_ids = (
+        "fixture:crosswalk-a", "fixture:crosswalk-a" if shared_id else "fixture:crosswalk-b",
+    )
+    dependency = b"Identical fictional crosswalk bytes"
+    dependency_sha = sha(dependency)
+    process = {
+        "artifact_id": REVIEWED_PROCESS_ID,
+        "sha256": sha(case["evidence"][REVIEWED_PROCESS_ID]),
+    }
+    references = [
+        {"from_unit_id": unit["unit_id"], "dependency_artifact_id": identity,
+         "dependency_sha256": dependency_sha, "version": version,
+         "evidence_refs": [deepcopy(process)]}
+        for unit, identity, version in zip(declaration["units"][1:], artifact_ids, versions, strict=True)
+    ]
+    declaration["cross_references"] = references
+    for identity in set(artifact_ids):
+        case["evidence"][identity] = dependency
+    reviewed_refresh_manifest_v2(case)
+    artifacts = case["manifest"]["artifacts"]
+    assert {row["artifact_id"]: row["artifact_sha256"] for row in artifacts
+            if row["artifact_id"] in artifact_ids} == dict.fromkeys(artifact_ids, dependency_sha)
+    assert case["manifest"]["cycles"] == []
+    conflict = shared_id and versions[0] != versions[1]
+    try:
+        case["preparation"] = owner.prepare_reviewed_norm_admission_v2(
+            declaration, **reviewed_prepare_arguments_v2(case))
+    except ValueError as error:
+        if not conflict:
+            raise
+        assert "conflicting dependency versions" in str(error)
+        return
+
+    refresh_signed_reviews(case, owner)
+    assert_signatures_valid(case)
+    report = assess_reviewed_fixture_v2(owner, case)
+    assert report["semantic_use_eligible"] and report["blockers"] == []
+    assert report["fixture_only"] and report["training_mask"] == report["evaluation_gold_mask"] == 0
+    assert [unit["canonical_ir"]["cross_references"][0] for unit in report["units"][1:]] == references
+    assert not conflict, "contradictory dependency version labels became eligible in a freshly signed V2 review"

@@ -259,6 +259,7 @@ def _reviewed_body(body, source_inputs, relational_inputs):
           "every normative use and governing definition must be reviewed")
     refs = body["cross_references"]
     _need(type(refs) is list and len(refs) <= 64, "bounded complete cross-reference inventory required")
+    versions = {}
     for ref in refs:
         _keys(ref, {"from_unit_id", "dependency_artifact_id", "dependency_sha256", "version", "evidence_refs"},
               "versioned reviewed cross reference")
@@ -269,6 +270,8 @@ def _reviewed_body(body, source_inputs, relational_inputs):
         _reviewed_refs(ref["evidence_refs"])
         key = ref["dependency_artifact_id"]
         _need(key not in artifacts or artifacts[key] == ref["dependency_sha256"], "conflicting dependency versions")
+        version = ref["version"]
+        _need(versions.setdefault(key, version) == version, "conflicting dependency versions")
         artifacts[key] = ref["dependency_sha256"]
     # The artifact manifest can be acyclic even when the reviewed units are not.
     # Match the incremental owner's dependent-to-dependency relation.

@@ -507,3 +507,54 @@ def test_reviewed_v3_preserves_acyclic_overlapping_unit_dependencies(sibling, mi
     report = prepare(sibling, mixed_case)
     assert report["declaration"]["units"] == declaration["units"]
     assert report["semantic_use_eligible"] is report["Lean_admitted"] is report["proof_authority"] is False
+
+
+@pytest.mark.parametrize("versions, shared_id", [
+    (("fictional-crosswalk/v1", "fictional-crosswalk/v2"), True),
+    (("fictional-crosswalk/v2", "fictional-crosswalk/v1"), True),
+    (("fictional-crosswalk/v1", "fictional-crosswalk/v1"), True),
+    (("fictional-crosswalk/v1", "fictional-crosswalk/v2"), False),
+], ids=["shared-forward-conflict", "shared-reverse-conflict", "shared-equal", "distinct-identities"])
+def test_reviewed_v3_cross_reference_version_consistency(sibling, mixed_case, versions, shared_id):
+    case = mixed_case
+    declaration = case["declaration"]
+    artifact_ids = (
+        "fixture:crosswalk-a", "fixture:crosswalk-a" if shared_id else "fixture:crosswalk-b",
+    )
+    dependency = b"Identical fictional crosswalk bytes"
+    dependency_sha = fixture.sha(dependency)
+    process = {
+        "artifact_id": fixture.REVIEWED_PROCESS_ID,
+        "sha256": fixture.sha(case["evidence"][fixture.REVIEWED_PROCESS_ID]),
+    }
+    references = [
+        {"from_unit_id": unit["unit_id"], "dependency_artifact_id": identity,
+         "dependency_sha256": dependency_sha, "version": version,
+         "evidence_refs": [deepcopy(process)]}
+        for unit, identity, version in zip(declaration["units"][1:], artifact_ids, versions, strict=True)
+    ]
+    declaration["cross_references"] = references
+    for identity in set(artifact_ids):
+        case["evidence"][identity] = dependency
+    fixture.reviewed_refresh_manifest_v2(case)
+    artifacts = case["manifest"]["artifacts"]
+    assert {row["artifact_id"]: row["artifact_sha256"] for row in artifacts
+            if row["artifact_id"] in artifact_ids} == dict.fromkeys(artifact_ids, dependency_sha)
+    assert case["manifest"]["cycles"] == []
+    conflict = shared_id and versions[0] != versions[1]
+    try:
+        case["preparation"] = sibling.prepare_reviewed_norm_admission_v3(
+            declaration, **prepare_args(case))
+    except ValueError as error:
+        if not conflict:
+            raise
+        assert "conflicting dependency versions" in str(error)
+        return
+
+    refresh_signed_reviews(case, sibling)
+    assert_signatures_valid(case)
+    report = assess(sibling, case)
+    assert report["semantic_use_eligible"] and report["blockers"] == []
+    assert report["fixture_only"] and report["training_mask"] == report["evaluation_gold_mask"] == 0
+    assert [unit["canonical_ir"]["cross_references"][0] for unit in report["units"][1:]] == references
+    assert not conflict, "contradictory dependency version labels became eligible in a freshly signed V3 review"
