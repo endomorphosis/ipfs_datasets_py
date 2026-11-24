@@ -2994,7 +2994,133 @@
         "Whole-phase or full-eight-phase completion"
       ],
       "full_eight_phase_goal_remains_open": true
-    }
+    },
+      "current_user_goal_sampled_header_lean_outcome_typed_feedback_ordinary_engineering_milestone514_20261124": {
+        "schema": "one-existing-four-guide514-closed-software-facts/v1",
+        "record_id": "sampled-header-lean-outcome-typed-feedback-ordinary-engineering-milestone514-20261124",
+        "migration_key": "current_user_goal_sampled_header_lean_outcome_typed_feedback_ordinary_engineering_milestone514_20261124",
+        "evidence_ordinal": 514,
+        "catalog_before": 513,
+        "catalog_after": 514,
+        "recorded_date_utc": "2026-11-24",
+        "scope": "Three separately qualified and published software changes; counts are not pooled. No task or phase completion promotion.",
+        "sampled_header": {
+          "qualification_reference": {
+            "path": "/tmp/Root-sampled-ordinary16-real-package-closure-selected-v218-o59w1lqg/Root-sampled-header-ordinary16-qualified-Source-resource-closed-small-v218.json",
+            "bytes": 4360,
+            "sha256": "b98990b1485a07c4026f34244dae8464255af0951f667832acefb488d1ff34e1"
+          },
+          "publication_reference": {
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-sampled-header-ordinary16-three-FF-publication-small-v218.json",
+            "bytes": 8170,
+            "sha256": "4cb911c70e652f528ee18190399d50a3756d63d9fa4acfe63b856a64826791e3"
+          },
+          "ordinary_unique_pass": 16,
+          "failures": 0,
+          "errors": 0,
+          "skips": 0,
+          "duplicates": 0,
+          "collected_equals_called": true,
+          "implemented_scope": "Four existing sampled-profile wrappers forward an optional explicit expected ledger header to the genuine reader, including a constructed 280000000000-byte header. None preserves the legacy default. Global MAX_STORAGE_BYTES=250000000000, administrative census, proof, custody and original record checks remain unchanged.",
+          "qualification_scope": "Constructed resource/ledger fixtures and administrative software behavior only; no host-ledger operation, cap change or claim operation.",
+          "published_heads": {
+            "D": "e3ffb26c42f0d5e4fe69354b299b874987073acc",
+            "H": "67ffacba428c66b5e6af0baf7c6ff723240c1364",
+            "Root": "1d976d404cf114fb64a54868132316f6b8374612"
+          },
+          "Source_resource_parent_closed": true,
+          "preserved_setup_refusals": [
+            "v215 module-scope mismatch: zero tests",
+            "v216 missing three parent-package rows: zero tests"
+          ]
+        },
+        "Lean_outcome": {
+          "qualification_reference": {
+            "path": "/tmp/Root-Phase1-Lean-outcome66-selected-v225-csqemsg0/Root-Phase1-Lean-outcome-ordinary66-qualified-Source-resource-closed-small-v225.json",
+            "bytes": 6020,
+            "sha256": "11416dbf31205cdbaba4faaa24196a0e86a07ca9a37c307ffa6ba4762f74c2f2"
+          },
+          "publication_reference": {
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase1-Lean-outcome-ordinary66-three-FF-publication-small-v225.json",
+            "bytes": 6047,
+            "sha256": "9348275bfa63572abd406ea8ce3f3002c07ffd0e9ec6b24fba60e63265f59e97"
+          },
+          "ordinary_unique_pass": 66,
+          "failures": 0,
+          "errors": 0,
+          "skips": 0,
+          "duplicates": 0,
+          "exact_expected_roster": true,
+          "implemented_scope": "All four existing outcome factory paths carry the immutable originating BackendRequest and bind the result/request fields, source/capability and proof evidence/witness consistently. Direct construction requires request=. Serialized outcome/receipt wire is unchanged.",
+          "external_direct_constructor_caller_census_performed": false,
+          "qualification_scope": "Ordinary software adapter/fictional executor fixtures; not a Lean/compiler execution or accepted Native proof.",
+          "published_heads": {
+            "D": "75b8c9c35297b2d69612868f457c4cd12542cf97",
+            "H": "9e4daa10d7b063e0056069a56a83993df7a3ee5f",
+            "Root": "6049d793fb5bbd5a603cc2ea19540ef959bb5c0a"
+          },
+          "Source_resource_parent_workspaces_closed": true
+        },
+        "typed_feedback_sample_identity": {
+          "qualification_reference": {
+            "path": "/tmp/Root-P7-typed-feedback72-modal-closed-selected-v237-llscaxax/Root-P7-ordinary72-qualified-Source-resource-closed-small-v237.json",
+            "bytes": 6488,
+            "sha256": "f1ca7ff8b21f304d679f6e7397af6c0773a8696931ca4d6791e3dc36e12f7aba"
+          },
+          "publication_reference": {
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P7-typed-proof-sample-ordinary72-three-FF-publication-small-v237.json",
+            "bytes": 6318,
+            "sha256": "f4eff2a1fde9425bfde8c8ced173bd98bc5fa9d12e685e67b25093211585813d"
+          },
+          "ordinary_unique_pass": 72,
+          "new_wrong_sample_cases": 5,
+          "retained_cases": 67,
+          "owning_functions": 16,
+          "failures": 0,
+          "errors": 0,
+          "skips": 0,
+          "duplicates": 0,
+          "collected_equals_called": true,
+          "implemented_scope": "Before either existing in-memory head update, bind every nonempty participating sample-ID alias plus the selected and resolved sample identity to the typed record obligation_id. Legacy untyped behavior and rollback ordering remain unchanged.",
+          "qualification_scope": "Bounded authored in-memory software updates and ordinary fixture retention only; no pretrained fit, model-quality result, statutory authenticity or legal authority.",
+          "qualified_D_HEAD": "1538e52c22f12fcad6a22aef0a0e1a4d32dac5ae",
+          "qualified_D_tree": "c1a9370818ea8eccf59372600159dcaa3c51a31f",
+          "published_heads": {
+            "D": "1538e52c22f12fcad6a22aef0a0e1a4d32dac5ae",
+            "H": "b052ea6b677a5d5dec58182881cc4f73eba44091",
+            "Root": "5f9a30fb6343c1f278feec6d023ff71be14a0503"
+          },
+          "Source_resource_parent_workspaces_closed": true,
+          "preserved_setup_refusals": [
+            "v229 control-hash text-replacement pre-Source refusal: zero project body reads",
+            "v233 missing modal Source import row: zero tests"
+          ],
+          "corrected_Source_binding": "Fixed read70 plus two actual modal rows captured; no raw bodies followed in this consolidation."
+        },
+        "publication": {
+          "three_each_normal_fast_forwards_closed": true,
+          "remote_readbacks_clean_indices_and_gitlink_joins_reported": true,
+          "unchanged_A": "88c0d9f82f66aaddbb01344c9f85236e92a5dc88",
+          "other_gitlinks_preserved": true,
+          "publisher_replay_requested": false
+        },
+        "preservation_and_limits": {
+          "all_prior_failures_costs_and_full_envelopes_preserved": true,
+          "physical_IO_accounting_complete": false,
+          "real_C56_513_facts_unchanged": true,
+          "stored_header_280GB_and_global_policy_250GB_historical_context_unchanged": true,
+          "historical_postcensus_overage_not_remeasured_or_cleared": true,
+          "new_host_ledger_cap_claim_or_census_operation": false,
+          "Native_Lean_compiler_proof_qualification": false,
+          "legal_review_or_training_gold_admission": false,
+          "pretrained_fit_or_model_quality_qualification": false,
+          "hosted_CI_verified": false,
+          "public_Torch_V4_qualification_added": false,
+          "task_status_changes": false,
+          "phase_completion_promotions": false,
+          "whole_eight_phase_goal_complete": false
+        }
+      }
   },
   "programme_goal_hierarchy": {
     "canonical_plan": "ipfs_datasets_py/logic/autoformal/docs/HANDOFF.md#whole-us-code-goal-and-supervised-delivery",
