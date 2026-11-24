@@ -83,8 +83,14 @@ def _administrative_census(helper, ledger):
 
 def reconcile_retained_reservation(ledger_path, *, roots, reservation_id,
         expected_record_sha256, attempt_directory, expected_artifacts, artifacts_durable=False,
-        capacity_policy="require_capacity", allow_empty_failed_admission=False):
+        capacity_policy="require_capacity", allow_empty_failed_admission=False,
+        expected_ledger_limit_bytes=None):
     """Release exactly one retained claim after explicit, verified closeout.
+
+    An explicit existing ledger limit is permitted only for administrative
+    closeout. It binds the stored header; it never changes the ledger cap,
+    admission policy, or the existing global-limit census. None preserves the
+    legacy default.
 
     This group-only profile accepts legacy unscoped claims and exact recorded
     ``isolated_process_group_only`` custody. Other explicit scopes require
@@ -105,14 +111,20 @@ def reconcile_retained_reservation(ledger_path, *, roots, reservation_id,
     return _retained_reconciliation_engine(ledger_path, roots=roots, reservation_id=reservation_id,
         expected_record_sha256=expected_record_sha256, attempt_directory=attempt_directory,
         expected_artifacts=expected_artifacts, artifacts_durable=artifacts_durable,
-        capacity_policy=capacity_policy, allow_empty_failed_admission=allow_empty_failed_admission)
+        capacity_policy=capacity_policy, allow_empty_failed_admission=allow_empty_failed_admission,
+        expected_ledger_limit_bytes=expected_ledger_limit_bytes)
 
 
 def _retained_reconciliation_engine(ledger_path, *, roots, reservation_id,
         expected_record_sha256, attempt_directory, expected_artifacts, artifacts_durable=False,
         capacity_policy="require_capacity", allow_empty_failed_admission=False,
-        _sampled=None, _ledger_lock_timeout_seconds=30):
+        expected_ledger_limit_bytes=None, _sampled=None, _ledger_lock_timeout_seconds=30):
     """Release exactly one retained claim after explicit, verified closeout.
+
+    An explicit existing ledger limit is permitted only for administrative
+    closeout. It binds the stored header; it never changes the ledger cap,
+    admission policy, or the existing global-limit census. None preserves the
+    legacy default.
 
     This group-only profile accepts legacy unscoped claims and exact recorded
     ``isolated_process_group_only`` custody. Other explicit scopes require
@@ -133,15 +145,22 @@ def _retained_reconciliation_engine(ledger_path, *, roots, reservation_id,
     if type(capacity_policy) is not str or capacity_policy not in {
             "require_capacity", "administrative_closeout"}:
         raise resources.DaemonResourceError("invalid reconciliation capacity policy")
+    if expected_ledger_limit_bytes is not None:
+        if capacity_policy != "administrative_closeout":
+            raise resources.DaemonResourceError("explicit ledger limit requires administrative_closeout")
+        if type(expected_ledger_limit_bytes) is not int or not 0 < expected_ledger_limit_bytes < (1 << 63):
+            raise resources.DaemonResourceError("invalid expected ledger limit")
     if type(allow_empty_failed_admission) is not bool:
         raise resources.DaemonResourceError("invalid empty failed admission opt-in")
     if allow_empty_failed_admission and (type(expected_artifacts) is not list or expected_artifacts != []):
         raise resources.DaemonResourceError("empty failed admission requires an exact empty inventory list")
     if artifacts_durable is not True or (not allow_empty_failed_admission and not expected_artifacts):
         raise resources.DaemonResourceError("explicit durable artifact inventory required")
+    storage_limit_binding = ({} if expected_ledger_limit_bytes is None else
+        {"storage_limit_bytes": expected_ledger_limit_bytes})
     helper = resources.DaemonResourceReservation(ledger_path, roots=roots,
         storage_bytes=1, memory_mb=1, ledger_lock_timeout_seconds=_ledger_lock_timeout_seconds,
-        require_existing_ledger=_sampled is not None)
+        require_existing_ledger=_sampled is not None, **storage_limit_binding)
     attempt = resources._safe_path(attempt_directory, directory=True)
     if not any(attempt == root or root in attempt.parents for root in helper.roots):
         raise resources.DaemonResourceError("recovery attempt outside named roots")

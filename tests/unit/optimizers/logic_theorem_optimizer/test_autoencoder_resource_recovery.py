@@ -8523,3 +8523,283 @@ def test_current_v5_private_ledger_disposition_rejects_mixed_source_summaries(se
     with pytest.raises(recovery.resources.DaemonResourceError):
         _private_completed_ledger_disposition(case, previous, row)
     assert case['ledger'].read_bytes() == before
+
+
+# Explicit existing-ledger-cap binding: fictional private storage only.  These
+# controls never acquire a native lease or infer release authority for host rows.
+from contextlib import contextmanager as _ledger_limit_contextmanager
+import copy as _ledger_limit_copy
+import tempfile as _ledger_limit_tempfile
+import unittest as _ledger_limit_unittest
+from unittest.mock import patch as _ledger_limit_patch
+
+
+class TestExplicitExistingLedgerLimit(_ledger_limit_unittest.TestCase):
+    root_cause_observations = []
+
+    @_ledger_limit_contextmanager
+    def _fictional_case(self, limit):
+        with _ledger_limit_tempfile.TemporaryDirectory(prefix='fictional-retained-cap-') as folder:
+            root = Path(folder) / 'owned'
+            root.mkdir()
+            attempt = root / 'failed'
+            attempt.mkdir()
+            artifact = attempt / 'failure.json'
+            artifact.write_bytes(b'{"fictional_failure":true}\n')
+            ledger = root / 'ledger.json'
+            selected_id, foreign_id = 'a' * 32, 'b' * 32
+            row = dict(reservation_id=selected_id, status='retained', owner_pid=99999999,
+                storage_bytes=4096, memory_mb=1, cpu_slots=1, child_process_slots=1,
+                scheduler_lane='hammer_lean', workload='canonical_trainer', created_at=1.0,
+                attempt_directory=recovery.resources._root_identity(attempt), child=None,
+                prior_children=[], external_charges={}, last_usage={'fictional': True},
+                artifacts_durable_asserted=False, retention_reason='context_failed')
+            foreign = dict(reservation_id=foreign_id, status='retained', owner_pid=99999998,
+                storage_bytes=2000, child_process_slots=1,
+                external_charges={'fictional_foreign_charge': 333}, opaque_history=['preserve', 7])
+            before = dict(schema=recovery.resources.SCHEMA,
+                roots=[recovery.resources._root_identity(root)], limit_bytes=limit,
+                reservations={selected_id: row, foreign_id: foreign})
+            ledger.write_text(json.dumps(before, sort_keys=True) + '\n')
+            args = dict(roots=[root], reservation_id=selected_id,
+                expected_record_sha256=recovery._digest(row), attempt_directory=attempt,
+                expected_artifacts=recovery._durable_inventory(attempt), artifacts_durable=True,
+                capacity_policy='administrative_closeout')
+            actual_process = recovery.resources._process
+            def fictional_stopped(pid):
+                return None if pid == row['owner_pid'] else actual_process(pid)
+            def no_admission(*unused, **unused_kw):
+                raise AssertionError('fictional reconciliation must never enter native admission')
+            with _ledger_limit_patch.object(recovery.resources, '_process', fictional_stopped), \
+                    _ledger_limit_patch.object(recovery.resources.DaemonResourceReservation, '__enter__', no_admission):
+                yield dict(root=root, ledger=ledger, args=args, before=before,
+                    row=row, foreign_id=foreign_id, artifact=artifact,
+                    artifact_bytes=artifact.read_bytes())
+
+    def _success(self, case, expected):
+        args = dict(case['args'])
+        if expected is not None:
+            args['expected_ledger_limit_bytes'] = expected
+        cap = recovery.resources.MAX_STORAGE_BYTES
+        result = recovery.reconcile_retained_reservation(case['ledger'], **args)
+        after = json.loads(case['ledger'].read_bytes())
+        self.assertEqual(after['limit_bytes'], case['before']['limit_bytes'])
+        self.assertEqual(after['roots'], case['before']['roots'])
+        self.assertEqual(set(after['reservations']), set(case['before']['reservations']))
+        self.assertEqual(after['reservations'][case['foreign_id']],
+            case['before']['reservations'][case['foreign_id']])
+        row = after['reservations'][case['args']['reservation_id']]
+        self.assertEqual(row['status'], 'released')
+        self.assertEqual(row['storage_bytes'], case['row']['storage_bytes'])
+        self.assertEqual(row['external_charges'], {})
+        self.assertEqual(row['last_usage'], case['row']['last_usage'])
+        for key, value in case['row'].items():
+            if key not in {'status', 'artifacts_durable_asserted'}:
+                self.assertEqual(row[key], value)
+        self.assertEqual(case['artifact'].read_bytes(), case['artifact_bytes'])
+        self.assertEqual(recovery.resources.MAX_STORAGE_BYTES, cap)
+        self.assertEqual(result['full_claim_accounting']['limit_bytes'], cap)
+        self.assertEqual(result['full_claim_accounting']['outstanding_full_reservations_bytes'], 6096)
+        self.assertEqual(result['final_accounting']['outstanding_full_reservations_bytes'], 2000)
+        self.assertIs(result['cap_changed'], False)
+        self.assertIs(result['admitted'], False)
+        self.assertIs(result['new_resource_lease_acquired'], False)
+        self.assertIs(result['actual_postwrite_census_required'], True)
+        self.assertEqual(result['fresh_global_inventory_count'], 2)
+
+    def _refusal(self, case, text, **changes):
+        args = dict(case['args'], **changes)
+        before = case['ledger'].read_bytes()
+        with self.assertRaisesRegex(recovery.resources.DaemonResourceError, text):
+            recovery.reconcile_retained_reservation(case['ledger'], **args)
+        self.assertEqual(case['ledger'].read_bytes(), before)
+        self.assertEqual(case['artifact'].read_bytes(), case['artifact_bytes'])
+
+    def test_00_legacy_none_250_admin_positive(self):
+        with self._fictional_case(recovery.resources.MAX_STORAGE_BYTES) as case:
+            result = recovery.reconcile_retained_reservation(case['ledger'], **case['args'])
+            self.assertEqual(json.loads(case['ledger'].read_bytes())['limit_bytes'],
+                recovery.resources.MAX_STORAGE_BYTES)
+            self.assertIs(result['cap_changed'], False)
+            self.assertIs(result['admitted'], False)
+
+    def test_01_real_default_read_rejects_current_280_before_inventory(self):
+        with self._fictional_case(280_000_000_000) as case:
+            actual_read = recovery.resources.DaemonResourceReservation._read
+            seen = []
+            def observed_read(helper):
+                seen.append(helper.storage_limit_bytes)
+                return actual_read(helper)
+            def forbidden_inventory(*unused, **unused_kw):
+                raise AssertionError('mismatched ledger reached inventory')
+            before = case['ledger'].read_bytes()
+            with _ledger_limit_patch.object(recovery.resources.DaemonResourceReservation,
+                    '_read', observed_read), _ledger_limit_patch.object(recovery.resources,
+                    '_inventory', forbidden_inventory):
+                self._refusal(case, 'disk ledger storage scope differs')
+            self.assertEqual(seen, [recovery.resources.MAX_STORAGE_BYTES])
+            self.root_cause_observations.append(dict(configured_limit=seen[0],
+                header_limit=280_000_000_000, error='disk ledger storage scope differs',
+                ledger_bytes_unchanged=case['ledger'].read_bytes() == before,
+                inventory_calls=0, native_admission_calls=0))
+
+    def test_02_explicit_280_admin_positive_preserves_header_and_other_charges(self):
+        with self._fictional_case(280_000_000_000) as case:
+            self._success(case, 280_000_000_000)
+
+    def test_03_wrong_exact_header_refuses(self):
+        for expected in (250_000_000_000, 281_000_000_000):
+            with self.subTest(expected=expected), self._fictional_case(280_000_000_000) as case:
+                self._refusal(case, 'disk ledger storage scope differs',
+                    expected_ledger_limit_bytes=expected)
+
+    def test_04_invalid_limit_refuses_before_helper(self):
+        class IntegerSubclass(int):
+            pass
+        bad = (True, False, 0, -1, 280_000_000_000.0, '280000000000', [], {},
+            1 << 63, IntegerSubclass(280_000_000_000))
+        def forbidden(*unused, **unused_kw):
+            raise AssertionError('invalid explicit limit reached resource access')
+        for expected in bad:
+            with self.subTest(value=repr(expected)), _ledger_limit_patch.object(
+                    recovery.resources, 'DaemonResourceReservation', forbidden):
+                with self.assertRaisesRegex(recovery.resources.DaemonResourceError,
+                        'invalid expected ledger limit'):
+                    recovery.reconcile_retained_reservation('/not-accessed/ledger', roots=[],
+                        reservation_id='not-accessed', expected_record_sha256='not-accessed',
+                        attempt_directory='/not-accessed/attempt', expected_artifacts=[],
+                        artifacts_durable=True, capacity_policy='administrative_closeout',
+                        expected_ledger_limit_bytes=expected)
+
+    def test_05_nonadministrative_limit_refuses_before_helper(self):
+        def forbidden(*unused, **unused_kw):
+            raise AssertionError('explicit limit reached nonadministrative resource access')
+        with _ledger_limit_patch.object(recovery.resources, 'DaemonResourceReservation', forbidden):
+            with self.assertRaisesRegex(recovery.resources.DaemonResourceError,
+                    'explicit ledger limit requires administrative_closeout'):
+                recovery.reconcile_retained_reservation('/not-accessed/ledger', roots=[],
+                    reservation_id='not-accessed', expected_record_sha256='not-accessed',
+                    attempt_directory='/not-accessed/attempt', expected_artifacts=[],
+                    artifacts_durable=True, expected_ledger_limit_bytes=280_000_000_000)
+
+    def test_06_explicit_legacy_cap_admin_positive(self):
+        with self._fictional_case(recovery.resources.MAX_STORAGE_BYTES) as case:
+            self._success(case, recovery.resources.MAX_STORAGE_BYTES)
+
+    def test_07_explicit_none_keeps_280_header_refusal(self):
+        with self._fictional_case(280_000_000_000) as case:
+            self._refusal(case, 'disk ledger storage scope differs', expected_ledger_limit_bytes=None)
+
+    def test_08_stale_row_refusal_is_unchanged(self):
+        with self._fictional_case(280_000_000_000) as case:
+            self._refusal(case, 'retained reservation identity changed',
+                expected_ledger_limit_bytes=280_000_000_000, expected_record_sha256='0' * 64)
+
+    def test_09_bad_inventory_refusal_is_unchanged(self):
+        with self._fictional_case(280_000_000_000) as case:
+            inventory = _ledger_limit_copy.deepcopy(case['args']['expected_artifacts'])
+            inventory[0]['sha256'] = '0' * 64
+            self._refusal(case, 'durable recovery inventory differs',
+                expected_ledger_limit_bytes=280_000_000_000, expected_artifacts=inventory)
+
+    def test_10_live_owner_refusal_is_unchanged(self):
+        with self._fictional_case(280_000_000_000) as case:
+            with _ledger_limit_patch.object(recovery.resources, '_process',
+                    lambda pid: {'pid': pid, 'birth': 'fictional-reused-pid', 'state': 'S'}):
+                self._refusal(case, 'original reservation owner PID still exists',
+                    expected_ledger_limit_bytes=280_000_000_000)
+
+    def test_11_selected_external_charge_refusal_is_unchanged(self):
+        with self._fictional_case(280_000_000_000) as case:
+            value = json.loads(case['ledger'].read_bytes())
+            row = value['reservations'][case['args']['reservation_id']]
+            row['external_charges'] = {'fictional_selected': 7}
+            case['ledger'].write_text(json.dumps(value, sort_keys=True) + '\n')
+            self._refusal(case, 'external charges require separate recovery',
+                expected_ledger_limit_bytes=280_000_000_000,
+                expected_record_sha256=recovery._digest(row))
+
+    def test_12_scope_refusal_is_unchanged(self):
+        with self._fictional_case(280_000_000_000) as case:
+            value = json.loads(case['ledger'].read_bytes())
+            row = value['reservations'][case['args']['reservation_id']]
+            row['process_scope'] = 'fictional_unsupported_scope'
+            case['ledger'].write_text(json.dumps(value, sort_keys=True) + '\n')
+            self._refusal(case, 'process scope requires separate recovery evidence',
+                expected_ledger_limit_bytes=280_000_000_000,
+                expected_record_sha256=recovery._digest(row))
+
+    def test_13_noninteger_stored_header_is_still_refused(self):
+        with self._fictional_case(280_000_000_000.0) as case:
+            self._refusal(case, 'disk ledger storage scope differs',
+                expected_ledger_limit_bytes=280_000_000_000)
+
+
+    def test_14_engine_rejects_any_explicit_nonadministrative_binding_before_helper(self):
+        def forbidden(*unused, **unused_kw):
+            raise AssertionError('engine explicit limit reached nonadministrative resource access')
+        for expected in (250_000_000_000, 280_000_000_000):
+            with self.subTest(expected=expected), _ledger_limit_patch.object(
+                    recovery.resources, 'DaemonResourceReservation', forbidden):
+                with self.assertRaisesRegex(recovery.resources.DaemonResourceError,
+                        'explicit ledger limit requires administrative_closeout'):
+                    recovery._retained_reconciliation_engine('/not-accessed/ledger', roots=[],
+                        reservation_id='not-accessed', expected_record_sha256='not-accessed',
+                        attempt_directory='/not-accessed/attempt', expected_artifacts=[],
+                        artifacts_durable=True, capacity_policy='require_capacity',
+                        expected_ledger_limit_bytes=expected)
+
+    def test_15_explicit_historical_160_opens_without_changing_global_census(self):
+        with self._fictional_case(160_000_000_000) as case:
+            self._success(case, 160_000_000_000)
+
+    def test_16_explicit_maximum_signed_integer_is_a_valid_existing_header(self):
+        with self._fictional_case((1 << 63) - 1) as case:
+            self._success(case, (1 << 63) - 1)
+
+    def test_17_live_recorded_group_refusal_is_unchanged(self):
+        with self._fictional_case(280_000_000_000) as case:
+            value = json.loads(case['ledger'].read_bytes())
+            row = value['reservations'][case['args']['reservation_id']]
+            row['child'] = {'pid': 99999997, 'birth': 'fictional'}
+            case['ledger'].write_text(json.dumps(value, sort_keys=True) + '\n')
+            with _ledger_limit_patch.object(recovery.resources, '_group_usage',
+                    lambda child: {'live_processes': 1 if child is not None else 0}):
+                self._refusal(case, 'retained child group is still alive',
+                    expected_ledger_limit_bytes=280_000_000_000,
+                    expected_record_sha256=recovery._digest(row))
+
+    def test_18_attempt_identity_refusal_is_unchanged(self):
+        with self._fictional_case(280_000_000_000) as case:
+            value = json.loads(case['ledger'].read_bytes())
+            row = value['reservations'][case['args']['reservation_id']]
+            row['attempt_directory']['inode'] += 1
+            case['ledger'].write_text(json.dumps(value, sort_keys=True) + '\n')
+            self._refusal(case, 'recovery attempt identity changed',
+                expected_ledger_limit_bytes=280_000_000_000,
+                expected_record_sha256=recovery._digest(row))
+
+    def test_19_explicit_none_legacy_250_admin_positive(self):
+        with self._fictional_case(recovery.resources.MAX_STORAGE_BYTES) as case:
+            result = recovery.reconcile_retained_reservation(case['ledger'],
+                **dict(case['args'], expected_ledger_limit_bytes=None))
+            self.assertEqual(json.loads(case['ledger'].read_bytes())['limit_bytes'],
+                recovery.resources.MAX_STORAGE_BYTES)
+            self.assertIs(result['admitted'], False)
+            self.assertIs(result['cap_changed'], False)
+
+
+    def test_20_none_preserves_legacy_constructor_keyword_shape(self):
+        with self._fictional_case(recovery.resources.MAX_STORAGE_BYTES) as case:
+            actual_constructor = recovery.resources.DaemonResourceReservation
+            observed = []
+            def legacy_constructor(*args, **kwargs):
+                self.assertNotIn('storage_limit_bytes', kwargs)
+                observed.append(set(kwargs))
+                return actual_constructor(*args, **kwargs)
+            with _ledger_limit_patch.object(recovery.resources,
+                    'DaemonResourceReservation', legacy_constructor):
+                result = recovery.reconcile_retained_reservation(case['ledger'],
+                    **dict(case['args'], expected_ledger_limit_bytes=None))
+            self.assertEqual(len(observed), 1)
+            self.assertIs(result['cap_changed'], False)
