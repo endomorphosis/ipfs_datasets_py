@@ -3781,6 +3781,28 @@
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
       "three_normal_child_first_code_publications_closed": true,
       "training_and_gold_masks": 0
+    },
+    "phase4_extracted_view_phase1_proof_receipt_closed_ordinary_evidence_20261125": {
+      "Title10_review_real_release_and_model_pending": true,
+      "all24_tasks126_components527_old_evidence_values_preserved": true,
+      "evidence_ordinal": 528,
+      "facts": {
+        "bytes": 19147,
+        "path": "/tmp/P4-P1-guide528-single-consolidation-private-v01-bDizPS/one-existing-guide528-P4-P1P8-scoped-facts.json",
+        "sha256": "12aaaf424cc9c1422a2835fd9fb69b27a9cba9626c71381972b56b10c0183f11"
+      },
+      "full_eight_phase_goal_complete": false,
+      "phase1_8_new_cases": 4,
+      "phase1_8_ordinary_unique_PASS": 9,
+      "phase1_8_retained_cases": 5,
+      "phase4_new_cases": 2,
+      "phase4_ordinary_unique_PASS": 9,
+      "phase4_retained_cases": 7,
+      "record_id": "phase4-extracted-view-phase1-proof-receipt-ordinary-evidence528-20261125",
+      "separate_cohorts_and_Source_resource_closeouts": true,
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
+      "three_normal_child_first_FFs_each": true,
+      "training_and_gold_masks": 0
     }
   },
   "programme_goal_hierarchy": {

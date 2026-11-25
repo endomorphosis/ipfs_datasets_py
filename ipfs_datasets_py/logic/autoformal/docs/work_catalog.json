@@ -28751,6 +28751,360 @@
       "root": "artifact_workspace",
       "scope": "Published controlled effective-date calendar software with 69 ordinary passes and two direct local Lean witness outcomes. Full Lake, statutory authority, model authority and task-status changes are outside this scope.",
       "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase4_extracted_view_phase1_proof_receipt_closed_ordinary_evidence_20261125",
+      "closed_software_facts": {
+        "actual_statutory_or_native_kernel_or_model_or_training_claim": false,
+        "cohort_comparison": "Separate published ordinary9 cohorts, each with 0 failures, errors, skips and duplicates. Private fixtures are outside these ordinary case counts.",
+        "components_preserved": 126,
+        "current_published_parent": {
+          "HEAD": "4223f352c4c79e520139138e9d6f52111f39379a",
+          "clean_worktree_and_index": true,
+          "origin_main": "4223f352c4c79e520139138e9d6f52111f39379a",
+          "tree": "a6f6a0bc4fb432e95682123e65cf846b12055408"
+        },
+        "evaluation_gold_mask": 0,
+        "evidence_ordinal": 528,
+        "full_eight_phase_goal_complete": false,
+        "phase1_8_proof_artifact": {
+          "Source2": {
+            "bytes": 74499,
+            "path": "/tmp/Root-P1P8-exact-receipt-existing-Source2-nonclock-v351-hk_q9k07/actual-output/actual-existing-four-Python-code-CAS-receipt.json",
+            "sha256": "eb0f44d8a628ba42d1ff90b32c4599e5e59537319124da3f40d1c4b7240a8dd5"
+          },
+          "Source_resource_parent_home_closed": true,
+          "Source_stage_commit_joins": {
+            "ipfs_datasets_py/logic/integration/reasoning/legal_ir_proof_carrying_artifacts.py": {
+              "bytes": 75592,
+              "full9": {
+                "st_ctime_ns": "1795640690222413579",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70042583",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795640689926756725",
+                "st_nlink": "1",
+                "st_size": "75592",
+                "st_uid": "1000"
+              },
+              "git_mode": "100644",
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/ipfs_datasets_py/logic/integration/reasoning/legal_ir_proof_carrying_artifacts.py",
+              "sha256": "93b5cb0a711f6b78b5b252cc82ccfe6f0576b7de00df6112936b5a6df81f4980",
+              "stage0_and_committed_blob": "20f83fb4a740c8f7c0b96277322b51daadba1b03"
+            },
+            "tests/unit/logic/integration/test_legal_ir_proof_carrying_artifacts.py": {
+              "bytes": 16369,
+              "full9": {
+                "st_ctime_ns": "1795640690522415744",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70042584",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795640689930453343",
+                "st_nlink": "1",
+                "st_size": "16369",
+                "st_uid": "1000"
+              },
+              "git_mode": "100644",
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/tests/unit/logic/integration/test_legal_ir_proof_carrying_artifacts.py",
+              "sha256": "84e1fa98b9c34ebbcf900a456e450fa92c2bd9c7a68c0119334635930b1bd7b4",
+              "stage0_and_committed_blob": "62df8a252cf05d1ddf896f717888f00dbcdcdb4c"
+            }
+          },
+          "actual_closed_READ3": {
+            "bytes": 7871,
+            "path": "/tmp/Root-P1P8-frozen-proof-artifact-and-Dindex-existing-READ3-v352-av9nwt2p/actual-output/actual-D27-observed-D-root-initializer-Source-READ-v01-small-closeout.json",
+            "sha256": "db0854898b2a728f54ce2338d6e7aa6c95c04353c8b25e3944bf3aa7ac4d40cd"
+          },
+          "collect_RUN_JUnit_order_equal": true,
+          "controlled_fixture_scope": "controlled proof-artifact receipt/formula policy test fixtures",
+          "coverage_text": "The proof-carrying artifact validator rejects a receipt that explicitly names a different formula for its obligation. When a policy requires both trusted proofs and verified native reconstruction, one receipt for the same obligation and formula must carry the proof, trust and checked reconstruction. A trusted backend receipt and an untrusted verified native receipt cannot supply that requirement together. Legacy structural validation still permits an omitted formula ID. The tests use fictional receipt records and do not execute a kernel or authenticate a theorem receipt.",
+          "duplicates": 0,
+          "errors": 0,
+          "exact_two_frozen_files": {
+            "ipfs_datasets_py/logic/integration/reasoning/legal_ir_proof_carrying_artifacts.py": {
+              "bytes": 75592,
+              "full9": {
+                "st_ctime_ns": "1795640690222413579",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70042583",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795640689926756725",
+                "st_nlink": "1",
+                "st_size": "75592",
+                "st_uid": "1000"
+              },
+              "git_mode": "100644",
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/ipfs_datasets_py/logic/integration/reasoning/legal_ir_proof_carrying_artifacts.py",
+              "sha256": "93b5cb0a711f6b78b5b252cc82ccfe6f0576b7de00df6112936b5a6df81f4980",
+              "stage0_and_committed_blob": "20f83fb4a740c8f7c0b96277322b51daadba1b03"
+            },
+            "tests/unit/logic/integration/test_legal_ir_proof_carrying_artifacts.py": {
+              "bytes": 16369,
+              "full9": {
+                "st_ctime_ns": "1795640690522415744",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70042584",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795640689930453343",
+                "st_nlink": "1",
+                "st_size": "16369",
+                "st_uid": "1000"
+              },
+              "git_mode": "100644",
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/tests/unit/logic/integration/test_legal_ir_proof_carrying_artifacts.py",
+              "sha256": "84e1fa98b9c34ebbcf900a456e450fa92c2bd9c7a68c0119334635930b1bd7b4",
+              "stage0_and_committed_blob": "62df8a252cf05d1ddf896f717888f00dbcdcdb4c"
+            }
+          },
+          "failures": 0,
+          "frozen_local_candidate": {
+            "bytes": 9804,
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P1P8-proof-artifact-exact2-local-freeze-v351.json",
+            "sha256": "76d08193bdc6ec69b2d8cebdba51b94600944d5c9dc7568b8e3ba1bffb7f6b84"
+          },
+          "functions": 8,
+          "head": "4223f352c4c79e520139138e9d6f52111f39379a",
+          "independent_receipt_authentication_or_proof_authority": false,
+          "junit": {
+            "bytes": 1836,
+            "path": "/tmp/Root-existing-P1P8-proof-artifact-ordinary9-v353-zsjmkzr7/actual-output/Phase1-8-proof-artifact-exact-receipt-ordinary9-run-result0-output1.bin",
+            "sha256": "d36b9c07108ac7fc10ce88964af28d041b443531e639da3887cafd45d810e40e"
+          },
+          "new_receipt_binding_cases": 4,
+          "physical_IO_accounting_complete": false,
+          "publication_pending": false,
+          "published_receipt": {
+            "bytes": 11921,
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P1P8-proof-artifact-ordinary9-three-FF-publication-v353.json",
+            "sha256": "e0b506ed249fd4262ad11db4915beeda3f9e0f766fd647d311e44013859c3050"
+          },
+          "receipt": {
+            "bytes": 6628,
+            "path": "/tmp/Root-existing-P1P8-proof-artifact-ordinary9-v353-zsjmkzr7/actual-proof-artifact-ordinary9-closed-small-v353.json",
+            "sha256": "e6f0161ae405d96bfad0da45d25dea3f6e86a5408cb0e045a3fcc9657f4fb467"
+          },
+          "report": {
+            "bytes": 586776,
+            "path": "/tmp/Root-existing-P1P8-proof-artifact-ordinary9-v353-zsjmkzr7/actual-output/complete-frozen-local-D-Phase1-8-proof-artifact-exact-receipt-ordinary9-existing-owner-report.json",
+            "sha256": "845364b55bdbe4ac93feff66ad579a87a25cbb6b707b6b1121432c2bf40f130e"
+          },
+          "repositories": {
+            "accelerate": {
+              "HEAD": "190cb69b9035ea210d9af8817fbe76caf890b48f",
+              "clean_worktree_and_index": true,
+              "origin_main": "190cb69b9035ea210d9af8817fbe76caf890b48f",
+              "tree": "a60ed4b66f2d828b6e22ace48588fb83c32fc7c6"
+            },
+            "datasets": {
+              "HEAD": "4223f352c4c79e520139138e9d6f52111f39379a",
+              "clean_worktree_and_index": true,
+              "origin_main": "4223f352c4c79e520139138e9d6f52111f39379a",
+              "tree": "a6f6a0bc4fb432e95682123e65cf846b12055408"
+            },
+            "hallucinate": {
+              "HEAD": "4134d9e056ef37f31b27783e05353fe6a6f86b9f",
+              "clean_worktree_and_index": true,
+              "origin_main": "4134d9e056ef37f31b27783e05353fe6a6f86b9f",
+              "tree": "4093dcc30cf9d5155321fc8b28c06439c52e7c2c"
+            },
+            "root": {
+              "HEAD": "496cecf4e212e8c4233d5a93dc355117424ce4cc",
+              "clean_worktree_and_index": true,
+              "origin_main": "496cecf4e212e8c4233d5a93dc355117424ce4cc",
+              "tree": "813ef31ec91d4eb99c37fd63513f1a711899a3ba"
+            }
+          },
+          "retained_cases": 5,
+          "selected_case_counts": {
+            "tests/unit/logic/integration/test_legal_ir_proof_carrying_artifacts.py::test_artifact_packages_all_evidence_and_validates_for_consumers": 1,
+            "tests/unit/logic/integration/test_legal_ir_proof_carrying_artifacts.py::test_consumer_rejects_incompatible_and_failed_proof_evidence": 1,
+            "tests/unit/logic/integration/test_legal_ir_proof_carrying_artifacts.py::test_consumer_rejects_invalid_unsupported_diagnostics": 1,
+            "tests/unit/logic/integration/test_legal_ir_proof_carrying_artifacts.py::test_consumer_rejects_missing_receipts_translations_and_stale_bindings": 1,
+            "tests/unit/logic/integration/test_legal_ir_proof_carrying_artifacts.py::test_consumer_rejects_stale_payload_and_manifest_expectations": 1,
+            "tests/unit/logic/integration/test_legal_ir_proof_carrying_artifacts.py::test_receipt_for_different_formula_cannot_validate_same_obligation": 1,
+            "tests/unit/logic/integration/test_legal_ir_proof_carrying_artifacts.py::test_strict_native_policy_checks_the_matching_receipt_formula": 1,
+            "tests/unit/logic/integration/test_legal_ir_proof_carrying_artifacts.py::test_strict_native_policy_requires_one_complete_receipt": 2
+          },
+          "separate_private_comparison": {
+            "bytes": 9456,
+            "path": "/tmp/Phase1-8-proof-artifact-receipt-binding-private-v01-5GZBhl/sealed-private-current-proof-artifact-exact-receipt-binding-two-file-v01.json",
+            "sha256": "9e4be4d946c572c721818603e9d582242a0ebadc464ca03a51fc91add044c143"
+          },
+          "skips": 0,
+          "tree": "a6f6a0bc4fb432e95682123e65cf846b12055408",
+          "two_no_Source_or_IO_precharge_READ3_assembler_refusals": [
+            {
+              "bytes": 143,
+              "path": "/tmp/Root-P1P8-frozen-proof-artifact-and-Dindex-existing-READ3-v352-av9nwt2p/preflight-v01-no-Source-effect.json",
+              "sha256": "7c00c0ba29f51629d4bf1e89fe3afc5569622fd048fb05c7a8d3fccebb3c9d01"
+            },
+            {
+              "bytes": 245,
+              "path": "/tmp/Root-P1P8-frozen-proof-artifact-and-Dindex-existing-READ3-v352-av9nwt2p/preflight-v02-no-Source-effect.json",
+              "sha256": "ea0f3fe3c86d5c29f64b3bcb92b5f5e15c9e3ee8338b1003b1b58be37006ed6a"
+            }
+          ],
+          "unique_physical_PASS": 9
+        },
+        "phase4_extracted_view": {
+          "Source2": {
+            "bytes": 7083,
+            "path": "/tmp/Root-P4-extracted-view-exact2-existing-Source2-v348-ed4py0b8/actual-P4-extracted-full-view-exact2-Source-closed-small-v348.json",
+            "sha256": "8b20c72485f59f7a1b78df8cde7f91816c39b921ceac512f859e151a20e75cc3"
+          },
+          "Source_resource_parent_home_closed": true,
+          "Source_stage_commit_joins": {
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_structured_retrieval.py": {
+              "before_blob": "305520ff096af44b584558cc348238b077ec65cd",
+              "bytes": 84362,
+              "committed_blob": "501cf42c0871daabb970b718c2de2ac960ff8c15",
+              "expected_Git_mode": "100644",
+              "full9": {
+                "st_ctime_ns": "1795639998467693102",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70042581",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795639997822291787",
+                "st_nlink": "1",
+                "st_size": "84362",
+                "st_uid": "1000"
+              },
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_structured_retrieval.py",
+              "post_private": {
+                "bytes": 84362,
+                "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/P4-reviewed-rich-context-extracted-view-private-m5vcu_b0/legal_structured_retrieval.after.py.DATA",
+                "sha256": "40bee20f85d989be078196b67cb02db7a2ab2e7f22ff4922db38839a1df0caa6"
+              },
+              "relative_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_structured_retrieval.py",
+              "sha256": "40bee20f85d989be078196b67cb02db7a2ab2e7f22ff4922db38839a1df0caa6",
+              "stage0_matches": true
+            },
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_evaluation_artifacts.py": {
+              "before_blob": "688da55d9247d187814e39d57c231933d4f7d143",
+              "bytes": 288974,
+              "committed_blob": "d91a30c01b882f4cff1c92a71e7eed426b13bd68",
+              "expected_Git_mode": "100644",
+              "full9": {
+                "st_ctime_ns": "1795639999085697563",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70042582",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795639997825471906",
+                "st_nlink": "1",
+                "st_size": "288974",
+                "st_uid": "1000"
+              },
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_evaluation_artifacts.py",
+              "post_private": {
+                "bytes": 288974,
+                "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/P4-reviewed-rich-context-extracted-view-private-m5vcu_b0/owning-test.after.py.DATA",
+                "sha256": "df7736aee87046e3fbbdb835bef2cefa02b542c747b93a91571d0481d63734e0"
+              },
+              "relative_path": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_evaluation_artifacts.py",
+              "sha256": "df7736aee87046e3fbbdb835bef2cefa02b542c747b93a91571d0481d63734e0",
+              "stage0_matches": true
+            }
+          },
+          "actual_closed_READ3": {
+            "bytes": 7894,
+            "path": "/tmp/Root-P4-frozen-two-source-owners-and-Dindex-existing-READ3-v349-edj1fjjh/actual-output/actual-D27-observed-D-root-initializer-Source-READ-v01-small-closeout.json",
+            "sha256": "4fff285ebdd4513f44f2a6b8afb877933e4a585d28166d19f2c7f3525aedf4bc"
+          },
+          "collect_RUN_JUnit_order_equal": true,
+          "controlled_fixture_scope": "controlled reviewed-rich retrieval fixture only",
+          "coverage_text": "Reviewed rich retrieval compares the SHA-256 of the complete extracted document view across TRAIN and heldout. The v2 and v3 fixtures used different raw encodings, distinct source and occurrence identities, and nonoverlapping spans of the same extracted view. The overlapping view now causes refusal before the producer callback. The declared-identity and provision checks retain their order. The existing V4 aggregate positive also passed.",
+          "duplicates": 0,
+          "errors": 0,
+          "failures": 0,
+          "functions": 5,
+          "head": "7e1cbca78c1c934ae57db6e1bb6639639345e516",
+          "junit": {
+            "bytes": 2126,
+            "path": "/tmp/Root-existing-P4-shared-view-ordinary9-selected-v350-t5j307ck/actual-output/Phase4-reviewed-rich-extracted-view-ordinary9-run-result0-output1.bin",
+            "sha256": "640e886d662ea6348fccbde334d3443a107c92ef525b87c4f64de03d1ce0971c"
+          },
+          "new_extracted_view_cases": 2,
+          "physical_IO_accounting_complete": false,
+          "published_receipt": {
+            "bytes": 13408,
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P4-extracted-view-ordinary9-three-FF-publication-v350.json",
+            "sha256": "582a712ce8b1d33d0509218d8c55ed41cafd0d21b3a6e20156dd711a56140d16"
+          },
+          "receipt": {
+            "bytes": 7734,
+            "path": "/tmp/Root-existing-P4-shared-view-ordinary9-selected-v350-t5j307ck/actual-ordinary9-closed-small-v350.json",
+            "sha256": "1a7622afc2501950d0b34e18a47a0cb67ea22e3a7306fb7566ac9eedfcbe4e58"
+          },
+          "report": {
+            "bytes": 618045,
+            "path": "/tmp/Root-existing-P4-shared-view-ordinary9-selected-v350-t5j307ck/actual-output/complete-frozen-local-D-Phase4-reviewed-rich-extracted-view-ordinary9-existing-owner-report.json",
+            "sha256": "cdf8d4f769a3abc32f9eca7d9ad0fefc5610f1b013fde6b8008025047a8117c1"
+          },
+          "repositories": {
+            "accelerate": {
+              "HEAD": "190cb69b9035ea210d9af8817fbe76caf890b48f",
+              "clean_worktree_and_index": true,
+              "origin_main": "190cb69b9035ea210d9af8817fbe76caf890b48f",
+              "tree": "a60ed4b66f2d828b6e22ace48588fb83c32fc7c6"
+            },
+            "datasets": {
+              "HEAD": "7e1cbca78c1c934ae57db6e1bb6639639345e516",
+              "clean_worktree_and_index": true,
+              "origin_main": "7e1cbca78c1c934ae57db6e1bb6639639345e516",
+              "tree": "2d2de82eed07b26b93fef32c3d6763f54f9290f1"
+            },
+            "hallucinate": {
+              "HEAD": "e0db356dd7977f3572ab28e8c6bbe794671f357b",
+              "clean_worktree_and_index": true,
+              "origin_main": "e0db356dd7977f3572ab28e8c6bbe794671f357b",
+              "tree": "2e7b72cb0f56135ab3db3c09cfe1ba219daf6cc9"
+            },
+            "root": {
+              "HEAD": "67507216c33fc6188dd87868d3cdfedd105a6eb3",
+              "clean_worktree_and_index": true,
+              "origin_main": "67507216c33fc6188dd87868d3cdfedd105a6eb3",
+              "tree": "25313b14a72e4d43f47ab454c2de211ddc4b2798"
+            }
+          },
+          "retained_cases": 7,
+          "selected_case_counts": {
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_evaluation_artifacts.py::test_aggregate_v4_actual_evaluator_dispatches_both_complete_components_and_definitions": 1,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_evaluation_artifacts.py::test_reviewed_rich_heldout_original_provision_guard_precedes_source_identity_check": 2,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_evaluation_artifacts.py::test_reviewed_rich_heldout_same_extracted_view_refuses_before_actual_producer": 2,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_evaluation_artifacts.py::test_reviewed_rich_heldout_shared_source_identity_rejects_before_actual_producer": 2,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_evaluation_artifacts.py::test_reviewed_rich_heldout_source_identity_is_bound_to_current_declaration": 2
+          },
+          "skips": 0,
+          "tree": "2d2de82eed07b26b93fef32c3d6763f54f9290f1",
+          "unique_physical_PASS": 9
+        },
+        "prior_evidence_values_preserved": 527,
+        "prior_verified_Guide527_publication": {
+          "bytes": 12291,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-guide527-four-doc-three-FF-publication-small-v344.json",
+          "sha256": "9d6a9c1c9b3a67cd16a225948eff9090b450b3abcfc5b1f599ed7e54bd40bb45"
+        },
+        "record_scope": "Two separate ordinary cohorts on published source snapshots. Controlled software fixtures only.",
+        "reviewed_trainer_binding_or_approval": false,
+        "schema": "Guide528-P4-extracted-view-and-P1-proof-artifact-scoped-facts/v1",
+        "tasks_preserved": 24,
+        "training_mask": 0
+      },
+      "evidence_ordinal": 528,
+      "id": "phase4-extracted-view-phase1-proof-receipt-ordinary-evidence528-20261125",
+      "observed_bytes": 19147,
+      "observed_sha256": "12aaaf424cc9c1422a2835fd9fb69b27a9cba9626c71381972b56b10c0183f11",
+      "path": "/tmp/P4-P1-guide528-single-consolidation-private-v01-bDizPS/one-existing-guide528-P4-P1P8-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Published extracted-view split isolation and proof-receipt validation, with separate nine-case ordinary cohorts. Controlled software fixtures only.",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
     }
   ]
 }
