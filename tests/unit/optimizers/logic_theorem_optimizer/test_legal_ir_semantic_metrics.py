@@ -826,3 +826,51 @@ def test_explicit_perfect_scores_cannot_launder_covered_raw_pair_evidence(damage
         "raw_deltas": dict(measured.raw_deltas),
         "missing_metrics": measured.missing_metrics,
     }
+
+
+@pytest.mark.parametrize("ranking_depth", [4, 16])
+def test_retrieved_payloads_score_all_abstentions_when_depth_exceeds_the_bank(ranking_depth):
+    owner, rankings, references, candidates, options = _retrieved_payload_case()
+    for producer in rankings.values():
+        for row in producer["rows"]:
+            row.update(
+                status="abstained",
+                abstention_reasons=["insufficient_permitted_training_examples"],
+                context=None,
+                retrieved_ids=[],
+            )
+            del row["retrieved_endpoint_refs"]
+    kwargs = options()
+    kwargs.update(ranking_depth=ranking_depth, cutoffs=(1, 3, ranking_depth))
+    report = owner.evaluate_complete_norm_retrieval_rankings(rankings, references, candidates, **kwargs)
+    assert report["ranking_depth"] == ranking_depth
+    assert report["reference_count"] == 2
+    assert report["candidate_view_count"] == 3
+    assert report["semantic_relevance_metrics"] is report["legal_applicability_metrics"] is None
+    for result in report["methods"].values():
+        assert result["query_count"] == result["abstention_count"] == 2
+        assert result["retrieved_count"] == 0
+        for cutoff in result["cutoffs"].values():
+            assert cutoff["denominator"] == 2
+            assert not any(cutoff["metric_numerators"].values())
+            assert cutoff["eligible_index_match_counts"]["full_nine_payload_exact"] == 2
+            assert cutoff["conditional_exact_match_rates"]["full_nine_payload_exact"] == 0
+
+
+@pytest.mark.parametrize(
+    ("ranking_depth", "all_abstain", "error"),
+    [
+        (4, False, "fixed ranking depth or explicit abstention"),
+        (17, True, "bounded cutoff configuration and ranking depth"),
+    ],
+)
+def test_retrieved_payloads_reject_short_rankings_or_unsupported_depth(ranking_depth, all_abstain, error):
+    owner, rankings, references, candidates, options = _retrieved_payload_case()
+    if all_abstain:
+        for producer in rankings.values():
+            for row in producer["rows"]:
+                row.update(status="abstained", retrieved_ids=[], retrieved_endpoint_refs=[])
+    kwargs = options()
+    kwargs.update(ranking_depth=ranking_depth, cutoffs=(1, 3, ranking_depth))
+    with pytest.raises(ValueError, match=error):
+        owner.evaluate_complete_norm_retrieval_rankings(rankings, references, candidates, **kwargs)

@@ -2406,7 +2406,9 @@ def evaluate_complete_norm_retrieval_rankings(rankings, reference_rows, candidat
     need(type(rankings) is dict and 1<=len(rankings)<=8 and type(reference_rows) is list
          and type(candidate_rows) is list and 1<=len(reference_rows)<=128 and 1<=len(candidate_rows)<=128
          and len(reference_rows)*len(candidate_rows)<=4096, 'bounded complete retrieval comparison population required')
-    need(type(ranking_depth) is int and 1<=ranking_depth<=len(candidate_rows)
+    # The reviewed retriever can request up to 16 rows from a smaller bank.
+    # Its abstentions still count at every requested cutoff.
+    need(type(ranking_depth) is int and 1<=ranking_depth<=max(len(candidate_rows), 16)
          and type(cutoffs) in (list,tuple) and 1<=len(cutoffs)<=8,
          'explicit bounded cutoff configuration and ranking depth required')
     # Keep a caller-owned list in the closing fence; compute only from its
