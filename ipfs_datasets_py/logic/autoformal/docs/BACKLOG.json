@@ -3275,6 +3275,174 @@
         "phase_completion_promotions": false,
         "whole_eight_phase_goal_complete": false
       }
+    },
+    "current_user_goal_proof_feedback_alias52_public_corpus_cli4_software_evidence516_20261125": {
+      "schema": "one-existing-four-guide516-closed-software-facts/v1",
+      "record_id": "proof-feedback-alias52-public-corpus-cli4-software-evidence516-20261125",
+      "migration_key": "current_user_goal_proof_feedback_alias52_public_corpus_cli4_software_evidence516_20261125",
+      "evidence_ordinal": 516,
+      "catalog_before": 515,
+      "catalog_after": 516,
+      "recorded_date_utc": "2026-11-25",
+      "scope": "Two separately qualified and published software changes. Denominators remain separate; no task, phase or goal completion promotion.",
+      "proof_feedback_attestation_aliases": {
+        "qualification_reference": {
+          "path": "/tmp/Root-P7-alias-ordinary52-selected-v262-gtoqnhj1/Root-P7-alias-ordinary52-qualified-Source-resource-closed-small-v262.json",
+          "bytes": 3229,
+          "sha256": "78527a75c143dd4887728710f5556e81d5f3060df29f5fdccc6a31c641aefea1"
+        },
+        "publication_reference": {
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P7-alias-ordinary52-three-FF-publication-small-v262.json",
+          "bytes": 6229,
+          "sha256": "cf9abb23afb6763cf642255c187c7ed0112af939cf3fc3a1504a95aa06142ce0"
+        },
+        "ordinary_unique_pass": 52,
+        "retained_cases": 44,
+        "new_cases": 8,
+        "owning_functions": 19,
+        "failures": 0,
+        "errors": 0,
+        "skips": 0,
+        "duplicates": 0,
+        "actual_collect_order_equals_called_RUN": true,
+        "implemented_scope": "Existing _attested_boolean rejects contradictory supplied boolean aliases in counterexample and deterministic-contract attestations. Absent, single and equal-valued aliases retain their existing behavior and canonical wire representation.",
+        "qualified_D_HEAD": "641c18147315a5cdfaf7ede4626bdeb72e70602e",
+        "qualified_D_tree": "0a2f5f21692f19804ec77a2dd2f058083be6d573",
+        "Source_epoch_records": 1308,
+        "owner_compiled_sha256": "c58df29db75d5200fae7b27ae1297ecc925e8761fb6663a5d70eae2fd55a8e1c",
+        "owning_test_source_sha256": "85806ca14e88f313066eba7c0ca0849f2e2047cb270d00fdf047fd7007654631",
+        "Source_AST_code_execution_witness": true,
+        "Source_resource_parent_workspaces_closed": true,
+        "private8_same_cohort": {
+          "baseline_pass": 4,
+          "baseline_fail": 4,
+          "candidate_pass": 8,
+          "separate_from_public52": true
+        },
+        "private29_retention_pass": {
+          "cases": 29,
+          "separate_from_public52": true
+        },
+        "prior_private_inspector_syntax_and_truncated_stdout_failures_retained": true,
+        "published_heads": {
+          "accelerate": "88c0d9f82f66aaddbb01344c9f85236e92a5dc88",
+          "datasets": "641c18147315a5cdfaf7ede4626bdeb72e70602e",
+          "hallucinate": "93110e2851c701e315d02752e699008c2cf793d6",
+          "root": "d3d2008a90ff7937f6288111ff3580d41228686b"
+        },
+        "qualification_scope": "Ordinary owning-file software fixtures; no new proof authenticity, Native authority, legal admission, training run or model result."
+      },
+      "public_corpus_release_cli_v4": {
+        "qualification_reference": {
+          "path": "/tmp/Root-Phase8-corpus-CLI-V4-ordinary4-selected-v266-zbj1of7i/Root-Phase8-public-corpus-V4-ordinary4-qualified-Source-resource-closed-small-v266.json",
+          "bytes": 4708,
+          "sha256": "874512580c535887197eb22c743d794a7454237764d8da28f0e98eb9efe7117f"
+        },
+        "publication_reference": {
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase8-corpus-CLI-V4-ordinary4-three-FF-publication-small-v266.json",
+          "bytes": 6751,
+          "sha256": "943bb4d24f4734723e7739ac85c224062415fa1df523e580f57e35920b7c40e5"
+        },
+        "ordinary_unique_pass": 4,
+        "owning_functions": 3,
+        "ordered_static_case_vector": [
+          1,
+          2,
+          1
+        ],
+        "failures": 0,
+        "errors": 0,
+        "skips": 0,
+        "duplicates": 0,
+        "first_actual_ordinary4_attempt": true,
+        "selected_scope": "Original physical V4 API positive, public module/direct CLI V4 positives, and Native-selection refusal using real temporary law/entity Parquet and retained-cache fixtures with fictional source/review records.",
+        "implemented_scope": "Public validate-closure can select the existing source-only reviewed-source-use-whole-norm-physical-source-replay/v1 coordinator profile. Native selection remains refused.",
+        "qualified_D_HEAD": "a470b0b8039dc4ca500731db5442ba1d20f7da97",
+        "qualified_D_tree": "0fa3cf44506d165d71eff58ba43ef75164340f82",
+        "Source_epoch_records": 1309,
+        "interpreter": "/home/barberb/lift_coding/.venv/bin/python",
+        "public_subprocess_contract_exercised": true,
+        "owning_test_Source_AST_code_execution_witness": {
+          "AST_to_code": true,
+          "code_execution": true,
+          "code_sha256": "0aba3b27c8ecbcecbc5f7158ccef11761e9b24b348a8d9e70ef0285a03f3cdc4",
+          "source_sha256": "f57ef7f49f1b979c7f75d456bd5c9f9e4eb091a40dd2dcb6c649c468198211bf",
+          "source_to_AST": true
+        },
+        "fixture_loaded_coordinator_terminal_origin": {
+          "bytes": 127752,
+          "compiled_SHA256": "aec9ed9cd79fa334266f299f25c5552280d1d2ace45f45df2aa98c8e57169967",
+          "full9": {
+            "st_ctime_ns": "1795426741862683370",
+            "st_dev": "66306",
+            "st_gid": "1000",
+            "st_ino": "70042507",
+            "st_mode": "33204",
+            "st_mtime_ns": "1795426741849683243",
+            "st_nlink": "1",
+            "st_size": "127752",
+            "st_uid": "1000"
+          },
+          "name": "ipfs_datasets_py.logic.autoformal.legal_release_coordinator_v1",
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/ipfs_datasets_py/logic/autoformal/legal_release_coordinator_v1.py",
+          "scope": "published_git_D_source",
+          "sha256": "aec9ed9cd79fa334266f299f25c5552280d1d2ace45f45df2aa98c8e57169967",
+          "status": "loaded"
+        },
+        "parent_coordinator_single_lazy_role": {
+          "force_imports": false,
+          "RUN_terminal": "loaded-and-current-Source-compiled"
+        },
+        "public_child_compilation_witness_claimed": false,
+        "child_evidence_limit": "The parent owning-test rewrite/execution and coordinator origin are witnessed. Public child argv and script bytes are Source/fixed-Git bound; no registered child module origin or child-specific compilation witness is asserted.",
+        "child_invocations": {
+          "total_public_commands": 7,
+          "python": "sys.executable from selected existing venv",
+          "forms": [
+            "-m scripts.ops.legal_ir.validate_uscode_corpus_release",
+            "scripts/ops/legal_ir/validate_uscode_corpus_release.py"
+          ],
+          "cwd": "owned temporary fixture directory",
+          "per_command_timeout_seconds": 45
+        },
+        "historical_resource_entry_CLI27_separate": true,
+        "historical_CLI27_owner": "test_validation_run_resources.py::TestCLIInitialReadRefusalControls",
+        "private_manifest_relative_path_extractor_correction_retained": true,
+        "Source_resource_parent_children_workspaces_closed": true,
+        "published_heads": {
+          "accelerate": "88c0d9f82f66aaddbb01344c9f85236e92a5dc88",
+          "datasets": "a470b0b8039dc4ca500731db5442ba1d20f7da97",
+          "hallucinate": "71b7117a76a15161991846b8718da7d7b31c8b5d",
+          "root": "5282932521223af0f01ceaa7649e50869c339288"
+        },
+        "software_source_replay_is_not_genuine_statutory_meaning_or_independent_legal_review": true
+      },
+      "publication": {
+        "both_units_three_normal_fast_forwards_closed": true,
+        "actual_remote_readbacks_clean_stores_and_gitlinks_reported": true,
+        "unchanged_A": "88c0d9f82f66aaddbb01344c9f85236e92a5dc88",
+        "other_gitlinks_preserved": true,
+        "CLI_initial_D_readback_assertion_retained_then_fresh_remote_confirmation_before_parent_pushes": true,
+        "CLI_D_push_not_repeated": true,
+        "new_Source_test_or_runtime_replay_for_this_consolidation": false
+      },
+      "preservation_and_limits": {
+        "all24_tasks_dependencies_acceptance_and_statuses_unchanged": true,
+        "all126_components_and_statuses_unchanged": true,
+        "all515_prior_evidence_records_unchanged": true,
+        "old_MD_byte_prefixes_unchanged": true,
+        "all_failures_costs_and_full_predebits_retained": true,
+        "physical_IO_accounting_complete": false,
+        "prior_producer_bound_preparations_signatures_reports_masks_remain_historical_without_repinning": true,
+        "prior_P2_unreviewed_statutory_meaning_and_independent_review_limits_unchanged": true,
+        "new_legal_statutory_meaning_review_or_training_gold_admission": false,
+        "new_Native_Lean_compiler_proof_qualification": false,
+        "new_training_or_model_fit_quality_or_hosted_CI_qualification": false,
+        "new_host_ledger_cap_claim_or_census_operation": false,
+        "public_Torch_V4_qualification_added": false,
+        "phase_completion_promotions": false,
+        "whole_eight_phase_goal_complete": false
+      }
     }
   },
   "programme_goal_hierarchy": {
