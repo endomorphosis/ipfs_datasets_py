@@ -481,7 +481,7 @@ class ExternalBenchmarkReport:
 
     @property
     def accepted(self) -> bool:
-        return all(result.accepted for result in self.packet_results)
+        return bool(self.packet_results) and all(result.accepted for result in self.packet_results)
 
     @property
     def external_validity_score(self) -> float:
@@ -591,9 +591,11 @@ def evaluate_external_legal_expert_benchmark(
     *,
     internal_canary_metrics: Mapping[str, Any] | None = None,
 ) -> ExternalBenchmarkReport:
-    """Evaluate candidate outputs against external expert benchmark packets."""
+    """Evaluate candidate outputs with at most one prediction per benchmark packet."""
 
     resolved = tuple(packets)
+    if len({packet.packet_id for packet in resolved}) != len(resolved):
+        raise LegalIRExternalBenchmarkError("duplicate external benchmark packet ID")
     require_external_benchmark_evaluation_only(
         resolved,
         operation=EXTERNAL_EVALUATION_OPERATION,
@@ -656,18 +658,33 @@ def _normalize_adjudication(value: Mapping[str, Any]) -> Mapping[str, Any]:
     }
 
 
+def _prediction_packet_id(prediction: Mapping[str, Any]) -> str:
+    packet_id = _string(prediction.get("packet_id"))
+    alias = _string(prediction.get("id"))
+    if packet_id and alias and packet_id != alias:
+        raise LegalIRExternalBenchmarkError("conflicting prediction packet IDs")
+    return packet_id or alias
+
+
 def _prediction_mapping(
     predictions: Mapping[str, Any] | Sequence[Mapping[str, Any]],
 ) -> Mapping[str, Any]:
     if isinstance(predictions, Mapping):
         if "packet_id" in predictions:
-            return {_string(predictions.get("packet_id")): predictions}
+            return {_prediction_packet_id(predictions): predictions}
+        for key, item in predictions.items():
+            if isinstance(item, Mapping):
+                packet_id = _prediction_packet_id(item)
+                if packet_id and packet_id != key:
+                    raise LegalIRExternalBenchmarkError("prediction packet ID does not match its mapping key")
         return predictions
     result: dict[str, Mapping[str, Any]] = {}
     for item in predictions:
         if isinstance(item, Mapping):
-            packet_id = _string(item.get("packet_id") or item.get("id"))
+            packet_id = _prediction_packet_id(item)
             if packet_id:
+                if packet_id in result:
+                    raise LegalIRExternalBenchmarkError("duplicate prediction packet ID")
                 result[packet_id] = item
     return result
 
@@ -869,7 +886,7 @@ def _decompiler_score(
     forbidden_hits = tuple(term for term in expected.forbidden_terms if term.lower() in text)
     round_trip = prediction.get("round_trip_success")
     if round_trip is None:
-        round_trip = prediction.get("decompiler_round_trip_preservation", True)
+        round_trip = prediction.get("decompiler_round_trip_preservation")
     round_trip_ok = (not expected.round_trip_required) or _bool(round_trip, default=False)
     checks = [
         not missing_terms,
@@ -900,8 +917,14 @@ def _semantic_score(
     prediction: Mapping[str, Any],
 ) -> tuple[float, Mapping[str, Any], tuple[str, ...]]:
     candidate_ir = prediction.get("candidate_ir") or prediction.get("predicted_ir")
-    if not packet.reference_ir or not isinstance(candidate_ir, Mapping):
-        return 1.0, {"available": False, "reason": "reference_or_candidate_ir_absent"}, ()
+    if not packet.reference_ir:
+        return 1.0, {"available": False, "reason": "reference_ir_absent"}, ()
+    if not isinstance(candidate_ir, Mapping) or not candidate_ir:
+        return (
+            0.0,
+            {"available": False, "reason": "candidate_ir_absent_or_invalid"},
+            ("semantic_equivalence_candidate_missing_or_invalid",),
+        )
     result = evaluate_legal_ir_semantic_equivalence(
         packet.reference_ir,
         candidate_ir,
