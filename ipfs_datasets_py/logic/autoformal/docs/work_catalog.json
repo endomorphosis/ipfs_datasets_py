@@ -27413,6 +27413,282 @@
       "root": "artifact_workspace",
       "scope": "Separate real SQL51 persistence checks, published P8 fictional packet-digest22 mechanics, and actual local fictional Native cache 1-version/2-compiler exact reuse. Hosted CI billing stopped before steps; both Title10 drafts remain unadmitted. No task status, legal/model/gold/training or full-goal qualification.",
       "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/p8_v4_reviewed_graph_ordinary9_closed_software_evidence_20261125",
+      "closed_software_facts": {
+        "evidence_ordinal": 524,
+        "implemented_behavior": {
+          "compatibility_scope_from_author": "V4 requires the existing reviewed companion projection. Flat or competing payload fields do not qualify as that projection. Generic HF package validation and V1–V3 coordinator branches retain their existing behavior.",
+          "complete_unique_record_CID_coverage": true,
+          "effect": "Existing V4 only. Join every exact manifest-selected HF node and edge Parquet row and its single canonical semantic companion to the independently replayed graph by record CID; enforce complete unique coverage, wrapper/payload digest and field parity, permit omitted/null legal_id as blank, and close each reader.",
+          "new_refusal_variants": [
+            "node-companion",
+            "edge-identity",
+            "flat-edge-endpoint"
+          ],
+          "omitted_or_null_legal_id_accepted_as_blank": true,
+          "owner_relative_path": "ipfs_datasets_py/logic/autoformal/legal_release_coordinator_v1.py",
+          "reviewed_companion_required": true,
+          "test_relative_path": "tests/unit/logic/autoformal/test_corpus_release_cli.py",
+          "wrapper_payload_digest_and_field_parity": true
+        },
+        "limits": {
+          "Native_Lean_qualification_from_ordinary9": false,
+          "Title10_applicability_signing_and_asof_selection": "pending",
+          "Title10_independent_legal_and_formal_review": "pending",
+          "actual_statutory_admission": false,
+          "full_eight_phase_goal_complete": false,
+          "real_model_or_external_expert_quality": "pending",
+          "real_release_readiness": "pending",
+          "runtime_physical_IO_complete_claimed": false,
+          "training_and_gold_masks": 0
+        },
+        "maintenance": {
+          "all_prior_failure_and_cost_evidence_retained": true,
+          "components": 126,
+          "composer_canonical_Source_Git_import_SQL_runtime_test_actions": false,
+          "exactly_one_new_catalog_record": 524,
+          "prior_evidence_records": 523,
+          "task_status_dependencies_acceptance_source_IDs_unchanged": true,
+          "tasks": 24,
+          "whole_previous_Markdown_prefixes_preserved": true
+        },
+        "private_author_lineage": {
+          "V1_followup_failures_retained": [
+            {
+              "assertion_passed": false,
+              "detail": "DID NOT RAISE <class 'ipfs_datasets_py.logic.autoformal.legal_release_coordinator_v1.ReleaseCoordinatorError'>",
+              "exception": "Failed",
+              "report": {
+                "bytes": 2575,
+                "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/P8-V4-packaged-reviewed-graph-private-8455u_cu/run-red-v1-flat-edge-endpoint/stdout.json",
+                "sha256": "81de842cf4d2ff63ddd414dc1bc1388684f16656af39a0afbefe4ac56d54e2ea"
+              },
+              "variant": "flat-edge-endpoint"
+            },
+            {
+              "assertion_passed": false,
+              "detail": "HF package graph differs from the independently reviewed graph",
+              "exception": "ReleaseCoordinatorError",
+              "report": {
+                "bytes": 5719,
+                "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/P8-V4-packaged-reviewed-graph-private-8455u_cu/run-red-v1-blank-legal-id/stdout.json",
+                "sha256": "8ac5a328a36c72fc324b37910a769baea8457b161d005e17e533f4aa73dc6107"
+              },
+              "variant": "blank-legal-id"
+            }
+          ],
+          "V2_final_private_passes": 5,
+          "V2_final_results_retained": [
+            {
+              "assertion_passed": true,
+              "detail": null,
+              "exception": null,
+              "report": {
+                "bytes": 1301,
+                "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/P8-V4-packaged-reviewed-graph-private-8455u_cu/run-green-v2-flat-edge-endpoint/stdout.json",
+                "sha256": "04aef790890f9efe354968ba7403be75f254e411f75a1bb131fd4e89e9642520"
+              },
+              "variant": "flat-edge-endpoint"
+            },
+            {
+              "assertion_passed": true,
+              "detail": null,
+              "exception": null,
+              "report": {
+                "bytes": 1297,
+                "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/P8-V4-packaged-reviewed-graph-private-8455u_cu/run-green-v2-blank-legal-id/stdout.json",
+                "sha256": "4bbbc80e08986b8683dfd7fb524c11b33af8abc2f0d9a04eb7ee413c69a98336"
+              },
+              "variant": "blank-legal-id"
+            },
+            {
+              "assertion_passed": true,
+              "detail": null,
+              "exception": null,
+              "report": {
+                "bytes": 1297,
+                "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/P8-V4-packaged-reviewed-graph-private-8455u_cu/run-green-v2-node-companion/stdout.json",
+                "sha256": "a23ae30c2c819ace6a40af9608b2d3810e0d076eb043eab855d7546aa3b6d5ba"
+              },
+              "variant": "node-companion"
+            },
+            {
+              "assertion_passed": true,
+              "detail": null,
+              "exception": null,
+              "report": {
+                "bytes": 1296,
+                "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/P8-V4-packaged-reviewed-graph-private-8455u_cu/run-green-v2-edge-identity/stdout.json",
+                "sha256": "720416170e82b7d446c77b90a70cea8e47cb0a97957d46d2f15a7890feb407e5"
+              },
+              "variant": "edge-identity"
+            },
+            {
+              "assertion_passed": true,
+              "detail": null,
+              "exception": null,
+              "report": {
+                "bytes": 1300,
+                "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/P8-V4-packaged-reviewed-graph-private-8455u_cu/run-green-v2-retained-positive/stdout.json",
+                "sha256": "b23d80f447448151a646b4428b87d3ec1bced171d3261950bdeb753b0dbc7d34"
+              },
+              "variant": "retained-positive"
+            }
+          ],
+          "before_fix_false_acceptance_retained": [
+            {
+              "assertion_passed": false,
+              "detail": "DID NOT RAISE <class 'ipfs_datasets_py.logic.autoformal.legal_release_coordinator_v1.ReleaseCoordinatorError'>",
+              "exception": "Failed",
+              "report": {
+                "bytes": 1843,
+                "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/P8-V4-packaged-reviewed-graph-private-8455u_cu/run-node-red-system/stdout.json",
+                "sha256": "75286cebb56f3f300f603693abf031279e648b7e168c150efa3278719bebbdfc"
+              },
+              "variant": "node-companion"
+            },
+            {
+              "assertion_passed": false,
+              "detail": "DID NOT RAISE <class 'ipfs_datasets_py.logic.autoformal.legal_release_coordinator_v1.ReleaseCoordinatorError'>",
+              "exception": "Failed",
+              "report": {
+                "bytes": 1842,
+                "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/P8-V4-packaged-reviewed-graph-private-8455u_cu/run-edge-red/stdout.json",
+                "sha256": "c68c021417e05b10e45ab952c6d87b9fd9caa4e1acdffca25be25fa3056f44d3"
+              },
+              "variant": "edge-identity"
+            }
+          ],
+          "final_packet": {
+            "bytes": 13296,
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/P8-V4-packaged-reviewed-graph-private-8455u_cu/FINAL-V4-reviewed-HF-graph-exact-two-owner-test-private-packet-v02.json",
+            "sha256": "8c07b74c28213646776472d01b64256e4164c7ed1e49953c1b7c9696e735eef1"
+          },
+          "initial_memory_error_retained": {
+            "assertion_passed": false,
+            "detail": "",
+            "exception": "MemoryError",
+            "report": {
+              "bytes": 1594,
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/P8-V4-packaged-reviewed-graph-private-8455u_cu/run-node-red/stdout.json",
+              "sha256": "2b9982193bee0467a2d8de42049a3a740c19054c26fcfec9f5e8b16b1158f2ec"
+            },
+            "variant": "node-companion"
+          },
+          "private_counts_not_added_to_ordinary9": true
+        },
+        "publication": {
+          "actual_three_normal_child_first_fast_forwards": true,
+          "all_Guide523_docs_and_other_paths_and_gitlinks_preserved": true,
+          "all_four_origin_main_equal_HEAD_and_clean": true,
+          "exact_Source_stage_committed_blob_joins": {
+            "ipfs_datasets_py/logic/autoformal/legal_release_coordinator_v1.py": {
+              "bytes": 130267,
+              "full9": {
+                "st_ctime_ns": "1795626392981734632",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70042566",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795626392331588950",
+                "st_nlink": "1",
+                "st_size": "130267",
+                "st_uid": "1000"
+              },
+              "git_blob": "2faa76f3b111b3d68c814eb0eb0db7724a7a18f8",
+              "mode": "100644",
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/ipfs_datasets_py/logic/autoformal/legal_release_coordinator_v1.py",
+              "prior_blob": "e775815b7d9bc2570008792ca8316706add6ab9a",
+              "sha256": "44206e3e1f92594bc57534f8de756e4ff938600e40ab98c7f314f5da395359c1",
+              "stage0_blob": "2faa76f3b111b3d68c814eb0eb0db7724a7a18f8"
+            },
+            "tests/unit/logic/autoformal/test_corpus_release_cli.py": {
+              "bytes": 214761,
+              "full9": {
+                "st_ctime_ns": "1795626393597728554",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70042567",
+                "st_mode": "33188",
+                "st_mtime_ns": "1795626392335396608",
+                "st_nlink": "1",
+                "st_size": "214761",
+                "st_uid": "1000"
+              },
+              "git_blob": "9dbd1c45ede27e34652cf872fb9aebfc06b996b8",
+              "mode": "100644",
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/tests/unit/logic/autoformal/test_corpus_release_cli.py",
+              "prior_blob": "a1999199145789efcaaad5a1afac766072e07527",
+              "sha256": "b02f62e724968f32c3a8df87a3998f7a26014764a04103bbdbc13898134e1371",
+              "stage0_blob": "9dbd1c45ede27e34652cf872fb9aebfc06b996b8"
+            }
+          },
+          "final_heads": {
+            "accelerate": "88c0d9f82f66aaddbb01344c9f85236e92a5dc88",
+            "datasets": "2d83a8511601e85723a09b4c3529c1d430deabf3",
+            "hallucinate": "1763dfa91f0c477b95f875b7ad16b9c805062191",
+            "root": "d8ac847c70317c34c5ee4d0cd02858b77201d3c7"
+          },
+          "initial_legacy_index_size_preflight_correction_retained": "Legacy index bytes field derived from existing full9 st_size; no effects on first attempt.",
+          "no_CI_Source_test_replay_for_publication": true,
+          "prior_guide523_publication": {
+            "bytes": 9207,
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-guide523-four-doc-three-FF-publication-small-v329.json",
+            "sha256": "beb86ded7a04035f9d2f402c02649ac1da7f5433108a4ec29f1054746c2e45c7"
+          },
+          "receipt": {
+            "bytes": 9064,
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P8-V4-reviewed-graph-ordinary9-three-FF-publication-v331.json",
+            "sha256": "7612da26c43e7050959b3d75be9398aa96cb2645ca7adb8388472af9b139ada0"
+          }
+        },
+        "qualified_ordinary9": {
+          "COLLECT_RUN_JUnit_order_exact": true,
+          "Source_SDK_resource_parent_closed": true,
+          "duplicates": 0,
+          "errors": 0,
+          "failures": 0,
+          "fresh_execution_by_composer": false,
+          "function_case_vector": [
+            1,
+            2,
+            1,
+            1,
+            3,
+            1
+          ],
+          "functions": 6,
+          "new_cases": 4,
+          "qualification": {
+            "bytes": 3479,
+            "path": "/tmp/Root-P8-V4-reviewed-graph-existing-ordinary9-v331-l4ls_bm7/Root-P8-V4-reviewed-graph-package-ordinary9-qualified-small-v331.json",
+            "sha256": "70eb12e25edfad5852c9c1314c92d7779e5469716633d3bd69d32dd29a43729b"
+          },
+          "raw_JUnit": {
+            "bytes": 1801,
+            "path": "/tmp/Root-P8-V4-reviewed-graph-existing-ordinary9-v331-l4ls_bm7/actual-output/corpus-release-public-v4-reviewed-graph-ordinary9-run-result0-output1.bin",
+            "sha256": "695d216743ddd87fb68263460a94163d85ae06b05044f4a1452cb464076d2ae8"
+          },
+          "retained_cases": 5,
+          "saved_JUnit_independently_authenticated_by_composer": true,
+          "skips": 0,
+          "unique_PASS": 9
+        },
+        "record_id": "p8-v4-reviewed-graph-ordinary9-closed-software-evidence524-20261125",
+        "schema": "P8-V4-reviewed-graph-ordinary9-published-scoped-software-evidence/v1",
+        "scope": "Existing V4 software validation using fictional Parquet fixtures."
+      },
+      "evidence_ordinal": 524,
+      "id": "p8-v4-reviewed-graph-ordinary9-closed-software-evidence524-20261125",
+      "observed_bytes": 13055,
+      "observed_sha256": "2ebfca5a4d0cf39774e95692887b9931445ecce2f6bbb35046eea6481a51d280",
+      "path": "/tmp/P8-guide524-single-consolidation-private-v01/one-existing-guide524-V4-reviewed-graph-ordinary9-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Published V4 reviewed graph consistency across nine standard fictional Parquet software cases. Title10 review, real release readiness and model work remain pending. All existing task and component values remain unchanged.",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
     }
   ]
 }

@@ -3647,6 +3647,34 @@
       "record_id": "sql51-p8-packet22-native-cache-closed-evidence523-20261125",
       "status": "closed_software_evidence_only_no_task_status_change",
       "training_and_gold_masks": 0
+    },
+    "p8_v4_reviewed_graph_ordinary9_closed_software_evidence_20261125": {
+      "Source_SDK_resource_parent_closed": true,
+      "Title10_review_real_release_and_model_pending": true,
+      "all24_tasks126_components523_old_evidence_values_preserved": true,
+      "evidence_ordinal": 524,
+      "facts": {
+        "bytes": 13055,
+        "path": "/tmp/P8-guide524-single-consolidation-private-v01/one-existing-guide524-V4-reviewed-graph-ordinary9-scoped-facts.json",
+        "sha256": "2ebfca5a4d0cf39774e95692887b9931445ecce2f6bbb35046eea6481a51d280"
+      },
+      "full_eight_phase_goal_complete": false,
+      "function_case_vector": [
+        1,
+        2,
+        1,
+        1,
+        3,
+        1
+      ],
+      "new_cases": 4,
+      "ordinary_functions": 6,
+      "public_V4_reviewed_graph_unique_PASS": 9,
+      "record_id": "p8-v4-reviewed-graph-ordinary9-closed-software-evidence524-20261125",
+      "retained_cases": 5,
+      "status": "closed_software_evidence_only_no_task_status_change",
+      "three_normal_child_first_publications_closed": true,
+      "training_and_gold_masks": 0
     }
   },
   "programme_goal_hierarchy": {
