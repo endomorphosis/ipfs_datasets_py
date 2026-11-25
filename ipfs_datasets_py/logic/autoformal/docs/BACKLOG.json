@@ -3850,6 +3850,33 @@
       "record_id": "phase7-exact-instance-cache-and-bridge-timeout-closed-fixture-evidence530-20261125",
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
       "training_and_gold_masks": 0
+    },
+    "phase2_physical_native_r5_phase8_ordinary62_closed_fixture_evidence_20261125": {
+      "all24_tasks126_components530_old_evidence_values_preserved": true,
+      "evidence_ordinal": 531,
+      "facts": {
+        "bytes": 22494,
+        "path": "/tmp/P2-P8-guide531-single-consolidation-private-v01-KDptu2/one-existing-guide531-Phase2-R5-and-Phase8-ordinary62-scoped-facts.json",
+        "sha256": "8ff5ef2e2cc7efb77e527c39f96412ecee1916120cf3fdfb4e7af3fdf0dabd1f"
+      },
+      "full_eight_phase_goal_complete": false,
+      "phase2_signed_fictional_native_R5": {
+        "archived_members_verified": 93,
+        "compiled_modules": 10,
+        "conditional_preservation_obligations": 30,
+        "physical_units": 3
+      },
+      "phase8_published_ordinary": {
+        "functions": 35,
+        "in_process": 60,
+        "real_CLI": 2,
+        "unique_PASS": 62
+      },
+      "prior_attempts_and_charges_retained": true,
+      "real_review_promotion_and_model_pending": true,
+      "record_id": "phase2-physical-native-r5-phase8-ordinary62-closed-fixture-evidence531-20261125",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
+      "training_and_gold_masks": 0
     }
   },
   "programme_goal_hierarchy": {

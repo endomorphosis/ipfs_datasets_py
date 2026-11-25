@@ -29822,6 +29822,410 @@
       "root": "artifact_workspace",
       "scope": "Published controlled Phase7 exact sample cache and process-cache retry ordinary23 fixture results.",
       "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase2_physical_native_r5_phase8_ordinary62_closed_fixture_evidence_20261125",
+      "closed_software_facts": {
+        "actual_Phase2_current_managed_Native_R5": {
+          "bytes": 4734,
+          "path": "/tmp/Root-Phase2-current-existing-R5-physical-native-v381-HKZ7Dwxm/actual-current-physical-V4-native-R5-closed-small-v381.json",
+          "sha256": "561ba7a29937343166dd126388ca067978f6cd39c3023b3de0b5f8570c99ae74"
+        },
+        "actual_Phase8_code_publication": {
+          "bytes": 14392,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P8-exact5-ordinary62-three-FF-publication-v386.json",
+          "sha256": "f32b565627531444060a508f986545e19709278f64f89d695efa3a961d688872"
+        },
+        "actual_Phase8_ordinary62_qualification": {
+          "bytes": 25922,
+          "path": "/tmp/Root-Phase8-existing-exact5-ordinary62-v386-F1FCg2wr/actual-Phase8-exact-five-ordinary62-closed-small-v386.json",
+          "sha256": "b1b682641a9b7329a80c9bd4caa2df07326d969b98ef14c34345e7bec8daeb81"
+        },
+        "components_preserved": 126,
+        "evaluation_gold_mask": 0,
+        "evidence_ordinal": 531,
+        "evidence_scopes_and_counts_kept_separate": true,
+        "full_eight_phase_goal_complete": false,
+        "phase2_managed_signed_fictional_physical_native_R5": {
+          "Source_resource_and_parent_cleanup_closed": true,
+          "actual_statutory_pilot_admission": false,
+          "archive_member_bytes_checked": 93,
+          "authority": {
+            "corpus_admission": false,
+            "gold": false,
+            "legal": false,
+            "model": false,
+            "proof": false,
+            "review": false,
+            "source": false,
+            "training": false
+          },
+          "compact": {
+            "bytes": 4734,
+            "path": "/tmp/Root-Phase2-current-existing-R5-physical-native-v381-HKZ7Dwxm/actual-current-physical-V4-native-R5-closed-small-v381.json",
+            "sha256": "561ba7a29937343166dd126388ca067978f6cd39c3023b3de0b5f8570c99ae74"
+          },
+          "compiled_modules": 10,
+          "conditional_native_build_receipt": {
+            "bytes": 266885,
+            "full9": {
+              "st_ctime_ns": 1795644553455105171,
+              "st_dev": 66306,
+              "st_gid": 1000,
+              "st_ino": 13924742,
+              "st_mode": 33152,
+              "st_mtime_ns": 1795644553455105171,
+              "st_nlink": 1,
+              "st_size": 266885,
+              "st_uid": 1000
+            },
+            "path": "build-receipt.json",
+            "sha256": "cb57fb658520a25c6b0f2eaf998ee7f6b9a5019b5ba2e94363097d454ec91ffe"
+          },
+          "evaluation_gold_mask": 0,
+          "exact_archived_members": 93,
+          "full_report_retained_reference": {
+            "bytes": 22492688,
+            "path": "/tmp/Root-Phase2-current-existing-R5-physical-native-v381-HKZ7Dwxm/actual-output/complete-direct-current-R5-physical-native-report.json",
+            "sha256": "c962f335d5ed30743212636e8c392546d4b9248f540dbefc468b9e4575531d56"
+          },
+          "full_retained_precharge": {
+            "bytes": 1829,
+            "path": "/tmp/Root-Phase2-current-existing-R5-physical-native-v381-HKZ7Dwxm/Source-only-current-managed-physical-R5-prepaid.json",
+            "sha256": "40a45616afc91c46c52fe6725582b812af47d3533179f5834573d4e16dd76494"
+          },
+          "kernel_containment_attested": false,
+          "ordinary_test_count": null,
+          "physical_IO_accounting_complete": false,
+          "physical_units": 3,
+          "preservation_obligations": 30,
+          "raw_retained_outputs": {
+            "native-packet-members.json": {
+              "bytes": 31825,
+              "logical_name": "native-packet-members.json",
+              "origin": "actual ToolRunResult.output_files bytes; not to_dict decoded text",
+              "path": "/tmp/Root-Phase2-current-existing-R5-physical-native-v381-HKZ7Dwxm/actual-output/run.output.1.bin",
+              "sha256": "bcf89d77548a73db5ad9e7e2a590883b454609e3e1190df8c6cd8063071947e5"
+            },
+            "native-packet.zip": {
+              "bytes": 5381032,
+              "logical_name": "native-packet.zip",
+              "origin": "actual ToolRunResult.output_files bytes; not to_dict decoded text",
+              "path": "/tmp/Root-Phase2-current-existing-R5-physical-native-v381-HKZ7Dwxm/actual-output/run.output.0.bin",
+              "sha256": "b9a7d17d6d2d0e9e622c1235a434f077b0584c6f79d0472e683a0029c4ff9409"
+            },
+            "opening.json": {
+              "bytes": 220110,
+              "logical_name": "opening.json",
+              "origin": "actual ToolRunResult.output_files bytes; not to_dict decoded text",
+              "path": "/tmp/Root-Phase2-current-existing-R5-physical-native-v381-HKZ7Dwxm/actual-output/run.output.3.bin",
+              "sha256": "701ae3058e0bcf72f747e6f05215218ccb760fc2d3f10635a3ec1d126013eb01"
+            },
+            "summary.json": {
+              "bytes": 267284,
+              "logical_name": "summary.json",
+              "origin": "actual ToolRunResult.output_files bytes; not to_dict decoded text",
+              "path": "/tmp/Root-Phase2-current-existing-R5-physical-native-v381-HKZ7Dwxm/actual-output/run.output.2.bin",
+              "sha256": "a64814a01389ffaf97dcf706e573f452fdbed02f858edc539f1fa93bc6df14d8"
+            }
+          },
+          "retained_prelaunch_no_effect_predecessor_charge": {
+            "bytes": 1543,
+            "path": "/tmp/Root-Phase2-current-existing-R5-physical-native-v380-8l74Cuo4/Source-only-current-managed-physical-R5-prepaid.json",
+            "sha256": "df3277707841ae401601569cbbdd75c4cf2ef95746d6676306303dab1173d218"
+          },
+          "scope": "one offline Lake build checked under explicit hypotheses, authentication of the original live handle, and same-process/thread/code-fixture consumer",
+          "separate_from_any_Phase8_ordinary_case_credit": true,
+          "signed_fictional_fixture": true,
+          "source_bound_Git_heads": {
+            "accelerate": "190cb69b9035ea210d9af8817fbe76caf890b48f",
+            "datasets": "cacb0e85dbfad57fb1d96f8aa0d8667f6c51b061"
+          },
+          "toolchain": "leanprover/lean4:v4.34.1",
+          "training_mask": 0,
+          "verified_original_live_handle_and_same_fixture_consumer": true
+        },
+        "phase8_ordinary62_published": {
+          "Source5": {
+            "bytes": 14248,
+            "path": "/tmp/Root-Phase8-exact-five-Source5-existing-v384-53fMUvBT/actual-Phase8-exact5-Source-closed-small-v384.json",
+            "sha256": "f42797bc6ced89a117d2d2361ec376e480a74407cac067425f8788de39255e8e"
+          },
+          "Source_external_resource_parent_closed": true,
+          "benchmarks_and_gate_changes": "The benchmark importer checks an explicit packet digest against the canonical packet. The external-validity gate reconciles packet counts, scores and failed IDs from distinct results with consistent dispositions. The compiler gate replays supplied raw external evidence beside any saved decision and checks agreement. It binds the evaluated identifiers alongside the submitted labels.",
+          "code_publication": {
+            "bytes": 14392,
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P8-exact5-ordinary62-three-FF-publication-v386.json",
+            "sha256": "f32b565627531444060a508f986545e19709278f64f89d695efa3a961d688872"
+          },
+          "counts": {
+            "duplicates": 0,
+            "errors": 0,
+            "failures": 0,
+            "functions": 35,
+            "passed": 62,
+            "skipped": 0,
+            "tests": 62
+          },
+          "exact_Git_HEAD": "bcd55c0d832c38ff7ed696592dfb6a9a55883b2d",
+          "exact_Git_tree": "bd284d0f540c17433056aa4af72db7b18d1c468e",
+          "exact_five_paths": {
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_external_benchmark.py": {
+              "bytes": 38313,
+              "full9": {
+                "st_ctime_ns": "1795644948831831577",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70042591",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795644948504189165",
+                "st_nlink": "1",
+                "st_size": "38313",
+                "st_uid": "1000"
+              },
+              "git_mode": "100644",
+              "parent_blob": "566fcdd4562bb8dc570d0e52b18fccc3172e4224",
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_external_benchmark.py",
+              "sha256": "99397ab0476b222e78a74bfb03d69ed85b9518ae9df330c195c6433da5cb5c27",
+              "stage0_and_committed_blob": "5ff7f4e61bc08745fd61b09ec7a858c50cf36283"
+            },
+            "scripts/ops/legal_ir/hammer_leanstral_rollout_gate.py": {
+              "bytes": 221541,
+              "full9": {
+                "st_ctime_ns": "1795644949133831913",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70042592",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795644948508725634",
+                "st_nlink": "1",
+                "st_size": "221541",
+                "st_uid": "1000"
+              },
+              "git_mode": "100644",
+              "parent_blob": "e9470fd4fc9576ae2f7b5858bd9938423146002e",
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/scripts/ops/legal_ir/hammer_leanstral_rollout_gate.py",
+              "sha256": "9785ff320f6ab5b16e9c933d6519cfed5b0abe2b7d9db58a363a782b612b167c",
+              "stage0_and_committed_blob": "1404a2a89a9b1c1935a91334b0b9171d564340f1"
+            },
+            "tests/unit/optimizers/logic_theorem_optimizer/test_compiler_system_promotion_gate.py": {
+              "bytes": 16745,
+              "full9": {
+                "st_ctime_ns": "1795644949426832242",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70042601",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795644948512507846",
+                "st_nlink": "1",
+                "st_size": "16745",
+                "st_uid": "1000"
+              },
+              "git_mode": "100644",
+              "parent_blob": "130637b6b26498fcea0cd6ff36344d1a27191da9",
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_compiler_system_promotion_gate.py",
+              "sha256": "097a46cb5fdfdf496f743b2792f8b28ca9cbc4a18597558f1fa7b168b418580a",
+              "stage0_and_committed_blob": "7c33d5a7b56f8cc63d523363c768f2664e883060"
+            },
+            "tests/unit/optimizers/logic_theorem_optimizer/test_external_validity_promotion_gate.py": {
+              "bytes": 15741,
+              "full9": {
+                "st_ctime_ns": "1795644949735832588",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70042602",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795644948516761483",
+                "st_nlink": "1",
+                "st_size": "15741",
+                "st_uid": "1000"
+              },
+              "git_mode": "100644",
+              "parent_blob": "83c43ebef4d4eb874635f586ded14a8e4601421a",
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_external_validity_promotion_gate.py",
+              "sha256": "dfbf3ace8d5d0fa5b6e16bacd4c0ffedb80b8d636f29e398299a80e7ceef1a43",
+              "stage0_and_committed_blob": "4f0c8b9a9db1a70c17b75ee83c578e45f2783fe6"
+            },
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_external_benchmark.py": {
+              "bytes": 16178,
+              "full9": {
+                "st_ctime_ns": "1795644950034832923",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70042603",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795644948520369359",
+                "st_nlink": "1",
+                "st_size": "16178",
+                "st_uid": "1000"
+              },
+              "git_mode": "100644",
+              "parent_blob": "906dfa81068aa04759af700d28966862e1686624",
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_external_benchmark.py",
+              "sha256": "aaa5f5ade2fe8b6a12516f87924c6879158f07ed594fc609d4866b66f81e8bb2",
+              "stage0_and_committed_blob": "1fc891c094b1354d1c02716c0e063cb3755d60b1"
+            }
+          },
+          "exact_function_case_counts": {
+            "tests/unit/optimizers/logic_theorem_optimizer/test_compiler_system_promotion_gate.py::test_compiler_system_checks_external_result_bindings": 8,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_compiler_system_promotion_gate.py::test_compiler_system_gate_accepts_complete_bound_evidence": 1,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_compiler_system_promotion_gate.py::test_compiler_system_gate_cli_writes_decision_and_report": 1,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_compiler_system_promotion_gate.py::test_compiler_system_gate_fails_closed_on_missing_domain": 1,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_compiler_system_promotion_gate.py::test_compiler_system_gate_rejects_backend_block_and_conformance_gap": 1,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_compiler_system_promotion_gate.py::test_compiler_system_replays_raw_external_evidence_beside_an_accepted_decision": 1,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_compiler_system_promotion_gate.py::test_compiler_system_replays_real_external_benchmark_report": 2,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_compiler_system_promotion_gate.py::test_compiler_system_report_renderer_lists_all_domains": 1,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_external_validity_promotion_gate.py::test_external_validity_cli_checks_produced_packet_rows_in_process": 2,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_external_validity_promotion_gate.py::test_external_validity_cli_writes_decision_and_report": 1,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_external_validity_promotion_gate.py::test_external_validity_gate_accepts_bound_complete_evidence": 1,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_external_validity_promotion_gate.py::test_external_validity_gate_accepts_consistent_produced_packet_rows": 1,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_external_validity_promotion_gate.py::test_external_validity_gate_fails_closed_on_missing_required_packets": 1,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_external_validity_promotion_gate.py::test_external_validity_gate_recomputes_multi_seed_statistics": 1,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_external_validity_promotion_gate.py::test_external_validity_gate_refuses_inconsistent_produced_packet_rows": 9,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_external_validity_promotion_gate.py::test_external_validity_gate_rejects_inconsistent_binding_and_metric_regression": 1,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_external_validity_promotion_gate.py::test_external_validity_report_renderer_lists_all_domains": 1,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_external_benchmark.py::test_acceptable_ambiguity_allows_expected_family_alternative": 1,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_external_benchmark.py::test_benchmark_packet_digest_binds_canonical_loaded_revision": 1,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_external_benchmark.py::test_benchmark_packet_intake_refuses_inconsistent_declared_digest": 5,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_external_benchmark.py::test_empty_external_population_has_no_acceptance": 1,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_external_benchmark.py::test_external_benchmark_predicts_by_each_supported_identity_form": 1,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_external_benchmark.py::test_external_benchmark_rejects_ambiguous_prediction_order": 2,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_external_benchmark.py::test_external_benchmark_rejects_conflicting_prediction_aliases": 2,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_external_benchmark.py::test_external_benchmark_rejects_duplicate_population_identity": 1,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_external_benchmark.py::test_external_benchmark_rejects_misbound_keyed_prediction": 2,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_external_benchmark.py::test_external_benchmark_requires_current_declared_packet_digest": 1,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_external_benchmark.py::test_external_packets_build_external_test_manifest_and_block_training_use": 1,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_external_benchmark.py::test_external_validity_report_is_separate_from_internal_canary_metrics": 1,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_external_benchmark.py::test_fixture_loads_versioned_external_expert_packets": 1,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_external_benchmark.py::test_legacy_candidate_alias_and_absent_reference_keep_existing_scope": 1,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_external_benchmark.py::test_missing_external_expectations_fail_packet_without_touching_canary_metrics": 1,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_external_benchmark.py::test_packet_validation_rejects_training_or_poisoned_external_records": 1,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_external_benchmark.py::test_reference_ir_requires_candidate_in_fixed_denominator": 4,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_external_benchmark.py::test_required_round_trip_needs_observation": 1
+          },
+          "frozen_READ6": {
+            "bytes": 12283,
+            "path": "/tmp/Root-Phase8-exact-five-posts-and-index-READ6-v385-KTNe1Zfu/actual-output/actual-D27-observed-D-root-initializer-Source-READ-v01-small-closeout.json",
+            "sha256": "6f833751162940ebd41682bcd651d8ca2167b1adc4dbd88d9ea27e5133bbdff9"
+          },
+          "initial_prelaunch_charge_key_refusal": {
+            "before_Source_or_runtime_effects": true,
+            "script": {
+              "bytes": 12526,
+              "path": "/tmp/Root-Phase8-existing-exact5-ordinary62-v386-F1FCg2wr/first-preflight-charge-key-refusal.py.DATA",
+              "sha256": "baf30e758def172fc7d4a6c7e881e3d05683f3e586e542baf96bbc40f5e6cced"
+            }
+          },
+          "local_freeze": {
+            "bytes": 12909,
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P8-exact5-local-freeze-v384.json",
+            "sha256": "8bf71d763c185363bcfaeb2298a2331a0de866ebe188b693f24f98d3a56f9949"
+          },
+          "ordinary_qualification": {
+            "bytes": 25922,
+            "path": "/tmp/Root-Phase8-existing-exact5-ordinary62-v386-F1FCg2wr/actual-Phase8-exact-five-ordinary62-closed-small-v386.json",
+            "sha256": "b1b682641a9b7329a80c9bd4caa2df07326d969b98ef14c34345e7bec8daeb81"
+          },
+          "ordinary_report": {
+            "bytes": 1875073,
+            "path": "/tmp/Root-Phase8-existing-exact5-ordinary62-v386-F1FCg2wr/actual-output/complete-frozen-local-D-Phase8-external-validity-through-compiler-ordinary62-existing-owner-report.json",
+            "sha256": "b445334a0550ec604ba023095db96a0acc95f96e3b6eb6c3ae5b4c203b24532f"
+          },
+          "publication_pending": false,
+          "raw_JUnit": {
+            "bytes": 12369,
+            "path": "/tmp/Root-Phase8-existing-exact5-ordinary62-v386-F1FCg2wr/actual-output/Phase8-external-validity-through-compiler-ordinary62-run-result0-output1.bin",
+            "sha256": "5e962356ee8b0b3d441cab2c7a429fd3490eac05cd8a880ef4c9b0564a7085f7"
+          },
+          "repositories": {
+            "accelerate": {
+              "HEAD": "190cb69b9035ea210d9af8817fbe76caf890b48f",
+              "clean_worktree_and_index": true,
+              "origin_main": "190cb69b9035ea210d9af8817fbe76caf890b48f",
+              "tree": "a60ed4b66f2d828b6e22ace48588fb83c32fc7c6"
+            },
+            "datasets": {
+              "HEAD": "bcd55c0d832c38ff7ed696592dfb6a9a55883b2d",
+              "clean_worktree_and_index": true,
+              "origin_main": "bcd55c0d832c38ff7ed696592dfb6a9a55883b2d",
+              "tree": "bd284d0f540c17433056aa4af72db7b18d1c468e"
+            },
+            "hallucinate": {
+              "HEAD": "f938aa24424714f91d47d9c80ec78a219e7a809b",
+              "clean_worktree_and_index": true,
+              "origin_main": "f938aa24424714f91d47d9c80ec78a219e7a809b",
+              "tree": "128b136146aa6e37c2b9d104c042e56487a9cc53"
+            },
+            "root": {
+              "HEAD": "a5653674936cb36d7c60a97a33bc42b0a0b6e77d",
+              "clean_worktree_and_index": true,
+              "origin_main": "a5653674936cb36d7c60a97a33bc42b0a0b6e77d",
+              "tree": "1cb072ae0559252052d7ebf9bc5aef7e4cf8cf9d"
+            }
+          },
+          "retained_charge": {
+            "bytes": 1228,
+            "path": "/tmp/Root-Phase8-existing-exact5-ordinary62-v386-F1FCg2wr/Source-only-authorized-Phase8-ordinary62-cap-prior-retained.json",
+            "sha256": "dce7692631b6c0912402b625d0cd54b211044cabd276c437dce19ee4221117da"
+          },
+          "review_promotion_deployment_statutory_model_or_Native_qualification": false,
+          "sampled_CLI": {
+            "all_sampled_children_drained": true,
+            "cases": [
+              "tests/unit/optimizers/logic_theorem_optimizer/test_compiler_system_promotion_gate.py::test_compiler_system_gate_cli_writes_decision_and_report",
+              "tests/unit/optimizers/logic_theorem_optimizer/test_external_validity_promotion_gate.py::test_external_validity_cli_writes_decision_and_report"
+            ],
+            "child_import_compile_claim": false,
+            "kernel_containment_attested": false,
+            "observed_descendants": [
+              {
+                "birth_ticks": 466333614,
+                "parent_pid": 1053364,
+                "pid": 1053394,
+                "process_group_id": 1053364,
+                "session_id": 1053364
+              },
+              {
+                "birth_ticks": 466333624,
+                "parent_pid": 1053364,
+                "pid": 1053395,
+                "process_group_id": 1053364,
+                "session_id": 1053364
+              }
+            ],
+            "workspace_and_parent_closed": true
+          },
+          "scope": "Controlled benchmark, rollout and compiler-gate fixtures. Reviewed legal, proof, model, deployment, and Native Lean qualification excluded.",
+          "separate_case_counts": {
+            "existing-CLI-descendants2": 2,
+            "in-process60": 60
+          },
+          "verified_normal_fast_forward_order": [
+            "datasets",
+            "hallucinate",
+            "root"
+          ]
+        },
+        "previous_evidence_records_preserved": 530,
+        "prior_verified_guide530_publication": {
+          "bytes": 12206,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-guide530-four-doc-three-FF-publication-small-v382.json",
+          "sha256": "90002f8a9213922429d3c9b12431bfeafc5e88ad426a2a32738c6df0be82d7a6"
+        },
+        "real_review_promotion_and_model_pending": true,
+        "schema": "Guide531-closed-independent-Phase2-and-Phase8-available-evidence/v1",
+        "tasks_preserved": 24,
+        "training_mask": 0
+      },
+      "evidence_ordinal": 531,
+      "id": "phase2-physical-native-r5-phase8-ordinary62-closed-fixture-evidence531-20261125",
+      "observed_bytes": 22494,
+      "observed_sha256": "8ff5ef2e2cc7efb77e527c39f96412ecee1916120cf3fdfb4e7af3fdf0dabd1f",
+      "path": "/tmp/P2-P8-guide531-single-consolidation-private-v01-KDptu2/one-existing-guide531-Phase2-R5-and-Phase8-ordinary62-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Separate controlled engineering evidence for managed Phase2 physical Native R5 and published Phase8 external-evidence gates.",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
     }
   ]
 }
