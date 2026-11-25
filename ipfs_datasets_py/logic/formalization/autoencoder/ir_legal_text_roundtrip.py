@@ -609,3 +609,91 @@ def score_relational_legal_text_roundtrip(reference_expression, candidate_text, 
 
 
 __all__.append("score_relational_legal_text_roundtrip")
+
+
+
+def score_deadline_legal_text_roundtrip(reference_ir, candidate_text, *,
+        anchor_dates, workday_calendar=None, original_text=None):
+    """Score controlled deadline prose and its due dates in one declared context.
+
+    The inverse receives only the candidate prose and its fixed profile.
+    The date and workday context is used after reconstruction. Equality of
+    due dates is specific to that context.
+    """
+    from datetime import date
+
+    from ipfs_datasets_py.logic.TDFOL.compiler_repairs import (
+        CivilWorkdayCalendar, TemporalDeadline, evaluate_civil_deadline,
+    )
+    from ipfs_datasets_py.logic.legal_ir.extended_compiler import compile_extended
+    from ipfs_datasets_py.logic.legal_ir.extended_contracts import ExtendedDeadlineLegalIR, NormV2
+    from ipfs_datasets_py.logic.legal_ir.extended_decompiler import (
+        TYPED_DEADLINE_PROSE_PROFILE, decompile_extended,
+    )
+
+    _require(type(reference_ir) is ExtendedDeadlineLegalIR, "typed deadline legal IR required")
+    _require(type(candidate_text) is str, "candidate prose text required")
+    _require(original_text is None or type(original_text) is str, "optional original source text required")
+    _require(type(anchor_dates) is dict, "explicit anchor date mapping required")
+    _require(workday_calendar is None or type(workday_calendar) is CivilWorkdayCalendar,
+             "explicit civil workday calendar required")
+    anchors = dict(anchor_dates)
+    _require(all(type(name) is str and type(value) is date for name, value in anchors.items()),
+             "anchor dates must map event names to civil dates")
+    try:
+        candidate_bytes = candidate_text.encode("utf-8")
+        original_bytes = None if original_text is None else original_text.encode("utf-8")
+    except UnicodeError as error:
+        raise LegalTextRoundTripError("valid UTF8 candidate and optional original text required") from error
+    _require(len(candidate_bytes) <= _MAX_JSON and (original_bytes is None or len(original_bytes) <= _MAX_JSON),
+             "bounded candidate and optional original source text required")
+
+    def due_dates(ir):
+        result = []
+        for statement in ir.statements:
+            if type(statement) is NormV2:
+                for deadline in statement.temporal:
+                    if type(deadline) is TemporalDeadline:
+                        _require(deadline.anchor in anchors, "missing civil date for deadline anchor")
+                        due = evaluate_civil_deadline(deadline, anchors[deadline.anchor],
+                                                      workday_calendar=workday_calendar)
+                        result.append(due.isoformat())
+        return result
+
+    reference_wire = reference_ir.to_dict()
+    reference = ExtendedDeadlineLegalIR.from_dict(reference_wire)
+    profile = TYPED_DEADLINE_PROSE_PROFILE
+    candidate = compile_extended(candidate_text, profile=profile)
+    reference_prose = decompile_extended(reference, profile=profile)
+    candidate_prose = None if candidate is None else decompile_extended(candidate, profile=profile)
+    reference_dates = due_dates(reference)
+    _require(bool(reference_dates), "reference must contain at least one evaluable deadline")
+    candidate_dates = None if candidate is None else due_dates(candidate)
+    return {
+        "schema": "legal-civil-deadline-text-roundtrip-score/v1",
+        "profile": profile,
+        "status": "unsupported_candidate_abstained" if candidate is None else "complete_candidate_scored",
+        "input_count": 1, "supported_count": int(candidate is not None),
+        "abstention_count": int(candidate is None),
+        "normalized_reference_prose": reference_prose,
+        "normalized_candidate_prose": candidate_prose,
+        "reference_due_dates": reference_dates,
+        "candidate_due_dates": candidate_dates,
+        "measurements": {
+            "original_utf8_exact": None if original_bytes is None else candidate_bytes == original_bytes,
+            "canonical_prose_exact": candidate_prose == reference_prose,
+            "complete_typed_structure_exact": candidate is not None and candidate.to_dict() == reference_wire,
+            "due_dates_exact": None if candidate_dates is None else candidate_dates == reference_dates,
+            "semantic_equivalence_verified": False,
+            "source_correspondence_verified": False,
+            "proof_validity_verified": False,
+        },
+        "original_source_available_to_inverse": False,
+        "reference_target_available_to_inverse": False,
+        "authority": {"source_semantics_verified": False, "admitted": False,
+                      "proof_authority": False, "model_quality_established": False},
+        "training_mask": 0, "evaluation_gold_mask": 0,
+    }
+
+
+__all__.append("score_deadline_legal_text_roundtrip")

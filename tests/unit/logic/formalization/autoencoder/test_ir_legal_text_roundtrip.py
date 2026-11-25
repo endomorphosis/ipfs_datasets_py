@@ -1086,3 +1086,168 @@ def test_relational_score_refuses_mutation_of_original_scoring_inputs(monkeypatc
             reference_argument_roles=roles, profile=RELATIONAL_PROSE_PROFILE,
             reference_governing_fields=reference, candidate_governing_fields=candidate)
     assert mutations
+
+
+
+def _civil_deadline_roundtrip_reference(unit):
+    from ipfs_datasets_py.logic.TDFOL.compiler_repairs import TemporalDeadline
+    from ipfs_datasets_py.logic.legal_ir.extended_contracts import ExtendedDeadlineLegalIR, NormV2
+
+    deadline = TemporalDeadline("notice", "event", True, 2, "after", unit)
+    norm = NormV2(modality="O", actor="Agency", action="file", object="report",
+        temporal=(deadline,))
+    return ExtendedDeadlineLegalIR((norm,))
+
+
+def _civil_deadline_may_2024_calendar():
+    from datetime import date
+    from ipfs_datasets_py.logic.TDFOL.compiler_repairs import CivilWorkdayCalendar
+
+    return CivilWorkdayCalendar(first_date=date(2024, 5, 24), last_date=date(2024, 5, 31),
+        workdays=(date(2024, 5, 28), date(2024, 5, 29)))
+
+
+@pytest.mark.parametrize("unit,expected_due_date", [
+    ("calendar_days", "2024-05-26"),
+    ("business_days", "2024-05-29"),
+], ids=["calendar", "business"])
+def test_civil_deadline_roundtrip_keeps_typed_unit_and_independent_due_date(unit, expected_due_date):
+    from datetime import date
+    from ipfs_datasets_py.logic.legal_ir.extended_compiler import compile_extended
+    from ipfs_datasets_py.logic.legal_ir.extended_decompiler import decompile_extended, TYPED_DEADLINE_PROSE_PROFILE
+
+    reference = _civil_deadline_roundtrip_reference(unit)
+    candidate = decompile_extended(reference, profile=TYPED_DEADLINE_PROSE_PROFILE)
+    reparsed = compile_extended(candidate, profile=TYPED_DEADLINE_PROSE_PROFILE)
+    assert reparsed == reference
+    assert reparsed.statements[0].temporal[0].unit == unit
+    assert reparsed.statements[0].temporal[0].offset == 2
+    assert reparsed.statements[0].temporal[0].anchor == "notice"
+    calendar = _civil_deadline_may_2024_calendar()
+    report = scorer.score_deadline_legal_text_roundtrip(reference, candidate,
+        anchor_dates={"notice": date(2024, 5, 24)}, workday_calendar=calendar,
+        original_text=candidate + "\n")
+    assert report["status"] == "complete_candidate_scored"
+    assert report["normalized_reference_prose"] == report["normalized_candidate_prose"] == candidate
+    assert report["reference_due_dates"] == [expected_due_date]
+    assert report["candidate_due_dates"] == [expected_due_date]
+    assert report["measurements"]["canonical_prose_exact"] is True
+    assert report["measurements"]["complete_typed_structure_exact"] is True
+    assert report["measurements"]["due_dates_exact"] is True
+    assert report["measurements"]["original_utf8_exact"] is False
+    assert report["measurements"]["proof_validity_verified"] is False
+    assert report["original_source_available_to_inverse"] is False
+    assert report["reference_target_available_to_inverse"] is False
+
+    exact_source = scorer.score_deadline_legal_text_roundtrip(reference, candidate,
+        anchor_dates={"notice": date(2024, 5, 24)}, workday_calendar=calendar,
+        original_text=candidate)
+    assert exact_source["measurements"]["original_utf8_exact"] is True
+    assert exact_source["measurements"]["canonical_prose_exact"] is True
+    assert exact_source["measurements"]["complete_typed_structure_exact"] is True
+    assert exact_source["measurements"]["due_dates_exact"] is True
+    assert exact_source["measurements"]["proof_validity_verified"] is False
+
+
+def test_civil_deadline_roundtrip_distinguishes_opposite_unit_reference():
+    from datetime import date
+    from ipfs_datasets_py.logic.legal_ir.extended_decompiler import decompile_extended, TYPED_DEADLINE_PROSE_PROFILE
+
+    reference = _civil_deadline_roundtrip_reference("calendar_days")
+    candidate_ir = _civil_deadline_roundtrip_reference("business_days")
+    candidate = decompile_extended(candidate_ir, profile=TYPED_DEADLINE_PROSE_PROFILE)
+    report = scorer.score_deadline_legal_text_roundtrip(reference, candidate,
+        anchor_dates={"notice": date(2024, 5, 24)},
+        workday_calendar=_civil_deadline_may_2024_calendar(), original_text=candidate)
+    assert report["status"] == "complete_candidate_scored"
+    assert report["normalized_reference_prose"] != report["normalized_candidate_prose"]
+    assert report["reference_due_dates"] == ["2024-05-26"]
+    assert report["candidate_due_dates"] == ["2024-05-29"]
+    assert report["measurements"]["original_utf8_exact"] is True
+    assert report["measurements"]["canonical_prose_exact"] is False
+    assert report["measurements"]["complete_typed_structure_exact"] is False
+    assert report["measurements"]["due_dates_exact"] is False
+    assert report["measurements"]["proof_validity_verified"] is False
+
+
+def test_civil_deadline_inverse_receives_only_candidate_prose_and_profile(monkeypatch):
+    from datetime import date
+    from ipfs_datasets_py.logic.legal_ir import extended_compiler
+    from ipfs_datasets_py.logic.legal_ir.extended_decompiler import decompile_extended, TYPED_DEADLINE_PROSE_PROFILE
+
+    reference = _civil_deadline_roundtrip_reference("business_days")
+    candidate = decompile_extended(reference, profile=TYPED_DEADLINE_PROSE_PROFILE)
+    real_compile = extended_compiler.compile_extended
+    observed = []
+
+    def observe(*args, **kwargs):
+        observed.append((args, dict(kwargs)))
+        assert args == (candidate,)
+        assert kwargs == {"profile": TYPED_DEADLINE_PROSE_PROFILE}
+        return real_compile(*args, **kwargs)
+
+    monkeypatch.setattr(extended_compiler, "compile_extended", observe)
+    sentinel = "PRIVATE original wording unavailable to the inverse."
+    report = scorer.score_deadline_legal_text_roundtrip(reference, candidate,
+        anchor_dates={"notice": date(2024, 5, 24)},
+        workday_calendar=_civil_deadline_may_2024_calendar(), original_text=sentinel)
+    assert observed == [((candidate,), {"profile": TYPED_DEADLINE_PROSE_PROFILE})]
+    assert report["original_source_available_to_inverse"] is False
+    assert report["reference_target_available_to_inverse"] is False
+    assert sentinel not in report["normalized_candidate_prose"]
+    assert sentinel not in report["normalized_reference_prose"]
+    assert report["measurements"]["complete_typed_structure_exact"] is True
+    assert report["measurements"]["due_dates_exact"] is True
+    assert report["measurements"]["proof_validity_verified"] is False
+
+
+def test_civil_deadline_roundtrip_abstains_on_unsupported_prose():
+    from datetime import date
+    from ipfs_datasets_py.logic.legal_ir.extended_compiler import compile_extended
+    from ipfs_datasets_py.logic.legal_ir.extended_decompiler import TYPED_DEADLINE_PROSE_PROFILE
+
+    candidate = "The Agency filed the report yesterday."
+    assert compile_extended(candidate, profile=TYPED_DEADLINE_PROSE_PROFILE) is None
+    report = scorer.score_deadline_legal_text_roundtrip(
+        _civil_deadline_roundtrip_reference("business_days"), candidate,
+        anchor_dates={"notice": date(2024, 5, 24)},
+        workday_calendar=_civil_deadline_may_2024_calendar())
+    assert report["status"] == "unsupported_candidate_abstained"
+    assert report["normalized_candidate_prose"] is None
+    assert report["reference_due_dates"] == ["2024-05-29"]
+    assert report["candidate_due_dates"] is None
+    assert report["measurements"]["canonical_prose_exact"] is False
+    assert report["measurements"]["complete_typed_structure_exact"] is False
+    assert report["measurements"]["due_dates_exact"] is None
+    assert report["measurements"]["original_utf8_exact"] is None
+    assert report["measurements"]["proof_validity_verified"] is False
+
+
+@pytest.mark.parametrize("context_case", ["missing", "different-anchor"])
+def test_civil_deadline_roundtrip_requires_exact_named_anchor_context(context_case):
+    from datetime import date
+    from ipfs_datasets_py.logic.legal_ir.extended_decompiler import decompile_extended, TYPED_DEADLINE_PROSE_PROFILE
+
+    reference = _civil_deadline_roundtrip_reference("business_days")
+    candidate = decompile_extended(reference, profile=TYPED_DEADLINE_PROSE_PROFILE)
+    anchors = {} if context_case == "missing" else {"filing": date(2024, 5, 24)}
+    with pytest.raises(ValueError):
+        scorer.score_deadline_legal_text_roundtrip(reference, candidate,
+            anchor_dates=anchors, workday_calendar=_civil_deadline_may_2024_calendar())
+
+
+@pytest.mark.parametrize("coverage_case", [
+    "missing-calendar", "before-coverage", "insufficient-workdays",
+])
+def test_civil_deadline_roundtrip_requires_covered_business_calendar(coverage_case):
+    from datetime import date
+    from ipfs_datasets_py.logic.legal_ir.extended_decompiler import decompile_extended, TYPED_DEADLINE_PROSE_PROFILE
+
+    reference = _civil_deadline_roundtrip_reference("business_days")
+    candidate = decompile_extended(reference, profile=TYPED_DEADLINE_PROSE_PROFILE)
+    trigger = date(2024, 5, 23) if coverage_case == "before-coverage" else (
+        date(2024, 5, 30) if coverage_case == "insufficient-workdays" else date(2024, 5, 24))
+    calendar = None if coverage_case == "missing-calendar" else _civil_deadline_may_2024_calendar()
+    with pytest.raises(ValueError):
+        scorer.score_deadline_legal_text_roundtrip(reference, candidate,
+            anchor_dates={"notice": trigger}, workday_calendar=calendar)

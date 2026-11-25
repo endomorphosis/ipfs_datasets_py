@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+from bisect import bisect_right
 from dataclasses import asdict, dataclass, fields
+from datetime import date, timedelta
 import hashlib
 import json
 import re
@@ -196,3 +198,69 @@ def _digest(value: Any) -> str:
 
 __all__ = ["TDFOL_COMPILER_REPAIR_SCHEMA_VERSION", "TemporalDeadline", "compile_temporal_deadline",
            "parse_temporal_deadline", "render_temporal_deadline"]
+
+
+@dataclass(frozen=True, slots=True)
+class CivilWorkdayCalendar:
+    """The caller lists every business date in a closed civil-date interval."""
+
+    first_date: date
+    last_date: date
+    workdays: tuple[date, ...]
+
+    def __post_init__(self):
+        if type(self.first_date) is not date or type(self.last_date) is not date:
+            raise ValueError("exact civil date coverage endpoints required")
+        if self.first_date > self.last_date:
+            raise ValueError("civil workday coverage endpoints are reversed")
+        if type(self.workdays) is not tuple:
+            raise ValueError("immutable workday tuple required")
+        previous = None
+        for workday in self.workdays:
+            if type(workday) is not date:
+                raise ValueError("exact civil dates required in workday tuple")
+            if not self.first_date <= workday <= self.last_date:
+                raise ValueError("workday lies outside calendar coverage")
+            if previous is not None and workday <= previous:
+                raise ValueError("workdays must be strictly sorted and distinct")
+            previous = workday
+
+
+def evaluate_civil_deadline(deadline: TemporalDeadline, trigger_date: date, *,
+                            workday_calendar: CivilWorkdayCalendar | None = None) -> date:
+    """Evaluate an inclusive after/event constraint under an explicit calendar.
+
+    The existing typed deadline wire is unchanged. A business date list is a
+    complete caller assertion for its coverage, not a weekday or holiday rule.
+    """
+    if type(deadline) is not TemporalDeadline:
+        raise ValueError("exact TemporalDeadline required")
+    TemporalDeadline.__post_init__(deadline)
+    if (deadline.anchor_type != "event" or deadline.relation != "after"
+            or deadline.inclusive is not True
+            or deadline.unit not in ("calendar_days", "business_days")):
+        raise ValueError("inclusive after/event calendar or business deadline required")
+    if type(trigger_date) is not date:
+        raise ValueError("exact civil trigger date required")
+    if workday_calendar is not None:
+        if type(workday_calendar) is not CivilWorkdayCalendar:
+            raise ValueError("exact CivilWorkdayCalendar required")
+        CivilWorkdayCalendar.__post_init__(workday_calendar)
+    if deadline.unit == "calendar_days":
+        try:
+            return trigger_date + timedelta(days=deadline.offset)
+        except (OverflowError, ValueError) as error:
+            raise ValueError("civil deadline exceeds the supported date range") from error
+    if type(workday_calendar) is not CivilWorkdayCalendar:
+        raise ValueError("business deadline requires an explicit CivilWorkdayCalendar")
+    if not workday_calendar.first_date <= trigger_date <= workday_calendar.last_date:
+        raise ValueError("trigger date lies outside workday calendar coverage")
+    if deadline.offset == 0:
+        return trigger_date
+    index = bisect_right(workday_calendar.workdays, trigger_date) + deadline.offset - 1
+    if index >= len(workday_calendar.workdays):
+        raise ValueError("insufficient workdays within explicit calendar coverage")
+    return workday_calendar.workdays[index]
+
+
+__all__ += ["CivilWorkdayCalendar", "evaluate_civil_deadline"]
