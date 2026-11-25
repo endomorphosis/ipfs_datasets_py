@@ -1681,9 +1681,13 @@ class DuckDBProofStore:
             raise DuckDBProofStoreError(
                 "negative_ttl_seconds cannot exceed positive_ttl_seconds"
             )
+        positive_ttl_seconds = float(positive_ttl_seconds)
+        negative_ttl_seconds = float(negative_ttl_seconds)
+        if not math.isfinite(positive_ttl_seconds) or not math.isfinite(negative_ttl_seconds):
+            raise DuckDBProofStoreError("TTL values must be finite")
         self.max_entries = int(max_entries)
-        self.positive_ttl_seconds = float(positive_ttl_seconds)
-        self.negative_ttl_seconds = float(negative_ttl_seconds)
+        self.positive_ttl_seconds = positive_ttl_seconds
+        self.negative_ttl_seconds = negative_ttl_seconds
         self._connection = connection
         self._lock = threading.RLock()
         # Unified key digest -> entry

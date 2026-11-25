@@ -930,3 +930,84 @@ def test_store_put_retains_advisory_candidate_without_proof_authority():
     assert stored.entry.result_payload["legacy_status"] == "attested"
     assert stored.entry.status is not ResultStatus.PROVED
     assert not store.lookup(entry.key, require_result_authority=ResultAuthority.THEOREM_PROOF, now=1.0).usable
+
+
+
+@pytest.mark.parametrize("cache_type", [ExactVerificationCache, DuckDBProofStore])
+@pytest.mark.parametrize("ttl_field", ["positive_ttl_seconds", "negative_ttl_seconds"])
+@pytest.mark.parametrize("ttl", [float("nan"), float("inf")], ids=["nan", "infinity"])
+def test_cache_rejects_nonfinite_configured_ttl(cache_type, ttl_field, ttl):
+    from ipfs_datasets_py.logic.backends.cache_protocol import VerificationCacheError
+
+    expected_error = (
+        VerificationCacheError if cache_type is ExactVerificationCache
+        else DuckDBProofStoreError
+    )
+    # Positive TTL 0 disables expiry and allows an independently configured negative TTL.
+    options = {"positive_ttl_seconds": 0, ttl_field: ttl}
+    try:
+        store = cache_type(**options)
+    except expected_error as exc:
+        assert str(exc) == "TTL values must be finite"
+        return
+
+    key = _unified_key()
+    if cache_type is ExactVerificationCache:
+        key = key.to_verification_cache_key()
+
+    def producer():
+        if ttl_field == "positive_ttl_seconds":
+            return _theorem()
+        return _theorem(
+            status=ResultStatus.UNKNOWN,
+            translation_ceiling=EvidenceAuthority.NONE,
+        )
+
+    assert store.get_or_compute(key, producer, now=100.0).usable
+    lookup = store.lookup(key, now=10_000_000.0)
+    pytest.fail(
+        f"constructor accepted nonfinite {ttl_field}; "
+        f"late lookup usable={lookup.usable}, reason={lookup.reason.value}"
+    )
+
+
+@pytest.mark.parametrize("cache_type", [ExactVerificationCache, DuckDBProofStore])
+@pytest.mark.parametrize("expiry_enabled", ["positive", "negative"])
+def test_cache_finite_ttl_and_zero_keep_existing_expiry(cache_type, expiry_enabled):
+    from fractions import Fraction
+
+    store = cache_type(
+        positive_ttl_seconds=Fraction(10) if expiry_enabled == "positive" else 0,
+        negative_ttl_seconds=Fraction(10) if expiry_enabled == "negative" else 0,
+    )
+    key = _unified_key()
+    if cache_type is ExactVerificationCache:
+        key = key.to_verification_cache_key()
+
+    def unknown_producer():
+        return _theorem(
+            status=ResultStatus.UNKNOWN,
+            translation_ceiling=EvidenceAuthority.NONE,
+        )
+
+    for polarity, producer in (("positive", _theorem), ("negative", unknown_producer)):
+        store.clear()
+        assert store.get_or_compute(key, producer, now=100.0).usable
+        assert store.lookup(key, now=110.0).usable
+        result = store.lookup(key, now=111.0)
+        if polarity == expiry_enabled:
+            assert result.reason is CacheLookupReason.EXPIRED and not result.usable
+        else:
+            assert result.usable
+
+
+def test_duckdb_proof_store_rejects_nonfinite_ttl_before_schema_setup():
+    class UnusedConnection:
+        def execute(self, *args, **kwargs):
+            pytest.fail("schema setup was attempted before rejecting nonfinite TTL")
+
+    with pytest.raises(DuckDBProofStoreError, match="TTL values must be finite"):
+        DuckDBProofStore(
+            positive_ttl_seconds=float("nan"),
+            connection=UnusedConnection(),
+        )
