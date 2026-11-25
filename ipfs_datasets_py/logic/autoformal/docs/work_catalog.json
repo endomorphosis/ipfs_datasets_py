@@ -29105,6 +29105,346 @@
       "root": "artifact_workspace",
       "scope": "Published extracted-view split isolation and proof-receipt validation, with separate nine-case ordinary cohorts. Controlled software fixtures only.",
       "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase3_full_lake_phase8_retrieval_depth_closed_fixture_evidence_20261125",
+      "closed_software_facts": {
+        "cohorts_keep_separate_counts": true,
+        "components_preserved": 126,
+        "corpus_training_or_model_PyTorch_qualification": false,
+        "current_published_parent": {
+          "HEAD": "1842e526b9af55b91cfa096d09d9971cfef1ca74",
+          "clean_worktree_and_index": true,
+          "origin_main": "1842e526b9af55b91cfa096d09d9971cfef1ca74",
+          "tree": "edbaedb490e09fa44e46f1948a98024af0484af8"
+        },
+        "evaluation_gold_mask": 0,
+        "evidence_ordinal": 529,
+        "full_eight_phase_goal_complete": false,
+        "phase3_managed_calendar_full_Lake": {
+          "Lean_version": "4.34.1",
+          "Source_resource_parent_home_closed": true,
+          "actual_report": {
+            "bytes": 630461,
+            "path": "/tmp/Root-Phase3-current-managed-calendar-full-Lake-v355-0ur2gmu0/actual-output/complete-effective-date-calendar-full-Lake-native-owner-report.json",
+            "sha256": "38054de10280a193382cb05f6e03aa80f62a2d546bd536c13bdec9a7f2e91a7d"
+          },
+          "code_epoch": {
+            "accelerate": {
+              "Git_HEAD": "190cb69b9035ea210d9af8817fbe76caf890b48f",
+              "Git_tree": "a60ed4b66f2d828b6e22ace48588fb83c32fc7c6"
+            },
+            "datasets": {
+              "Git_HEAD": "4223f352c4c79e520139138e9d6f52111f39379a",
+              "Git_tree": "a6f6a0bc4fb432e95682123e65cf846b12055408"
+            }
+          },
+          "compact": {
+            "bytes": 6022,
+            "path": "/tmp/Root-Phase3-current-managed-calendar-full-Lake-v355-0ur2gmu0/actual-full-Lake-calendar-compact-v355.json",
+            "sha256": "8bbd660e4db1d0be2cf199601b9e9a5e3e3bbabe0657beb61b485aa853047367"
+          },
+          "compiled_only_reopen_exact_inputs": {
+            "CalendarReplayProbe.lean": {
+              "bytes": 2945,
+              "logical_name": "CalendarReplayProbe.lean",
+              "original_type": "bytes",
+              "path": "/tmp/Root-Phase3-current-managed-calendar-full-Lake-v355-0ur2gmu0/actual-output/native-4-input-0.bin",
+              "sha256": "e84c238747def5adb1f5e0fd43ae12a9ef4f30141b03d5ee12b93305498b5336"
+            },
+            "calendar-artifacts/LegalCalendar.olean": {
+              "bytes": 1576,
+              "logical_name": "calendar-artifacts/LegalCalendar.olean",
+              "original_type": "bytes",
+              "path": "/tmp/Root-Phase3-current-managed-calendar-full-Lake-v355-0ur2gmu0/actual-output/native-4-input-1.bin",
+              "sha256": "e3f05fa95ca3ecfddd5ee4bbfcd12f4384b79087317941b1eb556b43ce447da8"
+            },
+            "calendar-artifacts/LegalCalendar/Candidate0000.olean": {
+              "bytes": 13656,
+              "logical_name": "calendar-artifacts/LegalCalendar/Candidate0000.olean",
+              "original_type": "bytes",
+              "path": "/tmp/Root-Phase3-current-managed-calendar-full-Lake-v355-0ur2gmu0/actual-output/native-4-input-2.bin",
+              "sha256": "fd2b00ea654031caf855f31bb3575dea4a3be2af4902a9208d0e5ff18cf0901e"
+            },
+            "calendar-artifacts/LegalCalendar/Prelude.olean": {
+              "bytes": 106312,
+              "logical_name": "calendar-artifacts/LegalCalendar/Prelude.olean",
+              "original_type": "bytes",
+              "path": "/tmp/Root-Phase3-current-managed-calendar-full-Lake-v355-0ur2gmu0/actual-output/native-4-input-3.bin",
+              "sha256": "da0b3caf810883ccc2b372a0006e07c06e2b1508863d00bfdff034084b1c1c56"
+            }
+          },
+          "compiled_reopen_propositions": 9,
+          "coverage_text": "The managed calendar fixture used Lean 4.34.1. Its five child commands recorded two successful version probes, a successful offline Lake build of the legal target, a separate Lake rejection of a deliberately false lower-bound theorem, and a successful compiled-only reopen. The positive build emitted the root, prelude and candidate .olean files. A fresh workspace used those same three compiled artifacts and the independent probe to check nine propositions without the original project sources. The negative build changed only LegalCalendar/Candidate0000.lean. Lean pointed to the appended theorem at line 9, column 155. The existing owner validated its preparation before and after dispatch.",
+          "exact_binding": {
+            "bytes": 18830,
+            "path": "/tmp/Root-Phase3-current-managed-calendar-full-Lake-v355-0ur2gmu0/current-existing-managed-calendar-full-Lake-v355-binding.json",
+            "sha256": "b1a77e55561dcaacc27977d093e0f8c1e9c26b6949517a96696623919cc65192"
+          },
+          "full_Phase3_complete": false,
+          "full_retained_v355_precharge": {
+            "bytes": 1530,
+            "path": "/tmp/Root-Phase3-current-managed-calendar-full-Lake-v355-0ur2gmu0/Source-only-current-managed-calendar-full-Lake-prepaid.json",
+            "sha256": "81af4a13b0cc9266d4fbdc1df1f8ec24b782810311178a901a505848e7c5ff32"
+          },
+          "managed_command_counts": {
+            "Lake_build": 2,
+            "all": 5,
+            "compiled_artifact_reopen": 1,
+            "version": 2
+          },
+          "negative_changed_leaf": "LegalCalendar/Candidate0000.lean",
+          "negative_diagnostic": {
+            "column": 155,
+            "line": 9,
+            "message": "Tactic `decide` proved that the proposition",
+            "path": "LegalCalendar/Candidate0000.lean"
+          },
+          "ordered_returncodes": [
+            0,
+            0,
+            0,
+            1,
+            0
+          ],
+          "ordinary_pytest_credit": 0,
+          "owner_preparation_manifest": {
+            "bytes": 7047,
+            "path": "/tmp/Root-Phase3-current-managed-calendar-full-Lake-v355-0ur2gmu0/actual-output/owner-calendar-preparation-manifest.json",
+            "sha256": "0c2893628e608e8100bba98e41bbcc6bf6fefefd51a76ee31be209e4ed35f75d"
+          },
+          "owner_preparation_validated_before_and_after": true,
+          "physically_complete_IO_accounting": false,
+          "positive_compiled_artifacts": {
+            ".lake/build/lib/lean/LegalCalendar.olean": {
+              "bytes": 1576,
+              "logical_name": ".lake/build/lib/lean/LegalCalendar.olean",
+              "path": "/tmp/Root-Phase3-current-managed-calendar-full-Lake-v355-0ur2gmu0/actual-output/native-2-output-2.bin",
+              "sha256": "e3f05fa95ca3ecfddd5ee4bbfcd12f4384b79087317941b1eb556b43ce447da8"
+            },
+            ".lake/build/lib/lean/LegalCalendar/Candidate0000.olean": {
+              "bytes": 13656,
+              "logical_name": ".lake/build/lib/lean/LegalCalendar/Candidate0000.olean",
+              "path": "/tmp/Root-Phase3-current-managed-calendar-full-Lake-v355-0ur2gmu0/actual-output/native-2-output-1.bin",
+              "sha256": "fd2b00ea654031caf855f31bb3575dea4a3be2af4902a9208d0e5ff18cf0901e"
+            },
+            ".lake/build/lib/lean/LegalCalendar/Prelude.olean": {
+              "bytes": 106312,
+              "logical_name": ".lake/build/lib/lean/LegalCalendar/Prelude.olean",
+              "path": "/tmp/Root-Phase3-current-managed-calendar-full-Lake-v355-0ur2gmu0/actual-output/native-2-output-0.bin",
+              "sha256": "da0b3caf810883ccc2b372a0006e07c06e2b1508863d00bfdff034084b1c1c56"
+            }
+          },
+          "public_build_wrapper_selected_or_executed": false,
+          "retained_v354_no_child_refusal": {
+            "Source_resource_parent_home_closed": true,
+            "actual_child_processes_started": 0,
+            "cause": "resource admission requires a finite memory bound",
+            "child_pid": null,
+            "command_kind": "first Lake version probe",
+            "precharge": {
+              "bytes": 1225,
+              "path": "/tmp/Root-Phase3-current-managed-calendar-full-Lake-v354-44rhgy27/Source-only-current-managed-calendar-full-Lake-prepaid.json",
+              "sha256": "f017d0d911982c1ebe1e6536f433c14d2ffccb73c32da714019ebb74ee8b01a4"
+            },
+            "receipt": {
+              "bytes": 85021,
+              "path": "/tmp/Root-Phase3-current-managed-calendar-full-Lake-v354-44rhgy27/actual-output/complete-effective-date-calendar-full-Lake-native-owner-report.json",
+              "sha256": "c92bca052efea919dbf1d7521d4aec1d627ea8f129efe545a9fdd74f90d367fc"
+            },
+            "returncode": null
+          },
+          "scope": "Controlled published fictional calendar fixture through managed Lake and compiled-only reopen",
+          "statutory_or_model_or_corpus_admission": false
+        },
+        "phase8_retrieval_depth_and_abstention": {
+          "Source2": {
+            "bytes": 73350,
+            "path": "/tmp/Root-P8-retrieval-depth-existing-Source2-v358-4xMKhLCT/actual-output/actual-existing-four-Python-code-CAS-receipt.json",
+            "sha256": "cca83a2806dff845366625b6626c839db46ace7a3142d5e884c8889b561fcc57"
+          },
+          "Source_resource_parent_home_closed": true,
+          "Source_stage_commit_joins": {
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_semantic_metrics.py": {
+              "bytes": 111564,
+              "full9": {
+                "st_ctime_ns": "1795641664741653694",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70008358",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795641664448010231",
+                "st_nlink": "1",
+                "st_size": "111564",
+                "st_uid": "1000"
+              },
+              "git_mode": "100644",
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_semantic_metrics.py",
+              "sha256": "8a62ef6ecb50608a828ad15ca90cd478d5b70168d1ab74802bd0ccee594da388",
+              "stage0_and_committed_blob": "3cca5056ffa6939213ee52b6ffe67108f1838c0d"
+            },
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_semantic_metrics.py": {
+              "bytes": 46530,
+              "full9": {
+                "st_ctime_ns": "1795641665049656017",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70029158",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795641664452114134",
+                "st_nlink": "1",
+                "st_size": "46530",
+                "st_uid": "1000"
+              },
+              "git_mode": "100644",
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_semantic_metrics.py",
+              "sha256": "667836209c26614fa5d24562b7e1060462b9428e774f61f39eabd49671903f8d",
+              "stage0_and_committed_blob": "e13b459893177be23d2cc580028318543abc73b7"
+            }
+          },
+          "actual_closed_READ3": {
+            "bytes": 7843,
+            "path": "/tmp/Root-P8-scorer-frozen-two-source-and-Dindex-READ3-v359-6frk4hkd/actual-output/actual-D27-observed-D-root-initializer-Source-READ-v01-small-closeout.json",
+            "sha256": "41c703a6a8f2ffedf498bc1b60918e783429f2b188fb039c7ba2ca412b3c4984"
+          },
+          "collect_RUN_JUnit_order_equal": true,
+          "controlled_fixture_scope": "controlled authored scoring fixture only",
+          "coverage_text": "The posthoc scorer accepts an explicitly requested depth through 16 when the candidate bank is smaller, while keeping the existing larger-bank depth allowance. Each successful ranking must still contain exactly the requested number of unique eligible candidates. Explicit abstentions keep the full enrolled-query denominator at every requested cutoff and add zero hits. The new fixture cases cover this small-bank abstention path and the refusal of short successful rankings or an unsupported depth. They score authored ranking data directly.",
+          "duplicates": 0,
+          "errors": 0,
+          "exact_cutoff_policy": "Depth from 1 through max(candidate bank size,16), with exact depth on retrieved rows.",
+          "exact_two_frozen_files": {
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_semantic_metrics.py": {
+              "bytes": 111564,
+              "full9": {
+                "st_ctime_ns": "1795641664741653694",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70008358",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795641664448010231",
+                "st_nlink": "1",
+                "st_size": "111564",
+                "st_uid": "1000"
+              },
+              "git_mode": "100644",
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_semantic_metrics.py",
+              "sha256": "8a62ef6ecb50608a828ad15ca90cd478d5b70168d1ab74802bd0ccee594da388",
+              "stage0_and_committed_blob": "3cca5056ffa6939213ee52b6ffe67108f1838c0d"
+            },
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_semantic_metrics.py": {
+              "bytes": 46530,
+              "full9": {
+                "st_ctime_ns": "1795641665049656017",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70029158",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795641664452114134",
+                "st_nlink": "1",
+                "st_size": "46530",
+                "st_uid": "1000"
+              },
+              "git_mode": "100644",
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_semantic_metrics.py",
+              "sha256": "667836209c26614fa5d24562b7e1060462b9428e774f61f39eabd49671903f8d",
+              "stage0_and_committed_blob": "e13b459893177be23d2cc580028318543abc73b7"
+            }
+          },
+          "existing_cases": 19,
+          "failures": 0,
+          "frozen_candidate": {
+            "bytes": 10218,
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P8-retrieval-depth-exact2-local-freeze-v358.json",
+            "sha256": "c63a1db7b4f5772ed3f469191f0fb7cdb0e5d37053ecc473f6212f818abe4e98"
+          },
+          "functions": 8,
+          "head": "1842e526b9af55b91cfa096d09d9971cfef1ca74",
+          "junit": {
+            "bytes": 5315,
+            "path": "/tmp/Root-existing-P8-scorer-depth-ordinary23-v360-l58nsgfh/actual-output/Phase8-retrieval-depth-abstention-ordinary23-run-result0-output1.bin",
+            "sha256": "e61202469fd5bc4a870035f40b0c23ae811d44a671cb2d1715bdc4bba29daced"
+          },
+          "new_cases": 4,
+          "physical_IO_accounting_complete": false,
+          "private_or_Native_or_model_cases_added_to_ordinary": false,
+          "publication_pending": false,
+          "published_receipt": {
+            "bytes": 14900,
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P8-scorer-depth-ordinary23-three-FF-publication-v360.json",
+            "sha256": "8eb9c9a4e4a729698c688b462e39bb0e10ae72c2a2db856e8c430e923c6c7755"
+          },
+          "receipt": {
+            "bytes": 10045,
+            "path": "/tmp/Root-existing-P8-scorer-depth-ordinary23-v360-l58nsgfh/actual-scorer-ordinary23-closed-small-v360.json",
+            "sha256": "64b4ac03e48fbabaafb0b98f331dcebbee95406527fd4f3ff9a84a89c5effdc9"
+          },
+          "report": {
+            "bytes": 757063,
+            "path": "/tmp/Root-existing-P8-scorer-depth-ordinary23-v360-l58nsgfh/actual-output/complete-frozen-local-D-Phase8-retrieval-depth-abstention-ordinary23-existing-owner-report.json",
+            "sha256": "b90fd890cccfd825d6893dbe15a68901ac938105a3fa448741369e4cc0abc039"
+          },
+          "repositories": {
+            "accelerate": {
+              "HEAD": "190cb69b9035ea210d9af8817fbe76caf890b48f",
+              "clean_worktree_and_index": true,
+              "origin_main": "190cb69b9035ea210d9af8817fbe76caf890b48f",
+              "tree": "a60ed4b66f2d828b6e22ace48588fb83c32fc7c6"
+            },
+            "datasets": {
+              "HEAD": "1842e526b9af55b91cfa096d09d9971cfef1ca74",
+              "clean_worktree_and_index": true,
+              "origin_main": "1842e526b9af55b91cfa096d09d9971cfef1ca74",
+              "tree": "edbaedb490e09fa44e46f1948a98024af0484af8"
+            },
+            "hallucinate": {
+              "HEAD": "6435a910f5789b26b92323f71c4bb9be1d3fd560",
+              "clean_worktree_and_index": true,
+              "origin_main": "6435a910f5789b26b92323f71c4bb9be1d3fd560",
+              "tree": "18c3aacb57df53212eca0d0489c2a42e5b706ad2"
+            },
+            "root": {
+              "HEAD": "f542eb6c875fd8fb5e3c98fe64a31561894f4496",
+              "clean_worktree_and_index": true,
+              "origin_main": "f542eb6c875fd8fb5e3c98fe64a31561894f4496",
+              "tree": "20139301b4a084c3fd3a491dfe13026c24c07180"
+            }
+          },
+          "selected_case_counts": {
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_semantic_metrics.py::test_retrieved_complete_payloads_bind_frozen_rankings_and_separate_local_matches_from_legal_relevance": 1,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_semantic_metrics.py::test_retrieved_payload_metrics_refuse_changed_population_binding_budget_and_opaque_rankings": 12,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_semantic_metrics.py::test_retrieved_payloads_detect_original_input_drift_during_posthoc_scoring": 1,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_semantic_metrics.py::test_retrieved_payloads_refuse_methods_with_different_eligible_candidate_sets": 1,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_semantic_metrics.py::test_retrieved_payloads_reject_cutoff_configuration_drift_during_scoring": 3,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_semantic_metrics.py::test_retrieved_payloads_reject_short_rankings_or_unsupported_depth": 2,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_semantic_metrics.py::test_retrieved_payloads_retain_abstentions_and_absent_counterparts_without_false_recall": 1,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_semantic_metrics.py::test_retrieved_payloads_score_all_abstentions_when_depth_exceeds_the_bank": 2
+          },
+          "skips": 0,
+          "tree": "edbaedb490e09fa44e46f1948a98024af0484af8",
+          "unique_physical_PASS": 23
+        },
+        "prior_evidence_values_preserved": 528,
+        "prior_verified_Guide528_publication": {
+          "bytes": 12240,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-guide528-four-doc-three-FF-publication-small-v356.json",
+          "sha256": "55b1a54c69eae6fe92b2774e153316106a5ef6cfdd9ed3adb5db81d21c3c02ca"
+        },
+        "record_scope": "Managed full Lake on a controlled calendar fixture and separate ordinary scorer23 on authored ranking fixtures.",
+        "schema": "Guide529-calendar-full-Lake-and-scorer-depth-scoped-facts/v1",
+        "statutory_admission_or_legal_meaning_claim": false,
+        "tasks_preserved": 24,
+        "training_mask": 0
+      },
+      "evidence_ordinal": 529,
+      "id": "phase3-full-lake-phase8-retrieval-depth-closed-fixture-evidence529-20261125",
+      "observed_bytes": 17777,
+      "observed_sha256": "15b4ffdf36566422d20a96731bdbffc8631efc1549081c55e193a6026c697dc3",
+      "path": "/tmp/P3-P8-guide529-single-consolidation-private-v01-ThoDbK/one-existing-guide529-Lake-P8-scorer-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Managed calendar Lake fixture and compiled-only reopen, plus a separate published authored retrieval scorer ordinary23 cohort.",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
     }
   ]
 }

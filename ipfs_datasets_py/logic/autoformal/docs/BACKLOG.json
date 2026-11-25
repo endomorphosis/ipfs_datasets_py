@@ -3803,6 +3803,34 @@
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
       "three_normal_child_first_FFs_each": true,
       "training_and_gold_masks": 0
+    },
+    "phase3_full_lake_phase8_retrieval_depth_closed_fixture_evidence_20261125": {
+      "Title10_review_real_release_and_model_pending": true,
+      "all24_tasks126_components528_old_evidence_values_preserved": true,
+      "evidence_ordinal": 529,
+      "facts": {
+        "bytes": 17777,
+        "path": "/tmp/P3-P8-guide529-single-consolidation-private-v01-ThoDbK/one-existing-guide529-Lake-P8-scorer-scoped-facts.json",
+        "sha256": "15b4ffdf36566422d20a96731bdbffc8631efc1549081c55e193a6026c697dc3"
+      },
+      "full_eight_phase_goal_complete": false,
+      "phase3_compiled_only_probe_propositions": 9,
+      "phase3_managed_Lake_commands": 5,
+      "phase3_managed_Lake_returncodes": [
+        0,
+        0,
+        0,
+        1,
+        0
+      ],
+      "phase3_v354_version_probe_zero_children_retained": true,
+      "phase8_new_cases": 4,
+      "phase8_ordinary_unique_PASS": 23,
+      "phase8_retained_cases": 19,
+      "record_id": "phase3-full-lake-phase8-retrieval-depth-closed-fixture-evidence529-20261125",
+      "separate_cohorts_and_Source_resource_closeouts": true,
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
+      "training_and_gold_masks": 0
     }
   },
   "programme_goal_hierarchy": {
