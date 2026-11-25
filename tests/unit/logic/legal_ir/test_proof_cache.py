@@ -1824,3 +1824,78 @@ def test_diagnostic_cache_waiter_retains_caller_ceiling(monkeypatch, store_name,
     assert later.reason is reasons.INSUFFICIENT_AUTHORITY and not later.usable
     assert computed.usable == later.usable
     assert computed.reason is later.reason
+
+
+# Deterministic test-only interleaving: lookup result is real and returned unchanged.
+_GET_SNAPSHOT_TRACE = []
+
+@pytest.mark.parametrize("change", ["none", "equivalent-put", "invalidate", "result-authority", "trust-ceiling"])
+def test_unified_get_eligibility_snapshot_after_actual_lookup(change, monkeypatch):
+    from ipfs_datasets_py.logic.common.duckdb_proof_store import trust_rank
+    store, original, reasons, _ = _cache_ceiling_fixture("unified", "max_trust_level")
+    assert store._connection is None
+    initial = original
+    policy = {"require_result_authority": original.result_authority}
+    replacement = None
+    if change == "trust-ceiling":
+        initial = replace(original, trust_level=type(original.trust_level).ADVISORY, entry_digest="")
+        policy = {"max_trust_level": type(initial.trust_level).ADVISORY}
+        replacement = original
+    elif change == "result-authority":
+        different = next(value for value in type(original.result_authority) if value is not original.result_authority)
+        replacement = replace(original, result_authority=different, entry_digest="")
+    elif change == "equivalent-put":
+        replacement = original
+    store.put(initial, now=100.0)
+    actual_lookup = store.lookup
+    before = actual_lookup(initial.key, **policy, now=100.0)
+    assert before.usable is True and before.entry is not None
+    calls = []
+    def after_actual_lookup(*args, **kwargs):
+        observed = actual_lookup(*args, **kwargs)
+        assert observed.usable is True and observed.entry is not None
+        assert args[0].digest == initial.key.digest
+        assert kwargs == {"require_result_authority": None, "max_evidence_authority": None, "max_trust_level": None, **policy, "now": 100.0}
+        calls.append(observed)
+        # A synchronous scheduling hook models a different caller mutating
+        # after the real lookup lock was released, before get reacquires it.
+        if replacement is not None:
+            stored = store.put(replacement, now=100.0)
+            assert stored.usable is True
+        elif change == "invalidate":
+            assert store.invalidate(initial.key) is True
+        return observed  # Never fabricate or change an approved lookup.
+    monkeypatch.setattr(store, "lookup", after_actual_lookup)
+    returned = store.get(initial.key, **policy, now=100.0)
+    assert len(calls) == 1 and calls[0].usable is True
+    after = actual_lookup(initial.key, **policy, now=100.0)
+    row = {
+        "change": change,
+        "policy": {k: v.value for k, v in policy.items()},
+        "initial_result_authority": initial.result_authority.value,
+        "initial_trust": initial.trust_level.value,
+        "real_lookup_usable": calls[0].usable,
+        "post_lookup_usable": after.usable,
+        "post_lookup_reason": after.reason.value,
+        "returned_none": returned is None,
+        "returned_result_authority": None if returned is None else returned.result_authority.value,
+        "returned_trust": None if returned is None else returned.trust_level.value,
+        "returned_key_digest": None if returned is None else returned.key.digest,
+        "requested_key_digest": initial.key.digest,
+    }
+    _GET_SNAPSHOT_TRACE.append(row)
+    if change == "result-authority":
+        assert after.usable is False and after.reason is reasons.AUTHORITY_MISMATCH
+    elif change == "trust-ceiling":
+        assert after.usable is False and after.reason is reasons.INSUFFICIENT_AUTHORITY
+    elif change == "invalidate":
+        assert after.usable is False and after.reason is reasons.MISS
+    else:
+        assert returned is not None and after.usable is True
+    if returned is not None:
+        returned.verify_integrity()
+        assert returned.key.digest == initial.key.digest
+        if "require_result_authority" in policy:
+            assert returned.result_authority is policy["require_result_authority"], row
+        if "max_trust_level" in policy:
+            assert trust_rank(returned.trust_level) <= trust_rank(policy["max_trust_level"]), row

@@ -2349,12 +2349,27 @@ class DuckDBProofStore:
         )
         if not result.usable:
             return None
+        def checked_snapshot(entry: UnifiedProofEntry | None) -> UnifiedProofEntry | None:
+            if entry is None:
+                return None
+            # The refetched row may differ from the earlier lookup. Validate
+            # this exact canonical snapshot under the same lock/transaction.
+            evaluated = self._evaluate_entry(
+                entry,
+                unified,
+                max_trust_level=self._trust_ceiling(max_trust_level, max_evidence_authority),
+                require_result_authority=require_result_authority,
+                now=time.time() if now is None else float(now),
+                count_hit=False,
+            )
+            return entry if evaluated.usable else None
+
         with self._lock:
             if self._connection is not None:
                 with self._sql_transaction():
                     self._sql_count()
-                    return self._sql_entry(unified)
-            return self._entries.get(unified.digest)
+                    return checked_snapshot(self._sql_entry(unified))
+            return checked_snapshot(self._entries.get(unified.digest))
 
     def put(
         self,

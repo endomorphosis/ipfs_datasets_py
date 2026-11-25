@@ -1186,7 +1186,7 @@ def test_lean_v3_version_output_charge_preserves_complete_source_input_capacity(
 # before 51d2c414, then 27ede074ceb68cd91d50eada99b9c6f02216607e22610bc63db4fde69e17fb4c.
 # Current reviewed constructors explicitly bind the current verifier profile;
 # negative cache controls changed the complete owner. This pin never follows edits itself.
-_NATIVE_PROOF_CACHE_FIXTURE_SHA256 = "cd92c41e80976e707110855423dd6ae6956206e5a6bfd57556cec93611ac4a9e"
+_NATIVE_PROOF_CACHE_FIXTURE_SHA256 = "4e012101e4400324175c02d296b51abde97d065c76abfddef1b51d16329f639d"
 
 
 def _load_native_proof_cache_fixture_owner():
