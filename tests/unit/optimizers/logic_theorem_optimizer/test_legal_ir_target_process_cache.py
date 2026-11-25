@@ -92,3 +92,70 @@ def test_disk_cache_writes_cannot_repopulate_disabled_process_cache(native, monk
 def test_cache_switch_requires_boolean(native, value):
     with pytest.raises(ValueError, match="must be a bool"):
         targets([native[0]], use_process_cache=value)
+
+
+def test_legal_ir_timeout_fallback_does_not_poison_process_cache(monkeypatch) -> None:
+    from ipfs_datasets_py.logic import bridge as bridge_module
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import (
+        build_us_code_sample,
+    )
+
+    monkeypatch.setenv("IPFS_DATASETS_LEGAL_IR_METRIC_DISK_CACHE", "0")
+    monkeypatch.setattr(modal, "_LEGAL_IR_TARGET_CACHE", {})
+    sample = build_us_code_sample(
+        title="5",
+        section="552-bridge-recovery",
+        text="A fictional agency must publish notice.",
+    )
+    healthy = SimpleNamespace(
+        accepted=True,
+        adapter_losses={},
+        bridge_names=("deontic_norms",),
+        document=SimpleNamespace(
+            canonical_hash=lambda: "healthy-target-after-timeout",
+            document_id=sample.sample_id,
+            version="legal-ir-test",
+        ),
+        losses={"legal_ir_multiview_total_loss": 0.15},
+        view_distribution={"deontic.ir": 1.0},
+    )
+    calls = []
+
+    def bridge(*, document_id, **kwargs):
+        calls.append(document_id)
+        if len(calls) == 1:
+            raise modal._LegalIRTargetTimeout("fictional interrupted bridge")
+        return SimpleNamespace(training_target=lambda: healthy)
+
+    monkeypatch.setattr(bridge_module, "evaluate_legal_ir_multiview", bridge)
+
+    def evaluate_targets():
+        observation = {}
+        (sample_id, target), = modal._legal_ir_target_items(
+            [sample],
+            bridge_names=("deontic_norms",),
+            evaluate_provers=False,
+            legal_ir_targets=None,
+            parallel_workers=1,
+            observation=observation,
+        )
+        assert sample_id == sample.sample_id
+        return target, observation
+
+    first, first_counts = evaluate_targets()
+    assert first.accepted is False
+    assert first.document.canonical_hash().startswith("timeout-fallback:")
+    assert first_counts["timeout_fallback_count"] == 1
+    assert first_counts["memory_cache_hit_count"] == 0
+
+    second, second_counts = evaluate_targets()
+    assert calls == [sample.sample_id, sample.sample_id]
+    assert second is healthy
+    assert second_counts["memory_cache_hit_count"] == 0
+    assert second_counts["timeout_fallback_count"] == 0
+
+    third, third_counts = evaluate_targets()
+    assert calls == [sample.sample_id, sample.sample_id]
+    assert third is healthy
+    assert third_counts["memory_cache_hit_count"] == 1
+    assert third_counts["timeout_fallback_count"] == 0

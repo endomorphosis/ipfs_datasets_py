@@ -2870,7 +2870,9 @@ def test_bounded_bridge_targets_are_aliased_before_full_sample_evaluation() -> N
             {
                 "bridge": bool(kwargs.get("legal_ir_bridge_names")),
                 "full_target_cached": bool(
-                    autoencoder._legal_ir_view_target_cache.get(sample.sample_id)
+                    autoencoder._legal_ir_view_target_distribution_for_sample(
+                        sample, include_autoencoder_prior=False
+                    )
                 ),
             }
         )
@@ -3375,7 +3377,7 @@ def test_autoencoder_caches_legal_ir_view_candidate_scan() -> None:
     state.feature_family_logits["feature-new"] = {"CEC.native": 0.2}
     assert autoencoder._legal_ir_view_family_candidates() == ("modal.frame_logic",)
 
-    autoencoder._legal_ir_view_target_cache[sample.sample_id] = {"CEC.native": 1.0}
+    autoencoder._cache_legal_ir_targets([sample], {sample.sample_id: {"CEC.native": 1.0}}, {})
     assert autoencoder._nudge_legal_ir_view_global_logits(sample, learning_rate=0.1)
     assert "CEC.native" in autoencoder._legal_ir_view_family_candidates()
 

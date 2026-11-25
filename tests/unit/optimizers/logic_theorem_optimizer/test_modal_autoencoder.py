@@ -13541,3 +13541,254 @@ def test_pgir030_advisor_extends_into_both_arms_without_choosing_a_winner() -> N
     assert typed["heads"]["family"]["shared"] is False
     assert extended["tokenizer_vocabulary_cid"] == LEGAL_IR_CANONICAL_VOCABULARY_CID
     assert autoencoder.state.architecture_version == MODAL_AUTOENCODER_ARCHITECTURE_VERSION
+
+
+@pytest.mark.parametrize("revision", ("exception-removed", "conditions-reordered"))
+def test_warm_feature_cache_matches_cold_after_clause_revision(revision) -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552-feature-clause-fixture",
+        text="A fictional agency must publish notice unless the board grants a waiver.",
+    )
+    formula = replace(
+        sample.modal_ir.formulas[0],
+        conditions=["fixture alpha gate", "fixture beta gate"],
+        exceptions=["fixture board waiver"],
+    )
+    sample = replace(sample, modal_ir=replace(sample.modal_ir, formulas=[formula]))
+    if revision == "exception-removed":
+        changed_formula = replace(formula, exceptions=[])
+    else:
+        changed_formula = replace(formula, conditions=list(reversed(formula.conditions)))
+    revised = replace(
+        sample, modal_ir=replace(sample.modal_ir, formulas=[changed_formula])
+    )
+    assert sample.sample_id == revised.sample_id
+    assert sample.text == revised.text
+    assert sample.modal_ir.canonical_hash() != revised.modal_ir.canonical_hash()
+
+    warm = AdaptiveModalAutoencoder(compute_device="python")
+    original_features = warm._fallback_feature_keys_for(sample)
+    cold = AdaptiveModalAutoencoder(compute_device="python")
+    revised_features = cold._fallback_feature_keys_for(revised)
+    if revision == "exception-removed":
+        assert "exception:fixture_board_waiver" in original_features
+        assert "exception:fixture_board_waiver" not in revised_features
+    else:
+        alpha = "condition:fixture_alpha_gate"
+        beta = "condition:fixture_beta_gate"
+        assert original_features.index(alpha) < original_features.index(beta)
+        assert revised_features.index(beta) < revised_features.index(alpha)
+    assert warm._fallback_feature_keys_for(revised) == revised_features
+
+
+def test_warm_feature_cache_preserves_runtime_formula_order() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552-feature-order-fixture",
+        text="A fictional agency must publish notice.",
+    )
+    formula = sample.modal_ir.formulas[0]
+    first = replace(
+        formula, predicate=replace(formula.predicate, name="fixture_first_predicate")
+    )
+    second = replace(
+        formula,
+        formula_id=f"{formula.formula_id}:second",
+        predicate=replace(formula.predicate, name="fixture_second_predicate"),
+    )
+    sample = replace(sample, modal_ir=replace(sample.modal_ir, formulas=[first, second]))
+    revised = replace(
+        sample, modal_ir=replace(sample.modal_ir, formulas=[second, first])
+    )
+    assert sample.sample_id == revised.sample_id
+    assert sample.modal_ir.canonical_hash() == revised.modal_ir.canonical_hash()
+
+    warm = AdaptiveModalAutoencoder(compute_device="python")
+    original_features = warm._fallback_feature_keys_for(sample)
+    cold = AdaptiveModalAutoencoder(compute_device="python")
+    revised_features = cold._fallback_feature_keys_for(revised)
+    first_key = "predicate:fixture_first_predicate"
+    second_key = "predicate:fixture_second_predicate"
+    assert original_features.index(first_key) < original_features.index(second_key)
+    assert revised_features.index(second_key) < revised_features.index(first_key)
+    assert warm._fallback_feature_keys_for(revised) == revised_features
+
+
+@pytest.mark.parametrize(
+    "field",
+    ("citation", "title", "section", "selected_frame", "embedding_vector", "parser_trace", "formula_metadata"),
+)
+def test_feature_cache_bucket_binds_exact_current_sample_inputs(field) -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552-feature-identity-fixture",
+        text="A fictional agency must publish notice.",
+        embedding_vector=[1.0, -0.5],
+    )
+    formula = sample.modal_ir.formulas[0]
+    formula = replace(formula, metadata={**formula.metadata, "fixture": {"markers": ["first"]}})
+    sample = replace(
+        sample,
+        modal_ir=replace(sample.modal_ir, formulas=[formula]),
+        selected_frame="fixture:first",
+        frame_candidates=[
+            {"frame_id": "fixture:first", "score": 0.75},
+            {"frame_id": "fixture:second", "score": 0.25},
+        ],
+        parser_trace={**sample.parser_trace, "fixture": {"markers": ["first"]}},
+    )
+    autoencoder = AdaptiveModalAutoencoder(compute_device="python")
+    original_bucket = autoencoder._sample_cache_for(sample)
+    assert autoencoder._sample_cache_for(replace(sample)) is original_bucket
+
+    if field == "parser_trace":
+        sample.parser_trace["fixture"]["markers"].append("second")
+        revised = sample
+    elif field == "formula_metadata":
+        formula.metadata["fixture"]["markers"].append("second")
+        revised = sample
+    else:
+        next_embedding = math.nextafter(sample.embedding_vector[0], 2.0)
+        replacements = {
+            "citation": "5 U.S.C. fictional-citation",
+            "title": "12",
+            "section": "553-feature-identity-fixture",
+            "selected_frame": "fixture:second",
+            "embedding_vector": [next_embedding, sample.embedding_vector[1]],
+        }
+        revised = replace(sample, **{field: replacements[field]})
+        if field == "embedding_vector":
+            assert sample.embedding_vector[0] != revised.embedding_vector[0]
+            assert round(sample.embedding_vector[0], 12) == round(revised.embedding_vector[0], 12)
+    assert revised.sample_id == sample.sample_id
+    revised_bucket = autoencoder._sample_cache_for(revised)
+    assert revised_bucket is not original_bucket
+    assert autoencoder._sample_cache_for(replace(revised)) is revised_bucket
+
+
+@pytest.mark.parametrize("revision", ("formula", "source", "sample-id"))
+def test_instance_targets_do_not_follow_a_different_sample_revision(revision) -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552-target-cache-fixture",
+        text="A fictional agency must publish notice unless the board grants a waiver.",
+    )
+    if revision == "formula":
+        formula = replace(sample.modal_ir.formulas[0], exceptions=["fictional waiver revision"])
+        revised = replace(sample, modal_ir=replace(sample.modal_ir, formulas=[formula]))
+    elif revision == "source":
+        text = sample.text + " A different fictional source revision applies."
+        revised = replace(
+            sample, text=text, normalized_text=text,
+            modal_ir=replace(sample.modal_ir, normalized_text=text),
+        )
+    else:
+        revised = replace(sample, sample_id="fictional-different-target-cache-row")
+
+    model = AdaptiveModalAutoencoder(compute_device="python")
+    views = {"deontic.ir": 1.0}
+    losses = {"linear_logic_equivalence_loss": 0.55}
+    model._cache_legal_ir_targets([sample], {sample.sample_id: views}, {sample.sample_id: losses})
+    assert model._legal_ir_view_target_distribution_for_sample(
+        replace(sample), include_autoencoder_prior=False,
+    ) == views
+    assert model._compiler_quality_loss_targets_for_sample(replace(sample)) == losses
+    assert model._legal_ir_view_target_distribution_for_sample(
+        revised, include_autoencoder_prior=False,
+    ) == {}
+    assert model._compiler_quality_loss_targets_for_sample(revised) == {}
+
+
+def test_bounded_targets_require_an_exact_evaluated_row_and_explicit_alias() -> None:
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import (
+        _legal_ir_metric_sample_for_text,
+    )
+
+    sample = build_us_code_sample(
+        title="5",
+        section="552-target-alias-fixture",
+        text="A fictional agency must publish notice unless the board grants a waiver.",
+    )
+    formula = replace(sample.modal_ir.formulas[0], exceptions=["fictional waiver revision"])
+    revised = replace(sample, modal_ir=replace(sample.modal_ir, formulas=[formula]))
+    assert sample.modal_ir.canonical_hash() != revised.modal_ir.canonical_hash()
+    prefix = sample.text[:45].rstrip()
+    bounded = _legal_ir_metric_sample_for_text(sample, metric_text=prefix)
+    revised_bounded = _legal_ir_metric_sample_for_text(revised, metric_text=prefix)
+    assert bounded.sample_id == revised_bounded.sample_id != sample.sample_id
+
+    model = AdaptiveModalAutoencoder(compute_device="python")
+    views = {"deontic.ir": 1.0}
+    losses = {"linear_logic_equivalence_loss": 0.55}
+    model._cache_legal_ir_targets(
+        [bounded], {bounded.sample_id: views}, {bounded.sample_id: losses},
+    )
+    assert model._legal_ir_view_target_distribution_for_sample(
+        sample, include_autoencoder_prior=False,
+    ) == {}
+    model.alias_cached_legal_ir_targets([sample, revised], [bounded, revised_bounded])
+    assert model._legal_ir_view_target_distribution_for_sample(
+        sample, include_autoencoder_prior=False,
+    ) == views
+    assert model._compiler_quality_loss_targets_for_sample(sample) == losses
+    assert model._legal_ir_view_target_distribution_for_sample(
+        revised, include_autoencoder_prior=False,
+    ) == {}
+    assert model._compiler_quality_loss_targets_for_sample(revised) == {}
+
+
+def test_ambiguous_target_priming_refuses_before_writing_any_revision() -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552-target-batch-fixture",
+        text="A fictional agency must publish notice.",
+    )
+    revised = replace(sample, citation="5 U.S.C. fictional revised citation")
+    unrelated = replace(sample, sample_id="fictional-unrelated-target-batch-row")
+    model = AdaptiveModalAutoencoder(compute_device="python")
+    views = {row.sample_id: {"deontic.ir": 1.0} for row in (sample, unrelated)}
+    losses = {row.sample_id: {"linear_logic_equivalence_loss": 0.55} for row in (sample, unrelated)}
+
+    with pytest.raises(ValueError, match="one revision per ID"):
+        model._cache_legal_ir_targets([unrelated, sample, revised], views, losses)
+
+    for row in (unrelated, sample, revised):
+        assert model._legal_ir_view_target_distribution_for_sample(
+            row, include_autoencoder_prior=False,
+        ) == {}
+        assert model._compiler_quality_loss_targets_for_sample(row) == {}
+
+
+def test_temporary_target_override_restores_only_the_selected_revision_on_error(monkeypatch) -> None:
+    sample = build_us_code_sample(
+        title="5",
+        section="552-target-override-fixture",
+        text="A fictional agency must publish notice.",
+    )
+    revised = replace(sample, citation="5 U.S.C. fictional revised citation")
+    model = AdaptiveModalAutoencoder(compute_device="python")
+    original_views = {"deontic.ir": 1.0}
+    revised_views = {"TDFOL.prover": 1.0}
+    temporary_views = {"CEC.native": 1.0}
+    model._cache_legal_ir_targets([sample], {sample.sample_id: original_views}, {})
+    model._cache_legal_ir_targets([revised], {revised.sample_id: revised_views}, {})
+
+    def views(row):
+        return model._legal_ir_view_target_distribution_for_sample(
+            row, include_autoencoder_prior=False,
+        )
+
+    def interrupt(selected, **kwargs):
+        assert selected is sample
+        assert views(sample) == temporary_views
+        assert views(revised) == revised_views
+        raise RuntimeError("fictional target update interrupted")
+
+    monkeypatch.setattr(model, "_nudge_legal_ir_view_logits", interrupt)
+    with pytest.raises(RuntimeError, match="fictional target update interrupted"):
+        model._nudge_legal_ir_view_logits_toward_distribution(
+            sample, temporary_views, learning_rate=0.01, update_sample_memory=False,
+        )
+    assert views(sample) == original_views
+    assert views(revised) == revised_views

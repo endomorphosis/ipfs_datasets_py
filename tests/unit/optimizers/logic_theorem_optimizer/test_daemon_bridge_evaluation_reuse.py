@@ -177,9 +177,13 @@ def test_bounded_samples_keep_full_text_reconstruction_and_target_aliases(sample
     assert full_rows == rows
     assert result.legal_ir_target_count == len(rows)
     assert set(result.decoded_embeddings) == {row.sample_id for row in rows}
-    assert autoencoder._legal_ir_view_target_cache[long_sample.sample_id] == (
-        autoencoder._legal_ir_view_target_cache[bounded_rows[0].sample_id]
+    full_target = autoencoder._legal_ir_view_target_distribution_for_sample(
+        long_sample, include_autoencoder_prior=False
     )
+    bounded_target = autoencoder._legal_ir_view_target_distribution_for_sample(
+        bounded_rows[0], include_autoencoder_prior=False
+    )
+    assert full_target and full_target == bounded_target
     repeated = autoencoder.evaluate(rows, legal_ir_bridge_names=(), use_sample_memory=False)
     assert result.decoded_embeddings == repeated.decoded_embeddings
     assert result.cross_entropy_loss == repeated.cross_entropy_loss

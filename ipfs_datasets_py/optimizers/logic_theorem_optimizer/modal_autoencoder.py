@@ -13,7 +13,7 @@ import threading
 import time
 from contextlib import nullcontext
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass, field, replace
+from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
 from typing import (
     Any,
@@ -4306,85 +4306,75 @@ class AdaptiveModalAutoencoder:
         target_view_distributions: Mapping[str, Mapping[str, float]],
         target_losses_by_sample: Mapping[str, Mapping[str, float]],
     ) -> None:
-        """Prime LegalIR target caches before decoding/evaluating samples."""
+        """Prime the target caches for the exact current sample revisions."""
+        prepared = []
+        revisions = {}
         for sample in samples:
-            target_view_distribution = target_view_distributions.get(sample.sample_id)
-            if target_view_distribution:
-                cached_distribution = {
-                    str(name): float(value) for name, value in target_view_distribution.items()
-                }
-                self._legal_ir_view_target_cache[sample.sample_id] = cached_distribution
-                self._legal_ir_view_target_cache[_sample_content_cache_id(sample)] = (
-                    cached_distribution
-                )
-            target_losses = target_losses_by_sample.get(sample.sample_id)
-            if target_losses:
-                cached_losses = {str(name): float(value) for name, value in target_losses.items()}
-                self._legal_ir_loss_target_cache[sample.sample_id] = cached_losses
-                self._legal_ir_loss_target_cache[_sample_content_cache_id(sample)] = cached_losses
-            if target_view_distribution or target_losses:
-                cache = self._sample_cache_for(sample)
-                for key in (
-                    "feature_keys",
-                    "fallback_feature_keys",
-                    "legal_ir_view_feature_keys",
-                    "legal_ir_view_core_feature_keys",
-                ):
-                    cache.pop(key, None)
-                for key in list(cache.keys()):
-                    if str(key).startswith("objective_residual_feature_keys:"):
-                        cache.pop(key, None)
+            distribution = target_view_distributions.get(sample.sample_id)
+            losses = target_losses_by_sample.get(sample.sample_id)
+            if not distribution and not losses:
+                continue
+            key = _sample_runtime_cache_id(sample)
+            if key is None:
+                raise ValueError("LegalIR target requires a serializable sample revision")
+            if revisions.setdefault(sample.sample_id, key) != key:
+                raise ValueError("LegalIR targets keyed by sample ID require one revision per ID")
+            prepared.append((
+                (key, len(sample.embedding_vector)),
+                {str(name): float(value) for name, value in (distribution or {}).items()},
+                {str(name): float(value) for name, value in (losses or {}).items()},
+            ))
+
+        for cache_key, distribution, losses in prepared:
+            self._store_cached_legal_ir_targets(cache_key, distribution, losses)
+
+    def _store_cached_legal_ir_targets(
+        self, cache_key: tuple[str, int], distribution: Dict[str, float], losses: Dict[str, float],
+    ) -> None:
+        key, _ = cache_key
+        if distribution:
+            self._legal_ir_view_target_cache[key] = distribution
+        if losses:
+            self._legal_ir_loss_target_cache[key] = losses
+        features = self._sample_feature_cache.get(cache_key, {})
+        for name in ("feature_keys", "fallback_feature_keys",
+                     "legal_ir_view_feature_keys", "legal_ir_view_core_feature_keys"):
+            features.pop(name, None)
+        for name in list(features):
+            if str(name).startswith("objective_residual_feature_keys:"):
+                features.pop(name, None)
+
+    def _cached_legal_ir_targets_for_sample(
+        self, sample: LegalSample,
+    ) -> tuple[Dict[str, float], Dict[str, float]]:
+        key = _sample_runtime_cache_id(sample)
+        if key is None:
+            return {}, {}
+        return self._legal_ir_view_target_cache.get(key, {}), self._legal_ir_loss_target_cache.get(key, {})
 
     def alias_cached_legal_ir_targets(
         self,
         samples: Sequence[LegalSample],
         evaluated_samples: Sequence[LegalSample],
     ) -> None:
-        """Attach bounded bridge targets to their corresponding full samples.
-
-        Metric bridges may evaluate a bounded clone with a synthetic sample ID.
-        Projection updates operate on the full sample, so they need an explicit
-        alias instead of relying on the bounded clone's cache identity.
-        """
+        """Attach targets from the exact evaluated revisions to aligned full samples."""
         source_rows = list(samples)
         evaluated_rows = list(evaluated_samples)
         if len(source_rows) != len(evaluated_rows):
             raise ValueError("LegalIR target aliases require aligned sample sequences")
 
-        for sample, evaluated_sample in zip(source_rows, evaluated_rows):
-            evaluated_id = str(evaluated_sample.sample_id)
-            evaluated_content_id = _sample_content_cache_id(evaluated_sample)
-            target_distribution = self._legal_ir_view_target_cache.get(
-                evaluated_id,
-                self._legal_ir_view_target_cache.get(evaluated_content_id),
-            )
-            target_losses = self._legal_ir_loss_target_cache.get(
-                evaluated_id,
-                self._legal_ir_loss_target_cache.get(evaluated_content_id),
-            )
-            if target_distribution:
-                cached_distribution = dict(target_distribution)
-                self._legal_ir_view_target_cache[sample.sample_id] = cached_distribution
-                self._legal_ir_view_target_cache[_sample_content_cache_id(sample)] = (
-                    cached_distribution
-                )
-            if target_losses:
-                cached_losses = dict(target_losses)
-                self._legal_ir_loss_target_cache[sample.sample_id] = cached_losses
-                self._legal_ir_loss_target_cache[_sample_content_cache_id(sample)] = cached_losses
-            if not target_distribution and not target_losses:
+        prepared = []
+        for sample, evaluated in zip(source_rows, evaluated_rows, strict=True):
+            distribution, losses = self._cached_legal_ir_targets_for_sample(evaluated)
+            if not distribution and not losses:
                 continue
-            cache = self._sample_cache_for(sample)
-            for key in (
-                "feature_keys",
-                "fallback_feature_keys",
-                "legal_ir_view_feature_keys",
-                "legal_ir_view_core_feature_keys",
-            ):
-                cache.pop(key, None)
-                for key in list(cache.keys()):
-                    if str(key).startswith("objective_residual_feature_keys:"):
-                        cache.pop(key, None)
+            key = _sample_runtime_cache_id(sample)
+            if key is None:
+                raise ValueError("LegalIR target alias requires a serializable sample revision")
+            prepared.append(((key, len(sample.embedding_vector)), dict(distribution), dict(losses)))
+
+        for cache_key, distribution, losses in prepared:
+            self._store_cached_legal_ir_targets(cache_key, distribution, losses)
 
     def _invalidate_state_dependent_evaluator_caches(self) -> None:
         """Discard cached feature selections after swapping model state.
@@ -4526,16 +4516,8 @@ class AdaptiveModalAutoencoder:
             sample=sample,
             use_sample_memory=use_sample_memory,
         )
-        legal_ir_view_distribution = self._legal_ir_view_target_cache.get(
-            sample.sample_id,
-            self._legal_ir_view_target_cache.get(_sample_content_cache_id(sample), {}),
-        )
-        legal_ir_losses = dict(
-            self._legal_ir_loss_target_cache.get(
-                sample.sample_id,
-                self._legal_ir_loss_target_cache.get(_sample_content_cache_id(sample), {}),
-            )
-        )
+        legal_ir_view_distribution, cached_legal_ir_losses = self._cached_legal_ir_targets_for_sample(sample)
+        legal_ir_losses = dict(cached_legal_ir_losses)
         source_decompiled_losses = _source_decompiled_text_losses_from_targets(legal_ir_losses)
         legal_ir_losses.update(source_decompiled_losses)
         legal_ir_predicted_view_distribution: Dict[str, float] = {}
@@ -4717,15 +4699,8 @@ class AdaptiveModalAutoencoder:
                 top_k=limit,
                 include_causal_attribution=include_causal_attribution,
             )
-        legal_ir_target_distribution = dict(
-            self._legal_ir_view_target_cache.get(
-                sample.sample_id,
-                self._legal_ir_view_target_cache.get(
-                    _sample_content_cache_id(sample),
-                    {},
-                ),
-            )
-        )
+        cached_distribution, _ = self._cached_legal_ir_targets_for_sample(sample)
+        legal_ir_target_distribution = dict(cached_distribution)
         legal_ir_predicted_distribution: Dict[str, float] = {}
         if legal_ir_target_distribution:
             legal_ir_predicted_distribution = self._legal_ir_view_distribution(
@@ -4868,13 +4843,7 @@ class AdaptiveModalAutoencoder:
             active = set(_stable_legal_ir_feature_keys_for_autoencoder_sample(self, sample))
             for feature in active:
                 active_feature_counts[feature] = active_feature_counts.get(feature, 0) + 1
-            target_distribution = self._legal_ir_view_target_cache.get(
-                sample.sample_id,
-                self._legal_ir_view_target_cache.get(
-                    _sample_content_cache_id(sample),
-                    {},
-                ),
-            )
+            target_distribution, _ = self._cached_legal_ir_targets_for_sample(sample)
             if target_distribution:
                 view_distributions.append(
                     self._legal_ir_view_distribution(
@@ -6362,7 +6331,9 @@ class AdaptiveModalAutoencoder:
         )
         if not normalized_target:
             return False
-        cache_key = sample.sample_id
+        cache_key = _sample_runtime_cache_id(sample)
+        if cache_key is None:
+            raise ValueError("LegalIR target override requires a serializable sample revision")
         had_previous = cache_key in self._legal_ir_view_target_cache
         previous = self._legal_ir_view_target_cache.get(cache_key)
         self._legal_ir_view_target_cache[cache_key] = dict(normalized_target)
@@ -8631,7 +8602,7 @@ class AdaptiveModalAutoencoder:
         )
 
         legal_ir_loss = 0.0
-        target_distribution = self._legal_ir_view_target_cache.get(sample.sample_id)
+        target_distribution, _ = self._cached_legal_ir_targets_for_sample(sample)
         if target_distribution:
             predicted = self._legal_ir_view_distribution(
                 sample,
@@ -9119,10 +9090,7 @@ class AdaptiveModalAutoencoder:
         *,
         include_autoencoder_prior: bool = True,
     ) -> Dict[str, float]:
-        distribution = self._legal_ir_view_target_cache.get(
-            sample.sample_id,
-            self._legal_ir_view_target_cache.get(_sample_content_cache_id(sample), {}),
-        )
+        distribution, _ = self._cached_legal_ir_targets_for_sample(sample)
         cached_distribution = {
             str(name): _float_or_zero(value)
             for name, value in dict(distribution or {}).items()
@@ -9214,10 +9182,7 @@ class AdaptiveModalAutoencoder:
         self,
         sample: LegalSample,
     ) -> Dict[str, float]:
-        losses = self._legal_ir_loss_target_cache.get(
-            sample.sample_id,
-            self._legal_ir_loss_target_cache.get(_sample_content_cache_id(sample), {}),
-        )
+        _, losses = self._cached_legal_ir_targets_for_sample(sample)
         return {
             str(name): _float_or_zero(value)
             for name, value in dict(losses or {}).items()
@@ -23847,7 +23812,7 @@ class AdaptiveModalAutoencoder:
         learning_rate: float,
         update_sample_memory: bool = True,
     ) -> bool:
-        target_distribution = self._legal_ir_view_target_cache.get(sample.sample_id)
+        target_distribution, _ = self._cached_legal_ir_targets_for_sample(sample)
         if not target_distribution:
             return False
         step = _clamp_learning_rate(learning_rate)
@@ -24006,7 +23971,7 @@ class AdaptiveModalAutoencoder:
         Pareto guards can accept useful LegalIR-view movement without also
         accepting broader architectural drift.
         """
-        target_distribution = self._legal_ir_view_target_cache.get(sample.sample_id)
+        target_distribution, _ = self._cached_legal_ir_targets_for_sample(sample)
         if not target_distribution:
             return False
         step = _clamp_learning_rate(learning_rate)
@@ -25445,10 +25410,10 @@ class AdaptiveModalAutoencoder:
         ]
 
     def _sample_cache_for(self, sample: LegalSample) -> Dict[str, Any]:
-        return self._sample_feature_cache.setdefault(
-            (_sample_content_cache_id(sample), len(sample.embedding_vector)),
-            {},
-        )
+        key = _sample_runtime_cache_id(sample)
+        if key is None:
+            return {}
+        return self._sample_feature_cache.setdefault((key, len(sample.embedding_vector)), {})
 
     def _family_contributions_for(
         self,
@@ -28188,6 +28153,8 @@ def _legal_ir_target_items(
                 cache_key=cache_key,
                 timeout_seconds=timeout_seconds,
             )
+            # The fallback describes this attempt. A later attempt can recover.
+            return sample.sample_id, target
         if use_process_cache:
             with _LEGAL_IR_TARGET_CACHE_LOCK:
                 if len(_LEGAL_IR_TARGET_CACHE) >= _LEGAL_IR_TARGET_CACHE_MAX:
@@ -28542,6 +28509,21 @@ def _write_legal_ir_target_disk_cache(
         _write_legal_ir_target_disk_cache_payload(cache_key, payload)
     else:
         _write_legal_ir_target_disk_cache_payload(cache_key, payload, use_process_cache=False)
+
+
+def _sample_runtime_cache_id(sample: LegalSample) -> str | None:
+    """Bind instance caches to the complete ordered sample they operate on."""
+    # A frozen sample may contain mutable nested parser data. Capture the
+    # current values on every lookup and preserve the runtime list ordering.
+    try:
+        snapshot = sample
+        if type(sample.embedding_vector) not in (tuple, list):
+            snapshot = replace(sample, embedding_vector=tuple(sample.embedding_vector))
+        payload = json.dumps(asdict(snapshot), ensure_ascii=True,
+                             allow_nan=False, separators=(",", ":"))
+    except (TypeError, ValueError, RecursionError):
+        return None
+    return "sample-runtime-v1:" + hashlib.sha256(payload.encode("ascii")).hexdigest()
 
 
 def _sample_content_cache_id(sample: LegalSample) -> str:
