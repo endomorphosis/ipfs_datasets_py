@@ -1434,3 +1434,52 @@ def test_cec_public_catalog_preserves_legacy_order_and_partial_bindings(
                 with pytest.raises(AttributeError):
                     getattr(package, unknown)
             assert calls == before_repeat
+
+
+def test_mixed_cap_permission_counts_each_event_time_pair(mixed_retained_reports):
+    domains = {
+        "Object": (0, 1, 2, 3),
+        "EventFrame": ("detail-a", "detail-b"),
+        "TimeFrame": ("early", "late"),
+    }
+    local_members = {
+        ("detail-a", "early"): {0, 1, 2},
+        ("detail-a", "late"): {1, 2, 3},
+        ("detail-b", "early"): {0, 2, 3},
+        ("detail-b", "late"): {1, 3},
+    }
+    # Pooling over either axis would falsely exceed the cap.
+    first = local_members["detail-a", "early"]
+    assert len(first | local_members["detail-a", "late"]) == 4
+    assert len(first | local_members["detail-b", "early"]) == 4
+    assert max(map(len, local_members.values())) == 3
+    overflow = {**local_members, ("detail-b", "late"): {0, 1, 2, 3}}
+    assert set.union(*overflow.values()) == set.union(*local_members.values())
+    fallback = _mixed_atoms(0)
+
+    def check(modal_members):
+        def atoms(symbol, values, world):
+            if symbol != "Member":
+                return fallback(symbol, values, world)
+            person, event, time = values
+            members = local_members if world == 0 else modal_members
+            return person in members[event, time]
+
+        results = []
+        for row in mixed_retained_reports:
+            calls = []
+
+            def permission(operator, body, ambient):
+                assert operator == "P"
+                calls.append(ambient)
+                return body(1)
+
+            results.append(_mixed_both_truths(row, domains, atoms, permission))
+            # Four pairs reach permission in each of the two evaluators.
+            # In particular, the outside guard cannot succeed vacuously.
+            pair_count = len(domains["EventFrame"]) * len(domains["TimeFrame"])
+            assert len(calls) == 2 * pair_count
+        return results
+
+    assert check(local_members) == [True, True]
+    assert check(overflow) == [False, True]
