@@ -3877,6 +3877,34 @@
       "record_id": "phase2-physical-native-r5-phase8-ordinary62-closed-fixture-evidence531-20261125",
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
       "training_and_gold_masks": 0
+    },
+    "phase1_memory_flight_ordinary68_phase2_private_7213_parquet_closed_evidence_20261125": {
+      "all24_tasks126_components531_old_evidence_values_preserved": true,
+      "evidence_ordinal": 532,
+      "facts": {
+        "bytes": 22159,
+        "path": "/tmp/P1-P2-guide532-single-consolidation-private-v01-ZqVsB7/one-existing-guide532-Phase1-ordinary68-and-Phase2-private-7213-Parquet-scoped-facts.json",
+        "sha256": "08e20cdfa1d4266782e94af1d9b1a7a25b741b966d0e2af8bdc790c46e311b04"
+      },
+      "full_eight_phase_goal_complete": false,
+      "phase1_published_in_memory_ordinary": {
+        "functions": 37,
+        "new_memory_flight": 6,
+        "retained": 62,
+        "unique_PASS": 68
+      },
+      "phase2_private_7213_transport": {
+        "edges": 5,
+        "exact_pinned_readback": true,
+        "nodes": 6,
+        "reviewed_or_admitted": false,
+        "same_length_tamper_refused": true
+      },
+      "prior_attempts_and_charges_retained": true,
+      "real_review_proof_promotion_and_model_pending": true,
+      "record_id": "phase1-memory-flight-ordinary68-phase2-private-7213-parquet-evidence532-20261125",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
+      "training_and_gold_masks": 0
     }
   },
   "programme_goal_hierarchy": {

@@ -30226,6 +30226,422 @@
       "root": "artifact_workspace",
       "scope": "Separate controlled engineering evidence for managed Phase2 physical Native R5 and published Phase8 external-evidence gates.",
       "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase1_memory_flight_ordinary68_phase2_private_7213_parquet_closed_evidence_20261125",
+      "closed_software_facts": {
+        "actual_Phase1_code_publication": {
+          "bytes": 14306,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P1-exact3-ordinary68-three-FF-publication-v396.json",
+          "sha256": "44ac63b4422d16fefed9865d60eb577ffa9a9e47c400b1bfb608566d44d574e4"
+        },
+        "actual_Phase1_ordinary68_qualification": {
+          "bytes": 20134,
+          "path": "/tmp/Root-existing-P1-clear-flight-ordinary68-rewrite-wire-v396-rml2oydq/actual-P1-clear-flight-ordinary68-closed-small-v396.json",
+          "sha256": "9c769c6f5f9e678071195b21f7f71915734de5d82b21b2d56e5db80d65fa232c"
+        },
+        "actual_Phase2_private_7213_Parquet": {
+          "bytes": 4853,
+          "path": "/tmp/Root-Phase2-private-7213-Parquet-existing-R2-PyArrow-bound-v389-ceGTkQV9/actual-7213-private-Parquet-pinned-roundtrip-and-tamper-refusal-small-v389.json",
+          "sha256": "91e425c0b4c34d1cf6ef34818888b6322fa524f543d883f1d065ada6eb95c91f"
+        },
+        "components_preserved": 126,
+        "evaluation_gold_mask": 0,
+        "evidence_ordinal": 532,
+        "evidence_scopes_and_counts_kept_separate": true,
+        "full_eight_phase_goal_complete": false,
+        "phase1_ordinary68_published": {
+          "actual_Source3": {
+            "bytes": 9202,
+            "path": "/tmp/Root-P1-clear-retired-flight-exact3-Source3-v391-FTyLMYZG/actual-P1-clear-retired-flight-exact3-Source-closed-small-v391.json",
+            "sha256": "e4506ac6e5ea056b056d9f7f45d5eff2ac269ce92de4d5df001e85490399539b"
+          },
+          "actual_frozen_READ4": {
+            "bytes": 9095,
+            "path": "/tmp/Root-P1-clear-flight-exact3-and-index-READ4-v392-jLGMjewp/actual-output/actual-D27-observed-D-root-initializer-Source-READ-v01-small-closeout.json",
+            "sha256": "2409edbf18516a5eab5bac58168f1134f184626aa883bb8f106206181a5b74af"
+          },
+          "code_publication": {
+            "bytes": 14306,
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P1-exact3-ordinary68-three-FF-publication-v396.json",
+            "sha256": "44ac63b4422d16fefed9865d60eb577ffa9a9e47c400b1bfb608566d44d574e4"
+          },
+          "counts": {
+            "duplicates": 0,
+            "errors": 0,
+            "failures": 0,
+            "functions": 37,
+            "passed": 68,
+            "skipped": 0,
+            "tests": 68
+          },
+          "exact_Git_HEAD": "19621b48313fa4e8790ca118f500731d3ec6a7f5",
+          "exact_Git_tree": "349c1ab0d5306fbc9f83f1285e1cec1e33d42805",
+          "exact_SQL_runtime_Native_review_legal_or_model_qualification": false,
+          "exact_function_case_counts": {
+            "tests/unit/logic/test_duckdb_proof_store.py::test_access_statistics_track_hits_misses_writes": 1,
+            "tests/unit/logic/test_duckdb_proof_store.py::test_advisory_verification_projection_uses_target_status_polarity": 2,
+            "tests/unit/logic/test_duckdb_proof_store.py::test_all_authority_dimensions_are_present_and_nonempty": 1,
+            "tests/unit/logic/test_duckdb_proof_store.py::test_authority_dimensions_cover_hammer_and_verification_surfaces": 1,
+            "tests/unit/logic/test_duckdb_proof_store.py::test_changing_any_authority_dimension_changes_key_digest": 15,
+            "tests/unit/logic/test_duckdb_proof_store.py::test_clear_discards_pending_single_flight_result": 2,
+            "tests/unit/logic/test_duckdb_proof_store.py::test_clear_preserves_replacement_flight": 4,
+            "tests/unit/logic/test_duckdb_proof_store.py::test_empty_backend_id_rejected": 1,
+            "tests/unit/logic/test_duckdb_proof_store.py::test_entry_integrity_round_trip_and_tamper_rejection": 1,
+            "tests/unit/logic/test_duckdb_proof_store.py::test_envelope_rejects_filesystem_path_authority": 1,
+            "tests/unit/logic/test_duckdb_proof_store.py::test_evidence_and_envelope_round_trip": 1,
+            "tests/unit/logic/test_duckdb_proof_store.py::test_exact_verification_cache_interop_bridge": 1,
+            "tests/unit/logic/test_duckdb_proof_store.py::test_get_or_compute_single_flight_and_store": 1,
+            "tests/unit/logic/test_duckdb_proof_store.py::test_hammer_key_projection_retains_authority_dimensions": 1,
+            "tests/unit/logic/test_duckdb_proof_store.py::test_interfaces_schema_and_catalog_are_pinned": 1,
+            "tests/unit/logic/test_duckdb_proof_store.py::test_invalidate_and_clear": 1,
+            "tests/unit/logic/test_duckdb_proof_store.py::test_mismatched_outcome_and_status_rejected": 1,
+            "tests/unit/logic/test_duckdb_proof_store.py::test_module_import_is_inert_without_duckdb": 1,
+            "tests/unit/logic/test_duckdb_proof_store.py::test_negative_ttl_expires_unknown_faster_than_proof": 1,
+            "tests/unit/logic/test_duckdb_proof_store.py::test_outcome_kinds_are_closed_and_distinct": 1,
+            "tests/unit/logic/test_duckdb_proof_store.py::test_outcome_mapping_keeps_kinds_distinct": 13,
+            "tests/unit/logic/test_duckdb_proof_store.py::test_premises_digest_changes_with_premise_set": 1,
+            "tests/unit/logic/test_duckdb_proof_store.py::test_proof_and_counterexample_entries_are_not_interchangeable": 1,
+            "tests/unit/logic/test_duckdb_proof_store.py::test_store_implements_verification_cache_put_get": 1,
+            "tests/unit/logic/test_duckdb_proof_store.py::test_store_lookup_exact_key_miss_on_dimension_change": 1,
+            "tests/unit/logic/test_duckdb_proof_store.py::test_store_put_retains_advisory_candidate_without_proof_authority": 1,
+            "tests/unit/logic/test_duckdb_proof_store.py::test_store_rejects_tampered_in_memory_entry": 1,
+            "tests/unit/logic/test_duckdb_proof_store.py::test_trust_cannot_exceed_evidence_authority": 1,
+            "tests/unit/logic/test_duckdb_proof_store.py::test_trust_ceiling_rejects_raise": 1,
+            "tests/unit/logic/test_duckdb_proof_store.py::test_trust_levels_project_from_evidence_authority": 1,
+            "tests/unit/logic/test_duckdb_proof_store.py::test_unified_key_must_project_to_matching_verification_key": 1,
+            "tests/unit/logic/test_duckdb_proof_store.py::test_unknown_and_error_entries_remain_distinct": 1,
+            "tests/unit/logic/test_duckdb_proof_store.py::test_unknown_entry_fields_fail_closed": 1,
+            "tests/unit/logic/test_duckdb_proof_store.py::test_unknown_key_fields_fail_closed": 1,
+            "tests/unit/logic/test_duckdb_proof_store.py::test_unsupported_key_schema_fails_closed": 1,
+            "tests/unit/logic/test_duckdb_proof_store.py::test_verification_cache_entry_can_be_put_directly": 1,
+            "tests/unit/logic/test_duckdb_proof_store.py::test_verification_cache_key_lift_retains_all_dimensions": 1
+          },
+          "exact_three_paths": {
+            "ipfs_datasets_py/logic/backends/cache_protocol.py": {
+              "bytes": 43579,
+              "full9": {
+                "st_ctime_ns": "1795646827195506735",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70042597",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795646826873085138",
+                "st_nlink": "1",
+                "st_size": "43579",
+                "st_uid": "1000"
+              },
+              "git_mode": "100644",
+              "parent_blob": "5faddd0448df6425f0d4008f39e5c4979e199210",
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/ipfs_datasets_py/logic/backends/cache_protocol.py",
+              "sha256": "cab85688cfc0971c4908cf220b795c0b2be14811dee408100a933005d5072e58",
+              "stage0_and_committed_blob": "312b165080753d8e032900b20d207f5efb1d30c6"
+            },
+            "ipfs_datasets_py/logic/common/duckdb_proof_store.py": {
+              "bytes": 112556,
+              "full9": {
+                "st_ctime_ns": "1795646827485511451",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70042598",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795646826877190245",
+                "st_nlink": "1",
+                "st_size": "112556",
+                "st_uid": "1000"
+              },
+              "git_mode": "100644",
+              "parent_blob": "08cfbf5a1ba36fca739215062b120464f5640379",
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/ipfs_datasets_py/logic/common/duckdb_proof_store.py",
+              "sha256": "acfec8c0152c6e7bc840c521deef6edd8ff861c91169bda6912760ab34a590bb",
+              "stage0_and_committed_blob": "f9207a3f3b5f5f1f3e010f5c3ab1518b310e9689"
+            },
+            "tests/unit/logic/test_duckdb_proof_store.py": {
+              "bytes": 34415,
+              "full9": {
+                "st_ctime_ns": "1795646827780516248",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70042599",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795646826880830832",
+                "st_nlink": "1",
+                "st_size": "34415",
+                "st_uid": "1000"
+              },
+              "git_mode": "100644",
+              "parent_blob": "28957ff35faff61f0915e553a25f0a5cbe3e67f5",
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/tests/unit/logic/test_duckdb_proof_store.py",
+              "sha256": "3522c4aa2813f6aa2ca4b9943b80d736f374f314f3c7a2be64f38b94109c972c",
+              "stage0_and_committed_blob": "d0dfbd35be14786c963bd688fbd38de390ce83d0"
+            }
+          },
+          "existing_memory_flight_behavior": "The two in-memory proof caches bind result storage and cleanup to the active single flight. After a cache clear, a retired flight cannot store a result or remove a replacement flight. The first caller receives an unusable miss for a retired result and retains the original exception if its producer raises.",
+          "final_full_retained_precharge": {
+            "bytes": 1253,
+            "path": "/tmp/Root-existing-P1-clear-flight-ordinary68-rewrite-wire-v396-rml2oydq/Source-only-authorized-P1-clear-flight-ordinary68-cap-prior-retained.json",
+            "sha256": "2aa8c1aaa30a1b11484cdf5db1148fb5a384ad76afaac8e74d4f9e5d8ff344fe"
+          },
+          "local_freeze": {
+            "bytes": 11209,
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P1-clear-retired-flight-exact3-local-freeze-v391.json",
+            "sha256": "a7c4fd2d15d824c976b177063fd49263700eb06a83137e0a32a774627ffba98b"
+          },
+          "ordinary_Source_resource_parent_closed": true,
+          "ordinary_qualification": {
+            "bytes": 20134,
+            "path": "/tmp/Root-existing-P1-clear-flight-ordinary68-rewrite-wire-v396-rml2oydq/actual-P1-clear-flight-ordinary68-closed-small-v396.json",
+            "sha256": "9c769c6f5f9e678071195b21f7f71915734de5d82b21b2d56e5db80d65fa232c"
+          },
+          "ordinary_report": {
+            "bytes": 1597717,
+            "path": "/tmp/Root-existing-P1-clear-flight-ordinary68-rewrite-wire-v396-rml2oydq/actual-output/complete-frozen-local-D-P1-proof-cache-clear-retired-flight-ordinary68-existing-owner-report.json",
+            "sha256": "20a220113ffdfab3f716a979a4865573819ae98c967cb6d1b48986848fa1e23c"
+          },
+          "ordinary_scope": "Existing direct in-memory proof cache fixtures, including retirement and replacement-flight regression. Actual DuckDB SQL, Native Lean, legal and model qualification excluded.",
+          "prior_private_in_memory_fixture": {
+            "any_ordinary_credit": false,
+            "baseline_63_pass_5_fail": {
+              "failure": 5,
+              "pass": 63
+            },
+            "candidate": {
+              "bytes": 14081,
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/P1-clear-retired-proof-cache-flight-private-hh95ett_/SEALED-private-P1-clear-retired-flight-three-file-red-green.json",
+              "sha256": "1908bb8d90fb2272295fe34e3c941a2e419110d38b1df8218e0d6edb9c69c10d"
+            },
+            "corrected_68_pass": {
+              "pass": 68
+            }
+          },
+          "prior_two_pre_effect_setup_refusals": [
+            {
+              "SDK_calls": 0,
+              "Source_or_admission_entered": false,
+              "evidence": {
+                "bytes": 504,
+                "path": "/tmp/Root-existing-P1-clear-flight-ordinary68-v393-a3xuF3Ls/operator.stderr",
+                "sha256": "23d15060068d02e052fa4874f83eaa4df606003cbb0cb67a5feb8c4e530e6578"
+              },
+              "operator_terminal_rc": 1,
+              "retained": {
+                "bytes": 1240,
+                "path": "/tmp/Root-existing-P1-clear-flight-ordinary68-v393-a3xuF3Ls/Source-only-authorized-P1-clear-flight-ordinary68-cap-prior-retained.json",
+                "sha256": "b66cfc59417e1a06eb650af46e582329e583865df929f6f9d97bcd5d3a2fbe34"
+              }
+            },
+            {
+              "SDK_calls": 0,
+              "Source_or_admission_entered": false,
+              "evidence": {
+                "bytes": 439,
+                "path": "/tmp/Root-existing-P1-clear-flight-ordinary68-fixture-wire-v395-hnr3ozl4/operator.stderr",
+                "sha256": "f4fa2f1807914291db89d7032a358ccf5e947f23883c1ded98ebddfac7defa58"
+              },
+              "operator_terminal_rc": 1,
+              "retained": {
+                "bytes": 1240,
+                "path": "/tmp/Root-existing-P1-clear-flight-ordinary68-fixture-wire-v395-hnr3ozl4/Source-only-authorized-P1-clear-flight-ordinary68-cap-prior-retained.json",
+                "sha256": "3c62455e973ad06577e48689b6b47a72e3fc3372c5aed4e297dff711a91f2a3b"
+              }
+            }
+          ],
+          "protected_A_provenance": {
+            "HEAD": "190cb69b9035ea210d9af8817fbe76caf890b48f",
+            "actual_closed_Source_READ": {
+              "bytes": 9095,
+              "path": "/tmp/Root-P1-clear-flight-exact3-and-index-READ4-v392-jLGMjewp/actual-output/actual-D27-observed-D-root-initializer-Source-READ-v01-small-closeout.json",
+              "sha256": "2409edbf18516a5eab5bac58168f1134f184626aa883bb8f106206181a5b74af"
+            },
+            "clean_index_provenance_reference": {
+              "bytes": 2585,
+              "path": "/tmp/Root-P1-clear-flight-ordinary68-actual-READ4-nonclock-v392-153r4pw6/actual-P1-clear-flight-clean-D-A-index-provenance-v392.json",
+              "sha256": "61ef17f5bef31cdd1a7c4423c6c6f478ed355d2bc7fe384e626497412bf27b36"
+            },
+            "clean_worktree_and_index": true,
+            "local_frozen_Git_metadata_reference": {
+              "bytes": 12561,
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-guide531-four-doc-three-FF-publication-small-v387.json",
+              "sha256": "54a0008fd5c24c6e5c8d540828d1aa1298204cf09432302ee21c945794262d75"
+            },
+            "root": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/accelerate",
+            "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "tree": "a60ed4b66f2d828b6e22ace48588fb83c32fc7c6"
+          },
+          "publication_pending": false,
+          "publisher_preflight_refused_before_Git_due_to_incorrect_empty_descendant_assumption": true,
+          "raw_JUnit": {
+            "bytes": 10147,
+            "path": "/tmp/Root-existing-P1-clear-flight-ordinary68-rewrite-wire-v396-rml2oydq/actual-output/P1-proof-cache-clear-retired-flight-ordinary68-run-result0-output1.bin",
+            "sha256": "04a89adf3f762c36ea63254b0e6c068776518c926436e99a3ab9b5318acfb073"
+          },
+          "repositories": {
+            "accelerate": {
+              "HEAD": "190cb69b9035ea210d9af8817fbe76caf890b48f",
+              "clean_worktree_and_index": true,
+              "origin_main": "190cb69b9035ea210d9af8817fbe76caf890b48f",
+              "tree": "a60ed4b66f2d828b6e22ace48588fb83c32fc7c6"
+            },
+            "datasets": {
+              "HEAD": "19621b48313fa4e8790ca118f500731d3ec6a7f5",
+              "clean_worktree_and_index": true,
+              "origin_main": "19621b48313fa4e8790ca118f500731d3ec6a7f5",
+              "tree": "349c1ab0d5306fbc9f83f1285e1cec1e33d42805"
+            },
+            "hallucinate": {
+              "HEAD": "cd22609306bddd94b3741e798b0bac36b75dec44",
+              "clean_worktree_and_index": true,
+              "origin_main": "cd22609306bddd94b3741e798b0bac36b75dec44",
+              "tree": "5cca9264b3e3cb4dff3a061809c18f79c6281ff0"
+            },
+            "root": {
+              "HEAD": "baa7c5f262a6830fa154c6ce4d728f316534c313",
+              "clean_worktree_and_index": true,
+              "origin_main": "baa7c5f262a6830fa154c6ce4d728f316534c313",
+              "tree": "e915b22eb9553d1c45d85835495ac4246b60ce95"
+            }
+          },
+          "sampled_process_cleanup": {
+            "all_observed_descendants_drained": true,
+            "executable_or_workload_identity_inferred": false,
+            "kernel_containment_attested": false,
+            "observed_descendants_by_phase": {
+              "collect": [
+                {
+                  "birth_ticks": 466536625,
+                  "parent_pid": 1409686,
+                  "pid": 1409714,
+                  "process_group_id": 1409686,
+                  "session_id": 1409686
+                }
+              ],
+              "run": [
+                {
+                  "birth_ticks": 466536688,
+                  "parent_pid": 1409726,
+                  "pid": 1409730,
+                  "process_group_id": 1409726,
+                  "session_id": 1409726
+                }
+              ]
+            }
+          },
+          "separate_case_counts": {
+            "new6": 6,
+            "retained62": 62
+          },
+          "verified_normal_fast_forward_order": [
+            "datasets",
+            "hallucinate",
+            "root"
+          ]
+        },
+        "phase2_private_unreviewed_7213_Parquet": {
+          "PyArrow_version": "25.0.1",
+          "actual_closed_one_child_five_raw_buffers": true,
+          "actual_full_custody": {
+            "bytes": 2211917,
+            "path": "/tmp/Root-Phase2-private-7213-Parquet-existing-R2-PyArrow-bound-v389-ceGTkQV9/actual-output/complete-existing-managed-7213-private-Parquet-custody-report.json",
+            "sha256": "5d1fc938cd8a30d598ebbe6cab201a904365ca3727603cdd0f3a5b84708210ef"
+          },
+          "actual_private_Parquet_compact": {
+            "bytes": 4853,
+            "path": "/tmp/Root-Phase2-private-7213-Parquet-existing-R2-PyArrow-bound-v389-ceGTkQV9/actual-7213-private-Parquet-pinned-roundtrip-and-tamper-refusal-small-v389.json",
+            "sha256": "91e425c0b4c34d1cf6ef34818888b6322fa524f543d883f1d065ada6eb95c91f"
+          },
+          "base_Git_HEADS": {
+            "accelerate": "190cb69b9035ea210d9af8817fbe76caf890b48f",
+            "datasets": "7fc2cde7dfda7be7035cb6b555d440e508473622"
+          },
+          "candidate": {
+            "bytes": 766660,
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/P2-7213-existing-documentary-proposal-graph-private-v1kt323v/existing-Parquet-snapshot-R2-payload-INERT-040o6dl5/candidate.json",
+            "sha256": "1e56eca9e6ab6a0f33f2296ba342f5d78a29d3e1bee301f637df1ab5c49809c9"
+          },
+          "current_full_retained_precharge": {
+            "bytes": 1595,
+            "path": "/tmp/Root-Phase2-private-7213-Parquet-existing-R2-PyArrow-bound-v389-ceGTkQV9/Source-only-existing-7213-Parquet-parent-prepaid.json",
+            "sha256": "f88ae53273eb85f3cd9bc944ea64da94882311a879c85358e5e59b4a15749c5b"
+          },
+          "exact_original_bundle_readback": true,
+          "external_original_manifest_sha256": "bfb16ba3e8f5fb172d3740d285d994542d38819680afe6a60c2ea91f94a55661",
+          "graph_cid": "baguqeerahzaza7otsw3kleq6gzmakgruycnit3tl3eayo6ki54dtgksoalga",
+          "ordinary_test_count": null,
+          "preserved_population": {
+            "edges": 5,
+            "nodes": 6
+          },
+          "prior_missing_PyArrow_closed_and_charged": {
+            "bytes": 1187,
+            "path": "/tmp/Root-Phase2-private-7213-Parquet-existing-R2-current-v388-wS6axFJW/actual-v388-private-7213-Parquet-PyArrow-unavailable-closeout-small.json",
+            "sha256": "3be86b2fc71ddc8859c8a077e2021d57b1fecd77f2de65f8ffc6fb5b26899b8f"
+          },
+          "private_unreviewed_candidate_exchange_only": true,
+          "raw_output_pins": {
+            "bundle/edges.parquet": {
+              "bytes": 3894,
+              "logical_name": "bundle/edges.parquet",
+              "origin": "actual ToolRunResult.output_files bytes; not to_dict decoded text",
+              "path": "/tmp/Root-Phase2-private-7213-Parquet-existing-R2-PyArrow-bound-v389-ceGTkQV9/actual-output/run.output.4.bin",
+              "sha256": "317d07f0b99b11bae1bfe25070be1e52c003145720b7e8d641629f9404049e91"
+            },
+            "bundle/manifest.json": {
+              "bytes": 854,
+              "logical_name": "bundle/manifest.json",
+              "origin": "actual ToolRunResult.output_files bytes; not to_dict decoded text",
+              "path": "/tmp/Root-Phase2-private-7213-Parquet-existing-R2-PyArrow-bound-v389-ceGTkQV9/actual-output/run.output.1.bin",
+              "sha256": "bfb16ba3e8f5fb172d3740d285d994542d38819680afe6a60c2ea91f94a55661"
+            },
+            "bundle/nodes.parquet": {
+              "bytes": 5225,
+              "logical_name": "bundle/nodes.parquet",
+              "origin": "actual ToolRunResult.output_files bytes; not to_dict decoded text",
+              "path": "/tmp/Root-Phase2-private-7213-Parquet-existing-R2-PyArrow-bound-v389-ceGTkQV9/actual-output/run.output.3.bin",
+              "sha256": "0c9e9f594567fdfb409abeb51d5070b07b28201e533069c6061b773ff23b277a"
+            },
+            "bundle/snapshot.json": {
+              "bytes": 5662,
+              "logical_name": "bundle/snapshot.json",
+              "origin": "actual ToolRunResult.output_files bytes; not to_dict decoded text",
+              "path": "/tmp/Root-Phase2-private-7213-Parquet-existing-R2-PyArrow-bound-v389-ceGTkQV9/actual-output/run.output.2.bin",
+              "sha256": "d0a5987d53e1b25f6e7b24f7c1fcb413e2827bf9162ef6ee89e820840259670d"
+            },
+            "exchange-observation.json": {
+              "bytes": 1484,
+              "logical_name": "exchange-observation.json",
+              "origin": "actual ToolRunResult.output_files bytes; not to_dict decoded text",
+              "path": "/tmp/Root-Phase2-private-7213-Parquet-existing-R2-PyArrow-bound-v389-ceGTkQV9/actual-output/run.output.0.bin",
+              "sha256": "3cc21fd02f763cf6161bd95f97fc2d0f16cc0b073796f2e188c9bc6697d1dbde"
+            }
+          },
+          "review_legal_corpus_training_gold_proof_and_model_qualification": false,
+          "same_length_tamper_refusal": {
+            "changed_sha256": "c4e986fcb1bcbc6da1ebc102b733b1c36c8cf127067b0cea9eb2c9008ea09e95",
+            "file": "nodes.parquet",
+            "refusal": "bundle file SHA256 differs: nodes.parquet",
+            "same_length": true
+          }
+        },
+        "previous_evidence_records_preserved": 531,
+        "prior_verified_guide531_publication": {
+          "bytes": 12561,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-guide531-four-doc-three-FF-publication-small-v387.json",
+          "sha256": "54a0008fd5c24c6e5c8d540828d1aa1298204cf09432302ee21c945794262d75"
+        },
+        "real_review_proof_promotion_and_model_pending": true,
+        "schema": "Guide532-closed-independent-Phase1-and-Phase2-available-evidence/v1",
+        "tasks_preserved": 24,
+        "training_mask": 0
+      },
+      "evidence_ordinal": 532,
+      "id": "phase1-memory-flight-ordinary68-phase2-private-7213-parquet-evidence532-20261125",
+      "observed_bytes": 22159,
+      "observed_sha256": "08e20cdfa1d4266782e94af1d9b1a7a25b741b966d0e2af8bdc790c46e311b04",
+      "path": "/tmp/P1-P2-guide532-single-consolidation-private-v01-ZqVsB7/one-existing-guide532-Phase1-ordinary68-and-Phase2-private-7213-Parquet-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Independent controlled evidence for the published Phase1 in-memory cache fix and the closed private, unreviewed Phase2 §7213 Parquet transport.",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
     }
   ]
 }
