@@ -319,6 +319,11 @@ def _require_disjoint_heldout_review(heldout, training_admission, training_rows,
         heldout_sources.add(tuple(identity[key] for key in source_fields))
     _require(not training_sources.intersection(heldout_sources),
              "heldout and TRAIN share a reviewed declared legal source identity")
+    # Different raw encodings and nonoverlapping spans can still belong to
+    # the same reviewed document. Keep the complete extracted view together.
+    training_views = {unit["source_version"]["extracted_view"]["sha256"] for unit in training_units}
+    _require(training_views.isdisjoint(unit["source_extracted_sha256"] for unit in group["source_units"]),
+             "heldout and TRAIN share a reviewed extracted source view")
     source_rows = [*queries, *training_rows]
     split_owner = bound.splits
     source_examples = [split_owner.LegalIRSplitExample.from_sample(row) for row in source_rows]

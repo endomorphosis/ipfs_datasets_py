@@ -2255,7 +2255,7 @@ def _fixture_reprofile_unicode_split(splits, manifest, rows):
 
 
 def _rich_v3_heldout_case(*, shared_provision=False, version="v3", shared_source_identity=False,
-        defer_heldout_check=False, training_prefix="T", split_overlap=None):
+        defer_heldout_check=False, training_prefix="T", split_overlap=None, shared_extracted_view=False):
     from tests.unit.optimizers.logic_theorem_optimizer import test_legal_span_consumer_binding as ch
     from tests.unit.logic.autoformal import test_legal_reviewed_norm_admission_v3 as mixed
     from ipfs_datasets_py.logic.autoformal import legal_reviewed_norm_admission_v3 as admission
@@ -2264,20 +2264,52 @@ def _rich_v3_heldout_case(*, shared_provision=False, version="v3", shared_source
     purpose = ("frozen-single-mixed-sort-component-with-reviewed-TRAIN-context/v1" if version == "v3"
                else ch.owner.REVIEWED_HELDOUT_CONTEXT_PURPOSE)
     populations, replays, exposures, components = {}, {}, {}, {}
+    train_permission = "TRAIN grants officers permission to inspect a register with a supervisor at an event and time."
+    holdout_permission = "QUERY permits covered officers to inspect records with supervisors at the designated event and time."
     for partition, prefix, operation in [("train", "T", "training"), ("holdout", "Q", "heldout_evaluation")]:
         texts = (["TRAIN defines covered officers by appointment to its independent coastal board.",
                   "TRAIN officers must send annual notices except when the coastal board excuses them.",
-                  "TRAIN grants officers permission to inspect a register with a supervisor at an event and time."]
+                  train_permission]
                  if partition == "train" else
                  ["QUERY establishes a covered officer through appointment by its separate inland council.",
                   "QUERY requires a covered officer to submit monthly statements unless an inland exemption applies.",
-                  "QUERY permits covered officers to inspect records with supervisors at the designated event and time."])
+                  holdout_permission])
         if partition == "holdout" and split_overlap in ("legacy_alias", "unicode_alias"):
             texts[2] = "TRAXN grants officers permission to inspect a regizter with a supervisor at an event and time."
         if partition == "holdout" and split_overlap == "unicode_second_alias":
             texts[2] = "SECXND permits inspectors to examine inventzries with assistants at a specified event and time."
         source_bindings = None
-        if shared_source_identity and partition == "holdout":
+        if shared_extracted_view:
+            from ipfs_datasets_py.logic.autoformal import corpus_source
+            # The selected passages are independent text samples. The full
+            # extracted document is the same, with different raw encodings.
+            separator = "\n§\n"
+            view = train_permission + separator + holdout_permission
+            source_bindings = {}
+            instrument = "fixture:rich-mixed-" + prefix.lower()
+            for index, text in enumerate(texts):
+                unit_id = f"{instrument}/unit-{index + 1}"
+                extracted = view if index == 2 else text
+                start = len(train_permission + separator) if index == 2 and partition == "holdout" else 0
+                end = start + len(text)
+                bom = index == 2 and partition == "holdout"
+                encoding = "utf-8-sig" if bom else "utf-8"
+                raw = extracted.encode(encoding)
+                assert raw.decode(encoding) == extracted and extracted[start:end] == text
+                raw_sha, view_sha = hashlib.sha256(raw).hexdigest(), ch.source_digest(extracted)
+                source = corpus_source.build_source_version(
+                    source_id=unit_id, release_id=instrument, edition="fictional-edition-1",
+                    provision_id=unit_id, raw_bytes=raw, expected_raw_sha256=raw_sha,
+                    extracted_text=extracted, expected_extracted_sha256=view_sha,
+                    extraction_profile="fixture:utf8-sig/v1" if bom else "identity/v1",
+                    normalization_profile="identity/v1", media_type="text/plain")
+                occurrence = corpus_source.build_source_occurrence(source,
+                    expected_raw_sha256=raw_sha, extracted_text=extracted, expected_extracted_sha256=view_sha,
+                    start_char=start, end_char=end, start_utf8=len(extracted[:start].encode("utf-8")),
+                    end_utf8=len(extracted[:end].encode("utf-8")))
+                source_bindings[unit_id] = dict(source_version=source, occurrence=occurrence,
+                    raw_bytes=raw, extracted_text=extracted)
+        elif shared_source_identity and partition == "holdout":
             from ipfs_datasets_py.logic.autoformal import corpus_source
             source_bindings = {}
             for index, text in enumerate(texts):
@@ -4481,3 +4513,31 @@ def test_aggregate_v4_holds_out_unicode_near_duplicate_from_unselected_component
             "reviewed-source-span-producer-heldout-aggregate-TRAIN/v4"
         )
         assert artifact.to_dict()["metrics"]["complete_norm_payload"]["denominator"] == 3
+
+
+@pytest.mark.parametrize("version", ["v2", "v3"])
+def test_reviewed_rich_heldout_same_extracted_view_refuses_before_actual_producer(version):
+    ch, options, populations, _, components = _rich_v3_heldout_case(
+        version=version, shared_extracted_view=True, defer_heldout_check=True)
+    context = options["reviewed_training_context"]
+    assert options["binding"].receipt()["status"] == context["binding"].receipt()["status"] == "ready"
+    assert ch.splits.require_legal_ir_split_guard(context["split_manifest"]).passed
+    training = components["train"]["declaration"]["units"][2]
+    heldout = components["holdout"]["declaration"]["units"][2]
+    left, right = training["source_version"], heldout["source_version"]
+    assert left["extracted_view"]["sha256"] == right["extracted_view"]["sha256"]
+    assert left["raw_artifact"]["sha256"] != right["raw_artifact"]["sha256"]
+    assert left["record_cid"] != right["record_cid"]
+    assert all(left[key] != right[key] for key in ("source_id", "release_id", "provision_id"))
+    assert training["occurrence"]["record_cid"] != heldout["occurrence"]["record_cid"]
+    assert training["occurrence"]["end_char"] < heldout["occurrence"]["start_char"]
+    assert populations["train"][2]["source_text"] != populations["holdout"][2]["source_text"]
+    calls = []
+
+    def producer(arguments):
+        calls.append(arguments)
+        return [dict(id=row["id"], outcome="abstained", candidate=None) for row in arguments]
+
+    with pytest.raises(ValueError, match="heldout and TRAIN share a reviewed extracted source view"):
+        _producer_evaluate(options, producer)
+    assert not calls
