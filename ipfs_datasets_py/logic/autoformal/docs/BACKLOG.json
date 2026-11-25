@@ -3497,6 +3497,37 @@
       "existing_caller_coordination": "24 fictional transport PASS; Root active-steer/loaded-idle enqueues only; no new live unloaded-resume experiment or authority",
       "all24_tasks126_components517_prior_records_preserved": true,
       "full_eight_phase_goal_complete": false
+    },
+    "p1_get_snapshot183_public_v4_revocation5_finalizer_closed_software_evidence_20261125": {
+      "P1_functions": 68,
+      "P1_new": 5,
+      "P1_public_ordinary_unique_PASS": 183,
+      "P1_retained": 178,
+      "SQL51_companion_Main_SQL_SQLget_Native": "UNRUN; historical SQL51 v287 zero tests/no grant retained",
+      "Source_resource_cleanup_closed": true,
+      "V4_case_vector": [
+        1,
+        2,
+        1,
+        1
+      ],
+      "V4_functions": 4,
+      "V4_new": 1,
+      "V4_public_ordinary_unique_PASS": 5,
+      "V4_retained": 4,
+      "all24_tasks126_components518_prior_records_preserved": true,
+      "cap_header_policy_eligibility_unchanged": true,
+      "evidence_ordinal": 519,
+      "facts": {
+        "bytes": 9564,
+        "path": "/tmp/P1-guide519-single-consolidation-private-v01/one-existing-guide519-closed-software-facts.json",
+        "sha256": "9d30841e575d98c036965427b2430e90eef2d9e7923560e43bc6bf16fb5f8395"
+      },
+      "full_eight_phase_goal_complete": false,
+      "genuine_fictional_revocation_blocks_semantic_use_and_masks_zero": true,
+      "private_same5_and_SAME2_six_subcases_separate": true,
+      "record_id": "p1-get-snapshot183-v4-revocation5-finalizer-software-evidence519-20261125",
+      "status": "closed_software_evidence_only_no_task_status_change"
     }
   },
   "programme_goal_hierarchy": {

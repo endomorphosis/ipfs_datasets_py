@@ -26271,6 +26271,228 @@
           "composer_Source_Git_runtime_effects": false
         }
       }
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/p1_get_snapshot183_public_v4_revocation5_finalizer_closed_software_evidence_20261125",
+      "closed_software_facts": {
+        "P1_checked_get_snapshot": {
+          "SQL_get_branch_tested": false,
+          "Source3_WRITE": {
+            "bytes": 4996,
+            "path": "/tmp/Root-P1-get-checked-snapshot-Source3-selected-v300-ns14glqj/Root-P1-get-snapshot-three-installed-Source-closed-small-v300.json",
+            "sha256": "bee1145054757a6292b28b7b02ea262c32497ed9b83025b7d7745984415dba17"
+          },
+          "behavior": "Existing get() re-evaluates the exact refetched canonical snapshot under its existing lock/transaction before returning reuse; full existing caller policy and current snapshot identity are retained.",
+          "fresh_private_same5": {
+            "baseline_fail": 2,
+            "baseline_pass": 3,
+            "candidate_pass": 5,
+            "errors": 0,
+            "final_cleaned_owning_test_sha256": "4e012101e4400324175c02d296b51abde97d065c76abfddef1b51d16329f639d",
+            "separate_from_public183": true,
+            "skips": 0
+          },
+          "get_or_compute_and_original_SQL_waiter_branch_preserved_exactly": true,
+          "no_SQL_read_count_change_claimed": true,
+          "only_store_get_behavior_changed": true,
+          "public_ordinary": {
+            "D_HEAD": "8aebc34eb1e430b00c2b941cb256e853fe2adc02",
+            "D_tree": "00cef1abedbef0ae383dc07df5f5efb22f5253bd",
+            "Source_resource_cleanup_closed": true,
+            "actual7_module_Source_AST_code_witnesses": true,
+            "duplicates": 0,
+            "errors": 0,
+            "failures": 0,
+            "function_vector_and_collect_RUN_JUnit_order_exact": true,
+            "functions": 68,
+            "new": 5,
+            "normal_conftests": [
+              "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/conftest.py",
+              "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/tests/conftest.py",
+              "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/tests/unit/conftest.py"
+            ],
+            "normal_pytest_ini": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/pytest.ini",
+            "publication": {
+              "bytes": 6094,
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P1-get-snapshot-ordinary183-three-FF-publication-v301.json",
+              "sha256": "b22af2033775c684dd34600f297090ebf70c287610fa0fdd1920c5179bd13ecb"
+            },
+            "qualification": {
+              "bytes": 3725,
+              "path": "/tmp/Root-P1-get-snapshot-ordinary183-v301-bknpttsl/Root-P1-get-checked-snapshot-ordinary183-qualified-small-v301.json",
+              "sha256": "a91378b44a708e3bffe7307fc0fd8b09c75ead0d600e89c1f22991c470da25f2"
+            },
+            "raw_JUnit": {
+              "bytes": 29719,
+              "logical_name": "junit.xml",
+              "path": "/tmp/Root-P1-get-snapshot-ordinary183-v301-bknpttsl/actual-output/P1-get-checked-snapshot183-run-result0-output1.bin",
+              "sha256": "9dc5f03761790f897d5c9991ee40cea965f7f88fcc84df3561ec14f6cb711962"
+            },
+            "retained": 178,
+            "skips": 0,
+            "unique_PASS": 183
+          },
+          "published_roles": {
+            "ipfs_datasets_py/logic/common/duckdb_proof_store.py": {
+              "blob_oid": "08cfbf5a1ba36fca739215062b120464f5640379",
+              "bytes": 111908,
+              "sha256": "5a614b0a1e3ee3b9f3dbc10e80950aff9ed5f19754e45f0cb5ceac5acdcfc400"
+            },
+            "tests/integration/logic/backends/test_kernel_backends.py": {
+              "blob_oid": "e18eec7a0b92a20d02a672559713a0923f3ad7a5",
+              "bytes": 111809,
+              "sha256": "5b57349bce86ec8d308f87802f9dc96195d56da15ec849a705f0b5b2a5ad1549"
+            },
+            "tests/unit/logic/legal_ir/test_proof_cache.py": {
+              "blob_oid": "4525114941200e1d74adf6b45449e03b2dd2c1a2",
+              "bytes": 97545,
+              "sha256": "4e012101e4400324175c02d296b51abde97d065c76abfddef1b51d16329f639d"
+            }
+          }
+        },
+        "V4_genuine_fictional_revocation": {
+          "child_CLI_compile_witness_claimed": false,
+          "evaluation_gold_mask": 0,
+          "fresh_real_Ed25519_fictional_fixture": true,
+          "genuine_legal_reviewer_or_statutory_admission": false,
+          "key_revoked_blocker_observed": true,
+          "permitted_uses": [],
+          "prior_private_physical_setup1_and137_retained": true,
+          "public_ordinary": {
+            "D_HEAD": "68e3739ffd64e54016133d3d1e0304c6302da1b1",
+            "D_tree": "754fd9f796439076c1bb71e14ec6430f505f3b99",
+            "Source_resource_and_parent_cleanup_closed": true,
+            "case_vector": [
+              1,
+              2,
+              1,
+              1
+            ],
+            "collect_RUN_JUnit_order_exact": true,
+            "duplicates": 0,
+            "errors": 0,
+            "failures": 0,
+            "functions": 4,
+            "lazy_coordinator_loaded_and_compiled_at_terminal": true,
+            "new": 1,
+            "normal3_conftests_ini_Source_AST_code_witnesses": true,
+            "publication": {
+              "bytes": 5030,
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P2-public-V4-revoked-key-ordinary5-three-FF-publication-v304.json",
+              "sha256": "dfb92f32c779cd2e415e58c44aae17ca0587d973fb73e7b037bc6169489d3f2b"
+            },
+            "qualification": {
+              "bytes": 3483,
+              "path": "/tmp/Root-P2-V4-revoked-key-ordinary5-v304-rcymoyx1/Root-public-V4-revoked-key-ordinary5-qualified-small-v304.json",
+              "sha256": "dc13b206148a64946916bc8a74d77613ff81747fc86fbad8078aca20dfbde467"
+            },
+            "raw_JUnit": {
+              "bytes": 1068,
+              "logical_name": "junit.xml",
+              "path": "/tmp/Root-P2-V4-revoked-key-ordinary5-v304-rcymoyx1/actual-output/corpus-release-public-v4-revocation-ordinary5-run-result0-output1.bin",
+              "sha256": "abcf68eaf6455b4125cca380c82a5bcf1b42fda5a490d98dd6864f79820d08a4"
+            },
+            "retained": 4,
+            "skips": 0,
+            "unique_PASS": 5
+          },
+          "same_fixture_request_re_signed_and_key_revoked": true,
+          "semantic_use_eligible": false,
+          "stale_report_and_fresh_consistently_rehashed_ineligible_report_refused": true,
+          "training_mask": 0
+        },
+        "evidence_ordinal": 519,
+        "inherited_finalizer": {
+          "Main_packet": {
+            "bytes": 13605,
+            "path": "/tmp/Main-inherited-ordinary-finalizer-regressions-private-v01/sealed-same-existing-operator-finalizer-correction-GREEN-successors-v03.json",
+            "sha256": "bd07ba6adf08a7f071fcf1147dac7fa2ef3a567f079078d6d1882c1804980d8d"
+          },
+          "Source_SDK_resource_boundary_calls_in_controls": 0,
+          "active_primary_exception_preserved_and_no_primary_cleanup_error_rethrown": true,
+          "actual_private_GREEN_failures_errors_skips": 0,
+          "actual_private_RED_failure_observations": 6,
+          "cleanup_failure_forces_inmemory_and_immutable_qualification_false": true,
+          "counts_overlap_not_additive": true,
+          "ordinary183_and5_completed_normal_cleanup_without_injected_fault": true,
+          "owned_cleanup_precedes_single_immutable_report": true,
+          "same_method_assertion_ASTs": true,
+          "same_two_parent_methods": 2,
+          "separate_from_public183_and_public5": true,
+          "three_profile_fictional_subcases": 6
+        },
+        "latest_publication": {
+          "all_four_clean_and_actual_origin_main_equal": true,
+          "exact_intended_gitlinks_other_paths_preserved": true,
+          "receipt": {
+            "bytes": 5030,
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P2-public-V4-revoked-key-ordinary5-three-FF-publication-v304.json",
+            "sha256": "dfb92f32c779cd2e415e58c44aae17ca0587d973fb73e7b037bc6169489d3f2b"
+          },
+          "repositories": {
+            "accelerate": {
+              "HEAD": "88c0d9f82f66aaddbb01344c9f85236e92a5dc88",
+              "tree": "416a953630c9ba7ef521fd87bf821f075b052efc"
+            },
+            "datasets": {
+              "HEAD": "68e3739ffd64e54016133d3d1e0304c6302da1b1",
+              "tree": "754fd9f796439076c1bb71e14ec6430f505f3b99"
+            },
+            "hallucinate": {
+              "HEAD": "98f3387686debc5fb75a495850b62a26a0fe0eeb",
+              "tree": "e6a75fd04dcda3ca1b23dee522d425ab02da5176"
+            },
+            "root": {
+              "HEAD": "a3cf10cef76a7178c5e83a84947430f507775684",
+              "tree": "a6c184330093b0b4ee7a60603567a6cc6b141ebb"
+            }
+          },
+          "three_normal_child_first_fast_forwards_each_publication": true
+        },
+        "maintenance": {
+          "all_status_dependencies_acceptance_values_and_MD_prefixes_preserved": true,
+          "components": 126,
+          "composer_Source_Git_runtime_effects": false,
+          "one519_only": true,
+          "prior_evidence_records_preserved": 518,
+          "tasks": 24
+        },
+        "no_promotions": {
+          "hosted_CI": false,
+          "proof_authenticity_Native_or_Lean_compilation": false,
+          "substantive_statutory_meaning_or_independent_legal_review": false,
+          "training_fit_model_quality": false,
+          "training_gold_legal_admission": false,
+          "whole_eight_phase_goal_complete": false
+        },
+        "record_id": "p1-get-snapshot183-v4-revocation5-finalizer-software-evidence519-20261125",
+        "retained_limits": {
+          "SQL51_qualification": "UNRUN",
+          "SQL51_v287_admission_or_grant": false,
+          "SQL51_v287_tests": 0,
+          "SQL_companion_and_Main_genuine_SQL_test": "UNRUN",
+          "SQL_get_branch": "UNRUN",
+          "SQL_or_Native_retried": false,
+          "actual_Native": "UNRUN",
+          "cap_header_scheduler_policy_eligibility_unchanged": true,
+          "configured_limit_bytes": 250000000000,
+          "original_v287_failure_and_identity_bound_Source_custody_recovery_retained": true,
+          "physical_IO_accounting_complete": false,
+          "real_statutory_pilot": "UNSIGNED_UNADMITTED",
+          "retroactive_v287_typed_terminal_credit": false,
+          "unchanged_ledger_header_bytes": 280000000000
+        },
+        "schema": "one-existing-guide519-closed-software-facts/v1"
+      },
+      "evidence_ordinal": 519,
+      "id": "p1-get-snapshot183-v4-revocation5-finalizer-software-evidence519-20261125",
+      "observed_bytes": 9564,
+      "observed_sha256": "9d30841e575d98c036965427b2430e90eef2d9e7923560e43bc6bf16fb5f8395",
+      "path": "/tmp/P1-guide519-single-consolidation-private-v01/one-existing-guide519-closed-software-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Published P1 ordinary183 checked-snapshot and public V4 ordinary5 genuine fictional revoked-reviewer refusals; inherited-finalizer private controls remain separate. SQL/Native and legal/training/full-goal qualification are not promoted.",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
     }
   ]
 }
