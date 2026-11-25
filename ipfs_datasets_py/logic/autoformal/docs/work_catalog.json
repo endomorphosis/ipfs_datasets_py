@@ -27689,6 +27689,298 @@
       "root": "artifact_workspace",
       "scope": "Published V4 reviewed graph consistency across nine standard fictional Parquet software cases. Title10 review, real release readiness and model work remain pending. All existing task and component values remain unchanged.",
       "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase6_civil_deadline_source_withheld_ordinary26_closed_software_evidence_20261125",
+      "closed_software_facts": {
+        "authored_fixture": {
+          "business_calendar_coverage": [
+            "2024-05-24",
+            "2024-05-31"
+          ],
+          "business_day_due_date": "2024-05-29",
+          "calendar_day_due_date": "2024-05-26",
+          "complete_listed_business_dates": [
+            "2024-05-28",
+            "2024-05-29"
+          ],
+          "inclusive": true,
+          "interpretation": "Fixture assertions only. The two listed business dates are explicit caller data, not statutory holiday semantics. Due-date equality is specific to that context.",
+          "offset": 2,
+          "opposite_unit_case": "Calendar reference versus business candidate yields May26 versus May29; canonical prose, complete typed structure and due dates differ even when original_utf8_exact is true.",
+          "relation": "after",
+          "source_newline_case": "Adding a newline to the optional original changes UTF8 exactness without changing successful canonical/typed/date comparisons.",
+          "trigger_civil_date": "2024-05-24",
+          "trigger_event": "notice"
+        },
+        "closed_code_publication": {
+          "Guide524_and_v331_code_fences_preserved": {
+            "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json": "5eece49b0246023cb462ccf0da79822c5f029601",
+            "ipfs_datasets_py/logic/autoformal/docs/HANDOFF.md": "2d3b3fbb4cdad708ba32677ef04f5f7cfcad204d",
+            "ipfs_datasets_py/logic/autoformal/docs/TRAINING_HISTORY.md": "6c48e1d646b74185567f700d7affbeeae7c3cc94",
+            "ipfs_datasets_py/logic/autoformal/docs/work_catalog.json": "8b7093686d1fc80980d43b9b380b0515d297832a",
+            "ipfs_datasets_py/logic/autoformal/legal_release_coordinator_v1.py": "2faa76f3b111b3d68c814eb0eb0db7724a7a18f8",
+            "tests/unit/logic/autoformal/test_corpus_release_cli.py": "9dbd1c45ede27e34652cf872fb9aebfc06b996b8"
+          },
+          "exact_three_code_files": {
+            "ipfs_datasets_py/logic/TDFOL/compiler_repairs.py": {
+              "bytes": 11393,
+              "full9": {
+                "st_ctime_ns": "1795628850442232202",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70042570",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795628850155534319",
+                "st_nlink": "1",
+                "st_size": "11393",
+                "st_uid": "1000"
+              },
+              "git_blob": "b914db06cd23be92ae0a24bcfb35c1b19d3fd1a3",
+              "mode": "100644",
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/ipfs_datasets_py/logic/TDFOL/compiler_repairs.py",
+              "prior_blob": "427d9076fd2895483f1b2b9d429f8f89a60cbf1a",
+              "sha256": "248dd9a3c9be8b21fb75799415aa6a72c6d81d7c559ed7579fa3f4a69660b823",
+              "stage0_blob": "b914db06cd23be92ae0a24bcfb35c1b19d3fd1a3"
+            },
+            "ipfs_datasets_py/logic/formalization/autoencoder/ir_legal_text_roundtrip.py": {
+              "bytes": 41678,
+              "full9": {
+                "st_ctime_ns": "1795628850725237205",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70042571",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795628850159251472",
+                "st_nlink": "1",
+                "st_size": "41678",
+                "st_uid": "1000"
+              },
+              "git_blob": "1fe01f9216329b977e28f9948344371536dec75b",
+              "mode": "100644",
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/ipfs_datasets_py/logic/formalization/autoencoder/ir_legal_text_roundtrip.py",
+              "prior_blob": "a074e58176770f48afc5ce7f7e7ff93890d5656f",
+              "sha256": "89f02cebfc5db384ffd23b6b185d05a87e76f5eb9c1771f6a2ad121d2f666518",
+              "stage0_blob": "1fe01f9216329b977e28f9948344371536dec75b"
+            },
+            "tests/unit/logic/formalization/autoencoder/test_ir_legal_text_roundtrip.py": {
+              "bytes": 67196,
+              "full9": {
+                "st_ctime_ns": "1795628851014242313",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70042572",
+                "st_mode": "33188",
+                "st_mtime_ns": "1795628850162856080",
+                "st_nlink": "1",
+                "st_size": "67196",
+                "st_uid": "1000"
+              },
+              "git_blob": "cbc3e7b2a6a3b162bbd9c3e0a263a06b5e28e4b3",
+              "mode": "100644",
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/tests/unit/logic/formalization/autoencoder/test_ir_legal_text_roundtrip.py",
+              "prior_blob": "31c949b5b573be357f2c5fbe4d3eb78b05e6e224",
+              "sha256": "a2d26968deb8ebfec4705f2b85100c80ccdbe6239a1d6d6ac79760154523c978",
+              "stage0_blob": "cbc3e7b2a6a3b162bbd9c3e0a263a06b5e28e4b3"
+            }
+          },
+          "genuinely_closed": true,
+          "no_test_CI_Source_replay_in_publication": true,
+          "normal_child_first_order": [
+            "datasets",
+            "hallucinate",
+            "root"
+          ],
+          "receipt": {
+            "bytes": 11179,
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase6-civil-deadline-ordinary26-three-FF-publication-v333.json",
+            "sha256": "8c394d323dbedda91b04b6ecc7280197d75c1b618f5fa25f3b845e4de8481a71"
+          },
+          "repositories": {
+            "accelerate": {
+              "HEAD": "88c0d9f82f66aaddbb01344c9f85236e92a5dc88",
+              "clean_worktree_and_index": true,
+              "origin_main": "88c0d9f82f66aaddbb01344c9f85236e92a5dc88",
+              "tree": "416a953630c9ba7ef521fd87bf821f075b052efc"
+            },
+            "datasets": {
+              "HEAD": "b48940317a7174a3f48895e2e37fcde597d7407d",
+              "clean_worktree_and_index": true,
+              "origin_main": "b48940317a7174a3f48895e2e37fcde597d7407d",
+              "tree": "e1416fd9427480925489a6c81c202f9bc99db9c2"
+            },
+            "hallucinate": {
+              "HEAD": "1bde96288d837e92157c734275b8be00992a390b",
+              "clean_worktree_and_index": true,
+              "origin_main": "1bde96288d837e92157c734275b8be00992a390b",
+              "tree": "bf67553c4eec9e82befd82a78ffffefcc98f1807"
+            },
+            "root": {
+              "HEAD": "318bd71df70fa393f8ae7582285f0306eb259c35",
+              "clean_worktree_and_index": true,
+              "origin_main": "318bd71df70fa393f8ae7582285f0306eb259c35",
+              "tree": "c0b8c0c31ef10f5111c8054f45e418cffb9d4dd6"
+            }
+          }
+        },
+        "evidence_ordinal": 525,
+        "implemented_behavior": {
+          "abstention_and_refusal": "Unsupported controlled prose abstains; missing or different named anchor, absent business calendar, trigger outside coverage and insufficient listed workdays refuse. Calendar arithmetic overflow refuses.",
+          "core_APIs": [
+            "CivilWorkdayCalendar",
+            "evaluate_civil_deadline"
+          ],
+          "core_owner": "ipfs_datasets_py/logic/TDFOL/compiler_repairs.py",
+          "date_context_used_after_candidate_reconstruction": true,
+          "distinct_measurements": [
+            "original_utf8_exact",
+            "canonical_prose_exact",
+            "complete_typed_structure_exact",
+            "due_dates_exact"
+          ],
+          "existing_typed_wire_and_prior_compiler_behavior_preserved": true,
+          "explicit_business_calendar": "CivilWorkdayCalendar gives a closed coverage interval and the complete strictly ordered caller-supplied tuple of business dates; no weekday or jurisdiction holiday rule is inferred.",
+          "inverse_inputs": {
+            "candidate_prose": true,
+            "date_and_calendar_context": false,
+            "fixed_profile": true,
+            "original_source": false,
+            "reference_IR": false
+          },
+          "old_heavy_interpretation_owner_not_rotated": "ipfs_datasets_py/logic/autoformal/legal_temporal_deadline_interpretation.py",
+          "owning_test": "tests/unit/logic/formalization/autoencoder/test_ir_legal_text_roundtrip.py",
+          "scorer_API": "score_deadline_legal_text_roundtrip",
+          "scorer_owner": "ipfs_datasets_py/logic/formalization/autoencoder/ir_legal_text_roundtrip.py",
+          "supported_profile": "Existing TYPED_DEADLINE_PROSE_PROFILE controlled prose; civil-date evaluation of inclusive after/event TemporalDeadline with calendar_days or business_days only."
+        },
+        "limits": {
+          "Guide525_canonical_adoption_or_publication_claimed": false,
+          "Title10_independent_legal_formal_review": "pending",
+          "actual_statutory_admission": false,
+          "court_or_statutory_deadline_authority": false,
+          "evaluation_gold_mask": 0,
+          "full_eight_phase_goal_complete": false,
+          "legal_semantics_or_source_correspondence_verified": false,
+          "model_quality_training_or_convergence_authority": false,
+          "new_service_activation_or_runtime_execution_by_composer": false,
+          "proof_or_Native_Lean_qualification": false,
+          "real_release_and_model_work": "pending",
+          "training_mask": 0
+        },
+        "maintenance": {
+          "all_previous_JSON_values_and_statuses_preserved": true,
+          "all_prior_failures_and_source_identities_retained": true,
+          "components": 126,
+          "composer_canonical_Source_Git_SQL_product_import_test_or_model_actions": false,
+          "entire_previous_Markdown_prefixes_preserved": true,
+          "new_evidence_record": 525,
+          "prior_evidence_records": 524,
+          "tasks": 24
+        },
+        "ordinary_qualification": {
+          "Source_and_resource_parent_home_closed": true,
+          "collect_run_and_JUnit_exact_order": true,
+          "detached_scorer_and_owning_test_Source_execution_verified": true,
+          "duplicates": 0,
+          "errors": 0,
+          "failures": 0,
+          "frozen_D_HEAD": "b48940317a7174a3f48895e2e37fcde597d7407d",
+          "frozen_D_tree": "e1416fd9427480925489a6c81c202f9bc99db9c2",
+          "full_report": {
+            "bytes": 866253,
+            "path": "/tmp/Root-Phase6-civil-deadline-ordinary26-selected-v333-5zx73okc/actual-output/complete-frozen-local-D-phase6-civil-deadline-source-withheld26-existing-owner-report.json",
+            "sha256": "3918484530c09d6161e5616d6b7fc469f79fe06e865700adaeac62f990fb54f8"
+          },
+          "function_case_vector": [
+            1,
+            1,
+            5,
+            1,
+            3,
+            3,
+            1,
+            1,
+            2,
+            1,
+            1,
+            1,
+            2,
+            3
+          ],
+          "functions": 14,
+          "new_civil_deadline_cases": 10,
+          "physical_IO_accounting_complete": false,
+          "raw_JUnit": {
+            "bytes": 6053,
+            "logical_name": "junit.xml",
+            "path": "/tmp/Root-Phase6-civil-deadline-ordinary26-selected-v333-5zx73okc/actual-output/phase6-civil-deadline-source-withheld26-run-result0-output1.bin",
+            "sha256": "17779b65f9c6c176df02f85ec1cdc678430f8e56ff804a166ba6d6a194e8e785"
+          },
+          "receipt": {
+            "bytes": 2905,
+            "path": "/tmp/Root-Phase6-civil-deadline-ordinary26-selected-v333-5zx73okc/Root-Phase6-civil-deadline-ordinary26-qualified-Source-closed-small-v333.json",
+            "sha256": "c4a6e3eb633f589c6ba8ed850a081408e3d4dd550fb8d098c603c7057734d879"
+          },
+          "retained_cases": 16,
+          "scope": "Controlled-prose civil-date fixtures and retained inverse tests; not a whole-file or general legal qualification.",
+          "skips": 0,
+          "unique_physical_PASS": 26
+        },
+        "schema": "guide525-civil-deadline-source-withheld-ordinary26-scoped-facts/v1",
+        "separate_private_SAME24": {
+          "Source_or_public_ordinary_qualification_from_private_run": false,
+          "candidate": {
+            "errors": 0,
+            "failures": 0,
+            "passed": 24,
+            "raw_JUnit": {
+              "bytes": 5500,
+              "path": "/tmp/Root-Phase6-civil-deadline-existing-private-pytest-v333-505kj_w3/candidate-v03-attempt/result.xml",
+              "sha256": "8bfa1ee1f485db48d8dd918f03b0ce2ace2ac41f4dd12ac881962cd0004bfe5d"
+            },
+            "skips": 0
+          },
+          "initial_missing_private_dependencies_remain_nonqualifying": true,
+          "not_added_to_ordinary26": true,
+          "original": {
+            "JUnit_failure_count": 10,
+            "errors": 0,
+            "missing_new_entrypoint_cases": 10,
+            "passed": 14,
+            "raw_JUnit": {
+              "bytes": 12986,
+              "path": "/tmp/Root-Phase6-civil-deadline-existing-private-pytest-v333-505kj_w3/original-v03-attempt/result.xml",
+              "sha256": "da0af6af8ebeb0153f84ad556c20d3c6f58d061225cf588b37dc5a1c2315e2b3"
+            },
+            "skips": 0
+          },
+          "receipt": {
+            "bytes": 11981,
+            "path": "/tmp/Root-Phase6-civil-deadline-existing-private-pytest-v333-505kj_w3/sealed-existing-civil-deadline-SAME24-private-closeout-v03.json",
+            "sha256": "1bb5cc6c4515015975e491ec1ec7e0040d3dcc50a57e90a4d993851205678e84"
+          },
+          "same_roster_and_variants": {
+            "bytes": 7053,
+            "path": "/tmp/Root-Phase6-civil-deadline-existing-private-pytest-v333-505kj_w3/exact-same-private-deadline-case-roster-and-variant-overlay-v03.json",
+            "sha256": "bf791a4a99f2f1ddd94b7635a68e1e88d4d5da6029f01695b5350297af942231"
+          },
+          "scope": "Same private24 controls: original14 pass plus10 missing-new-entrypoint failures, candidate24 pass. This is a separate historical before/after fixture result, not50 ordinary tests.",
+          "source_ports": {
+            "bytes": 2741,
+            "path": "/tmp/Root-Phase6-civil-deadline-existing-private-pytest-v333-505kj_w3/exact3-shared-TDFOL-deadline-owner-successors-v03.json",
+            "sha256": "48199ece0475a836916dd07a4b3c974f03fc10392fe460c13dace082b6f7865e"
+          }
+        }
+      },
+      "evidence_ordinal": 525,
+      "id": "phase6-civil-deadline-source-withheld-ordinary26-closed-software-evidence525-20261125",
+      "observed_bytes": 12786,
+      "observed_sha256": "af4fc857efbe5f1fc46c870412d54485bbc698f4e0711d746a9f0fc867cf7e90",
+      "path": "/tmp/P6-guide525-single-consolidation-private-v01-ifxu4wfk/one-existing-guide525-civil-deadline-ordinary26-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Published controlled-prose civil-date roundtrip software with an exact26-case ordinary cohort. Private SAME24 remains separate. No legal/proof/model authority or task-status change.",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
     }
   ]
 }

@@ -3675,6 +3675,43 @@
       "status": "closed_software_evidence_only_no_task_status_change",
       "three_normal_child_first_publications_closed": true,
       "training_and_gold_masks": 0
+    },
+    "phase6_civil_deadline_source_withheld_ordinary26_closed_software_evidence_20261125": {
+      "Source_SDK_resource_parent_closed": true,
+      "Title10_review_real_release_and_model_pending": true,
+      "all24_tasks126_components524_old_evidence_values_preserved": true,
+      "evidence_ordinal": 525,
+      "facts": {
+        "bytes": 12786,
+        "path": "/tmp/P6-guide525-single-consolidation-private-v01-ifxu4wfk/one-existing-guide525-civil-deadline-ordinary26-scoped-facts.json",
+        "sha256": "af4fc857efbe5f1fc46c870412d54485bbc698f4e0711d746a9f0fc867cf7e90"
+      },
+      "full_eight_phase_goal_complete": false,
+      "function_case_vector": [
+        1,
+        1,
+        5,
+        1,
+        3,
+        3,
+        1,
+        1,
+        2,
+        1,
+        1,
+        1,
+        2,
+        3
+      ],
+      "new_cases": 10,
+      "ordinary_functions": 14,
+      "private_SAME24_separate": true,
+      "public_civil_deadline_unique_PASS": 26,
+      "record_id": "phase6-civil-deadline-source-withheld-ordinary26-closed-software-evidence525-20261125",
+      "retained_cases": 16,
+      "status": "closed_software_evidence_only_no_task_status_change",
+      "three_normal_child_first_code_publications_closed": true,
+      "training_and_gold_masks": 0
     }
   },
   "programme_goal_hierarchy": {
