@@ -89,6 +89,7 @@ def prepare_qualified_legal(rows, *, toolchain):
         "LegalCalendar/Prelude.lean": "namespace LegalCalendar\n" + emitters.PRELUDE + "\nend LegalCalendar\n",
     }
     candidates, imports = [], []
+    producer_pins = dict(_IMPORTED_PINS)
     for index, entry in enumerate(inputs):
         candidate = entry["candidate"]
         record = {"candidate_id": candidate["candidate_id"], "source_sha256": candidate["source_sha256"],
@@ -100,6 +101,11 @@ def prepare_qualified_legal(rows, *, toolchain):
             body = result["lean_body"]
             if old._REFUSED.search(body):
                 raise ValueError("refused Lean keyword or placeholder in emitted source")
+            if result["lowering_details"]["supported_family_profile"] == "deontic/" + bridge.EFFECTIVE_PROFILE:
+                for path, digest in result["producer_pins"].items():
+                    if path in producer_pins and producer_pins[path] != digest:
+                        raise ValueError("calendar gate producer pins conflict")
+                producer_pins.update(result["producer_pins"])
             module = f"LegalCalendar.Candidate{index:04d}"
             content = f"import LegalCalendar.Prelude\nnamespace {module}\n{body}\nend {module}\n"
             files[module.replace(".", "/") + ".lean"] = content
@@ -117,11 +123,16 @@ def prepare_qualified_legal(rows, *, toolchain):
         files = {}
     raw = _json(inputs)
     files["qualified-inputs.json"] = raw + "\n"
+    scope = _SCOPE
+    if any(row["status"] == "supported" and row["profile"] == bridge.EFFECTIVE_PROFILE
+           for row in candidates):
+        scope = {**_SCOPE, "supported_family_profiles": [
+            *_SCOPE["supported_family_profiles"], "deontic/" + bridge.EFFECTIVE_PROFILE]}
     manifest = {"schema": SCHEMA, "toolchain": toolchain, "target": "legal",
                 "status": "prepared" if supported else "blocked", "backend_executed": False,
                 "all_candidates_supported": supported, "candidates": candidates,
-                "input_sha256": _sha(raw), "producer_pins": dict(_IMPORTED_PINS),
-                "file_sha256": {name: _sha(body) for name, body in sorted(files.items())}, **_SCOPE}
+                "input_sha256": _sha(raw), "producer_pins": producer_pins,
+                "file_sha256": {name: _sha(body) for name, body in sorted(files.items())}, **scope}
     return QualifiedPreparation(_json(manifest), raw, tuple(sorted(files.items())))
 
 

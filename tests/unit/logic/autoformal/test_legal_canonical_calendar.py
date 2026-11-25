@@ -268,3 +268,359 @@ def test_real_calendar_gate_builds_exact_legal_and_covers_mixed_candidates(tmp_p
     assert len(receipt["compiled_modules"]) == 5
     assert receipt["all_logic_families_supported"] is False
     assert {row["profile"] for row in receipt["candidates"]} == {calendar.PROFILE, "canonical-explicit-qualified/v1"}
+
+
+_EFFECTIVE_DATE = "2000-02-29"
+_EFFECTIVE_ORDINAL = 730179
+_EFFECTIVE_LITERAL = "effective from " + _EFFECTIVE_DATE
+_DEADLINE_LITERAL = "before 2000-03-01"
+_EFFECTIVE_NORM = 'Norm: "agency" must "retain" "record".'
+_EFFECTIVE_TEMPORAL = 'Temporal: effective from 2000-02-29; "before 2000-03-01".'
+_EFFECTIVE_SOURCE = _EFFECTIVE_NORM + " " + _EFFECTIVE_TEMPORAL
+_EFFECTIVE_QUALIFIED_SOURCE = (
+    _EFFECTIVE_NORM + ' Conditions: "requested". Exceptions: "emergency". ' + _EFFECTIVE_TEMPORAL
+)
+
+
+def effective_calendar_candidate(source=_EFFECTIVE_SOURCE):
+    return calendar.candidate_from_effective_date_prose(source, candidate_id="calendar:effective")
+
+
+def interpreted_effective_calendar(row):
+    sidecar = interpreted(row)
+    for declaration in sidecar["formulas"]:
+        effective = declaration["effective_from"]
+        if effective is not None:
+            assert effective["source_text"] == _EFFECTIVE_LITERAL
+            effective.update(
+                date=_EFFECTIVE_DATE,
+                date_ordinal=_EFFECTIVE_ORDINAL,
+                placement="activation_at_evaluation_origin_before_modality",
+                lower_inclusive=True,
+            )
+    return sidecar
+
+
+def test_effective_calendar_preserves_typed_source_and_both_canonical_qualifiers():
+    row = effective_calendar_candidate(_EFFECTIVE_QUALIFIED_SOURCE)
+    skeleton = calendar.interpretation_skeleton(row)
+    assert skeleton["schema"] == calendar.EFFECTIVE_INTERPRETATION_SCHEMA
+    declaration = skeleton["formulas"][0]
+    assert declaration["effective_from"] == {
+        "source_index": 2,
+        "canonical_temporal_index": 1,
+        "source_text": _EFFECTIVE_LITERAL,
+        "date": None,
+        "date_ordinal": None,
+        "placement": None,
+        "lower_inclusive": None,
+    }
+    assert declaration["temporal"]["source_index"] == 1
+    assert declaration["temporal"]["source_text"] == _DEADLINE_LITERAL
+
+    sidecar = interpreted_effective_calendar(row)
+    incomplete = deepcopy(sidecar)
+    incomplete["formulas"][0]["effective_from"] = declaration["effective_from"]
+    with pytest.raises(ValueError):
+        calendar.prepare_canonical_qualified(row, incomplete)
+
+    snapshot = deepcopy((row, sidecar))
+    result = calendar.prepare_canonical_qualified(row, sidecar)
+    assert (row, sidecar) == snapshot
+    assert result == calendar.prepare_canonical_qualified(row, sidecar)
+    assert result["schema"] == calendar.EFFECTIVE_SCHEMA
+    typed = result["typed_source_ir"]
+    assert typed == {
+        "schema": "legal-surface-ir-with-effective-dates/v1",
+        "statements": [{
+            "kind": "norm",
+            "modality": "O",
+            "actor": "agency",
+            "action": "retain",
+            "object": "record",
+            "scope": [],
+            "conditions": ["requested"],
+            "exceptions": ["emergency"],
+            "temporal": [{"effective_from": _EFFECTIVE_DATE}, _DEADLINE_LITERAL],
+        }],
+    }
+    assert result["source_ref"]["content_sha256"] == hashlib.sha256(
+        _EFFECTIVE_QUALIFIED_SOURCE.encode()
+    ).hexdigest()
+    typed_sha256 = calendar.digest(typed)
+    assert skeleton["typed_source_ir_sha256"] == typed_sha256
+    assert result["typed_source_ir_sha256"] == typed_sha256
+    assert skeleton["canonical_to_source_statement_index"] == [0]
+    assert result["canonical_to_source_statement_index"] == [0]
+    assert result["original_canonical_ir"] == row["canonical_ir"]
+    rule, = row["canonical_ir"]["rules"]
+    assert rule["conditions"] == ["requested"]
+    assert rule["exceptions"] == ["emergency"]
+    assert rule["temporal"] == [_DEADLINE_LITERAL, _EFFECTIVE_LITERAL]
+    projection = result["native_projection"]
+    formula, = projection["payload"]["formulas"]
+    assert formula["conditions"] == ["requested", _DEADLINE_LITERAL, _EFFECTIVE_LITERAL]
+    assert formula["exceptions"] == ["emergency"]
+    assert previous.reconstruct_canonical(projection, result["reversible_mapping"]) == row["canonical_ir"]
+    qualified = result["qualified_projection"]
+    assert qualified["profile"] == calendar.EFFECTIVE_PROFILE
+    assert qualified["payload"]["typed_source_ir"] == typed
+    assert qualified["payload"]["typed_source_ir_sha256"] == typed_sha256
+    assert qualified["payload"]["canonical_to_source_statement_index"] == [0]
+    lowering = result["lowering_details"]
+    assert lowering["effective_interpretations"] == [{
+        "source_index": 2,
+        "canonical_temporal_index": 1,
+        "source_text": _EFFECTIVE_LITERAL,
+        "date": _EFFECTIVE_DATE,
+        "date_ordinal": _EFFECTIVE_ORDINAL,
+        "placement": "activation_at_evaluation_origin_before_modality",
+        "lower_inclusive": True,
+        "formula_index": 0,
+        "native_condition_index": 2,
+        "source_statement_index": 0,
+    }]
+    deadline, = lowering["calendar_interpretations"]
+    assert deadline["formula_index"] == 0
+    assert deadline["native_condition_index"] == 1
+    assert deadline["canonical_temporal_index"] == 0
+    assert deadline["date_ordinal"] == 730180
+    assert deadline["interval"] == "origin_inclusive_deadline_exclusive"
+    assert result["source_semantics_verified"] is result["source_text_inference_executed"] is result["admitted"] is False
+
+
+def test_effective_calendar_replays_source_order_independently_of_canonical_order():
+    first = _EFFECTIVE_NORM.replace('"agency"', '"zeta"') + " Temporal: effective from 2000-02-29."
+    second = _EFFECTIVE_SOURCE
+    row = effective_calendar_candidate(first + "\n" + second)
+    sidecar = interpreted_effective_calendar(row)
+    result = calendar.prepare_canonical_qualified(row, sidecar)
+    assert [statement["actor"] for statement in result["typed_source_ir"]["statements"]] == ["zeta", "agency"]
+    assert [rule["actor"] for rule in row["canonical_ir"]["rules"]] == ["agency", "zeta"]
+    assert sidecar["canonical_to_source_statement_index"] == [1, 0]
+    assert result["canonical_to_source_statement_index"] == [1, 0]
+    assert result["typed_source_ir"]["statements"][0]["temporal"] == [{"effective_from": _EFFECTIVE_DATE}]
+    starts = result["lowering_details"]["effective_interpretations"]
+    assert [start["source_statement_index"] for start in starts] == [1, 0]
+    only_deadline, = result["lowering_details"]["calendar_interpretations"]
+    assert only_deadline["formula_index"] == 0
+    sidecar["canonical_to_source_statement_index"] = [0, 1]
+    with pytest.raises(ValueError):
+        calendar.prepare_canonical_qualified(row, sidecar)
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        pytest.param("date", "2000-02-28", id="date"),
+        pytest.param("date_ordinal", 730178, id="ordinal"),
+        pytest.param("date_ordinal", 730179.0, id="ordinal-type"),
+        pytest.param("source_index", 1, id="native-deadline-index"),
+        pytest.param("canonical_temporal_index", 0, id="canonical-deadline-index"),
+        pytest.param("source_text", _DEADLINE_LITERAL, id="source-literal"),
+        pytest.param("placement", "inside_modality", id="placement"),
+        pytest.param("lower_inclusive", False, id="exclusive-start"),
+    ],
+)
+def test_effective_calendar_interpretation_refuses_start_drift(field, value):
+    row = effective_calendar_candidate(_EFFECTIVE_QUALIFIED_SOURCE)
+    sidecar = interpreted_effective_calendar(row)
+    sidecar["formulas"][0]["effective_from"][field] = value
+    with pytest.raises(ValueError):
+        calendar.prepare_canonical_qualified(row, sidecar)
+
+
+def test_effective_calendar_rejects_repinned_source_canonical_and_condition_drift():
+    row = effective_calendar_candidate(_EFFECTIVE_QUALIFIED_SOURCE)
+    sidecar = interpreted_effective_calendar(row)
+    different_source = deepcopy(row)
+    different_source["source_text"] = row["source_text"].replace(_EFFECTIVE_DATE, "2000-02-28")
+    different_source["source_sha256"] = hashlib.sha256(different_source["source_text"].encode()).hexdigest()
+    with pytest.raises(ValueError):
+        calendar.interpretation_skeleton(different_source)
+
+    different_canonical = deepcopy(row)
+    different_canonical["canonical_ir"]["rules"][0]["conditions"] = ["other request"]
+    with pytest.raises(ValueError):
+        calendar.interpretation_skeleton(different_canonical)
+
+    omitted_start = deepcopy(row)
+    omitted_start["canonical_ir"]["rules"][0]["temporal"] = [_DEADLINE_LITERAL]
+    with pytest.raises(ValueError):
+        calendar.interpretation_skeleton(omitted_start)
+
+    different_typed_wire = deepcopy(sidecar)
+    different_typed_wire["typed_source_ir_sha256"] = "f" * 64
+    with pytest.raises(ValueError):
+        calendar.prepare_canonical_qualified(row, different_typed_wire)
+
+    different_condition = deepcopy(sidecar)
+    different_condition["formulas"][0]["conditions"][0]["source_text"] = "other request"
+    with pytest.raises(ValueError):
+        calendar.prepare_canonical_qualified(row, different_condition)
+
+
+@pytest.mark.parametrize(
+    "clauses",
+    [
+        pytest.param('Temporal: "effective from 2000-02-29".', id="opaque-start"),
+        pytest.param('Conditions: "effective from 2000-02-29". ' + _EFFECTIVE_TEMPORAL, id="opaque-condition"),
+        pytest.param('Exceptions: "effective from 2000-02-29". ' + _EFFECTIVE_TEMPORAL, id="opaque-exception"),
+        pytest.param("Temporal: effective from 1900-02-29.", id="invalid-leap-day"),
+        pytest.param("Temporal: effective from next Tuesday.", id="inferred-date"),
+        pytest.param('Temporal: effective from 2000-02-29; "within 10 days".', id="relative-window"),
+        pytest.param('Temporal: effective from 2000-02-29; "before tomorrow".', id="relative-deadline"),
+        pytest.param('Temporal: effective from 2000-02-29; "on or before 2000-03-01".', id="unsupported-calendar"),
+        pytest.param('Scope: "federal". ' + _EFFECTIVE_TEMPORAL, id="omitted-scope"),
+    ],
+)
+def test_effective_calendar_refuses_unsupported_source_qualifiers(clauses):
+    with pytest.raises(ValueError):
+        effective_calendar_candidate(_EFFECTIVE_NORM + " " + clauses)
+
+
+def test_effective_calendar_rejects_source_over_existing_byte_bound():
+    source = _EFFECTIVE_SOURCE + (" " * previous.MAX_SOURCE_BYTES)
+    with pytest.raises(ValueError):
+        effective_calendar_candidate(source)
+
+
+def test_effective_calendar_gate_replays_mixed_profiles_and_requires_complete_input():
+    effective = effective_calendar_candidate()
+    legacy = candidate()
+    rows = [
+        {"candidate": effective, "interpretation": interpreted_effective_calendar(effective)},
+        {"candidate": legacy, "interpretation": interpreted(legacy)},
+    ]
+    toolchain = "leanprover/lean4:v4.34.1"
+    preparation = gate.prepare_qualified_legal(rows, toolchain=toolchain)
+    manifest = preparation.to_dict()
+    assert manifest["status"] == "prepared"
+    assert manifest["backend_executed"] is False
+    assert {row["profile"] for row in manifest["candidates"]} == {calendar.EFFECTIVE_PROFILE, calendar.PROFILE}
+    assert "deontic/" + calendar.EFFECTIVE_PROFILE in manifest["supported_family_profiles"]
+    bridge_pins = calendar.prepare_canonical_qualified(effective, rows[0]["interpretation"])["producer_pins"]
+    logic = Path(calendar.__file__).resolve().parents[1]
+    typed_replay_paths = {
+        str((logic / relative).resolve())
+        for relative in (
+            "legal_ir/extended_compiler.py",
+            "legal_ir/extended_contracts.py",
+            "legal_ir/extended_decompiler.py",
+            "TDFOL/compiler_repairs.py",
+        )
+    }
+    assert typed_replay_paths <= bridge_pins.keys()
+    for path, digest in bridge_pins.items():
+        assert manifest["producer_pins"][path] == digest
+
+    legacy_preparation = gate.prepare_qualified_legal(rows[1:], toolchain=toolchain)
+    legacy_manifest = legacy_preparation.to_dict()
+    assert legacy_manifest["status"] == "prepared"
+    assert legacy_manifest["producer_pins"] == gate._IMPORTED_PINS
+    assert typed_replay_paths.isdisjoint(legacy_manifest["producer_pins"])
+    assert {row["module"] for row in manifest["candidates"]} == {
+        "LegalCalendar.Candidate0000", "LegalCalendar.Candidate0001"
+    }
+    gate.validate_preparation(preparation)
+
+    incomplete_files = replace(
+        preparation,
+        files=tuple((name, body) for name, body in preparation.files if name != "LegalCalendar/Candidate0000.lean"),
+    )
+    with pytest.raises(ValueError, match="coverage changed"):
+        gate.validate_preparation(incomplete_files)
+
+    incomplete_rows = deepcopy(rows)
+    incomplete_rows[0]["interpretation"]["formulas"][0]["effective_from"] = None
+    blocked = gate.prepare_qualified_legal(incomplete_rows, toolchain=toolchain)
+    assert blocked.to_dict()["status"] == "blocked"
+    assert all(not name.endswith(".lean") for name, _ in blocked.files)
+    gate.validate_preparation(blocked)
+
+
+_EFFECTIVE_LEAN_WITNESSES = '''
+def toyDayBack (p : String → Nat → Prop) : Interpretation Unit Unit :=
+  { toy p with modal := fun _ _ _ body t => body (t - 1) }
+
+def toyDayForward (p : String → Nat → Prop) : Interpretation Unit Unit :=
+  { toy p with modal := fun _ _ _ body t => body (t + 1) }
+
+example : EffectiveCalendar.effectiveFromActive_0 730179 := by unfold EffectiveCalendar.effectiveFromActive_0; decide
+example : ¬ EffectiveCalendar.effectiveFromActive_0 730178 := by unfold EffectiveCalendar.effectiveFromActive_0; decide
+example : ¬ EffectiveCalendar.effectiveFromActive_0 0 := by unfold EffectiveCalendar.effectiveFromActive_0; decide
+
+-- The caller origin activates the rule on February 29.
+example : EffectiveCalendar.qualifiedLegalFormula_0 (toy (fun _ t => t = 730179)) 730179 := by
+  refine ⟨by decide, ?_⟩
+  intro _
+  exact ⟨by decide, 730179, by decide, by decide, rfl⟩
+
+-- An active rule requires a witness strictly before March 1.
+example : ¬ EffectiveCalendar.qualifiedLegalFormula_0 (toy (fun _ _ => True)) 730180 := by
+  intro h
+  have active : EffectiveCalendar.effectiveFromActive_0 730180 := by unfold EffectiveCalendar.effectiveFromActive_0; decide
+  obtain ⟨_, u, lower, upper, _⟩ := h.2 active
+  exact (Nat.not_lt_of_ge lower) upper
+
+-- Before the start, shifting the modality forward cannot activate the outer rule.
+example : EffectiveCalendar.qualifiedLegalFormula_0 (toyDayForward (fun _ _ => False)) 730178 := by
+  refine ⟨by decide, ?_⟩
+  intro h
+  exact False.elim ((by decide : ¬ (730179 ≤ 730178)) h.2)
+
+-- With an active caller origin, a shifted modality still needs its payload.
+example : ¬ EffectiveCalendar.qualifiedLegalFormula_0 (toyDayBack (fun _ _ => False)) 730179 := by
+  intro h
+  have active : EffectiveCalendar.effectiveFromActive_0 730179 := by unfold EffectiveCalendar.effectiveFromActive_0; decide
+  obtain ⟨_, _, _, _, value⟩ := h.2 active
+  exact value
+
+-- Its inner interval uses the shifted origin; the old witness bounds are preserved.
+example : EffectiveCalendar.qualifiedLegalFormula_0 (toyDayBack (fun _ t => t = 730178)) 730179 := by
+  refine ⟨by decide, ?_⟩
+  intro _
+  exact ⟨by decide, 730178, by decide, by decide, rfl⟩
+
+example : ¬ EffectiveCalendar.qualifiedLegalFormula_0 (toy (fun _ _ => True)) 0 := by
+  intro h
+  exact (by decide : ¬ (1 ≤ 0)) h.1
+'''
+
+_EFFECTIVE_FALSE_CLAIM = '''
+-- FalseEffectiveDateClaim
+theorem falseEffectiveDateClaim : EffectiveCalendar.effectiveFromActive_0 730178 := by unfold EffectiveCalendar.effectiveFromActive_0; decide
+'''
+
+
+def effective_semantic_source():
+    row = effective_calendar_candidate()
+    body = calendar.prepare_canonical_qualified(row, interpreted_effective_calendar(row))["lean_body"]
+    return "\n".join([
+        emitters.PRELUDE,
+        TOY,
+        "namespace EffectiveCalendar\n" + body + "\nend EffectiveCalendar",
+        _EFFECTIVE_LEAN_WITNESSES,
+    ])
+
+
+def effective_semantic_false_claim_source():
+    return effective_semantic_source() + _EFFECTIVE_FALSE_CLAIM
+
+
+def test_real_lake_effective_date_inclusive_start_and_outer_modal_guard(tmp_path):
+    result = run_lake(tmp_path, effective_semantic_source())
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_real_lake_refuses_false_effective_date_at_preceding_ordinal(tmp_path):
+    source = effective_semantic_false_claim_source()
+    claim_line = next(
+        number for number, line in enumerate(source.splitlines(), 1)
+        if line.startswith("theorem falseEffectiveDateClaim ")
+    )
+    result = run_lake(tmp_path, source)
+    diagnostics = result.stdout + result.stderr
+    assert result.returncode != 0
+    assert "error:" in diagnostics
+    assert f"CalendarWitness.lean:{claim_line}:" in diagnostics
