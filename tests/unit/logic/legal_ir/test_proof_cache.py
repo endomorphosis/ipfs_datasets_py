@@ -1279,3 +1279,341 @@ def test_bound_cache_rejects_reissued_outer_version_differing_from_native_toolch
     with pytest.raises(LegalProofIntegrityError, match="backend version"):
         build_legal_proof_binding(artifact, receipt, claim=claim, request=request,
             attempt=attempt, result=result, context=context)
+
+
+def _second_obligation_binding(artifact, first_binding, variant):
+    from ipfs_datasets_py.logic.backends.kernel.wasm import KernelToolchainBinding
+
+    context = deepcopy(first_binding["context"])
+    context["expected_declaration"] = "second_cache_fixture"
+    if variant == "interpretation":
+        context["interpretation_digest"] = stable_digest({"fictional_interpretation": 2})
+    if variant == "dependency":
+        context["dependency_versions"]["fictional-definition"] = stable_digest({"definition": 2})
+    if variant in {"toolchain", "numeric-toolchain-alias"}:
+        context["toolchain"]["metadata"]["native_resource_profile"]["cpu_slots"] = (
+            True if variant == "numeric-toolchain-alias" else 2
+        )
+    obligation = artifact.proof_obligations[1]
+    old_claim = IRClaim.from_dict(first_binding["claim"])
+    claim = replace(old_claim, claim_id="claim:second-fictional-cache",
+                    statement=obligation.statement, obligations=(obligation,),
+                    metadata={**old_claim.metadata.to_dict(),
+                              "proof_context_digest": stable_digest(context)})
+    old_request = BackendRequest.from_dict(first_binding["request"])
+    request = BackendRequest.for_claim(
+        claim, obligation.obligation_id, request_id="request:second-fictional-cache",
+        requested_backend_id="lean", bounds=old_request.bounds,
+        payload={"lean": "theorem second_cache_fixture : True := by trivial\n",
+                 "expected_declaration": context["expected_declaration"],
+                 "expected_proposition": context["expected_proposition"],
+                 "legal_proof_context": context},
+    )
+    kernel = _fictional_kernel_receipt(
+        request, toolchain=KernelToolchainBinding(**context["toolchain"]),
+    )
+    old_attempt = BackendAttempt.from_dict(first_binding["attempt"])
+    attempt = replace(old_attempt, attempt_id="attempt:second-fictional-cache",
+                      request_digest=request.digest,
+                      output_digest=stable_digest({"authored_kernel_fixture": kernel.to_dict()}))
+    old_result = ProofResult.from_dict(first_binding["result"])
+    result = ProofResult.for_attempt(
+        request, attempt, result_id="result:second-fictional-cache", status=ResultStatus.PROVED,
+        authority=replace(old_result.authority, scope_digest=request.digest,
+                          configuration_digest=stable_digest(context)),
+        payload={"kernel_receipt": kernel.to_dict(), "fixture_only": True},
+    )
+    receipt = ProofReceipt.issue(claim, request, attempt, result,
+                                 receipt_id="receipt:second-fictional-cache", verifier="fictional-test")
+    binding = build_legal_proof_binding(artifact, receipt, claim=claim, request=request,
+                                       attempt=attempt, result=result, context=context)
+    return receipt, binding, context
+
+
+@pytest.mark.parametrize("variant", [
+    "same", "interpretation", "dependency", "toolchain", "numeric-toolchain-alias",
+])
+@pytest.mark.parametrize("projection", ["shadow", "migration"])
+def test_artifact_coverage_requires_one_proof_context(variant, projection):
+    """Fictional receipt chains only, with no prover or database execution."""
+    artifact, first, first_binding, context = _bound_fixture(
+        extra_obligation=True, native_resource_profile={"cpu_slots": 1},
+    )
+    second, second_binding, second_context = _second_obligation_binding(artifact, first_binding, variant)
+    record = LegalProofRecord.build(
+        artifact, profile="fictional-two-proof-contexts", jurisdiction="fictional",
+        theorem_receipts=(first, second), proof_bindings=(second_binding, first_binding),
+    )
+    assert first.obligation_id != second.obligation_id
+    assert context["expected_declaration"] != second_context["expected_declaration"]
+    assert record.theorem_receipt_results(expected_context=context, obligation_id=first.obligation_id) == (first,)
+    assert record.theorem_receipt_results(expected_context=second_context, obligation_id=second.obligation_id) == (second,)
+    before = record.to_dict()
+    complete = variant == "same"
+    if projection == "shadow":
+        spy = _ShadowObservation()
+        cache = LegalProofCache()
+        cache.bind_shadow_repository(spy)
+        assert cache.put(record) is record
+        assert len(spy.writes) == 1
+        row = spy.writes[0]
+        assert row["status"] == ("proved" if complete else "unknown")
+        assert row["kernel_accepted"] is complete
+        assert row["trust_level"] == ("independently_checkable" if complete else "none")
+        assert row["legacy_payload"] == before
+    else:
+        from ipfs_datasets_py.logic.common.duckdb_proof_migration import (
+            ProofCacheFamily, RawLegacyRecord, normalize_legacy_record,
+        )
+        entry = normalize_legacy_record(
+            RawLegacyRecord(record_index=1, line_number=1, payload=before),
+            family=ProofCacheFamily.LEGAL_IR,
+        )
+        assert entry.status.value == ("proved" if complete else "candidate")
+        assert entry.trust_level.value == ("independently_checkable" if complete else "none")
+        assert entry.result_payload["theorem_receipts"] == before["theorem_receipts"]
+        assert entry.result_payload["proof_bindings"] == before["proof_bindings"]
+    assert record.to_dict() == before
+
+
+@pytest.mark.parametrize("legacy_version", ["legacy", "bound-v2"])
+def test_old_aggregate_cache_authority_is_unusable_but_retained(legacy_version):
+    from ipfs_datasets_py.logic.common.duckdb_proof_migration import (
+        ProofCacheFamily, RawLegacyRecord, normalize_legacy_record,
+    )
+    from ipfs_datasets_py.logic.common.duckdb_proof_store import (
+        DuckDBProofStore, DuckDBProofStoreAuthorityError,
+    )
+
+    record, _, _, _, _ = _bound_record()
+    projection = normalize_legacy_record(
+        RawLegacyRecord(record_index=1, line_number=1, payload=record.to_dict()),
+        family=ProofCacheFamily.LEGAL_IR,
+    )
+    current = projection.to_unified_entry(created_at=1.0)
+    store = DuckDBProofStore()
+    assert store.put(current, now=1.0).usable is True
+    assert store.get(current.key, now=2.0) == current
+    legacy_payload = current.result_payload.to_dict()
+    legacy_payload.pop("complete_proof_contexts", None)
+    old = replace(current, key=replace(current.key, backend_version=legacy_version),
+                  result_payload=legacy_payload, entry_digest="")
+    # Seed the exact historical row without going through new write admission.
+    archive = DuckDBProofStore()
+    archive._entries[old.key.digest] = old
+    result = archive.lookup(old.key, now=2.0)
+    assert result.usable is False
+    assert result.entry is None
+    assert result.reason.value == "authority_mismatch"
+    assert archive.get(old.key, now=2.0) is None
+    assert archive._entries[old.key.digest].to_dict() == old.to_dict()
+    with pytest.raises(DuckDBProofStoreAuthorityError):
+        archive.put(old, now=2.0)
+    partial, _, _, _, _ = _bound_record(extra_obligation=True)
+    advisory = normalize_legacy_record(
+        RawLegacyRecord(record_index=2, line_number=2, payload=partial.to_dict()),
+        family=ProofCacheFamily.LEGAL_IR,
+    ).to_unified_entry(created_at=2.0)
+    advisory = replace(advisory, key=old.key, entry_digest="")
+    computed = []
+
+    def compute_advisory():
+        computed.append(True)
+        return advisory
+
+    retry = archive.get_or_compute(old.key, compute_advisory, now=2.0)
+    assert computed == [], "obsolete proof lookup invoked an advisory producer"
+    assert retry.usable is False and retry.reason.value == "authority_mismatch"
+    assert archive._entries[old.key.digest].to_dict() == old.to_dict()
+
+
+def test_genuine_sql_legal_shadow_requires_coherent_context_and_preserves_prior_rows(tmp_path: Path) -> None:
+    """Real SQL/adapter paths with fictional receipt chains; no Native claim."""
+    import duckdb
+
+    from ipfs_datasets_py.logic.backends.cache_protocol import CacheLookupReason
+    from ipfs_datasets_py.logic.backends.results import (
+        ResultAuthority as StoredAuthority,
+        ResultStatus as StoredStatus,
+    )
+    from ipfs_datasets_py.logic.common.duckdb_proof_migration import (
+        ProofCacheFamily, RawLegacyRecord, normalize_legacy_record,
+    )
+    from ipfs_datasets_py.logic.common.duckdb_proof_store import (
+        DuckDBProofStore, LEGAL_FORMAL_COVERAGE_VERSION,
+        ProofOutcomeKind, ProofTrustLevel, UnifiedProofEntry,
+    )
+    from ipfs_datasets_py.logic.common.proof_cache import UnifiedProofShadowRepository
+    from ipfs_datasets_py.logic.families.models import EvidenceAuthority
+
+    path = tmp_path / "live-coherent-proof-coverage.duckdb"
+    config = {
+        "threads": 1,
+        "memory_limit": "128MB",
+        "enable_external_access": False,
+        "autoinstall_known_extensions": False,
+        "autoload_known_extensions": False,
+    }
+    artifact, first, first_binding, first_context = _bound_fixture(
+        extra_obligation=True, native_resource_profile={"cpu_slots": 1},
+    )
+
+    def bound_record(variant):
+        second, binding, context = _second_obligation_binding(artifact, first_binding, variant)
+        record = LegalProofRecord.build(
+            artifact, profile="fictional-genuine-sql-contexts", jurisdiction="fictional",
+            theorem_receipts=(first, second), proof_bindings=(binding, first_binding),
+        )
+        # Both receipts remain valid for their own exact requests. The adverse
+        # cases change shared context, not the integrity of either receipt.
+        assert record.theorem_receipt_results(
+            expected_context=first_context, obligation_id=first.obligation_id,
+        ) == (first,)
+        assert record.theorem_receipt_results(
+            expected_context=context, obligation_id=second.obligation_id,
+        ) == (second,)
+        return record
+
+    def selected_rows(connection, digest):
+        queries = (
+            "SELECT * FROM proof_keys WHERE key_digest=?",
+            "SELECT * FROM proof_key_dimensions WHERE key_digest=? ORDER BY dimension_name",
+            "SELECT * FROM premises WHERE key_digest=? ORDER BY premise_ordinal",
+            "SELECT * FROM proof_entries WHERE key_digest=?",
+            "SELECT * FROM proof_evidence WHERE entry_digest IN "
+            "(SELECT entry_digest FROM proof_entries WHERE key_digest=?) ORDER BY evidence_id",
+        )
+        # Access statistics may change; normalized proof evidence must not.
+        return tuple(connection.execute(query, [digest]).fetchall() for query in queries)
+
+    def stored_shadow(connection, record):
+        # _shadow_write intentionally catches errors. Reading actual SQL is
+        # required here; a LegalProofCache memory hit cannot satisfy the test.
+        rows = connection.execute(
+            "SELECT payload_json FROM proof_entries WHERE result_id=?", [record.content_cid],
+        ).fetchall()
+        assert len(rows) == 1, "live shadow did not persist exactly one physical SQL row"
+        return UnifiedProofEntry.from_dict(json.loads(rows[0][0])).verify_integrity()
+
+    def migrated(record, index):
+        return normalize_legacy_record(
+            RawLegacyRecord(record_index=index, line_number=index, payload=record.to_dict()),
+            family=ProofCacheFamily.LEGAL_IR,
+        ).to_unified_entry(created_at=100.0)
+
+    def assert_advisory(entry):
+        assert entry.key.backend_version == LEGAL_FORMAL_COVERAGE_VERSION
+        assert entry.status in (StoredStatus.UNKNOWN, StoredStatus.CANDIDATE)
+        assert entry.outcome is not ProofOutcomeKind.PROOF
+        assert entry.result_authority is StoredAuthority.CANDIDATE
+        assert entry.trust_level is ProofTrustLevel.NONE
+        assert entry.evidence_authority is EvidenceAuthority.NONE
+        assert not entry.result_payload["complete_proof_contexts"]
+        for name in ("source_admission", "legal_admission", "corpus_admission"):
+            assert entry.result_payload[name] is False
+
+    coherent = bound_record("same")
+    coherent_wire = coherent.to_dict()
+    retained = []
+    advisory_entries = []
+    coherent_rows = {}
+    with duckdb.connect(str(path), config=config) as connection:
+        store = DuckDBProofStore(connection=connection, max_entries=32)
+        shadow = UnifiedProofShadowRepository(store=store, clock=lambda: 100.0)
+        assert shadow.store is store
+        cache = LegalProofCache()
+        cache.bind_shadow_repository(shadow)
+        assert cache.put(coherent) is coherent
+        live_positive = stored_shadow(connection, coherent)
+        positive_migration = migrated(coherent, 1)
+        assert positive_migration.key.digest != live_positive.key.digest
+        assert store.put(positive_migration, now=100.0).reason is CacheLookupReason.STORED
+        for positive in (live_positive, positive_migration):
+            assert positive.key.backend_version == LEGAL_FORMAL_COVERAGE_VERSION
+            assert positive.status is StoredStatus.PROVED
+            assert positive.trust_level is ProofTrustLevel.INDEPENDENTLY_CHECKABLE
+            assert len(positive.result_payload["complete_proof_contexts"]) == 1
+            for name in ("source_admission", "legal_admission", "corpus_admission"):
+                assert positive.result_payload[name] is False
+            assert store.get(positive.key, require_result_authority=StoredAuthority.THEOREM,
+                             now=101.0).to_dict() == positive.to_dict()
+            coherent_rows[positive.key.digest] = selected_rows(connection, positive.key.digest)
+            assert len(coherent_rows[positive.key.digest][0]) == 1
+            assert len(coherent_rows[positive.key.digest][3]) == 1
+            retained.append(positive)
+
+        for index, variant in enumerate(
+            ("interpretation", "dependency", "toolchain", "numeric-toolchain-alias"), start=2,
+        ):
+            mixed = bound_record(variant)
+            before = mixed.to_dict()
+            assert cache.put(mixed) is mixed
+            live_advisory = stored_shadow(connection, mixed)
+            assert live_advisory.status is StoredStatus.UNKNOWN
+            migration_advisory = migrated(mixed, index)
+            assert migration_advisory.status is StoredStatus.CANDIDATE
+            assert migration_advisory.key.digest != live_advisory.key.digest
+            assert store.put(migration_advisory, now=100.0).reason is CacheLookupReason.STORED
+            for entry in (live_advisory, migration_advisory):
+                assert_advisory(entry)
+                assert entry.key.digest not in coherent_rows
+                # Ordinary advisory reuse is valid; it confers no theorem authority.
+                assert store.get(entry.key, now=101.0).to_dict() == entry.to_dict()
+                advisory_entries.append(entry)
+                retained.append(entry)
+            assert mixed.to_dict() == before
+            for digest, rows in coherent_rows.items():
+                assert selected_rows(connection, digest) == rows
+        assert coherent.to_dict() == coherent_wire
+        assert connection.execute("SELECT count(*) FROM proof_entries").fetchone()[0] == 10
+
+    # A genuinely closed/reopened file prevents warm _entries from hiding a
+    # different persisted projection, or a failed live shadow write.
+    with duckdb.connect(str(path), config=config) as connection:
+        cold = DuckDBProofStore(connection=connection, max_entries=32)
+        for positive in retained[:2]:
+            calls = []
+
+            def must_not_compute():
+                calls.append(positive.key.digest)
+                raise AssertionError("coherent cached theorem was recomputed")
+
+            for key in (positive.key, positive.key.to_verification_cache_key()):
+                hit = cold.get_or_compute(key, must_not_compute,
+                    require_result_authority=StoredAuthority.THEOREM, now=101.0)
+                assert hit.hit and hit.usable
+                assert hit.entry.to_dict() == positive.to_verification_cache_entry().to_dict()
+            assert calls == []
+
+        for advisory in advisory_entries:
+            for key in (advisory.key, advisory.key.to_verification_cache_key()):
+                refused = cold.lookup(key, require_result_authority=StoredAuthority.THEOREM, now=101.0)
+                assert refused.hit and not refused.usable
+                assert refused.reason is CacheLookupReason.AUTHORITY_MISMATCH
+                assert cold.get(key, require_result_authority=StoredAuthority.THEOREM, now=101.0) is None
+                retry_calls = []
+
+                def retain_advisory():
+                    retry_calls.append(advisory.key.digest)
+                    return advisory
+
+                retry = cold.get_or_compute(key, retain_advisory,
+                    require_result_authority=StoredAuthority.THEOREM, now=101.0)
+                assert retry_calls == [advisory.key.digest]
+                # The current retry API returns a storage acknowledgement after
+                # computing; its usable flag is not a theorem-proof assertion.
+                assert retry.entry is not None
+                assert retry.entry.to_dict() == advisory.to_verification_cache_entry().to_dict()
+                assert cold.get(key, require_result_authority=StoredAuthority.THEOREM, now=101.0) is None
+                persisted = cold.get(key, now=101.0)
+                assert_advisory(persisted)
+                assert persisted.to_dict() == advisory.to_dict()
+                for digest, rows in coherent_rows.items():
+                    assert selected_rows(connection, digest) == rows
+
+    with duckdb.connect(str(path), config=config) as connection:
+        final_store = DuckDBProofStore(connection=connection, max_entries=32)
+        for entry in retained:
+            assert final_store.get(entry.key, now=101.0).to_dict() == entry.to_dict()
+        for digest, rows in coherent_rows.items():
+            assert selected_rows(connection, digest) == rows

@@ -70,6 +70,8 @@ DUCKDB_PROOF_STORE_SCHEMA_VERSION: Final = "duckdb-proof-store/v1"
 UNIFIED_PROOF_KEY_SCHEMA_VERSION: Final = "unified-proof-key/v1"
 UNIFIED_PROOF_ENTRY_SCHEMA_VERSION: Final = "unified-proof-entry/v1"
 PROOFS_CATALOG_NAME: Final = "proofs"
+LEGAL_FORMAL_OBLIGATION_COVERAGE: Final = "declared_formal_obligation_coverage"
+LEGAL_FORMAL_COVERAGE_VERSION: Final = "bound-v2-coherent-coverage/v1"
 SQL_MAX_ENTRY_JSON_BYTES: Final = 8 * 1024 * 1024
 SQL_MAX_KEY_JSON_BYTES: Final = 64 * 1024
 SQL_MAX_PREMISES: Final = 4096
@@ -1634,6 +1636,18 @@ class DuckDBProofStoreProtocol(Protocol):
     ) -> AccessStatistics: ...
 
 
+def _unqualified_legal_coverage(entry: UnifiedProofEntry) -> bool:
+    """Keep older whole-artifact rows without granting their proof authority."""
+    return (
+        entry.status is ResultStatus.PROVED
+        and entry.result_payload.get("property") == LEGAL_FORMAL_OBLIGATION_COVERAGE
+        and (
+            entry.key.backend_version != LEGAL_FORMAL_COVERAGE_VERSION
+            or not entry.result_payload.get("complete_proof_contexts")
+        )
+    )
+
+
 class DuckDBProofStore:
     """Unified proof store implementing VerificationCacheProtocol@1.
 
@@ -2138,6 +2152,17 @@ class DuckDBProofStore:
                 key_digest=key.digest,
                 single_flight_shared=single_flight_shared,
             )
+        if _unqualified_legal_coverage(entry):
+            self._stats["rejections"] += 1
+            self._access_touch(key.digest, rejection=True, now=now)
+            return VerificationCacheLookup(
+                entry=None,
+                hit=True,
+                usable=False,
+                reason=CacheLookupReason.AUTHORITY_MISMATCH,
+                key_digest=key.digest,
+                single_flight_shared=single_flight_shared,
+            )
         if entry.is_expired(
             positive_ttl_seconds=self.positive_ttl_seconds,
             negative_ttl_seconds=self.negative_ttl_seconds,
@@ -2355,6 +2380,8 @@ class DuckDBProofStore:
         unified_entry = UnifiedProofEntry.from_dict(
             unified_entry.to_dict()
         ).verify_integrity()
+        if _unqualified_legal_coverage(unified_entry):
+            raise DuckDBProofStoreAuthorityError("whole-artifact proof requires one complete current context")
         current = time.time() if now is None else float(now)
         with self._lock:
             if self._connection is not None:
@@ -2429,7 +2456,10 @@ class DuckDBProofStore:
             max_trust_level=max_trust_level,
             now=now,
         )
-        if existing.usable:
+        # A withheld historical row is an authority refusal, not a miss.
+        if existing.usable or (
+            existing.reason is CacheLookupReason.AUTHORITY_MISMATCH and existing.entry is None
+        ):
             return existing
 
         leader = False
@@ -2442,7 +2472,9 @@ class DuckDBProofStore:
                 max_trust_level=max_trust_level,
                 now=now,
             )
-            if recheck.usable:
+            if recheck.usable or (
+                recheck.reason is CacheLookupReason.AUTHORITY_MISMATCH and recheck.entry is None
+            ):
                 return recheck
             existing_flight = self._flights.get(unified.digest)
             if existing_flight is None:

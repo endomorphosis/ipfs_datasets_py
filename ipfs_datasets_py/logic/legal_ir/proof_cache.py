@@ -580,6 +580,30 @@ class LegalProofRecord:
             raise LegalProofIntegrityError("no proved obligation matches the expected reuse context")
         return matches
 
+    def _formal_obligation_coverage(self) -> dict[str, Any]:
+        """Project complete contexts from an already verified bound record."""
+        from ..common.duckdb_proof_store import LEGAL_FORMAL_OBLIGATION_COVERAGE
+
+        required = {obligation.obligation_id for obligation in self.formalization_artifact().proof_obligations}
+        obligation_by_receipt = {receipt.digest: receipt.obligation_id for receipt in self._theorem_receipt_headers()}
+        coverage: dict[bytes, set[str]] = {}
+        for binding in self.proof_bindings:
+            # The declaration and proposition are checked per receipt. All
+            # other context identities must agree for their proofs to combine.
+            context = _json_ready(binding["context"])
+            del context["expected_declaration"], context["expected_proposition"]
+            coverage.setdefault(_canonical_bytes(context), set()).add(
+                obligation_by_receipt[binding["receipt_digest"]]
+            )
+        complete_contexts = [
+            json.loads(context) for context, covered in sorted(coverage.items())
+            if required and required <= covered
+        ]
+        return dict(property=LEGAL_FORMAL_OBLIGATION_COVERAGE,
+                    required_obligation_ids=sorted(required),
+                    complete_proof_contexts=complete_contexts,
+                    source_admission=False, legal_admission=False, corpus_admission=False)
+
     def verify_integrity(self) -> "LegalProofRecord":
         """Recompute the full envelope, artifact and all proof bindings."""
         digest = _sha256_digest(_canonical_bytes(self._identity_payload()))
@@ -788,10 +812,9 @@ class LegalProofCache:
             # shallow nested mutations must not retain an earlier verified CID.
             record = LegalProofRecord.from_dict(record.to_dict())
             envelope_bytes = _canonical_bytes(record.to_dict())
-            required = sorted(item.obligation_id for item in record.formalization_artifact().proof_obligations)
             bound = record.schema_version == LEGAL_BOUND_PROOF_RECORD_SCHEMA_VERSION
-            proved = (bound and bool(required)
-                      and set(required) <= {item.obligation_id for item in record._theorem_receipt_headers()})
+            scope = record._formal_obligation_coverage() if bound else {}
+            proved = bool(scope.get("complete_proof_contexts"))
             # Preserve the v1 artifact projection exactly. Only new bound v2
             # entries add their actual contexts and formal-obligation scope.
             key_args = dict(
@@ -803,10 +826,10 @@ class LegalProofCache:
                 ir={"source_id": record.source_id, "source_digest": record.source_digest,
                     "artifact_cid": record.artifact_cid},
             )
-            scope = dict(property="declared_formal_obligation_coverage",
-                         required_obligation_ids=required, source_admission=False,
-                         legal_admission=False, corpus_admission=False)
             if bound:
+                from ..common.duckdb_proof_store import LEGAL_FORMAL_COVERAGE_VERSION
+
+                key_args["backend_version"] = LEGAL_FORMAL_COVERAGE_VERSION
                 key_args["toolchain"] = {"legal_ir": True, "bound_contexts": [
                     _json_ready(item["context"]) for item in record.proof_bindings]}
                 key_args["ir"]["artifact_digest"] = record.artifact_digest

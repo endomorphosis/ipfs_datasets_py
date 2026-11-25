@@ -494,3 +494,125 @@ def test_unknown_observation_never_satisfies_theorem_authority(sql_store):
     assert observed.entry.result_authority is ResultAuthority.CANDIDATE
     assert observed.entry.evidence_authority is EvidenceAuthority.NONE
     assert reopened.get(entry.key, require_result_authority=ResultAuthority.THEOREM, now=100.0) is None
+
+
+def _authored_legal_coverage_entry(version, *, context_complete):
+    """Create a fictional aggregate SQL row with the selected key generation."""
+    scope = {
+        "property": "declared_formal_obligation_coverage",
+        "required_obligation_ids": ["obligation:fictional-first", "obligation:fictional-second"],
+        "source_admission": False,
+        "legal_admission": False,
+        "corpus_admission": False,
+    }
+    if context_complete is not None:
+        scope["complete_proof_contexts"] = (
+            [{
+                "schema_version": "legal-proof-reuse-context/v1",
+                "jurisdiction": "fictional",
+                "interpretation_digest": "sha256:" + "a" * 64,
+                "dependency_versions": {"fictional-definition": "sha256:" + "b" * 64},
+                "backend_id": "lean",
+                "backend_version": "fictional",
+                "toolchain": {"profile": "fictional"},
+                "axiom_policy_digest": "sha256:" + "c" * 64,
+            }] if context_complete else []
+        )
+    key = _key(
+        ir={"artifact": "fictional-legal-aggregate"},
+        property_value=scope,
+        backend_id="legal_ir",
+        backend_version=version,
+    )
+    return UnifiedProofEntry(
+        key=key,
+        outcome=ProofOutcomeKind.PROOF,
+        trust_level=ProofTrustLevel.INDEPENDENTLY_CHECKABLE,
+        status=ResultStatus.PROVED,
+        result_authority=ResultAuthority.THEOREM,
+        evidence_authority=EvidenceAuthority.INDEPENDENTLY_CHECKABLE,
+        result_payload=FrozenMap(scope),
+        polarity=CachePolarity.POSITIVE,
+        created_at=100.0,
+        result_id="aggregate:fictional:" + version,
+    )
+
+
+def _open_legal_coverage_fixture(duckdb_module, path):
+    return duckdb_module.connect(str(path), config={
+        "threads": 1,
+        "memory_limit": "128MB",
+        "enable_external_access": False,
+        "autoinstall_known_extensions": False,
+        "autoload_known_extensions": False,
+    })
+
+
+def _selected_legal_coverage_sql_rows(connection, digest):
+    # Access statistics and physical DuckDB checkpoint bytes are not evidence
+    # identity. Observe the exact normalized catalog rows for these keys.
+    queries = (
+        "SELECT * FROM proof_keys WHERE key_digest=?",
+        "SELECT * FROM proof_key_dimensions WHERE key_digest=? ORDER BY dimension_name",
+        "SELECT * FROM premises WHERE key_digest=? ORDER BY premise_ordinal",
+        "SELECT * FROM proof_entries WHERE key_digest=?",
+        "SELECT * FROM proof_evidence WHERE entry_digest IN "
+        "(SELECT entry_digest FROM proof_entries WHERE key_digest=?) ORDER BY evidence_id",
+    )
+    return tuple(connection.execute(query, [digest]).fetchall() for query in queries)
+
+
+@pytest.mark.parametrize("historical_version", ["legacy", "bound-v2"])
+def test_historical_legal_aggregate_reopen_refuses_authority_without_retry(
+    duckdb_module, tmp_path, historical_version,
+):
+    path = tmp_path / "legal-coverage.duckdb"
+    old = _authored_legal_coverage_entry(historical_version, context_complete=None)
+    current = _authored_legal_coverage_entry("bound-v2-coherent-coverage/v1", context_complete=True)
+    calls = []
+
+    def compute_advisory():
+        calls.append(old.key.digest)
+        return _entry(old.key, tag="fictional-advisory-retry", created_at=101.0)
+
+    with _open_legal_coverage_fixture(duckdb_module, path) as connection:
+        store = DuckDBProofStore(connection=connection, max_entries=16)
+        # Restore a historical physical fixture, never an admitted new proof.
+        store._sql_put(old, now=100.0)
+        assert store.put(current, now=100.0).reason is CacheLookupReason.STORED
+        prior = _selected_legal_coverage_sql_rows(connection, old.key.digest)
+        assert [len(rows) for rows in prior] == [1, 15, 2, 1, 0]
+
+    with _open_legal_coverage_fixture(duckdb_module, path) as connection:
+        cold = DuckDBProofStore(connection=connection, max_entries=16)
+        for key in (old.key, old.key.to_verification_cache_key()):
+            result = cold.lookup(key, now=101.0)
+            assert result.reason is CacheLookupReason.AUTHORITY_MISMATCH
+            assert result.hit and not result.usable and result.entry is None
+            assert cold.get(key, now=101.0) is None
+            retry = cold.get_or_compute(key, compute_advisory, now=101.0)
+            assert retry.reason is CacheLookupReason.AUTHORITY_MISMATCH
+            assert not retry.usable and retry.entry is None
+        assert calls == []
+        assert cold.get(current.key, now=101.0).to_dict() == current.to_dict()
+        assert cold.get(current.key.to_verification_cache_key(), now=101.0).to_dict() == current.to_dict()
+        assert _selected_legal_coverage_sql_rows(connection, old.key.digest) == prior
+        assert _scalar(connection, "SELECT count(*) FROM proof_entries") == 2
+
+    with _open_legal_coverage_fixture(duckdb_module, path) as connection:
+        assert _selected_legal_coverage_sql_rows(connection, old.key.digest) == prior
+
+
+def test_current_legal_aggregate_without_complete_context_refuses_sql_put(
+    duckdb_module, tmp_path,
+):
+    from ipfs_datasets_py.logic.common.duckdb_proof_store import DuckDBProofStoreAuthorityError
+
+    incomplete = _authored_legal_coverage_entry(
+        "bound-v2-coherent-coverage/v1", context_complete=False,
+    )
+    with _open_legal_coverage_fixture(duckdb_module, tmp_path / "incomplete-coverage.duckdb") as connection:
+        store = DuckDBProofStore(connection=connection, max_entries=16)
+        with pytest.raises(DuckDBProofStoreAuthorityError, match="complete current context"):
+            store.put(incomplete, now=100.0)
+        assert _selected_legal_coverage_sql_rows(connection, incomplete.key.digest) == ([], [], [], [], [])

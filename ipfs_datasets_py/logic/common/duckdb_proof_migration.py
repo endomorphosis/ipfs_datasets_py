@@ -42,6 +42,7 @@ from ..ir_core.claims import FrozenMap
 from .duckdb_proof_store import (
     DuckDBProofStore,
     DuckDBProofStoreError,
+    LEGAL_FORMAL_COVERAGE_VERSION,
     ProofOutcomeKind,
     ProofTrustLevel,
     UnifiedProofEntry,
@@ -1795,14 +1796,14 @@ def _normalize_legal_ir(
     proved = False
     bound_record = None
     bound_contexts = []
+    formal_scope = {}
     if schema == "legal-proof-record/v2":
         try:
             from ..legal_ir.proof_cache import LegalProofRecord
 
             bound_record = LegalProofRecord.from_dict(payload)
-            required = {item.obligation_id for item in bound_record.formalization_artifact().proof_obligations}
-            covered = {item["obligation_id"] for item in bound_record.theorem_receipts}
-            proved = bool(required) and required <= covered
+            formal_scope = bound_record._formal_obligation_coverage()
+            proved = bool(formal_scope["complete_proof_contexts"])
             bound_contexts = [item["context"] for item in bound_record.to_dict()["proof_bindings"]]
         except (TypeError, ValueError, KeyError, AttributeError) as exc:
             raise ProofMigrationQuarantineError("invalid bound legal proof record") from exc
@@ -1842,13 +1843,9 @@ def _normalize_legal_ir(
     # PROVED row; every bound v2 key contains its full historical context.
     if theorem_receipts or bound_record is not None:
         key_values["policy"]["legal_receipt_binding_policy"] = "bound-record-v2-only"
-    formal_scope = {}
     if bound_record is not None:
-        formal_scope = dict(property="declared_formal_obligation_coverage",
-                            required_obligation_ids=sorted(required), source_admission=False,
-                            legal_admission=False, corpus_admission=False)
         key_values["property_value"].update(formal_scope)
-        key_values["backend_version"] = "bound-v2"
+        key_values["backend_version"] = LEGAL_FORMAL_COVERAGE_VERSION
         key_values["solver_identities"]["bound_contexts"] = bound_contexts
         key_values["toolchain"] = {"bound_contexts": bound_contexts}
     key = UnifiedProofKey.build(**key_values)
