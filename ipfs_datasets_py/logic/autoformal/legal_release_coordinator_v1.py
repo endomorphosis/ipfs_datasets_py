@@ -174,6 +174,47 @@ MAX_CLOSURE_NATIVE_PACKET_BYTES_V3 = 48 * 1024**2
 MAX_CLOSURE_ARTIFACT_TOTAL_BYTES_V3 = 48 * 1024**2
 
 
+def _require_hf_reviewed_graph_v4(release, descriptors, reviewed_graph):
+    """Join exact packaged graph rows to the independently replayed graph."""
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+
+    error = "HF package graph differs from the independently reviewed graph"
+    remaining = {
+        "graph_nodes": {row["record_cid"]: row for row in reviewed_graph["nodes"]},
+        "graph_edges": {row["record_cid"]: row for row in reviewed_graph["edges"]},
+    }
+    companions = {"graph_nodes": "semantic_graph_node", "graph_edges": "semantic_graph_edge"}
+    for descriptor in descriptors:
+        family = descriptor["family"]
+        companion = companions[family]
+        fields = {"entry_cid", "family", companion}
+        allowed = fields | {"legal_id"}
+        artifact = release.artifact(descriptor["relative_path"])
+        _need(artifact.row_count <= len(remaining[family]), error)
+        with pq.ParquetFile(pa.BufferReader(artifact.content)) as reader:
+            _need(reader.metadata.num_rows == artifact.row_count, error)
+            for batch in reader.iter_batches(batch_size=128, use_threads=False):
+                for row in batch.to_pylist():
+                    entry_cid = row["entry_cid"]
+                    expected = remaining[family].pop(entry_cid, None)
+                    record_json = row["record_json"]
+                    _need(expected is not None and type(record_json) is str and row["family"] == family,
+                          error)
+                    raw = record_json.encode("utf-8")
+                    _need(hashlib.sha256(raw).hexdigest() == row["record_sha256"], error)
+                    body = _reviewed_json_artifact_v3(raw)
+                    # A V4 row has one graph representation. A parallel flat
+                    # projection could present different endpoints or kinds.
+                    _need(type(body) is dict and fields <= body.keys() <= allowed, error)
+                    legal_id = body.get("legal_id")
+                    _need((legal_id is None or type(legal_id) is str)
+                          and (legal_id or "") == row["legal_id"]
+                          and body["entry_cid"] == entry_cid and body["family"] == family
+                          and _canonical(body[companion]) == _canonical(expected), error)
+    _need(not any(remaining.values()), error)
+
+
 def _validate_uscode_release_byte_closure(request_raw: bytes, *, expected_request_sha256: str, reviewed_version: int, _captured_native_context=None,
         _native_transport="chunk-index/v1", original_parent_handle=None, _original_parent_context=None) -> dict:
     """Replay exact local package, source/IR/graph/dependency/Lean-text custody.
@@ -421,6 +462,9 @@ def _validate_uscode_release_byte_closure(request_raw: bytes, *, expected_reques
     package_files = {artifact.relative_path: artifact.content for artifact in release.artifacts}
     _need(all(package_files.get(row["path_in_repo"]) == row["raw_utf8"].encode("utf-8")
               for row in intake["files"]), "HF package/selected source metadata bytes differ")
+    if reviewed_version == 4:
+        _require_hf_reviewed_graph_v4(
+            release, intake["primary_manifest_selection"]["descriptors"], graph["graph"])
     native_report = None
     transport_report = None
     parent_authentication = None

@@ -732,7 +732,8 @@ def _physical_source_material(directory, *, source_texts=None, shared_normative_
 
 def _physical_closure_request(material, *, map_damage=None, reviewed_version=2, return_control=False,
         native_transport="chunk-index/v1",
-        foreign_dependency_version="fictional-external-legal-dependency/v1"):
+        foreign_dependency_version="fictional-external-legal-dependency/v1",
+        packaged_graph_variant=None):
     from copy import deepcopy
     from dataclasses import fields
     from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as transport
@@ -838,6 +839,32 @@ def _physical_closure_request(material, *, map_damage=None, reviewed_version=2, 
                          semantic_graph_node=node) for node in control["graph"]["graph"]["nodes"]],
         graph_edges=[dict(entry_cid=edge["record_cid"], legal_id=material["instrument"],
                          semantic_graph_edge=edge) for edge in control["graph"]["graph"]["edges"]])
+    if packaged_graph_variant == "node-companion":
+        first, second = family_rows["graph_nodes"][:2]
+        assert first["entry_cid"] != second["entry_cid"]
+        first["semantic_graph_node"] = deepcopy(second["semantic_graph_node"])
+    elif packaged_graph_variant == "edge-identity":
+        first = family_rows["graph_edges"][0]
+        original = first["semantic_graph_edge"]
+        replacement = build_edge(
+            src_cid=original["src_cid"], dst_cid=original["dst_cid"],
+            relation=original["relation"], ordinal=original["ordinal"],
+            evidence_cids=[cid("alternate-fictional-edge-evidence")],
+        )
+        assert replacement["record_cid"] not in {
+            row["entry_cid"] for row in family_rows["graph_edges"]
+        }
+        first.update(entry_cid=replacement["record_cid"], semantic_graph_edge=replacement)
+    elif packaged_graph_variant == "flat-edge-endpoint":
+        first = family_rows["graph_edges"][0]
+        edge = first["semantic_graph_edge"]
+        assert edge["src_cid"] != edge["dst_cid"]
+        first["source_entry_cid"] = edge["dst_cid"]
+    elif packaged_graph_variant == "blank-legal-id":
+        family_rows["graph_nodes"][0].pop("legal_id")
+        family_rows["graph_edges"][0]["legal_id"] = None
+    elif packaged_graph_variant is not None:
+        raise AssertionError("unknown authored package graph variant")
     legacy = hf.fixture_legacy_files()
     legacy["uscode_parquet/laws.parquet"] = material["law_bytes"]
     package = hf.build_uscode_hf_release(family_rows, legacy_files=legacy, dry_run=True,
@@ -2861,7 +2888,7 @@ def test_explicit_direct_and_chunk_domains_refuse_each_others_original_request(
     assert request["native"] is None
 
 
-def reviewed_physical_whole_norm_control_v2(material):
+def reviewed_physical_whole_norm_control_v2(material, *, packaged_graph_variant=None):
     """Build one fresh three-unit physical source-use/whole-norm fixture.
 
     Existing fictional reviews, source rows and crosswalk remain unchanged.
@@ -2874,7 +2901,8 @@ def reviewed_physical_whole_norm_control_v2(material):
     from tests.unit.logic.autoformal import test_legal_corpus_shared_lake as shared_fixture
 
     original_request, original_control = _physical_closure_request(material,
-        reviewed_version=3, native_transport="direct-packet/v1", return_control=True)
+        reviewed_version=3, native_transport="direct-packet/v1", return_control=True,
+        packaged_graph_variant=packaged_graph_variant)
     original_raw = wire.encode_parent_replay_value_v1(original_request)
     control = dict(original_control)
     profiles = dict(instance_identity_profile="reviewed-source-use/v1",
@@ -3476,3 +3504,26 @@ def test_physical_v4_current_replay_refuses_genuinely_revoked_reviewer(
         control["physical_request"], max_bytes=release.MAX_CLOSURE_REQUEST_BYTES_V3
     ) == control["physical_request_raw"]
     assert original["registry"]["revocation_generation"] + 1 == case["registry"]["revocation_generation"]
+
+
+@pytest.mark.parametrize("damage", ["node-companion", "edge-identity", "flat-edge-endpoint"])
+def test_physical_v4_refuses_hf_graph_different_from_independently_reviewed_graph(
+        physical_closure_material_v3, damage):
+    from ipfs_datasets_py.logic.autoformal.legal_release_coordinator_v1 import ReleaseCoordinatorError
+
+    # The existing HF builder regenerates and validates the actual package, and
+    # the existing join builder regenerates source metadata from those bytes.
+    # The independently reviewed graph, preservation inputs and entity rows
+    # still describe the unchanged fictional law.
+    with pytest.raises(ReleaseCoordinatorError,
+                      match="HF package graph differs from the independently reviewed graph"):
+        reviewed_physical_whole_norm_control_v2(
+            physical_closure_material_v3, packaged_graph_variant=damage)
+
+
+def test_physical_v4_reviewed_hf_graph_allows_optional_legal_id(physical_closure_material_v3):
+    control = reviewed_physical_whole_norm_control_v2(
+        physical_closure_material_v3, packaged_graph_variant="blank-legal-id")
+    context = control["preparation"].to_dict()["physical_context"]
+    assert context["physical_source_bindings"]["counts"]["reviewed_units"] == 3
+    assert context["native_execution_performed"] is context["release_ready"] is False
