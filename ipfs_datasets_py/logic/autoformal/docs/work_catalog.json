@@ -27081,6 +27081,338 @@
       "root": "artifact_workspace",
       "scope": "Separate published Phase3 source-only5 and Phase4 fixture-only numerical4: actual V4[0,3], inherited V2fixture20, maximum23 authored-vector updates. No model asset/runtime/vendor/quality/legal/SQL/Native/Lean qualification.",
       "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/sql51_p8_packet22_native_cache_closed_software_evidence_20261125",
+      "closed_software_facts": {
+        "P8_public_ordinary22_v327": {
+          "COLLECT_RUN_JUnit_order_exact": true,
+          "Source_resource_parent_workspace_closed": true,
+          "actual_normal_fast_forwards": [
+            {
+              "after": "3ea8a5a10da075dc7bc31a67e5d48c32cf8ae1b4",
+              "before": "17a3d3ff728fd4485220ae7ab85c344672db08c9",
+              "normal_fast_forward": true,
+              "repository": "datasets"
+            },
+            {
+              "after": "4bb1fbc197b47e5d43f47e06485b9ebd8bef364d",
+              "before": "bdd4d76d4a90d782259e688289d4b348c1a14cfb",
+              "normal_fast_forward": true,
+              "repository": "hallucinate"
+            },
+            {
+              "after": "ac772bc0102ff8ceda6ea19b8c846a4ab6c401a8",
+              "before": "7184c81f12d474fa47f5a1f7b7ffa9a66baa4804",
+              "normal_fast_forward": true,
+              "repository": "root"
+            }
+          ],
+          "current_published_repositories": {
+            "accelerate": {
+              "HEAD": "88c0d9f82f66aaddbb01344c9f85236e92a5dc88",
+              "clean_worktree_and_index": true,
+              "origin_main": "88c0d9f82f66aaddbb01344c9f85236e92a5dc88",
+              "tree": "416a953630c9ba7ef521fd87bf821f075b052efc"
+            },
+            "datasets": {
+              "HEAD": "3ea8a5a10da075dc7bc31a67e5d48c32cf8ae1b4",
+              "clean_worktree_and_index": true,
+              "origin_main": "3ea8a5a10da075dc7bc31a67e5d48c32cf8ae1b4",
+              "tree": "0cb675b8978f2e6aabb33de3644960382e857dba"
+            },
+            "hallucinate": {
+              "HEAD": "4bb1fbc197b47e5d43f47e06485b9ebd8bef364d",
+              "clean_worktree_and_index": true,
+              "origin_main": "4bb1fbc197b47e5d43f47e06485b9ebd8bef364d",
+              "tree": "517e1e7b49d73ac52f8d05aa58600602e6f61cf7"
+            },
+            "root": {
+              "HEAD": "ac772bc0102ff8ceda6ea19b8c846a4ab6c401a8",
+              "clean_worktree_and_index": true,
+              "origin_main": "ac772bc0102ff8ceda6ea19b8c846a4ab6c401a8",
+              "tree": "8715b30e58ada168d04e58e7311311d99c5d03ee"
+            }
+          },
+          "duplicates": 0,
+          "errors": 0,
+          "failures": 0,
+          "function_case_vector": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            4,
+            1,
+            1,
+            1,
+            2,
+            2,
+            2,
+            1,
+            1,
+            1
+          ],
+          "functions": 16,
+          "new": 1,
+          "new_case_ID": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_external_benchmark.py::test_external_benchmark_requires_current_declared_packet_digest",
+          "product_and_test": {
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_external_benchmark.py": {
+              "bytes": 37952,
+              "full9": {
+                "st_ctime_ns": "1795624161686653870",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70031759",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795624161046039810",
+                "st_nlink": "1",
+                "st_size": "37952",
+                "st_uid": "1000"
+              },
+              "git_blob": "566fcdd4562bb8dc570d0e52b18fccc3172e4224",
+              "mode": "100644",
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_external_benchmark.py",
+              "prior_blob": "fe181984a79a0088faa46010bd2d60e155d27b0a",
+              "sha256": "9ad1187907f37120be9929da6967ba3753cb6887696b48c2386e13854c2df000"
+            },
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_external_benchmark.py": {
+              "bytes": 13790,
+              "full9": {
+                "st_ctime_ns": "1795624162298660516",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70031793",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795624161049700938",
+                "st_nlink": "1",
+                "st_size": "13790",
+                "st_uid": "1000"
+              },
+              "git_blob": "906dfa81068aa04759af700d28966862e1686624",
+              "mode": "100644",
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_external_benchmark.py",
+              "prior_blob": "939c3d60a7bb13f021679de702d760d0c19f30aa",
+              "sha256": "e2bdaca2566fe5c331bcc401781e286d4956a1af474ddebd666a93f2973f641a"
+            }
+          },
+          "publication": {
+            "bytes": 6741,
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P8-benchmark-packet-revision-ordinary22-three-FF-publication-v327.json",
+            "sha256": "7b0dd753544c9ff2ebcb1646f6a7945f9d24484da70ad258f4f9d6c3ec4a20e6"
+          },
+          "qualification": {
+            "bytes": 2203,
+            "path": "/tmp/Root-P8-packet-revision-ordinary22-v327-x8nb2z15/Root-P8-benchmark-packet-revision-existing-R2-qualified22-small-v327.json",
+            "sha256": "67ea74ffcd285467474d9b6dbf2aa5787657703541259b9481c17dee70e8f178"
+          },
+          "raw_JUnit": {
+            "bytes": 4397,
+            "path": "/tmp/Root-P8-packet-revision-ordinary22-v327-x8nb2z15/actual-output/P8-external-benchmark22-run-result0-output1.bin",
+            "sha256": "fdc237a3955d9b17c3acfc6953a22b4f99aa0e9df5566f34a1bae5785f991e68"
+          },
+          "retained": 21,
+          "scope": "Existing fictional software-mechanics benchmark evaluation only. Matching or omitted digest compatibility and declared stale/null digest refusal; no real producer authentication, model or legal qualification.",
+          "skips": 0,
+          "unique_PASS": 22
+        },
+        "SQL51_v325": {
+          "COLLECT_RUN_JUnit_order_exact": true,
+          "Native_run": false,
+          "Source_resource_parent_workspace_closed": true,
+          "errors": 0,
+          "failures": 0,
+          "frozen_D_HEAD": "17a3d3ff728fd4485220ae7ab85c344672db08c9",
+          "frozen_D_tree": "c47971d12ada285d5c64bf09f72cdbfedfadf750",
+          "functions": 25,
+          "managed_ledger_changed": false,
+          "managed_v287_route_qualification": false,
+          "new": 4,
+          "new_case_IDs": [
+            "tests/unit/logic/test_duckdb_proof_store_persistence.py::test_historical_legal_aggregate_reopen_refuses_authority_without_retry[legacy]",
+            "tests/unit/logic/test_duckdb_proof_store_persistence.py::test_historical_legal_aggregate_reopen_refuses_authority_without_retry[bound-v2]",
+            "tests/unit/logic/test_duckdb_proof_store_persistence.py::test_current_legal_aggregate_without_complete_context_refuses_sql_put",
+            "tests/unit/logic/legal_ir/test_proof_cache.py::test_genuine_sql_legal_shadow_requires_coherent_context_and_preserves_prior_rows"
+          ],
+          "qualification": {
+            "bytes": 2622,
+            "path": "/tmp/Root-P1-real-DuckDB-existing-R2-ordinary51-v325-compact-205zqxy0/Root-real-DuckDB-SQL51-existing-R2-qualified-small.json",
+            "sha256": "edddc38e73c73da677e30582812e536641d6a039d44140a5c3b300bae8b2c3a0"
+          },
+          "raw_JUnit": {
+            "bytes": 8484,
+            "logical_name": "junit.xml",
+            "path": "/tmp/Root-P1-real-DuckDB-existing-R2-ordinary51-v325-compact-205zqxy0/actual-output/P1-current-real-DuckDB-SQL51-run-result0-output1.bin",
+            "sha256": "f28dd50d01fb13ab82b2400444c12f63296f9a997c9e7a79a02ba3ce4890af4e"
+          },
+          "real_DuckDB_software_persistence_only": true,
+          "retained": 47,
+          "skips": 0,
+          "unique_PASS": 51
+        },
+        "Title10_pilot": {
+          "Lean_text_preparation_not_Lean_compiler_result": true,
+          "admission": null,
+          "both_drafts_unadmitted": true,
+          "evaluation_gold_mask": 0,
+          "formal_review": null,
+          "historical_four_7214_passes_not_new_ordinary_credit": true,
+          "legal_review": null,
+          "review_input_index": {
+            "bytes": 5372,
+            "path": "/tmp/Root-P2-7213-existing-public-owner-private-replay-v323-3xl4_76z/title-10-pilot-review-input-index.json",
+            "sha256": "a00c306002c3ea09689f574d86d5fc7f2ddd972527b45882faf6841ee0532e91"
+          },
+          "selected_as_of": null,
+          "signed_subject": null,
+          "status_101_b": "Governing-definition applicability decisions for the two uses remain pending.",
+          "status_7213": "Current exact typed IR preparation and Lean-text replay of the unreviewed draft, with no formal source_binding.",
+          "status_7214": "Retained typed partial proposal and four historical passes. Exact raw HTML and operative text join the 2024 source packet while preserving different view and occurrence IDs.",
+          "training_mask": 0,
+          "typed_draft_evidence": {
+            "bytes": 1331,
+            "path": "/tmp/Root-P2-7213-existing-public-owner-private-replay-v323-3xl4_76z/title-10-pilot-prepared-inputs-with-typed-7214-evidence.json",
+            "sha256": "61d76f557c1e04017d17a137062cebf7f3c502c0eab580d2d354cd56ecd8358a"
+          },
+          "uses": [
+            "10 USC \u00a77213",
+            "10 USC \u00a77214"
+          ]
+        },
+        "evidence_ordinal": 523,
+        "hosted_CI_v327": {
+          "cause": "GitHub account billing lock prevented the job from starting.",
+          "compiler_dispatched": false,
+          "conclusion": "failure",
+          "diagnostic": {
+            "bytes": 663,
+            "path": "/tmp/Root-v327-GitHub-hosted-Native-billing-readonly-k492yy_6/actual-hosted-pinned-Lean-job-terminal-zero-steps.json",
+            "sha256": "8a9df839e09b4d35298a72c21a443f58bd5743892f0f211b79792d2820495c2b"
+          },
+          "job_ID": 139355766005,
+          "job_url": "https://github.com/endomorphosis/ipfs_datasets_py/actions/runs/45656804967/job/139355766005",
+          "local_Native_result_is_separate_from_hosted_CI": true,
+          "new_run_or_billing_change_selected": false,
+          "push_run_ID": 45656804967,
+          "status": "completed",
+          "step_count": 0
+        },
+        "limits": {
+          "all_prior_failures_costs_and_read_scope_incident_retained": true,
+          "full_eight_phase_goal_complete": false,
+          "managed_ledger_header_cap_policy_eligibility_changed": false,
+          "managed_v287_failure_retagged": false,
+          "new_model_training_gold_real_external_expert_legal_review_claim": false
+        },
+        "local_Native_cache_v328": {
+          "actual_Source_compiler_custody_parent_descendants_parent_home_closed": true,
+          "compiler_commands": 2,
+          "disk_round_trip_and_exact_reuse_passed": true,
+          "fictional_fixture_only": true,
+          "mutation_facets": 9,
+          "negative_artifact_facets": [
+            "source",
+            "obligation",
+            "assumptions"
+          ],
+          "negative_context_facets": [
+            "declaration",
+            "proposition",
+            "toolchain",
+            "backend-profile",
+            "interpretation",
+            "dependency"
+          ],
+          "published_D_HEAD": "3ea8a5a10da075dc7bc31a67e5d48c32cf8ae1b4",
+          "published_D_tree": "0cb675b8978f2e6aabb33de3644960382e857dba",
+          "pytest_credit": 0,
+          "qualification": {
+            "bytes": 2395,
+            "path": "/tmp/Root-P1-actual-Native-cache-exact-current-v328-d8ssiw7e/Root-actual-existing-Native-cache-reuse-qualification-closed-small-v328.json",
+            "sha256": "b3a93d92ef6e1ded89882d751302e1c1d8b7fe3f0b72e50ed171ab87fb5f5129"
+          },
+          "raw_report": {
+            "bytes": 91466,
+            "path": "/tmp/Root-P1-actual-Native-cache-exact-current-v328-d8ssiw7e/actual-output/complete-native3-direct-existing-owner-report.json",
+            "sha256": "1504bc480a0761e2b7815bebaca33650ee2767f242dff37eef589dd04b554c51"
+          },
+          "reuse_or_refusal_commands": 0,
+          "runtime_physical_IO_complete": false,
+          "software_only_version_mutation_controls": 2,
+          "statutory_corpus_model_full_goal_qualification": false,
+          "test_report": {
+            "bytes": 128453,
+            "path": "/tmp/Root-P1-actual-Native-cache-exact-current-v328-d8ssiw7e/actual-output/original-test-temp/native-lean-proof-cache-v3.json",
+            "sha256": "257e0069b98a18da3a3a4d2de4bf3f2fa85eac0a882772c75d5bba948751c7c7"
+          },
+          "version_commands": 1
+        },
+        "maintenance": {
+          "all_old_evidence_values_retained": 522,
+          "components_retained": 126,
+          "composer_Source_Git_runtime_or_canonical_action": false,
+          "new_record_count": 1,
+          "task_component_status_dependencies_acceptance_source_IDs_changed": false,
+          "tasks_retained": 24,
+          "whole_old_MD_prefixes_and_EOF_behavior_retained": true
+        },
+        "record_id": "sql51-p8-packet22-native-cache-closed-evidence523-20261125",
+        "retained_prior_SQL_attempt_scopes": {
+          "earlier_attempts_not_pooled_into_v325_PASS": true,
+          "prior_failures_and_full_Source_charges_retained_separately": true,
+          "scope_references": {
+            "review_input_index": {
+              "bytes": 5372,
+              "path": "/tmp/Root-P2-7213-existing-public-owner-private-replay-v323-3xl4_76z/title-10-pilot-review-input-index.json",
+              "sha256": "a00c306002c3ea09689f574d86d5fc7f2ddd972527b45882faf6841ee0532e91"
+            },
+            "v323": {
+              "bytes": 3593,
+              "path": "/tmp/Root-P2-7213-existing-public-owner-private-replay-v323-3xl4_76z/current-eight-phase-checkpoint-draft-and-SQL-Source8-v323.json",
+              "sha256": "a145ded9b8d25e3a5ed64b99a010cc49d675d271fbe6093f1349c41833172440"
+            },
+            "v324": {
+              "bytes": 12081,
+              "path": "/tmp/Root-P2-7213-existing-public-owner-private-replay-v323-3xl4_76z/current-eight-phase-checkpoint-SQL51-retries-and-exact-closure-v324.json",
+              "sha256": "b41a3df51e9d8651b70b5c20189d029276910ca43939e70c7e17a4daea470b10"
+            }
+          },
+          "v287": {
+            "default_GB": 250,
+            "failure_and_identity_bound_recovery_retained": true,
+            "no_grant": true,
+            "persisted_GB": 280,
+            "scope": "Historical separate managed-ledger initial-read scope refusal, preserved from prior guide records and Root supplied closeout facts; not reverified or retroactively qualified here.",
+            "tests": 0
+          },
+          "v323": {
+            "RUN_raw_output_files": 0,
+            "RUN_stopped_by_workspace_limit": true,
+            "Source_resource_parent_workspace_closed": true,
+            "collection_passed": true,
+            "diagnostic_PASS_lines_not_case_credit": 22,
+            "qualified": false
+          },
+          "v324": {
+            "Source_resource_parent_workspace_closed": true,
+            "qualified": false,
+            "recorded_failure": "test_genuine_sql_legal_shadow_requires_coherent_context_and_preserves_prior_rows: unlisted Source import duckdb_proof_coordination.py",
+            "reported_unique_cases": 51
+          }
+        },
+        "schema": "closed-SQL51-P8-packet22-Native-cache-and-unadmitted-pilot-evidence/v1"
+      },
+      "evidence_ordinal": 523,
+      "id": "sql51-p8-packet22-native-cache-closed-evidence523-20261125",
+      "observed_bytes": 13842,
+      "observed_sha256": "43a4ece4f1e2929f1fc85b87a1a37fedd4cd619fe7fb90ca97f32a0a73ab51df",
+      "path": "/tmp/P1-guide523-single-consolidation-private-v01/one-existing-guide523-SQL51-P8packet22-Nativecache-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Separate real SQL51 persistence checks, published P8 fictional packet-digest22 mechanics, and actual local fictional Native cache 1-version/2-compiler exact reuse. Hosted CI billing stopped before steps; both Title10 drafts remain unadmitted. No task status, legal/model/gold/training or full-goal qualification.",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
     }
   ]
 }

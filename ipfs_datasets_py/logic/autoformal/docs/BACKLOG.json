@@ -3622,6 +3622,31 @@
       "same_scope_SUT_RED_GREEN_demonstrated": false,
       "status": "closed_software_evidence_only_no_task_status_change",
       "temporary_JSON_cleaned_no_reusable_model_artifact": true
+    },
+    "sql51_p8_packet22_native_cache_closed_software_evidence_20261125": {
+      "Title10_drafts_unadmitted": true,
+      "all24_tasks126_components522_old_evidence_values_preserved": true,
+      "evidence_ordinal": 523,
+      "facts": {
+        "bytes": 13842,
+        "path": "/tmp/P1-guide523-single-consolidation-private-v01/one-existing-guide523-SQL51-P8packet22-Nativecache-scoped-facts.json",
+        "sha256": "43a4ece4f1e2929f1fc85b87a1a37fedd4cd619fe7fb90ca97f32a0a73ab51df"
+      },
+      "full_eight_phase_goal_complete": false,
+      "hosted_CI_billing_failure_not_compiler_result": true,
+      "hosted_CI_steps": 0,
+      "local_Native_pytest_credit": 0,
+      "local_Native_version_compiler_reuse_refusal_vector": [
+        1,
+        2,
+        0
+      ],
+      "managed_250_280_GB_scope_refusal_preserved": true,
+      "public_P8_packet_revision_unique_PASS": 22,
+      "public_SQL51_unique_PASS": 51,
+      "record_id": "sql51-p8-packet22-native-cache-closed-evidence523-20261125",
+      "status": "closed_software_evidence_only_no_task_status_change",
+      "training_and_gold_masks": 0
     }
   },
   "programme_goal_hierarchy": {
