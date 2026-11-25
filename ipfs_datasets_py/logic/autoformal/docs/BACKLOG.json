@@ -3712,6 +3712,50 @@
       "status": "closed_software_evidence_only_no_task_status_change",
       "three_normal_child_first_code_publications_closed": true,
       "training_and_gold_masks": 0
+    },
+    "phase6_effective_date_source_withheld_ordinary44_closed_software_evidence_20261125": {
+      "Source_SDK_resource_parent_closed": true,
+      "Title10_review_real_release_and_model_pending": true,
+      "all24_tasks126_components525_old_evidence_values_preserved": true,
+      "evidence_ordinal": 526,
+      "facts": {
+        "bytes": 16419,
+        "path": "/tmp/P6-guide526-single-consolidation-private-v01-x1f1s4dn/one-existing-guide526-effective-date-ordinary44-scoped-facts.json",
+        "sha256": "5c5bc3467f24b6077be2af7dcf6099f9a55df80f516fba7c4eab628b0f5caaeb"
+      },
+      "full_eight_phase_goal_complete": false,
+      "function_case_vector": [
+        1,
+        1,
+        5,
+        1,
+        3,
+        3,
+        1,
+        1,
+        2,
+        1,
+        1,
+        1,
+        2,
+        3,
+        2,
+        2,
+        1,
+        8,
+        1,
+        3,
+        1
+      ],
+      "new_cases": 18,
+      "ordinary_functions": 21,
+      "private_SAME20_and_retained24_separate": true,
+      "public_effective_date_unique_PASS": 44,
+      "record_id": "phase6-effective-date-source-withheld-ordinary44-closed-software-evidence526-20261125",
+      "retained_cases": 26,
+      "status": "closed_software_evidence_only_no_task_status_change",
+      "three_normal_child_first_code_publications_closed": true,
+      "training_and_gold_masks": 0
     }
   },
   "programme_goal_hierarchy": {

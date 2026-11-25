@@ -27981,6 +27981,368 @@
       "root": "artifact_workspace",
       "scope": "Published controlled-prose civil-date roundtrip software with an exact26-case ordinary cohort. Private SAME24 remains separate. No legal/proof/model authority or task-status change.",
       "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase6_effective_date_source_withheld_ordinary44_closed_software_evidence_20261125",
+      "closed_software_facts": {
+        "authored_fixtures": {
+          "different_dates_can_share_start_status": "Reference2030-01-01 and candidate2030-04-01 differ in exact dates and typed structure. At2030-01-01 their start predicates differ; at2030-06-01 both have started, so start-status equality alone does not establish date equality.",
+          "earlier_effective_from": "2030-01-01",
+          "earlier_started_on_as_of": true,
+          "fixed_as_of": "2030-02-01",
+          "later_effective_from": "2030-04-01",
+          "later_started_on_as_of": false,
+          "norm_binding": "Moving the typed date from statement0 to statement1 preserves neither the statement-indexed date array nor the corresponding start-condition comparison.",
+          "same_date_boundary": "An effective_from value equal to the supplied as-of date has started under the inclusive lower-bound convention.",
+          "scope": "Controlled fixture assertions only; no statute, jurisdiction, real legal applicability or clock attestation.",
+          "source_withheld": "The real inverse receives candidate prose and the fixed opt-in profile only. Original fixture wording, reference target and as-of date are not passed into reconstruction."
+        },
+        "closed_code_publication": {
+          "Guide525_and_untargeted_code_fences_preserved": {
+            "ipfs_datasets_py/logic/TDFOL/compiler_repairs.py": "b914db06cd23be92ae0a24bcfb35c1b19d3fd1a3",
+            "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json": "6e9c25b72a50b7a03c9d6398409a0a29248eb20a",
+            "ipfs_datasets_py/logic/autoformal/docs/HANDOFF.md": "e4cab9ca42bea8bd8569d940556c4fe2c6c2ddc1",
+            "ipfs_datasets_py/logic/autoformal/docs/TRAINING_HISTORY.md": "c9ce39ba92f0f2ca21de2c3c494314a010db9ff9",
+            "ipfs_datasets_py/logic/autoformal/docs/work_catalog.json": "f61e4e366c96ca64f74b33e6b06dd3a6afb5668b",
+            "ipfs_datasets_py/logic/autoformal/legal_release_coordinator_v1.py": "2faa76f3b111b3d68c814eb0eb0db7724a7a18f8",
+            "tests/unit/logic/autoformal/test_corpus_release_cli.py": "9dbd1c45ede27e34652cf872fb9aebfc06b996b8"
+          },
+          "exact_five_code_files": {
+            "ipfs_datasets_py/logic/formalization/autoencoder/ir_legal_text_roundtrip.py": {
+              "bytes": 45653,
+              "full9": {
+                "st_ctime_ns": "1795630425645804383",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70042555",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795630425326664816",
+                "st_nlink": "1",
+                "st_size": "45653",
+                "st_uid": "1000"
+              },
+              "git_blob": "3e89176b68d5a16b9c808e744a9e09a462ea0ddb",
+              "mode": "100644",
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/ipfs_datasets_py/logic/formalization/autoencoder/ir_legal_text_roundtrip.py",
+              "prior_blob": "1fe01f9216329b977e28f9948344371536dec75b",
+              "sha256": "06a50571f77db77c5ee25d13d45adfb55ecb1ef19ddb1c89d92cfef7bc522d06",
+              "stage0_blob": "3e89176b68d5a16b9c808e744a9e09a462ea0ddb"
+            },
+            "ipfs_datasets_py/logic/legal_ir/extended_compiler.py": {
+              "bytes": 16302,
+              "full9": {
+                "st_ctime_ns": "1795630425964803230",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70042568",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795630425331567534",
+                "st_nlink": "1",
+                "st_size": "16302",
+                "st_uid": "1000"
+              },
+              "git_blob": "3c30f4ffb90199b11293bedc9b8e468ce286cfce",
+              "mode": "100644",
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/ipfs_datasets_py/logic/legal_ir/extended_compiler.py",
+              "prior_blob": "42a325036699a54749e6353f090bda5ba3131310",
+              "sha256": "1df3a74a711143aef03d08048b06b74b3b2f7d99017e49c831f91493b192316f",
+              "stage0_blob": "3c30f4ffb90199b11293bedc9b8e468ce286cfce"
+            },
+            "ipfs_datasets_py/logic/legal_ir/extended_contracts.py": {
+              "bytes": 10358,
+              "full9": {
+                "st_ctime_ns": "1795630426253802192",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70042574",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795630425336713227",
+                "st_nlink": "1",
+                "st_size": "10358",
+                "st_uid": "1000"
+              },
+              "git_blob": "b4c41063d5c3aa0ce680ec5b448d97e0c1bd9b38",
+              "mode": "100644",
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/ipfs_datasets_py/logic/legal_ir/extended_contracts.py",
+              "prior_blob": "eb8fed612ef4a0cfc9a096199596c4ee8affec0e",
+              "sha256": "9e7f7781b09965cdfefbd7713de66793f559aedd56b76f0734211fbeb0dde4dd",
+              "stage0_blob": "b4c41063d5c3aa0ce680ec5b448d97e0c1bd9b38"
+            },
+            "ipfs_datasets_py/logic/legal_ir/extended_decompiler.py": {
+              "bytes": 18172,
+              "full9": {
+                "st_ctime_ns": "1795630426565801071",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70042578",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795630425341473530",
+                "st_nlink": "1",
+                "st_size": "18172",
+                "st_uid": "1000"
+              },
+              "git_blob": "bfca7a6f7a03a1f26ff5322dae81b11aa216b17f",
+              "mode": "100644",
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/ipfs_datasets_py/logic/legal_ir/extended_decompiler.py",
+              "prior_blob": "6aeba2db1d4fc0c29a97271757f25a874ebc548b",
+              "sha256": "f9fa4903ff67cf246ca0df11ead75278329bef5e5185507ac04c87815a1fe357",
+              "stage0_blob": "bfca7a6f7a03a1f26ff5322dae81b11aa216b17f"
+            },
+            "tests/unit/logic/formalization/autoencoder/test_ir_legal_text_roundtrip.py": {
+              "bytes": 77915,
+              "full9": {
+                "st_ctime_ns": "1795630426884799925",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70042579",
+                "st_mode": "33188",
+                "st_mtime_ns": "1795630425347018518",
+                "st_nlink": "1",
+                "st_size": "77915",
+                "st_uid": "1000"
+              },
+              "git_blob": "41bf5a658264cd8b5ee11b4f94236bd0aa8bfc20",
+              "mode": "100644",
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/tests/unit/logic/formalization/autoencoder/test_ir_legal_text_roundtrip.py",
+              "prior_blob": "cbc3e7b2a6a3b162bbd9c3e0a263a06b5e28e4b3",
+              "sha256": "ded7776b874b7cdee6a80911f783d9ab96b1965a2c58a38dc6e5b218960badc0",
+              "stage0_blob": "41bf5a658264cd8b5ee11b4f94236bd0aa8bfc20"
+            }
+          },
+          "genuinely_closed": true,
+          "no_test_CI_Source_model_replay_in_publication": true,
+          "normal_child_first_order": [
+            "datasets",
+            "hallucinate",
+            "root"
+          ],
+          "receipt": {
+            "bytes": 13081,
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase6-effective-date-ordinary44-three-FF-publication-v335.json",
+            "sha256": "b9b12b1a191f866b9d83bce59772eec6c31c82f820cf4f1f9c63993dd13acb39"
+          },
+          "repositories": {
+            "accelerate": {
+              "HEAD": "88c0d9f82f66aaddbb01344c9f85236e92a5dc88",
+              "clean_worktree_and_index": true,
+              "origin_main": "88c0d9f82f66aaddbb01344c9f85236e92a5dc88",
+              "tree": "416a953630c9ba7ef521fd87bf821f075b052efc"
+            },
+            "datasets": {
+              "HEAD": "9316c081448cab6ecb3595f5d4475e9267472173",
+              "clean_worktree_and_index": true,
+              "origin_main": "9316c081448cab6ecb3595f5d4475e9267472173",
+              "tree": "bbd2c651b264e0ac5e7bbdead1aaea51007022df"
+            },
+            "hallucinate": {
+              "HEAD": "0f88b33addc0ae3ed0fe1079323b9f0fac4b1436",
+              "clean_worktree_and_index": true,
+              "origin_main": "0f88b33addc0ae3ed0fe1079323b9f0fac4b1436",
+              "tree": "81413757acefd54252329eb4a35184a53e59cbab"
+            },
+            "root": {
+              "HEAD": "00a963d75a5f1c897600eae5d26970815e430382",
+              "clean_worktree_and_index": true,
+              "origin_main": "00a963d75a5f1c897600eae5d26970815e430382",
+              "tree": "f74c29a48b88d9ba22acde1410949ddaf08a7caa"
+            }
+          }
+        },
+        "evidence_ordinal": 526,
+        "implemented_behavior": {
+          "IR_schema": "legal-surface-ir-with-effective-dates/v1",
+          "IR_type": "ExtendedEffectiveDateLegalIR",
+          "controlled_surface_example": "Temporal: effective from 2030-01-01.",
+          "date_evaluation_after_candidate_reconstruction": true,
+          "distinct_measurements": [
+            "original_utf8_exact",
+            "canonical_prose_exact",
+            "complete_typed_structure_exact",
+            "effective_dates_exact",
+            "start_conditions_exact_as_of"
+          ],
+          "existing_field": "NormV2.temporal retains its field inventory; literal strings and exact TemporalDeadline remain available. Typed deadlines may coexist with one typed effective date in the same norm.",
+          "existing_inverse_and_rendering_APIs": [
+            "compile_extended",
+            "decompile_extended"
+          ],
+          "explicit_opt_in_and_legacy_preservation": "The versioned effective-date profile and IR schema opt in explicitly; the two historical schemas reject typed effective dates. Definitions and policies accept no typed date. Historical defaults and prior schemas remain unchanged.",
+          "fixed_as_of_limit": "The inclusive lower-bound start predicate is evaluated only against the explicitly supplied civil as-of date. Equality of these predicates is not equality of effective dates, complete IR, or legal applicability; it does not evaluate other conditions, exceptions, source fidelity or norm truth.",
+          "inverse_inputs": {
+            "as_of_date": false,
+            "candidate_prose": true,
+            "fixed_profile": true,
+            "original_source": false,
+            "reference_IR": false
+          },
+          "profile": "source-withheld-typed-legal-effective-dates/v1",
+          "profile_constant": "EFFECTIVE_DATE_PROSE_PROFILE",
+          "refusal_scope": "Impossible or noncanonical dates, timestamps, absent typed dates, quoted temporal literals, duplicate starts, date-bearing definitions and unconsumed qualifiers refuse or abstain. Missing/non-exact civil as-of values, including datetime values, are rejected.",
+          "scorer_API": "score_effective_date_legal_text_roundtrip",
+          "scorer_owner": "ipfs_datasets_py/logic/formalization/autoencoder/ir_legal_text_roundtrip.py",
+          "typed_lower_bound": "EffectiveFrom(effective_from: str) stores one exact valid canonical ISO YYYY-MM-DD lower bound per norm; has_started_on requires an exact datetime.date and includes equality.",
+          "typed_surface_contract": {
+            "bytes": 6665,
+            "path": "/tmp/Phase6-effective-from-wire-owner-readonly-private-v01/sealed-private-effective-from-three-owner-posts-and-contract-v01.json",
+            "sha256": "2b8d86040cad2c34776db17c7dc896385614a76c8bc35360a5ab41e5b7489517"
+          },
+          "wire_example": {
+            "effective_from": "2030-01-01"
+          }
+        },
+        "limits": {
+          "Guide526_canonical_adoption_or_publication_claimed": false,
+          "Title10_independent_legal_formal_review": "pending",
+          "actual_statutory_admission": false,
+          "court_or_effective_date_legal_authority": false,
+          "evaluation_gold_mask": 0,
+          "full_eight_phase_goal_complete": false,
+          "legal_semantics_or_source_correspondence_verified": false,
+          "model_quality_training_or_convergence_authority": false,
+          "new_service_activation_or_runtime_execution_by_composer": false,
+          "proof_or_Native_Lean_qualification": false,
+          "real_release_and_model_work": "pending",
+          "training_mask": 0
+        },
+        "maintenance": {
+          "all_previous_JSON_values_and_statuses_preserved": true,
+          "all_prior_failures_and_source_identities_retained": true,
+          "components": 126,
+          "composer_canonical_Source_Git_SQL_product_import_test_or_model_actions": false,
+          "entire_previous_Markdown_prefixes_preserved": true,
+          "new_evidence_record": 526,
+          "prior_evidence_records": 525,
+          "tasks": 24
+        },
+        "ordinary_qualification": {
+          "Source_and_resource_parent_home_closed": true,
+          "collect_run_and_JUnit_exact_order": true,
+          "detached_scorer_and_owning_test_Source_execution_verified": true,
+          "duplicates": 0,
+          "errors": 0,
+          "failures": 0,
+          "frozen_D_HEAD": "9316c081448cab6ecb3595f5d4475e9267472173",
+          "frozen_D_tree": "bbd2c651b264e0ac5e7bbdead1aaea51007022df",
+          "full_report": {
+            "bytes": 1259785,
+            "path": "/tmp/Root-Phase6-effective-date-ordinary44-selected-v335-wrle9136/actual-output/complete-frozen-local-D-phase6-effective-date-source-withheld44-existing-owner-report.json",
+            "sha256": "772a9ebbbdda578bc3b29cb4da5a03bfad3072ff094d2e6dbbe51a9e83963cc6"
+          },
+          "function_case_vector": [
+            1,
+            1,
+            5,
+            1,
+            3,
+            3,
+            1,
+            1,
+            2,
+            1,
+            1,
+            1,
+            2,
+            3,
+            2,
+            2,
+            1,
+            8,
+            1,
+            3,
+            1
+          ],
+          "functions": 21,
+          "new_effective_date_cases": 18,
+          "physical_IO_accounting_complete": false,
+          "raw_JUnit": {
+            "bytes": 9530,
+            "logical_name": "junit.xml",
+            "path": "/tmp/Root-Phase6-effective-date-ordinary44-selected-v335-wrle9136/actual-output/phase6-effective-date-source-withheld44-run-result0-output1.bin",
+            "sha256": "36f24eeb885d0473e0b16918b32a67671c380629d990e9e429153cb52ea03c12"
+          },
+          "receipt": {
+            "bytes": 3005,
+            "path": "/tmp/Root-Phase6-effective-date-ordinary44-selected-v335-wrle9136/Root-Phase6-effective-date-ordinary44-qualified-Source-closed-small-v335.json",
+            "sha256": "6317ca4620b32c1c04cc9662e70dc2dbf4d5177c240fa78c372337bc00bebf50"
+          },
+          "retained_cases": 26,
+          "scope": "Exact selected ordinary44 controlled-prose cohort; not whole-file coverage, statutory evaluation or Native Lean qualification.",
+          "skips": 0,
+          "unique_physical_PASS": 44
+        },
+        "schema": "guide526-effective-date-source-withheld-ordinary44-scoped-facts/v1",
+        "scoped_hosted_CI_observation": {
+          "D_commit": "9316c081448cab6ecb3595f5d4475e9267472173",
+          "Native_Lean_started_or_passed": false,
+          "each_steps": 0,
+          "no_rerun_or_billing_mutation": true,
+          "official_annotation": "The job was not started because your account is locked due to a billing issue.",
+          "pinned_job_ids": [
+            139416373473,
+            139416183282
+          ],
+          "receipt": {
+            "bytes": 1651,
+            "path": "/tmp/Root-Phase6-effective-date-ordinary44-selected-v335-wrle9136/actual-v335-hosted-native-Lean-billing-refusal-read-only.json",
+            "sha256": "42da8fc57e7e52e32c449d90e386b767cbb284b1b37f4d5e87c982750fa8eab3"
+          },
+          "run": "https://github.com/endomorphosis/ipfs_datasets_py/actions/runs/45673899321",
+          "scope": "Observation of these two jobs at this exact published commit only; not Native proof qualification or a claim about all CI."
+        },
+        "separate_private_results": {
+          "no_canonical_or_ordinary_qualification_transferred_from_private_runs": true,
+          "not_added_to_ordinary44": true,
+          "receipt": {
+            "bytes": 15643,
+            "path": "/tmp/Root-Phase6-effective-date-existing-five-private-pytest-v335-zkij4rgq/sealed-effective-date-exact-five-same20-private-and-retained24-v335.json",
+            "sha256": "441e99b9243d3295ce19a46873fb3a9639e6bfe9c661d5dbaf76be474b5bb318"
+          },
+          "retained24": {
+            "errors": 0,
+            "failures": 0,
+            "passed": 24,
+            "raw_JUnit": {
+              "bytes": 5500,
+              "path": "/tmp/Root-Phase6-effective-date-existing-five-private-pytest-v335-zkij4rgq/retained24-after-attempt/result.xml",
+              "sha256": "30201bdd3fdda71507ce428a6bac1f49cc2cc30e3fa8a0817f3c8c01137c9afd"
+            },
+            "skips": 0
+          },
+          "retained24_separate": true,
+          "same20_after": {
+            "errors": 0,
+            "failures": 0,
+            "passed": 20,
+            "raw_JUnit": {
+              "bytes": 4100,
+              "path": "/tmp/Root-Phase6-effective-date-existing-five-private-pytest-v335-zkij4rgq/after-attempt/result.xml",
+              "sha256": "c3d2ce1006dff7f649c60c123657cb4bce7bbcdbc37735065f6ecce191a59640"
+            },
+            "skips": 0
+          },
+          "same20_before": {
+            "errors": 0,
+            "failures": 18,
+            "passed": 2,
+            "raw_JUnit": {
+              "bytes": 15336,
+              "path": "/tmp/Root-Phase6-effective-date-existing-five-private-pytest-v335-zkij4rgq/before-attempt/result.xml",
+              "sha256": "49d0439bcd6a1bd2ec66545266888aa3a7aaef7794e1024783cedfbc2f6e6c48"
+            },
+            "skips": 0
+          },
+          "same20_roster_and_variants_preserved": true
+        }
+      },
+      "evidence_ordinal": 526,
+      "id": "phase6-effective-date-source-withheld-ordinary44-closed-software-evidence526-20261125",
+      "observed_bytes": 16419,
+      "observed_sha256": "5c5bc3467f24b6077be2af7dcf6099f9a55df80f516fba7c4eab628b0f5caaeb",
+      "path": "/tmp/P6-guide526-single-consolidation-private-v01-x1f1s4dn/one-existing-guide526-effective-date-ordinary44-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Published opt-in controlled-prose typed effective-date roundtrip software with an exact44-case ordinary cohort. Private SAME20 and retained24 remain separate. No legal/proof/model authority or task-status change.",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
     }
   ]
 }
