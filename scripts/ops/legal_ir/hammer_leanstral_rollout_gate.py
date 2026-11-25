@@ -2312,6 +2312,7 @@ def compiler_system_promotion_gate(
         payload,
         evidence_packets,
         cfg,
+        external_result=external_result,
     )
     failures.extend(binding_failures)
     metrics["evidence_domains"] = domain_metrics
@@ -2435,25 +2436,39 @@ def _compiler_system_external_validity_result(
     payload: Mapping[str, Any],
     cfg: CompilerSystemPromotionConfig,
 ) -> RolloutGateResult | None:
-    packet = _first_mapping_value(
-        payload,
-        (
-            "external_validity",
-            "external_validity_promotion",
-            "external_validity_gate",
-            "external_validity_evidence",
-        ),
+    aliases = (
+        "external_validity",
+        "external_validity_promotion",
+        "external_validity_gate",
+        "external_validity_evidence",
     )
-    if (
-        packet is None
-        and str(payload.get("schema_version") or "") == EXTERNAL_VALIDITY_PROMOTION_SCHEMA_VERSION
-    ):
-        packet = payload
-    if packet is None:
+    packets = [packet for key in aliases if isinstance(packet := payload.get(key), Mapping)]
+    if not packets and _schema_version(payload) == EXTERNAL_VALIDITY_PROMOTION_SCHEMA_VERSION:
+        packets.append(payload)
+    if not packets:
         return None
-    if _looks_like_gate_decision(packet, EXTERNAL_VALIDITY_PROMOTION_SCHEMA_VERSION):
-        return _rollout_result_from_decision(packet)
-    return external_validity_promotion_gate(packet)
+
+    saved = []
+    replayed = []
+    for packet in packets:
+        if _looks_like_gate_decision(packet, EXTERNAL_VALIDITY_PROMOTION_SCHEMA_VERSION):
+            saved.append(_rollout_result_from_decision(packet))
+        else:
+            replayed.append(external_validity_promotion_gate(packet))
+    results = replayed + saved
+    selected = results[0]
+    if all(result.to_dict() == selected.to_dict() for result in results[1:]):
+        return selected
+
+    failures = [failure for result in results for failure in result.failures]
+    failures.append("external_validity_inputs_disagree")
+    warnings = [warning for result in results for warning in result.warnings]
+    return RolloutGateResult(
+        accepted=False,
+        failures=list(dict.fromkeys(failures)),
+        warnings=list(dict.fromkeys(warnings)),
+        metrics=selected.metrics,
+    )
 
 
 def _compiler_system_domain_packet(
@@ -2816,6 +2831,8 @@ def _compiler_system_binding_failures(
     payload: Mapping[str, Any],
     evidence_packets: Mapping[str, Mapping[str, Any]],
     cfg: CompilerSystemPromotionConfig,
+    *,
+    external_result: RolloutGateResult | None,
 ) -> tuple[dict[str, Any], list[str]]:
     relevant = {
         domain: packet
@@ -2828,6 +2845,17 @@ def _compiler_system_binding_failures(
             "rollback_readiness",
         }
     }
+    # The external result records the identifiers actually evaluated. Keep
+    # these separate from the labels on the submitted packet.
+    if external_result is not None:
+        evaluated = external_result.metrics.get("bindings")
+        if isinstance(evaluated, Mapping):
+            relevant["external_validity_result"] = {
+                field: binding["canonical"]
+                for field in cfg.required_binding_fields
+                if isinstance(binding := evaluated.get(field), Mapping)
+                and isinstance(binding.get("canonical"), str)
+            }
     return _external_validity_binding_failures(
         payload,
         relevant,
@@ -3329,6 +3357,34 @@ def _poisoning_defense_failures(
     )
 
 
+def _external_benchmark_packet_totals(value: Any) -> tuple[int, int, list[str]] | None:
+    """Count only distinct packet results with coherent producer dispositions."""
+
+    if not isinstance(value, list):
+        return None
+    packet_ids: set[str] = set()
+    failed: list[str] = []
+    for row in value:
+        if not isinstance(row, Mapping):
+            return None
+        packet_id = row.get("packet_id")
+        accepted = row.get("accepted")
+        reasons = row.get("block_reasons")
+        if (
+            type(packet_id) is not str or not packet_id.strip() or packet_id in packet_ids
+            or type(accepted) is not bool
+            or row.get("status") != ("accepted" if accepted else "failed")
+            or not isinstance(reasons, list)
+            or any(type(reason) is not str or not reason.strip() for reason in reasons)
+            or accepted == bool(reasons)
+        ):
+            return None
+        packet_ids.add(packet_id)
+        if not accepted:
+            failed.append(packet_id)
+    return len(packet_ids), len(packet_ids) - len(failed), failed
+
+
 def _external_benchmark_failures(
     packet: Mapping[str, Any],
     cfg: ExternalValidityPromotionConfig,
@@ -3345,6 +3401,28 @@ def _external_benchmark_failures(
     score = _first_finite(external, ("external_validity_score", "score", "accepted_rate"))
     packet_count = _first_finite(external, ("packet_count", "sample_count", "evaluated_count"))
     failed_packets = _string_sequence(external.get("failed_packet_ids"))
+    packet_results_reconciled = False
+    if "packet_results" in external or "benchmark_digest" in packet:
+        totals = _external_benchmark_packet_totals(external.get("packet_results"))
+        if totals is None:
+            failures.append("external_benchmark_scores:packet_results_missing_or_invalid")
+        else:
+            actual_count, accepted_count, actual_failed = totals
+            actual_score = accepted_count / actual_count if actual_count else 0.0
+            reported_score = external.get("external_validity_score")
+            packet_results_reconciled = (
+                type(external.get("packet_count")) is int
+                and external["packet_count"] == actual_count
+                and type(external.get("accepted_packet_count")) is int
+                and external["accepted_packet_count"] == accepted_count
+                and type(reported_score) in (int, float)
+                and _finite_float(reported_score) is not None
+                and abs(reported_score - actual_score) <= 1.0e-12
+                and external.get("failed_packet_ids") == actual_failed
+            )
+            if not packet_results_reconciled:
+                failures.append("external_benchmark_scores:packet_summary_mismatch")
+            packet_count, score, failed_packets = actual_count, actual_score, actual_failed
     hard_guardrail = str(packet.get("hard_guardrail") or "").strip()
     separate = packet.get("separate_from_internal_canary_metrics")
     if score is None:
@@ -3375,6 +3453,7 @@ def _external_benchmark_failures(
             "schema_version": _schema_version(packet),
             "external_validity_score": score,
             "packet_count": packet_count,
+            "packet_results_reconciled": packet_results_reconciled,
             "failed_packet_ids": failed_packets,
             "separate_from_internal_canary_metrics": separate,
         },

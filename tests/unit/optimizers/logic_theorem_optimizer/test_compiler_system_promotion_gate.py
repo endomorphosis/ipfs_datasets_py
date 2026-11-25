@@ -8,6 +8,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+import pytest
+
 _DATASETS_ROOT = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(_DATASETS_ROOT))
 for _name in list(sys.modules):
@@ -324,3 +326,115 @@ def test_compiler_system_gate_cli_writes_decision_and_report(tmp_path: Path) -> 
     assert decision["accepted"] is True
     assert decision["schema_version"] == COMPILER_SYSTEM_PROMOTION_SCHEMA_VERSION
     assert "Decision: `accepted`" in report_path.read_text(encoding="utf-8")
+
+
+def _make_external_subgate_input(*, current):
+    from tests.unit.optimizers.logic_theorem_optimizer.test_external_validity_promotion_gate import (
+        _complete_evidence as complete_external_evidence,
+    )
+
+    evidence = complete_external_evidence()
+    if current:
+        evidence["evidence_bindings"].update(COMMON_BINDINGS)
+        for packet in evidence["evidence"].values():
+            packet.update(COMMON_BINDINGS)
+    return evidence
+
+
+def _save_external_subgate_decision(raw, tmp_path, capsys):
+    from hashlib import sha256
+    from scripts.ops.legal_ir.hammer_leanstral_rollout_gate import main
+
+    input_path = tmp_path / "external-input.json"
+    decision_path = tmp_path / "external-decision.json"
+    encoded = json.dumps(raw).encode("utf-8")
+    input_path.write_bytes(encoded)
+    assert main([
+        "external-validity-gate", "--evidence-path", str(input_path),
+        "--evidence-output", str(decision_path),
+    ]) == 0
+    decision = json.loads(decision_path.read_text(encoding="utf-8"))
+    assert json.loads(capsys.readouterr().out) == decision
+    assert decision["evidence_sha256"] == sha256(encoded).hexdigest()
+    assert decision["accepted"] is True
+    assert all(
+        decision["metrics"]["bindings"][key]["canonical"] == raw["evidence_bindings"][key]
+        for key in EXTERNAL_VALIDITY_BINDING_FIELDS
+    )
+    return decision
+
+
+@pytest.mark.parametrize("source", ("saved", "raw", "paired", "saved-with-current-labels"))
+@pytest.mark.parametrize("stale", (False, True))
+def test_compiler_system_checks_external_result_bindings(source, stale, tmp_path, capsys) -> None:
+    evidence = _complete_evidence()
+    raw = _make_external_subgate_input(current=not stale)
+    if source == "raw":
+        evidence["external_validity"] = raw
+    else:
+        saved = _save_external_subgate_decision(raw, tmp_path, capsys)
+        if source == "saved-with-current-labels":
+            saved.update(COMMON_BINDINGS)
+        evidence["external_validity"] = saved
+        if source == "paired":
+            evidence["external_validity_evidence"] = raw
+    result = compiler_system_promotion_gate(evidence)
+
+    assert result.accepted is not stale
+    if stale:
+        for field in EXTERNAL_VALIDITY_BINDING_FIELDS:
+            assert any(
+                failure.startswith(f"external_validity_binding_mismatch:{field}:")
+                for failure in result.failures
+            )
+    else:
+        assert result.failures == []
+
+
+def test_compiler_system_replays_raw_external_evidence_beside_an_accepted_decision(tmp_path, capsys) -> None:
+    from scripts.ops.legal_ir.hammer_leanstral_rollout_gate import external_validity_promotion_gate
+
+    evidence = _complete_evidence()
+    raw = _make_external_subgate_input(current=True)
+    evidence["external_validity"] = _save_external_subgate_decision(raw, tmp_path, capsys)
+    raw["evidence"]["external_benchmark_scores"]["external_validity"].update(
+        external_validity_score=0.5, failed_packet_ids=["fixture-rejected-packet"],
+    )
+    assert external_validity_promotion_gate(raw).accepted is False
+    evidence["external_validity_evidence"] = raw
+
+    result = compiler_system_promotion_gate(evidence)
+    assert result.accepted is False
+    assert any("fixture-rejected-packet" in failure for failure in result.failures)
+
+
+@pytest.mark.parametrize("hidden_failure", (False, True))
+def test_compiler_system_replays_real_external_benchmark_report(tmp_path, capsys, hidden_failure) -> None:
+    from tests.unit.optimizers.logic_theorem_optimizer.test_external_validity_promotion_gate import (
+        _actual_external_benchmark_report,
+    )
+
+    raw = _make_external_subgate_input(current=True)
+    benchmark = _actual_external_benchmark_report()
+    assert benchmark["accepted"] is True
+    external = benchmark["external_validity"]
+    assert external["packet_count"] == external["accepted_packet_count"] == len(external["packet_results"]) == 2
+    raw["evidence"]["external_benchmark_scores"] = _bind(benchmark)
+    evidence = _complete_evidence()
+    evidence["external_validity"] = _save_external_subgate_decision(raw, tmp_path, capsys)
+    if hidden_failure:
+        external["packet_results"][1].update(
+            accepted=False, status="failed", block_reasons=["fixture_source_mismatch"],
+        )
+    evidence["external_validity_evidence"] = raw
+
+    result = compiler_system_promotion_gate(evidence)
+    assert result.accepted is not hidden_failure
+    scores = result.metrics["external_validity"]["evidence_domains"]["external_benchmark_scores"]
+    assert scores["packet_count"] == 2
+    if hidden_failure:
+        assert scores["external_validity_score"] == 0.5
+        assert "external_validity:external_benchmark_scores:packet_summary_mismatch" in result.failures
+    else:
+        assert scores["external_validity_score"] == 1.0
+        assert result.failures == []

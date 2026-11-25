@@ -299,7 +299,7 @@ class ExternalLegalExpertBenchmarkPacket:
             for item in value.get("proof_obligations", ())
             if isinstance(item, Mapping)
         )
-        return cls(
+        packet = cls(
             packet_id=_string(value.get("packet_id") or value.get("id")),
             source_text=_string(value.get("source_text") or value.get("text")),
             expected_ir_families=_canonical_families(value.get("expected_ir_families")),
@@ -323,6 +323,13 @@ class ExternalLegalExpertBenchmarkPacket:
                 value.get("schema_version") or LEGAL_IR_EXTERNAL_BENCHMARK_SCHEMA_VERSION
             ),
         )
+        if "packet_digest" in value:
+            declared_digest = value["packet_digest"]
+            if type(declared_digest) is not str or declared_digest != packet.digest:
+                raise LegalIRExternalBenchmarkError(
+                    "declared benchmark packet digest does not match the canonical packet"
+                )
+        return packet
 
     def __post_init__(self) -> None:
         if self.schema_version != LEGAL_IR_EXTERNAL_BENCHMARK_SCHEMA_VERSION:

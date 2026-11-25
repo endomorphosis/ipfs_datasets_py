@@ -325,3 +325,60 @@ def test_external_benchmark_requires_current_declared_packet_digest() -> None:
             evaluate_external_legal_expert_benchmark(
                 [revised], {**prediction, "packet_digest": stale_digest}
             )
+
+
+@pytest.mark.parametrize(
+    "mutation", ("source-document", "source-text", "reference-ir", "null-pin", "wrong-pin"),
+)
+def test_benchmark_packet_intake_refuses_inconsistent_declared_digest(mutation) -> None:
+    packet = _packets()[0]
+    payload = packet.to_dict()
+    assert payload["packet_digest"] == packet.digest
+    if mutation == "source-document":
+        payload["source_document_id"] += ":another-edition"
+    elif mutation == "source-text":
+        payload["source_text"] += " A fictional additional exception applies."
+    elif mutation == "reference-ir":
+        payload["reference_ir"]["rules"][0]["modality"] = "permission"
+        assert payload["reference_ir"] != packet.reference_ir
+    elif mutation == "null-pin":
+        payload["packet_digest"] = None
+    else:
+        payload["packet_digest"] = "sha256:" + "0" * 64
+
+    with pytest.raises(LegalIRExternalBenchmarkError, match="benchmark packet digest"):
+        ExternalLegalExpertBenchmarkPacket.from_mapping(payload)
+
+
+def test_benchmark_packet_digest_binds_canonical_loaded_revision(tmp_path) -> None:
+    import json
+    from dataclasses import replace
+
+    packet, second = _packets()
+    canonical = packet.to_dict()
+    alias = {
+        key: value for key, value in canonical.items()
+        if key not in {"packet_id", "source_text"}
+    }
+    alias.update(id=packet.packet_id, text=packet.source_text)
+    assert ExternalLegalExpertBenchmarkPacket.from_mapping(alias).digest == packet.digest
+    revised = replace(packet, source_document_id=f"{packet.source_document_id}:new-revision")
+    assert revised.digest != packet.digest
+    legacy = second.to_dict(include_digest=False)
+    fixture = tmp_path / "benchmarks.jsonl"
+    fixture.write_text(
+        "\n".join(json.dumps(row) for row in (revised.to_dict(), legacy)) + "\n",
+        encoding="utf-8",
+    )
+    assert tuple(item.digest for item in load_external_expert_benchmark_packets(fixture)) == (
+        revised.digest, second.digest,
+    )
+
+    changed = second.to_dict()
+    changed["source_document_id"] = "fixture-wrong-source-edition"
+    fixture.write_text(
+        "\n".join(json.dumps(row) for row in (revised.to_dict(), changed)) + "\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(LegalIRExternalBenchmarkError, match=r"benchmarks[.]jsonl:2: .*packet digest"):
+        load_external_expert_benchmark_packets(fixture)

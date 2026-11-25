@@ -300,3 +300,121 @@ def test_external_validity_cli_writes_decision_and_report(tmp_path: Path) -> Non
     assert decision["accepted"] is True
     assert decision["schema_version"] == EXTERNAL_VALIDITY_PROMOTION_SCHEMA_VERSION
     assert "Decision: `accepted`" in report_path.read_text(encoding="utf-8")
+
+
+def _actual_external_benchmark_report():
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_external_benchmark import (
+        evaluate_external_legal_expert_benchmark,
+        load_external_expert_benchmark_packets,
+    )
+
+    packets = load_external_expert_benchmark_packets(
+        ROOT / "tests" / "fixtures" / "legal_ir" / "external_expert_benchmark.jsonl"
+    )
+    predictions = [
+        {
+            "packet_id": packet.packet_id,
+            "packet_digest": packet.digest,
+            "candidate_ir": packet.reference_ir,
+            "predicted_ir_families": list(packet.expected_ir_families),
+            "citations": [citation.citation for citation in packet.citations],
+            "proof_obligation_ids": list(packet.required_proof_obligation_ids),
+            "decompiled_text": packet.decompiler_expectations.expected_reading,
+            "round_trip_success": True,
+        }
+        for packet in packets
+    ]
+    return evaluate_external_legal_expert_benchmark(packets, predictions).to_dict()
+
+
+def test_external_validity_gate_accepts_consistent_produced_packet_rows() -> None:
+    evidence = _complete_evidence()
+    report = _actual_external_benchmark_report()
+    assert report["accepted"] and len(report["external_validity"]["packet_results"]) == 2
+    evidence["evidence"]["external_benchmark_scores"] = _bind(report)
+    result = external_validity_promotion_gate(evidence)
+
+    assert result.accepted is True
+    assert result.failures == []
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    (
+        "hidden-failure", "duplicate-row-identity", "nonboolean-row-acceptance",
+        "contradictory-row-status", "missing-rows", "null-rows", "count-drift",
+        "accepted-count-drift", "score-drift",
+    ),
+)
+def test_external_validity_gate_refuses_inconsistent_produced_packet_rows(mutation) -> None:
+    evidence = _complete_evidence()
+    report = _actual_external_benchmark_report()
+    external = report["external_validity"]
+    rows = external["packet_results"]
+    if mutation == "hidden-failure":
+        rows[1].update(accepted=False, status="failed", block_reasons=["fixture_source_mismatch"])
+    elif mutation == "duplicate-row-identity":
+        rows[1]["packet_id"] = rows[0]["packet_id"]
+    elif mutation == "nonboolean-row-acceptance":
+        rows[1]["accepted"] = 1
+    elif mutation == "contradictory-row-status":
+        rows[1]["status"] = "failed"
+    elif mutation == "missing-rows":
+        del external["packet_results"]
+    elif mutation == "null-rows":
+        external["packet_results"] = None
+    elif mutation == "count-drift":
+        external["packet_count"] += 1
+    elif mutation == "accepted-count-drift":
+        external["accepted_packet_count"] -= 1
+    else:
+        external["external_validity_score"] = 1.1
+
+    evidence["evidence"]["external_benchmark_scores"] = _bind(report)
+    result = external_validity_promotion_gate(evidence)
+
+    assert result.accepted is False
+    assert result.metrics["domain_status"]["external_benchmark_scores"] is False
+    assert any(
+        failure.startswith("external_benchmark_scores:packet_")
+        for failure in result.failures
+    )
+
+
+@pytest.mark.parametrize("hidden_failure", (False, True))
+def test_external_validity_cli_checks_produced_packet_rows_in_process(tmp_path, capsys, hidden_failure) -> None:
+    from hashlib import sha256
+
+    from scripts.ops.legal_ir.hammer_leanstral_rollout_gate import main
+
+    evidence = _complete_evidence()
+    report = _actual_external_benchmark_report()
+    external = report["external_validity"]
+    assert len(external["packet_results"]) == external["accepted_packet_count"] == 2
+    if hidden_failure:
+        external["packet_results"][1].update(
+            accepted=False, status="failed", block_reasons=["fixture_source_mismatch"],
+        )
+    evidence["evidence"]["external_benchmark_scores"] = _bind(report)
+
+    evidence_path = tmp_path / "external-validity.json"
+    decision_path = tmp_path / "decision.json"
+    report_path = tmp_path / "report.md"
+    raw_evidence = json.dumps(evidence).encode("utf-8")
+    evidence_path.write_bytes(raw_evidence)
+    exit_code = main([
+        "external-validity-gate",
+        "--evidence-path", str(evidence_path),
+        "--evidence-output", str(decision_path),
+        "--report-output", str(report_path),
+    ])
+    decision = json.loads(decision_path.read_text(encoding="utf-8"))
+    assert json.loads(capsys.readouterr().out) == decision
+    assert decision["evidence_sha256"] == sha256(raw_evidence).hexdigest()
+    assert exit_code == int(hidden_failure)
+    assert decision["accepted"] is not hidden_failure
+    assert ("Decision: `blocked`" if hidden_failure else "Decision: `accepted`") in (
+        report_path.read_text(encoding="utf-8")
+    )
+    if hidden_failure:
+        assert "external_benchmark_scores:packet_summary_mismatch" in decision["failures"]
