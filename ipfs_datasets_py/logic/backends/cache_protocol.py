@@ -1095,8 +1095,18 @@ class ExactVerificationCache:
                 if max_evidence_authority is None
                 else _evidence_authority(max_evidence_authority)
             )
-            stored = self.put(entry, now=now)
-            flight.entry = stored.entry
+            with self._lock:
+                # clear() can retire this producer while it computes outside the lock.
+                if self._flights.get(key.digest) is not flight:
+                    return VerificationCacheLookup(
+                        entry=None,
+                        hit=False,
+                        usable=False,
+                        reason=CacheLookupReason.MISS,
+                        key_digest=key.digest,
+                    )
+                stored = self.put(entry, now=now)
+                flight.entry = stored.entry
             evaluated = self._evaluate_entry(
                 stored.entry, key, require_result_authority=required,
                 max_evidence_authority=ceiling,
@@ -1112,13 +1122,15 @@ class ExactVerificationCache:
                 single_flight_shared=False,
             )
         except BaseException as error:
-            flight.error = error
+            with self._lock:
+                if self._flights.get(key.digest) is flight:
+                    flight.error = error
             raise
         finally:
-            flight.event.set()
             with self._lock:
                 if self._flights.get(key.digest) is flight:
                     del self._flights[key.digest]
+                flight.event.set()
 
     def invalidate(self, key: VerificationCacheKey) -> bool:
         if not isinstance(key, VerificationCacheKey):

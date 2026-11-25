@@ -2557,8 +2557,18 @@ class DuckDBProofStore:
             # representation. Keep that canonical snapshot, not a later row or
             # its trust-losing verification projection, for every waiting caller.
             entry = UnifiedProofEntry.from_dict(entry.to_dict()).verify_integrity()
-            stored = self.put(entry, now=now)
-            flight.entry = entry
+            with self._lock:
+                # clear() can retire this producer while it computes outside the lock.
+                if self._flights.get(unified.digest) is not flight:
+                    return VerificationCacheLookup(
+                        entry=None,
+                        hit=False,
+                        usable=False,
+                        reason=CacheLookupReason.MISS,
+                        key_digest=unified.digest,
+                    )
+                stored = self.put(entry, now=now)
+                flight.entry = entry
             evaluated = self._evaluate_entry(
                 entry, unified, max_trust_level=ceiling,
                 require_result_authority=required,
@@ -2574,12 +2584,15 @@ class DuckDBProofStore:
                 age_seconds=stored.age_seconds,
             )
         except BaseException as error:
-            flight.error = error
+            with self._lock:
+                if self._flights.get(unified.digest) is flight:
+                    flight.error = error
             raise
         finally:
-            flight.event.set()
             with self._lock:
-                self._flights.pop(unified.digest, None)
+                if self._flights.get(unified.digest) is flight:
+                    del self._flights[unified.digest]
+                flight.event.set()
 
     def invalidate(self, key: UnifiedProofKey | VerificationCacheKey) -> bool:
         unified = self._resolve_unified_key(key)
