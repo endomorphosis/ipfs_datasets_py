@@ -26493,6 +26493,207 @@
       "root": "artifact_workspace",
       "scope": "Published P1 ordinary183 checked-snapshot and public V4 ordinary5 genuine fictional revoked-reviewer refusals; inherited-finalizer private controls remain separate. SQL/Native and legal/training/full-goal qualification are not promoted.",
       "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/p8_benchmark_evidence_identity_ordinary21_closed_software_evidence_20261125",
+      "closed_software_facts": {
+        "behavior": {
+          "ambiguous_prediction_order_misbound_keyed_predictions_conflicting_aliases_duplicate_population_identity_refused": true,
+          "empty_external_population_not_accepted": true,
+          "external_validity_scope_stays_separate_from_internal_canary_metrics": true,
+          "mandatory_candidate_IR_required_when_reference_IR_supplied": true,
+          "missing_null_empty_invalid_required_candidate_rejected": true,
+          "required_round_trip_needs_observation": true,
+          "supported_identity_forms_legacy_aliases_and_optional_reference_scope_preserved": true,
+          "two_file_published_delta": {
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_external_benchmark.py": {
+              "bytes": 37725,
+              "committed_blob": "fe181984a79a0088faa46010bd2d60e155d27b0a",
+              "sha256": "1a7d55434d9c89ac22c6cc7dc53f30ded964ab0846e0a35c84efe8d760495f98"
+            },
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_external_benchmark.py": {
+              "bytes": 12917,
+              "committed_blob": "939c3d60a7bb13f021679de702d760d0c19f30aa",
+              "sha256": "e64e9f8fa947d15ffbd3196eaf4b9a0b4df99492e6f95bdbb167bfe54ae4fb75"
+            }
+          }
+        },
+        "evidence_ordinal": 520,
+        "fixture_and_limit_scope": {
+          "SQL51_qualification_SQL_get_Main_genuine_SQL_companion": "UNRUN",
+          "SQL51_v287_admission_or_grant": false,
+          "SQL51_v287_tests": 0,
+          "SQL_or_Native_retried": false,
+          "actual_Native": "UNRUN",
+          "cap_header_scheduler_policy_eligibility_unchanged": true,
+          "configured_limit_bytes": 250000000000,
+          "external_pretrained_assets_requested": false,
+          "fictional_evaluation_only_fixture": true,
+          "original_v287_failure_and_identity_bound_Source_custody_recovery_preserved": true,
+          "outputs": "producer/fixture reference-derived synthetic values",
+          "physical_IO_accounting_complete": false,
+          "real_external_expert_review_or_authenticity_qualification": false,
+          "real_model_prediction_or_quality_claim": false,
+          "real_statutory_pilot": "UNSIGNED_UNADMITTED",
+          "retroactive_v287_typed_terminal_credit": false,
+          "training_or_gold_or_legal_admission": false,
+          "unchanged_ledger_header_bytes": 280000000000
+        },
+        "maintenance": {
+          "all519_old_evidence_values_preserved": true,
+          "all_status_dependencies_acceptance_values_and_MD_prefixes_preserved": true,
+          "components": 126,
+          "composer_Source_Git_runtime_effects": false,
+          "one520_only": true,
+          "tasks": 24
+        },
+        "no_promotions": {
+          "hosted_CI": false,
+          "proof_authenticity_Native_Lean_compilation": false,
+          "substantive_statutory_meaning_or_independent_legal_review": false,
+          "training_fit_model_quality": false,
+          "training_gold_legal_admission": false,
+          "whole_eight_phase_goal_complete": false
+        },
+        "private_SAME21": {
+          "baseline_fail": 7,
+          "baseline_pass": 14,
+          "candidate_errors": 0,
+          "candidate_failures": 0,
+          "candidate_pass": 21,
+          "candidate_skips": 0,
+          "distinct_from_public_normal21": true,
+          "source": "Existing signed private two-file packet and actual Source2 receipt retained by Root; no new private execution by composer."
+        },
+        "public_normal21": {
+          "D_HEAD": "a79b4ef9a8b9a4aee2e53a975832784e694b5e33",
+          "D_tree": "4dc7b0aca19c557eab81ff6014c9cb4463b96f3c",
+          "Source2_WRITE_NOT_READ": {
+            "bytes": 4543,
+            "path": "/tmp/Root-P8-benchmark-exact-Source2-selected-v306-ene6i7ym/Root-P8-benchmark-two-installed-Source-closed-small-v306.json",
+            "sha256": "aa054444cee38da24fe76e3dd681c0a9c5ae4609ebbba2b4932c5cb5abe5dd66"
+          },
+          "Source_resource_and_actual_parent_cleanup_closed": true,
+          "actual_READ6": {
+            "bytes": 5642,
+            "path": "/tmp/Root-P8-frozen-six-exact-SourceREAD6-v306-l8dzqfj_/actual-output/actual-two-exact-Source-closed.json",
+            "sha256": "2cd6391b7dd40cee4c73e49534d7dc0e11717936b133b6f462ea801e76098f3f"
+          },
+          "actual_Source_AST_code_witnesses": true,
+          "canonical_five_conftests": [
+            "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/conftest.py",
+            "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/tests/conftest.py",
+            "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/tests/unit/conftest.py",
+            "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/tests/unit/optimizers/conftest.py",
+            "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/tests/unit/optimizers/logic_theorem_optimizer/conftest.py"
+          ],
+          "canonical_pytest_ini": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/pytest.ini",
+          "duplicates": 0,
+          "errors": 0,
+          "failures": 0,
+          "function_case_vector": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            4,
+            1,
+            1,
+            1,
+            2,
+            2,
+            2,
+            1,
+            1
+          ],
+          "functions": 15,
+          "literal_ID_set_function_vector_COLLECT_RUN_JUnit_order_exact": true,
+          "local_freeze": {
+            "bytes": 5510,
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P8-benchmark-exact2-local-freeze-v306.json",
+            "sha256": "9e552f4ce495353d24e1afbe799ba37d3d5327717bd7ab64f0fd9fe9aee7999f"
+          },
+          "qualification": {
+            "bytes": 4105,
+            "path": "/tmp/Root-P8-benchmark-ordinary21-v307-sz73_pyk/Root-P8-benchmark-ordinary21-qualified-small-v307.json",
+            "sha256": "4faacaab4ca6332c382df49a0131e4b23bac3a6390fff2a8495a677b290de3d1"
+          },
+          "raw_JUnit": {
+            "bytes": 4210,
+            "logical_name": "junit.xml",
+            "path": "/tmp/Root-P8-benchmark-ordinary21-v307-sz73_pyk/actual-output/P8-external-benchmark21-run-result0-output1.bin",
+            "sha256": "ab237df365f9ab7ce764c98ae3e0a7bbf23f2c8e1e2612a657c45b572be71d80"
+          },
+          "six_current_Source_module_bindings": true,
+          "skips": 0,
+          "unique_PASS": 21
+        },
+        "publication": {
+          "all_four_clean_and_actual_origin_main_equal": true,
+          "exact_intended_gitlinks_and_all_other_paths_preserved": true,
+          "frozen_D_index": {
+            "bytes": 6991149,
+            "full9": {
+              "st_ctime_ns": "1795599571719292315",
+              "st_dev": "66306",
+              "st_gid": "1000",
+              "st_ino": "68338235",
+              "st_mode": "33204",
+              "st_mtime_ns": "1795599571718292305",
+              "st_nlink": "1",
+              "st_size": "6991149",
+              "st_uid": "1000"
+            },
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/.git/index",
+            "sha256": "c0753e50bc82c5bed19ace9ac98d96e34ac294b34e791eb65bafadd9ee5b39c1"
+          },
+          "guide519_unchanged": true,
+          "latest_heads_and_trees": {
+            "accelerate": {
+              "HEAD": "88c0d9f82f66aaddbb01344c9f85236e92a5dc88",
+              "tree": "416a953630c9ba7ef521fd87bf821f075b052efc"
+            },
+            "datasets": {
+              "HEAD": "a79b4ef9a8b9a4aee2e53a975832784e694b5e33",
+              "tree": "4dc7b0aca19c557eab81ff6014c9cb4463b96f3c"
+            },
+            "hallucinate": {
+              "HEAD": "db3c7ddff837ad075d60a66a4fe49f9570924097",
+              "tree": "c678967ab2138ee0956529e3ca36b283911e6cef"
+            },
+            "root": {
+              "HEAD": "b0d349c984f4fa09cce3ccc54fd47421ccfdfa9e",
+              "tree": "92d159b5edea1e11de19f6d3a7bd0827046878df"
+            }
+          },
+          "normal_child_first_fast_forwards": 3,
+          "receipt": {
+            "bytes": 6865,
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P8-benchmark-ordinary21-three-FF-publication-v307.json",
+            "sha256": "14616df121aca2419e0462a876ac02625c0ef41ba9db881f6ab7964a7922df82"
+          }
+        },
+        "record_id": "p8-benchmark-evidence-identity-ordinary21-software-evidence520-20261125",
+        "retained_checker_failure": {
+          "Root_verifier_v1_dictionary_order_assumption_failure_retained": true,
+          "actual_collection_order_and_literal_function_vector_remain_authority": true,
+          "checker_only_correction": true,
+          "product_tests_and_saved_outputs_unchanged": true,
+          "test_rerun_performed_to_fix_checker": false
+        },
+        "schema": "one-existing-guide520-closed-benchmark-software-facts/v1"
+      },
+      "evidence_ordinal": 520,
+      "id": "p8-benchmark-evidence-identity-ordinary21-software-evidence520-20261125",
+      "observed_bytes": 8268,
+      "observed_sha256": "63d30b56e04b7855a0f26b951b2f2ad0a715bea0f9c6cc7069a8797fbbe2baf0",
+      "path": "/tmp/P8-guide520-single-consolidation-private-v01/one-existing-guide520-closed-benchmark-software-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Published benchmark mandatory-evidence and packet-identity software fixtures: normal21; private SAME21 remains separate. Synthetic reference-derived values grant no real external review/model quality/training/gold/legal/Lean qualification.",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
     }
   ]
 }

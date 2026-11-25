@@ -3528,6 +3528,43 @@
       "private_same5_and_SAME2_six_subcases_separate": true,
       "record_id": "p1-get-snapshot183-v4-revocation5-finalizer-software-evidence519-20261125",
       "status": "closed_software_evidence_only_no_task_status_change"
+    },
+    "p8_benchmark_evidence_identity_ordinary21_closed_software_evidence_20261125": {
+      "Root_dictionary_order_checker_failure_retained_no_test_rerun": true,
+      "SQL51_SQLget_MainSQL_Native": "UNRUN; historical SQL51 v287 zero tests/no grant retained",
+      "Source_resource_parent_cleanup_closed": true,
+      "all24_tasks126_components_and519_old_evidence_values_preserved": true,
+      "cap_header_policy_eligibility_unchanged": true,
+      "evidence_ordinal": 520,
+      "facts": {
+        "bytes": 8268,
+        "path": "/tmp/P8-guide520-single-consolidation-private-v01/one-existing-guide520-closed-benchmark-software-facts.json",
+        "sha256": "63d30b56e04b7855a0f26b951b2f2ad0a715bea0f9c6cc7069a8797fbbe2baf0"
+      },
+      "full_eight_phase_goal_complete": false,
+      "function_case_vector": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        4,
+        1,
+        1,
+        1,
+        2,
+        2,
+        2,
+        1,
+        1
+      ],
+      "functions": 15,
+      "private_SAME21_14P7F_to21P_separate": true,
+      "public_normal21_unique_PASS": 21,
+      "record_id": "p8-benchmark-evidence-identity-ordinary21-software-evidence520-20261125",
+      "status": "closed_software_evidence_only_no_task_status_change",
+      "synthetic_evaluation_only_no_expert_model_training_gold_legal_Lean_claim": true
     }
   },
   "programme_goal_hierarchy": {
