@@ -1078,3 +1078,163 @@ def test_reviewed_lexical_baseline_abstains_on_source_without_tokens(
     assert row["retrieved_ids"] == [] and row["context"] is None
     assert result["retrieved_count"] == 0 and result["abstention_count"] == 1
     assert result["model_forward_executed"] is False and model.checkpoint == checkpoint
+
+
+@pytest.mark.parametrize("steps", [0, 3])
+def test_reviewed_v4_tiny_joint_updates_restore_and_rank_current_index(steps, tmp_path):
+    """Synthetic numerical mechanics under future caller-owned admission only.
+
+    The existing fixture supplies authored vectors and freshly signed fictional
+    review, not encoder inference, private assets, statutory gold or permission
+    to execute this test. No convergence or monotone-loss claim is made.
+    """
+    import site
+    import sys
+    from pathlib import Path
+
+    from tests.unit.logic.formalization.autoencoder import test_alignment_relation_mask_handoff as owner
+    case = owner.fixtures.reviewed_pair_fixture_v4()
+    current = owner.reviewed_mask_compile_v4(case)
+    assert current["reviewed_objective_mask_ready"] is True
+    assert current["endpoint_admission_version"] == "v3"
+    assert (current["source_row_count"], current["formal_row_count"]) == (4, 6)
+    assert len(current["context_set"]) == 2
+    assert current["context_set"] == case["preparation_inputs"]["body"]["context_set"]
+    assert current["objective_positive_mask"] == case["expected_positive_mask"]
+    assert current["unknown_pair_count"] > 0 and current["analogy_retrieval_only_pair_count"] > 0
+    for pair in current["pair_rows"]:
+        if pair["relation"] in ("unknown", "analogy"):
+            assert pair["objective_positive"] is pair["objective_permitted_negative"] is False
+    assert current["training_gold_mask"] == current["evaluation_gold_mask"] == 0
+    # Observe the actual imported runtime inside this caller-admitted test.
+    # Source identity is recorded; vendor execution and quality are unqualified.
+    torch_origin = Path(torch.__file__).resolve(strict=True)
+    assert torch_origin.name == "__init__.py" and torch_origin.is_file()
+    with torch_origin.open("rb") as stream:
+        torch_origin_bytes = stream.read(1024 * 1024 + 1)
+    assert len(torch_origin_bytes) <= 1024 * 1024
+    runtime_origin = {
+        "schema": "reviewed-v4-tiny-numerical-runtime-origin/v1",
+        "torch": {
+            "version": str(torch.__version__),
+            "module_file": str(torch.__file__),
+            "resolved_init_file": str(torch_origin),
+            "init_file_bytes": len(torch_origin_bytes),
+            "init_file_sha256": hashlib.sha256(torch_origin_bytes).hexdigest(),
+        },
+        "python": {
+            "executable": sys.executable,
+            "resolved_executable": str(Path(sys.executable).resolve(strict=True)),
+            "prefix": sys.prefix,
+            "base_prefix": sys.base_prefix,
+            "isolated": int(sys.flags.isolated),
+            "no_user_site": int(sys.flags.no_user_site),
+            "site_ENABLE_USER_SITE": site.ENABLE_USER_SITE,
+        },
+        "fixture": {
+            "schema": current["schema"],
+            "fixture_only": current["fixture_only"],
+            "endpoint_admission_version": current["endpoint_admission_version"],
+            "ledger_id": case["preparation_inputs"]["body"]["ledger_id"],
+            "preparation_sha256": retrieval.checkpoint_digest(case["preparation"]),
+            "context_set_sha256": current["context_set_sha256"],
+            "handoff_content_sha256": current["content_sha256"],
+            "source_row_count": current["source_row_count"],
+            "formal_row_count": current["formal_row_count"],
+        },
+        "training_steps_requested": steps,
+        "legal_source_correspondence_qualified": False,
+        "model_quality_qualified": False,
+        "convergence_proved": False,
+        "vendor_binary_closure_attested": False,
+        "runtime_profile_qualified": False,
+        "resource_admission_authority": False,
+    }
+    runtime_origin_raw = (json.dumps(runtime_origin, ensure_ascii=False, sort_keys=True,
+        separators=(",", ":"), allow_nan=False) + "\n").encode("utf-8")
+    assert len(runtime_origin_raw) <= 16 * 1024
+    runtime_origin_path = tmp_path / "reviewed-v4-runtime-origin.json"
+    with runtime_origin_path.open("xb") as stream:
+        stream.write(runtime_origin_raw)
+    assert runtime_origin_path.read_bytes() == runtime_origin_raw
+    assert json.loads(runtime_origin_path.read_bytes()) == runtime_origin
+    args, options = owner.reviewed_mask_arguments_v2(case)
+    original_inputs = copy.deepcopy((args, options))
+    initial_rng = torch.get_rng_state().clone()
+    fitted = retrieval.train_reviewed_retriever_v4(*args, **options,
+        steps=steps, seed=2718, joint_dimension=8)
+    checkpoint, report = fitted["checkpoint"], fitted["report"]
+    assert (args, options) == original_inputs and torch.equal(torch.get_rng_state(), initial_rng)
+    assert checkpoint["schema"] == "legal-joint-retrieval-checkpoint/v4"
+    assert report["schema"] == "legal-joint-retrieval-training/v4"
+    assert report["endpoint_admission_version"] == "v3"
+    assert checkpoint["training_handoff"] == current
+    assert report["context_set_sha256"] == current["context_set_sha256"]
+    assert report["optimizer_steps"] == len(report["losses"]) == steps
+    assert all(torch.isfinite(torch.tensor(value)) for value in report["losses"])
+    assert report["training_executed"] is (steps > 0) and report["model_executed"] is True
+    expected_parameters = {"source.weight", "source.bias", "formal.weight", "formal.bias"}
+    assert set(checkpoint["model_state"]) == expected_parameters
+    assert set(report["changed_parameter_names"]) <= expected_parameters
+    assert bool(report["changed_parameter_names"]) is (steps > 0)
+    assert (checkpoint["initial_model_state_sha256"] !=
+        retrieval.checkpoint_digest(checkpoint["model_state"])) is (steps > 0)
+    assert report["checkpoint_restore_verified"] is True
+    assert report["fixture_only"] is True
+    assert report["input_embedding_runtime_computation_proven"] is False
+    assert report["heldout_evaluation_performed"] is report["previous_task_retention_evaluated"] is False
+    assert report["resource_admission_scope"] == "caller_owned_not_validated_here"
+    assert report["recall_scope"] == "reviewed_training_grid_resubstitution_only"
+    for flag in ("qualified", "admitted", "proof_authority", "semantic_correctness_verified",
+            "legal_applicability_verified", "controlling_authority"):
+        assert report[flag] is False
+    assert report["target_access"] is True and report["query_target_access"] is False
+    original_checkpoint = copy.deepcopy(checkpoint)
+    path = tmp_path / "reviewed-v4-tiny.json"
+    file_sha = retrieval.save_checkpoint(checkpoint, path)
+    loaded = retrieval.load_checkpoint(path, file_sha)
+    assert loaded == checkpoint == original_checkpoint
+    torch_owner, restored = retrieval._restore(loaded)
+    assert retrieval._state(restored) == checkpoint["model_state"]
+    assert all(parameter.device.type == "cpu" and parameter.dtype == torch_owner.float32
+        for parameter in restored.parameters())
+    model = retrieval.ReviewedLegalJointRetriever(loaded,
+        expected_checkpoint_sha256=retrieval.checkpoint_digest(loaded))
+    indexed, query, lane, expected = _reviewed_structural_query_fixture(
+        owner, case, admission_version="v4")
+    indexed_mask = owner.reviewed_mask_compile_v4(indexed)
+    assert indexed_mask["reviewed_objective_mask_ready"] is True
+    assert indexed_mask["context_set"] == current["context_set"]
+    assert indexed_mask["objective_positive_mask"] == current["objective_positive_mask"]
+    for pair in indexed_mask["pair_rows"]:
+        if pair["relation"] in ("unknown", "analogy"):
+            assert pair["objective_positive"] is pair["objective_permitted_negative"] is False
+    result = _structural_call(model, owner, indexed, query, lane, expected, top_k=2)
+    assert result["schema"] == "legal-joint-retrieval-result/v4"
+    assert result["status"] == "retrieval_completed" and result["model_forward_executed"] is True
+    assert result["retrieved_count"] == 1 and result["abstention_count"] == 0
+    assert result["endpoint_admission_version"] == "v3"
+    assert result["context_set_sha256"] == current["context_set_sha256"]
+    assert "context_set" not in result
+    assert result["current_index_differs_from_training"] is True
+    assert result["query_target_access"] is result["decoder_context_admitted"] is False
+    assert result["query_target_payload_accessed"] is result["inference_reference_content_forwarded"] is False
+    assert result["query_source_runtime_computation_proven"] is False
+    assert result["heldout_evaluation_performed"] is False
+    assert result["legal_applicability_verified"] is result["controlling_authority"] is False
+    row = result["rows"][0]
+    assert row["status"] == "retrieved" and row["context_dimension"] == 384
+    vectors = {item["id"]: item["vector"] for item in indexed["preparation_inputs"]["formal_lane"]["rows"]}
+    assert len(row["retrieved_ids"]) == len(set(row["retrieved_ids"])) == 2
+    assert set(row["retrieved_ids"]) <= set(vectors)
+    assert all(torch.isfinite(torch.tensor(value)) for value in (*row["context"], *row["scores"], *row["weights"]))
+    independent_context = sum(torch.tensor(vectors[identity], dtype=torch.float32) * weight
+        for identity, weight in zip(row["retrieved_ids"], row["weights"], strict=True))
+    assert torch.allclose(torch.tensor(row["context"]), independent_context, rtol=0, atol=1e-6)
+    assert model.checkpoint == original_checkpoint
+    indexed["reviews"] = []
+    denied = _structural_call(model, owner, indexed, query, lane, expected, top_k=2)
+    assert denied["status"] == "abstained_current_index_unavailable"
+    assert denied["model_forward_executed"] is False and denied["retrieved_count"] == 0
+    assert denied["rows"][0]["context"] is None
+    assert model.checkpoint == original_checkpoint
