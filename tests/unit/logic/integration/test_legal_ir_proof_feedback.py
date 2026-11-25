@@ -563,3 +563,161 @@ def test_matching_proof_attestation_aliases_keep_canonical_feedback(artifact, ac
     assert paired == single
     assert paired.eligible_for_training is accepted
     assert LegalIRProofFeedbackRecord.from_dict(paired.to_dict()) == paired
+
+
+@pytest.mark.parametrize("typed", [False, True], ids=["mapping", "typed"])
+@pytest.mark.parametrize(
+    "damage, error",
+    [
+        ("none", None),
+        ("other-obligation", "receipt obligation"),
+        ("missing-obligation", "receipt obligation"),
+        ("other-formula", "receipt formula"),
+        ("missing-formula", "receipt formula"),
+    ],
+    ids=["matching", "other-obligation", "missing-obligation", "other-formula", "missing-formula"],
+)
+def test_positive_reconstruction_receipt_binds_the_selected_obligation(typed, damage, error):
+    from ipfs_datasets_py.logic.integration.reasoning.legal_ir_hammer_translation import (
+        HammerReconstructionReceipt,
+    )
+    from ipfs_datasets_py.logic.integration.reasoning.legal_ir_obligations import (
+        LegalIRProofObligation,
+    )
+    from ipfs_datasets_py.logic.integration.reasoning.legal_ir_proof_feedback import (
+        ProofFeedbackTrustError,
+    )
+
+    obligation = LegalIRProofObligation(
+        "authored-obligation", "authored predicate", "fixture", "deontic.ir", "fixture",
+        formula_id="authored-formula",
+    )
+    receipt = {
+        "receipt_id": "authored-positive-receipt",
+        "obligation_id": obligation.obligation_id,
+        "input_formula_id": obligation.formula_id,
+        "outcome": "native_reconstruction",
+        "translation_succeeded": True,
+        "translation_failed": False,
+        "backend_proved": True,
+        "native_reconstruction": True,
+        "native_reconstruction_verified": True,
+        "reconstruction_status": "verified",
+        "checker": "authored-checker",
+        "trusted": True,
+        "trust_status": "trusted",
+        "trust_reason": "authored-native-check",
+    }
+    if damage.endswith("-obligation"):
+        receipt["obligation_id"] = "" if damage == "missing-obligation" else "other-obligation"
+    if damage.endswith("-formula"):
+        receipt["input_formula_id"] = "" if damage == "missing-formula" else "other-formula"
+    supplied_receipt = HammerReconstructionReceipt.from_dict(receipt) if typed else receipt
+
+    if error is not None:
+        with pytest.raises(ProofFeedbackTrustError, match=error):
+            build_legal_ir_proof_feedback_record(obligation, reconstruction_receipt=supplied_receipt)
+        return
+    record = build_legal_ir_proof_feedback_record(obligation, reconstruction_receipt=supplied_receipt)
+    assert record.kernel_reconstruction.verified
+    assert record.eligible_for_training
+    assert record.receipt_ids == ("authored-positive-receipt",)
+
+
+@pytest.mark.parametrize("explicit_receipt", [False, True], ids=["derived", "explicit"])
+@pytest.mark.parametrize(
+    "damage, error",
+    [
+        ("none", None),
+        ("legacy-goal", None),
+        ("route-obligation", "route result obligation"),
+        ("goal-statement", "routed proof statement"),
+        ("goal-obligation", "routed proof obligation"),
+        ("goal-formula", "routed proof formula"),
+    ],
+    ids=["matching", "legacy-goal", "route-obligation", "goal-statement", "goal-obligation", "goal-formula"],
+)
+def test_positive_reconstruction_cannot_relabel_an_unrelated_routed_result(
+    explicit_receipt, damage, error,
+):
+    from dataclasses import replace
+
+    from ipfs_datasets_py.logic.integration.reasoning.hammer import HammerReconstruction
+    from ipfs_datasets_py.logic.integration.reasoning.legal_ir_hammer_translation import (
+        reconstruction_receipt_from_hammer_result,
+    )
+    from ipfs_datasets_py.logic.integration.reasoning.legal_ir_proof_feedback import (
+        ProofFeedbackTrustError,
+    )
+
+    obligation = {
+        "obligation_id": "authored-obligation",
+        "formula_id": "authored-formula",
+        "statement": "authored predicate",
+        "kind": "fixture",
+        "legal_ir_view": "deontic.ir",
+        "logic_family": "fixture",
+    }
+    route_obligation_id = obligation["obligation_id"]
+    goal_metadata = {
+        "obligation_id": obligation["obligation_id"],
+        "input_formula_id": obligation["formula_id"],
+    }
+    statement = obligation["statement"]
+    if damage == "legacy-goal":
+        goal_metadata.clear()
+    elif damage == "route-obligation":
+        route_obligation_id = "other-obligation"
+    elif damage == "goal-statement":
+        statement = "different predicate"
+    elif damage == "goal-obligation":
+        goal_metadata["obligation_id"] = "other-obligation"
+    elif damage == "goal-formula":
+        goal_metadata["input_formula_id"] = "other-formula"
+
+    result = HammerResult(
+        status=HammerStatus.PROVED,
+        goal=HammerGoal(statement, name="authored-goal", metadata=goal_metadata),
+        premise_selection=PremiseSelection([], {}, 0, 1),
+        translations={},
+        backend_results=[
+            HammerBackendResult(
+                backend="z3", status=HammerBackendStatus.PROVED, proved=True,
+                elapsed_seconds=0.0, translation_format="smt-lib",
+            )
+        ],
+        reconstruction=HammerReconstruction("lean", "by trivial", "authored", True, "verified"),
+    )
+    route = LegalIRProofRouteResult(
+        obligation_id=route_obligation_id,
+        status=ProofRouteStatus.PROVED,
+        trust_level=ProofTrustLevel.KERNEL,
+        required_trust=ProofTrustLevel.KERNEL,
+        attempts=(),
+        hammer_result=result,
+        elapsed_seconds=0.0,
+        stop_reason="authored-proof-verified",
+    )
+
+    receipt = None
+    if explicit_receipt:
+        selected_result = replace(result, goal=HammerGoal(obligation["statement"]))
+        receipt = reconstruction_receipt_from_hammer_result(
+            selected_result,
+            obligation_id=obligation["obligation_id"],
+            input_formula_id=obligation["formula_id"],
+            trusted_requires_reconstruction=True,
+        )
+
+    if error is not None:
+        with pytest.raises(ProofFeedbackTrustError, match=error):
+            build_legal_ir_proof_feedback_record(
+                obligation, route_result=route, reconstruction_receipt=receipt,
+            )
+        return
+    record = build_legal_ir_proof_feedback_record(
+        obligation, route_result=route, reconstruction_receipt=receipt,
+    )
+    assert record.kernel_reconstruction.verified
+    assert record.eligible_for_training
+    assert record.receipt_ids == (record.kernel_reconstruction.receipt_id,)

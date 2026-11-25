@@ -1067,6 +1067,8 @@ def build_legal_ir_proof_feedback_record(
     obligation_map = _mapping(obligation)
     metadata = _mapping(_get(obligation, "metadata", obligation_map.get("metadata", {})))
     obligation_id = _get(obligation, "obligation_id", obligation_map.get("obligation_id"))
+    formula_id = str(_get(obligation, "formula_id", "") or "")
+    statement = _get(obligation, "statement", obligation_map.get("statement", ""))
     obligation_type = _get(obligation, "kind", obligation_map.get("kind")) or metadata.get(
         "obligation_type"
     )
@@ -1093,6 +1095,8 @@ def build_legal_ir_proof_feedback_record(
             if slot_name in metadata and slot_name not in extracted_slots:
                 extracted_slots[slot_name] = metadata[slot_name]
 
+    if route_result is not None and route_result.obligation_id != obligation_id:
+        raise ProofFeedbackTrustError("route result obligation does not match selected obligation")
     availability, route_statuses, route_deterministic = _route_features(route_result)
     hammer_result = (
         getattr(route_result, "hammer_result", None) if route_result is not None else None
@@ -1108,11 +1112,29 @@ def build_legal_ir_proof_feedback_record(
         receipt = reconstruction_receipt_from_hammer_result(
             hammer_result,
             obligation_id=str(obligation_id or ""),
-            input_formula_id=str(_get(obligation, "formula_id", "") or ""),
+            input_formula_id=formula_id,
             trusted_requires_reconstruction=True,
         )
-    kernel = KernelReconstructionFeedback.from_receipt(receipt)
     receipt_map = _mapping(receipt)
+    kernel = KernelReconstructionFeedback.from_receipt(receipt_map)
+    if kernel.verified:
+        if not obligation_id or receipt_map.get("obligation_id") != obligation_id:
+            raise ProofFeedbackTrustError("receipt obligation does not match selected obligation")
+        if formula_id and receipt_map.get("input_formula_id") != formula_id:
+            raise ProofFeedbackTrustError("receipt formula does not match selected formula")
+        if hammer_result is not None:
+            # Bind the routed evidence too. A matching receipt does not
+            # validate a separate Hammer result.
+            goal = hammer_result.goal
+            if goal.statement != statement:
+                raise ProofFeedbackTrustError("routed proof statement does not match selected statement")
+            if goal.metadata.get("obligation_id") not in (None, "", obligation_id):
+                raise ProofFeedbackTrustError("routed proof obligation does not match selected obligation")
+            if formula_id and any(
+                goal.metadata.get(field) not in (None, "", formula_id)
+                for field in ("input_formula_id", "formula_id")
+            ):
+                raise ProofFeedbackTrustError("routed proof formula does not match selected formula")
     resolved_receipts = list(receipt_ids)
     if receipt_map.get("receipt_id"):
         resolved_receipts.append(receipt_map["receipt_id"])
@@ -1132,7 +1154,6 @@ def build_legal_ir_proof_feedback_record(
 
     # Hashing the original statement binds the record to the obligation while
     # keeping the statement itself outside the training corpus.
-    statement = _get(obligation, "statement", obligation_map.get("statement", ""))
     obligation_hash = _digest(
         {
             "obligation_id": str(obligation_id or ""),
