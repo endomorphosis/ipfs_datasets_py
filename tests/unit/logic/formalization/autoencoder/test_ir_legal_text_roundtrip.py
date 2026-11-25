@@ -1251,3 +1251,213 @@ def test_civil_deadline_roundtrip_requires_covered_business_calendar(coverage_ca
     with pytest.raises(ValueError):
         scorer.score_deadline_legal_text_roundtrip(reference, candidate,
             anchor_dates={"notice": trigger}, workday_calendar=calendar)
+
+
+
+_EFFECTIVE_NORM_TEXT = 'Norm: "agency" must "publish" "rule".'
+
+
+def _effective_norm_reference(effective_from):
+    from ipfs_datasets_py.logic.legal_ir.extended_contracts import (
+        EffectiveFrom, ExtendedEffectiveDateLegalIR, NormV2,
+    )
+
+    return ExtendedEffectiveDateLegalIR((
+        NormV2("O", "agency", "publish", "rule", temporal=(EffectiveFrom(effective_from),)),
+    ))
+
+
+def _effective_norm_text(effective_from):
+    return _EFFECTIVE_NORM_TEXT + " Temporal: effective from " + effective_from + "."
+
+
+@pytest.mark.parametrize(("effective_from", "started"), [
+    pytest.param("2030-01-01", True, id="earlier"),
+    pytest.param("2030-04-01", False, id="later"),
+])
+def test_effective_date_roundtrip_real_inverse_with_fixed_as_of(monkeypatch, effective_from, started):
+    from datetime import date
+    from ipfs_datasets_py.logic.legal_ir import extended_compiler
+    from ipfs_datasets_py.logic.legal_ir.extended_decompiler import EFFECTIVE_DATE_PROSE_PROFILE
+
+    reference = _effective_norm_reference(effective_from)
+    text = _effective_norm_text(effective_from)
+    compile_extended = extended_compiler.compile_extended
+    seen = []
+
+    def observe(text, *, profile):
+        seen.append((text, profile))
+        return compile_extended(text, profile=profile)
+
+    monkeypatch.setattr(extended_compiler, "compile_extended", observe)
+    result = scorer.score_effective_date_legal_text_roundtrip(
+        reference, text, as_of_date=date(2030, 2, 1),
+        original_text="Withheld fixture wording " + effective_from)
+    assert seen == [(text, EFFECTIVE_DATE_PROSE_PROFILE)]
+    assert result["normalized_reference_prose"] == result["normalized_candidate_prose"] == text
+    assert result["as_of_date"] == "2030-02-01"
+    expected = [{"statement_index": 0, "effective_from": effective_from, "started_on_as_of": started}]
+    assert result["reference_effective_dates"] == result["candidate_effective_dates"] == expected
+    assert result["measurements"] == {
+        "original_utf8_exact": False,
+        "canonical_prose_exact": True,
+        "complete_typed_structure_exact": True,
+        "effective_dates_exact": True,
+        "start_conditions_exact_as_of": True,
+        "semantic_equivalence_verified": False,
+        "source_correspondence_verified": False,
+        "proof_validity_verified": False,
+    }
+    assert not result["original_source_available_to_inverse"]
+    assert not result["reference_target_available_to_inverse"]
+    assert not any(result["authority"].values())
+    assert result["training_mask"] == result["evaluation_gold_mask"] == 0
+
+
+@pytest.mark.parametrize(("cutoff", "agreement"), [
+    pytest.param((2030, 1, 1), False, id="inclusive-boundary-between-dates"),
+    pytest.param((2030, 6, 1), True, id="same-start-status-different-dates"),
+])
+def test_effective_date_roundtrip_distinguishes_date_and_start_condition(cutoff, agreement):
+    from datetime import date
+
+    reference = _effective_norm_reference("2030-01-01")
+    text = _effective_norm_text("2030-04-01")
+    result = scorer.score_effective_date_legal_text_roundtrip(
+        reference, text, as_of_date=date(*cutoff), original_text=text)
+    measurements = result["measurements"]
+    assert measurements["original_utf8_exact"]
+    assert not measurements["canonical_prose_exact"]
+    assert not measurements["complete_typed_structure_exact"]
+    assert not measurements["effective_dates_exact"]
+    assert measurements["start_conditions_exact_as_of"] is agreement
+    assert result["reference_effective_dates"][0]["started_on_as_of"] is True
+    assert result["candidate_effective_dates"][0]["started_on_as_of"] is agreement
+
+
+def test_effective_date_roundtrip_keeps_typed_deadline_and_norm_binding():
+    from datetime import date
+    from ipfs_datasets_py.logic.TDFOL.compiler_repairs import TemporalDeadline
+    from ipfs_datasets_py.logic.legal_ir.extended_compiler import compile_extended
+    from ipfs_datasets_py.logic.legal_ir.extended_contracts import (
+        EffectiveFrom, ExtendedEffectiveDateLegalIR, NormV2,
+    )
+    from ipfs_datasets_py.logic.legal_ir.extended_decompiler import (
+        EFFECTIVE_DATE_PROSE_PROFILE, decompile_extended,
+    )
+
+    first, second = _EFFECTIVE_NORM_TEXT, 'Norm: "clerk" may "inspect" "record".'
+    deadline = TemporalDeadline("notice", "event", True, 2, "after", "business_days")
+    effective = EffectiveFrom("2030-02-01")
+    reference = ExtendedEffectiveDateLegalIR((
+        NormV2("O", "agency", "publish", "rule", temporal=(effective, deadline)),
+        NormV2("P", "clerk", "inspect", "record"),
+    ))
+    text = first + ' Temporal: effective from 2030-02-01; within 2 business days after event "notice".\n' + second
+    clone = compile_extended(text, profile=EFFECTIVE_DATE_PROSE_PROFILE)
+    assert clone == reference
+    assert clone.statements[0].temporal == (effective, deadline)
+    assert decompile_extended(clone, profile=EFFECTIVE_DATE_PROSE_PROFILE) == text
+    swapped = first + ' Temporal: within 2 business days after event "notice".\n' + second + ' Temporal: effective from 2030-02-01.'
+    report = scorer.score_effective_date_legal_text_roundtrip(
+        reference, swapped, as_of_date=date(2030, 2, 1))
+    assert report["reference_effective_dates"] == [
+        {"statement_index": 0, "effective_from": "2030-02-01", "started_on_as_of": True}]
+    assert report["candidate_effective_dates"] == [
+        {"statement_index": 1, "effective_from": "2030-02-01", "started_on_as_of": True}]
+    assert report["measurements"]["original_utf8_exact"] is None
+    assert not report["measurements"]["complete_typed_structure_exact"]
+    assert not report["measurements"]["effective_dates_exact"]
+    assert not report["measurements"]["start_conditions_exact_as_of"]
+
+
+@pytest.mark.parametrize("text", [
+    pytest.param(_effective_norm_text("2030-02-30"), id="impossible"),
+    pytest.param(_effective_norm_text("20300201"), id="noncanonical"),
+    pytest.param(_effective_norm_text("2030-02-01T00:00:00Z"), id="timestamp"),
+    pytest.param(_EFFECTIVE_NORM_TEXT, id="missing"),
+    pytest.param(_EFFECTIVE_NORM_TEXT + ' Temporal: "effective from 2030-02-01".', id="quoted-literal"),
+    pytest.param(_EFFECTIVE_NORM_TEXT + " Temporal: effective from 2030-01-01; effective from 2030-10-01.",
+                 id="competing-starts"),
+    pytest.param('Definition: "notice" means "a letter". Temporal: effective from 2030-02-01.',
+                 id="definition-not-norm"),
+    pytest.param(_EFFECTIVE_NORM_TEXT + " Temporal: effective from 2030-02-01 when approved.",
+                 id="unconsumed-qualifier"),
+])
+def test_effective_date_roundtrip_refuses_unrepresented_applicability(text):
+    from datetime import date
+
+    report = scorer.score_effective_date_legal_text_roundtrip(
+        _effective_norm_reference("2030-02-01"), text, as_of_date=date(2030, 2, 1))
+    assert report["status"] == "unsupported_candidate_abstained"
+    assert report["abstention_count"] == 1
+    assert report["candidate_effective_dates"] is None
+    assert report["normalized_candidate_prose"] is None
+    assert report["measurements"]["effective_dates_exact"] is None
+    assert report["measurements"]["start_conditions_exact_as_of"] is None
+    assert not report["measurements"]["complete_typed_structure_exact"]
+
+
+def test_effective_date_wire_is_closed_and_legacy_wires_stay_exact():
+    from ipfs_datasets_py.logic.legal_ir.extended_compiler import compile_extended
+    from ipfs_datasets_py.logic.legal_ir.extended_contracts import (
+        EXTENDED_DEADLINE_IR_SCHEMA, EXTENDED_IR_SCHEMA, ExtendedLegalIR,
+    )
+    from ipfs_datasets_py.logic.legal_ir.extended_decompiler import (
+        EFFECTIVE_DATE_PROSE_PROFILE, TYPED_DEADLINE_PROSE_PROFILE, decompile_extended,
+    )
+
+    text = _effective_norm_text("2030-02-01")
+    reference = _effective_norm_reference("2030-02-01")
+    wire = reference.to_dict()
+    assert wire["statements"][0]["temporal"] == [{"effective_from": "2030-02-01"}]
+    assert ExtendedLegalIR.from_dict(wire) == reference
+    assert compile_extended(text) is None
+    assert compile_extended(text, profile=TYPED_DEADLINE_PROSE_PROFILE) is None
+    for schema in (EXTENDED_IR_SCHEMA, EXTENDED_DEADLINE_IR_SCHEMA):
+        with pytest.raises(ValueError):
+            ExtendedLegalIR.from_dict({**wire, "schema": schema})
+    with pytest.raises(ValueError):
+        decompile_extended(reference)
+    with pytest.raises(ValueError):
+        decompile_extended(reference, profile=TYPED_DEADLINE_PROSE_PROFILE)
+    wire["statements"][0]["temporal"][0]["proof_cid"] = "untrusted"
+    with pytest.raises(ValueError):
+        ExtendedLegalIR.from_dict(wire)
+    literal = _EFFECTIVE_NORM_TEXT + ' Temporal: "effective from 2030-02-01".'
+    old = compile_extended(literal)
+    assert old.to_dict()["schema"] == EXTENDED_IR_SCHEMA
+    assert old.to_dict()["statements"][0]["temporal"] == ["effective from 2030-02-01"]
+    assert compile_extended(literal, profile=EFFECTIVE_DATE_PROSE_PROFILE) is None
+    old_deadline_prose = _EFFECTIVE_NORM_TEXT + ' Temporal: within 2 calendar days after event "notice".'
+    old_deadline = compile_extended(old_deadline_prose, profile=TYPED_DEADLINE_PROSE_PROFILE)
+    assert old_deadline.to_dict()["schema"] == EXTENDED_DEADLINE_IR_SCHEMA
+    assert decompile_extended(old_deadline, profile=TYPED_DEADLINE_PROSE_PROFILE) == old_deadline_prose
+    assert compile_extended(old_deadline_prose, profile=EFFECTIVE_DATE_PROSE_PROFILE) is None
+
+
+@pytest.mark.parametrize("fault", ["text", "datetime", "absent"])
+def test_effective_date_score_requires_explicit_civil_as_of(fault):
+    from datetime import datetime
+
+    bad = {"text": "2030-02-01", "datetime": datetime(2030, 2, 1), "absent": None}
+    with pytest.raises(scorer.LegalTextRoundTripError, match="civil as-of date"):
+        scorer.score_effective_date_legal_text_roundtrip(
+            _effective_norm_reference("2030-02-01"), _effective_norm_text("2030-02-01"),
+            as_of_date=bad[fault])
+
+
+def test_effective_date_calendar_type_refuses_duplicates_and_invalid_values():
+    from datetime import date, datetime
+    from ipfs_datasets_py.logic.legal_ir.extended_contracts import EffectiveFrom, NormV2
+
+    exact = EffectiveFrom("2032-02-29")
+    assert not exact.has_started_on(date(2032, 2, 28))
+    assert exact.has_started_on(date(2032, 2, 29))
+    for value in ("2030-02-29", "20320229", "2032-02-29Z", date(2032, 2, 29), None):
+        with pytest.raises(ValueError):
+            EffectiveFrom(value)
+    with pytest.raises(ValueError):
+        exact.has_started_on(datetime(2032, 2, 29))
+    with pytest.raises(ValueError):
+        NormV2("O", "agency", "publish", "rule", temporal=(exact, exact))

@@ -9,10 +9,14 @@ from __future__ import annotations
 import json
 
 from ..TDFOL.compiler_repairs import render_temporal_deadline
-from .extended_contracts import DefinitionV2, ExtendedDeadlineLegalIR, ExtendedLegalIR, NormV2, PolicyV2
+from .extended_contracts import (
+    DefinitionV2, EffectiveFrom, ExtendedDeadlineLegalIR, ExtendedEffectiveDateLegalIR,
+    ExtendedLegalIR, NormV2, PolicyV2,
+)
 
 EXTENDED_REALIZER_PROFILE = "source-withheld-quoted-legal-clauses/v2"
 TYPED_DEADLINE_PROSE_PROFILE = "source-withheld-typed-legal-deadlines/v1"
+EFFECTIVE_DATE_PROSE_PROFILE = "source-withheld-typed-legal-effective-dates/v1"
 MAX_RENDERED_UTF8_BYTES = 1024 * 1024
 
 
@@ -24,9 +28,12 @@ def decompile_extended(ir: ExtendedLegalIR, *, profile: str = EXTENDED_REALIZER_
     order and duplicates remain visible; clause lists do not invent logical
     conjunction/disjunction or decide the applicability of a definition.
     """
-    if type(profile) is not str or profile not in (EXTENDED_REALIZER_PROFILE, TYPED_DEADLINE_PROSE_PROFILE):
+    if type(profile) is not str or profile not in (
+            EXTENDED_REALIZER_PROFILE, TYPED_DEADLINE_PROSE_PROFILE, EFFECTIVE_DATE_PROSE_PROFILE):
         raise ValueError("supported extended prose profile required")
-    expected = ExtendedDeadlineLegalIR if profile == TYPED_DEADLINE_PROSE_PROFILE else ExtendedLegalIR
+    expected = {EXTENDED_REALIZER_PROFILE: ExtendedLegalIR,
+                TYPED_DEADLINE_PROSE_PROFILE: ExtendedDeadlineLegalIR,
+                EFFECTIVE_DATE_PROSE_PROFILE: ExtendedEffectiveDateLegalIR}[profile]
     if type(ir) is not expected:
         raise ValueError("extended IR type differs from selected prose profile")
     ExtendedLegalIR.__post_init__(ir)
@@ -51,6 +58,8 @@ def decompile_extended(ir: ExtendedLegalIR, *, profile: str = EXTENDED_REALIZER_
                 write("; ")
             if type(value) is str:
                 atom(value)
+            elif type(value) is EffectiveFrom:
+                write("effective from " + value.effective_from)
             else:
                 write(render_temporal_deadline(value))
 

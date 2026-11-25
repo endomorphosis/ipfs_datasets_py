@@ -625,11 +625,8 @@ def score_deadline_legal_text_roundtrip(reference_ir, candidate_text, *,
     from ipfs_datasets_py.logic.TDFOL.compiler_repairs import (
         CivilWorkdayCalendar, TemporalDeadline, evaluate_civil_deadline,
     )
-    from ipfs_datasets_py.logic.legal_ir.extended_compiler import compile_extended
     from ipfs_datasets_py.logic.legal_ir.extended_contracts import ExtendedDeadlineLegalIR, NormV2
-    from ipfs_datasets_py.logic.legal_ir.extended_decompiler import (
-        TYPED_DEADLINE_PROSE_PROFILE, decompile_extended,
-    )
+    from ipfs_datasets_py.logic.legal_ir.extended_decompiler import TYPED_DEADLINE_PROSE_PROFILE
 
     _require(type(reference_ir) is ExtendedDeadlineLegalIR, "typed deadline legal IR required")
     _require(type(candidate_text) is str, "candidate prose text required")
@@ -640,13 +637,6 @@ def score_deadline_legal_text_roundtrip(reference_ir, candidate_text, *,
     anchors = dict(anchor_dates)
     _require(all(type(name) is str and type(value) is date for name, value in anchors.items()),
              "anchor dates must map event names to civil dates")
-    try:
-        candidate_bytes = candidate_text.encode("utf-8")
-        original_bytes = None if original_text is None else original_text.encode("utf-8")
-    except UnicodeError as error:
-        raise LegalTextRoundTripError("valid UTF8 candidate and optional original text required") from error
-    _require(len(candidate_bytes) <= _MAX_JSON and (original_bytes is None or len(original_bytes) <= _MAX_JSON),
-             "bounded candidate and optional original source text required")
 
     def due_dates(ir):
         result = []
@@ -660,12 +650,9 @@ def score_deadline_legal_text_roundtrip(reference_ir, candidate_text, *,
                         result.append(due.isoformat())
         return result
 
-    reference_wire = reference_ir.to_dict()
-    reference = ExtendedDeadlineLegalIR.from_dict(reference_wire)
     profile = TYPED_DEADLINE_PROSE_PROFILE
-    candidate = compile_extended(candidate_text, profile=profile)
-    reference_prose = decompile_extended(reference, profile=profile)
-    candidate_prose = None if candidate is None else decompile_extended(candidate, profile=profile)
+    reference, candidate, reference_prose, candidate_prose, measurements = _compile_extended_roundtrip(
+        reference_ir, candidate_text, profile=profile, original_text=original_text)
     reference_dates = due_dates(reference)
     _require(bool(reference_dates), "reference must contain at least one evaluable deadline")
     candidate_dates = None if candidate is None else due_dates(candidate)
@@ -680,9 +667,7 @@ def score_deadline_legal_text_roundtrip(reference_ir, candidate_text, *,
         "reference_due_dates": reference_dates,
         "candidate_due_dates": candidate_dates,
         "measurements": {
-            "original_utf8_exact": None if original_bytes is None else candidate_bytes == original_bytes,
-            "canonical_prose_exact": candidate_prose == reference_prose,
-            "complete_typed_structure_exact": candidate is not None and candidate.to_dict() == reference_wire,
+            **measurements,
             "due_dates_exact": None if candidate_dates is None else candidate_dates == reference_dates,
             "semantic_equivalence_verified": False,
             "source_correspondence_verified": False,
@@ -697,3 +682,100 @@ def score_deadline_legal_text_roundtrip(reference_ir, candidate_text, *,
 
 
 __all__.append("score_deadline_legal_text_roundtrip")
+
+
+
+def _compile_extended_roundtrip(reference_ir, candidate_text, *, profile, original_text):
+    from ipfs_datasets_py.logic.legal_ir.extended_compiler import compile_extended
+    from ipfs_datasets_py.logic.legal_ir.extended_decompiler import decompile_extended
+
+    try:
+        candidate_bytes = candidate_text.encode("utf-8")
+        original_bytes = None if original_text is None else original_text.encode("utf-8")
+    except UnicodeError as error:
+        raise LegalTextRoundTripError("valid UTF8 candidate and optional original text required") from error
+    _require(len(candidate_bytes) <= _MAX_JSON and (original_bytes is None or len(original_bytes) <= _MAX_JSON),
+             "bounded candidate and optional original source text required")
+    reference_wire = reference_ir.to_dict()
+    reference = type(reference_ir).from_dict(reference_wire)
+    candidate = compile_extended(candidate_text, profile=profile)
+    reference_prose = decompile_extended(reference, profile=profile)
+    candidate_prose = None if candidate is None else decompile_extended(candidate, profile=profile)
+    measurements = {
+        "original_utf8_exact": None if original_bytes is None else candidate_bytes == original_bytes,
+        "canonical_prose_exact": candidate_prose == reference_prose,
+        "complete_typed_structure_exact": candidate is not None and candidate.to_dict() == reference_wire,
+    }
+    return reference, candidate, reference_prose, candidate_prose, measurements
+
+
+def score_effective_date_legal_text_roundtrip(reference_ir, candidate_text, *,
+        as_of_date, original_text=None):
+    """Score explicit norm start dates reconstructed from controlled prose.
+
+    The supplied as-of date is used after reconstruction to evaluate each
+    explicit inclusive start condition. That result is specific to the
+    supplied date and the statement carrying the condition.
+    """
+    from datetime import date
+
+    from ipfs_datasets_py.logic.legal_ir.extended_contracts import (
+        EffectiveFrom, ExtendedEffectiveDateLegalIR, NormV2,
+    )
+    from ipfs_datasets_py.logic.legal_ir.extended_decompiler import EFFECTIVE_DATE_PROSE_PROFILE
+
+    _require(type(reference_ir) is ExtendedEffectiveDateLegalIR, "typed effective date legal IR required")
+    _require(type(candidate_text) is str, "candidate prose text required")
+    _require(original_text is None or type(original_text) is str, "optional original source text required")
+    _require(type(as_of_date) is date, "exact civil as-of date required")
+    profile = EFFECTIVE_DATE_PROSE_PROFILE
+    reference, candidate, reference_prose, candidate_prose, measurements = _compile_extended_roundtrip(
+        reference_ir, candidate_text, profile=profile, original_text=original_text)
+
+    def dated_statements(ir):
+        return [
+            {"statement_index": index, "effective_from": condition.effective_from,
+             "started_on_as_of": condition.has_started_on(as_of_date)}
+            for index, statement in enumerate(ir.statements)
+            if type(statement) is NormV2
+            for condition in statement.temporal
+            if type(condition) is EffectiveFrom
+        ]
+
+    reference_dates = dated_statements(reference)
+    candidate_dates = None if candidate is None else dated_statements(candidate)
+
+    def projection(rows, field):
+        return [(row["statement_index"], row[field]) for row in rows]
+
+    return {
+        "schema": "legal-effective-date-text-roundtrip-score/v1",
+        "profile": profile,
+        "status": "unsupported_candidate_abstained" if candidate is None else "complete_candidate_scored",
+        "input_count": 1, "supported_count": int(candidate is not None),
+        "abstention_count": int(candidate is None),
+        "normalized_reference_prose": reference_prose,
+        "normalized_candidate_prose": candidate_prose,
+        "as_of_date": as_of_date.isoformat(),
+        "reference_effective_dates": reference_dates,
+        "candidate_effective_dates": candidate_dates,
+        "measurements": {
+            **measurements,
+            "effective_dates_exact": None if candidate_dates is None else
+                projection(candidate_dates, "effective_from") == projection(reference_dates, "effective_from"),
+            "start_conditions_exact_as_of": None if candidate_dates is None else
+                projection(candidate_dates, "started_on_as_of") == projection(reference_dates, "started_on_as_of"),
+            "semantic_equivalence_verified": False,
+            "source_correspondence_verified": False,
+            "proof_validity_verified": False,
+        },
+        "original_source_available_to_inverse": False,
+        "reference_target_available_to_inverse": False,
+        "authority": {"source_semantics_verified": False, "admitted": False,
+                      "proof_authority": False, "model_quality_established": False},
+        "training_mask": 0,
+        "evaluation_gold_mask": 0,
+    }
+
+
+__all__.append("score_effective_date_legal_text_roundtrip")

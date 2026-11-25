@@ -11,14 +11,17 @@ import re
 
 from ..TDFOL.compiler_repairs import parse_temporal_deadline
 from .extended_contracts import (
-    DefinitionV2, ExtendedDeadlineLegalIR, ExtendedLegalIR, MAX_STATEMENTS, NormV2, PolicyV2,
+    DefinitionV2, EffectiveFrom, ExtendedDeadlineLegalIR, ExtendedEffectiveDateLegalIR,
+    ExtendedLegalIR, MAX_STATEMENTS, NormV2, PolicyV2,
 )
 from .extended_decompiler import (
-    EXTENDED_REALIZER_PROFILE, MAX_RENDERED_UTF8_BYTES, TYPED_DEADLINE_PROSE_PROFILE,
+    EFFECTIVE_DATE_PROSE_PROFILE, EXTENDED_REALIZER_PROFILE, MAX_RENDERED_UTF8_BYTES,
+    TYPED_DEADLINE_PROSE_PROFILE,
     decompile_extended,
 )
 
 _DEADLINE_CLAUSE = re.compile(r"[^.;]+")
+_EFFECTIVE_FROM_CLAUSE = re.compile(r"effective from ([0-9]{4}-[0-9]{2}-[0-9]{2})(?=[.;]|$)")
 
 
 class _ClauseReader:
@@ -50,6 +53,14 @@ class _ClauseReader:
         self.position = match.end()
         return deadline
 
+    def effective_date_atom(self):
+        match = _EFFECTIVE_FROM_CLAUSE.match(self.text, self.position)
+        if match is None:
+            return self.temporal_atom()
+        effective = EffectiveFrom(match[1])
+        self.position = match.end()
+        return effective
+
     def atoms(self, read_atom=None):
         read_atom = self.atom if read_atom is None else read_atom
         values = [read_atom()]
@@ -68,7 +79,7 @@ class _ClauseReader:
         raise ValueError("unknown statement operator")
 
 
-def _statement(text, *, typed_deadlines):
+def _statement(text, *, typed_deadlines, typed_effective_dates=False):
     reader = _ClauseReader(text)
     if reader.starts("Norm: "):
         reader.take("Norm: ")
@@ -96,8 +107,11 @@ def _statement(text, *, typed_deadlines):
         if reader.starts(prefix):
             reader.take(prefix)
             read_atom = None
-            if typed_deadlines and kind is NormV2 and field == "temporal":
-                read_atom = reader.temporal_atom
+            if kind is NormV2 and field == "temporal":
+                if typed_effective_dates:
+                    read_atom = reader.effective_date_atom
+                elif typed_deadlines:
+                    read_atom = reader.temporal_atom
             values[field] = reader.atoms(read_atom)
             reader.take(".")
     if reader.position != len(text):
@@ -111,7 +125,8 @@ def compile_extended(text: str, *, profile: str = EXTENDED_REALIZER_PROFILE) -> 
     The opt-in deadline profile recognizes the complete explicit deadline
     grammar alongside literal slots. Both profiles use only the supplied span.
     """
-    if type(profile) is not str or profile not in (EXTENDED_REALIZER_PROFILE, TYPED_DEADLINE_PROSE_PROFILE):
+    if type(profile) is not str or profile not in (
+            EXTENDED_REALIZER_PROFILE, TYPED_DEADLINE_PROSE_PROFILE, EFFECTIVE_DATE_PROSE_PROFILE):
         raise ValueError("supported extended prose profile required")
     if type(text) is not str or not text.strip():
         raise ValueError("source must be nonempty text")
@@ -124,7 +139,12 @@ def compile_extended(text: str, *, profile: str = EXTENDED_REALIZER_PROFILE) -> 
         if len(lines) > MAX_STATEMENTS:
             return None
         typed_deadlines = profile == TYPED_DEADLINE_PROSE_PROFILE
-        statements = tuple(_statement(line, typed_deadlines=typed_deadlines) for line in lines)
+        typed_effective_dates = profile == EFFECTIVE_DATE_PROSE_PROFILE
+        statements = tuple(_statement(line, typed_deadlines=typed_deadlines,
+                                      typed_effective_dates=typed_effective_dates) for line in lines)
+        if typed_effective_dates:
+            ir = ExtendedEffectiveDateLegalIR(statements)
+            return ir if decompile_extended(ir, profile=profile) == text else None
         if typed_deadlines:
             ir = ExtendedDeadlineLegalIR(statements)
             return ir if decompile_extended(ir, profile=profile) == text else None
