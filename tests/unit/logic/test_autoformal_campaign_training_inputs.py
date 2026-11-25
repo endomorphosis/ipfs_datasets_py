@@ -3190,3 +3190,225 @@ def test_reviewed_mixed_cycle_v4_withdrawal_and_fresh_same_profile_readmission_p
     with pytest.raises(ValueError, match="closed reviewed cycle parent artifact"):
         inputs.stage_reviewed_cycle_inputs(data.registry, **legacy)
     assert data.registry.stage_calls == before and not legacy["output_directory"].exists()
+
+
+def _unicode_reviewed_stage_options(tmp_path, *, unicode_profile):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_eval_splits as splits
+
+    data = _reviewed_transition_fixture(tmp_path)
+    config = replace(
+        splits.LegalIREvalSplitConfig(**data.config),
+        train_ratio=1.0, validation_ratio=0.0, canary_ratio=0.0,
+        holdout_ratio=0.0, statute_family_ratio=0.0, jurisdiction_ratio=0.0,
+        temporal_ratio=0.0,
+    )
+    profile = splits.UNICODE_CAMPAIGN_SPLIT_PROFILE if unicode_profile else None
+    manifest = splits.build_ir_campaign_splits(data.rows, config, split_profile=profile).to_dict()
+    assert manifest["assignments"] == {row["id"]: "train" for row in data.rows}
+    data.config = config.to_dict()
+    data.options.update(split_manifest=manifest, expected_split_manifest_sha256=data.fixtures.digest(manifest))
+    examples = {row["sample_id"]: row for row in manifest["examples"]}
+    for record in data.history["records"]:
+        sample_id = record["id"]
+        record["split_example"] = examples[sample_id]
+        record["assignment"] = manifest["assignments"][sample_id]
+    options = _reviewed_stage_options(data, tmp_path / "staged")
+    return data, options, manifest
+
+
+@pytest.mark.parametrize("unicode_profile", (False, True), ids=("default", "unicode"))
+def test_reviewed_cycle_preserves_actual_campaign_manifest_and_source_history(tmp_path, unicode_profile):
+    data, options, manifest = _unicode_reviewed_stage_options(tmp_path, unicode_profile=unicode_profile)
+    registry = _ReviewedArtifactRegistry(tmp_path / "registry")
+
+    reference = inputs.stage_reviewed_cycle_inputs(registry, **options)
+    document = _reviewed_doc(registry, reference)
+    history = _reviewed_doc(registry, document["history_artifact"])
+    assert _reviewed_doc(registry, document["split_manifest_artifact"]) == manifest
+    assert _reviewed_doc(registry, document["rows_artifact"]) == data.rows
+    assert history == dict(data.history, split_manifests=[
+        {"manifest": manifest, "sha256": data.fixtures.digest(manifest)}
+    ])
+    assert document["history_guard"]["status"] == "passed"
+    assert document["history_guard"]["positive_use_authorized"] is False
+    assert document["consumer_receipt"]["status"] == "ready"
+    assert document["consumer_receipt"]["training_mask"] == 0
+    assert document["compatibility"]["numerical_consumption_ready"] is False
+    assert document["compatibility"]["weights_updated"] is False
+    assert document["compatibility"]["model_or_registry_promotion_authorized"] is False
+
+
+def test_reviewed_cycle_rejects_repinned_unicode_history_source_drift_before_staging(tmp_path):
+    data, options, _ = _unicode_reviewed_stage_options(tmp_path, unicode_profile=True)
+    registry = _ReviewedArtifactRegistry(tmp_path / "registry")
+    first = data.history["records"][0]
+    first["source_text"] += " Unreviewed addition."
+    first["source_sha256"] = data.fixtures.source_digest(first["source_text"])
+    options["expected_history_sha256"] = data.fixtures.digest(data.history)
+
+    with pytest.raises(ValueError, match="historical source fingerprint or frozen grouping differs"):
+        inputs.stage_reviewed_cycle_inputs(registry, **options)
+    assert registry.stage_calls == 0
+    assert not options["output_directory"].exists()
+
+
+@pytest.mark.parametrize("archive", ("none", "unrelated", "unicode_near_duplicate"))
+def test_full_reviewed_decoder_replays_unicode_stage_with_legacy_holdout(tmp_path, archive):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_eval_splits as splits
+
+    data, _, manifest = _unicode_reviewed_stage_options(tmp_path, unicode_profile=True)
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setitem(globals(), "_reviewed_transition_fixture", lambda path: data)
+        _, registry, artifact, kwargs = _reviewed_decoder_fixture(tmp_path)
+
+    seen = []
+
+    class ObservedTokenizer(_ReviewedDecoderByteTokenizer):
+        def encode(self, text):
+            seen.append(text)
+            return super().encode(text)
+
+    kwargs["tokenizer"] = ObservedTokenizer()
+    legacy_id = "fixture:distinct-legacy-holdout"
+    if archive != "none":
+        document = _reviewed_doc(registry, artifact)
+        history = _reviewed_doc(registry, document["history_artifact"])
+        source_row = data.rows[1]
+        text = (
+            source_row["source_text"].replace("covered", "coverzd").replace("Board", "Bourd")
+            if archive == "unicode_near_duplicate"
+            else "Violet minerals rest beneath quiet silver mountains."
+        )
+        config = splits.LegalIREvalSplitConfig(**data.config)
+        historical = splits.LegalIRSplitExample.from_sample({"id": legacy_id, "text": text})
+        original = splits.LegalIRSplitExample.from_sample(source_row)
+        assert original.content_hash != historical.content_hash
+        legacy = splits.LegalIRSplitManifest(
+            examples=(historical,), assignments={legacy_id: "holdout"}, config_digest=config.digest
+        ).to_dict()
+        history["scope_kind"] = "complete_declared_history"
+        history["split_manifests"].append({"manifest": legacy, "sha256": data.fixtures.digest(legacy)})
+        history["records"].append({"id": legacy_id, "source_text": text,
+            "source_sha256": data.fixtures.source_digest(text), "split_example": historical.to_dict(),
+            "assignment": "holdout"})
+
+        def overlap(profile):
+            _, first = splits.legal_ir_split_source_fingerprint(source_row["source_text"], metadata=profile)
+            _, second = splits.legal_ir_split_source_fingerprint(text, metadata=profile)
+            return len(set(first).intersection(second)) / len(set(first).union(second))
+
+        assert overlap({}) < config.near_duplicate_jaccard_threshold
+        assert (overlap(manifest["metadata"]) >= config.near_duplicate_jaccard_threshold) == (
+            archive == "unicode_near_duplicate"
+        )
+        document["history_artifact"] = _reviewed_decoder_put_json(
+            registry, tmp_path / "legacy-heldout-history.json", history
+        )
+        _reviewed_decoder_repin_stage(registry, tmp_path, kwargs, document)
+
+    staged_calls = registry.stage_calls
+    if archive == "unicode_near_duplicate":
+        with pytest.raises(splits.LegalIRSplitLeakageError) as blocked:
+            inputs.prepare_reviewed_decoder_training_inputs(registry, **kwargs)
+        assert seen == []
+        assert registry.stage_calls == staged_calls
+        assert any(
+            item.kind == "near_duplicate"
+            and source_row["id"] in item.sample_ids_by_split.get("train", ())
+            and legacy_id in item.sample_ids_by_split.get("holdout", ())
+            for item in blocked.value.result.violations
+        )
+        return
+
+    result = inputs.prepare_reviewed_decoder_training_inputs(registry, **kwargs)
+    assert registry.stage_calls == staged_calls
+    assert result["receipt"]["training_record_ids"] == [row["id"] for row in data.rows]
+    assert result["receipt"]["training_mask"] == 0
+    assert result["receipt"]["production_training_eligible"] is False
+    assert result["receipt"]["backend_execution_authorized"] is False
+    assert len(seen) == 2 * len(data.rows)
+    if archive == "unrelated":
+        assert all(text not in wire for wire in seen)
+    for row, record in zip(data.rows, result["records"], strict=True):
+        source = json.loads(record["source_wire"])
+        assert source["source_text"] == row["source_text"]
+        assert set(source) == {"profile", "source_text", "governing_context", "source_binding", "selection_context"}
+        assert json.loads(record["target_json"]) == row["canonical_ir"]
+        assert len(json.loads(record["target_json"])) == 9
+
+
+def _reviewed_mixed_unicode_stage(tmp_path):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_eval_splits as splits
+
+    data = _reviewed_mixed_cycle_fixture(tmp_path, stage=False)
+    config = replace(
+        splits.LegalIREvalSplitConfig(**data.options["split_config"]),
+        train_ratio=1.0, validation_ratio=0.0, canary_ratio=0.0,
+        holdout_ratio=0.0, statute_family_ratio=0.0, jurisdiction_ratio=0.0,
+        temporal_ratio=0.0,
+    )
+    manifest = splits.build_ir_campaign_splits(
+        data.rows, config, split_profile=splits.UNICODE_CAMPAIGN_SPLIT_PROFILE
+    ).to_dict()
+    assert manifest["assignments"] == {row["id"]: "train" for row in data.rows}
+    data.options["split_manifest"] = manifest
+    guard_config = config.to_dict()
+    for args in (data.options, data.kwargs):
+        args.update(split_config=guard_config, expected_split_config_sha256=data.fixtures.digest(guard_config))
+    examples = {item["sample_id"]: item for item in manifest["examples"]}
+    for record in data.options["history"]["records"]:
+        record["split_example"] = examples[record["id"]]
+        record["assignment"] = manifest["assignments"][record["id"]]
+    _reviewed_mixed_cycle_rebind(data)
+    artifact = inputs.stage_reviewed_mixed_cycle_inputs_v4(data.registry, **data.options)
+    data.kwargs.update(stage_artifact=artifact, expected_stage_sha256=artifact["sha256"])
+    return data
+
+
+@pytest.mark.parametrize("codec", ("full", "digest_omitted"))
+def test_reviewed_mixed_unicode_stage_preserves_exact_targets_in_both_codecs(tmp_path, codec):
+    import hashlib
+
+    data = _reviewed_mixed_unicode_stage(tmp_path)
+    stage = _reviewed_doc(data.registry, data.kwargs["stage_artifact"])
+    assert stage["schema"] == inputs.REVIEWED_MIXED_CYCLE_SCHEMA
+    assert stage["admission_profile"] == data.admission.REVIEWED_PROFILE
+    assert _reviewed_doc(data.registry, stage["split_manifest_artifact"]) == data.options["split_manifest"]
+    transport = _reviewed_doc(data.registry, stage["admission_transport_artifact"])
+    restored = inputs._reviewed_restore_admission(data.registry, transport)
+    assert restored == data.options["admission_inputs"]
+    assert any(row["canonical_ir"]["profile"] == "authored-many-sorted-relational-deontic/v1" for row in data.rows)
+
+    before = data.registry.stage_calls
+    if codec == "full":
+        result = inputs.prepare_reviewed_mixed_decoder_training_inputs_v4(data.registry, **data.kwargs)
+        assert result["schema"] == inputs.REVIEWED_MIXED_DECODER_INPUT_SCHEMA
+    else:
+        result = inputs.prepare_reviewed_mixed_decoder_digest_omitted_inputs_v1(data.registry, **data.kwargs)
+        assert result["schema"] == inputs.REVIEWED_DIGEST_OMITTED_INPUT_SCHEMA
+    assert data.registry.stage_calls == before
+    receipt = result["receipt"]
+    assert receipt["training_record_ids"] == [row["id"] for row in data.rows]
+    assert receipt["split_manifest_sha256"] == stage["split_manifest_artifact"]["sha256"]
+    assert receipt["history_sha256"] == stage["history_artifact"]["sha256"]
+    assert receipt["training_mask"] == 0
+    assert all(receipt[key] is False for key in ("production_training_eligible", "training_executed",
+        "weights_updated", "backend_execution_authorized", "proof_authority", "Lean_admitted", "corpus_admitted"))
+    assert len(result["records"]) == len(receipt["row_commitments"]) == len(data.rows)
+
+    for row, record, commitment in zip(data.rows, result["records"], receipt["row_commitments"], strict=True):
+        source = json.loads(record["source_wire"])
+        assert set(source) == {"profile", "source_text", "governing_context", "source_binding", "selection_context"}
+        assert source["source_text"] == row["source_text"]
+        wire = record["target_json"]
+        assert len(json.loads(wire)) == 9
+        if codec == "full":
+            assert json.loads(wire) == row["canonical_ir"]
+        else:
+            expected = data.deepcopy(row["canonical_ir"])
+            del expected["typed_expression"]["content_digest"]
+            assert json.loads(wire) == expected
+            assert commitment["model_target_wire_sha256"] == hashlib.sha256(wire.encode("utf-8")).hexdigest()
+            assert inputs.assemble_reviewed_decoder_digest_omitted_target(
+                wire, target_codec=receipt["target_codec"]
+            ) == row["canonical_ir"]

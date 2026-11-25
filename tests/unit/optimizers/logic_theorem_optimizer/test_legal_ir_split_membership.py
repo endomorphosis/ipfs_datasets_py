@@ -4,6 +4,7 @@ The manifest and examples are fictional, constructed directly. No trainer,
 checkpoint, corpus artifact, model or historical test module is imported.
 """
 from copy import deepcopy
+from dataclasses import replace
 import hashlib
 from types import SimpleNamespace
 
@@ -213,3 +214,108 @@ def test_public_operation_wrappers_preserve_unresolved_membership_failure(manife
         wrapper(manifest, items=[{}])
     assert caught.value.operation == operation
     assert caught.value.disallowed == ({"reason": "sample_not_resolved_in_split_manifest", "item_index": 0},)
+
+
+@pytest.mark.parametrize(
+    "operation,partition",
+    (*PRIMARY.items(), (splits.HELDOUT_EVALUATION_OPERATION, "holdout")),
+)
+@pytest.mark.parametrize("serialized", [False, True], ids=["manifest", "mapping"])
+def test_assignment_without_example_cannot_authorize_item(
+    manifest, operation, partition, serialized,
+):
+    manifest = replace(
+        manifest,
+        assignments={**manifest.assignments, "assignment-only": partition},
+    )
+    candidate = manifest.to_dict() if serialized else manifest
+    valid_id = f"{partition}-a"
+    assert splits.authorize_legal_ir_split_use(
+        candidate, operation=operation, items=[{"sample_id": valid_id}],
+    ).passed
+    assert policy_error(candidate, operation, [{
+        "sample_ids": [valid_id, "assignment-only", "assignment-only"],
+        "sample_id": "assignment-only",
+        **source_reference(partition),
+    }]) == ({"reason": "sample_not_in_split_manifest", "sample_id": "assignment-only"},)
+
+
+def test_legacy_assignment_only_manifest_retains_manifest_checks_and_diagnostics():
+    manifest = splits.LegalIRSplitManifest.from_mapping(
+        {"samples_by_split": {"train": ["old-train"], "holdout": ["old-holdout"]}},
+    )
+    assert manifest.examples == ()
+    assert splits.authorize_legal_ir_split_use(manifest, operation="training").passed
+    assert splits.LegalIRSplitManifest.from_mapping(manifest.to_dict()).digest == manifest.digest
+    assert policy_error(manifest, "training", [{"sample_id": "old-holdout"}]) == ({
+        "allowed_splits": ["train"], "operation": "training", "sample_id": "old-holdout",
+        "split": "holdout", "known_example": False,
+    },)
+    assert policy_error(manifest, "training", [{"sample_id": "old-train"}]) == (
+        {"reason": "sample_not_in_split_manifest", "sample_id": "old-train"},
+    )
+
+
+def test_opt_in_grouped_campaign_keeps_near_duplicate_lineages_together():
+    shared = "owners shall mark every covered vehicle clearly within the stated local period using ink"
+    rows = (
+        {"sample_id": "a-internal", "text": shared + " blue", "lineage_group_id": "lineage-one"},
+        {"sample_id": "b-external", "text": shared + " black", "lineage_group_id": "lineage-two",
+         "source_label": "external"},
+    )
+    config = splits.LegalIREvalSplitConfig(
+        train_ratio=1.0, validation_ratio=0.0, canary_ratio=0.0, holdout_ratio=0.0,
+        statute_family_ratio=0.0, jurisdiction_ratio=0.0, temporal_ratio=0.0,
+    )
+    legacy = splits.build_ir_campaign_splits(rows, config)
+    assert legacy.assignments == {"a-internal": "train", "b-external": "external_test"}
+    assert "campaign_split_profile" not in legacy.metadata
+    assert legacy.to_dict() == splits.build_ir_campaign_splits(rows, config, split_profile=None).to_dict()
+    grouped = splits.build_ir_campaign_splits(
+        rows, config, split_profile=splits.DEDUPLICATED_CAMPAIGN_SPLIT_PROFILE)
+    left, right = grouped.examples
+    assert left.content_hash != right.content_hash and left.lineage_group_id != right.lineage_group_id
+    assert left.near_duplicate_key and left.near_duplicate_key == right.near_duplicate_key
+    assert grouped.assignments == {"a-internal": "external_test", "b-external": "external_test"}
+    assert grouped.guard_result().passed
+
+
+def test_unicode_campaign_groups_japanese_without_linking_unrelated_shared_digits():
+    import unicodedata
+
+    profile = splits.UNICODE_CAMPAIGN_SPLIT_PROFILE
+    text = ("申請者は指定された窓口に提出された書面について受理の通知を受けた日から"
+            "三十日以内に添付資料を整理して審査を担当する職員に交付するものとする。")
+    related = (
+        {"sample_id": "a-internal", "text": text, "lineage_group_id": "lineage-a"},
+        {"sample_id": "b-external", "text": text.replace("書面", "電文"), "lineage_group_id": "lineage-b"},
+    )
+    config = splits.LegalIREvalSplitConfig(
+        seed="heldout-campaign-fixture", train_ratio=0.5, holdout_ratio=0.5,
+        validation_ratio=0.0, canary_ratio=0.0, statute_family_ratio=0.0,
+        jurisdiction_ratio=0.0, temporal_ratio=0.0,
+    )
+    ascii_manifest = splits.build_ir_campaign_splits(
+        related, config, split_profile=splits.DEDUPLICATED_CAMPAIGN_SPLIT_PROFILE)
+    assert set(ascii_manifest.assignments.values()) == {"train", "holdout"}
+    grouped = splits.build_ir_campaign_splits(related, config, split_profile=profile)
+    a, b = grouped.examples
+    assert a.content_hash != b.content_hash and a.lineage_group_id != b.lineage_group_id
+    assert a.near_duplicate_key and a.near_duplicate_key == b.near_duplicate_key
+    assert set(grouped.assignments.values()) == {"holdout"}
+    assert grouped.metadata["unicode_data_version"] == unicodedata.unidata_version
+    assert grouped.guard_result().passed
+
+    unrelated = (
+        {"sample_id": "a", "text": "申請者に交付する書面の写しを保存する。 31415",
+         "lineage_group_id": "lineage-a"},
+        {"sample_id": "b", "text": "Заседание проводится городским советом. 31415",
+         "lineage_group_id": "lineage-b", "source_label": "external"},
+    )
+    config = replace(config, train_ratio=1.0, holdout_ratio=0.0)
+    ascii_manifest = splits.build_ir_campaign_splits(
+        unrelated, config, split_profile=splits.DEDUPLICATED_CAMPAIGN_SPLIT_PROFILE)
+    assert set(ascii_manifest.assignments.values()) == {"external_test"}
+    unicode_manifest = splits.build_ir_campaign_splits(unrelated, config, split_profile=profile)
+    assert unicode_manifest.assignments == {"a": "train", "b": "external_test"}
+    assert unicode_manifest.guard_result().passed

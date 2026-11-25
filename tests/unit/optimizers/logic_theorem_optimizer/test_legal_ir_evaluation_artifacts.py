@@ -2236,8 +2236,26 @@ def test_reviewed_mixed_retention_full_v1_label_swap_keeps_v3_receipts_out_of_v2
 
 
 
+def _fixture_reprofile_unicode_split(splits, manifest, rows):
+    import unicodedata
+
+    metadata = {"campaign_split_profile": splits.UNICODE_CAMPAIGN_SPLIT_PROFILE,
+                "unicode_data_version": unicodedata.unidata_version}
+    by_id = {row["id"]: row["source_text"] for row in rows}
+    for example in manifest["examples"]:
+        content_hash, fingerprint = splits.legal_ir_split_source_fingerprint(
+            by_id[example["sample_id"]], metadata=metadata)
+        assert example["content_hash"] == content_hash
+        example["token_fingerprint"] = list(fingerprint)
+    manifest["metadata"] = metadata
+    # Preserve the enrolled split identities without relying on frozen near keys.
+    resolved = splits.LegalIRSplitManifest.from_mapping(manifest)
+    assert resolved.guard_result().passed
+    return resolved.to_dict()
+
+
 def _rich_v3_heldout_case(*, shared_provision=False, version="v3", shared_source_identity=False,
-        defer_heldout_check=False, training_prefix="T"):
+        defer_heldout_check=False, training_prefix="T", split_overlap=None):
     from tests.unit.optimizers.logic_theorem_optimizer import test_legal_span_consumer_binding as ch
     from tests.unit.logic.autoformal import test_legal_reviewed_norm_admission_v3 as mixed
     from ipfs_datasets_py.logic.autoformal import legal_reviewed_norm_admission_v3 as admission
@@ -2254,6 +2272,10 @@ def _rich_v3_heldout_case(*, shared_provision=False, version="v3", shared_source
                  ["QUERY establishes a covered officer through appointment by its separate inland council.",
                   "QUERY requires a covered officer to submit monthly statements unless an inland exemption applies.",
                   "QUERY permits covered officers to inspect records with supervisors at the designated event and time."])
+        if partition == "holdout" and split_overlap in ("legacy_alias", "unicode_alias"):
+            texts[2] = "TRAXN grants officers permission to inspect a regizter with a supervisor at an event and time."
+        if partition == "holdout" and split_overlap == "unicode_second_alias":
+            texts[2] = "SECXND permits inspectors to examine inventzries with assistants at a specified event and time."
         source_bindings = None
         if shared_source_identity and partition == "holdout":
             from ipfs_datasets_py.logic.autoformal import corpus_source
@@ -2322,6 +2344,9 @@ def _rich_v3_heldout_case(*, shared_provision=False, version="v3", shared_source
         for part,rows in populations.items() for r in rows),
         assignments={r["id"]:part for part,rows in populations.items() for r in rows},
         config_digest=ch.source_digest("fictional reviewed mixed rich heldout split")).to_dict()
+    if split_overlap in ("unicode_unrelated", "unicode_alias", "unicode_second_alias"):
+        all_rows = [row for group in populations.values() for row in group]
+        manifest = _fixture_reprofile_unicode_split(ch.splits, manifest, all_rows)
     bindings={}
     for part,rows in populations.items():
         bindings[part] = getattr(ch.owner,"prepare_reviewed_source_span_consumer_binding_"+version)(rows,
@@ -3377,10 +3402,11 @@ def test_reviewed_v4_rich_route_keeps_v3_endpoint_consumer_domain():
     assert callable(structured.consume_reviewed_contexts_v4)
 
 
-def _aggregate_v4_heldout_case():
+def _aggregate_v4_heldout_case(*, split_overlap=None, defer_heldout_check=False):
     """Two independently signed fictional TRAIN components and one heldout."""
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_structured_retrieval as structured
-    ch, options, populations, replays, _ = _rich_v3_heldout_case()
+    ch, options, populations, replays, _ = _rich_v3_heldout_case(
+        split_overlap=split_overlap, defer_heldout_check=defer_heldout_check)
     _, second_options, second_populations, second_replays, _ = _rich_v3_heldout_case(training_prefix="R")
     first = options["reviewed_training_context"]
     second = second_options["reviewed_training_context"]
@@ -3393,6 +3419,8 @@ def _aggregate_v4_heldout_case():
                            ("holdout", populations["holdout"])] for row in rows),
         assignments={row["id"]: ("holdout" if row in populations["holdout"] else "train") for row in all_rows},
         config_digest=ch.source_digest("fictional complete two-component aggregate split")).to_dict()
+    if split_overlap in ("unicode_unrelated", "unicode_second_alias"):
+        manifest = _fixture_reprofile_unicode_split(ch.splits, manifest, all_rows)
     components = []
     for identity, inputs in zip(("fixture:train:A", "fixture:train:B"), train_groups):
         binding = ch.owner.prepare_reviewed_source_span_consumer_binding_v3(inputs["training_rows"],
@@ -3422,7 +3450,8 @@ def _aggregate_v4_heldout_case():
         query_rows=queries,retrieval_rows=selections)
     payload=structured.consume_reviewed_contexts_v4(**context,
         expected_query_rows_sha256=ch.digest(queries),expected_retrieval_rows_sha256=ch.digest(selections),
-        consumer=lambda value:value,heldout_evaluation=query_binding.receipt()["heldout_evaluation"])
+        consumer=lambda value:value,
+        heldout_evaluation=None if defer_heldout_check else query_binding.receipt()["heldout_evaluation"])
     options.update(binding=query_binding,split_manifest=manifest,reviewed_training_context=context,
         reviewed_training_context_profile=structured.AGGREGATE_CONTEXT_V4_PROFILE,
         retrieved_examples={row["id"]:[dict(id=example["id"],content=example) for example in row["examples"]]
@@ -4365,3 +4394,90 @@ def test_reviewed_digest_cache_retention_metadata_reader_refuses_links_and_bound
     link.unlink();symlink = tmp_path / "symlink.json";symlink.symlink_to(path)
     with pytest.raises(owner.InvalidEvaluationArtifactError):
         owner._reviewed_retention_metadata_json({**reference, "path": str(symlink)}, limit=1024, budget=[0])
+
+
+
+@pytest.mark.parametrize("split_overlap", ("legacy_alias", "unicode_unrelated", "unicode_alias"))
+def test_rich_v3_heldout_replays_profile_near_duplicate_before_producer(split_overlap):
+    ch, options, populations, _, _ = _rich_v3_heldout_case(
+        split_overlap=split_overlap, defer_heldout_check=True
+    )
+    train, heldout = (populations[part][2] for part in ("train", "holdout"))
+    assert train["canonical_ir"] != heldout["canonical_ir"]
+    assert train["canonical_ir"]["source_binding"] != heldout["canonical_ir"]["source_binding"]
+    threshold = ch.splits.LegalIREvalSplitConfig().near_duplicate_jaccard_threshold
+
+    def overlap(metadata):
+        first, second = (ch.splits.legal_ir_split_source_fingerprint(row["source_text"], metadata=metadata)
+                         for row in (train, heldout))
+        assert first[0] != second[0]
+        a, b = set(first[1]), set(second[1])
+        return len(a & b) / len(a | b)
+
+    assert overlap({}) < threshold
+    metadata = options["split_manifest"]["metadata"]
+    assert (overlap(metadata) >= threshold) == (split_overlap == "unicode_alias")
+    received = []
+
+    def producer(arguments):
+        received.append(arguments)
+        assert all(set(item) == {"id", "source_text", "context"} for item in arguments)
+        assert all({e["id"] for e in row["context"]["retrieved"]} <= {item["id"] for item in populations["train"]}
+                   for row in arguments)
+        return [dict(id=row["id"], outcome="abstained", candidate=None) for row in arguments]
+
+    if split_overlap == "unicode_alias":
+        with pytest.raises(ValueError, match="heldout and TRAIN share a near-duplicate source group"):
+            _producer_evaluate(options, producer)
+        assert received == []
+    else:
+        artifact = _producer_evaluate(options, producer)
+        assert len(received) == 1
+        assert artifact.to_dict()["metrics"]["complete_norm_payload"]["denominator"] == len(populations["holdout"])
+
+
+@pytest.mark.parametrize("split_overlap", ("unicode_unrelated", "unicode_second_alias"))
+def test_aggregate_v4_holds_out_unicode_near_duplicate_from_unselected_component(split_overlap):
+    ch, options, payload = _aggregate_v4_heldout_case(
+        split_overlap=split_overlap, defer_heldout_check=True
+    )
+    context = options["reviewed_training_context"]
+    first, second = context["components"]
+    selected = context["retrieval_rows"][2]
+    assert [entry["admission_id"] for entry in selected["retrieved_refs"]] == [first["admission_id"]]
+    assert second["admission_id"] not in {entry["admission_id"] for entry in payload["rows"][2]["examples"]}
+    assert first["binding"].receipt()["status"] == second["binding"].receipt()["status"] == "ready"
+    train, heldout = second["training_rows"][2], options["rows"][2]
+    assert train["canonical_ir"]["source_binding"] != heldout["canonical_ir"]["source_binding"]
+    threshold = ch.splits.LegalIREvalSplitConfig().near_duplicate_jaccard_threshold
+
+    def overlap(metadata):
+        left, right = (ch.splits.legal_ir_split_source_fingerprint(row["source_text"], metadata=metadata)
+                       for row in (train, heldout))
+        assert left[0] != right[0]
+        a, b = set(left[1]), set(right[1])
+        return len(a & b) / len(a | b)
+
+    assert overlap({}) < threshold
+    assert (overlap(options["split_manifest"]["metadata"]) >= threshold) == (
+        split_overlap == "unicode_second_alias"
+    )
+    policy_calls, producer_calls = [], []
+    options["context_policy_guard"] = policy_calls.append
+
+    def producer(arguments):
+        producer_calls.append(arguments)
+        assert all(set(row) == {"id", "source_text", "context"} for row in arguments)
+        return [dict(id=row["id"],outcome="abstained",candidate=None) for row in arguments]
+
+    if split_overlap == "unicode_second_alias":
+        with pytest.raises(ValueError, match="heldout and TRAIN share a near-duplicate source group"):
+            _producer_evaluate(options, producer)
+        assert policy_calls == producer_calls == []
+    else:
+        artifact = _producer_evaluate(options, producer)
+        assert len(producer_calls) == 1
+        assert _producer_payload(artifact)["configuration"]["profile"] == (
+            "reviewed-source-span-producer-heldout-aggregate-TRAIN/v4"
+        )
+        assert artifact.to_dict()["metrics"]["complete_norm_payload"]["denominator"] == 3

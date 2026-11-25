@@ -626,6 +626,10 @@ def _prepare_reviewed_source_span_consumer_binding(rows, *, expected_rows_sha256
     _require(type(exposure) is list and len(exposure) == len(rows_copy),
              "complete ordered exposure population required")
     manifest, examples = _manifest(manifest_copy, guards[1])
+    split_fingerprint = None
+    if "campaign_split_profile" in manifest.metadata or "unicode_data_version" in manifest.metadata:
+        split_fingerprint = getattr(splits, "legal_ir_split_source_fingerprint", None)
+        _require(callable(split_fingerprint), "reviewed split fingerprint profile is unavailable")
     global_blockers = []
     if report["semantic_use_eligible"] is not True or report["blockers"]:
         global_blockers.append({"reason": "semantic_admission_not_eligible", "details": report["blockers"]})
@@ -666,7 +670,16 @@ def _prepare_reviewed_source_span_consumer_binding(rows, *, expected_rows_sha256
                  "explicit target_exposure required")
         example = examples.get(row["id"])
         if example is not None:
-            _require(example.content_hash == splits._content_hash(row["source_text"]),
+            if split_fingerprint is None:
+                content_hash = splits._content_hash(row["source_text"])
+            else:
+                try:
+                    content_hash, fingerprint = split_fingerprint(row["source_text"], metadata=manifest.metadata)
+                except ValueError as error:
+                    raise SourceSpanConsumerBindingError("invalid reviewed split fingerprint profile: " + str(error)) from error
+                _require(example.token_fingerprint == fingerprint,
+                         "reviewed source fingerprint differs from split manifest example")
+            _require(example.content_hash == content_hash,
                      "reviewed source content differs from split manifest example")
         blockers = []
         required_exposure = REVIEWED_HELDOUT_EXPOSURE if heldout else _REQUIRED_EXPOSURE[operation]

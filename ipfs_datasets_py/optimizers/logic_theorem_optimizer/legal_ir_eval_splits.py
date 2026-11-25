@@ -12,9 +12,10 @@ import hashlib
 import json
 import math
 import re
+import unicodedata
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date, datetime
 from typing import Any, Final
 
@@ -42,6 +43,8 @@ RARE_OPERATOR_SPLIT: Final = "rare_operator"
 EXCEPTION_SPLIT: Final = "exception"
 CROSS_REFERENCE_SPLIT: Final = "cross_reference"
 IR_SPLIT_MANIFEST_SCHEMA: Final = "IRSplitManifest@1"
+DEDUPLICATED_CAMPAIGN_SPLIT_PROFILE: Final = "dependency-grouped-campaign-split/v1"
+UNICODE_CAMPAIGN_SPLIT_PROFILE: Final = "unicode-campaign-split/v1"
 
 LEGAL_IR_EVAL_SPLITS: Final = (
     TRAIN_SPLIT,
@@ -235,8 +238,35 @@ def _tokens(value: str) -> frozenset[str]:
     return frozenset(re.findall(r"[a-z0-9]+", _normalized_text(value)))
 
 
+def _unicode_trigrams(text: str) -> tuple[str, ...]:
+    """Return case-folded Unicode trigrams for overlap detection only."""
+    normalized = unicodedata.normalize("NFC", unicodedata.normalize("NFC", text).casefold())
+    words = "".join(char if unicodedata.category(char)[0] in "LMN" else " " for char in normalized)
+    # Manifest readers trim whitespace from each stored feature.
+    content = "|".join(words.split())
+    if len(content) < 3:
+        return (content,) if content else ()
+    return tuple(sorted({content[index:index + 3] for index in range(len(content) - 2)}))
+
+
 def _content_hash(text: str) -> str:
     return hashlib.sha256(_normalized_text(text).encode("utf-8")).hexdigest()
+
+
+def legal_ir_split_source_fingerprint(
+    text: str, *, metadata: Mapping[str, Any],
+) -> tuple[str, tuple[str, ...]]:
+    """Replay the content hash and fingerprint from an authenticated split profile."""
+    profile = metadata.get("campaign_split_profile")
+    if profile == UNICODE_CAMPAIGN_SPLIT_PROFILE:
+        if metadata.get("unicode_data_version") != unicodedata.unidata_version:
+            raise ValueError("Unicode campaign split data version differs from the runtime")
+        fingerprint = _unicode_trigrams(text)
+    elif profile in (None, DEDUPLICATED_CAMPAIGN_SPLIT_PROFILE) and "unicode_data_version" not in metadata:
+        fingerprint = tuple(sorted(_tokens(text)))
+    else:
+        raise ValueError(f"unknown LegalIR campaign split profile: {profile!r}")
+    return _content_hash(text), fingerprint
 
 
 def _citation_cluster(value: str) -> str:
@@ -741,6 +771,12 @@ def build_legal_ir_eval_splits(
 
     cfg = config or LegalIREvalSplitConfig()
     examples = [LegalIRSplitExample.from_sample(sample) for sample in samples]
+    return _build_eval_splits(examples, cfg)
+
+
+def _build_eval_splits(
+    examples: list[LegalIRSplitExample], cfg: LegalIREvalSplitConfig,
+) -> LegalIRSplitManifest:
     examples.sort(key=lambda item: item.sample_id)
     if not examples:
         return LegalIRSplitManifest(
@@ -1092,7 +1128,8 @@ def authorize_legal_ir_split_use(
 
     An empty item sequence validates only the manifest. A supplied item must
     resolve at least one member through an explicit ID, citation or source span;
-    its complete resolved membership must satisfy the selected operation.
+    every resolved member must have a manifest example and an assignment allowed
+    by the selected operation.
     """
     resolved = (
         manifest
@@ -1132,9 +1169,7 @@ def authorize_legal_ir_split_use(
             continue
         for sid in dict.fromkeys(sample_ids):
             split = resolved.assignments.get(sid)
-            if split is None:
-                disallowed.append({"reason": "sample_not_in_split_manifest", "sample_id": sid})
-            elif split not in allowed:
+            if split is not None and split not in allowed:
                 disallowed.append(
                     {
                         "allowed_splits": sorted(allowed),
@@ -1144,6 +1179,8 @@ def authorize_legal_ir_split_use(
                         "known_example": sid in by_id,
                     }
                 )
+            elif split is None or sid not in by_id:
+                disallowed.append({"reason": "sample_not_in_split_manifest", "sample_id": sid})
     if disallowed:
         raise LegalIRSplitPolicyError(
             f"LegalIR split policy blocks {normalized_operation}",
@@ -1272,13 +1309,62 @@ def _hidden_test_commitment(assignments: Mapping[str, str]) -> str:
 def build_ir_campaign_splits(
     samples: Sequence[Any],
     config: LegalIREvalSplitConfig | None = None,
+    *,
+    split_profile: str | None = None,
 ) -> LegalIRSplitManifest:
-    """Build IRSplitManifest@1 from lineage-grouped samples.
+    """Build IRSplitManifest@1 from owner-selected samples.
 
-    Principal assignment is by lineage group, never by independent row.
+    The explicit profiles apply content-aware grouping even when every sample
+    has a lineage ID. The Unicode profile uses character trigrams instead of
+    ASCII words. Supply actual text and reviewed lineage and sibling keys.
     """
 
     cfg = config or LegalIREvalSplitConfig()
+    profile_metadata = {} if split_profile is None else {"campaign_split_profile": split_profile}
+    if split_profile == UNICODE_CAMPAIGN_SPLIT_PROFILE:
+        profile_metadata["unicode_data_version"] = unicodedata.unidata_version
+    if split_profile is not None:
+        if split_profile not in (DEDUPLICATED_CAMPAIGN_SPLIT_PROFILE, UNICODE_CAMPAIGN_SPLIT_PROFILE):
+            raise ValueError(f"unknown LegalIR campaign split profile: {split_profile!r}")
+        examples = []
+        for sample in samples:
+            text = _get(sample, "normalized_text", "text", "source_text", default=None)
+            if type(text) is not str or not text.strip():
+                raise ValueError("dependency-grouped campaign splits require sample text")
+            example = LegalIRSplitExample.from_sample(sample)
+            if split_profile == UNICODE_CAMPAIGN_SPLIT_PROFILE:
+                content_hash, fingerprint = legal_ir_split_source_fingerprint(text, metadata=profile_metadata)
+                example = replace(example, content_hash=content_hash, token_fingerprint=fingerprint)
+            examples.append(example)
+        manifest = _build_eval_splits(examples, cfg)
+    else:
+        manifest = _build_lineage_campaign_splits(samples, cfg)
+    report = _holdout_report(manifest.assignments)
+    metadata = dict(manifest.metadata)
+    metadata.update(
+        {
+            "hidden_test_commitment": _hidden_test_commitment(manifest.assignments),
+            "holdouts": report,
+            "ir_split_schema": IR_SPLIT_MANIFEST_SCHEMA,
+            "principal_split": "lineage-group",
+        }
+    )
+    metadata.update(profile_metadata)
+    return LegalIRSplitManifest(
+        examples=manifest.examples,
+        assignments=manifest.assignments,
+        config_digest=manifest.config_digest,
+        protected_splits=manifest.protected_splits,
+        schema_version=manifest.schema_version,
+        partition_names=manifest.partition_names,
+        metadata=metadata,
+        assignment_conflicts=manifest.assignment_conflicts,
+    )
+
+
+def _build_lineage_campaign_splits(
+    samples: Sequence[Any], cfg: LegalIREvalSplitConfig,
+) -> LegalIRSplitManifest:
     examples = [LegalIRSplitExample.from_sample(sample) for sample in samples]
     examples.sort(key=lambda item: item.sample_id)
     if examples and all(item.lineage_group_id for item in examples):
@@ -1296,35 +1382,14 @@ def build_ir_campaign_splits(
             split = _group_split(group, group_id=group_id, config=cfg)
             for item in group:
                 assignments[item.sample_id] = split
-        manifest = LegalIRSplitManifest(
+        return LegalIRSplitManifest(
             examples=tuple(examples),
             assignments=assignments,
             config_digest=cfg.digest,
             protected_splits=cfg.protected_splits,
             metadata={"seed": cfg.seed},
         )
-    else:
-        manifest = build_legal_ir_eval_splits(samples, cfg)
-    report = _holdout_report(manifest.assignments)
-    metadata = dict(manifest.metadata)
-    metadata.update(
-        {
-            "hidden_test_commitment": _hidden_test_commitment(manifest.assignments),
-            "holdouts": report,
-            "ir_split_schema": IR_SPLIT_MANIFEST_SCHEMA,
-            "principal_split": "lineage-group",
-        }
-    )
-    return LegalIRSplitManifest(
-        examples=manifest.examples,
-        assignments=manifest.assignments,
-        config_digest=manifest.config_digest,
-        protected_splits=manifest.protected_splits,
-        schema_version=manifest.schema_version,
-        partition_names=manifest.partition_names,
-        metadata=metadata,
-        assignment_conflicts=manifest.assignment_conflicts,
-    )
+    return build_legal_ir_eval_splits(samples, cfg)
 
 
 def campaign_samples_from_corpus_root(corpus_root: Mapping[str, Any]) -> list[dict[str, Any]]:
@@ -1386,13 +1451,14 @@ def seal_ir_campaign_splits(
     output_dir: str | Path,
     *,
     config: LegalIREvalSplitConfig | None = None,
+    split_profile: str | None = None,
 ) -> dict[str, Any]:
     """Write an immutable IRSplitManifest@1 plus leakage and holdout receipts."""
 
     from pathlib import Path as PathType
 
     cfg = config or LegalIREvalSplitConfig(seed="pgir-012-jdao-pinset-1")
-    manifest = build_ir_campaign_splits(samples, cfg)
+    manifest = build_ir_campaign_splits(samples, cfg, split_profile=split_profile)
     result = manifest.guard_result()
     if not result.passed:
         raise LegalIRSplitLeakageError("campaign split leaked across a protected boundary", result)
@@ -1422,6 +1488,9 @@ def seal_ir_campaign_splits(
         "schema_version": manifest.schema_version,
         "split_manifest_digest": manifest.digest,
     }
+    profile_metadata = {key: manifest.metadata[key] for key in ("campaign_split_profile", "unicode_data_version")
+                        if key in manifest.metadata}
+    compact.update(profile_metadata)
     raw = json.dumps(compact, allow_nan=False, ensure_ascii=True, separators=(",", ":"), sort_keys=True).encode("utf-8") + b"\n"
     (output / "ir_split_manifest.json").write_bytes(raw)
     leakage = json.dumps(result.to_dict(), allow_nan=False, ensure_ascii=True, separators=(",", ":"), sort_keys=True).encode("utf-8") + b"\n"
@@ -1447,6 +1516,7 @@ def seal_ir_campaign_splits(
         "split_manifest_digest": manifest.digest,
         "split_manifest_sha256": hashlib.sha256(raw).hexdigest(),
     }
+    root.update(profile_metadata)
     (output / "split_root.json").write_bytes(
         json.dumps(root, allow_nan=False, ensure_ascii=True, separators=(",", ":"), sort_keys=True).encode("utf-8") + b"\n"
     )
@@ -1473,6 +1543,8 @@ __all__ = [
     "COMPILER_SPLIT",
     "CROSS_REFERENCE_SPLIT",
     "DECLARED_HOLDOUTS",
+    "DEDUPLICATED_CAMPAIGN_SPLIT_PROFILE",
+    "UNICODE_CAMPAIGN_SPLIT_PROFILE",
     "DOMAIN_SPLIT",
     "EXCEPTION_SPLIT",
     "EXTERNAL_TEST_SPLIT",
@@ -1510,6 +1582,7 @@ __all__ = [
     "build_ir_campaign_splits",
     "build_legal_ir_eval_splits",
     "campaign_samples_from_corpus_root",
+    "legal_ir_split_source_fingerprint",
     "load_and_seal_corpus_splits",
     "seal_ir_campaign_splits",
     "require_codex_todo_projection_split",

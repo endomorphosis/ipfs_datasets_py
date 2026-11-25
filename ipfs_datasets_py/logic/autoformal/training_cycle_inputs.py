@@ -269,6 +269,7 @@ def _reviewed_lineage(value):
 
 def _reviewed_history(value, current_manifest, rows, config, parent_history, split_owner, *, withdrawal=False):
     import hashlib
+    from dataclasses import replace
 
     _reviewed_closed(value, {"schema", "scope_id", "scope_kind", "split_manifests", "records", "parent_history_artifact"},
                      "complete declared guard history")
@@ -299,6 +300,7 @@ def _reviewed_history(value, current_manifest, rows, config, parent_history, spl
         manifests.append({"manifest": current_manifest, "sha256": current_sha})
     _reviewed_need(len(manifests) <= MAX_REVIEWED_HISTORY, "unsupported_historical_guard_capacity")
     examples, assignments, assignment_conflicts, manifest_hashes = {}, {}, {}, set()
+    unicode_by_id, fingerprint_spaces = {}, {}
     for entry in manifests:
         _reviewed_closed(entry, {"manifest", "sha256"}, "pinned historical split manifest")
         data = _reviewed_copy(entry["manifest"], entry["sha256"])
@@ -310,6 +312,13 @@ def _reviewed_history(value, current_manifest, rows, config, parent_history, spl
                        and resolved.partition_names == split_owner.LEGAL_IR_EVAL_SPLITS
                        and set(resolved.assignments) == {item.sample_id for item in resolved.examples},
                        "frozen split policy, metadata or population differs")
+        metadata = {key: resolved.metadata[key] for key in ("campaign_split_profile", "unicode_data_version")
+                    if key in resolved.metadata}
+        if metadata:
+            split_owner.legal_ir_split_source_fingerprint("", metadata=metadata)
+        unicode_profile = bool(metadata and metadata.get("campaign_split_profile")
+                               == split_owner.UNICODE_CAMPAIGN_SPLIT_PROFILE)
+        fingerprint_spaces.setdefault(unicode_profile, metadata)
         for key, conflicts in resolved.assignment_conflicts.items():
             merged = assignment_conflicts.setdefault(key, [])
             for split in conflicts:
@@ -319,11 +328,15 @@ def _reviewed_history(value, current_manifest, rows, config, parent_history, spl
             key, assignment = example.sample_id, resolved.assignments[example.sample_id]
             _reviewed_need(key not in examples or (examples[key].to_dict() == example.to_dict()
                            and assignments[key] == assignment), "historical example or assignment changed")
+            _reviewed_need(unicode_by_id.get(key, unicode_profile) == unicode_profile,
+                           "historical source fingerprint profile changed")
             examples[key], assignments[key] = example, assignment
+            unicode_by_id[key] = unicode_profile
     _reviewed_need(len(examples) <= MAX_REVIEWED_HISTORY
-                   and len(examples) * (len(examples) - 1) // 2 <= 131072,
+                   and len(fingerprint_spaces) * len(examples) * (len(examples) - 1) // 2 <= 131072,
                    "unsupported_historical_guard_capacity")
     records, source_bytes = {}, 0
+    recomputed = {profile: {} for profile in fingerprint_spaces}
     for record in value["records"]:
         _reviewed_closed(record, {"id", "source_text", "source_sha256", "split_example", "assignment"},
                          "historical source replay record")
@@ -336,12 +349,21 @@ def _reviewed_history(value, current_manifest, rows, config, parent_history, spl
         _reviewed_need(source_bytes <= MAX_REVIEWED_HISTORY_BYTES, "unsupported_historical_guard_capacity")
         _reviewed_need(hashlib.sha256(raw).hexdigest() == record["source_sha256"],
                        "historical source bytes differ")
-        actual = split_owner.LegalIRSplitExample.from_sample({"id": key, "text": record["source_text"]})
         frozen = examples[key]
+        text = record["source_text"]
+        for profile, metadata in fingerprint_spaces.items():
+            if metadata:
+                content_hash, fingerprint = split_owner.legal_ir_split_source_fingerprint(text, metadata=metadata)
+            else:
+                actual = split_owner.LegalIRSplitExample.from_sample({"id": key, "text": text})
+                content_hash, fingerprint = actual.content_hash, actual.token_fingerprint
+            if profile == unicode_by_id[key]:
+                _reviewed_need((frozen.content_hash, frozen.token_fingerprint) == (content_hash, fingerprint),
+                               "historical source fingerprint or frozen grouping differs")
+            recomputed[profile][key] = (frozen if frozen.token_fingerprint == fingerprint
+                                       else replace(frozen, token_fingerprint=fingerprint))
         _reviewed_need(record["split_example"] == frozen.to_dict()
-                       and record["assignment"] == assignments[key]
-                       and frozen.content_hash == actual.content_hash
-                       and frozen.token_fingerprint == actual.token_fingerprint,
+                       and record["assignment"] == assignments[key],
                        "historical source fingerprint or frozen grouping differs")
         records[key] = record
     _reviewed_need(set(records) == set(examples), "unsupported_historical_source_replay")
@@ -351,21 +373,25 @@ def _reviewed_history(value, current_manifest, rows, config, parent_history, spl
     for row in rows:
         _reviewed_need(row["id"] in records and records[row["id"]]["source_text"] == row["source_text"],
                        "successor source differs from full historical guard")
-    clusters = split_owner._near_duplicate_clusters(list(examples.values()), cfg.near_duplicate_jaccard_threshold)
     frozen_union = split_owner.LegalIRSplitManifest(
         examples=tuple(examples.values()), assignments=assignments, config_digest=cfg.digest,
         protected_splits=cfg.protected_splits, assignment_conflicts=assignment_conflicts,
         metadata={"guard_only": True, "assignments_recomputed": False, "duplicate_view": "frozen"})
-    recomputed_union = split_owner.LegalIRSplitManifest(
-        examples=tuple(example.with_near_duplicate_key(clusters[key]) for key, example in examples.items()),
-        assignments=assignments, config_digest=cfg.digest, protected_splits=cfg.protected_splits,
-        assignment_conflicts=assignment_conflicts,
-        metadata={"guard_only": True, "assignments_recomputed": False, "duplicate_view": "recomputed"})
+    views = [frozen_union]
+    for profile, members in recomputed.items():
+        # Every row participates in each selected feature space before comparison.
+        clusters = split_owner._near_duplicate_clusters([members[key] for key in examples],
+                                                        cfg.near_duplicate_jaccard_threshold)
+        views.append(split_owner.LegalIRSplitManifest(
+            examples=tuple(members[key].with_near_duplicate_key(clusters[key]) for key in examples),
+            assignments=assignments, config_digest=cfg.digest, protected_splits=cfg.protected_splits,
+            assignment_conflicts=assignment_conflicts,
+            metadata={"guard_only": True, "assignments_recomputed": False,
+                      "duplicate_view": "recomputed_unicode" if profile else "recomputed"}))
     # Recomputed token relations add a check; they cannot replace committed
     # duplicate groups or assignment conflicts. Keep only actual violations
-    # returned by the two canonical guards, in the canonical result type.
-    results = tuple(split_owner.validate_legal_ir_eval_splits(view)
-                    for view in (frozen_union, recomputed_union))
+    # returned by the canonical guards, in the canonical result type.
+    results = tuple(split_owner.validate_legal_ir_eval_splits(view) for view in views)
     violations = {_reviewed_wire(item.to_dict()): item
                   for guard in results for item in guard.violations}
     result = split_owner.LegalIRSplitGuardResult(
@@ -375,7 +401,7 @@ def _reviewed_history(value, current_manifest, rows, config, parent_history, spl
     if not withdrawal:
         if not result.passed:
             raise split_owner.LegalIRSplitLeakageError("LegalIR split leakage blocks reviewed-cycle positive use", result)
-        for view in (frozen_union, recomputed_union):
+        for view in views:
             split_owner.authorize_legal_ir_split_use(view, operation="training",
                                                    items=[{"sample_id": row["id"]} for row in rows])
     observation = {"schema": "reviewed-cycle-history-guard-observation/v1",

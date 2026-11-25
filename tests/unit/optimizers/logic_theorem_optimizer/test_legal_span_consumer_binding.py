@@ -1228,3 +1228,48 @@ def test_reviewed_v3_signed_training_permission_cannot_be_relabelled_as_hparam_s
         owner.consume_reviewed_source_span_binding_v3(binding, rows,
             **reviewed_validation_inputs(options), consumer=calls.append)
     assert calls == []
+
+
+def test_reviewed_heldout_replays_explicit_unicode_split_fingerprints():
+    from dataclasses import replace
+
+    _, _, _, rows, options = reviewed_public_heldout_case()
+    split_profile = splits.UNICODE_CAMPAIGN_SPLIT_PROFILE
+    config = splits.LegalIREvalSplitConfig(train_ratio=0.0, validation_ratio=0.0,
+        canary_ratio=0.0, holdout_ratio=1.0, statute_family_ratio=0.0,
+        jurisdiction_ratio=0.0, temporal_ratio=0.0)
+    manifest = splits.build_ir_campaign_splits(
+        [{"sample_id": row["id"], "text": row["source_text"]} for row in rows], config,
+        split_profile=split_profile)
+    assert manifest.guard_result().passed
+    assert set(manifest.assignments.values()) == {splits.HOLDOUT_SPLIT}
+
+    def offered_options(offered):
+        wire = offered.to_dict()
+        return {**options, "split_manifest": wire, "expected_split_manifest_sha256": digest(wire)}
+
+    correct = offered_options(manifest)
+    prepared = owner.prepare_reviewed_source_span_consumer_binding_v2(rows, **correct)
+    assert prepared.receipt()["status"] == "ready"
+    assert prepared.receipt()["training_mask"] == prepared.receipt()["evaluation_gold_mask"] == 0
+    calls = []
+    reviewed_consume(prepared, rows, correct, lambda received: calls.append(deepcopy(received)))
+    assert calls == [rows]
+
+    original, *rest = manifest.examples
+    wrong_fingerprint = ("zzq",)
+    assert original.token_fingerprint != wrong_fingerprint
+    changed = replace(manifest, examples=(replace(original, token_fingerprint=wrong_fingerprint), *rest))
+    assert changed.examples[0].content_hash == original.content_hash
+    assert changed.assignments == manifest.assignments
+    assert changed.digest != manifest.digest
+    with pytest.raises(owner.SourceSpanConsumerBindingError, match="reviewed source fingerprint differs"):
+        owner.prepare_reviewed_source_span_consumer_binding_v2(rows, **offered_options(changed))
+
+    for metadata in ({"campaign_split_profile": "unknown/test-fixture"},
+                     {**manifest.metadata, "unicode_data_version": "0.0.0"},
+                     {"unicode_data_version": manifest.metadata["unicode_data_version"]}):
+        candidate = replace(manifest, metadata=metadata)
+        with pytest.raises(owner.SourceSpanConsumerBindingError, match="invalid reviewed split fingerprint profile"):
+            owner.prepare_reviewed_source_span_consumer_binding_v2(rows, **offered_options(candidate))
+    assert calls == [rows]
