@@ -3015,3 +3015,197 @@ def test_reviewed_whole_norm_incremental_interned_binding_refuses_resealed_wire_
             expected_previous_cache_sha256=sha(raw), previous_artifacts=dict(selected["artifacts"]))
     assert len(runtime["compiler"].calls) == before
     assert not (runtime["directory"] / output).exists()
+
+
+
+@pytest.mark.parametrize("family", ["fol"])
+def test_parent_incremental_installed_lean_failed_donor_evicts_descendants(
+        installed_incremental_parent_lake, tmp_path, monkeypatch, family):
+    """An actual compiler diagnostic evicts the cold dependents of an authored donor."""
+    from dataclasses import asdict, replace
+
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_incremental as incremental
+
+    support, executable, binary_pins = installed_incremental_parent_lake
+    fixture = support.shared_fixture
+    originals = tmp_path / "originals"
+    independent_originals = tmp_path / "independent-originals"
+    originals.mkdir()
+    independent_originals.mkdir()
+    original = fixture.parent_shared_family_examples(originals, family)["cases"][0]
+    physical = {path: path.read_bytes() for path in originals.rglob("*") if path.is_file()}
+    assert physical
+    changed = fixture.parent_shared_family_examples(
+        originals, family, donor_body_op="any")["cases"][0]
+    assert physical == {path: path.read_bytes() for path in originals.rglob("*") if path.is_file()}
+    independent = fixture.parent_shared_family_examples(independent_originals, family)["cases"][0]
+    physical.update({path: path.read_bytes() for path in independent_originals.rglob("*")
+                     if path.is_file()})
+    for case in (original, changed, independent):
+        assert case["assessment"]["evidence_assessment_status"] == "authenticated"
+        assert case["review_inputs"]["registry"]["mode"] == "external_pinned_trust"
+
+    original_inputs = fixture.parent_shared_arguments([original, independent])
+    changed_inputs = fixture.parent_shared_arguments([changed, independent])
+    preparation = shared.prepare_parent_shared_definition_use_corpus_v1(**original_inputs)
+    changed_preparation = shared.prepare_parent_shared_definition_use_corpus_v1(**changed_inputs)
+    prior_manifest, current_manifest = preparation.to_dict(), changed_preparation.to_dict()
+    old_donor = fixture.parent_shared_definition(prior_manifest, 0, "donor")["module"]
+    new_donor = fixture.parent_shared_definition(current_manifest, 0, "donor")["module"]
+    assert old_donor != new_donor
+    independent_joint = prior_manifest["components"][1]["joint_module"]
+    assert current_manifest["components"][1]["joint_module"] == independent_joint
+    independent_modules = {independent_joint, *prior_manifest["module_imports"][independent_joint]}
+
+    def affected(manifest, donor):
+        modules = {donor}
+        while frontier := {module for module, imports in manifest["module_imports"].items()
+                           if module not in modules and modules.intersection(imports)}:
+            modules.update(frontier)
+        return modules
+
+    prior_affected = affected(prior_manifest, old_donor)
+    current_affected = affected(current_manifest, new_donor)
+    stable_descendants = (prior_affected & current_affected) - {old_donor, new_donor}
+    stable_root = "LegalCorpusParent"
+    assert stable_root in stable_descendants
+    assert not (independent_modules & (prior_affected | current_affected))
+
+    parent_native = incremental._parent_native()
+
+    def build(prepared, inputs, output, **previous):
+        return incremental.build_incremental_parent_shared_corpus_v1(
+            prepared, **inputs,
+            expected_preparation_sha256=parent_native.parent_shared_preparation_sha256(prepared),
+            lake_executable=str(executable), output_directory=output,
+            timeout_seconds=60, operation_timeout_seconds=3600, **previous)
+
+    cold_path = tmp_path / "failed-donor-cold"
+    cold = build(preparation, original_inputs, cold_path), cold_path
+    cold_artifacts = artifacts(cold)
+    cold_cache_raw = (cold_path / "cache.json").read_bytes()
+    assert cold[0]["build_passed"] is cold[0]["lean_compilation_verified"] is True
+    assert cache(cold)["qualified"] is True
+    assert set(cold_artifacts) == set(prior_manifest["expected_modules"])
+    assert stable_descendants <= cold_artifacts.keys()
+
+    lean = str(executable.parent / "lean")
+    donor_source = new_donor.replace(".", "/") + ".lean"
+    donor_output = "compiled/" + donor_source.removesuffix(".lean") + ".olean"
+    donor_command = (lean, "-o", donor_output, donor_source)
+    frozen_donor_source = dict(changed_preparation.files)[donor_source].encode()
+    marker = "lir15IntentionalUnknownForFailedDonor"
+    diagnostic_tail = ("\n#check " + marker + "\n").encode()
+    diagnostic_line = frozen_donor_source.count(b"\n") + 2
+    diagnostic_pattern = re.compile(
+        rf"^(?:[^:\r\n]+/)?{re.escape(donor_source)}:{diagnostic_line}:[0-9]+:"
+        r"[ \t]*error(?:\([^)\r\n]+\))?:[ \t]*(?:\r?\n[ \t]*)?"
+        rf"unknown (?:identifier|constant)[ \t]+[`'\u2018\u201c]?{re.escape(marker)}\b",
+        re.MULTILINE | re.IGNORECASE,
+    )
+    launched_modules, fault_results = [], []
+    original_run = native.process.BoundedToolRunner.run
+
+    def observe_and_fault_one_input(runner, request, **kwargs):
+        command = tuple(request.argv)
+        if command[:2] == (lean, "-o"):
+            launched_modules.append(command[3])
+        if command != donor_command:
+            return original_run(runner, request, **kwargs)
+
+        # Change only the isolated compiler input, after genuine preparation replay.
+        original_input = request.input_files[donor_source]
+        assert (original_input.encode() if isinstance(original_input, str) else original_input) == frozen_donor_source
+        assert marker.encode() not in frozen_donor_source and request.owned_process_observation is True
+        faulted_raw = frozen_donor_source + diagnostic_tail
+        faulted_request = replace(request, input_files=dict(request.input_files) | {donor_source: faulted_raw})
+        faulted_name = "intentional-lean-failure-input.lean.DATA"
+        (tmp_path / faulted_name).write_bytes(faulted_raw)
+        (tmp_path / "intentional-lean-failure-request.json").write_bytes(wire({
+            "kind": "deliberate_test_only_native_input_fault",
+            "owner_preparation_sha256": parent_native.parent_shared_preparation_sha256(changed_preparation),
+            "module": new_donor,
+            "source_path": donor_source,
+            "original_source_sha256": sha(frozen_donor_source),
+            "diagnostic_line_1_based": diagnostic_line,
+            "faulted_input_file": faulted_name,
+            "faulted_source_sha256": sha(faulted_raw),
+            "source_bytes_match_frozen_preparation": False,
+            "argv": faulted_request.argv,
+            "runtime": faulted_request.runtime.value,
+            "owned_process_observation": faulted_request.owned_process_observation,
+            "requested_outputs": faulted_request.output_paths,
+            "environment": dict(faulted_request.environment),
+            "limits": asdict(faulted_request.limits),
+            "inputs": {path: sha(body.encode() if isinstance(body, str) else body)
+                       for path, body in faulted_request.input_files.items()},
+        }))
+        result = original_run(runner, faulted_request, **kwargs)
+        fault_results.append((faulted_raw, result))
+        return result
+
+    failed_path = tmp_path / "failed-donor-affected"
+    with monkeypatch.context() as patch:
+        patch.setattr(native.process.BoundedToolRunner, "run", observe_and_fault_one_input)
+        receipt = build(changed_preparation, changed_inputs, failed_path,
+                        previous_cache_raw=cold_cache_raw,
+                        expected_previous_cache_sha256=sha(cold_cache_raw),
+                        previous_artifacts=cold_artifacts)
+
+    assert launched_modules == [donor_source] and len(fault_results) == 1
+    faulted_raw, native_failure = fault_results[0]
+    assert native_failure.runtime is native.process.ToolRuntime.NATIVE
+    assert native_failure.command == donor_command
+    assert native_failure.pid > 0 and native_failure.returncode > 0
+    assert native_failure.termination_reason == "nonzero_exit"
+    assert any(diagnostic_pattern.search(stream) for stream in (native_failure.stdout, native_failure.stderr))
+    assert native_failure.output_files[donor_source] == faulted_raw
+    assert native_failure.workspace_cleaned
+    lifecycle = native_failure.native_lifecycle
+    assert isinstance(lifecycle, native.process.NativeToolLifecycleObservation)
+    assert lifecycle.cleanup_confirmed
+    assert parent_native._observed_process_scope(lifecycle, native_failure.pid, native.process)
+    assert not any((native_failure.timed_out, native_failure.cancelled, native_failure.unavailable,
+                    native_failure.resource_exhausted, native_failure.output_truncated,
+                    native_failure.workspace_limit_exceeded))
+
+    failed = receipt, failed_path
+    failed_cache = cache(failed)
+    failed_artifacts = artifacts(failed)
+    assert receipt["previous_cache_cid"] == cache(cold)["record_cid"]
+    assert receipt["framework_successful"] is receipt["build_passed"] is False
+    assert receipt["lean_compilation_verified"] is failed_cache["qualified"] is False
+    assert receipt["post_run_validation_error"] is None
+    assert receipt["compiled_modules"] == [new_donor] and receipt["module_compile_invocations"] == 1
+    assert receipt["fresh_theorems"] == []
+    assert not ((prior_affected | current_affected) & failed_artifacts.keys())
+    assert independent_modules <= set(receipt["reused_modules"])
+    assert {module: failed_artifacts[module] for module in independent_modules} == {
+        module: cold_artifacts[module] for module in independent_modules}
+    failed_facts = {fact["module"]: fact for fact in failed_cache["module_facts"]}
+    assert all(failed_facts[module]["output"] is None for module in current_affected)
+    assert all(receipt[flag] is failed_cache[flag] is False for flag in incremental._parent_flags())
+    assert failed_cache["execution_contract"]["binary_sha256"] == binary_pins
+    assert failed_cache["execution_contract"] == cache(cold)["execution_contract"]
+    observation_raw = (failed_path / "module-executions.jsonl").read_bytes()
+    observations = [json.loads(line) for line in observation_raw.splitlines()]
+    assert sha(observation_raw) == receipt["execution_observations"]["sha256"]
+    assert len(observations) == 1
+    observation = observations[0]
+    assert (observation["module"], observation["pid"], observation["returncode"]) == (
+        new_donor, native_failure.pid, native_failure.returncode)
+    assert observation["runtime"] == native_failure.runtime.value
+    assert observation["command"] == list(native_failure.command)
+    assert observation["stdout"] == native_failure.stdout and observation["stderr"] == native_failure.stderr
+    assert observation["termination_reason"] == native_failure.termination_reason
+    assert observation["workspace_cleaned"] is native_failure.workspace_cleaned
+    assert observation["native_lifecycle"] == lifecycle.to_dict()
+    assert observation["output_files"][donor_source] == {
+        "bytes": len(faulted_raw), "sha256": sha(faulted_raw),
+    }
+    published_source = (failed_path / "project" / donor_source).read_bytes()
+    assert published_source == frozen_donor_source
+    assert published_source != faulted_raw
+    assert (cold_path / "cache.json").read_bytes() == cold_cache_raw
+    assert artifacts(cold) == cold_artifacts
+    assert all(path.read_bytes() == body for path, body in physical.items())
