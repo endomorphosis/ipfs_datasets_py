@@ -28343,6 +28343,414 @@
       "root": "artifact_workspace",
       "scope": "Published opt-in controlled-prose typed effective-date roundtrip software with an exact44-case ordinary cohort. Private SAME20 and retained24 remain separate. No legal/proof/model authority or task-status change.",
       "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase3_calendar_effective_start_ordinary69_direct_Lean_witness_evidence_20261125",
+      "closed_software_facts": {
+        "closed_code_publication": {
+          "Guide526_and_untargeted_code_fences_preserved": {
+            "ipfs_datasets_py/logic/TDFOL/compiler_repairs.py": "b914db06cd23be92ae0a24bcfb35c1b19d3fd1a3",
+            "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json": "ceec6f5ef719ad09bf8471bede8c56d23c557617",
+            "ipfs_datasets_py/logic/autoformal/docs/HANDOFF.md": "13caa6d9a224c0ce5ab49ca0dc664f95d79347c1",
+            "ipfs_datasets_py/logic/autoformal/docs/TRAINING_HISTORY.md": "00ead43061d6d53605b8a8695dbb039ab9bc11e0",
+            "ipfs_datasets_py/logic/autoformal/docs/work_catalog.json": "a7b0b5663bcee6df39396d7e2e2837f1126fd432",
+            "ipfs_datasets_py/logic/autoformal/legal_release_coordinator_v1.py": "2faa76f3b111b3d68c814eb0eb0db7724a7a18f8",
+            "ipfs_datasets_py/logic/formalization/autoencoder/ir_legal_text_roundtrip.py": "3e89176b68d5a16b9c808e744a9e09a462ea0ddb",
+            "ipfs_datasets_py/logic/legal_ir/extended_compiler.py": "3c30f4ffb90199b11293bedc9b8e468ce286cfce",
+            "ipfs_datasets_py/logic/legal_ir/extended_contracts.py": "b4c41063d5c3aa0ce680ec5b448d97e0c1bd9b38",
+            "ipfs_datasets_py/logic/legal_ir/extended_decompiler.py": "bfca7a6f7a03a1f26ff5322dae81b11aa216b17f",
+            "tests/unit/logic/autoformal/test_corpus_release_cli.py": "9dbd1c45ede27e34652cf872fb9aebfc06b996b8",
+            "tests/unit/logic/formalization/autoencoder/test_ir_legal_text_roundtrip.py": "41bf5a658264cd8b5ee11b4f94236bd0aa8bfc20"
+          },
+          "actual_Source3": {
+            "bytes": 8839,
+            "path": "/tmp/Root-Phase3-effective-calendar-Source3-v339-b4dfj2ud/actual-effective-calendar-Source3-source-closed-small-v339.json",
+            "sha256": "fef2ea3a29e83f90138d1b38aa9792019b08a806048ecd8d8ef903fe52c45712"
+          },
+          "exact_three_Source_stage_committed_joins": {
+            "ipfs_datasets_py/logic/autoformal/legal_calendar_lake.py": {
+              "bytes": 11292,
+              "full9": {
+                "st_ctime_ns": "1795637571565853173",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70042573",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795637571260440964",
+                "st_nlink": "1",
+                "st_size": "11292",
+                "st_uid": "1000"
+              },
+              "git_blob": "445df67173a755ed15b60866aedb90e16af8ff0a",
+              "mode": "100644",
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/ipfs_datasets_py/logic/autoformal/legal_calendar_lake.py",
+              "prior_blob": "e53514cab6825d373f0ecdb1a52cc95fc7e43c5d",
+              "sha256": "2d7e37f84562ddfed17de5cdc95d91fe3a1301be32e693961147644f35edd702",
+              "stage0_blob": "445df67173a755ed15b60866aedb90e16af8ff0a"
+            },
+            "ipfs_datasets_py/logic/autoformal/legal_canonical_calendar.py": {
+              "bytes": 29974,
+              "full9": {
+                "st_ctime_ns": "1795637571852856692",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70042575",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795637571263656347",
+                "st_nlink": "1",
+                "st_size": "29974",
+                "st_uid": "1000"
+              },
+              "git_blob": "90c4357511dfb11ce18297c9d0d0e1abae57ac48",
+              "mode": "100644",
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/ipfs_datasets_py/logic/autoformal/legal_canonical_calendar.py",
+              "prior_blob": "9f8f5a740dfff16ea67dd07b8208eed97ce64aaa",
+              "sha256": "b45d0ad9329e90e4b007885e201adf5b2602b2d789127555b35fdbe5b65bc1b5",
+              "stage0_blob": "90c4357511dfb11ce18297c9d0d0e1abae57ac48"
+            },
+            "tests/unit/logic/autoformal/test_legal_canonical_calendar.py": {
+              "bytes": 31449,
+              "full9": {
+                "st_ctime_ns": "1795637572171860603",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70042576",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795637571267859743",
+                "st_nlink": "1",
+                "st_size": "31449",
+                "st_uid": "1000"
+              },
+              "git_blob": "f611b86c860d75c2231131ca28702bb93bcb889a",
+              "mode": "100644",
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/tests/unit/logic/autoformal/test_legal_canonical_calendar.py",
+              "prior_blob": "490b7c31a9edaa7f6259302367e14f07faadd15b",
+              "sha256": "eefdf25291245045690f70570fec7238d76d0bca931ef3eef2b47e32f0b20a73",
+              "stage0_blob": "f611b86c860d75c2231131ca28702bb93bcb889a"
+            }
+          },
+          "genuinely_closed": true,
+          "no_test_CI_Source_Native_model_replay": true,
+          "normal_child_first_order": [
+            "datasets",
+            "hallucinate",
+            "root"
+          ],
+          "receipt": {
+            "bytes": 12709,
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase3-effective-calendar-ordinary69-and-direct-Lean-three-FF-publication-v342.json",
+            "sha256": "192b14db36939a9a91f992b2e6c8df03b8d214985cfba9866560af4556385c2f"
+          },
+          "repositories": {
+            "accelerate": {
+              "HEAD": "88c0d9f82f66aaddbb01344c9f85236e92a5dc88",
+              "clean_worktree_and_index": true,
+              "origin_main": "88c0d9f82f66aaddbb01344c9f85236e92a5dc88",
+              "tree": "416a953630c9ba7ef521fd87bf821f075b052efc"
+            },
+            "datasets": {
+              "HEAD": "86a9a0c49e2021ecc98bdd56b000f0c99238342a",
+              "clean_worktree_and_index": true,
+              "origin_main": "86a9a0c49e2021ecc98bdd56b000f0c99238342a",
+              "tree": "b3c7bc9a88c642bd9119a432f9d3b44834c95b4b"
+            },
+            "hallucinate": {
+              "HEAD": "0f901c879247e419b16854b47224bfb1aa504ff6",
+              "clean_worktree_and_index": true,
+              "origin_main": "0f901c879247e419b16854b47224bfb1aa504ff6",
+              "tree": "7c10ae92770e7679cbd3586a83cc54d2fecc7ed2"
+            },
+            "root": {
+              "HEAD": "2a1640c598b3548145a27ce3c06c4aaa2f5ba23c",
+              "clean_worktree_and_index": true,
+              "origin_main": "2a1640c598b3548145a27ce3c06c4aaa2f5ba23c",
+              "tree": "d63c48a967fcc24448cc721f58e3e588e1a5ea2d"
+            }
+          }
+        },
+        "direct_local_Lean_witnesses": {
+          "Lake_build_selected_or_completed": false,
+          "Lean_version": "Lean (version 4.34.1, aarch64-unknown-linux-gnu, commit 5045d0056413266e57c625dcd7c365b10e377c52, Release)",
+          "Source_resource_parent_home_closed": true,
+          "actual_compiler_commands": 2,
+          "actual_report": {
+            "bytes": 92237,
+            "path": "/tmp/Root-Phase3-calendar-exact-managed-Native-v342-qd6fv43g/actual-output/complete-effective-date-calendar-direct-native-owner-report.json",
+            "sha256": "c594ccd1b0a3eb5f65a5d4755449d8524acf21303b2c93af6549fc4a43db3b4e"
+          },
+          "actual_version_commands": 1,
+          "closed_READ4": {
+            "bytes": 4119,
+            "path": "/tmp/Root-Phase3-calendar-existing-frozen-READ4-v339-eghb_8es/actual-output/actual-two-exact-Source-closed.json",
+            "sha256": "1963c737f0798f6898e7c5f86fc80c0d743b53891e2758fd68722db0ba241fe9"
+          },
+          "compiler_returncodes": [
+            0,
+            1
+          ],
+          "direct_witnesses_added_to_pytest_count": false,
+          "exact_inputs": [
+            {
+              "bytes": 4581,
+              "path": "/tmp/Root-Phase3-calendar-exact-managed-Native-v342-qd6fv43g/actual-output/native-1-input-0.bin",
+              "sha256": "b7abe22862f80ec34531a1b88520fbb90d4631c1b78e7756b65e4f5474aaaa49"
+            },
+            {
+              "bytes": 4751,
+              "path": "/tmp/Root-Phase3-calendar-exact-managed-Native-v342-qd6fv43g/actual-output/native-2-input-0.bin",
+              "sha256": "c73a94d80c558949ce8fb5aea3e091adbaea34b6c50824cfd7ef171ab8605bc1"
+            }
+          ],
+          "full_prepaid_accounting": {
+            "bytes": 1223,
+            "path": "/tmp/Root-Phase3-calendar-exact-managed-Native-v342-qd6fv43g/Source-only-current-managed-calendar-native-prepaid.json",
+            "sha256": "0809de7b4e1c3d28cf79a20c704ccf53f7e6fe695965ad9cf4cb50a1391602b7"
+          },
+          "negative": "A theorem asserting activation at preceding ordinal 730178 is rejected by decide. The compiler diagnostic checks the false arithmetic inequality at the appended claim.",
+          "negative_origin": {
+            "column": 135,
+            "file": "Main.lean",
+            "line": 90,
+            "severity": "error"
+          },
+          "positive": "Identity and nonidentity modal witnesses verify the fixture start at 730179, prior-day inactivity, ordinal zero refusal and the original strict deadline witness interval.",
+          "receipt": {
+            "bytes": 2887,
+            "path": "/tmp/Root-Phase3-calendar-exact-managed-Native-v342-qd6fv43g/actual-Phase3-calendar-ordinary69-and-direct-Lean-two-witnesses-compact-v342.json",
+            "sha256": "c676741a2f3140e3a53a9cc36f370de92abd5c314f289a8202aa3ec44834664a"
+          },
+          "same_frozen_candidate": {
+            "bytes": 10270,
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase3-effective-calendar-exact3-local-freeze-v339.json",
+            "sha256": "7bf4b816e14c3c7ee7d86d13a9b9709616eb9f3874b0e153eba1bfc189b20040"
+          },
+          "scope": "Two isolated source inputs compiled directly by local Lean 4.34.1 under the existing managed runner. Controlled fixture only."
+        },
+        "evidence_ordinal": 527,
+        "implemented_behavior": {
+          "calendar_profile": "canonical-explicit-effective-date/v1",
+          "calendar_schema": "legal-canonical-effective-date/v1",
+          "candidate_builder": "candidate_from_effective_date_prose",
+          "exact_three_code_files": {
+            "ipfs_datasets_py/logic/autoformal/legal_calendar_lake.py": {
+              "bytes": 11292,
+              "full9": {
+                "st_ctime_ns": "1795637571565853173",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70042573",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795637571260440964",
+                "st_nlink": "1",
+                "st_size": "11292",
+                "st_uid": "1000"
+              },
+              "git_blob": "445df67173a755ed15b60866aedb90e16af8ff0a",
+              "mode": "100644",
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/ipfs_datasets_py/logic/autoformal/legal_calendar_lake.py",
+              "prior_blob": "e53514cab6825d373f0ecdb1a52cc95fc7e43c5d",
+              "sha256": "2d7e37f84562ddfed17de5cdc95d91fe3a1301be32e693961147644f35edd702",
+              "stage0_blob": "445df67173a755ed15b60866aedb90e16af8ff0a"
+            },
+            "ipfs_datasets_py/logic/autoformal/legal_canonical_calendar.py": {
+              "bytes": 29974,
+              "full9": {
+                "st_ctime_ns": "1795637571852856692",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70042575",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795637571263656347",
+                "st_nlink": "1",
+                "st_size": "29974",
+                "st_uid": "1000"
+              },
+              "git_blob": "90c4357511dfb11ce18297c9d0d0e1abae57ac48",
+              "mode": "100644",
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/ipfs_datasets_py/logic/autoformal/legal_canonical_calendar.py",
+              "prior_blob": "9f8f5a740dfff16ea67dd07b8208eed97ce64aaa",
+              "sha256": "b45d0ad9329e90e4b007885e201adf5b2602b2d789127555b35fdbe5b65bc1b5",
+              "stage0_blob": "90c4357511dfb11ce18297c9d0d0e1abae57ac48"
+            },
+            "tests/unit/logic/autoformal/test_legal_canonical_calendar.py": {
+              "bytes": 31449,
+              "full9": {
+                "st_ctime_ns": "1795637572171860603",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70042576",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795637571267859743",
+                "st_nlink": "1",
+                "st_size": "31449",
+                "st_uid": "1000"
+              },
+              "git_blob": "f611b86c860d75c2231131ca28702bb93bcb889a",
+              "mode": "100644",
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/tests/unit/logic/autoformal/test_legal_canonical_calendar.py",
+              "prior_blob": "490b7c31a9edaa7f6259302367e14f07faadd15b",
+              "sha256": "eefdf25291245045690f70570fec7238d76d0bca931ef3eef2b47e32f0b20a73",
+              "stage0_blob": "f611b86c860d75c2231131ca28702bb93bcb889a"
+            }
+          },
+          "example": "Norm: \"agency\" must \"retain\" \"record\". Temporal: effective from 2000-02-29; \"before 2000-03-01\".",
+          "interpretation_schema": "legal-canonical-effective-date-interpretation/v1",
+          "layered_producer_pins": "The mixed Lake manifest includes the four typed replay producer pins. Legacy-only preparation retains the existing pin scope.",
+          "placement": "Whole formula requires a valid caller evaluation day. The start implication applies outside the parametric modality. The existing inner deadline still requires 1 ≤ origin and a witness u with origin ≤ u < 730180.",
+          "refusals": "Bounded replay rejects source/typed wire drift; changed date, ordinal, placement or indices; opaque effective-date slots; and unsupported inferred or relative dates in this profile.",
+          "source_wire_schema": "legal-surface-ir-with-effective-dates/v1",
+          "start": "Explicit inclusive Gregorian start under day-one Nat ordinals. For fixture ordinal 730179, eligibility at the evaluation origin t is 1 ≤ t and 730179 ≤ t.",
+          "whole_typed_source_replay_and_mapping": "Exact controlled-source replay binds full source SHA-256, typed wire SHA-256 and canonical-to-source statement ordering. The interpretation and reversible native qualifier ledger keep the start and deadline with their own indices."
+        },
+        "limits": {
+          "Guide527_adoption_or_publication_claimed": false,
+          "Title10_independent_review_real_release_and_model_work_pending": true,
+          "evaluation_gold_mask": 0,
+          "full_eight_phase_goal_complete": false,
+          "hosted_CI_or_full_Lake_build_claimed": false,
+          "model_training_quality_or_convergence_authority": false,
+          "new_runtime_authority": false,
+          "scope": "Controlled software and direct Lean witness evidence only.",
+          "statutory_source_fidelity_legal_applicability_or_court_authority": false,
+          "training_mask": 0
+        },
+        "maintenance": {
+          "all_previous_JSON_values_and_statuses_preserved": true,
+          "both_entire_Markdown_prefixes_preserved": true,
+          "components": 126,
+          "new_evidence_ordinal": 527,
+          "prior_evidence_records": 526,
+          "tasks": 24
+        },
+        "ordinary_qualification": {
+          "Native_or_statutory_qualification_in_ordinary_cohort": false,
+          "Source_resource_parent_closed": true,
+          "actual_COLLECT_RUN_same_order": true,
+          "duplicates": 0,
+          "errors": 0,
+          "failures": 0,
+          "full_report": {
+            "bytes": 1733754,
+            "path": "/tmp/Root-Phase3-calendar-ordinary69-selected-v341-h_fuvec2/actual-output/complete-frozen-local-D-canonical-calendar-software-ordinary69-existing-owner-report.json",
+            "sha256": "5f33bb1d383e4063b449a804ca20b998fa915e7d77544e40fc6891d08d3186c6"
+          },
+          "function_case_vector": [
+            8,
+            11,
+            3,
+            1,
+            12,
+            10,
+            1,
+            1,
+            1,
+            1,
+            8,
+            1,
+            9,
+            1,
+            1
+          ],
+          "functions": 15,
+          "natural_typed_producer_roles": {
+            "ipfs_datasets_py/logic/TDFOL/compiler_repairs.py": "248dd9a3c9be8b21fb75799415aa6a72c6d81d7c559ed7579fa3f4a69660b823",
+            "ipfs_datasets_py/logic/legal_ir/extended_compiler.py": "1df3a74a711143aef03d08048b06b74b3b2f7d99017e49c831f91493b192316f",
+            "ipfs_datasets_py/logic/legal_ir/extended_contracts.py": "9e7f7781b09965cdfefbd7713de66793f559aedd56b76f0734211fbeb0dde4dd",
+            "ipfs_datasets_py/logic/legal_ir/extended_decompiler.py": "f9fa4903ff67cf246ca0df11ead75278329bef5e5185507ac04c87815a1fe357"
+          },
+          "new_effective_date_cases": 22,
+          "observed_dataset_HEAD": "86a9a0c49e2021ecc98bdd56b000f0c99238342a",
+          "observed_dataset_tree": "b3c7bc9a88c642bd9119a432f9d3b44834c95b4b",
+          "physical_IO_accounting_complete": false,
+          "raw_JUnit": {
+            "bytes": 12671,
+            "path": "/tmp/Root-Phase3-calendar-ordinary69-selected-v341-h_fuvec2/actual-output/canonical-calendar-software-ordinary69-run-result0-output1.bin",
+            "sha256": "90c5cd9ba8940cc894676472c9caf05527d8f1f635531f2aab01df998a9a3a41"
+          },
+          "receipt": {
+            "bytes": 2538,
+            "path": "/tmp/Root-Phase3-calendar-ordinary69-selected-v341-h_fuvec2/actual-calendar-ordinary69-qualified-compact-v341.json",
+            "sha256": "d54fe9e16fb25d61625054151afe78a3e7ccdc61b58094bf57821c0060c37e71"
+          },
+          "retained_cases": 47,
+          "skips": 0,
+          "unique_physical_PASS": 69
+        },
+        "retained_preflight_failures": {
+          "pooling": "Preflight refusals and separate private controls carry no ordinary or direct Lean test count.",
+          "v338": {
+            "receipt": {
+              "bytes": 2636,
+              "path": "/tmp/Root-Phase3-effective-calendar-Source3-v338-oexc6swm/actual-output/actual-existing-three-Python-code-CAS-receipt.json",
+              "sha256": "0aa4ce78faad69f3cc84ff5549ce6783f95389d8d543734fdaecefa0ba76f37b"
+            },
+            "scope": "Private hardlink check before Source entry. No canonical replacements. Exact singly-linked copies used for v339 with prior charges retained."
+          },
+          "v340_atime": {
+            "receipt": {
+              "bytes": 191,
+              "path": "/tmp/Root-Phase3-calendar-ordinary69-selected-v340-hwze1dpt/preselection-atime-refusal.json",
+              "sha256": "664aa5434b00d0e1f1123239b6bf65265734714b108c64ea4b6318c341864693"
+            },
+            "scope": "Private epoch comparison included atime and refused before Root selection or Source/SDK launch."
+          },
+          "v340_binder": {
+            "receipt": {
+              "bytes": 708,
+              "path": "/tmp/Root-Phase3-calendar-ordinary69-selected-v340-hwze1dpt/selected-binder-refusal-before-SDK.json",
+              "sha256": "799e910ddad64b2295836ccebe5afd79a3b7a2c67af96bf231b8641cc4bdf6ac"
+            },
+            "scope": "Binder used a nonexistent standalone PYTHONUSERBASE key. Actual owner stores it inside FLAGS. No Source/SDK launch and full precharge retained."
+          }
+        },
+        "schema": "guide527-calendar-effective-start-ordinary69-direct-lean-scoped-facts/v1",
+        "scoped_hosted_CI_observation": {
+          "commit": "86a9a0c49e2021ecc98bdd56b000f0c99238342a",
+          "each_steps": 0,
+          "job_IDs": [
+            139487832116,
+            139488005294
+          ],
+          "native_started_or_passed": false,
+          "read_only_no_rerun_or_billing_action": true,
+          "receipt": {
+            "bytes": 1647,
+            "path": "/tmp/Root-Phase3-calendar-exact-managed-Native-v342-qd6fv43g/actual-v342-hosted-native-Lean-billing-refusal-read-only.json",
+            "sha256": "8adb6045c649207b42680ba332ea1a1e26f16226383d1e77836fe015b2de3224"
+          },
+          "run": "https://github.com/endomorphosis/ipfs_datasets_py/actions/runs/45694378577"
+        },
+        "separate_private_controls": {
+          "pooled_into_ordinary69_or_direct_Lean": false,
+          "private_staging_preexecution_refusal_retained": "/tmp/Root-Phase3-effective-calendar-exact-same-private-v337-2g5hhcwt",
+          "receipt": {
+            "bytes": 8231,
+            "path": "/tmp/Root-Phase3-effective-calendar-Source3-v338-oexc6swm/actual-calendar-same23-and-retained47-private-closeout.json",
+            "sha256": "4839e517d6cf6cf528e6f7c2d81f3eab01de928a335d5758afbf3f4fb3e75bff"
+          },
+          "retained47": {
+            "failed": 0,
+            "passed": 47
+          },
+          "same23_after": {
+            "failed": 0,
+            "passed": 23
+          },
+          "same23_before": {
+            "failed": 22,
+            "passed": 1
+          }
+        }
+      },
+      "evidence_ordinal": 527,
+      "id": "phase3-calendar-effective-start-ordinary69-direct-lean-witness-evidence527-20261125",
+      "observed_bytes": 19302,
+      "observed_sha256": "7bb08d09a23f2074ab5069b226c20cd3728dda56ba9b2dc76cf5f177e97fce53",
+      "path": "/tmp/P3-guide527-single-consolidation-private-v01-cEFpTS/one-existing-guide527-calendar-ordinary69-direct-Lean-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Published controlled effective-date calendar software with 69 ordinary passes and two direct local Lean witness outcomes. Full Lake, statutory authority, model authority and task-status changes are outside this scope.",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
     }
   ]
 }

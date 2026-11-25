@@ -3756,6 +3756,31 @@
       "status": "closed_software_evidence_only_no_task_status_change",
       "three_normal_child_first_code_publications_closed": true,
       "training_and_gold_masks": 0
+    },
+    "phase3_calendar_effective_start_ordinary69_direct_Lean_witness_evidence_20261125": {
+      "Source_SDK_resource_parent_closed": true,
+      "Title10_review_real_release_and_model_pending": true,
+      "all24_tasks126_components526_old_evidence_values_preserved": true,
+      "direct_Lean_4_34_1_compiler_returncodes": [
+        0,
+        1
+      ],
+      "evidence_ordinal": 527,
+      "facts": {
+        "bytes": 19302,
+        "path": "/tmp/P3-guide527-single-consolidation-private-v01-cEFpTS/one-existing-guide527-calendar-ordinary69-direct-Lean-scoped-facts.json",
+        "sha256": "7bb08d09a23f2074ab5069b226c20cd3728dda56ba9b2dc76cf5f177e97fce53"
+      },
+      "full_Lake_or_statutory_or_model_claim": false,
+      "full_eight_phase_goal_complete": false,
+      "new_cases": 22,
+      "ordinary_functions": 15,
+      "ordinary_unique_PASS": 69,
+      "record_id": "phase3-calendar-effective-start-ordinary69-direct-lean-witness-evidence527-20261125",
+      "retained_cases": 47,
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
+      "three_normal_child_first_code_publications_closed": true,
+      "training_and_gold_masks": 0
     }
   },
   "programme_goal_hierarchy": {
