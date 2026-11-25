@@ -962,7 +962,7 @@ def _pre_resource_entry_refusal_terminal(owner, value, request_raw, request_path
     """Observe a constructed owner's actual first-read refusal, never a constructor fiction."""
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_daemon_resources as host
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer.validation_run_resources import ValidationResourceReservation
-    if (value.get('schema') != 'owned-validation-request/v5'
+    if (value.get('schema') not in ('owned-validation-request/v1', 'owned-validation-request/v5')
             or type(owner) is not ValidationResourceReservation
             or type(failure) is not host.DaemonResourceError
             or type(failure.args) is not tuple or len(failure.args) != 1
@@ -1023,6 +1023,14 @@ def _pre_resource_entry_refusal_terminal(owner, value, request_raw, request_path
     if (identity is None or any(identity[key] != owner._owner_identity[key] for key in ('pid', 'birth'))
             or snapshot(request_path) != request_raw):
         return None
+    if value['schema'] == 'owned-validation-request/v1':
+        # Recheck the same constructed owner's original request/attempt before
+        # exposing the V1 first-read no-grant terminal to its Source custodian.
+        if (owner.request != value or owner.request_sha256 != request_pin
+                or owner.request_path != Path(request_path)
+                or owner.ledger_path != Path(resource_ledger)):
+            return None
+        owner._guard_inputs()
     _lifecycle_source_guard(value)
     producer = str(Path(__file__).resolve())
     witness = dict(schema=PRE_RESOURCE_ENTRY_REFUSAL_SCHEMA,
@@ -1097,7 +1105,8 @@ def classify_owned_validation_source_custody(terminal, request_raw, *,
             need(type(phase_owner) is dict and type(phase_owner.get('pid')) is int
                  and phase_owner.get('pid') == owner_pid and phase_owner.get('birth') == owner_birth)
         if type(witness) is dict and witness.get('schema') == PRE_RESOURCE_ENTRY_REFUSAL_SCHEMA:
-            need(value['schema'] == 'owned-validation-request/v5' and returncode == 1)
+            need(value['schema'] in ('owned-validation-request/v1', 'owned-validation-request/v5')
+                 and returncode == 1)
             need(set(witness) == {'schema', 'stage', 'request_sha256', 'producer', 'owner',
                 'ledger_path', 'events', 'owner_state', 'entry_refusal_observation',
                 'native_grant', 'storage', 'source_guards'})
@@ -1111,7 +1120,8 @@ def classify_owned_validation_source_custody(terminal, request_raw, *,
                 and witness['producer'] == {'path': producer, 'sha256': producer_pin}
                 and hashlib.sha256(snapshot(producer, 4*1024*1024)).hexdigest() == producer_pin)
             _lifecycle_source_guard(value)
-            _live_no_native_sdk_receipt(value, request_raw, expected_request_sha256, reservation, need)
+            if live:
+                _live_no_native_sdk_receipt(value, request_raw, expected_request_sha256, reservation, need)
             observation = witness['entry_refusal_observation']
             need(_resource_entry_refusal_observation(observation))
             need(type(failure) is dict and failure.get('schema') == 'owned-validation-result/v1'

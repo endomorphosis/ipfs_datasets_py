@@ -10700,3 +10700,204 @@ class TestCLIInitialReadRefusalControls(_pre_entry_unittest.TestCase):
         main=next(n for n in tree.body if isinstance(n,_pre_entry_ast.FunctionDef) and n.name=='main')
         calls=[n.func.id for n in _pre_entry_ast.walk(main) if isinstance(n,_pre_entry_ast.Call) and isinstance(n.func,_pre_entry_ast.Name)]
         self.assertIn('_pre_resource_entry_refusal_terminal',calls)
+
+
+# V1 shares the real initial-read trace observer, without borrowing a V5
+# ordinary-scratch profile.  The resource constructor/lock boundaries are the
+# existing explicit unit fixture above; its open/read/trace functions stay real.
+class _V1PreResourceEntryPublicFixture(_PreResourceEntryPublicFixture):
+    def __init__(self, tmp_path, monkeypatch):
+        original_input_guard = validation.ValidationResourceReservation._guard_inputs
+        super().__init__(tmp_path, monkeypatch)
+        self.attempt = tmp_path / 'attempt'
+        self.attempt.mkdir(mode=0o700)
+        self.source_marker = tmp_path / 'pinned-source.py'
+        self.source_marker.write_bytes(b'# fictional input, never executed\n')
+        self.value.pop('ordinary_scratch_profile')
+        self.value.update(schema='owned-validation-request/v1',
+            argv=[sys.executable, '-B', str(self.source_marker)],
+            cwd=str(tmp_path), selected_checks=['fictional-initial-read-only'],
+            timeout_seconds=300, roots=[], declared_external_writable_paths=[],
+            scheduler_state_path=str(tmp_path/'not-opened-scheduler.json'),
+            outputs={name: str(self.attempt/name) for name in validation.OUTPUT_NAMES})
+        self.value['source_sha256'][str(self.source_marker)] = hashlib.sha256(
+            self.source_marker.read_bytes()).hexdigest()
+        self.raw = json.dumps(self.value, sort_keys=True).encode()
+        self.pin = hashlib.sha256(self.raw).hexdigest()
+        self.request_path.write_bytes(self.raw)
+        self.outcome['request_sha256'] = self.pin
+        fixture_constructor = validation.ValidationResourceReservation.__init__
+        fx = self
+
+        def original_guard_constructor(owner):
+            fixture_constructor(owner)
+            owner.request = deepcopy(fx.value)
+            owner.request_sha256 = fx.pin
+            owner.request_path = fx.request_path
+            owner._request_identity = validation._regular_bytes(
+                fx.request_path, validation.MAX_REQUEST_BYTES)[2]
+            owner.directory = fx.attempt
+            owner.identity = native_disk._root_identity(fx.attempt)
+            owner.output_layout = {name: fx.attempt/name for name in validation.OUTPUT_NAMES}
+            owner._cwd_identity = native_disk._root_identity(fx.root)
+            owner._source_identities = {path: validation._regular_bytes(
+                path, validation.MAX_SOURCE_BYTES)[2] for path in owner.request['source_sha256']}
+            owner._output_identities = {}
+            owner._physical_identities = {}
+            owner._startup_clock_profile = None
+            owner._ordinary_scratch_profile = None
+
+        monkeypatch.setattr(validation.ValidationResourceReservation, '__init__',
+            original_guard_constructor)
+        monkeypatch.setattr(validation.ValidationResourceReservation, '_guard_inputs',
+            original_input_guard)
+
+
+@pytest.fixture
+def _v1_pre_resource_entry_public_case(request, tmp_path, monkeypatch):
+    request.instance._pre_resource_entry_fixture = _V1PreResourceEntryPublicFixture(
+        tmp_path, monkeypatch)
+    yield
+
+
+@pytest.mark.usefixtures('_v1_pre_resource_entry_public_case')
+class TestCLIV1InitialReadRefusalControls(_pre_entry_unittest.TestCase):
+    def setUp(self):
+        self.fx = self._pre_resource_entry_fixture
+
+    def tearDown(self):
+        self.fx.close()
+
+    def assert_unknown(self, terminal, **changes):
+        self.assertEqual(self.fx.classify(terminal, **changes), {
+            'verdict': 'requires_original_native_cleanup',
+            'source_custody_closed': False, 'storage_release_authorized': False})
+
+    def assert_owner_change_refused(self, key, value):
+        owner, error, outcome = self.fx.fail_open()
+        setattr(owner, key, value)
+        self.assertIsNone(self.fx.produce(owner=owner, error=error, outcome=outcome))
+
+    def test_actual_v1_initial_scope_refusal_emits_no_grant_terminal(self):
+        before = self.fx.ledger_path.read_bytes()
+        terminal = self.fx.produce()
+        self.assertIsInstance(terminal, dict)
+        self.assertEqual(self.fx.value['schema'], 'owned-validation-request/v1')
+        self.assertNotIn('ordinary_scratch_profile', self.fx.value)
+        self.assertEqual(terminal['source_custody_lifecycle']['native_grant'], {
+            'status': 'not_requested_before_resource_entry'})
+        self.assertEqual(terminal['failure']['error'], 'disk ledger storage scope differs')
+        self.assertEqual(self.fx.ledger_path.read_bytes(), before)
+        self.assertEqual((self.fx.writes, self.fx.native), (0, 0))
+
+    def test_actual_v1_terminal_closes_only_matching_original_source_custody(self):
+        self.assertEqual(self.fx.classify(self.fx.reference()), {
+            'verdict': 'proven_original_no_child_no_native_grant',
+            'source_custody_closed': True, 'storage_release_authorized': False})
+
+    def test_v1_copied_error_without_live_trace_remains_unknown(self):
+        owner = self.fx.sdk.ValidationResourceReservation()
+        error = self.fx.host.DaemonResourceError('disk ledger storage scope differs')
+        self.assertIsNone(self.fx.produce(owner=owner, error=error, outcome=self.fx.outcome))
+
+    def test_v1_uncertain_write_cannot_reuse_initial_read_boundary(self):
+        self.fx.ledger_path.write_text(json.dumps(dict(self.fx.fixture_ledger,
+            limit_bytes=250000000000)))
+        self.fx.mode = 'write_failure'
+        owner, error, outcome = self.fx.fail_open()
+        self.assertGreater(self.fx.writes, 0)
+        self.assertIsNone(self.fx.produce(owner=owner, error=error, outcome=outcome))
+
+    def test_v1_later_read_during_write_cannot_reuse_initial_trace(self):
+        self.fx.ledger_path.write_text(json.dumps(dict(self.fx.fixture_ledger,
+            limit_bytes=250000000000)))
+        self.fx.mode = 'read_during_write'
+        owner, error, outcome = self.fx.fail_open()
+        self.assertGreater(self.fx.writes, 0)
+        self.assertIsNone(self.fx.produce(owner=owner, error=error, outcome=outcome))
+
+    def test_v1_acquired_lease_stays_unknown(self):
+        self.assert_owner_change_refused('_lease', object())
+
+    def test_v1_created_record_stays_unknown(self):
+        self.assert_owner_change_refused('_record', {})
+
+    def test_v1_entered_owner_stays_unknown(self):
+        self.assert_owner_change_refused('_entered', True)
+
+    def test_v1_attached_child_stays_unknown(self):
+        self.assert_owner_change_refused('_child', {})
+
+    def test_v1_mismatched_owner_request_hash_stays_unknown(self):
+        self.assert_owner_change_refused('request_sha256', '0'*64)
+
+    def test_v1_mismatched_owner_request_path_stays_unknown(self):
+        self.assert_owner_change_refused('request_path', self.fx.root/'other-request.json')
+
+    def test_v1_mismatched_owner_request_value_stays_unknown(self):
+        self.assert_owner_change_refused('request', dict(self.fx.value, memory_mb=1))
+
+    def test_v1_mismatched_owner_ledger_path_stays_unknown(self):
+        self.assert_owner_change_refused('ledger_path', self.fx.root/'other-ledger.json')
+
+    def test_v1_original_owner_birth_must_still_match(self):
+        owner, error, outcome = self.fx.fail_open()
+        owner._owner_identity = dict(owner._owner_identity, birth='0')
+        self.assertIsNone(self.fx.produce(owner=owner, error=error, outcome=outcome))
+
+    def test_v1_changed_actual_pinned_source_is_refused_before_emission(self):
+        owner, error, outcome = self.fx.fail_open()
+        self.fx.source_marker.write_bytes(b'# changed fictional source\n')
+        self.assertIsNone(self.fx.produce(owner=owner, error=error, outcome=outcome))
+
+    def test_v1_changed_original_request_is_refused_before_emission(self):
+        owner, error, outcome = self.fx.fail_open()
+        self.fx.request_path.write_bytes(self.fx.raw + b'\n')
+        self.assertIsNone(self.fx.produce(owner=owner, error=error, outcome=outcome))
+
+    def test_v1_replaced_attempt_is_refused_by_original_input_guard(self):
+        owner, error, outcome = self.fx.fail_open()
+        self.fx.attempt.rename(self.fx.root/'original-attempt')
+        self.fx.attempt.mkdir(mode=0o700)
+        self.assertIsNone(self.fx.produce(owner=owner, error=error, outcome=outcome))
+
+    def test_v1_child_launch_event_stays_unknown(self):
+        owner, error, outcome = self.fx.fail_open()
+        self.assertIsNone(self.fx.produce(owner=owner, error=error, outcome=outcome,
+            events=dict(self.fx.events, child_launch_attempted=True)))
+
+    def test_v1_consumer_rejects_mismatched_request_hash(self):
+        self.assert_unknown(self.fx.reference(), expected_request_sha256='0'*64)
+
+    def test_v1_consumer_rejects_mismatched_owner_pid(self):
+        self.assert_unknown(self.fx.reference(), owner_pid=os.getpid()+1)
+
+    def test_v1_consumer_rejects_mismatched_owner_birth(self):
+        self.assert_unknown(self.fx.reference(), owner_birth='0')
+
+    def test_v1_consumer_rejects_mismatched_resource_ledger(self):
+        self.assert_unknown(self.fx.reference(), expected_resource_ledger=str(
+            self.fx.root/'not-the-ledger.json'))
+
+    def test_v1_consumer_rejects_mismatched_producer_pin(self):
+        terminal = self.fx.reference()
+        terminal['source_custody_lifecycle']['producer']['sha256'] = '0'*64
+        self.assert_unknown(terminal)
+
+    def test_v1_consumer_rejects_unverified_trace(self):
+        terminal = self.fx.reference()
+        terminal['source_custody_lifecycle']['entry_refusal_observation']['live_trace_verified'] = False
+        self.assert_unknown(terminal)
+
+    def test_v1_consumer_rejects_started_native_or_child_evidence(self):
+        terminal = self.fx.reference()
+        terminal['source_custody_lifecycle']['events']['child_created'] = True
+        self.assert_unknown(terminal)
+
+    def test_v1_consumer_never_authorizes_storage_release(self):
+        terminal = self.fx.reference()
+        terminal['source_custody_lifecycle']['storage']['release_authorized'] = True
+        self.assert_unknown(terminal)
+
+    def test_v1_consumer_requires_actual_failure_exit(self):
+        self.assert_unknown(self.fx.reference(), returncode=0)
