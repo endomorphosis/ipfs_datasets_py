@@ -3413,3 +3413,66 @@ def test_prepare_original_parent_v3_same_physical_public_inputs(
     assert hashlib.sha256(unit_path.read_bytes()).hexdigest() == unit_sha
     assert reference(closure_path) == lineage["physical_closure_request"]
     request.node.user_properties.append(("same_physical_V3_derivation", owners.canonical(reference(lineage_path)).decode("utf-8")))
+
+
+def test_physical_v4_current_replay_refuses_genuinely_revoked_reviewer(
+        physical_source_use_whole_norm_control_v2):
+    """A valid signature under the selected trust records still can be revoked."""
+    from copy import deepcopy
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as wire
+
+    control = physical_source_use_whole_norm_control_v2
+    owner, helper, mixed_helper = (control[key] for key in ("owner", "helper", "mixed_helper"))
+    original = control["case"]
+    case = dict(original, registry=deepcopy(original["registry"]),
+                policy=deepcopy(original["policy"]), reviews=deepcopy(original["reviews"]))
+    claim = case["reviews"][0]
+    key = next(record for record in case["registry"]["keys"] if record["key_id"] == claim["key_id"])
+    case["registry"]["revocation_generation"] += 1
+    key["revoked_at_utc"] = control["kwargs"]["at_time_utc"]
+    helper.reviewed_resign_v2(case)
+    mixed_helper.assert_signatures_valid(case)
+    args, kwargs = helper.reviewed_assessment_arguments_v2(owner, case)
+    assert kwargs["at_time_utc"] == key["revoked_at_utc"]
+
+    assert control["admission"]["semantic_use_eligible"] is True
+    blocked = owner.assess_reviewed_norm_admission_v3(*args, **kwargs)
+    review = next(row for row in blocked["review_authority"]["reviews"]
+                  if row["review_id"] == claim["review_id"])
+    assert "key_revoked" in review["blockers"]
+    assert blocked["semantic_use_eligible"] is False
+    assert blocked["permitted_uses"] == []
+    assert blocked["training_mask"] == blocked["evaluation_gold_mask"] == 0
+
+    request = deepcopy(control["physical_request"])
+    rows = {row["artifact_id"]: row for row in request["artifacts"]}
+    replay_row = rows[request["component"]["replay"]]
+    replay = wire.decode_parent_replay_value_v1(
+        replay_row["payload"], expected_payload_sha256=replay_row["sha256"])
+    replay["admission_args"] = list(args)
+    replay["admission_kwargs"] = kwargs
+
+    def replace_payload(row, payload):
+        row.update(payload=payload, bytes=len(payload), sha256=hashlib.sha256(payload).hexdigest())
+
+    def validate():
+        raw = wire.encode_parent_replay_value_v1(request, max_bytes=release.MAX_CLOSURE_REQUEST_BYTES_V3)
+        return release.validate_uscode_release_closure_v4(
+            raw, expected_request_sha256=hashlib.sha256(raw).hexdigest())
+
+    replace_payload(replay_row, wire.encode_parent_replay_value_v1(replay))
+    with pytest.raises(ValueError, match="admission report differs from complete current replay"):
+        validate()
+
+    # A freshly computed ineligible report must also stop the release, even
+    # when all its own hashes and the outer request are internally consistent.
+    replace_payload(rows[request["component"]["admission"]], _physical_wire(blocked))
+    request["pins"]["admission"] = owner.norm_content_adjudication_sha256(blocked)
+    with pytest.raises(ValueError, match="current reviewed admission has unresolved blockers"):
+        validate()
+
+    assert wire.encode_parent_replay_value_v1(
+        control["physical_request"], max_bytes=release.MAX_CLOSURE_REQUEST_BYTES_V3
+    ) == control["physical_request_raw"]
+    assert original["registry"]["revocation_generation"] + 1 == case["registry"]["revocation_generation"]
