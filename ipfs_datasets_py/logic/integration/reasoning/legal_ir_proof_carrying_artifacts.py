@@ -32,6 +32,7 @@ from .legal_ir_hammer_translation import (
     LEGAL_IR_HAMMER_TRANSLATION_SCHEMA_VERSION,
     HammerReconstructionReceipt,
     HammerTranslationRecord,
+    HammerTrustStatus,
 )
 from .legal_ir_obligations import (
     LEGAL_IR_OBLIGATION_SCHEMA_VERSION,
@@ -1095,7 +1096,8 @@ def _validate_cross_references(
     policy: LegalIRProofVerificationPolicy,
 ) -> tuple[LegalIRProofArtifactDiagnostic, ...]:
     diagnostics: list[LegalIRProofArtifactDiagnostic] = []
-    obligation_ids = set(value.obligation_ids)
+    obligations = {item.obligation_id: item for item in value.proof_obligations}
+    obligation_ids = set(obligations)
     translation_ids = {record.translation_id for record in value.translation_records}
     guidance_ids = {artifact.guidance_id for artifact in value.hammer_guidance_artifacts}
     receipt_ids = {receipt.receipt_id for receipt in value.reconstruction_receipts}
@@ -1121,12 +1123,28 @@ def _validate_cross_references(
                 )
             )
     for index, receipt in enumerate(value.reconstruction_receipts):
-        if receipt.obligation_id and receipt.obligation_id not in obligation_ids:
+        obligation = obligations.get(receipt.obligation_id)
+        if receipt.obligation_id and obligation is None:
             diagnostics.append(
                 _diagnostic(
                     "orphaned_hammer_receipt",
                     "Hammer reconstruction receipt references an unknown proof obligation.",
                     f"reconstruction_receipts.{index}.obligation_id",
+                    obligation_id=receipt.obligation_id,
+                    evidence_id=receipt.receipt_id,
+                )
+            )
+        if (
+            obligation is not None
+            and obligation.formula_id
+            and receipt.input_formula_id
+            and receipt.input_formula_id != obligation.formula_id
+        ):
+            diagnostics.append(
+                _diagnostic(
+                    "receipt_formula_mismatch",
+                    "Hammer reconstruction receipt names a different input formula.",
+                    f"reconstruction_receipts.{index}.input_formula_id",
                     obligation_id=receipt.obligation_id,
                     evidence_id=receipt.receipt_id,
                 )
@@ -1233,6 +1251,22 @@ def _validate_obligation_evidence(
     policy: LegalIRProofVerificationPolicy,
 ) -> tuple[LegalIRProofArtifactDiagnostic, ...]:
     diagnostics: list[LegalIRProofArtifactDiagnostic] = []
+    require_trusted_native = policy.require_trusted_proofs and policy.require_native_reconstruction_verified
+    trusted_native_receipts = set()
+    if require_trusted_native:
+        # Evidence bindings summarize all routes. A trusted kernel policy must
+        # find its proof, trust and checked reconstruction on one receipt.
+        trusted_native_receipts = {
+            (receipt.obligation_id, receipt.input_formula_id)
+            for receipt in value.reconstruction_receipts
+            if receipt.receipt_id
+            and receipt.backend_proved
+            and receipt.trusted
+            and receipt.trust_status is HammerTrustStatus.TRUSTED
+            and receipt.native_reconstruction
+            and receipt.native_reconstruction_verified
+            and not receipt.translation_failed
+        }
     recomputed_bindings = _build_evidence_bindings(
         obligations=value.proof_obligations,
         guidance=value.hammer_guidance_artifacts,
@@ -1346,6 +1380,19 @@ def _validate_obligation_evidence(
                     "Proof obligation native reconstruction was not verified.",
                     obligation.obligation_id,
                     "evidence_bindings.native_reconstruction_verified",
+                )
+            )
+        if (
+            require_trusted_native
+            and (obligation.obligation_id, obligation.formula_id) not in trusted_native_receipts
+            and not unsupported_allowed
+        ):
+            diagnostics.append(
+                _obligation_diagnostic(
+                    "trusted_native_receipt_missing",
+                    "One receipt for this obligation and formula must carry a trusted proof and verified native reconstruction.",
+                    obligation.obligation_id,
+                    "reconstruction_receipts",
                 )
             )
         if (

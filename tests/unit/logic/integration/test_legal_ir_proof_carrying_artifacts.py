@@ -360,3 +360,79 @@ def test_consumer_rejects_invalid_unsupported_diagnostics() -> None:
     assert "invalid_unsupported_diagnostic" in {
         diagnostic.code for diagnostic in result.diagnostics
     }
+
+
+def _artifact_with_receipts(*receipts):
+    existing = _artifact()
+    return build_legal_ir_proof_carrying_artifact(
+        legal_ir_outputs=existing.legal_ir_outputs,
+        proof_obligations=existing.proof_obligations,
+        hammer_guidance_artifacts=existing.hammer_guidance_artifacts,
+        translation_records=existing.translation_records,
+        reconstruction_receipts=receipts,
+        route_results=existing.route_results,
+        unsupported_diagnostics=existing.unsupported_diagnostics,
+        source_map=existing.source_map,
+        build_manifest=existing.build_manifest,
+        verification_policy=existing.verification_policy,
+        metadata=existing.metadata,
+    )
+
+
+def test_receipt_for_different_formula_cannot_validate_same_obligation() -> None:
+    wrong_formula = dict(_receipt(), input_formula_id="another-formula")
+    artifact = _artifact_with_receipts(wrong_formula)
+    result = validate_legal_ir_proof_carrying_artifact(artifact.to_dict())
+
+    assert not result.valid
+    assert "receipt_formula_mismatch" in {item.code for item in result.diagnostics}
+
+
+@pytest.mark.parametrize("order", ["backend-first", "native-first"])
+def test_strict_native_policy_requires_one_complete_receipt(order: str) -> None:
+    trusted_backend = dict(
+        _receipt(),
+        receipt_id="receipt-trusted-backend",
+        outcome="backend_proof",
+        native_reconstruction=False,
+        native_reconstruction_verified=False,
+        reconstruction_status="",
+        checker="",
+        trust_reason="backend_proof_accepted_by_policy",
+    )
+    untrusted_native = dict(
+        _receipt(),
+        receipt_id="receipt-untrusted-native",
+        trust_reason="upstream_trust_revoked",
+        trust_status="untrusted",
+        trusted=False,
+    )
+    receipts = (trusted_backend, untrusted_native)
+    if order == "native-first":
+        receipts = receipts[::-1]
+    artifact = _artifact_with_receipts(*receipts)
+    payload = artifact.to_dict()
+
+    # Structural validation and its historical summary still accept these facts.
+    assert validate_legal_ir_proof_carrying_artifact(
+        payload, policy=LegalIRProofVerificationPolicy()
+    ).valid
+    result = validate_legal_ir_proof_carrying_artifact(payload)
+    assert not result.valid
+    assert "trusted_native_receipt_missing" in {item.code for item in result.diagnostics}
+
+    corroborated = _artifact_with_receipts(*receipts, _receipt())
+    assert validate_legal_ir_proof_carrying_artifact(corroborated.to_dict()).valid
+
+
+def test_strict_native_policy_checks_the_matching_receipt_formula() -> None:
+    legacy_receipt = dict(_receipt(), input_formula_id="")
+    artifact = _artifact_with_receipts(legacy_receipt)
+    payload = artifact.to_dict()
+
+    assert validate_legal_ir_proof_carrying_artifact(
+        payload, policy=LegalIRProofVerificationPolicy()
+    ).valid
+    result = validate_legal_ir_proof_carrying_artifact(payload)
+    assert not result.valid
+    assert "trusted_native_receipt_missing" in {item.code for item in result.diagnostics}
