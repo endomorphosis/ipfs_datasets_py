@@ -15,6 +15,7 @@ import sys
 from pathlib import Path
 
 RECEIPT_SCHEMA = "legal-corpus-graph-cli-receipt/v1"
+_WHOLE_NORM_V4_PROFILE = "reviewed-source-use-whole-norm-physical-source-replay/v1"
 
 
 class CLIError(ValueError):
@@ -48,6 +49,7 @@ def _parser():
         "reviewed-norm-v2-physical-three-cache-replay/v1",
         "reviewed-norm-v3-physical-three-cache-replay/v1",
         "reviewed-norm-v3-direct",
+        _WHOLE_NORM_V4_PROFILE,
     ), default="reviewed-norm-v2-local-replay/v1")
     return parser
 
@@ -138,6 +140,7 @@ def main(argv=None):
                     "reviewed-norm-v2-physical-three-cache-replay/v1",
                     "reviewed-norm-v3-physical-three-cache-replay/v1",
                     "reviewed-norm-v3-direct",
+                    _WHOLE_NORM_V4_PROFILE,
                 ]
                 result["default_profile"] = "reviewed-norm-v2-local-replay/v1"
         else:
@@ -150,7 +153,7 @@ def main(argv=None):
                     MAX_CLOSURE_REQUEST_BYTES, validate_uscode_release_closure_v1,
                 )
                 request_limit = MAX_CLOSURE_REQUEST_BYTES
-                if args.profile == "reviewed-norm-v3-direct":
+                if args.profile in ("reviewed-norm-v3-direct", _WHOLE_NORM_V4_PROFILE):
                     from ipfs_datasets_py.logic.autoformal.legal_release_coordinator_v1 import (
                         MAX_CLOSURE_REQUEST_BYTES_V3,
                     )
@@ -172,6 +175,11 @@ def main(argv=None):
                         validate_uscode_release_closure_direct_v3,
                     )
                     validator = validate_uscode_release_closure_direct_v3
+                elif args.profile == _WHOLE_NORM_V4_PROFILE:
+                    from ipfs_datasets_py.logic.autoformal.legal_release_coordinator_v1 import (
+                        validate_uscode_release_closure_v4,
+                    )
+                    validator = validate_uscode_release_closure_v4
                 closure = validator(raw, expected_request_sha256=args.request_sha256)
                 result = _receipt(status="success", command=command,
                     validation_scope="selected-component-local-replay-not-release-admission",

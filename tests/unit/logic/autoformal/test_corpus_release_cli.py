@@ -2987,6 +2987,62 @@ def test_physical_v2_requires_every_independent_input_commitment(
             c["preparation"], c["preservation"], c["graph"], c["admission"], *c["args"], **options)
 
 
+@pytest.mark.parametrize("direct", [False, True])
+def test_physical_closure_v4_actual_explicit_cli_is_source_only(
+        physical_source_use_whole_norm_control_v2, tmp_path, direct):
+    control = physical_source_use_whole_norm_control_v2
+    assert control["physical_request"]["native"] is None
+    path = tmp_path / "physical-closure-v4.request"
+    path.write_bytes(control["physical_request_raw"])
+    arguments = [
+        "validate-closure", "--request", str(path),
+        "--request-sha256", control["physical_request_sha256"],
+    ]
+    profile = "reviewed-source-use-whole-norm-physical-source-replay/v1"
+    result, receipt = run_cli(arguments + ["--profile", profile], cwd=tmp_path, direct=direct)
+    assert result.returncode == 0, receipt
+    assert receipt["status"] == "success"
+    assert receipt["validation_scope"] == "selected-component-local-replay-not-release-admission"
+    closure = receipt["closure"]
+    assert closure["schema"] == "legal-uscode-release-closure-report/v4"
+    assert closure["profile"] == profile
+    assert closure["reviewed_version"] == 4
+    assert closure["request_sha256"] == control["physical_request_sha256"]
+    assert closure["local_source_cache_entity_bindings_verified"] is True
+    assert closure["independent_reviewed_crosswalk_verified"] is True
+    assert closure["physical_crosswalk"]["counts"]["reviewed_units"] == 3
+    for key in (
+        "native_receipt_replayed", "remote_readback_verified", "release_ready",
+        "closure_complete", "admitted", "formalized", "proof_verified",
+    ):
+        assert closure[key] is False
+
+    for options in ([], ["--profile", "reviewed-norm-v3-direct"]):
+        refused, error = run_cli(arguments + options, cwd=tmp_path, direct=direct)
+        assert refused.returncode == 1 and error["status"] == "error"
+        assert "closure" not in error
+        if options:
+            assert "unsupported physical closure schema/profile" in error["error"]
+
+
+def test_physical_closure_v4_cli_refuses_native_selection(
+        physical_source_use_whole_norm_control_v2, tmp_path):
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as wire
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+
+    request = dict(physical_source_use_whole_norm_control_v2["physical_request"], native={})
+    raw = wire.encode_parent_replay_value_v1(request, max_bytes=release.MAX_CLOSURE_REQUEST_BYTES_V3)
+    path = tmp_path / "physical-closure-v4-forbidden-native.request"
+    path.write_bytes(raw)
+    result, receipt = run_cli([
+        "validate-closure", "--profile", "reviewed-source-use-whole-norm-physical-source-replay/v1",
+        "--request", str(path), "--request-sha256", hashlib.sha256(raw).hexdigest(),
+    ], cwd=tmp_path)
+    assert result.returncode == 1 and receipt["status"] == "error"
+    assert "cannot acquire Native authority" in receipt["error"]
+    assert "closure" not in receipt
+
+
 def test_physical_v4_cannot_borrow_native_or_legacy_wire_authority(physical_source_use_whole_norm_control_v2):
     from copy import deepcopy
     from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
