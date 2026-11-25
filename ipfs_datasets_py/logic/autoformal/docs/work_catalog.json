@@ -29445,6 +29445,383 @@
       "root": "artifact_workspace",
       "scope": "Managed calendar Lake fixture and compiled-only reopen, plus a separate published authored retrieval scorer ordinary23 cohort.",
       "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase7_exact_instance_cache_and_bridge_timeout_closed_fixture_evidence_20261125",
+      "closed_software_facts": {
+        "actual_ordinary23": {
+          "HEAD": "cacb0e85dbfad57fb1d96f8aa0d8667f6c51b061",
+          "Source_resource_parent_closed": true,
+          "case_counts": {
+            "tests/unit/optimizers/logic_theorem_optimizer/test_daemon_bridge_evaluation_reuse.py::test_bounded_samples_keep_full_text_reconstruction_and_target_aliases": 1,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_process_cache.py::test_cache_switch_requires_boolean": 1,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_process_cache.py::test_default_reuses_target_unchanged": 1,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_process_cache.py::test_legal_ir_timeout_fallback_does_not_poison_process_cache": 1,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_process_cache.py::test_optout_bypasses_existing_target_without_destroying_foreign_cache": 1,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py::test_ambiguous_target_priming_refuses_before_writing_any_revision": 1,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py::test_bounded_targets_require_an_exact_evaluated_row_and_explicit_alias": 1,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py::test_feature_cache_bucket_binds_exact_current_sample_inputs": 7,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py::test_instance_targets_do_not_follow_a_different_sample_revision": 3,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py::test_temporary_target_override_restores_only_the_selected_revision_on_error": 1,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py::test_warm_feature_cache_matches_cold_after_clause_revision": 2,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py::test_warm_feature_cache_preserves_runtime_formula_order": 1,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py::test_autoencoder_caches_legal_ir_view_candidate_scan": 1,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py::test_bounded_bridge_targets_are_aliased_before_full_sample_evaluation": 1
+          },
+          "cohorts": {
+            "instance-feature-target-and-daemon19": 19,
+            "target-timeout-process-cache4": 4
+          },
+          "collect_run_calls_JUnit_exact_order": true,
+          "counts": {
+            "duplicates": 0,
+            "errors": 0,
+            "failures": 0,
+            "functions": 14,
+            "passed": 23,
+            "skipped": 0,
+            "tests": 23
+          },
+          "full_report": {
+            "bytes": 1370456,
+            "path": "/tmp/Root-existing-P7-cache-ordinary23-ontology-bound-v379-rj1br0db/actual-output/complete-frozen-local-D-Phase7-instance-feature-target-and-timeout-ordinary23-existing-owner-report.json",
+            "sha256": "adb900c0df11f58f0e6becbd14382ad1c1ff59b24aaf9a699706b1ff87834b48"
+          },
+          "live_case_replay_performed_by_composer": false,
+          "ordinary_scope": "Controlled software fixtures. Disk target caching, automatic CUDA, model training and pretrained quality or convergence excluded.",
+          "raw_JUnit": {
+            "bytes": 4470,
+            "path": "/tmp/Root-existing-P7-cache-ordinary23-ontology-bound-v379-rj1br0db/actual-output/Phase7-instance-feature-target-and-timeout-ordinary23-run-result0-output1.bin",
+            "sha256": "db3e3d2223335c1ab8f04a60035369eab0ea8d165c90ea556e7b9cf078e11095"
+          },
+          "receipt": {
+            "bytes": 15603,
+            "path": "/tmp/Root-existing-P7-cache-ordinary23-ontology-bound-v379-rj1br0db/actual-P7-cache-ordinary23-closed-small-v379.json",
+            "sha256": "2baced03741b089e13f80a6efdb7f9d245afcdfc202b1d2f12ae50b91bbfb8ce"
+          },
+          "tree": "ba11b58f93c24060d59c96a87fd308b179771ba5"
+        },
+        "actual_publication": {
+          "Guide529_other_code_and_gitlinks_preserved": true,
+          "Source5_install": {
+            "bytes": 154992,
+            "path": "/tmp/Root-P7-exact-five-Source5-existing-v363-sPgV3AIC/actual-output/actual-existing-five-Python-code-CAS-receipt.json",
+            "sha256": "13ebf91f35dbef1ef148fe4927eac3d466b65bf765ba3c5262e765c4217a932f"
+          },
+          "actual_frozen_READ": {
+            "bytes": 49737,
+            "path": "/tmp/Root-P7-cache-frozen-source-and-index-READ32-v364-t60n92vs/actual-output/actual-D27-observed-D-root-initializer-Source-READ-v01-small-closeout.json",
+            "sha256": "572faaf35b100cb002b5dfb003dfb103f1706abb95eb3b3f278ebc2298234906"
+          },
+          "child_first_normal_fast_forward_order": [
+            "datasets",
+            "hallucinate",
+            "root"
+          ],
+          "local_freeze": {
+            "bytes": 12445,
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P7-exact5-local-freeze-v363.json",
+            "sha256": "8333b2d6109b73079c28e7192934ee97929b17f7898188b2afc3f418b304024d"
+          },
+          "ordinary_qualification": {
+            "bytes": 15603,
+            "path": "/tmp/Root-existing-P7-cache-ordinary23-ontology-bound-v379-rj1br0db/actual-P7-cache-ordinary23-closed-small-v379.json",
+            "sha256": "2baced03741b089e13f80a6efdb7f9d245afcdfc202b1d2f12ae50b91bbfb8ce"
+          },
+          "receipt": {
+            "bytes": 13944,
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P7-cache-ordinary23-three-FF-publication-v379.json",
+            "sha256": "f8ac0c70916a550f5234e83a36a4b94643342ab5e24b4e63bbcc0261e8e1bbc4"
+          },
+          "repositories": {
+            "accelerate": {
+              "HEAD": "190cb69b9035ea210d9af8817fbe76caf890b48f",
+              "clean_worktree_and_index": true,
+              "origin_main": "190cb69b9035ea210d9af8817fbe76caf890b48f",
+              "tree": "a60ed4b66f2d828b6e22ace48588fb83c32fc7c6"
+            },
+            "datasets": {
+              "HEAD": "cacb0e85dbfad57fb1d96f8aa0d8667f6c51b061",
+              "clean_worktree_and_index": true,
+              "origin_main": "cacb0e85dbfad57fb1d96f8aa0d8667f6c51b061",
+              "tree": "ba11b58f93c24060d59c96a87fd308b179771ba5"
+            },
+            "hallucinate": {
+              "HEAD": "510938af863d27ee84176090ead07b3302e98d14",
+              "clean_worktree_and_index": true,
+              "origin_main": "510938af863d27ee84176090ead07b3302e98d14",
+              "tree": "a8bb4d7cc2279d75b568e42a5ac48c682650fff8"
+            },
+            "root": {
+              "HEAD": "3bfa83debdc1001df88abc35b401c352b81a8f82",
+              "clean_worktree_and_index": true,
+              "origin_main": "3bfa83debdc1001df88abc35b401c352b81a8f82",
+              "tree": "8293b4288d079d2618c29857033894ae94d713c7"
+            }
+          }
+        },
+        "code_scope": {
+          "five_source_stage_commit_joins": {
+            "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py": {
+              "bytes": 1428092,
+              "full9": {
+                "st_ctime_ns": "1795642539386284177",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70042589",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795642539068164203",
+                "st_nlink": "1",
+                "st_size": "1428092",
+                "st_uid": "1000"
+              },
+              "git_mode": "100644",
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+              "sha256": "fd80bf985b3f544a43d6d389feadac49bd33b55ba891d43d155574652c46a35d",
+              "stage0_and_committed_blob": "b527db1c29a5e0ba13c13f2adf5a0f8be925ed7e"
+            },
+            "tests/unit/optimizers/logic_theorem_optimizer/test_daemon_bridge_evaluation_reuse.py": {
+              "bytes": 8632,
+              "full9": {
+                "st_ctime_ns": "1795642539673287632",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70042590",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795642539072726370",
+                "st_nlink": "1",
+                "st_size": "8632",
+                "st_uid": "1000"
+              },
+              "git_mode": "100644",
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_daemon_bridge_evaluation_reuse.py",
+              "sha256": "dd1c823d76ba48ea9c463924c8c810d4ab25379431bb76018cc07649fd173b1a",
+              "stage0_and_committed_blob": "a68ce16cbbe730abd64e1a7263ea045e7f2c7ddb"
+            },
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_process_cache.py": {
+              "bytes": 6744,
+              "full9": {
+                "st_ctime_ns": "1795642539963291124",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70042593",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795642539077218136",
+                "st_nlink": "1",
+                "st_size": "6744",
+                "st_uid": "1000"
+              },
+              "git_mode": "100644",
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_target_process_cache.py",
+              "sha256": "3fed598fdf1d9e639c2d26c8c5fd0a1dc98a833cd223e4dcaabec6b0c7ab6f80",
+              "stage0_and_committed_blob": "3cb73c5693ce6909e09541606fc54b105d90a329"
+            },
+            "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py": {
+              "bytes": 539848,
+              "full9": {
+                "st_ctime_ns": "1795642540265294758",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70042594",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795642539080629185",
+                "st_nlink": "1",
+                "st_size": "539848",
+                "st_uid": "1000"
+              },
+              "git_mode": "100644",
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder.py",
+              "sha256": "7907a65257ade3521a74ef29c006276dd5561d902b1fb363f8a107e6f412dd90",
+              "stage0_and_committed_blob": "1d1effce18dac5b93664dc1b58e42f297916103e"
+            },
+            "tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py": {
+              "bytes": 421372,
+              "full9": {
+                "st_ctime_ns": "1795642540538298043",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70042595",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795642539085387595",
+                "st_nlink": "1",
+                "st_size": "421372",
+                "st_uid": "1000"
+              },
+              "git_mode": "100644",
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_modal_todo_daemon.py",
+              "sha256": "961402d8e2f7b2f2f85f0cf2de3978129bce5df99dd10a61d7f337fec2738628",
+              "stage0_and_committed_blob": "bbc43c5c55114f456aa55bcf688a9991ff66f2da"
+            }
+          },
+          "instance_feature_and_target": "Instance supplied LegalIR view/loss target caches and feature buckets bind complete ordered supported sample data. Ambiguous ID-keyed priming refuses before writes, explicit aliases use exact evaluated rows, and temporary overrides restore the selected revision in finally. Both priming and alias preparation materialize feature-cache keys before any writes.",
+          "private_source_composition_reference": {
+            "bytes": 15311,
+            "path": "/tmp/Phase7-exact-instance-and-timeout-composition-private-v01-YOnHsJ/SEALED-Phase7-exact-instance-timeout-five-private-candidate.json",
+            "sha256": "4a04097d1088b3d71822e7d6419e0622eeece4cf2708ee7ca4524957de027e79"
+          },
+          "qualification_runtime": "Controlled CPU/runtime software fixtures, including instance cache behavior, default process-cache reuse, process-cache opt-out and timeout retry.",
+          "transient_bridge_timeout": "Return the current attempt’s non-accepting fallback without storing it. The next independent call recomputes. Successful results retain existing reuse."
+        },
+        "components_preserved": 126,
+        "current_published_parent": {
+          "HEAD": "cacb0e85dbfad57fb1d96f8aa0d8667f6c51b061",
+          "clean_worktree_and_index": true,
+          "origin_main": "cacb0e85dbfad57fb1d96f8aa0d8667f6c51b061",
+          "tree": "ba11b58f93c24060d59c96a87fd308b179771ba5"
+        },
+        "evidence_ordinal": 530,
+        "exclusions": {
+          "automatic_CUDA_qualification": false,
+          "disk_target_cache_qualification": false,
+          "evaluation_gold_mask": 0,
+          "full_eight_phase_goal_complete": false,
+          "model_fit_or_training_quality_or_convergence": false,
+          "private_receipt_substitution_and_projection_cap_included": false,
+          "review_admission_or_scientific_claim": false,
+          "training_mask": 0
+        },
+        "previous_evidence_records_preserved": 529,
+        "prior_verified_Guide529_publication": {
+          "bytes": 12512,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-guide529-four-doc-three-FF-publication-small-v361.json",
+          "sha256": "451e75f10d0d4857c3ddb7b338331659e4ba6b354b0b858cf25d84a71deb5f0c"
+        },
+        "retained_prior_attempts": {
+          "earlier_attempts_add_no_cases_to_v379": true,
+          "five_pre_run_collection_refusals": {
+            "v365": {
+              "child_returncode": 1,
+              "errors": [
+                "Actual normal pytest phase exited nonzero before success-binding validation: Phase7-instance-feature-target-and-timeout-ordinary23-collect returncode=1"
+              ],
+              "phase": "collect",
+              "qualified": false,
+              "report": {
+                "bytes": 99378,
+                "path": "/tmp/Root-existing-P7-cache-ordinary23-v365-lbxbmew5/actual-output/complete-frozen-local-D-Phase7-instance-feature-target-and-timeout-ordinary23-existing-owner-report.json",
+                "sha256": "bb6410f5dea0e72058e695ee510ea588d4cdcee6e9ea959afc10d6f73096b659"
+              },
+              "run_entered": false
+            },
+            "v367": {
+              "child_returncode": 1,
+              "errors": [
+                "Actual normal pytest phase exited nonzero before success-binding validation: Phase7-instance-feature-target-and-timeout-ordinary23-collect returncode=1"
+              ],
+              "phase": "collect",
+              "qualified": false,
+              "report": {
+                "bytes": 186862,
+                "path": "/tmp/Root-existing-P7-cache-ordinary23-wire-order-retry-v367-O1PJU4sZ/actual-output/complete-frozen-local-D-Phase7-instance-feature-target-and-timeout-ordinary23-existing-owner-report.json",
+                "sha256": "2e9565c19e624f73c9305da15aca34f358aba48860b4e5423c87eca1102af834"
+              },
+              "run_entered": false
+            },
+            "v369": {
+              "child_returncode": 1,
+              "errors": [
+                "Actual normal pytest phase exited nonzero before success-binding validation: Phase7-instance-feature-target-and-timeout-ordinary23-collect returncode=1"
+              ],
+              "phase": "collect",
+              "qualified": false,
+              "report": {
+                "bytes": 189841,
+                "path": "/tmp/Root-existing-P7-cache-ordinary23-actual-storage-bound-v369-tbhjtc1g/actual-output/complete-frozen-local-D-Phase7-instance-feature-target-and-timeout-ordinary23-existing-owner-report.json",
+                "sha256": "47aacd21d1ff4f11cd8a98f13dcf0cabafc023167255c069a9e0baadf22f6326"
+              },
+              "run_entered": false
+            },
+            "v371": {
+              "child_returncode": 1,
+              "errors": [
+                "Actual normal pytest phase exited nonzero before success-binding validation: Phase7-instance-feature-target-and-timeout-ordinary23-collect returncode=1"
+              ],
+              "phase": "collect",
+              "qualified": false,
+              "report": {
+                "bytes": 195346,
+                "path": "/tmp/Root-existing-P7-cache-ordinary23-lazy-bound-v371-1LeCSOXT/actual-output/complete-frozen-local-D-Phase7-instance-feature-target-and-timeout-ordinary23-existing-owner-report.json",
+                "sha256": "bc244def29049e30ebf2a49f4e6feb5799c74c4b64c5dfb5d1c0452f4b87836e"
+              },
+              "run_entered": false
+            },
+            "v373": {
+              "child_returncode": 1,
+              "errors": [
+                "Actual normal pytest phase exited nonzero before success-binding validation: Phase7-instance-feature-target-and-timeout-ordinary23-collect returncode=1"
+              ],
+              "phase": "collect",
+              "qualified": false,
+              "report": {
+                "bytes": 216151,
+                "path": "/tmp/Root-existing-P7-cache-ordinary23-cross-root-bound-v373-e7exp78i/actual-output/complete-frozen-local-D-Phase7-instance-feature-target-and-timeout-ordinary23-existing-owner-report.json",
+                "sha256": "b79e4c7e315b3297331fe5c6543161527ef235022d60aea43515770f9311902e"
+              },
+              "run_entered": false
+            }
+          },
+          "full_historical_charge_usage_retained": true,
+          "incremental_Source_only_envelope_bytes": 134217728,
+          "retained_cumulative_Source_precharge": {
+            "bytes": 1223,
+            "path": "/tmp/Root-existing-P7-cache-ordinary23-ontology-bound-v379-rj1br0db/Source-only-authorized-ordinary23-cap-prior-retained.json",
+            "sha256": "ee8583d9a7372de70a9633068d5a300b070525e55b920307f194d95b6da9ed51"
+          },
+          "two_incomplete_actual_cohorts": {
+            "v375": {
+              "failed_test_names": [
+                "test_bounded_samples_keep_full_text_reconstruction_and_target_aliases",
+                "test_bounded_bridge_targets_are_aliased_before_full_sample_evaluation"
+              ],
+              "failures": 2,
+              "passes": 21,
+              "qualified": false,
+              "raw_JUnit": {
+                "bytes": 27085,
+                "path": "/tmp/Root-existing-P7-cache-ordinary23-router-bound-v375-882v4ujc/actual-output/Phase7-instance-feature-target-and-timeout-ordinary23-run-result0-output1.bin",
+                "sha256": "6d2962fa7dbb92aadd4e725e4bc9397fc181291599af8cfb086a4e46653243b9"
+              },
+              "report": {
+                "bytes": 1089779,
+                "path": "/tmp/Root-existing-P7-cache-ordinary23-router-bound-v375-882v4ujc/actual-output/complete-frozen-local-D-Phase7-instance-feature-target-and-timeout-ordinary23-existing-owner-report.json",
+                "sha256": "e9ba8dc44a31857846f4be2ad4fa884e2dd0e5514da41b1d133646fcfcb4bb94"
+              },
+              "unlisted_dependency": "ipfs_datasets_py/logic/modal/decompiler_repairs.py"
+            },
+            "v377": {
+              "failed_test_names": [
+                "test_bounded_samples_keep_full_text_reconstruction_and_target_aliases",
+                "test_bounded_bridge_targets_are_aliased_before_full_sample_evaluation"
+              ],
+              "failures": 2,
+              "passes": 21,
+              "qualified": false,
+              "raw_JUnit": {
+                "bytes": 34579,
+                "path": "/tmp/Root-existing-P7-cache-ordinary23-test-imports-bound-v377-qlx5wa_7/actual-output/Phase7-instance-feature-target-and-timeout-ordinary23-run-result0-output1.bin",
+                "sha256": "2d4c1c779b037c74662833f3e6e3fc9047d9bdb0c22df570c2256cb99436b91b"
+              },
+              "report": {
+                "bytes": 1106859,
+                "path": "/tmp/Root-existing-P7-cache-ordinary23-test-imports-bound-v377-qlx5wa_7/actual-output/complete-frozen-local-D-Phase7-instance-feature-target-and-timeout-ordinary23-existing-owner-report.json",
+                "sha256": "4cbed5672e20b328c073d002c94a13bc3a5afc57fcc5e821dc79ff9a9050f89f"
+              },
+              "unlisted_dependency": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_ontology_observation.py"
+            }
+          }
+        },
+        "schema": "Guide530-phase7-exact-cache-revision-and-timeout-ordinary23-scoped-facts/v1",
+        "tasks_preserved": 24
+      },
+      "evidence_ordinal": 530,
+      "id": "phase7-exact-instance-cache-and-bridge-timeout-closed-fixture-evidence530-20261125",
+      "observed_bytes": 19290,
+      "observed_sha256": "7569b31d962049811fbb12053b18ab55c3a3fc2ffa36443e8ad2b23828cc5181",
+      "path": "/tmp/Phase7-guide530-single-consolidation-private-v01-xkVNNS/one-existing-guide530-phase7-cache-ordinary23-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Published controlled Phase7 exact sample cache and process-cache retry ordinary23 fixture results.",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
     }
   ]
 }

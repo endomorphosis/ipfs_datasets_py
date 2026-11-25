@@ -3831,6 +3831,25 @@
       "separate_cohorts_and_Source_resource_closeouts": true,
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
       "training_and_gold_masks": 0
+    },
+    "phase7_exact_instance_cache_and_bridge_timeout_closed_fixture_evidence_20261125": {
+      "Title10_review_real_release_and_model_pending": true,
+      "all24_tasks126_components529_old_evidence_values_preserved": true,
+      "evidence_ordinal": 530,
+      "exact_instance_feature_target_daemon": 19,
+      "exact_timeout_process_cache": 4,
+      "facts": {
+        "bytes": 19290,
+        "path": "/tmp/Phase7-guide530-single-consolidation-private-v01-xkVNNS/one-existing-guide530-phase7-cache-ordinary23-scoped-facts.json",
+        "sha256": "7569b31d962049811fbb12053b18ab55c3a3fc2ffa36443e8ad2b23828cc5181"
+      },
+      "five_prerun_and_two_partial_cohorts_retained": true,
+      "full_eight_phase_goal_complete": false,
+      "ordinary_functions": 14,
+      "ordinary_unique_PASS": 23,
+      "record_id": "phase7-exact-instance-cache-and-bridge-timeout-closed-fixture-evidence530-20261125",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
+      "training_and_gold_masks": 0
     }
   },
   "programme_goal_hierarchy": {
