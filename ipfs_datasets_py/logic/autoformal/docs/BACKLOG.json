@@ -3905,6 +3905,35 @@
       "record_id": "phase1-memory-flight-ordinary68-phase2-private-7213-parquet-evidence532-20261125",
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
       "training_and_gold_masks": 0
+    },
+    "phase1_finite_ttl_ordinary81_phase7_private_producer74_closed_evidence_20261125": {
+      "all24_tasks126_components532_old_evidence_values_preserved": true,
+      "evidence_ordinal": 533,
+      "facts": {
+        "bytes": 10733,
+        "path": "/tmp/P1-P7-guide533-single-consolidation-private-v01-hZ4qoR/one-existing-guide533-Phase1-ordinary81-and-Phase7-private74-scoped-facts.json",
+        "sha256": "0107951810130a8f7598b45f7761f4cfa9fcdf1ad4474e7e7ddab0b2c97beccb"
+      },
+      "full_eight_phase_goal_complete": false,
+      "phase1_published_in_memory_ordinary": {
+        "functions": 40,
+        "new_finite_TTL": 13,
+        "retained": 68,
+        "unique_PASS": 81
+      },
+      "phase7_private_producer_binding": {
+        "baseline_FAIL": 16,
+        "baseline_PASS": 58,
+        "corrected_PASS": 74,
+        "independent_static_review_recorded": true,
+        "ordinary_credit": null,
+        "receipt_authenticity_review_and_trainer_record_handoff_open": true
+      },
+      "prior_attempts_and_charges_retained": true,
+      "real_review_proof_promotion_and_model_pending": true,
+      "record_id": "phase1-finite-ttl-ordinary81-phase7-private-producer74-evidence533-20261125",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
+      "training_and_gold_masks": 0
     }
   },
   "programme_goal_hierarchy": {

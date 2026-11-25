@@ -30642,6 +30642,240 @@
       "root": "artifact_workspace",
       "scope": "Independent controlled evidence for the published Phase1 in-memory cache fix and the closed private, unreviewed Phase2 §7213 Parquet transport.",
       "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase1_finite_ttl_ordinary81_phase7_private_producer74_closed_evidence_20261125",
+      "closed_software_facts": {
+        "actual_Phase1_code_publication": {
+          "bytes": 14437,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P1-finite-TTL-exact3-ordinary81-three-FF-publication-v403.json",
+          "sha256": "bf8f740479c1734945b78f09d1e28860bea97b2828842f724ec967dd2fc51bd6"
+        },
+        "actual_Phase1_ordinary81_qualification": {
+          "bytes": 31325,
+          "path": "/tmp/Root-existing-P1-finite-TTL-ordinary81-v403-nU67RwaB/actual-P1-finite-TTL-ordinary81-closed-small-v403.json",
+          "sha256": "c65c609987d8fc1c975b092ea2975f86155e954a0d1bdf73196a2023e7b3df88"
+        },
+        "actual_Phase7_private_same74": {
+          "bytes": 21243,
+          "path": "/tmp/Root-P7-proof-feedback-producer-binding-private-v01-9KDRHBEf/SEALED-P7-proof-feedback-producer-target-binding-exact-two-private-same74.json",
+          "sha256": "ac2b3d8808b36231d400acd2194a3853dae6b144e877ac1cd8ba18776fa1a03f"
+        },
+        "components_preserved": 126,
+        "evaluation_gold_mask": 0,
+        "evidence_ordinal": 533,
+        "evidence_scopes_and_counts_kept_separate": true,
+        "full_eight_phase_goal_complete": false,
+        "phase1_ordinary81_published": {
+          "SQL_Lean_or_model_qualification": false,
+          "Scope": "Controlled in-memory proof-cache software cases. SQL, Lean and model results require separate runs.",
+          "Source_resource_and_parent_closed": true,
+          "collection_execution_JUnit_order_exact": true,
+          "counts": {
+            "duplicates": 0,
+            "errors": 0,
+            "failures": 0,
+            "functions": 40,
+            "passed": 81,
+            "skipped": 0,
+            "tests": 81
+          },
+          "exact_changed_code": {
+            "ipfs_datasets_py/logic/backends/cache_protocol.py": {
+              "bytes": 43860,
+              "full9": {
+                "st_ctime_ns": "1795648407062981197",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70042605",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795648406765241699",
+                "st_nlink": "1",
+                "st_size": "43860",
+                "st_uid": "1000"
+              },
+              "git_mode": "100644",
+              "parent_blob": "312b165080753d8e032900b20d207f5efb1d30c6",
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/ipfs_datasets_py/logic/backends/cache_protocol.py",
+              "sha256": "0bce3629c7eca5bb102a85fe9d2a2de950fd4723a9b449bd24cbd7ccfe32594b",
+              "stage0_and_committed_blob": "fdcfdb7e08bdfc69336e5d3596710e77601e0b64"
+            },
+            "ipfs_datasets_py/logic/common/duckdb_proof_store.py": {
+              "bytes": 112824,
+              "full9": {
+                "st_ctime_ns": "1795648407365984755",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70042606",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795648406768673611",
+                "st_nlink": "1",
+                "st_size": "112824",
+                "st_uid": "1000"
+              },
+              "git_mode": "100644",
+              "parent_blob": "f9207a3f3b5f5f1f3e010f5c3ab1518b310e9689",
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/ipfs_datasets_py/logic/common/duckdb_proof_store.py",
+              "sha256": "2edcfca78ccc079112d67e7ab0f7ff2eee86793039892b6161e4aab1c0fd9d79",
+              "stage0_and_committed_blob": "178a2d04e906ede6d46c81bd67030ab2715a6b0a"
+            },
+            "tests/unit/logic/test_duckdb_proof_store.py": {
+              "bytes": 37526,
+              "full9": {
+                "st_ctime_ns": "1795648407691988584",
+                "st_dev": "66306",
+                "st_gid": "1000",
+                "st_ino": "70042609",
+                "st_mode": "33204",
+                "st_mtime_ns": "1795648406771540125",
+                "st_nlink": "1",
+                "st_size": "37526",
+                "st_uid": "1000"
+              },
+              "git_mode": "100644",
+              "parent_blob": "d0dfbd35be14786c963bd688fbd38de390ce83d0",
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/tests/unit/logic/test_duckdb_proof_store.py",
+              "sha256": "a1dc901654991266e9f5d75be57ad602caf7bb903c12a20de94fd72b8fd9ac33",
+              "stage0_and_committed_blob": "8b2fe955b25b6cf5342a00b1380b3658762221fe"
+            }
+          },
+          "frozen_HEAD": "b06d73ce46b7fd4b3aab63e4231d2a66e0345454",
+          "frozen_READ4": {
+            "bytes": 9085,
+            "path": "/tmp/Root-P1-finite-TTL-exact3-and-index-READ4-v400-rDYfjc8m/actual-output/actual-D27-observed-D-root-initializer-Source-READ-v01-small-closeout.json",
+            "sha256": "2c23d50b65d96bde12c9c4b9b4f6350607f65cec2e346edb17425c6551952ccc"
+          },
+          "frozen_tree": "5d550af5c14fcab7ba179e43523f844ae42c7821",
+          "full_retained_charges": {
+            "bytes": 1269,
+            "path": "/tmp/Root-existing-P1-finite-TTL-ordinary81-v403-nU67RwaB/Source-only-authorized-P1-finite-TTL-ordinary81-cap-prior-retained.json",
+            "sha256": "005aa532339e24b11de53190b3d5a44df60a191498f5ff146bd7174eab896391"
+          },
+          "local_freeze": {
+            "bytes": 10973,
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P1-finite-TTL-exact3-local-freeze-v399.json",
+            "sha256": "767e50fed9c4902c7aa77272dfdb40c378bf8e8b2b0272c36a234ff39cea0c5c"
+          },
+          "prior_private_same81": {
+            "artifact": {
+              "bytes": 11440,
+              "path": "/tmp/Phase1-proof-cache-finite-configured-TTL-private-vlur5plf/SEALED-Phase1-proof-cache-finite-TTL-exact-three-private-red-green.json",
+              "sha256": "5ee18951608135a52c57d95235fe54bdf53e23ff207f739727d9eaf2458229e4"
+            },
+            "baseline_fail": 9,
+            "baseline_pass": 72,
+            "candidate_pass": 81,
+            "ordinary_credit": false
+          },
+          "prior_two_pre_effect_refusals": [
+            {
+              "charge": {
+                "bytes": 1236,
+                "path": "/tmp/Root-existing-P1-finite-TTL-ordinary81-v401-0HsE3d5W/Source-only-authorized-P1-finite-TTL-ordinary81-cap-prior-retained.json",
+                "sha256": "6afaf417143d2b2138b9c6af5dfe4395fb15c37a84b86afeda19d9f56f9c8159"
+              },
+              "failed_attempt": {
+                "bytes": 1749,
+                "path": "/tmp/Root-existing-P1-finite-TTL-ordinary81-v401-0HsE3d5W/Root-selected-existing-P1-finite-TTL-ordinary81.json",
+                "sha256": "927c48a940d77985071e5eb55a04fdb80ca5caf090a16d51b38ddddbcc289fef"
+              },
+              "reason": "Multiline bootstrap pin binding stopped before operator launch."
+            },
+            {
+              "charge": {
+                "bytes": 1271,
+                "path": "/tmp/Root-existing-P1-finite-TTL-ordinary81-v402-lli7j9ey/Source-only-authorized-P1-finite-TTL-ordinary81-cap-prior-retained.json",
+                "sha256": "417d80feff03db6e0d3385cf5e8c0803a5032b2f7d73e13040c3f7e96c911c02"
+              },
+              "failed_attempt": {
+                "bytes": 1749,
+                "path": "/tmp/Root-existing-P1-finite-TTL-ordinary81-v402-lli7j9ey/Root-selected-existing-P1-finite-TTL-ordinary81.json",
+                "sha256": "911e65ca17abefbda1b1530622fcce64508201d229c27a38ffdfe48b1445c6ed"
+              },
+              "reason": "Uncorrected config record filled the separate fixture-artifact list. Operator stopped before Source or resource acquisition."
+            }
+          ],
+          "publication_pending": false,
+          "publisher_receipt": {
+            "bytes": 14437,
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P1-finite-TTL-exact3-ordinary81-three-FF-publication-v403.json",
+            "sha256": "bf8f740479c1734945b78f09d1e28860bea97b2828842f724ec967dd2fc51bd6"
+          },
+          "qualification": {
+            "bytes": 31325,
+            "path": "/tmp/Root-existing-P1-finite-TTL-ordinary81-v403-nU67RwaB/actual-P1-finite-TTL-ordinary81-closed-small-v403.json",
+            "sha256": "c65c609987d8fc1c975b092ea2975f86155e954a0d1bdf73196a2023e7b3df88"
+          },
+          "raw_JUnit": {
+            "bytes": 12386,
+            "path": "/tmp/Root-existing-P1-finite-TTL-ordinary81-v403-nU67RwaB/actual-output/P1-proof-cache-finite-TTL-ordinary81-run-result0-output1.bin",
+            "sha256": "be8961fe34579bfca7dbced0eaef054a8a26c0f95f953fca15faa759bfe02b21"
+          },
+          "report": {
+            "bytes": 1862888,
+            "path": "/tmp/Root-existing-P1-finite-TTL-ordinary81-v403-nU67RwaB/actual-output/complete-frozen-local-D-P1-proof-cache-finite-TTL-ordinary81-existing-owner-report.json",
+            "sha256": "92bb2c5b829b7d85f7ad994df5f45931f571624d848de889d6739391650cc027"
+          },
+          "separate_counts": {
+            "finiteTTL13": 13,
+            "new6": 6,
+            "retained62": 62
+          },
+          "source_install": {
+            "bytes": 8696,
+            "path": "/tmp/Root-P1-finite-TTL-exact3-Source3-v399-8wyQtk1H/actual-P1-finite-TTL-exact3-Source-closed-small-v399.json",
+            "sha256": "e8152e28bf14e5a6fb81bad64e077073bcd98d139c8ac281d1990787c4ccb0c6"
+          },
+          "verified_normal_fast_forward_order": [
+            "datasets",
+            "hallucinate",
+            "root"
+          ]
+        },
+        "phase7_private_producer_binding_same74": {
+          "approved_review_open": true,
+          "baseline_fail": 16,
+          "baseline_pass": 58,
+          "candidate_fail": 0,
+          "candidate_pass": 74,
+          "canonical_selection": null,
+          "earlier_attempts_retained_in_private_receipt": true,
+          "errors": 0,
+          "independent_static_software_review": "Agent calendar_bridge confirmed one builder AST delta, exact old byte/AST prefix, and mixed-input fix from raw same74 reports.",
+          "independently_selected_trainer_record_handoff_open": true,
+          "intermediate_fail": 3,
+          "intermediate_pass": 71,
+          "ordinary_credit": null,
+          "private_same74": {
+            "bytes": 21243,
+            "path": "/tmp/Root-P7-proof-feedback-producer-binding-private-v01-9KDRHBEf/SEALED-P7-proof-feedback-producer-target-binding-exact-two-private-same74.json",
+            "sha256": "ac2b3d8808b36231d400acd2194a3853dae6b144e877ac1cd8ba18776fa1a03f"
+          },
+          "receipt_authenticity_review_open": true,
+          "scope": "Fictional receipt assembly and structural target consistency in the builder. Receipt authenticity, approved review, and the independently selected record ID passed to training require their existing separate authorization and binding.",
+          "skips": 0,
+          "training_Lean_or_model_result": false
+        },
+        "previous_evidence_records_preserved": 532,
+        "prior_verified_guide532_publication": {
+          "bytes": 12922,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-guide532-four-doc-three-FF-publication-small-v397.json",
+          "sha256": "69d3542dbb1c9783078c87a053209def94f119206138a6429b35b35eba364e71"
+        },
+        "real_review_proof_promotion_and_model_pending": true,
+        "schema": "Guide533-closed-independent-Phase1-ordinary81-and-Phase7-private74-evidence/v1",
+        "tasks_preserved": 24,
+        "training_mask": 0
+      },
+      "evidence_ordinal": 533,
+      "id": "phase1-finite-ttl-ordinary81-phase7-private-producer74-evidence533-20261125",
+      "observed_bytes": 10733,
+      "observed_sha256": "0107951810130a8f7598b45f7761f4cfa9fcdf1ad4474e7e7ddab0b2c97beccb",
+      "path": "/tmp/P1-P7-guide533-single-consolidation-private-v01-hZ4qoR/one-existing-guide533-Phase1-ordinary81-and-Phase7-private74-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Independent engineering evidence for published Phase1 in-memory TTL validation and private Phase7 producer binding.",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
     }
   ]
 }
