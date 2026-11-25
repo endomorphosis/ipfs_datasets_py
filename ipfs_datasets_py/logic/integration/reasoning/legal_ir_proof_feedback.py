@@ -93,8 +93,12 @@ def _trust_boolean(value: Any, field: str) -> bool:
 
 
 def _attested_boolean(value: Mapping[str, Any], *fields: str) -> bool:
-    # Check every supplied alias; a true field cannot hide a malformed peer.
+    # Every supplied alias must be boolean and agree with its peers.
     signals = [_trust_boolean(value[name], name) for name in fields if name in value]
+    if len(set(signals)) > 1:
+        raise ProofFeedbackTrustError(
+            "conflicting proof attestation fields: " + ", ".join(fields)
+        )
     return any(signals)
 
 

@@ -516,3 +516,50 @@ def test_proof_receipt_positive_requires_explicit_unrevoked_trust(trusted):
     else:
         with pytest.raises(ProofFeedbackTrustError):
             KernelReconstructionFeedback.from_receipt(receipt)
+
+
+
+@pytest.mark.parametrize(
+    "artifact,primary,alias",
+    [
+        ("counterexample", True, False),
+        ("counterexample", False, True),
+        ("minimal_failing_contract", True, False),
+        ("minimal_failing_contract", False, True),
+    ],
+    ids=["counterexample-alias-denies", "counterexample-explicit-denial",
+         "contract-alias-denies", "contract-explicit-denial"],
+)
+def test_disagreeing_proof_attestation_flags_cannot_create_training_feedback(artifact, primary, alias):
+    from ipfs_datasets_py.logic.integration.reasoning.legal_ir_proof_feedback import ProofFeedbackTrustError
+
+    alias_field = "verifier_attested" if artifact == "counterexample" else "deterministic"
+    value = {"verified": primary, alias_field: alias, "kind": "authored-finite-witness",
+             "witness": "fictional counterexample surface", "contract_id": "authored-contract",
+             "failure_code": "authored-mismatch"}
+    try:
+        record = _trusted_record(deterministic_trusted=False, route_statuses={}, **{artifact: value})
+    except ProofFeedbackTrustError as error:
+        assert str(error) == "conflicting proof attestation fields: verified, " + alias_field
+        return
+    assert not record.eligible_for_training, "conflicting attestation became trusted training feedback"
+    pytest.fail("the input must refuse mismatched verification flags")
+
+
+@pytest.mark.parametrize(
+    "artifact,accepted",
+    [("counterexample", True), ("counterexample", False),
+     ("minimal_failing_contract", True), ("minimal_failing_contract", False)],
+    ids=["counterexample-approve", "counterexample-deny", "contract-approve", "contract-deny"],
+)
+def test_matching_proof_attestation_aliases_keep_canonical_feedback(artifact, accepted):
+    alias_field = "verifier_attested" if artifact == "counterexample" else "deterministic"
+    evidence = {"contract_id": "authored-contract", "kind": "authored-finite-witness",
+                "failure_code": "authored-mismatch", "witness": "fixture-only witness"}
+    paired = _trusted_record(deterministic_trusted=False, route_statuses={},
+                            **{artifact: {**evidence, "verified": accepted, alias_field: accepted}})
+    single = _trusted_record(deterministic_trusted=False, route_statuses={},
+                             **{artifact: {**evidence, alias_field: accepted}})
+    assert paired == single
+    assert paired.eligible_for_training is accepted
+    assert LegalIRProofFeedbackRecord.from_dict(paired.to_dict()) == paired
