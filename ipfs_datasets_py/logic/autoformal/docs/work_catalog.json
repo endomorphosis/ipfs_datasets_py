@@ -25628,6 +25628,177 @@
           "whole_eight_phase_goal_complete": false
         }
       }
+    },
+    {
+      "id": "reviewed-dependency-version40-real-inverse16-software-evidence515-20261125",
+      "evidence_ordinal": 515,
+      "path": "/tmp/guide515-same-wave-corrected-private-v02-_7y5v_ji/one-existing-guide515-closed-software-facts-corrected.json",
+      "observed_bytes": 8557,
+      "observed_sha256": "aad14ee3d06b9df47fdbe06a70d35823b488e71279ed33ec37eb666bf7a52ac0",
+      "root": "artifact_workspace",
+      "required_for_catalog_check": false,
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY",
+      "scope": "Separate closed and published ordinary40=28retained+12new and real-inverse16=14retained+2new. Private lazy-metadata12 and zero-test setup refusals retain separate scopes. Source/resource/parent closure retained; no legal/Native/model/phase completion credit.",
+      "backlog_crosslink": {
+        "path": "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json",
+        "container": "migration",
+        "key": "current_user_goal_reviewed_dependency_versions_inverse16_software_evidence515_20261125"
+      },
+      "closed_software_facts": {
+        "schema": "one-existing-four-guide515-closed-software-facts/v1",
+        "record_id": "reviewed-dependency-version40-real-inverse16-software-evidence515-20261125",
+        "migration_key": "current_user_goal_reviewed_dependency_versions_inverse16_software_evidence515_20261125",
+        "evidence_ordinal": 515,
+        "catalog_before": 514,
+        "catalog_after": 515,
+        "recorded_date_utc": "2026-11-25",
+        "scope": "Two separately qualified and published software changes. Counts stay separate; no task, phase or goal completion promotion.",
+        "reviewed_dependency_versions": {
+          "qualification_reference": {
+            "path": "/tmp/Root-P2-composed-ordinary40-selected-v247-qrabqcgd/Root-P2-composed-ordinary40-qualified-Source-resource-closed-small-v247.json",
+            "bytes": 6692,
+            "sha256": "9546b3049130495b0d799781f8728e9e1eff92e9a073efcb8e6a68aa7b59648d"
+          },
+          "publication_reference": {
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P2-composed-ordinary40-three-FF-publication-small-v247.json",
+            "bytes": 6827,
+            "sha256": "ea6f692d0c02c03a13c7355f9ef022eba775c2789b408ed82e4389a46b99fe60"
+          },
+          "ordinary_unique_pass": 40,
+          "retained_cases": 28,
+          "new_cases": 12,
+          "owning_functions": 11,
+          "failures": 0,
+          "errors": 0,
+          "skips": 0,
+          "duplicates": 0,
+          "actual_collect_order_equals_called_RUN": true,
+          "implemented_scope": "Existing V2 admission now checks unit parent/governing cycles and cross-reference version labels. Existing V3 retains its published cycle guard and gains the same version-label consistency check. A shared dependency artifact ID and SHA cannot carry contradictory declared version labels; matching labels and distinct artifact identities remain supported.",
+          "qualification_scope": "Ordinary signed fictional engineering fixtures; no genuine statutory meaning/reviewer/admission qualification.",
+          "qualified_D_HEAD": "3409f499d7cf3b08f3fbda71f6e7e066e9c57117",
+          "qualified_D_tree": "7a582c0368fa39bfb00e87b99dff1ab3a54501e4",
+          "Source_epoch_records": 1297,
+          "Source_resource_parent_workspaces_closed": true,
+          "owning_test_Source_AST_code_execution_witnesses": true,
+          "producer_epoch": "V2 owner changes also rotate V3 transitive producer pins. Older preparations, signatures, reports and masks remain unchanged and historical; no repinning or transfer of previous qualification.",
+          "published_heads": {
+            "accelerate": "88c0d9f82f66aaddbb01344c9f85236e92a5dc88",
+            "datasets": "3409f499d7cf3b08f3fbda71f6e7e066e9c57117",
+            "hallucinate": "a8059595e144a3bcff20593f11a29801c131f59f",
+            "root": "55cc38eac26f13ed5f11c0b2659444dc82d47a9a"
+          },
+          "preserved_refusals": [
+            "v246 preflight refusal retained without test credit; original full Source predebits and private/authoring failures remain retained"
+          ],
+          "private_mask_epoch_checks_not_pooled": true
+        },
+        "real_relational_inverse": {
+          "qualification_reference": {
+            "path": "/tmp/Root-Phase6-real-inverse16-selected-v255-upsjl7mk/Root-Phase6-real-inverse-ordinary16-qualified-Source-resource-closed-small-v255.json",
+            "bytes": 5986,
+            "sha256": "3535d863db12c6b19c74cbb79eaa5b4bc2bb81973548fe9f2ecc9f5767b65cc8"
+          },
+          "publication_reference": {
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase6-inverse-ordinary16-three-FF-publication-small-v255.json",
+            "bytes": 6142,
+            "sha256": "b28297a60e0e332f5f89c6b98a97edbe640661cf01a5b5110a3b9cff7042e6a5"
+          },
+          "ordinary_unique_pass": 16,
+          "retained_cases": 14,
+          "new_cases": 2,
+          "owning_functions": 8,
+          "failures": 0,
+          "errors": 0,
+          "skips": 0,
+          "duplicates": 0,
+          "actual_collect_order_equals_called_RUN": true,
+          "implemented_scope": "One existing owning test file adds two selected controls. The selected Serve-role obligation/assertion controls remain non-equivalent, and the selected unsupported past-tense input abstains. No product owner changed.",
+          "qualified_D_HEAD": "c023a6cb0d7b18e42e80ad0d82bedfc75e4fd8ae",
+          "qualified_D_tree": "fb88f59586144ce167347f1e198a14bc69562b0d",
+          "Source_epoch_records": 1307,
+          "actual_test_module": "autoencoder.test_ir_legal_text_roundtrip",
+          "owning_test_source_sha256": "f918c5c29396beccf9119d41a4017763511a3abb737c4ce79f1f33c3eda50c72",
+          "genuine_empty_test_initializer_read": {
+            "path": "tests/unit/logic/formalization/autoencoder/__init__.py",
+            "empty": true,
+            "source_READ_ABI_reference": {
+              "bytes": 10587,
+              "path": "/tmp/Phase6-existing-modern-ordinary16-INERT-v01-nhwy2jb4/actual-empty-init-READ1-package-role-DATA-v05/actual-Phase6ordinary16-READ-ABI-genuine-empty-test-init-1307-1298.json",
+              "sha256": "b42a1613f01406c059aa13570c100d123b0582c3723a99526be564eae3fe69f4"
+            }
+          },
+          "COLLECT_terminal_owner_visibility": {
+            "ipfs_datasets_py.logic.autoformal.legal_relational_reconstruction_v1": "not_loaded",
+            "ipfs_datasets_py.logic.legal_ir.extended_compiler": "not_loaded",
+            "ipfs_datasets_py.logic.legal_ir.extended_decompiler": "not_loaded",
+            "ipfs_datasets_py.logic.syntax_core.ast": "not_loaded"
+          },
+          "RUN_terminal_owner_visibility": {
+            "ipfs_datasets_py.logic.autoformal.legal_relational_reconstruction_v1": "loaded",
+            "ipfs_datasets_py.logic.legal_ir.extended_compiler": "loaded",
+            "ipfs_datasets_py.logic.legal_ir.extended_decompiler": "loaded",
+            "ipfs_datasets_py.logic.syntax_core.ast": "loaded"
+          },
+          "RUN_terminal_actual_loaded_compiled_owner_names": [
+            "ipfs_datasets_py.logic.legal_ir.extended_compiler",
+            "ipfs_datasets_py.logic.legal_ir.extended_decompiler",
+            "ipfs_datasets_py.logic.autoformal.legal_relational_reconstruction_v1",
+            "ipfs_datasets_py.logic.syntax_core.ast"
+          ],
+          "initial_binding_visibility_is_not_RUN_terminal_status": true,
+          "no_force_import_to_make_COLLECT_pass": true,
+          "legacy_strict_profile_retained": true,
+          "Source_and_execution_witness_guards_retained": true,
+          "detached_scorer": {
+            "path": "ipfs_datasets_py/logic/formalization/autoencoder/ir_legal_text_roundtrip.py",
+            "sha256": "a0424bbb63df198457f32861d5302859361a4d4d37a78145ee8f8b75d41817e8",
+            "current_Source_compiled": true,
+            "canonical_registration_invented": false
+          },
+          "private_lazy_visibility_metadata_controls": {
+            "same_cohort_cases": 12,
+            "baseline_passed": 5,
+            "baseline_failed": 7,
+            "corrected_passed": 12,
+            "separate_from_public16": true
+          },
+          "preserved_zero_test_refusals": [
+            "v252 stale-index Source preflight: zero tests",
+            "v253 unlisted genuine empty test-package initializer: zero tests"
+          ],
+          "Source_resource_parent_workspaces_closed": true,
+          "published_heads": {
+            "accelerate": "88c0d9f82f66aaddbb01344c9f85236e92a5dc88",
+            "datasets": "c023a6cb0d7b18e42e80ad0d82bedfc75e4fd8ae",
+            "hallucinate": "e8209466cf7062005d3386eda4750f5067de0572",
+            "root": "56c5a3cb1fc95d187e62fd7eb815bd2b113ed63c"
+          },
+          "postrun_extractor_shape_failure_corrected_without_test_replay": true
+        },
+        "publication": {
+          "both_units_three_normal_fast_forwards_closed": true,
+          "actual_remote_readbacks_clean_stores_and_gitlinks_reported": true,
+          "unchanged_A": "88c0d9f82f66aaddbb01344c9f85236e92a5dc88",
+          "other_gitlinks_preserved": true,
+          "new_Source_test_or_runtime_replay_for_this_consolidation": false
+        },
+        "preservation_and_limits": {
+          "all24_tasks_dependencies_acceptance_and_statuses_unchanged": true,
+          "all126_components_and_statuses_unchanged": true,
+          "all514_prior_evidence_records_unchanged": true,
+          "old_MD_byte_prefixes_unchanged": true,
+          "all_failures_costs_and_full_predebits_retained": true,
+          "physical_IO_accounting_complete": false,
+          "private_P7_bool_alias_Source2_status": "Private proposal/preparation only at this snapshot; not adopted and no ordinary/publication credit in this record.",
+          "new_legal_statutory_meaning_review_or_training_gold_admission": false,
+          "new_Native_Lean_compiler_proof_qualification": false,
+          "new_model_fit_quality_or_hosted_CI_qualification": false,
+          "new_host_ledger_cap_claim_or_census_operation": false,
+          "public_Torch_V4_qualification_added": false,
+          "phase_completion_promotions": false,
+          "whole_eight_phase_goal_complete": false
+        }
+      }
     }
   ]
 }
