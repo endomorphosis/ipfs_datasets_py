@@ -3565,6 +3565,36 @@
       "record_id": "p8-benchmark-evidence-identity-ordinary21-software-evidence520-20261125",
       "status": "closed_software_evidence_only_no_task_status_change",
       "synthetic_evaluation_only_no_expert_model_training_gold_legal_Lean_claim": true
+    },
+    "phase45_grouped_unicode_ordinary152_closed_software_evidence_20261125": {
+      "COLLECT_RUN_JUnit_literal_order_exact": true,
+      "Source_module_roles": 14,
+      "Source_resource_parent_cleanup_closed": true,
+      "all24_tasks126_components_and520_old_evidence_values_preserved": true,
+      "cap_header_policy_eligibility_unchanged": true,
+      "evidence_ordinal": 521,
+      "facts": {
+        "bytes": 7761,
+        "path": "/tmp/Phase45-guide521-single-consolidation-private-v01/one-existing-guide521-closed-phase45-software-facts.json",
+        "sha256": "7a2fa1f464bb5aa8734c68a52e33a6d6ddcaac9371d5c6951baa655fbc514cb9"
+      },
+      "file_case_counts": {
+        "tests/unit/logic/test_autoformal_campaign_training_inputs.py": 10,
+        "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_evaluation_artifacts.py": 6,
+        "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_external_benchmark.py": 21,
+        "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_split_membership.py": 110,
+        "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_consumer_binding.py": 5
+      },
+      "full_eight_phase_goal_complete": false,
+      "functions": 43,
+      "no_fit_pretrained_gold_legal_SQL_Native_Lean_promotion": true,
+      "opt_in_grouped_Unicode_provenance_default_byte_identity": true,
+      "owning_files": 5,
+      "private131_and_prior_public21_retained_separately": true,
+      "public_normal152_unique_PASS": 152,
+      "record_id": "phase45-grouped-unicode-ordinary152-software-evidence521-20261125",
+      "status": "closed_software_evidence_only_no_task_status_change",
+      "v311_v312_v313_v314_setup_refusals_and_full_Source_costs_retained": true
     }
   },
   "programme_goal_hierarchy": {

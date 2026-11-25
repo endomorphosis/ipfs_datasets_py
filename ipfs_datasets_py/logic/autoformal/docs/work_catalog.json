@@ -26694,6 +26694,201 @@
       "root": "artifact_workspace",
       "scope": "Published benchmark mandatory-evidence and packet-identity software fixtures: normal21; private SAME21 remains separate. Synthetic reference-derived values grant no real external review/model quality/training/gold/legal/Lean qualification.",
       "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase45_grouped_unicode_ordinary152_closed_software_evidence_20261125",
+      "closed_software_facts": {
+        "behavior": {
+          "Unicode_near_duplicate_fingerprint": {
+            "default": "existing byte-identity profile retained",
+            "explicit_profile_and_provenance": true,
+            "feature": "Unicode trigrams",
+            "normalization": "NFC then casefold",
+            "selection": "opt-in"
+          },
+          "complete_reviewed_decoder_and_rich_context": {
+            "complete_nine_field_mixed_targets_retained": true,
+            "original_source_target_bytes_retained": true,
+            "selected_prep_and_evaluation_software_fixture_scope_only": true
+          },
+          "grouped_dependency_split": {
+            "complete_dependency_component_grouping_and_explicit_group_provenance": true,
+            "default": "existing byte-identity behavior retained",
+            "selection": "opt-in"
+          }
+        },
+        "evidence_ordinal": 521,
+        "maintenance": {
+          "Source_runtime_Git_or_canonical_action_by_composer": false,
+          "components_retained": 126,
+          "new_record_count": 1,
+          "ordinal": 521,
+          "prior_evidence_values_retained": 520,
+          "tasks_retained": 24,
+          "whole_old_Markdown_prefixes_retained": true
+        },
+        "no_promotions": {
+          "Native_or_Lean_execution_or_proof": false,
+          "SQL51_SQLget_MainSQL_tests": false,
+          "external_pretrained_assets_requested": false,
+          "gold_or_training_admission": false,
+          "human_or_legal_semantic_review": false,
+          "managed_ledger_header_cap_policy_or_eligibility_changed": false,
+          "model_fit_or_pretrained_training": false,
+          "prediction_quality_or_real_evaluation_gold": false,
+          "task_or_component_status_changed_by_this_documentary_update": false,
+          "whole_eight_phase_goal_complete": false
+        },
+        "public_ordinary152": {
+          "COLLECT_RUN_JUnit_literal_order_exact": true,
+          "Source_resource_and_parent_closed": true,
+          "actual_Source_AST_code_witnesses_observed": true,
+          "case_sum": 152,
+          "current_Source_module_roles": 14,
+          "duplicates": 0,
+          "errors": 0,
+          "failures": 0,
+          "fictional_signed_and_reference_derived_fixtures_only": true,
+          "file_case_counts": {
+            "tests/unit/logic/test_autoformal_campaign_training_inputs.py": 10,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_evaluation_artifacts.py": 6,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_external_benchmark.py": 21,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_split_membership.py": 110,
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_consumer_binding.py": 5
+          },
+          "five_normal_conftests_and_pytest_ini_loaded": true,
+          "functions": 43,
+          "owning_files": 5,
+          "physical_IO_accounting_complete": false,
+          "published_D_HEAD": "e28f7f0de5d6ca4beb71326f035011638158748f",
+          "published_D_tree": "c92d7efbf480401be88e8e8a5eb3eb4370f03150",
+          "qualification": {
+            "bytes": 6423,
+            "path": "/tmp/Root-Phase45-grouped-Unicode-ordinary152-v315-0zy06y6l/Root-Phase45-eight-plus-P8-ordinary152-qualified-small.json",
+            "sha256": "8610fb81762a9896f961eb878dae90428cfc3b98f770f6ea227c3d16b8851ecf"
+          },
+          "raw_JUnit": {
+            "bytes": 31193,
+            "logical_name": "junit.xml",
+            "path": "/tmp/Root-Phase45-grouped-Unicode-ordinary152-v315-0zy06y6l/actual-output/Phase45-eight-plus-P8-152-run-result0-output1.bin",
+            "sha256": "de0af3c2623e57c2b932b82c1c090aaac660d49c1f96d69d6a76106c3f594c5b"
+          },
+          "run_seconds": 420.0873437523842,
+          "skips": 0,
+          "unique_PASS": 152
+        },
+        "publication": {
+          "actual_receipt": {
+            "bytes": 11790,
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase45-ordinary152-three-FF-publication-v315.json",
+            "sha256": "ee417bd05ccafbab0f6982cf9a9abfa3ceccd77a0499a4d8de1c240b8c3a7c76"
+          },
+          "exact_eight_Source_posts_committed_and_qualified": true,
+          "guide520_P8_other_code_and_unrelated_links_preserved": true,
+          "normal_fast_forward_order": [
+            "datasets",
+            "hallucinate",
+            "root"
+          ],
+          "repositories": {
+            "accelerate": {
+              "HEAD": "88c0d9f82f66aaddbb01344c9f85236e92a5dc88",
+              "clean_worktree_and_index": true,
+              "gitlinks_updated": {},
+              "origin_main": "88c0d9f82f66aaddbb01344c9f85236e92a5dc88",
+              "tree": "416a953630c9ba7ef521fd87bf821f075b052efc"
+            },
+            "datasets": {
+              "HEAD": "e28f7f0de5d6ca4beb71326f035011638158748f",
+              "clean_worktree_and_index": true,
+              "gitlinks_updated": {},
+              "origin_main": "e28f7f0de5d6ca4beb71326f035011638158748f",
+              "tree": "c92d7efbf480401be88e8e8a5eb3eb4370f03150"
+            },
+            "hallucinate": {
+              "HEAD": "30f77622060155c6f4070fcdc4e957cedfaae3ef",
+              "clean_worktree_and_index": true,
+              "gitlinks_updated": {
+                "ipfs_datasets_py": "e28f7f0de5d6ca4beb71326f035011638158748f"
+              },
+              "origin_main": "30f77622060155c6f4070fcdc4e957cedfaae3ef",
+              "tree": "5f76c56ad88855a67189d1fdaeec4a24c4785223"
+            },
+            "root": {
+              "HEAD": "f5ccc9972ff8e84ba274edca4e0e4945dba8ba05",
+              "clean_worktree_and_index": true,
+              "gitlinks_updated": {
+                "external/ipfs_datasets": "e28f7f0de5d6ca4beb71326f035011638158748f",
+                "hallucinate_app": "30f77622060155c6f4070fcdc4e957cedfaae3ef"
+              },
+              "origin_main": "f5ccc9972ff8e84ba274edca4e0e4945dba8ba05",
+              "tree": "0c0a410bce4d6efa2e64e234856416854dfbb4b3"
+            }
+          }
+        },
+        "record_id": "phase45-grouped-unicode-ordinary152-software-evidence521-20261125",
+        "retained_refusals": {
+          "Source_scope_static_analysis_is_not_dynamic_closure_or_extra_test_credit": true,
+          "all_v311_v312_v313_v314_setup_refusals_and_full_Source128_reservations_retained": true,
+          "normal_attempts": [
+            {
+              "attempt": "v311",
+              "full_Source128_retained": true,
+              "report": {
+                "bytes": 94751,
+                "path": "/tmp/Root-Phase45-grouped-Unicode-ordinary152-v311-llt6wzcq/actual-output/complete-frozen-local-D-P8-external-benchmark21-existing-owner-report.json",
+                "sha256": "d6e1f9139d2f84e0e56c1086e09a84ffd3c0aae49c11953f7a08fef995581728"
+              }
+            },
+            {
+              "attempt": "v312",
+              "full_Source128_retained": true,
+              "report": {
+                "bytes": 147969,
+                "path": "/tmp/Root-Phase45-grouped-Unicode-ordinary152-v312-qd76zb_7/actual-output/complete-frozen-local-D-Phase45-eight-plus-P8-152-existing-owner-report.json",
+                "sha256": "b27a262c6000e4a27e221c7464ff97a21d669da755878d6890a35773988ff968"
+              }
+            },
+            {
+              "attempt": "v313",
+              "full_Source128_retained": true,
+              "report": {
+                "bytes": 150316,
+                "path": "/tmp/Root-Phase45-grouped-Unicode-ordinary152-v313-gkzpu28l/actual-output/complete-frozen-local-D-Phase45-eight-plus-P8-152-existing-owner-report.json",
+                "sha256": "6422e9ade137038bd1ea0b49d8540d49f1b9f0caffb8c811e4fad5be89e0030b"
+              }
+            },
+            {
+              "Source_and_SDK_never_started": true,
+              "attempt": "v314",
+              "exit_code": 1,
+              "full_Source128_retained": true,
+              "operator": {
+                "bytes": 118840,
+                "path": "/tmp/Root-Phase45-grouped-Unicode-ordinary152-v314-gzruwex1/Root-selected-operator.py",
+                "sha256": "7f3e41234210b1a3e62951743b2e2b4e6cc58549c1377630b82e9645ec3fad1b"
+              }
+            }
+          ],
+          "not_product_behavior_failures_or_qualified_passes": true,
+          "schema_and_Source_scope_corrections_preserved_existing_guards": true
+        },
+        "schema": "closed-Phase45-P8-ordinary152-published-software-facts/v1",
+        "separate_prior_evidence": {
+          "prior_private_P8_21_is_separate": true,
+          "prior_public_P8_21_is_not_added_to_fresh_P8_21": true,
+          "private_joined131_is_not_added_to_public152": true
+        }
+      },
+      "evidence_ordinal": 521,
+      "id": "phase45-grouped-unicode-ordinary152-software-evidence521-20261125",
+      "observed_bytes": 7761,
+      "observed_sha256": "7a2fa1f464bb5aa8734c68a52e33a6d6ddcaac9371d5c6951baa655fbc514cb9",
+      "path": "/tmp/Phase45-guide521-single-consolidation-private-v01/one-existing-guide521-closed-phase45-software-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Published grouped/Unicode split, reviewed decoder/history and rich V4 software fixtures: fresh ordinary152; earlier private131/public21 remain separate. Fictional signed/reference-derived fixture results grant no real model/training/gold/legal/SQL/Native/Lean authority.",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
     }
   ]
 }
