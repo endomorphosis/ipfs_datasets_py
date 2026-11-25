@@ -25983,6 +25983,132 @@
           "whole_eight_phase_goal_complete": false
         }
       }
+    },
+    {
+      "id": "p1-coherent-cache166-and-strict-v1-refusal54-software-evidence517-20261125",
+      "evidence_ordinal": 517,
+      "path": "/tmp/P1-guide517-single-consolidation-private-v01/one-existing-guide517-closed-software-facts.json",
+      "observed_bytes": 5042,
+      "observed_sha256": "f597922a6419c809315330efa1d812c873d0316f1df282b22111670bbf35a87e",
+      "root": "artifact_workspace",
+      "required_for_catalog_check": false,
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY",
+      "scope": "Closed coherent-cache ordinary166 and strict V1 initial-read-refusal ordinary54 software fixtures, separate denominators; SQL51 refused before tests/admission; SQL and Native qualification remain open.",
+      "backlog_crosslink": "BACKLOG.json#/migration/p1_coherent_cache_and_strict_v1_refusal_closed_software_evidence_20261125",
+      "closed_software_facts": {
+        "schema": "one-existing-guide517-closed-software-facts/v1",
+        "record_id": "p1-coherent-cache166-and-strict-v1-refusal54-software-evidence517-20261125",
+        "evidence_ordinal": 517,
+        "coherent_proof_cache": {
+          "six_code_candidate_D_HEAD": "35e56b6b34c5cd363935e5377c1946a1a53e32b1",
+          "D_tree": "6be75ed4c9a6448a59ab035cdaed746af66d6d7e",
+          "ordinary_unique_PASS": 166,
+          "failures": 0,
+          "errors": 0,
+          "skips": 0,
+          "software_fixture_scope_only": true,
+          "ordinary_qualification": {
+            "bytes": 1587,
+            "path": "/tmp/Root-P1-local-coherent-cache-ordinary166-READ1-final-v285-vylkm1fy/Root-P1-coherent-cache-ordinary166-qualified-small-v285.json",
+            "sha256": "03b09e1183d2cb1415a82daae2e9de6e30db71cf58924b1e838356a15101b5de"
+          },
+          "publication": {
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/P1-proof-context-aggregation-private-v01-6eRrVF/publication-ordinary166-v285-SQL51-refused-v287/P1-ordinary166-published-remote-clean-gitlink-receipt.json",
+            "bytes": 5055,
+            "sha256": "60ed17357325882c8b2bc3fdd812bfa965a32e2fa42e6835c2e753bc8771584d"
+          },
+          "historical_SQL51_v287": {
+            "test_cases_run": 0,
+            "admission": false,
+            "configured_limit_bytes": 250000000000,
+            "persisted_header_limit_bytes": 280000000000,
+            "scope_mismatch_retained": true,
+            "Source_custody_identity_bound_recovery": true,
+            "original_failure_preserved": true,
+            "historical_typed_terminal_reclassified": false,
+            "refusal_and_recovery": {
+              "bytes": 1800,
+              "path": "/tmp/Root-P1-SQL51-actual-source-resource-selection-v287-6h9nx_q8/Root-SQL51-no-grant-original-refusal-custody-recovered-small-v287.json",
+              "sha256": "eec454b13b27a9c5fd06bc96cc7ad4fa67e48c86a92068d7f257d197463cbb02"
+            }
+          },
+          "SQL_companion_and_Main_genuine_SQL_test": "UNRUN",
+          "Native_cache_qualification": "PENDING"
+        },
+        "strict_V1_initial_read_refusal": {
+          "published_D_HEAD": "5cb7aca73e8fc36bc8a1fa9f0cb3c648452967ab",
+          "D_tree": "824d985501147bb58fc9874137c548a8023c3bb6",
+          "canonical_launcher_SHA256": "7f8d0173f46403f1fc6ace57e6d8d5495937a07c404947d3595952e06a0f8914",
+          "owning_test_SHA256": "bc26f32129fe2d266066177e0bb325c0faf2cac3f1d98762770e13b069e502ff",
+          "ordinary_unique_PASS": 54,
+          "retained_V5": 27,
+          "new_V1": 27,
+          "failures": 0,
+          "errors": 0,
+          "skips": 0,
+          "duplicates": 0,
+          "actual_collect_run_JUnit_order_exact": true,
+          "all54_function_case_counts_one": true,
+          "actual_five_conftests_loaded": true,
+          "normal_Source_AST_code_execution_witnesses": true,
+          "actual_canonical_launcher_compiled": true,
+          "Source_and_resource_cleanup_closed": true,
+          "qualification": {
+            "path": "/tmp/Root-V1-frozen-local-modern-normal54-v293-dvxgqlkd/Root-V1-strict-refusal-ordinary54-qualified-small-v293.json",
+            "bytes": 3915,
+            "sha256": "f0cc37b95d733143f26d78cb910824c6398bed3a0a589a371c6c2c02cb7d5930"
+          },
+          "publication": {
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/p1-v1-strict-refusal-local-freeze-v291/publication-ordinary54-v293/ordinary54-published-remote-clean-gitlink-receipt.json",
+            "bytes": 4640,
+            "sha256": "0c55c1cbb5a363850c6cf24c3f6cc089c7d9dbdc0004e82cdf823e6b25b07ea2"
+          },
+          "original_v287_not_given_retroactive_typed_terminal": true
+        },
+        "publication": {
+          "both_units_normal_child_first_fast_forwards": true,
+          "latest_origin_main_heads": {
+            "accelerate": "88c0d9f82f66aaddbb01344c9f85236e92a5dc88",
+            "datasets": "5cb7aca73e8fc36bc8a1fa9f0cb3c648452967ab",
+            "hallucinate": "76d3bb5b116325921403aad161b96f6ab4a73971",
+            "root": "a980d038f234249a561c3200dd8fd332fce0a8ac"
+          },
+          "all_four_clean_and_remote_readbacks_exact": true,
+          "all_other_gitlinks_preserved": true
+        },
+        "separate_private_cache_leader_same4": {
+          "canonical_adoption": false,
+          "ordinary166_or54_credit": false
+        },
+        "unchanged": {
+          "storage_cap": true,
+          "ledger_header": true,
+          "scheduler_policy": true,
+          "eligibility": true,
+          "grant_authority": true
+        },
+        "limits": {
+          "SQL_or_Native_retried": false,
+          "actual_SQL_tests_added": 0,
+          "actual_Native_execution_added": false,
+          "complete_physical_IO_accounting_claimed": false,
+          "substantive_statutory_meaning_review": false,
+          "independent_legal_review_grant": false,
+          "training_gold_or_legal_admission": false,
+          "training_fit_or_model_quality": false,
+          "hosted_CI_qualification": false,
+          "full_eight_phase_goal_complete": false
+        },
+        "maintenance": {
+          "prior_tasks": 24,
+          "prior_components": 126,
+          "prior_evidence_records": 516,
+          "task_status_dependencies_acceptance_unchanged": true,
+          "component_status_unchanged": true,
+          "single_consolidation_only": true,
+          "composer_Source_Git_runtime_effects": false
+        }
+      }
     }
   ]
 }

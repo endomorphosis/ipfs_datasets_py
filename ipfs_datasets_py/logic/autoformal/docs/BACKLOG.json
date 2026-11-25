@@ -3443,6 +3443,37 @@
         "phase_completion_promotions": false,
         "whole_eight_phase_goal_complete": false
       }
+    },
+    "p1_coherent_cache_and_strict_v1_refusal_closed_software_evidence_20261125": {
+      "record_id": "p1-coherent-cache166-and-strict-v1-refusal54-software-evidence517-20261125",
+      "evidence_ordinal": 517,
+      "status": "closed_software_fixture_evidence_only_no_task_status_change",
+      "facts": {
+        "path": "/tmp/P1-guide517-single-consolidation-private-v01/one-existing-guide517-closed-software-facts.json",
+        "bytes": 5042,
+        "sha256": "f597922a6419c809315330efa1d812c873d0316f1df282b22111670bbf35a87e"
+      },
+      "public_ordinary_cohorts": [
+        {
+          "unique_PASS": 166,
+          "D_HEAD": "35e56b6b34c5cd363935e5377c1946a1a53e32b1"
+        },
+        {
+          "unique_PASS": 54,
+          "D_HEAD": "5cb7aca73e8fc36bc8a1fa9f0cb3c648452967ab",
+          "retained_V5": 27,
+          "new_V1": 27
+        }
+      ],
+      "SQL51_v287": "0 tests; no admission; original250GB/280GBscope refusal and identity-bound Source recovery retained",
+      "SQL_companion_and_Main_genuine_SQL_test": "UNRUN",
+      "Native": "PENDING",
+      "storage_header_cap_policy_eligibility_unchanged": true,
+      "original_v287_not_reclassified": true,
+      "separate_private_same4_unadopted": true,
+      "all24_task_values_statuses_and126_components_preserved": true,
+      "all516_prior_evidence_records_preserved": true,
+      "full_eight_phase_goal_complete": false
     }
   },
   "programme_goal_hierarchy": {
