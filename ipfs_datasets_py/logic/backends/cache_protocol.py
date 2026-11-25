@@ -775,6 +775,23 @@ class ExactVerificationCache:
             self._entries.popitem(last=False)
             self._stats["evictions"] += 1
 
+    @staticmethod
+    def _authority_rejection(
+        entry: VerificationCacheEntry | None,
+        required: ResultAuthority | None,
+        ceiling: EvidenceAuthority | None,
+    ) -> CacheLookupReason | None:
+        if required is not None and (entry is None or entry.result_authority is not required):
+            return CacheLookupReason.AUTHORITY_MISMATCH
+        if ceiling is not None:
+            if entry is None:
+                return CacheLookupReason.INSUFFICIENT_AUTHORITY
+            try:
+                entry.require_authority_at_most(ceiling)
+            except VerificationCacheAuthorityError:
+                return CacheLookupReason.INSUFFICIENT_AUTHORITY
+        return None
+
     def _evaluate_entry(
         self,
         entry: VerificationCacheEntry,
@@ -784,6 +801,7 @@ class ExactVerificationCache:
         max_evidence_authority: EvidenceAuthority | None,
         now: float,
         single_flight_shared: bool = False,
+        count_hit: bool = True,
     ) -> VerificationCacheLookup:
         if entry.key.digest != key.digest:
             self._stats["rejections"] += 1
@@ -823,34 +841,20 @@ class ExactVerificationCache:
                 age_seconds=entry.age_seconds(now=now),
                 single_flight_shared=single_flight_shared,
             )
-        if (
-            require_result_authority is not None
-            and entry.result_authority is not require_result_authority
-        ):
+        rejection = self._authority_rejection(
+            entry, require_result_authority, max_evidence_authority
+        )
+        if rejection is not None:
             self._stats["rejections"] += 1
             return VerificationCacheLookup(
                 entry=entry,
                 hit=True,
                 usable=False,
-                reason=CacheLookupReason.AUTHORITY_MISMATCH,
+                reason=rejection,
                 key_digest=key.digest,
                 age_seconds=entry.age_seconds(now=now),
                 single_flight_shared=single_flight_shared,
             )
-        if max_evidence_authority is not None:
-            try:
-                entry.require_authority_at_most(max_evidence_authority)
-            except VerificationCacheAuthorityError:
-                self._stats["rejections"] += 1
-                return VerificationCacheLookup(
-                    entry=entry,
-                    hit=True,
-                    usable=False,
-                    reason=CacheLookupReason.INSUFFICIENT_AUTHORITY,
-                    key_digest=key.digest,
-                    age_seconds=entry.age_seconds(now=now),
-                    single_flight_shared=single_flight_shared,
-                )
         reason = (
             CacheLookupReason.NEGATIVE_HIT
             if entry.polarity is CachePolarity.NEGATIVE
@@ -858,7 +862,8 @@ class ExactVerificationCache:
         )
         if single_flight_shared:
             reason = CacheLookupReason.SINGLE_FLIGHT_SHARED
-        self._stats["hits"] += 1
+        if count_hit:
+            self._stats["hits"] += 1
         return VerificationCacheLookup(
             entry=entry,
             hit=True,
@@ -1080,13 +1085,29 @@ class ExactVerificationCache:
                 raise VerificationCacheError(
                     "producer must return VerificationCacheEntry or TypedBackendResult"
                 )
+            required = (
+                None
+                if require_result_authority is None
+                else _result_authority(require_result_authority)
+            )
+            ceiling = (
+                None
+                if max_evidence_authority is None
+                else _evidence_authority(max_evidence_authority)
+            )
             stored = self.put(entry, now=now)
             flight.entry = stored.entry
+            evaluated = self._evaluate_entry(
+                stored.entry, key, require_result_authority=required,
+                max_evidence_authority=ceiling,
+                now=time.time() if now is None else float(now),
+                count_hit=False,
+            )
             return VerificationCacheLookup(
-                entry=stored.entry,
+                entry=stored.entry if evaluated.entry is not None else None,
                 hit=False,
-                usable=True,
-                reason=CacheLookupReason.STORED,
+                usable=evaluated.usable,
+                reason=CacheLookupReason.STORED if evaluated.usable else evaluated.reason,
                 key_digest=key.digest,
                 single_flight_shared=False,
             )

@@ -2098,6 +2098,19 @@ class DuckDBProofStore:
             self._verification_index.pop(vdigest, None)
             self._stats["evictions"] += 1
 
+    @staticmethod
+    def _trust_ceiling(
+        max_trust_level: ProofTrustLevel | str | None,
+        max_evidence_authority: EvidenceAuthority | str | None,
+    ) -> ProofTrustLevel | None:
+        if max_trust_level is not None:
+            return _enum(max_trust_level, ProofTrustLevel, "max_trust_level")
+        if max_evidence_authority is not None:
+            return trust_level_from_evidence(
+                _enum(max_evidence_authority, EvidenceAuthority, "max_evidence_authority")
+            )
+        return None
+
     def _evaluate_entry(
         self,
         entry: UnifiedProofEntry,
@@ -2106,6 +2119,8 @@ class DuckDBProofStore:
         max_trust_level: ProofTrustLevel | None,
         now: float,
         single_flight_shared: bool = False,
+        require_result_authority: ResultAuthority | str | None = None,
+        count_hit: bool = True,
     ) -> VerificationCacheLookup:
         # Exact key check — fail closed on digest mismatch.
         if entry.key.digest != key.digest:
@@ -2201,13 +2216,26 @@ class DuckDBProofStore:
         )
         if single_flight_shared:
             reason = CacheLookupReason.SINGLE_FLIGHT_SHARED
-        self._stats["hits"] += 1
-        self._access_touch(entry.key.digest, hit=True, now=now)
+        if count_hit:
+            self._stats["hits"] += 1
+            self._access_touch(entry.key.digest, hit=True, now=now)
         ventry = entry.to_verification_cache_entry()
+        usable = True
+        if require_result_authority is not None:
+            required = (
+                require_result_authority
+                if isinstance(require_result_authority, ResultAuthority)
+                else ResultAuthority(require_result_authority)
+            )
+            if ventry.result_authority is not required:
+                self._stats["rejections"] += 1
+                self._access_touch(key.digest, rejection=True, now=now)
+                usable = False
+                reason = CacheLookupReason.AUTHORITY_MISMATCH
         return VerificationCacheLookup(
             entry=ventry,
             hit=True,
-            usable=True,
+            usable=usable,
             reason=reason,
             key_digest=key.digest,
             age_seconds=entry.age_seconds(now=now),
@@ -2224,20 +2252,7 @@ class DuckDBProofStore:
         now: float | None = None,
     ) -> VerificationCacheLookup:
         unified = self._resolve_unified_key(key)
-        ceiling = (
-            None
-            if max_trust_level is None
-            else _enum(max_trust_level, ProofTrustLevel, "max_trust_level")
-        )
-        # Map evidence ceiling onto trust when trust ceiling omitted.
-        if ceiling is None and max_evidence_authority is not None:
-            ceiling = trust_level_from_evidence(
-                _enum(
-                    max_evidence_authority,
-                    EvidenceAuthority,
-                    "max_evidence_authority",
-                )
-            )
+        ceiling = self._trust_ceiling(max_trust_level, max_evidence_authority)
         current = time.time() if now is None else float(now)
         with self._lock:
             if self._connection is not None:
@@ -2297,31 +2312,10 @@ class DuckDBProofStore:
                 unified,
                 max_trust_level=ceiling,
                 now=current,
+                require_result_authority=require_result_authority,
             )
-            # Optional result-authority filter (protocol parity).
-            if (
-                result.usable
-                and result.entry is not None
-                and require_result_authority is not None
-            ):
-                required = (
-                    require_result_authority
-                    if isinstance(require_result_authority, ResultAuthority)
-                    else ResultAuthority(require_result_authority)
-                )
-                if result.entry.result_authority is not required:
-                    self._stats["rejections"] += 1
-                    self._access_touch(
-                        unified.digest, rejection=True, now=current
-                    )
-                    return VerificationCacheLookup(
-                        entry=result.entry,
-                        hit=True,
-                        usable=False,
-                        reason=CacheLookupReason.AUTHORITY_MISMATCH,
-                        key_digest=unified.digest,
-                        age_seconds=result.age_seconds,
-                    )
+            if result.reason is CacheLookupReason.AUTHORITY_MISMATCH and result.entry is not None:
+                return result
             if result.reason in {
                 CacheLookupReason.EXPIRED,
                 CacheLookupReason.TAMPERED,
@@ -2505,17 +2499,14 @@ class DuckDBProofStore:
                     reason=CacheLookupReason.SINGLE_FLIGHT_SHARED if result.usable else result.reason,
                     key_digest=result.key_digest, age_seconds=result.age_seconds, single_flight_shared=True)
             current = time.time() if now is None else float(now)
-            ceiling = (
-                None
-                if max_trust_level is None
-                else _enum(max_trust_level, ProofTrustLevel, "max_trust_level")
-            )
+            ceiling = self._trust_ceiling(max_trust_level, max_evidence_authority)
             return self._evaluate_entry(
                 flight.entry,
                 unified,
                 max_trust_level=ceiling,
                 now=current,
                 single_flight_shared=True,
+                require_result_authority=require_result_authority,
             )
 
         try:
@@ -2541,13 +2532,29 @@ class DuckDBProofStore:
                     "producer must return UnifiedProofEntry, "
                     "VerificationCacheEntry, or TypedBackendResult"
                 )
+            required = (
+                None
+                if require_result_authority is None
+                else _enum(require_result_authority, ResultAuthority, "require_result_authority")
+            )
+            ceiling = self._trust_ceiling(max_trust_level, max_evidence_authority)
+            # put normalizes virtual producer values through this same wire
+            # representation. Keep that canonical snapshot, not a later row or
+            # its trust-losing verification projection, for every waiting caller.
+            entry = UnifiedProofEntry.from_dict(entry.to_dict()).verify_integrity()
             stored = self.put(entry, now=now)
-            flight.entry = self._entries.get(unified.digest)
+            flight.entry = entry
+            evaluated = self._evaluate_entry(
+                entry, unified, max_trust_level=ceiling,
+                require_result_authority=required,
+                now=time.time() if now is None else float(now),
+                count_hit=False,
+            )
             return VerificationCacheLookup(
-                entry=stored.entry,
+                entry=stored.entry if evaluated.entry is not None else None,
                 hit=False,
-                usable=True,
-                reason=CacheLookupReason.STORED,
+                usable=evaluated.usable,
+                reason=CacheLookupReason.STORED if evaluated.usable else evaluated.reason,
                 key_digest=unified.digest,
                 age_seconds=stored.age_seconds,
             )

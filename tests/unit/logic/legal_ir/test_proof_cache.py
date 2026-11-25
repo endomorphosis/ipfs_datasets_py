@@ -1617,3 +1617,210 @@ def test_genuine_sql_legal_shadow_requires_coherent_context_and_preserves_prior_
             assert final_store.get(entry.key, now=101.0).to_dict() == entry.to_dict()
         for digest, rows in coherent_rows.items():
             assert selected_rows(connection, digest) == rows
+
+
+@pytest.mark.parametrize("store_name", ["exact", "unified"])
+@pytest.mark.parametrize("extra_obligation", [True, False], ids=["advisory-refused", "theorem-usable"])
+def test_cache_compute_leader_respects_requested_theorem_authority(store_name, extra_obligation):
+    from ipfs_datasets_py.logic.backends.cache_protocol import CacheLookupReason, ExactVerificationCache
+    from ipfs_datasets_py.logic.backends.results import ResultAuthority
+    from ipfs_datasets_py.logic.common.duckdb_proof_migration import (
+        ProofCacheFamily, RawLegacyRecord, normalize_legacy_record,
+    )
+    from ipfs_datasets_py.logic.common.duckdb_proof_store import DuckDBProofStore
+
+    record, *_ = _bound_record(extra_obligation=extra_obligation)
+    unified = normalize_legacy_record(
+        RawLegacyRecord(record_index=1, line_number=1, payload=record.to_dict()),
+        family=ProofCacheFamily.LEGAL_IR,
+    ).to_unified_entry(created_at=100.0)
+    if store_name == "exact":
+        store = ExactVerificationCache()
+        entry = unified.to_verification_cache_entry()
+    else:
+        store = DuckDBProofStore()
+        entry = unified
+
+    required = ResultAuthority.THEOREM
+    assert entry.result_authority is (
+        ResultAuthority.CANDIDATE if extra_obligation else required
+    )
+    calls = []
+
+    def produce():
+        calls.append(entry.key.digest)
+        return entry
+
+    if extra_obligation:
+        assert store.put(entry, now=100.0).reason is CacheLookupReason.STORED
+        observed = store.lookup(entry.key, require_result_authority=required, now=101.0)
+        assert observed.hit and not observed.usable
+        assert observed.reason is CacheLookupReason.AUTHORITY_MISMATCH
+        assert observed.entry is not None
+
+    result = store.get_or_compute(
+        entry.key, produce, require_result_authority=required, now=101.0,
+    )
+    assert calls == [entry.key.digest]
+    assert store.get(entry.key, now=102.0).to_dict() == entry.to_dict()
+    if extra_obligation:
+        assert store.get(entry.key, require_result_authority=required, now=102.0) is None
+        assert not result.usable
+        assert result.reason is CacheLookupReason.AUTHORITY_MISMATCH
+    else:
+        assert store.get(entry.key, require_result_authority=required, now=102.0).to_dict() == entry.to_dict()
+        assert result.usable and result.reason is CacheLookupReason.STORED
+
+
+@pytest.mark.parametrize("extra_obligation", [True, False], ids=["advisory-refused", "theorem-usable"])
+def test_unified_cache_waiter_respects_requested_theorem_authority(monkeypatch, extra_obligation):
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Event
+
+    from ipfs_datasets_py.logic.backends.cache_protocol import CacheLookupReason
+    from ipfs_datasets_py.logic.backends.results import ResultAuthority
+    from ipfs_datasets_py.logic.common.duckdb_proof_migration import (
+        ProofCacheFamily, RawLegacyRecord, normalize_legacy_record,
+    )
+    from ipfs_datasets_py.logic.common.duckdb_proof_store import DuckDBProofStore
+
+    record, *_ = _bound_record(extra_obligation=extra_obligation)
+    entry = normalize_legacy_record(
+        RawLegacyRecord(record_index=1, line_number=1, payload=record.to_dict()),
+        family=ProofCacheFamily.LEGAL_IR,
+    ).to_unified_entry(created_at=100.0)
+    required = ResultAuthority.THEOREM
+    assert entry.result_authority is (ResultAuthority.CANDIDATE if extra_obligation else required)
+    store = DuckDBProofStore()
+    entered = Event()
+    release = Event()
+    flights_waited = []
+
+    def produce():
+        entered.set()
+        assert release.wait(timeout=5), "waiter never reached the producer's flight"
+        return entry
+
+    def must_share():
+        pytest.fail("a waiter independently invoked its producer")
+
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        producing = executor.submit(store.get_or_compute, entry.key, produce, now=101.0)
+        try:
+            assert entered.wait(timeout=5), "producer never entered its flight"
+            with store._lock:
+                event = store._flights[entry.key.digest].event
+            wait = event.wait
+
+            def wait_then_release():
+                flights_waited.append(entry.key.digest)
+                release.set()
+                assert wait(timeout=5), "producer did not release the flight"
+
+            monkeypatch.setattr(event, "wait", wait_then_release)
+            result = store.get_or_compute(
+                entry.key, must_share, require_result_authority=required, now=101.0,
+            )
+        finally:
+            release.set()
+        leader = producing.result(timeout=5)
+
+    assert leader.usable and leader.reason is CacheLookupReason.STORED
+    assert flights_waited == [entry.key.digest]
+    assert result.single_flight_shared
+    assert result.entry.to_dict() == entry.to_verification_cache_entry().to_dict()
+    assert store.get(entry.key, now=101.0).to_dict() == entry.to_dict()
+    if extra_obligation:
+        assert not result.usable
+        assert result.reason is CacheLookupReason.AUTHORITY_MISMATCH
+    else:
+        assert result.usable
+        assert result.reason is CacheLookupReason.SINGLE_FLIGHT_SHARED
+
+
+def _cache_ceiling_fixture(store_name, ceiling_name):
+    from ipfs_datasets_py.logic.backends.cache_protocol import CacheLookupReason, ExactVerificationCache
+    from ipfs_datasets_py.logic.common.duckdb_proof_migration import (
+        ProofCacheFamily, RawLegacyRecord, normalize_legacy_record,
+    )
+    from ipfs_datasets_py.logic.common.duckdb_proof_store import DuckDBProofStore
+    from ipfs_datasets_py.logic.families.models import EvidenceAuthority
+
+    record, *_ = _bound_record()
+    unified = normalize_legacy_record(
+        RawLegacyRecord(record_index=1, line_number=1, payload=record.to_dict()),
+        family=ProofCacheFamily.LEGAL_IR,
+    ).to_unified_entry(created_at=100.0)
+    entry = unified.to_verification_cache_entry() if store_name == "exact" else unified
+    store_type = ExactVerificationCache if store_name == "exact" else DuckDBProofStore
+    assert entry.evidence_authority is EvidenceAuthority.INDEPENDENTLY_CHECKABLE
+    return store_type(), entry, CacheLookupReason, {ceiling_name: "advisory"}
+
+
+@pytest.mark.parametrize("store_name,ceiling_name", [
+    pytest.param("exact", "max_evidence_authority", id="exact-evidence"),
+    pytest.param("unified", "max_evidence_authority", id="unified-evidence"),
+    pytest.param("unified", "max_trust_level", id="unified-trust"),
+])
+def test_diagnostic_cache_producer_retains_caller_ceiling(store_name, ceiling_name):
+    store, entry, reasons, filters = _cache_ceiling_fixture(store_name, ceiling_name)
+    calls = []
+
+    def produce():
+        calls.append(entry.key.digest)
+        return entry
+
+    computed = store.get_or_compute(entry.key, produce, now=101.0, **filters)
+    later = store.lookup(entry.key, now=101.0, **filters)
+    assert calls == [entry.key.digest]
+    assert later.reason is reasons.INSUFFICIENT_AUTHORITY and not later.usable
+    assert store.get(entry.key, now=101.0).to_dict() == entry.to_dict()
+    assert computed.usable == later.usable
+    assert computed.reason is later.reason
+
+
+@pytest.mark.parametrize("store_name,ceiling_name", [
+    pytest.param("exact", "max_evidence_authority", id="exact-evidence"),
+    pytest.param("unified", "max_evidence_authority", id="unified-evidence"),
+    pytest.param("unified", "max_trust_level", id="unified-trust"),
+])
+def test_diagnostic_cache_waiter_retains_caller_ceiling(monkeypatch, store_name, ceiling_name):
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Event
+
+    store, entry, reasons, filters = _cache_ceiling_fixture(store_name, ceiling_name)
+    started, release = Event(), Event()
+    waits = []
+
+    def produce():
+        started.set()
+        assert release.wait(timeout=5)
+        return entry
+
+    def unexpected():
+        pytest.fail("the waiting caller became a second producer")
+
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        first = executor.submit(store.get_or_compute, entry.key, produce, now=101.0)
+        try:
+            assert started.wait(timeout=5)
+            with store._lock:
+                event = store._flights[entry.key.digest].event
+            wait = event.wait
+
+            def observed_wait():
+                waits.append(entry.key.digest)
+                release.set()
+                assert wait(timeout=5)
+
+            monkeypatch.setattr(event, "wait", observed_wait)
+            computed = store.get_or_compute(entry.key, unexpected, now=101.0, **filters)
+        finally:
+            release.set()
+        assert first.result(timeout=5).usable
+    assert waits == [entry.key.digest]
+    assert computed.single_flight_shared
+    later = store.lookup(entry.key, now=101.0, **filters)
+    assert later.reason is reasons.INSUFFICIENT_AUTHORITY and not later.usable
+    assert computed.usable == later.usable
+    assert computed.reason is later.reason
