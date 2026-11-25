@@ -693,6 +693,11 @@ def _evaluate_packet(
     packet: ExternalLegalExpertBenchmarkPacket,
     prediction: Mapping[str, Any],
 ) -> ExternalBenchmarkPacketResult:
+    if "packet_digest" in prediction and prediction["packet_digest"] != packet.digest:
+        raise LegalIRExternalBenchmarkError(
+            "prediction packet digest does not match the selected benchmark packet"
+        )
+
     family_score, family_detail, family_blocks = _family_score(packet, prediction)
     citation_score, citation_detail, citation_blocks = _citation_score(packet, prediction)
     proof_score, proof_detail, proof_blocks = _proof_score(packet, prediction)

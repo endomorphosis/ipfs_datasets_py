@@ -305,3 +305,23 @@ def test_external_benchmark_predicts_by_each_supported_identity_form() -> None:
         {packet.packet_id: {**payload, "id": packet.packet_id}},
     ):
         assert evaluate_external_legal_expert_benchmark([packet], predictions).accepted
+
+
+def test_external_benchmark_requires_current_declared_packet_digest() -> None:
+    from dataclasses import replace
+
+    packet = _packets()[0]
+    revised = replace(packet, source_document_id=f"{packet.source_document_id}:revised")
+    assert revised.packet_id == packet.packet_id
+    assert revised.digest != packet.digest
+
+    prediction = _prediction(packet)
+    assert evaluate_external_legal_expert_benchmark([revised], prediction).accepted
+    current = {**prediction, "packet_digest": revised.digest}
+    assert evaluate_external_legal_expert_benchmark([revised], current).accepted
+
+    for stale_digest in (packet.digest, None):
+        with pytest.raises(LegalIRExternalBenchmarkError, match="prediction packet digest"):
+            evaluate_external_legal_expert_benchmark(
+                [revised], {**prediction, "packet_digest": stale_digest}
+            )
