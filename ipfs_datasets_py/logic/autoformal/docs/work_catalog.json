@@ -26889,6 +26889,198 @@
       "root": "artifact_workspace",
       "scope": "Published grouped/Unicode split, reviewed decoder/history and rich V4 software fixtures: fresh ordinary152; earlier private131/public21 remain separate. Fictional signed/reference-derived fixture results grant no real model/training/gold/legal/SQL/Native/Lean authority.",
       "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase3_event_time5_phase4_tiny_numerical4_closed_software_evidence_20261125",
+      "closed_software_facts": {
+        "Phase3_public_source_only5": {
+          "COLLECT_RUN_JUnit_order_exact": true,
+          "Lean_TEXT_generation_only_no_compiler_or_Native_dispatch": true,
+          "Source_resource_and_parent_closed": true,
+          "actual_Source_AST_code_witnesses": true,
+          "duplicates": 0,
+          "errors": 0,
+          "failures": 0,
+          "function_case_vector": [
+            1,
+            3,
+            1
+          ],
+          "functions": 3,
+          "historical_saved229_private1_and_mutants_not_current_ordinary_credit": true,
+          "physical_IO_accounting_complete": false,
+          "publication": {
+            "bytes": 9560,
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase3-event-time-ordinary5-three-FF-publication-v319.json",
+            "sha256": "bd2e113cfdde047e9d9c02504c12856d7f9733d184c2634ea885e6b3fc5c0770"
+          },
+          "published_D_HEAD": "dbc2e90e45fd090c8d850ba989194fbb2b71617d",
+          "published_D_tree": "482b819d49ca48399e41e0e29af125fff3bb672c",
+          "qualification": {
+            "bytes": 4272,
+            "path": "/tmp/Root-Phase3-permission-event-time-ordinary5-v319-sau6nmeq/Root-Phase3-permission-event-time-ordinary5-qualified-small.json",
+            "sha256": "c6eae59b9585e8b78ecdb6c966525f192fccf76c0130f9d778dc7669d93588b4"
+          },
+          "raw_JUnit": {
+            "bytes": 1114,
+            "logical_name": "junit.xml",
+            "path": "/tmp/Root-Phase3-permission-event-time-ordinary5-v319-sau6nmeq/actual-output/Phase3-mixed-permission-event-time-5-run-result0-output1.bin",
+            "sha256": "79887b069dc996fa500f50f01c3d3f685289500a50d6c83726989bb0d4cca585"
+          },
+          "scope": "mixed permission/event-time source-only bridge software, one new case and four retained baseline cases",
+          "skips": 0,
+          "unique_PASS": 5
+        },
+        "Phase4_public_ordinary4": {
+          "Source_opening_equals_closing": true,
+          "Source_resource_and_parent_closed": true,
+          "artifact_retention": {
+            "only_binding_and_JUnit_retained": true,
+            "reusable_model_checkpoint_retained": false,
+            "runtime_profile_certification": false,
+            "temporary_origin_checkpoint_JSON_tested_then_cleaned": true,
+            "vendor_binary_attestation": false
+          },
+          "duplicates": 0,
+          "eight_module_Source_hash_full9_loaded_rows_verified": true,
+          "errors": 0,
+          "failures": 0,
+          "function_case_vector": [
+            2,
+            1,
+            1
+          ],
+          "functions": 3,
+          "literal_roster": [
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_joint_retrieval.py::test_reviewed_v4_tiny_joint_updates_restore_and_rank_current_index[0]",
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_joint_retrieval.py::test_reviewed_v4_tiny_joint_updates_restore_and_rank_current_index[3]",
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_joint_retrieval.py::test_reviewed_v4_source_query_preparation_retains_authenticated_context_set",
+            "tests/unit/optimizers/logic_theorem_optimizer/test_legal_joint_retrieval.py::test_reviewed_lexical_baseline_abstains_on_source_without_tokens"
+          ],
+          "local_frozen_D_HEAD": "7a1e4cafd278fe10f1b4d6b65a98134d298b5f4b",
+          "local_frozen_D_tree": "a43805f8a96ef67a87ed8cd3cc6f47dcd5d859d4",
+          "normal_five_conftests_and_pytest_ini": true,
+          "numerical_effects": {
+            "V4_requested_optimizer_updates": [
+              0,
+              3
+            ],
+            "fixture_actual_fit_authorized_False_preserved": true,
+            "fresh_existing_R2_GlobalResourceScheduler_lease": true,
+            "full_goal_small_fixture_test_authorization_only": true,
+            "maximum_RUN_authored_vector_optimizer_updates": 23,
+            "new_V4_fixture_grid": [
+              4,
+              6
+            ],
+            "old_V5_grant_transferred": false,
+            "retained_V2_reviewed_fixture_updates": 20,
+            "trained60_selected": false,
+            "unchanged_child_process_slots": 1,
+            "unchanged_cpu_slots": 1,
+            "unchanged_memory_mb": 4096,
+            "zero_step_case_still_executes_CPU_model_Adam_forward_restore_ranking": true
+          },
+          "physical_IO_accounting_complete": false,
+          "preserved_test_boundaries": {
+            "current_SUT_SHA256": "b60874c3e8260f926cbd5eab18018c183417b594b9937a167854dbe45fcf9bac",
+            "current_SUT_unchanged": true,
+            "current_owning_test_SHA256": "450286faa445a358d512fb0e57c80f194d31ef545c0342832ee6edeedce28f3e",
+            "historical_prefixed_RED1_still_unrun": true,
+            "only_numerical_test_append_committed_at": "7a1e4cafd278fe10f1b4d6b65a98134d298b5f4b",
+            "retained_authenticated_context_and_lexical_tests": true,
+            "same_scope_SUT_RED_GREEN_demonstrated": false
+          },
+          "publication": {
+            "actual_receipt": {
+              "bytes": 7651,
+              "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase4-v4-tiny-numerical-ordinary4-three-FF-publication-v321.json",
+              "sha256": "dd23f498792b922c4f4ff38ab826338483471d4a7db69aa5e7350d65a2fd4d41"
+            },
+            "exact_test_blob_and_frozen_Source_hash_join": true,
+            "guide521_and_all_other_code_preserved": true,
+            "normal_fast_forward_order": [
+              "datasets",
+              "hallucinate",
+              "root"
+            ],
+            "publication_preflight_format_corrections_retained_in_raw_receipt_not_test_failures": true,
+            "repositories": {
+              "accelerate": {
+                "HEAD": "88c0d9f82f66aaddbb01344c9f85236e92a5dc88",
+                "clean_worktree_and_index": true,
+                "origin_main": "88c0d9f82f66aaddbb01344c9f85236e92a5dc88",
+                "tree": "416a953630c9ba7ef521fd87bf821f075b052efc"
+              },
+              "datasets": {
+                "HEAD": "7a1e4cafd278fe10f1b4d6b65a98134d298b5f4b",
+                "clean_worktree_and_index": true,
+                "origin_main": "7a1e4cafd278fe10f1b4d6b65a98134d298b5f4b",
+                "tree": "a43805f8a96ef67a87ed8cd3cc6f47dcd5d859d4"
+              },
+              "hallucinate": {
+                "HEAD": "f47731d46919b42d64e9bfc138970ca5a1bc200c",
+                "clean_worktree_and_index": true,
+                "origin_main": "f47731d46919b42d64e9bfc138970ca5a1bc200c",
+                "tree": "10edd69296b65b449581eb2fd42e778c4f94cf0c"
+              },
+              "root": {
+                "HEAD": "115a531a005168b1cd462e86a780814e59e883b7",
+                "clean_worktree_and_index": true,
+                "origin_main": "115a531a005168b1cd462e86a780814e59e883b7",
+                "tree": "ec5ab065e7f97387a203568cd127f778925a227f"
+              }
+            }
+          },
+          "qualification": {
+            "bytes": 4111,
+            "path": "/tmp/Root-Phase4-reviewed-numerical-ordinary4-v321-prav84rh/Root-Phase4-current-two-numerical-plus-context-lexical-ordinary4-qualified-small-v321.json",
+            "sha256": "7eca9d1a851021fa6a876f9e2983e8241d54479758bd59c04add38de6b6ebc7e"
+          },
+          "raw_JUnit": {
+            "bytes": 999,
+            "logical_name": "junit.xml",
+            "path": "/tmp/Root-Phase4-reviewed-numerical-ordinary4-v321-prav84rh/actual-output/Phase4-reviewed-V4-numerical2-context1-lexical1-4-run-result0-output1.bin",
+            "sha256": "cbab2b1a8d9b11ac49893dc8ddbc58ede6e6c538cb780e388d58e9e4aab18f9e"
+          },
+          "run_seconds": 101.47789199650288,
+          "skips": 0,
+          "unique_PASS": 4
+        },
+        "evidence_ordinal": 522,
+        "limits_and_open_work": {
+          "Native_qualification_unresolved": true,
+          "SQL51_280GB_header_vs_250GB_default_mismatch_unresolved": true,
+          "SQL51_tests": 0,
+          "all_prior_failure_setup_refusal_Source_resource_costs_and_read_scope_incident_retained": true,
+          "expensive_training_pretrained_paid_network_SQL_Lean_or_Native_operation": false,
+          "full_eight_phase_goal_complete": false,
+          "managed_ledger_cap_header_policy_eligibility_changed": false,
+          "model_quality_convergence_or_statutory_semantic_claim": false,
+          "pilot_meaning_and_edition_review_unresolved": true,
+          "real_corpus_gold_or_legal_training_admission": false
+        },
+        "maintenance": {
+          "components_retained": 126,
+          "composer_Source_Git_runtime_or_canonical_action": false,
+          "new_record_count": 1,
+          "prior_evidence_values_retained": 521,
+          "task_component_status_dependencies_acceptance_source_IDs_changed": false,
+          "tasks_retained": 24,
+          "whole_old_MD_prefixes_retained": true
+        },
+        "record_id": "phase3-event-time5-phase4-tiny-numerical4-software-evidence522-20261125",
+        "schema": "closed-Phase3-source5-Phase4-tiny-numerical4-software-facts/v1"
+      },
+      "evidence_ordinal": 522,
+      "id": "phase3-event-time5-phase4-tiny-numerical4-software-evidence522-20261125",
+      "observed_bytes": 8269,
+      "observed_sha256": "1d236133bf4947612d115ca9cdc43c784c7c91f992506761c47af0a559962f87",
+      "path": "/tmp/Phase4-guide522-single-consolidation-private-v01/one-existing-guide522-closed-phase3-source5-phase4-numerical4-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Separate published Phase3 source-only5 and Phase4 fixture-only numerical4: actual V4[0,3], inherited V2fixture20, maximum23 authored-vector updates. No model asset/runtime/vendor/quality/legal/SQL/Native/Lean qualification.",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
     }
   ]
 }

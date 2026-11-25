@@ -3595,6 +3595,33 @@
       "record_id": "phase45-grouped-unicode-ordinary152-software-evidence521-20261125",
       "status": "closed_software_evidence_only_no_task_status_change",
       "v311_v312_v313_v314_setup_refusals_and_full_Source_costs_retained": true
+    },
+    "phase3_event_time5_phase4_tiny_numerical4_closed_software_evidence_20261125": {
+      "Phase3_no_Lean_compiler_or_Native": true,
+      "Phase4_max_authored_vector_optimizer_updates": 23,
+      "Phase4_new_V4_requested_updates": [
+        0,
+        3
+      ],
+      "Phase4_retained_V2_fixture_updates": 20,
+      "SQL51_Native_pilot_review_unresolved": true,
+      "all24_tasks126_components521_old_evidence_values_preserved": true,
+      "all_Source_resource_parent_cleanup_closed": true,
+      "evidence_ordinal": 522,
+      "facts": {
+        "bytes": 8269,
+        "path": "/tmp/Phase4-guide522-single-consolidation-private-v01/one-existing-guide522-closed-phase3-source5-phase4-numerical4-facts.json",
+        "sha256": "1d236133bf4947612d115ca9cdc43c784c7c91f992506761c47af0a559962f87"
+      },
+      "full_eight_phase_goal_complete": false,
+      "historical_prefixed_RED1_still_unrun": true,
+      "old_V5_grant_transferred": false,
+      "public_Phase3_source_only_unique_PASS": 5,
+      "public_Phase4_fixture_numerical_unique_PASS": 4,
+      "record_id": "phase3-event-time5-phase4-tiny-numerical4-software-evidence522-20261125",
+      "same_scope_SUT_RED_GREEN_demonstrated": false,
+      "status": "closed_software_evidence_only_no_task_status_change",
+      "temporary_JSON_cleaned_no_reusable_model_artifact": true
     }
   },
   "programme_goal_hierarchy": {
