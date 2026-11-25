@@ -26109,6 +26109,168 @@
           "composer_Source_Git_runtime_effects": false
         }
       }
+    },
+    {
+      "id": "p1-complete-caller-policy178-and-existing-caller-coordination-evidence518-20261125",
+      "evidence_ordinal": 518,
+      "path": "/tmp/P1-guide518-single-consolidation-private-v01/one-existing-guide518-closed-software-facts.json",
+      "observed_bytes": 6975,
+      "observed_sha256": "d5fc3e07d29ea026191661e9c702a7368d35b8f1ca88ea52736d25a72ef2a58f",
+      "root": "artifact_workspace",
+      "required_for_catalog_check": false,
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY",
+      "scope": "Closed public ordinary178 complete-caller-policy software fixtures; private12 and fictional-transport24 coordination remain distinct. SQL/Native, legal/training and whole-goal qualification are not promoted.",
+      "backlog_crosslink": "BACKLOG.json#/migration/p1_complete_caller_policy_reuse_ordinary178_closed_software_evidence_20261125",
+      "closed_software_facts": {
+        "schema": "one-existing-guide518-closed-software-and-coordination-facts/v1",
+        "record_id": "p1-complete-caller-policy178-and-existing-caller-coordination-evidence518-20261125",
+        "evidence_ordinal": 518,
+        "public_ordinary": {
+          "unique_PASS": 178,
+          "retained": 166,
+          "new": 12,
+          "functions": 67,
+          "function_case_vector_exact": true,
+          "collect_RUN_JUnit_order_exact": true,
+          "failures": 0,
+          "errors": 0,
+          "skips": 0,
+          "duplicates": 0,
+          "canonical_conftests": [
+            "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/conftest.py",
+            "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/tests/conftest.py",
+            "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/tests/unit/conftest.py"
+          ],
+          "canonical_pytest_ini": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/pytest.ini",
+          "all7_module_roles_and_normal_Source_AST_code_witnesses": true,
+          "Source_resource_cleanup_closed": true,
+          "D_HEAD": "7cb1e5ddc291e19ec8552f9edff11249c08d4470",
+          "D_tree": "0d4030b300fb47a7724353ff1262b4b2b263c664",
+          "qualification": {
+            "path": "/tmp/Root-P1-complete-caller-policy-ordinary178-v298-grrhjnuq/Root-P1-complete-caller-policy-ordinary178-qualified-small-v298.json",
+            "bytes": 3702,
+            "sha256": "4c5d7846ccb88c2809865a0abe310056f572f3282acdb2af84ce2f817ab3b4bb"
+          },
+          "publication": {
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P1-complete-caller-policy-ordinary178-three-FF-publication-v298.json",
+            "bytes": 5938,
+            "sha256": "79fd7e5762e4d7243ae05316d011686563d4ef887bd3d498872bd53915e648f2"
+          }
+        },
+        "behavior": {
+          "full_existing_caller_policy_evaluator_for_both_compute_leaders": true,
+          "canonical_shared_memory_snapshot_evaluated_for_each_waiter": true,
+          "authority_evidence_trust_ceilings_and_existing_precedence_preserved": true,
+          "self_put_dispatch_entry_snapshot_age_statistics_preserved": true,
+          "no_extra_lookup_or_SQL_added": true,
+          "original_SQL_waiter_branch_564bytes_restored_exactly": true,
+          "SQL_behavior_qualified": false,
+          "kernel_fixture_only_one_literal_239d_to_cd92_not_Native": true,
+          "four_published_roles": {
+            "ipfs_datasets_py/logic/backends/cache_protocol.py": {
+              "bytes": 43005,
+              "committed_blob": "5faddd0448df6425f0d4008f39e5c4979e199210",
+              "sha256": "48029fa604a91f6f748eda8b30dcb03d11b3127abb2bd32b21d91246b0dd3661"
+            },
+            "ipfs_datasets_py/logic/common/duckdb_proof_store.py": {
+              "bytes": 111147,
+              "committed_blob": "0a72c6f822387b940384a36fb1dd65b35d654776",
+              "sha256": "db8488f5640c8d9bbc6fb565cfe93b0e6ee1b52b67a079d74238629507d65d37"
+            },
+            "tests/integration/logic/backends/test_kernel_backends.py": {
+              "bytes": 111809,
+              "committed_blob": "0f90cb1507027379c68246f40f8d5786dcf93613",
+              "sha256": "fe723bdd0f777bdb9ac96a7a72dd508a43830b82d1219e0ec97672be752bbb56"
+            },
+            "tests/unit/logic/legal_ir/test_proof_cache.py": {
+              "bytes": 93508,
+              "committed_blob": "8dbb1843acdb95d94e1c22398712a9c11049d5cd",
+              "sha256": "cd92c41e80976e707110855423dd6ae6956206e5a6bfd57556cec93611ac4a9e"
+            }
+          }
+        },
+        "private_same12": {
+          "passes": 12,
+          "failures": 0,
+          "errors": 0,
+          "skips": 0,
+          "distinct_from_public178": true,
+          "receipt": {
+            "path": "/tmp/P1-cache-leader-authority-four-code-private-v01/actual-private-SQL-preserved-same12-closeout-v02.json",
+            "bytes": 9842,
+            "sha256": "7b81e9896e1a600fca0ce0c80efae90c00d1c4629e4630b68db3e2b49c799ec9"
+          },
+          "two_zero_case_collection_refusals_preserved": true,
+          "private_confcutdir_invocation_only_correction_not_normal_profile": true
+        },
+        "publication": {
+          "normal_child_first_fast_forwards": true,
+          "all_four_clean_and_remote_heads_exact": true,
+          "latest_heads": {
+            "accelerate": "88c0d9f82f66aaddbb01344c9f85236e92a5dc88",
+            "datasets": "7cb1e5ddc291e19ec8552f9edff11249c08d4470",
+            "hallucinate": "08062a477b4d76aebe62f7a7cdeb59afc384185b",
+            "root": "7661d31339ced280fab5de7145cc1e56353b21f9"
+          },
+          "other_gitlinks_preserved": true,
+          "frozen_D_index_SHA256": "0cb647dc6b8f2ca1a2b36c0fb1a6d234403792c02d36b16ba9f1681033effcef"
+        },
+        "retained_limits": {
+          "SQL51_v287_tests": 0,
+          "SQL51_v287_admission_or_grant": false,
+          "configured_limit_bytes": 250000000000,
+          "unchanged_ledger_header_bytes": 280000000000,
+          "original_failure_and_identity_bound_Source_recovery_preserved": true,
+          "historical_v287_reclassified": false,
+          "actual_SQL_and_Native_retried": false,
+          "SQL_companion_and_Main_genuine_SQL_test": "UNRUN",
+          "Native": "PENDING",
+          "cap_header_scheduler_policy_eligibility_unchanged": true,
+          "physical_IO_accounting_complete": false
+        },
+        "separate_existing_caller_coordination": {
+          "proposal": {
+            "path": "/tmp/Main-existing-invoke-once-unloaded-hydration-private-v01/sealed-private-existing-invoke-once-unloaded-hydration-v01.json",
+            "bytes": 2819,
+            "sha256": "ed9f35af2b83b098a5ff63a5fb85b3c637abfd1026eb9bbcb0de075721dfd6b4"
+          },
+          "closed": {
+            "path": "/tmp/Main-existing-invoke-once-unloaded-hydration-private-v01/closed-private-caller-workaround-and-review-v01.json",
+            "bytes": 3481,
+            "sha256": "cf4ca5e0be0fdd02b516cfd5303e001d5124cf033877f7cceecf81aa2b61f08a"
+          },
+          "independent_static_review": {
+            "path": "/tmp/Root-existing-handoff-hydration-static-review-v01-e2khyfuy/scoped-static-review.json",
+            "bytes": 7487,
+            "sha256": "e02a61914b28bd7b4d3f05be331e3ce7d9a729f20823496c4bc9f1a661d1e6b5"
+          },
+          "candidate_bytes": 19593,
+          "candidate_SHA256": "00d26e75f8e84fe03364101fbbe1a88c32e4d4b02bd24dd92fd263adbc1da9ca",
+          "only_invoke_once_AST_changed": true,
+          "fictional_transport_tests_PASS": 24,
+          "Root_reported_actual_uses": "accepted active-steer and loaded-idle-start enqueues only",
+          "accepted_enqueue_is_not_processing_or_completion_evidence": true,
+          "new_live_unloaded_resume_experiment": false,
+          "new_provider_controller_registry_thread_or_authority": false,
+          "message_custody_and_unknown_no_replay_checks_retained": true
+        },
+        "no_promotions": {
+          "substantive_statutory_meaning_or_independent_legal_review": false,
+          "training_gold_legal_admission": false,
+          "proof_authenticity_or_Native_compiler": false,
+          "training_fit_or_model_quality": false,
+          "hosted_CI": false,
+          "whole_eight_phase_goal_complete": false
+        },
+        "maintenance": {
+          "tasks": 24,
+          "components": 126,
+          "all_prior_evidence_records": 517,
+          "all_status_dependencies_acceptance_and_MD_prefixes_preserved": true,
+          "one518_only": true,
+          "composer_Source_Git_runtime_effects": false
+        }
+      }
     }
   ]
 }
