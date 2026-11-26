@@ -128,6 +128,12 @@ _CANDIDATE_KEYS: Final = (
     "predicted_legal_ir",
 )
 
+_LEGACY_ROUND_TRIP_BLOCK_KEYS: Final = ("round_trip", "roundtrip")
+_LEGACY_DECOMPILED_KEYS: Final = ("decompiled", "decompiler")
+_LEGACY_RECOMPILED_KEYS: Final = ("recompiled_ir", "reconstructed_ir")
+_LEGACY_ROUND_TRIP_TEXT_KEYS: Final = _LEGACY_DECOMPILED_KEYS + _LEGACY_RECOMPILED_KEYS
+_LEGACY_ROUND_TRIP_KEYS: Final = frozenset(_LEGACY_ROUND_TRIP_BLOCK_KEYS + _LEGACY_ROUND_TRIP_TEXT_KEYS)
+
 _IGNORED_NORMALIZATION_KEYS: Final = frozenset(
     {
         "created_at",
@@ -315,6 +321,12 @@ class SemanticEquivalenceComparisonReport:
         }
 
 
+def _legacy_ir_without_round_trip_observations(value: Any) -> Any:
+    if isinstance(value, Mapping):
+        return {key: child for key, child in value.items() if key not in _LEGACY_ROUND_TRIP_KEYS}
+    return value
+
+
 def evaluate_legal_ir_semantic_equivalence(
     reference_ir: Any,
     candidate_ir: Any,
@@ -326,25 +338,28 @@ def evaluate_legal_ir_semantic_equivalence(
     This raw-payload route does not validate canonical typed IR, independently
     recompile text, or establish legal source correspondence. Unknown legacy
     shapes remain diagnostic inputs, but cannot supply complete gate evidence.
+    Reported round trips are scored separately from the underlying IR facets.
     """
 
     family_name = _canonical_family_or_unscoped(family)
-    structural_left = _structural_signature(reference_ir)
-    structural_right = _structural_signature(candidate_ir)
-    obligations_left = _obligation_signature(reference_ir)
-    obligations_right = _obligation_signature(candidate_ir)
-    counterexamples_left = _counterexample_signature(reference_ir)
-    counterexamples_right = _counterexample_signature(candidate_ir)
-    graph_left = _graph_signature(reference_ir)
-    graph_right = _graph_signature(candidate_ir)
-    temporal_left = _temporal_window_signature(reference_ir)
-    temporal_right = _temporal_window_signature(candidate_ir)
+    reference = _legacy_ir_without_round_trip_observations(reference_ir)
+    candidate = _legacy_ir_without_round_trip_observations(candidate_ir)
+    structural_left = _structural_signature(reference)
+    structural_right = _structural_signature(candidate)
+    obligations_left = _obligation_signature(reference)
+    obligations_right = _obligation_signature(candidate)
+    counterexamples_left = _counterexample_signature(reference)
+    counterexamples_right = _counterexample_signature(candidate)
+    graph_left = _graph_signature(reference)
+    graph_right = _graph_signature(candidate)
+    temporal_left = _temporal_window_signature(reference)
+    temporal_right = _temporal_window_signature(candidate)
     decompiler_left, round_trip_left = _legacy_round_trip_observation(reference_ir)
     decompiler_right, round_trip_right = _legacy_round_trip_observation(candidate_ir)
     unsupported_left = _legacy_raw_ir_unsupported_paths(reference_ir)
     unsupported_right = _legacy_raw_ir_unsupported_paths(candidate_ir)
-    proof_left = _proof_obligation_signature(reference_ir)
-    proof_right = _proof_obligation_signature(candidate_ir)
+    proof_left = _proof_obligation_signature(reference)
+    proof_right = _proof_obligation_signature(candidate)
     proof_delta = float(len(proof_left ^ proof_right))
 
     scores = {
@@ -791,8 +806,8 @@ def _legacy_raw_ir_unsupported_paths(value: Any) -> tuple[str, ...]:
 
     schemas = {
         "root": {"rules": "rules", "graph": "graph", "counterexamples": "counterexamples",
-                 "round_trip": "round_trip", "roundtrip": "round_trip",
-                 **text_keys("decompiled decompiler recompiled_ir reconstructed_ir")},
+                 **dict.fromkeys(_LEGACY_ROUND_TRIP_BLOCK_KEYS, "round_trip"),
+                 **dict.fromkeys(_LEGACY_ROUND_TRIP_TEXT_KEYS, "text")},
         "rule": {**text_keys("modality type norm_type obligation_type subject actor agent party "
                              "action predicate verb duty obligation condition unless if exception"),
                  "proof_obligation_ids": "texts", "temporal_window": "temporal"},
@@ -803,7 +818,7 @@ def _legacy_raw_ir_unsupported_paths(value: Any) -> tuple[str, ...]:
         "edge": text_keys("source from subject target to object label type predicate"),
         "triple": text_keys("subject s predicate p relation object o"),
         "counterexample": {"assignment": "assignment", "violates": "text"},
-        "round_trip": text_keys("decompiled decompiler recompiled_ir reconstructed_ir"),
+        "round_trip": dict.fromkeys(_LEGACY_ROUND_TRIP_TEXT_KEYS, "text"),
     }
     sequence_items = {"rules": "rule", "nodes": "node", "edges": "edge",
                       "triples": "triple", "counterexamples": "counterexample", "texts": "text"}
@@ -884,20 +899,18 @@ def _legacy_round_trip_observation(value: Any) -> tuple[frozenset[str], str]:
     """Require both named reported observations; structural equality is no substitute."""
     if not isinstance(value, Mapping):
         return frozenset(), "unsupported_raw_payload"
-    source_keys = ("decompiled", "decompiler")
-    result_keys = ("recompiled_ir", "reconstructed_ir")
-    blocks = [value[key] for key in ("round_trip", "roundtrip") if key in value]
-    if any(key in value for key in source_keys + result_keys):
-        blocks.append({key: value[key] for key in source_keys + result_keys if key in value})
+    blocks = [value[key] for key in _LEGACY_ROUND_TRIP_BLOCK_KEYS if key in value]
+    if any(key in value for key in _LEGACY_ROUND_TRIP_TEXT_KEYS):
+        blocks.append({key: value[key] for key in _LEGACY_ROUND_TRIP_TEXT_KEYS if key in value})
     if len(blocks) != 1:
         return frozenset(), "missing_or_ambiguous_observation"
     block = blocks[0]
     if not isinstance(block, Mapping) or any(
-        key not in source_keys + result_keys and key not in _IGNORED_NORMALIZATION_KEYS for key in block
+        key not in _LEGACY_ROUND_TRIP_TEXT_KEYS and key not in _IGNORED_NORMALIZATION_KEYS for key in block
     ):
         return frozenset(), "unsupported_observation_shape"
-    sources = [block[key] for key in source_keys if key in block]
-    results = [block[key] for key in result_keys if key in block]
+    sources = [block[key] for key in _LEGACY_DECOMPILED_KEYS if key in block]
+    results = [block[key] for key in _LEGACY_RECOMPILED_KEYS if key in block]
     if len(sources) != 1 or len(results) != 1 or any(
         type(item) is not str or not item.strip() for item in sources + results
     ):

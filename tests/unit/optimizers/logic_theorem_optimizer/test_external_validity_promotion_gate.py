@@ -418,3 +418,99 @@ def test_external_validity_cli_checks_produced_packet_rows_in_process(tmp_path, 
     )
     if hidden_failure:
         assert "external_benchmark_scores:packet_summary_mismatch" in decision["failures"]
+
+
+@pytest.mark.parametrize("evaluation", ["complete", "subset", "reordered"])
+def test_external_validity_gate_honors_independently_selected_benchmark_population(evaluation):
+    from hashlib import sha256
+
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_external_benchmark import (
+        evaluate_external_legal_expert_benchmark,
+        load_external_expert_benchmark_packets,
+    )
+
+    selected = load_external_expert_benchmark_packets(
+        ROOT / "tests" / "fixtures" / "legal_ir" / "external_expert_benchmark.jsonl")
+    assert len(selected) == 2
+    digest_payload = json.dumps([packet.digest for packet in selected], separators=(",", ":")).encode()
+    expected = {
+        "benchmark_digest": "sha256:" + sha256(digest_payload).hexdigest(),
+        "packet_ids": [packet.packet_id for packet in selected],
+    }
+    evaluated = selected if evaluation == "complete" else (
+        selected[:1] if evaluation == "subset" else tuple(reversed(selected)))
+    predictions = [{
+        "packet_id": packet.packet_id,
+        "candidate_ir": packet.reference_ir,
+        "predicted_ir_families": list(packet.expected_ir_families),
+        "citations": [citation.citation for citation in packet.citations],
+        "proof_obligation_ids": list(packet.required_proof_obligation_ids),
+        "decompiled_text": packet.decompiler_expectations.expected_reading,
+        "round_trip_success": True,
+    } for packet in evaluated]
+    report = evaluate_external_legal_expert_benchmark(evaluated, predictions).to_dict()
+    assert report["accepted"]
+    assert report["external_validity"]["packet_count"] == len(evaluated)
+    evidence = _complete_evidence()
+    evidence["expected_external_benchmark"] = expected
+    evidence["evidence"]["external_benchmark_scores"] = _bind(report)
+    result = external_validity_promotion_gate(evidence)
+    assert result.accepted is (evaluation == "complete"), result.to_dict()
+    check = result.metrics["evidence_domains"]["external_benchmark_scores"]
+    assert check["packet_results_reconciled"] is True
+    assert check["selected_population_reconciled"] is (evaluation == "complete")
+    if evaluation != "complete":
+        assert "external_benchmark_scores:selected_population_mismatch" in result.failures
+
+
+def test_external_validity_gate_does_not_promote_unmeasured_legacy_ir() -> None:
+    from dataclasses import replace
+
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_external_benchmark import (
+        evaluate_external_legal_expert_benchmark,
+        load_external_expert_benchmark_packets,
+    )
+
+    packet = load_external_expert_benchmark_packets(
+        ROOT / "tests" / "fixtures" / "legal_ir" / "external_expert_benchmark.jsonl")[0]
+    reference = packet.to_dict()["reference_ir"]
+    reference["rules"][0]["arguments"] = ["agency", "notice"]
+    packet = replace(packet, reference_ir=reference)
+    prediction = {
+        "packet_id": packet.packet_id, "candidate_ir": packet.reference_ir,
+        "predicted_ir_families": list(packet.expected_ir_families),
+        "citations": [citation.citation for citation in packet.citations],
+        "proof_obligation_ids": list(packet.required_proof_obligation_ids),
+        "decompiled_text": packet.decompiler_expectations.expected_reading,
+        "round_trip_success": True,
+    }
+    report = evaluate_external_legal_expert_benchmark([packet], [prediction]).to_dict()
+    diagnostic = report["external_validity"]["packet_results"][0]["detail"]["semantic_equivalence"]
+    assert diagnostic["complete"] is False
+    assert set(diagnostic["missing_metrics"]) == {"structural_equivalence", "obligation_equivalence"}
+    assert set(diagnostic["scores"].values()) == {1.0}
+    evidence = _complete_evidence()
+    evidence["evidence"]["external_benchmark_scores"] = _bind(report)
+    result = external_validity_promotion_gate(evidence)
+    assert not result.accepted, result.to_dict()
+    assert not result.metrics["domain_status"]["external_benchmark_scores"]
+
+
+@pytest.mark.parametrize("case", ["duplicate-expected-identity", "summary-without-rows"])
+def test_external_validity_gate_refuses_unverifiable_selected_benchmark(case):
+    evidence = _complete_evidence()
+    report = _actual_external_benchmark_report()
+    expected = {
+        "benchmark_digest": report["benchmark_digest"],
+        "packet_ids": [row["packet_id"] for row in report["external_validity"]["packet_results"]],
+    }
+    if case == "duplicate-expected-identity":
+        expected["packet_ids"].append(expected["packet_ids"][0])
+        evidence["evidence"]["external_benchmark_scores"] = _bind(report)
+        expected_blocker = "external_benchmark_scores:selected_population_invalid"
+    else:
+        expected_blocker = "external_benchmark_scores:selected_population_unreconciled"
+    evidence["expected_external_benchmark"] = expected
+    result = external_validity_promotion_gate(evidence)
+    assert result.accepted is False, result.to_dict()
+    assert expected_blocker in result.failures

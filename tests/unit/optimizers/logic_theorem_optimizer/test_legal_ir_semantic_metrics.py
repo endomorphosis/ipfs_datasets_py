@@ -874,3 +874,30 @@ def test_retrieved_payloads_reject_short_rankings_or_unsupported_depth(ranking_d
     kwargs.update(ranking_depth=ranking_depth, cutoffs=(1, 3, ranking_depth))
     with pytest.raises(ValueError, match=error):
         owner.evaluate_complete_norm_retrieval_rankings(rankings, references, candidates, **kwargs)
+
+
+@pytest.mark.parametrize("observation", ["missing", "changed-prose", "direct-alias"])
+def test_legacy_round_trip_observations_are_separate_from_ir_facets(observation):
+    reference = _reference_ir()
+    reference["round_trip"]["decompiled"] = "The agency must provide notice within 30 days."
+    candidate = _reference_ir()
+    candidate["round_trip"] = dict(reference["round_trip"])
+    if observation == "missing":
+        del candidate["round_trip"]
+    elif observation == "direct-alias":
+        candidate.update(candidate.pop("round_trip"))
+    else:
+        candidate["round_trip"]["decompiled"] = "The contractor may provide notice by 2026-04-10."
+
+    result = evaluate_legal_ir_semantic_equivalence(reference, candidate, family="deontic")
+    assert result.scores[STRUCTURAL_EQUIVALENCE] == 1.0, result.to_dict()
+    assert result.scores[OBLIGATION_EQUIVALENCE] == 1.0
+    assert result.scores[TEMPORAL_WINDOW_AGREEMENT] == 1.0
+    assert not result.detail["raw_input_coverage"]["candidate_unsupported_paths"]
+    assert result.detail["round_trip_evidence"]["independently_recompiled"] is False
+    if observation == "missing":
+        assert result.missing_metrics == (DECOMPILER_ROUND_TRIP_PRESERVATION,)
+    elif observation == "direct-alias":
+        assert result.complete and result.scores[DECOMPILER_ROUND_TRIP_PRESERVATION] == 1.0
+    else:
+        assert result.complete and result.scores[DECOMPILER_ROUND_TRIP_PRESERVATION] < 1.0

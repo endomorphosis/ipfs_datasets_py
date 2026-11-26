@@ -382,3 +382,119 @@ def test_benchmark_packet_digest_binds_canonical_loaded_revision(tmp_path) -> No
     )
     with pytest.raises(LegalIRExternalBenchmarkError, match=r"benchmarks[.]jsonl:2: .*packet digest"):
         load_external_expert_benchmark_packets(fixture)
+
+
+@pytest.mark.parametrize(
+    ("packet_index", "missing_family"),
+    [(0, "temporal"), (1, "cec")],
+    ids=["optional-family", "family-alternative"],
+)
+@pytest.mark.parametrize(
+    "allowed", [False, True, None], ids=["disabled", "enabled", "legacy-implicit"]
+)
+def test_external_benchmark_obeys_family_ambiguity_policy(
+    packet_index, missing_family, allowed
+) -> None:
+    from dataclasses import replace
+
+    packet = _packets()[packet_index]
+    ambiguity = dict(packet.acceptable_ambiguity)
+    if packet_index == 0:
+        # Exercise the optional-family clause without its alternate.
+        ambiguity["acceptable_family_alternatives"] = {}
+    if allowed is None:
+        del ambiguity["allowed"]
+    else:
+        ambiguity["allowed"] = allowed
+    packet = replace(packet, acceptable_ambiguity=ambiguity)
+    assert packet.acceptable_ambiguity["allowed"] is (allowed is not False)
+
+    prediction = {**_prediction(packet), "packet_digest": packet.digest}
+    assert evaluate_external_legal_expert_benchmark([packet], [prediction]).accepted
+
+    prediction["predicted_ir_families"] = [
+        family for family in packet.expected_ir_families if family != missing_family
+    ]
+    report = evaluate_external_legal_expert_benchmark([packet], [prediction])
+    result, = report.packet_results
+    assert result.packet_id == packet.packet_id
+    if allowed is False:
+        assert report.failed_packet_ids == (packet.packet_id,)
+        assert report.external_validity_score == 0.0
+        assert result.scores["expected_ir_families"] == pytest.approx(2 / 3)
+        assert result.detail["expected_ir_families"]["missing_required"] == [missing_family]
+        assert result.block_reasons == ("missing_expected_ir_family",)
+    else:
+        assert report.accepted
+        assert report.external_validity_score == 1.0
+        assert result.scores["expected_ir_families"] == 1.0
+
+
+@pytest.mark.parametrize("form", ["sequence", "keyed", "flat"])
+def test_external_benchmark_refuses_predictions_for_unselected_packets(form) -> None:
+    packet, other = _packets()
+    chosen, foreign = _prediction(packet), _prediction(other)
+    assert evaluate_external_legal_expert_benchmark([packet], [chosen]).accepted
+    if form == "sequence":
+        predictions = [chosen, foreign]
+    elif form == "keyed":
+        predictions = {packet.packet_id: chosen, other.packet_id: foreign}
+    else:
+        predictions = foreign
+    with pytest.raises(LegalIRExternalBenchmarkError, match="outside the selected benchmark population"):
+        evaluate_external_legal_expert_benchmark([packet], predictions)
+
+
+@pytest.mark.parametrize("malformed", [{"candidate_ir": {}}, None])
+def test_external_benchmark_refuses_unbound_sequence_output(malformed) -> None:
+    packet = _packets()[0]
+    with pytest.raises(LegalIRExternalBenchmarkError, match="prediction row requires a packet ID"):
+        evaluate_external_legal_expert_benchmark([packet], [_prediction(packet), malformed])
+
+
+def test_external_benchmark_refuses_nonmapping_keyed_output() -> None:
+    packet = _packets()[0]
+    with pytest.raises(LegalIRExternalBenchmarkError, match="keyed prediction must be a mapping"):
+        evaluate_external_legal_expert_benchmark([packet], {packet.packet_id: None})
+
+
+@pytest.mark.parametrize("coverage", ["complete", "unmeasured-arguments", "missing-round-trip"])
+def test_external_benchmark_counts_only_complete_semantic_coverage(coverage):
+    from dataclasses import replace
+
+    selected, control = _packets()
+    if coverage == "unmeasured-arguments":
+        reference = selected.to_dict()["reference_ir"]
+        reference["rules"][0]["arguments"] = ["agency", "notice"]
+        selected = replace(selected, reference_ir=reference)
+    prediction = _prediction(selected)
+    if coverage == "missing-round-trip":
+        candidate = selected.to_dict()["reference_ir"]
+        del candidate["round_trip"]
+        prediction["candidate_ir"] = candidate
+
+    report = evaluate_external_legal_expert_benchmark(
+        [selected, control], [prediction, _prediction(control)])
+    result, retained = report.packet_results
+    diagnostic = result.detail["semantic_equivalence"]
+    external = report.to_dict()["external_validity"]
+    assert retained.accepted
+    assert result.scores["decompiler_expectations"] == 1.0
+    assert external["packet_count"] == 2
+    if coverage == "complete":
+        assert result.accepted and diagnostic["complete"]
+        assert result.scores["semantic_equivalence"] == 1.0
+        assert external["accepted_packet_count"] == 2
+        return
+
+    assert not diagnostic["complete"]
+    if coverage == "unmeasured-arguments":
+        assert set(diagnostic["missing_metrics"]) == {"structural_equivalence", "obligation_equivalence"}
+        assert set(diagnostic["scores"].values()) == {1.0}
+    else:
+        assert diagnostic["missing_metrics"] == ["decompiler_round_trip_preservation"]
+    assert result.accepted is False, result.to_dict()
+    assert result.scores["semantic_equivalence"] == 0.0
+    assert result.block_reasons == ("semantic_equivalence_failed",)
+    assert external["accepted_packet_count"] == 1
+    assert external["external_validity_score"] == pytest.approx(0.5)

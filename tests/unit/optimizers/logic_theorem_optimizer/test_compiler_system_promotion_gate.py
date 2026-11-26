@@ -438,3 +438,68 @@ def test_compiler_system_replays_real_external_benchmark_report(tmp_path, capsys
     else:
         assert scores["external_validity_score"] == 1.0
         assert result.failures == []
+
+
+@pytest.mark.parametrize("evaluation", ["plain", "observation-alias", "unmeasured-arguments", "subset"])
+def test_compiler_replays_selected_benchmark_semantic_coverage(evaluation):
+    from dataclasses import replace
+    from hashlib import sha256
+
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_external_benchmark import (
+        evaluate_external_legal_expert_benchmark,
+        load_external_expert_benchmark_packets,
+    )
+
+    first, second = load_external_expert_benchmark_packets(
+        ROOT / "tests" / "fixtures" / "legal_ir" / "external_expert_benchmark.jsonl")
+    if evaluation == "unmeasured-arguments":
+        reference = first.to_dict()["reference_ir"]
+        reference["rules"][0]["arguments"] = ["agency", "notice"]
+        first = replace(first, reference_ir=reference)
+    selected = (first, second)
+    digest_payload = json.dumps([packet.digest for packet in selected], separators=(",", ":")).encode()
+    selected_population = {
+        "benchmark_digest": "sha256:" + sha256(digest_payload).hexdigest(),
+        "packet_ids": [packet.packet_id for packet in selected],
+    }
+
+    executed = selected[:1] if evaluation == "subset" else selected
+    predictions = []
+    for packet in executed:
+        candidate = packet.to_dict()["reference_ir"]
+        if evaluation == "observation-alias" and packet is first:
+            candidate.update(candidate.pop("round_trip"))
+        predictions.append({
+            "packet_id": packet.packet_id,
+            "packet_digest": packet.digest,
+            "candidate_ir": candidate,
+            "predicted_ir_families": list(packet.expected_ir_families),
+            "citations": [citation.citation for citation in packet.citations],
+            "proof_obligation_ids": list(packet.required_proof_obligation_ids),
+            "decompiled_text": packet.decompiler_expectations.expected_reading,
+            "round_trip_success": True,
+        })
+    benchmark = evaluate_external_legal_expert_benchmark(executed, predictions).to_dict()
+    expect_complete = evaluation != "unmeasured-arguments"
+    first_row = benchmark["external_validity"]["packet_results"][0]
+    assert first_row["detail"]["semantic_equivalence"]["complete"] is expect_complete
+    assert first_row["scores"]["semantic_equivalence"] == (1.0 if expect_complete else 0.0)
+    assert benchmark["accepted"] is expect_complete
+
+    raw = _make_external_subgate_input(current=True)
+    raw["expected_external_benchmark"] = selected_population
+    raw["evidence"]["external_benchmark_scores"] = _bind(benchmark)
+    evidence = _complete_evidence()
+    evidence.pop("external_validity")
+    evidence["external_validity_evidence"] = raw
+    gate = compiler_system_promotion_gate(evidence)
+    result = gate.metrics["external_validity"]["evidence_domains"]["external_benchmark_scores"]
+    assert result["packet_results_reconciled"] is True
+    assert result["selected_population_reconciled"] is (evaluation != "subset")
+    assert result["packet_count"] == len(executed)
+    assert gate.accepted is (evaluation in {"plain", "observation-alias"}), gate.to_dict()
+    if evaluation == "unmeasured-arguments":
+        assert result["failed_packet_ids"] == [first.packet_id]
+        assert result["external_validity_score"] == 0.5
+    elif evaluation == "subset":
+        assert "external_validity:external_benchmark_scores:selected_population_mismatch" in gate.failures

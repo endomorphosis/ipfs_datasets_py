@@ -2103,6 +2103,8 @@ def external_validity_promotion_gate(
     It does not trust a single headline flag: each evidence domain must expose
     the schema, status, metrics, and cross-artifact identifiers needed to prove
     that the candidate was evaluated leak-free and can be rolled back.
+    If supplied independently, expected_external_benchmark binds the report
+    to the selected benchmark digest and ordered packet IDs.
     """
 
     cfg = config or ExternalValidityPromotionConfig()
@@ -2138,6 +2140,13 @@ def external_validity_promotion_gate(
             packet,
             cfg,
         )
+        if domain == "external_benchmark_scores" and "expected_external_benchmark" in payload:
+            population_failures, population_details = _external_benchmark_population_failures(
+                payload["expected_external_benchmark"], packet,
+                packet_results_reconciled=domain_details["packet_results_reconciled"],
+            )
+            domain_failures.extend(population_failures)
+            domain_details.update(population_details)
         failures.extend(domain_failures)
         warnings.extend(domain_warnings)
         domain_entry.update(domain_details)
@@ -3379,10 +3388,53 @@ def _external_benchmark_packet_totals(value: Any) -> tuple[int, int, list[str]] 
             or accepted == bool(reasons)
         ):
             return None
+        detail = row.get("detail")
+        semantic = detail.get("semantic_equivalence") if isinstance(detail, Mapping) else None
+        if accepted and isinstance(semantic, Mapping) and (
+            semantic.get("complete") is False or semantic.get("missing_metrics")
+        ):
+            return None
         packet_ids.add(packet_id)
         if not accepted:
             failed.append(packet_id)
     return len(packet_ids), len(packet_ids) - len(failed), failed
+
+
+def _external_benchmark_population_failures(
+    expected: Any,
+    packet: Mapping[str, Any],
+    *,
+    packet_results_reconciled: bool,
+) -> tuple[list[str], dict[str, Any]]:
+    details: dict[str, Any] = {"selected_population_reconciled": False}
+    invalid = ["external_benchmark_scores:selected_population_invalid"]
+    if not isinstance(expected, Mapping) or set(expected) != {"benchmark_digest", "packet_ids"}:
+        return invalid, details
+    digest, packet_ids = expected["benchmark_digest"], expected["packet_ids"]
+    if (
+        type(digest) is not str or not _valid_digest_ref(digest)
+        or not isinstance(packet_ids, list) or not packet_ids
+        or any(type(packet_id) is not str or not packet_id.strip() for packet_id in packet_ids)
+        or len(set(packet_ids)) != len(packet_ids)
+    ):
+        return invalid, details
+    expected_digest = _normalized_digest_ref(digest)
+    details.update(expected_benchmark_digest=expected_digest, expected_packet_ids=list(packet_ids))
+    if not packet_results_reconciled:
+        return ["external_benchmark_scores:selected_population_unreconciled"], details
+    external = packet.get("external_validity")
+    if not isinstance(external, Mapping):
+        external = packet
+    reported_digest = packet.get("benchmark_digest")
+    observed_ids = [row["packet_id"] for row in external["packet_results"]]
+    matches = (
+        type(reported_digest) is str and _valid_digest_ref(reported_digest)
+        and _normalized_digest_ref(reported_digest) == expected_digest
+        and observed_ids == packet_ids
+    )
+    details.update(reported_benchmark_digest=reported_digest,
+                   observed_packet_ids=observed_ids, selected_population_reconciled=matches)
+    return ([] if matches else ["external_benchmark_scores:selected_population_mismatch"]), details
 
 
 def _external_benchmark_failures(

@@ -598,18 +598,25 @@ def evaluate_external_legal_expert_benchmark(
     *,
     internal_canary_metrics: Mapping[str, Any] | None = None,
 ) -> ExternalBenchmarkReport:
-    """Evaluate candidate outputs with at most one prediction per benchmark packet."""
+    """Score the fixed population with at most one bound output per packet.
+
+    Missing outputs stay in the denominator. Unbound rows or outputs for an
+    unselected packet are errors.
+    """
 
     resolved = tuple(packets)
-    if len({packet.packet_id for packet in resolved}) != len(resolved):
+    packet_ids = {packet.packet_id for packet in resolved}
+    if len(packet_ids) != len(resolved):
         raise LegalIRExternalBenchmarkError("duplicate external benchmark packet ID")
     require_external_benchmark_evaluation_only(
         resolved,
         operation=EXTERNAL_EVALUATION_OPERATION,
     )
     by_packet = _prediction_mapping(predictions)
+    if any(packet_id not in packet_ids for packet_id in by_packet):
+        raise LegalIRExternalBenchmarkError("prediction is outside the selected benchmark population")
     results = tuple(
-        _evaluate_packet(packet, _mapping(by_packet.get(packet.packet_id))) for packet in resolved
+        _evaluate_packet(packet, by_packet.get(packet.packet_id, {})) for packet in resolved
     )
     return ExternalBenchmarkReport(
         packet_results=results,
@@ -679,20 +686,24 @@ def _prediction_mapping(
     if isinstance(predictions, Mapping):
         if "packet_id" in predictions:
             return {_prediction_packet_id(predictions): predictions}
+        result = {}
         for key, item in predictions.items():
-            if isinstance(item, Mapping):
-                packet_id = _prediction_packet_id(item)
-                if packet_id and packet_id != key:
-                    raise LegalIRExternalBenchmarkError("prediction packet ID does not match its mapping key")
-        return predictions
-    result: dict[str, Mapping[str, Any]] = {}
-    for item in predictions:
-        if isinstance(item, Mapping):
+            if not isinstance(item, Mapping):
+                raise LegalIRExternalBenchmarkError("keyed prediction must be a mapping")
             packet_id = _prediction_packet_id(item)
-            if packet_id:
-                if packet_id in result:
-                    raise LegalIRExternalBenchmarkError("duplicate prediction packet ID")
-                result[packet_id] = item
+            if packet_id and packet_id != key:
+                raise LegalIRExternalBenchmarkError("prediction packet ID does not match its mapping key")
+            result[key] = item
+        return result
+
+    result = {}
+    for item in predictions:
+        packet_id = _prediction_packet_id(item) if isinstance(item, Mapping) else ""
+        if not packet_id:
+            raise LegalIRExternalBenchmarkError("prediction row requires a packet ID")
+        if packet_id in result:
+            raise LegalIRExternalBenchmarkError("duplicate prediction packet ID")
+        result[packet_id] = item
     return result
 
 
@@ -749,8 +760,11 @@ def _family_score(
     prediction: Mapping[str, Any],
 ) -> tuple[float, Mapping[str, Any], tuple[str, ...]]:
     predicted = _predicted_families(prediction)
-    optional = set(_strings(packet.acceptable_ambiguity.get("optional_families")))
-    alternatives = _mapping(packet.acceptable_ambiguity.get("acceptable_family_alternatives"))
+    ambiguity = packet.acceptable_ambiguity
+    if not ambiguity["allowed"]:
+        ambiguity = {}
+    optional = set(_strings(ambiguity.get("optional_families")))
+    alternatives = _mapping(ambiguity.get("acceptable_family_alternatives"))
     required = tuple(family for family in packet.expected_ir_families if family not in optional)
     covered: list[str] = []
     missing: list[str] = []
@@ -942,13 +956,16 @@ def _semantic_score(
         candidate_ir,
         family=packet.expected_ir_families[0],
     )
-    failures = tuple(
-        metric for metric in SEMANTIC_EQUIVALENCE_METRICS if result.scores.get(metric, 0.0) < 1.0
+    # Diagnostic similarities can exist for facets the legacy scorer could
+    # not measure. Only measured facets contribute to benchmark credit.
+    score = min(
+        0.0 if metric in result.missing_metrics else result.scores.get(metric, 0.0)
+        for metric in SEMANTIC_EQUIVALENCE_METRICS
     )
     return (
-        result.minimum_score,
+        score,
         result.to_dict(),
-        ("semantic_equivalence_failed",) if failures else (),
+        ("semantic_equivalence_failed",) if score < 1.0 else (),
     )
 
 
