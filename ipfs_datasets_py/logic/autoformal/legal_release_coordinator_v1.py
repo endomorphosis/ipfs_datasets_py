@@ -1471,6 +1471,7 @@ def _declared_physical_release_eligibility(request_raw, report):
             "packet_sha256": report["native_packet_transport"]["logical_packet_inventory_sha256"],
             "observation_profile": native["observation_profile"],
         }
+    current_review = report.get("current_review_observation")
     evidence = contracts.seal_record({
         "schema": f"legal-corpus-physical-v{version}-qualification-evidence/v1",
         "reviewed_version": version,
@@ -1491,6 +1492,7 @@ def _declared_physical_release_eligibility(request_raw, report):
         "formal_assumptions": admission["formal_assumptions"],
         "preservation_obligations": expected_obligations,
         "retained_native": retained_native,
+        **({"current_review_observation": current_review} if current_review is not None else {}),
     })
     # These declarations refer to the verified local component. In particular,
     # source integrity is the exact physical byte crosswalk. Retained Native
@@ -1502,11 +1504,13 @@ def _declared_physical_release_eligibility(request_raw, report):
         "representation": ("supported_complete", cids["preservation"]),
         "dependency": ("resolved", cids["dependency"]),
     }
+    declarations = {name: {"status": state, "evidence_cids": [cid]}
+                    for name, (state, cid) in dimensions.items()}
+    if current_review is not None:
+        declarations["interpretation"]["evidence_cids"].append(current_review["record_cid"])
     record = qualification.prepare_qualification(
         artifact_cid=artifact_cid, profile=report["profile"],
-        theorem_requested=bool(expected_obligations),
-        dimensions={name: {"status": state, "evidence_cids": [cid]}
-                    for name, (state, cid) in dimensions.items()},
+        theorem_requested=bool(expected_obligations), dimensions=declarations,
     )
     return {
         "declared_eligibility_evidence": evidence,
@@ -1834,18 +1838,95 @@ def _validate_uscode_release_byte_closure_v4(request_raw, *, expected_request_sh
         _captured_native_context=_captured_native_context, _native_transport=_native_transport)
 
 
+def _physical_v4_current_review_selection(current_review):
+    from . import corpus_contracts as contracts, legal_graph_review as review
+
+    _need(type(current_review) is dict and set(current_review) == {
+        "registry_sha256", "policy_sha256", "at_time_utc", "observed_artifact_sha256s", "observed_pins",
+    }, "closed current review observation required")
+    selection = contracts.clone_json(current_review)
+    for field in ("registry_sha256", "policy_sha256"):
+        contracts.require_sha256(selection[field], "current review " + field)
+    review._time(selection["at_time_utc"])
+    _need(type(selection["observed_artifact_sha256s"]) is dict
+          and type(selection["observed_pins"]) is dict,
+          "current review dependency observations must be mappings")
+    return selection
+
+
+def _observe_physical_v4_current_review(context, selection):
+    from . import corpus_contracts as contracts, legal_graph_dependencies as dependencies
+    from . import legal_graph_review as review, legal_reviewed_norm_admission_v3 as admissions
+
+    prior = context["kwargs"]
+    _need(selection["registry_sha256"] == prior["expected_registry_sha256"]
+          and selection["policy_sha256"] == prior["expected_policy_sha256"],
+          "current review trust pins differ from the signed replay trust")
+    _need(review._time(selection["at_time_utc"]) >= review._time(prior["at_time_utc"]),
+          "current review evaluation time rollback")
+    assessment = admissions.assess_reviewed_norm_admission_v3(*context["args"], **{
+        **prior, "at_time_utc": selection["at_time_utc"],
+        "observed_artifact_sha256s": selection["observed_artifact_sha256s"],
+        "observed_pins": selection["observed_pins"],
+    })
+    historical = context["admission"]
+    _need(assessment["semantic_use_eligible"] is True,
+          "current review has unresolved admission blockers")
+    fields = ("declaration_sha256", "preparation_sha256", "provenance_kind", "units", "permitted_uses",
+              "fixture_only", "formal_assumptions", "training_mask", "evaluation_gold_mask")
+    _need(all(assessment[field] == historical[field] for field in fields)
+          and assessment["review_authority"]["reviews"] == historical["review_authority"]["reviews"],
+          "current review differs from the selected admission")
+    # The physical release requires the full dependency closure, including any
+    # artifact outside the admission subject's required review dependencies.
+    inputs = prior["preparation_inputs"]
+    invalidation = dependencies.invalidate_dependencies(inputs["dependency_manifest"],
+        expected_manifest_sha256=inputs["expected_manifest_sha256"],
+        observed_artifact_sha256s=selection["observed_artifact_sha256s"],
+        observed_pins=selection["observed_pins"])
+    _need(not invalidation["stale_artifact_ids"], "current review dependency closure is stale")
+    return contracts.seal_record({
+        "schema": "legal-corpus-physical-v4-current-review-observation/v1",
+        "request_sha256": context["physical_request_sha256"],
+        "graph_sha256": context["pins"]["graph"],
+        "admission_sha256": context["pins"]["admission"],
+        "registry_sha256": selection["registry_sha256"],
+        "policy_sha256": selection["policy_sha256"],
+        "reviews_sha256": prior["expected_reviews_sha256"],
+        "at_time_utc": selection["at_time_utc"],
+        "caller_observation_sha256": hashlib.sha256(_canonical(selection)).hexdigest(),
+        "current_assessment_sha256": admissions.norm_content_adjudication_sha256(assessment),
+        "dependency_invalidation_sha256": invalidation["invalidation_sha256"],
+        "evaluation_clock_authenticated": False,
+        "registry_freshness_authenticated": False,
+    })
+
+
 def validate_uscode_release_closure_v4(request_raw, *, expected_request_sha256,
-        include_declared_eligibility=False):
+        include_declared_eligibility=False, current_review=None):
     """Replay source-only whole-norm correspondence and optionally project eligibility.
 
-    The projection binds the upstream preservation obligations, which are
-    distinct from any later physical realization or Native results.
+    A caller may independently select current trust digests, evaluation time
+    and dependency observations. A change to signed trust requires new signed
+    review evidence. Omission retains historical replay. The caller's clock
+    and registry freshness are outside this validator's authentication scope.
     """
     _release_v4_policy()
     _need(type(include_declared_eligibility) is bool, "explicit boolean eligibility selection required")
+    observer = None
+    observations = []
+    if current_review is not None:
+        selection = _physical_v4_current_review_selection(current_review)
+
+        def observer(context):
+            observations.append(_observe_physical_v4_current_review(context, selection))
+
     report = _validate_uscode_release_physical_closure(request_raw,
         expected_request_sha256=expected_request_sha256, reviewed_version=4,
-        _native_transport="direct-packet/v1")
+        _native_transport="direct-packet/v1", _observe_checked_context=observer)
+    if observer is not None:
+        _need(len(observations) == 1, "exactly one closed current review observation required")
+        report["current_review_observation"] = observations[0]
     if include_declared_eligibility:
         report.update(_declared_physical_release_eligibility(request_raw, report))
     return report

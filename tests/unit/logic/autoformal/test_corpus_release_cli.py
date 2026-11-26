@@ -3778,3 +3778,158 @@ def test_physical_v4_whole_norm_request_refuses_unbound_selection(
             preparation, c["preservation"], c["graph"], c["admission"], *c["args"],
             expected_realization_sha256=c["realization_sha"], expected_theorem=theorem,
             expected_unit_id=unit_id, bounds=protocols.ExecutionBounds(), **c["physical_options"])
+
+
+def _physical_v4_review_observation_inputs(control):
+    from copy import deepcopy
+
+    kwargs = control["kwargs"]
+    return {
+        "registry_sha256": kwargs["expected_registry_sha256"],
+        "policy_sha256": kwargs["expected_policy_sha256"],
+        "at_time_utc": kwargs["at_time_utc"],
+        "observed_artifact_sha256s": deepcopy(kwargs["observed_artifact_sha256s"]),
+        "observed_pins": deepcopy(kwargs["observed_pins"]),
+    }
+
+
+def _physical_v4_review_time_offset(at_time_utc, seconds):
+    from datetime import datetime, timedelta
+
+    shifted = datetime.fromisoformat(at_time_utc) + timedelta(seconds=seconds)
+    return shifted.isoformat(timespec="seconds").replace("+00:00", "Z")
+
+
+def test_physical_v4_projects_independently_observed_current_review(
+        physical_source_use_whole_norm_control_v2):
+    from copy import deepcopy
+
+    from ipfs_datasets_py.logic.autoformal import corpus_qualification as qualification
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+
+    c = physical_source_use_whole_norm_control_v2
+    raw, pin = c["physical_request_raw"], c["physical_request_sha256"]
+    current = _physical_v4_review_observation_inputs(c)
+    current["at_time_utc"] = _physical_v4_review_time_offset(current["at_time_utc"], 1)
+    current_before = deepcopy(current)
+    report = release.validate_uscode_release_closure_v4(raw,
+        expected_request_sha256=pin, include_declared_eligibility=True, current_review=current)
+    assert report["request_sha256"] == pin == hashlib.sha256(raw).hexdigest()
+    assert report["graph_sha256"] == c["graph_sha"]
+    assert report["admission_sha256"] == c["admission_sha"]
+    assert report["local_source_cache_entity_bindings_verified"] is True
+    assert current == current_before
+
+    observation = report["current_review_observation"]
+    evidence = report["declared_eligibility_evidence"]
+    assert evidence["current_review_observation"] == observation
+    assert {field: observation[field] for field in ("at_time_utc", "registry_sha256", "policy_sha256")} == {
+        field: current[field] for field in ("at_time_utc", "registry_sha256", "policy_sha256")
+    }
+    assert observation["reviews_sha256"] == c["kwargs"]["expected_reviews_sha256"]
+    assert observation["admission_sha256"] == c["admission_sha"]
+    assert observation["request_sha256"] == pin
+    assert observation["graph_sha256"] == c["graph_sha"]
+    assert observation["evaluation_clock_authenticated"] is False
+    assert observation["registry_freshness_authenticated"] is False
+    assert seal_record({key: value for key, value in observation.items()
+                        if key not in {"record_cid", "cid_scope"}}) == observation
+    record = report["declared_qualification"]
+    assert record["dimensions"]["interpretation"] == {
+        "status": "reviewed",
+        "evidence_cids": [evidence["component_cids"]["admission"], observation["record_cid"]],
+    }
+    eligibility = report["declared_eligibility"]
+    assert qualification.validate_eligibility(eligibility, record,
+        artifact_cid=evidence["artifact_cid"], profile=release.CLOSURE_PROFILE_V4) == eligibility
+    assert eligibility["views"]["reviewed_graph"]["declared_eligible"] is True
+    assert eligibility["views"]["checked_lean"]["declared_eligible"] is False
+    assert record["dimensions"]["proof"]["status"] == "pending"
+    assert report["native_receipt_replayed"] is False
+    assert all(eligibility[field] is False for field in qualification.AUTHORITY_FIELDS)
+
+
+@pytest.mark.parametrize("drift", ["revoked-registry", "changed-policy", "expiry", "dependency", "rollback"])
+def test_physical_v4_refuses_stale_wire_against_independent_current_review(
+        physical_source_use_whole_norm_control_v2, drift):
+    from copy import deepcopy
+
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as wire
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+
+    c = physical_source_use_whole_norm_control_v2
+    raw, pin = c["physical_request_raw"], c["physical_request_sha256"]
+    current = _physical_v4_review_observation_inputs(c)
+    assert c["admission"]["semantic_use_eligible"] is True
+    if drift in {"revoked-registry", "changed-policy"}:
+        case = dict(c["case"], **{key: deepcopy(c["case"][key])
+                                 for key in ("registry", "policy", "reviews")})
+        if drift == "revoked-registry":
+            key_id = case["reviews"][0]["key_id"]
+            key = next(row for row in case["registry"]["keys"] if row["key_id"] == key_id)
+            case["registry"]["revocation_generation"] += 1
+            key["revoked_at_utc"] = current["at_time_utc"]
+        else:
+            case["policy"]["policy_id"] += ":replacement"
+        c["helper"].reviewed_resign_v2(case)
+        c["mixed_helper"].assert_signatures_valid(case)
+        args, kwargs = c["helper"].reviewed_assessment_arguments_v2(c["owner"], case)
+        assessment = c["owner"].assess_reviewed_norm_admission_v3(*args, **kwargs)
+        if drift == "revoked-registry":
+            assert assessment["semantic_use_eligible"] is False
+            assert any("key_revoked" in row["blockers"]
+                       for row in assessment["review_authority"]["reviews"])
+            assert current["registry_sha256"] != kwargs["expected_registry_sha256"]
+            current["registry_sha256"] = kwargs["expected_registry_sha256"]
+        else:
+            assert assessment["semantic_use_eligible"] is True
+            assert current["policy_sha256"] != kwargs["expected_policy_sha256"]
+        current["policy_sha256"] = kwargs["expected_policy_sha256"]
+    elif drift == "expiry":
+        expiry = min(row["expires_at_utc"] for row in c["case"]["reviews"])
+        current["at_time_utc"] = _physical_v4_review_time_offset(expiry, 1)
+        assessment = c["owner"].assess_reviewed_norm_admission_v3(
+            *c["args"], **dict(c["kwargs"], at_time_utc=current["at_time_utc"]))
+        assert assessment["semantic_use_eligible"] is False
+        assert any("review_not_current" in row["blockers"]
+                   for row in assessment["review_authority"]["reviews"])
+    elif drift == "dependency":
+        crosswalk = c["physical_request"]["component"]["reviewed_crosswalk"]
+        artifact_hashes = current["observed_artifact_sha256s"]
+        assert artifact_hashes[crosswalk] == c["physical_request"]["pins"]["reviewed_crosswalk"]
+        artifact_hashes[crosswalk] = hashlib.sha256(b"replacement fictional dependency").hexdigest()
+    else:
+        current["at_time_utc"] = _physical_v4_review_time_offset(current["at_time_utc"], -1)
+        assessment = c["owner"].assess_reviewed_norm_admission_v3(
+            *c["args"], **dict(c["kwargs"], at_time_utc=current["at_time_utc"]))
+        assert assessment["semantic_use_eligible"] is True
+
+    before = deepcopy(current)
+    with pytest.raises(ValueError, match=r"current review|review_not_current|rollback"):
+        release.validate_uscode_release_closure_v4(raw,
+            expected_request_sha256=pin, include_declared_eligibility=True, current_review=current)
+    assert current == before
+    assert wire.encode_parent_replay_value_v1(c["physical_request"],
+        max_bytes=release.MAX_CLOSURE_REQUEST_BYTES_V3) == raw
+    assert hashlib.sha256(raw).hexdigest() == pin
+
+
+def test_physical_v4_current_review_selection_preserves_legacy_default(
+        physical_source_use_whole_norm_control_v2):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+
+    c = physical_source_use_whole_norm_control_v2
+    raw, pin = c["physical_request_raw"], c["physical_request_sha256"]
+    default = release.validate_uscode_release_closure_v4(raw, expected_request_sha256=pin)
+    assert release.validate_uscode_release_closure_v4(raw,
+        expected_request_sha256=pin, current_review=None) == default
+    assert "current_review_observation" not in default and "declared_qualification" not in default
+    assert default["native_receipt_replayed"] is default["admitted"] is default["proof_verified"] is False
+    projected = release.validate_uscode_release_closure_v4(raw,
+        expected_request_sha256=pin, include_declared_eligibility=True)
+    assert "current_review_observation" not in projected
+    evidence = projected["declared_eligibility_evidence"]
+    assert "current_review_observation" not in evidence
+    assert projected["declared_qualification"]["dimensions"]["interpretation"]["evidence_cids"] == [
+        evidence["component_cids"]["admission"],
+    ]
