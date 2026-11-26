@@ -10,13 +10,16 @@ import argparse
 import hashlib
 import json
 import os
+import secrets
 import stat
 import sys
+from contextlib import contextmanager
 from pathlib import Path
 
 RECEIPT_SCHEMA = "legal-corpus-graph-cli-receipt/v1"
 _WHOLE_NORM_V4_PROFILE = "reviewed-source-use-whole-norm-physical-source-replay/v1"
 _PHYSICAL_V3_PROFILE = "reviewed-norm-v3-physical-three-cache-replay/v1"
+_RETAINED_TYPE_COMMAND = "retained-type-eligibility"
 
 
 class CLIError(ValueError):
@@ -53,16 +56,24 @@ def _parser():
         "reviewed-norm-v3-direct",
         _WHOLE_NORM_V4_PROFILE,
     ), default="reviewed-norm-v2-local-replay/v1")
+    retained = commands.add_parser(_RETAINED_TYPE_COMMAND, add_help=False)
+    retained.add_argument("-h", "--help", action="store_true")
+    for name in ("checked-report", "probe-input", "stdout", "stderr"):
+        retained.add_argument("--" + name, required=True)
+        retained.add_argument("--" + name + "-sha256", required=True)
+    retained.add_argument("--preparation-sha256", required=True)
+    retained.add_argument("--graph-sha256", required=True)
+    retained.add_argument("--unit-id", required=True)
+    destination = retained.add_mutually_exclusive_group(required=True)
+    destination.add_argument("--output")
+    destination.add_argument("--saved")
+    retained.add_argument("--saved-sha256")
     return parser
 
 
-def _read_regular_file(path, *, maximum_bytes):
-    """Read one bounded regular file without following any path symlink.
-
-    Directory descriptors prevent a parent-component symlink from being hidden
-    by path resolution. The expected digest is checked separately by the common
-    JSON loader. Exact source intake/authenticity remains the caller's concern.
-    """
+@contextmanager
+def _file_location(path):
+    """Open the existing parent by descending through unsymlinked directory FDs."""
     if not hasattr(os, "O_NOFOLLOW") or not hasattr(os, "O_DIRECTORY"):
         raise CLIError("this profile requires O_NOFOLLOW and directory-descriptor support")
     candidate = Path(path).absolute()
@@ -72,15 +83,24 @@ def _read_regular_file(path, *, maximum_bytes):
     if not components:
         raise CLIError("snapshot must name a regular file")
     directory_fd = os.open(candidate.anchor, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
-    descriptor = None
     try:
         for component in components[:-1]:
             child_fd = os.open(component, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW,
                                dir_fd=directory_fd)
             os.close(directory_fd)
             directory_fd = child_fd
-        descriptor = os.open(components[-1], os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK,
-                             dir_fd=directory_fd)
+        yield directory_fd, components[-1]
+    finally:
+        os.close(directory_fd)
+
+
+def _file_inode(info):
+    return info.st_dev, info.st_ino
+
+
+def _read_named_file(directory_fd, name, maximum_bytes):
+    descriptor = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=directory_fd)
+    try:
         before = os.fstat(descriptor)
         if not stat.S_ISREG(before.st_mode) or before.st_size > maximum_bytes:
             raise CLIError("snapshot must be a bounded regular file")
@@ -94,14 +114,136 @@ def _read_regular_file(path, *, maximum_bytes):
                 raise CLIError("snapshot exceeds its byte bound")
             chunks.append(chunk)
         after = os.fstat(descriptor)
-        observations = ("st_dev", "st_ino", "st_size", "st_mtime_ns", "st_ctime_ns")
-        if any(getattr(before, field) != getattr(after, field) for field in observations):
+        named = os.stat(name, dir_fd=directory_fd, follow_symlinks=False)
+        observations = ("st_dev", "st_ino", "st_mode", "st_size", "st_mtime_ns", "st_ctime_ns")
+        if size != before.st_size or any(
+                getattr(before, field) != getattr(after, field)
+                or getattr(before, field) != getattr(named, field) for field in observations):
             raise CLIError("snapshot changed during its read")
         return b"".join(chunks)
     finally:
-        if descriptor is not None:
-            os.close(descriptor)
-        os.close(directory_fd)
+        os.close(descriptor)
+
+
+def _read_regular_file(path, *, maximum_bytes):
+    """Read one bounded regular file without following any path symlink."""
+    with _file_location(path) as (directory_fd, name):
+        return _read_named_file(directory_fd, name, maximum_bytes)
+
+
+def _remove_owned_file(directory_fd, name, inode):
+    try:
+        info = os.stat(name, dir_fd=directory_fd, follow_symlinks=False)
+    except FileNotFoundError:
+        return
+    if _file_inode(info) == inode:
+        os.unlink(name, dir_fd=directory_fd)
+
+
+def _write_new_handoff(path, raw, *, maximum_bytes):
+    """Read back an exclusive stage and publish a closed file without overwrite."""
+    if not 0 < len(raw) <= maximum_bytes:
+        raise CLIError("retained eligibility handoff exceeds its byte bound")
+    with _file_location(path) as (directory_fd, name):
+        try:
+            os.stat(name, dir_fd=directory_fd, follow_symlinks=False)
+        except FileNotFoundError:
+            pass
+        else:
+            raise CLIError("retained eligibility output already exists; overwrite refused")
+        stage = ".retained-type-eligibility-" + secrets.token_hex(16) + ".pending"
+        descriptor = os.open(stage, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
+                             0o600, dir_fd=directory_fd)
+        linked = False
+        inode = None
+        try:
+            with os.fdopen(descriptor, "wb") as stream:
+                inode = _file_inode(os.fstat(stream.fileno()))
+                stream.write(raw)
+                stream.flush()
+                os.fsync(stream.fileno())
+            if _read_named_file(directory_fd, stage, maximum_bytes) != raw:
+                raise CLIError("staged retained eligibility handoff differs from replay")
+            if _file_inode(os.stat(stage, dir_fd=directory_fd, follow_symlinks=False)) != inode:
+                raise CLIError("retained eligibility stage was replaced")
+            try:
+                os.link(stage, name, src_dir_fd=directory_fd, dst_dir_fd=directory_fd,
+                        follow_symlinks=False)
+            except FileExistsError as error:
+                raise CLIError("retained eligibility output already exists; overwrite refused") from error
+            linked = True
+            _remove_owned_file(directory_fd, stage, inode)
+            os.fsync(directory_fd)
+            with _file_location(path) as (current_fd, current_name):
+                if (_file_inode(os.fstat(current_fd)) != _file_inode(os.fstat(directory_fd))
+                        or _file_inode(os.stat(current_name, dir_fd=current_fd, follow_symlinks=False)) != inode
+                        or _read_named_file(current_fd, current_name, maximum_bytes) != raw):
+                    raise CLIError("published retained eligibility handoff differs from replay")
+        except BaseException:
+            if linked:
+                _remove_owned_file(directory_fd, name, inode)
+                os.fsync(directory_fd)
+            raise
+        finally:
+            if inode is not None:
+                _remove_owned_file(directory_fd, stage, inode)
+
+
+def _retained_type_eligibility(args):
+    from ipfs_datasets_py.logic.autoformal import corpus_contracts as contracts
+    from ipfs_datasets_py.logic.autoformal.legal_corpus_definition_use_preservation_elaboration_native_v2 import (
+        MAX_CAPTURE_BYTES,
+    )
+    from ipfs_datasets_py.logic.autoformal.legal_release_coordinator_v1 import (
+        qualify_retained_physical_type_capture_v4,
+    )
+    from ipfs_datasets_py.logic.ir_core.protocols import BackendRequest
+    from ipfs_datasets_py.utils.cid_utils import canonical_dag_json_bytes
+
+    if (args.saved is None) != (args.saved_sha256 is None):
+        raise CLIError("--saved and --saved-sha256 must be supplied together")
+    for field in ("checked_report", "probe_input", "stdout", "stderr", "preparation", "graph"):
+        contracts.require_sha256(getattr(args, field + "_sha256"), field + " SHA256")
+    contracts.require_text(args.unit_id, "selected unit ID")
+    if args.saved is not None:
+        contracts.require_sha256(args.saved_sha256, "saved handoff SHA256")
+    limit = contracts.MAX_RECORD_BYTES
+    raw = _read_regular_file(args.probe_input, maximum_bytes=limit)
+    probe = contracts.load_record_bytes(raw, expected_sha256=args.probe_input_sha256)
+    contracts.require_keys(probe, ("schema", "request", "request_sha256", "original_files",
+                                  "retained_receipt_sha256", "retained_packet_sha256"), "probe input")
+    if probe["schema"] != "physical-type-probe-caller-input/v1" or type(probe["original_files"]) is not dict:
+        raise CLIError("closed physical type probe input required")
+    request = BackendRequest.from_dict(probe["request"])
+    contracts.require_sha256(probe["request_sha256"], "probe request SHA256")
+    if request.digest != probe["request_sha256"]:
+        raise CLIError("typed request differs from the pinned probe input")
+    if args.saved is not None:
+        saved = _read_regular_file(args.saved, maximum_bytes=limit)
+        if hashlib.sha256(saved).hexdigest() != args.saved_sha256:
+            raise CLIError("saved handoff differs from expected SHA256")
+    handoff = qualify_retained_physical_type_capture_v4(
+        _read_regular_file(args.checked_report, maximum_bytes=limit),
+        request, tuple(sorted(probe["original_files"].items())),
+        _read_regular_file(args.stdout, maximum_bytes=MAX_CAPTURE_BYTES),
+        _read_regular_file(args.stderr, maximum_bytes=MAX_CAPTURE_BYTES),
+        expected_checked_release_report_sha256=args.checked_report_sha256,
+        expected_graph_sha256=args.graph_sha256, expected_unit_id=args.unit_id,
+        expected_retained_receipt_sha256=probe["retained_receipt_sha256"],
+        expected_retained_packet_sha256=probe["retained_packet_sha256"],
+        expected_preparation_sha256=args.preparation_sha256,
+        expected_stdout_sha256=args.stdout_sha256, expected_stderr_sha256=args.stderr_sha256)
+    content = canonical_dag_json_bytes(handoff)
+    if args.output is not None:
+        _write_new_handoff(args.output, content, maximum_bytes=limit)
+    elif saved != content:
+        raise CLIError("saved handoff differs from the exact retained eligibility replay")
+    return _receipt(status="success", command=_RETAINED_TYPE_COMMAND,
+        validation_scope="retained-v4-type-eligibility-local-replay",
+        mode="save" if args.output is not None else "reload",
+        artifact={"path": str(Path(args.output or args.saved).absolute()), "bytes": len(content),
+                  "sha256": hashlib.sha256(content).hexdigest()},
+        declared_eligibility_cid=handoff["declared_eligibility"]["record_cid"])
 
 
 def _receipt(*, status, command, **values):
@@ -129,13 +271,20 @@ def main(argv=None):
         parser = _parser()
         # Help is a receipt too; subcommand help does not require file options.
         if "--help" in arguments or "-h" in arguments:
-            command = arguments[0] if arguments and arguments[0] in ("export", "validate", "validate-closure") else None
+            command = arguments[0] if arguments and arguments[0] in ("export", "validate", "validate-closure", _RETAINED_TYPE_COMMAND) else None
             result = _receipt(status="help", command=command, usage=[
                 "export --snapshot PATH --snapshot-sha256 SHA --output DIRECTORY",
                 "validate --bundle DIRECTORY --manifest-sha256 SHA",
             ] if command != "validate-closure" else [
                 "validate-closure --request PATH --request-sha256 SHA",
             ])
+            if command == _RETAINED_TYPE_COMMAND:
+                result["usage"] = [
+                    "retained-type-eligibility --checked-report PATH --checked-report-sha256 SHA "
+                    "--probe-input PATH --probe-input-sha256 SHA --stdout PATH --stdout-sha256 SHA "
+                    "--stderr PATH --stderr-sha256 SHA --preparation-sha256 SHA "
+                    "--graph-sha256 SHA --unit-id ID (--output PATH | --saved PATH --saved-sha256 SHA)",
+                ]
             if command == "validate-closure":
                 result["supported_profiles"] = [
                     "reviewed-norm-v2-local-replay/v1",
@@ -153,7 +302,11 @@ def main(argv=None):
             args = parser.parse_args(arguments)
             command = args.command
             if command is None:
-                raise CLIError("a subcommand is required: export, validate or validate-closure")
+                raise CLIError("a subcommand is required: export, validate, validate-closure or retained-type-eligibility")
+            if command == _RETAINED_TYPE_COMMAND:
+                result = _retained_type_eligibility(args)
+                sys.stdout.write(json.dumps(result, sort_keys=True, ensure_ascii=False, allow_nan=False) + "\n")
+                return 0
             if command == "validate-closure":
                 from ipfs_datasets_py.logic.autoformal.legal_release_coordinator_v1 import (
                     MAX_CLOSURE_REQUEST_BYTES, validate_uscode_release_closure_v1,

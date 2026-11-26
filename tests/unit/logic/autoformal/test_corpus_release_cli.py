@@ -4138,3 +4138,143 @@ def test_physical_v4_retained_type_eligibility_refuses_foreign_or_unbound_captur
     with pytest.raises(ValueError):
         release.qualify_retained_physical_type_capture_v4(
             raw, case["request"], case["files"], case["stdout"], case["stderr"], **options)
+
+
+def _retained_type_eligibility_cli_files(directory, label):
+    directory.mkdir()
+    case, report_raw, options = _retained_physical_type_eligibility_fixture(label)
+    probe = {
+        "schema": "physical-type-probe-caller-input/v1", "request": case["request"].to_dict(),
+        "request_sha256": case["request"].digest, "original_files": dict(case["files"]),
+        "retained_receipt_sha256": options["expected_retained_receipt_sha256"],
+        "retained_packet_sha256": options["expected_retained_packet_sha256"],
+    }
+    raw_inputs = {"checked-report": report_raw, "probe-input": canonical_dag_json_bytes(probe),
+                  "stdout": case["stdout"], "stderr": case["stderr"]}
+    argv = ["retained-type-eligibility"]
+    for flag, raw in raw_inputs.items():
+        path = directory / (flag + ".data")
+        path.write_bytes(raw)
+        argv.extend(["--" + flag, str(path), "--" + flag + "-sha256", hashlib.sha256(raw).hexdigest()])
+    argv.extend(["--preparation-sha256", options["expected_preparation_sha256"],
+                 "--graph-sha256", options["expected_graph_sha256"], "--unit-id", options["expected_unit_id"]])
+    return case, report_raw, options, argv
+
+
+def _retained_type_eligibility_cli_call(argv, capsys):
+    from scripts.ops.legal_ir import validate_uscode_corpus_release as cli
+
+    rc = cli.main(argv)
+    lines = capsys.readouterr().out.splitlines()
+    assert len(lines) == 1
+    receipt = json.loads(lines[0])
+    assert receipt["command"] == "retained-type-eligibility"
+    assert all(receipt[field] is False for field in (
+        "admitted", "formalized", "source_semantics_verified", "source_authenticity_verified", "proof_verified"))
+    return rc, receipt
+
+
+@pytest.mark.parametrize("release_id", ["one", "two"])
+def test_retained_type_eligibility_cli_saves_and_reloads_exact_handoff(tmp_path, capsys, release_id):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+
+    directory = tmp_path / release_id
+    case, report_raw, options, argv = _retained_type_eligibility_cli_files(directory, release_id)
+    expected = release.qualify_retained_physical_type_capture_v4(
+        report_raw, case["request"], case["files"], case["stdout"], case["stderr"], **options)
+    expected_raw = canonical_dag_json_bytes(expected)
+    destination = directory / "saved-eligibility.json"
+    rc, saved = _retained_type_eligibility_cli_call(argv + ["--output", str(destination)], capsys)
+    assert rc == 0 and saved["status"] == "success" and saved["mode"] == "save"
+    assert destination.read_bytes() == expected_raw
+    artifact = {"path": str(destination.absolute()), "bytes": len(expected_raw),
+                "sha256": hashlib.sha256(expected_raw).hexdigest()}
+    assert saved["artifact"] == artifact
+    assert saved["declared_eligibility_cid"] == expected["declared_eligibility"]["record_cid"]
+    rc, reloaded = _retained_type_eligibility_cli_call(
+        argv + ["--saved", str(destination), "--saved-sha256", artifact["sha256"]], capsys)
+    assert rc == 0 and reloaded["status"] == "success" and reloaded["mode"] == "reload"
+    assert reloaded["artifact"] == artifact
+    assert reloaded["declared_eligibility_cid"] == saved["declared_eligibility_cid"]
+    assert destination.read_bytes() == expected_raw
+    assert expected["declared_qualification"]["dimensions"]["proof"]["status"] == "pending"
+    assert expected["declared_eligibility"]["views"]["checked_lean"]["declared_eligible"] is False
+
+
+@pytest.mark.parametrize("damage", ["graph-pin", "unit-pin", "modified-saved-bytes", "repinned-sibling-saved"])
+def test_retained_type_eligibility_cli_refuses_unbound_saved_handoff(tmp_path, capsys, damage):
+    directory = tmp_path / "selected"
+    _, _, _, argv = _retained_type_eligibility_cli_files(directory, "one")
+    destination = directory / "saved-eligibility.json"
+    rc, saved = _retained_type_eligibility_cli_call(argv + ["--output", str(destination)], capsys)
+    assert rc == 0 and saved["status"] == "success"
+    expected_pin = saved["artifact"]["sha256"]
+    original = destination.read_bytes()
+    if damage in ("graph-pin", "unit-pin"):
+        _, _, other_options = _retained_physical_type_eligibility_fixture("two")
+        flag, value = (("--graph-sha256", other_options["expected_graph_sha256"]) if damage == "graph-pin"
+                       else ("--unit-id", other_options["expected_unit_id"]))
+        argv[argv.index(flag) + 1] = value
+        retained = original
+    elif damage == "modified-saved-bytes":
+        retained = original + b"\n"
+        changed = directory / "changed-saved.data"
+        changed.write_bytes(retained)
+        os.replace(changed, destination)
+    else:
+        sibling = tmp_path / "valid-sibling"
+        _, _, _, sibling_argv = _retained_type_eligibility_cli_files(sibling, "two")
+        sibling_saved = sibling / "saved-eligibility.json"
+        rc, other_saved = _retained_type_eligibility_cli_call(
+            sibling_argv + ["--output", str(sibling_saved)], capsys)
+        assert rc == 0 and other_saved["status"] == "success"
+        retained = sibling_saved.read_bytes()
+        assert retained != original
+        expected_pin = other_saved["artifact"]["sha256"]
+        changed = directory / "changed-saved.data"
+        changed.write_bytes(retained)
+        os.replace(changed, destination)
+    rc, refused = _retained_type_eligibility_cli_call(
+        argv + ["--saved", str(destination), "--saved-sha256", expected_pin], capsys)
+    assert rc == 1 and refused["status"] == "error"
+    assert type(refused["error"]) is str and refused["error"]
+    if damage in ("graph-pin", "unit-pin"):
+        assert "different reviewed " + ("graph" if damage == "graph-pin" else "unit") in refused["error"]
+    assert destination.read_bytes() == retained
+
+
+@pytest.mark.parametrize("damage", ["overwrite", "saved-symlink", "output-parent-symlink"])
+def test_retained_type_eligibility_cli_refuses_unsafe_save_or_reload_paths(tmp_path, capsys, damage):
+    directory = tmp_path / "selected"
+    _, _, _, argv = _retained_type_eligibility_cli_files(directory, "one")
+    destination = directory / "saved-eligibility.json"
+    rc, saved = _retained_type_eligibility_cli_call(argv + ["--output", str(destination)], capsys)
+    assert rc == 0 and saved["status"] == "success"
+    original = destination.read_bytes()
+    stat_fields = ("st_ctime_ns", "st_dev", "st_gid", "st_ino", "st_mode",
+                   "st_mtime_ns", "st_nlink", "st_size", "st_uid")
+    before = {field: getattr(destination.lstat(), field) for field in stat_fields}
+    if damage == "overwrite":
+        arguments = argv + ["--output", str(destination)]
+        parent_before = {field: getattr(directory.lstat(), field) for field in stat_fields}
+    elif damage == "saved-symlink":
+        link = directory / "linked-saved.json"
+        link.symlink_to(destination)
+        arguments = argv + ["--saved", str(link), "--saved-sha256", saved["artifact"]["sha256"]]
+    else:
+        real_parent = directory / "real-output"
+        real_parent.mkdir()
+        link = directory / "linked-output"
+        link.symlink_to(real_parent, target_is_directory=True)
+        arguments = argv + ["--output", str(link / "must-not-appear.json")]
+    rc, refused = _retained_type_eligibility_cli_call(arguments, capsys)
+    assert rc == 1 and refused["status"] == "error"
+    assert type(refused["error"]) is str and refused["error"]
+    assert destination.read_bytes() == original
+    assert {field: getattr(destination.lstat(), field) for field in stat_fields} == before
+    if damage == "overwrite":
+        assert {field: getattr(directory.lstat(), field) for field in stat_fields} == parent_before
+    else:
+        assert link.is_symlink()
+        if damage == "output-parent-symlink":
+            assert list(real_parent.iterdir()) == []
