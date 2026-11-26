@@ -4035,6 +4035,24 @@
       "record_id": "phase2-physical-declared-graph-eligibility-ordinary15-evidence537-20261126",
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
       "task": "LIR-21"
+    },
+    "phase3_candidate_inventory_ordinary11_20261126": {
+      "evidence_ordinal": 538,
+      "facts": {
+        "bytes": 3673,
+        "path": "/tmp/Root-one-guide538-existing-Source4-v436-uv64kmKv/one-guide538-Phase3-candidate-inventory-scoped-facts.json",
+        "sha256": "137400a5210f36ee1f62998967cd6f6989a385976c83532ffb3d0d41e75780f7"
+      },
+      "ordinary11": {
+        "functions": 8,
+        "oversize": 2,
+        "retained": 9,
+        "unique_PASS": 11
+      },
+      "record_id": "phase3-candidate-inventory-ordinary11-evidence538-20261126",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
+      "statutory_or_proof_credit": false,
+      "task": "LIR-07"
     }
   },
   "programme_goal_hierarchy": {

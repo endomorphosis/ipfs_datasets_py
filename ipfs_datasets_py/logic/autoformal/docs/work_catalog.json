@@ -31516,6 +31516,97 @@
       "root": "artifact_workspace",
       "scope": "Published opt-in local replay projection for signed fictional physical V3 and V4.",
       "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase3_candidate_inventory_ordinary11_20261126",
+      "closed_software_facts": {
+        "Lean_invocation": false,
+        "READ5": {
+          "bytes": 10715,
+          "path": "/tmp/Root-Phase3-inventory-postfreeze-READ5-v434-fZjnE9aj/actual-output/actual-D27-observed-D-root-initializer-Source-READ-v01-small-closeout.json",
+          "sha256": "4afa7478846005ccc9688da1c5fe4eb6b3e509960a438dd50c6f5af32e9da044"
+        },
+        "Source2": {
+          "bytes": 5858,
+          "path": "/tmp/Root-Phase3-inventory-existing-Source2-v433-OTtX4THI/actual-Phase3-candidate-inventory-exact2-Source-closed-small-v433.json",
+          "sha256": "80b2eab6c6ef42f247838807eac4a2603616ef2dbc49bc56b90f053908baefcf"
+        },
+        "actual_ordinary11": {
+          "bytes": 25998,
+          "path": "/tmp/Root-existing-Phase3-candidate-inventory-ordinary11-v435-mISXHM3q/actual-Phase3-candidate-inventory-ordinary11-closed-small-v435.json",
+          "sha256": "a31a2a56aea0cd6f7af1e503f8fd04f0c087a2d620834264741c4270ef2d0ee9"
+        },
+        "actual_publication": {
+          "bytes": 13870,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase3-candidate-inventory-exact2-ordinary11-three-FF-publication-v435.json",
+          "sha256": "bb6eb50d8acd593892b9ac143b8f37e7a19681220e9805ed698828b9e360dbb4"
+        },
+        "actual_seven_compiled_owners_and_test_rewrite": true,
+        "component": "relational-norm-fragment",
+        "counts": {
+          "duplicates": 0,
+          "errors": 0,
+          "failures": 0,
+          "functions": 8,
+          "passed": 11,
+          "skipped": 0,
+          "tests": 11
+        },
+        "current_code_head": "0ad89e81ffa91e24279ebdd9d675c47c781a0940",
+        "evidence_ordinal": 538,
+        "inventory_acceptance_envelope_bytes": 2097152,
+        "mixed_codec_limit_bytes": 524288,
+        "native_codec_limit_bytes": 1048576,
+        "owner": "ipfs_datasets_py/logic/autoformal/legal_relational_norm_v1.py",
+        "owning_test": "tests/unit/logic/autoformal/test_legal_relational_norm_v1.py",
+        "preserves_unsupported_candidate_payload_hash_roles_order_and_supported_siblings": true,
+        "private_same11_separate": {
+          "bytes": 23020,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/Phase3-candidate-interface-dispositions-private-ozvlan6t/SEALED-Phase3-candidate-inventory-private-same11-retention-and-role-coverage.json",
+          "sha256": "44b16e7c91292dd7f10cb88923c301fef0f5fc37e12e0ab2c2315152e608c104"
+        },
+        "raw_JUnit": {
+          "bytes": 2129,
+          "path": "/tmp/Root-existing-Phase3-candidate-inventory-ordinary11-v435-mISXHM3q/actual-output/Phase3-candidate-inventory-ordinary11-run-result0-output1.bin",
+          "sha256": "4711df0424297b6354a61a47664a2f02ad20f3875062f9820a9f430599357894"
+        },
+        "retained_7214_candidate_fixture": {
+          "bytes": 662668,
+          "full9": {
+            "st_ctime_ns": "1795421808217031727",
+            "st_dev": "66306",
+            "st_gid": "1000",
+            "st_ino": "69995097",
+            "st_mode": "33204",
+            "st_mtime_ns": "1795421808217031727",
+            "st_nlink": "1",
+            "st_size": "662668",
+            "st_uid": "1000"
+          },
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/docs/autoformalization/evidence/legal-ir-title10-7214-pending-compositions-20261024.json",
+          "sha256": "dd72e2b92ed5a44a77acfb72dd27ca8614250878400db89742c0437438d59dda",
+          "stable_FD_path_before_after": true
+        },
+        "retained_7214_independently_reviewed": false,
+        "schema": "Guide538-Phase3-candidate-inventory-ordinary11-verified-evidence/v1",
+        "statutory_or_proof_admission": false,
+        "subcohort_counts": {
+          "oversize2": 2,
+          "retained9": 9
+        },
+        "task": "LIR-07",
+        "task_status_changed": false,
+        "training_or_model_qualification": false
+      },
+      "evidence_ordinal": 538,
+      "id": "phase3-candidate-inventory-ordinary11-evidence538-20261126",
+      "observed_bytes": 3673,
+      "observed_sha256": "137400a5210f36ee1f62998967cd6f6989a385976c83532ffb3d0d41e75780f7",
+      "path": "/tmp/Root-one-guide538-existing-Source4-v436-uv64kmKv/one-guide538-Phase3-candidate-inventory-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Published candidate inventory envelope correction.",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
     }
   ]
 }
