@@ -4921,6 +4921,34 @@
       ],
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
       "task": "LIR-14"
+    },
+    "phase2_v4_cli_digest_pinned_current_review_ordinary33_20261126": {
+      "actual_legal_admission_or_Native_or_model_qualified": false,
+      "actual_live_ordinary33": {
+        "bytes": 15020,
+        "path": "/tmp/Root-V4-CLI-live-main-reconcile-EsXXzUG0/actual-live-reconciled-V4-CLI-ordinary33-closed.json",
+        "sha256": "7a9f1b31bbe71eba1e2bc4253d3fd9d0180a13045c171c76d803be6b6ffcdb09"
+      },
+      "evidence_ordinal": 572,
+      "facts": {
+        "bytes": 5228,
+        "path": "/tmp/P2-live-V4-CLI-evidence-composer-INERT-aMJ0GRii/current-V4-CLI-engineering-scoped-facts.json",
+        "sha256": "5210522294c151ca2c49014bae81527979b58dd3138ccd605221760bbcc51839"
+      },
+      "historical_isolated_ordinary33": {
+        "bytes": 14894,
+        "path": "/tmp/P2-V4-CLI-ordinary33-isolated-Guide571-LzSFO07f/actual-isolated-V4-CLI-ordinary33-closed.json",
+        "sha256": "a7b1792f4166dffb7f3c0a55af0da71f0383f5260b504a3838e5ae19e23b204c"
+      },
+      "private_same15": {
+        "bytes": 10578,
+        "path": "/tmp/P2-physical-V4-retained-handoff-current-trust-CLI-private-cy1j1i4x/SEALED-current-V4-CLI-current-review-retained-handoff-exact-two-private.json",
+        "sha256": "d4ec744a8454e4781a2804e6ec0cdf197a844d95fccef8e1f82ec3a14568596a"
+      },
+      "record_id": "phase2-v4-cli-digest-pinned-current-review-ordinary33-evidence572-20261126",
+      "related_catalog_component": "legal-release-coordinator",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
+      "task": "LIR-21"
     }
   },
   "programme_goal_hierarchy": {

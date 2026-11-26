@@ -35947,6 +35947,132 @@
       "root": "artifact_workspace",
       "scope": "Current installed Lean expected-proposition acceptance, wrong-type compiler rejection and axiom-policy refusal.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase2_v4_cli_digest_pinned_current_review_ordinary33_20261126",
+      "closed_runtime_facts": {
+        "actual_legal_admission_or_Native_or_model_qualified": false,
+        "actual_live_code_publication": {
+          "bytes": 27474,
+          "path": "/tmp/P2-V4-CLI-live-reconciled-ordinary33-publisher-INERT-UHtLMQQb/actual-live-reconciled-V4-CLI-ordinary33-three-FF-publication.json",
+          "sha256": "0b8f452fcedbe7f44befed897d5445558b68afb1ef1c4404262bf82eb71f265a"
+        },
+        "actual_live_exact2_freeze": {
+          "bytes": 6102,
+          "path": "/tmp/Root-V4-CLI-live-main-reconcile-EsXXzUG0/actual-live-reconciled-index-refreshed-freeze.json",
+          "sha256": "55a3b16ae1e00c7df30146a03cdde8ad98eda319ee2c3af386662dc4aabbb37a"
+        },
+        "actual_live_ordinary33": {
+          "bytes": 15020,
+          "path": "/tmp/Root-V4-CLI-live-main-reconcile-EsXXzUG0/actual-live-reconciled-V4-CLI-ordinary33-closed.json",
+          "sha256": "7a9f1b31bbe71eba1e2bc4253d3fd9d0180a13045c171c76d803be6b6ffcdb09"
+        },
+        "actual_live_reconciled_Source42_READ3": {
+          "bytes": 9832,
+          "path": "/tmp/P2-V4-CLI33-live-reconciled-READ3-controls-46ECQFly/actual-isolated-CLI33-READ3-closed.json",
+          "sha256": "0b9c361b49fa8918e1bf5b760ee9fc2eed6bafadf447ea775afccfd7d14c9eba"
+        },
+        "actual_live_reconciled_Source42_epoch": {
+          "bytes": 6362,
+          "path": "/tmp/Root-V4-CLI-live-main-reconcile-EsXXzUG0/actual-live-reconciled-Source42-content-epoch-closed.json",
+          "sha256": "e655b5bd34e12e6825044d4eb103f296e8f7f67a114520f74549aa54b37cce4e"
+        },
+        "actual_ordinary33_raw_JUnit": {
+          "bytes": 6106,
+          "path": "/tmp/P2-V4-CLI-ordinary33-live-bind-rtsfpb6t/actual-output/corpus-release-physical-v4-retained-type-current-review-ordinary33-run-result0-output1.bin",
+          "sha256": "d1ba609e94c9a4d10217fa2c6a4d3deee2aa9f3e68116b58f6310691dbfab06e"
+        },
+        "actual_ordinary33_report": {
+          "bytes": 996010,
+          "path": "/tmp/P2-V4-CLI-ordinary33-live-bind-rtsfpb6t/actual-output/complete-frozen-local-D-corpus-release-physical-v4-retained-type-current-review-ordinary33-existing-owner-report.json",
+          "sha256": "eecfe9703987364d818a9fe6448e1aa66da01efb9f9c17d6700274fbe417e297"
+        },
+        "actual_qualification_counts": {
+          "errors": 0,
+          "failures": 0,
+          "functions": 15,
+          "passed": 33,
+          "skipped": 0,
+          "tests": 33
+        },
+        "authenticated_clock_or_registry_freshness": false,
+        "canonical_Source_write_claimed": false,
+        "cli_owner": "scripts/ops/legal_ir/validate_uscode_corpus_release.py",
+        "delegated_release_coordinator": "ipfs_datasets_py/logic/autoformal/legal_release_coordinator_v1.py",
+        "evidence_ordinal": 572,
+        "healthy_review_attaches_exact_saved_handoff": true,
+        "historical_isolated_Source42_READ3": {
+          "bytes": 9033,
+          "path": "/tmp/P2-V4-CLI33-isolated-READ3-controls-03GmsFzw/actual-isolated-CLI33-READ3-closed.json",
+          "sha256": "918e24e2f6c72f1d4ab67093e0084978d3404abb7bbdb121b6f494507e667b96"
+        },
+        "historical_isolated_exact2_freeze": {
+          "bytes": 5779,
+          "path": "/tmp/P2-V4-CLI-ordinary33-isolated-Guide571-LzSFO07f/actual-isolated-exact-two-local-freeze.json",
+          "sha256": "6590d0cb8b762e0ada43e77288571fff74e720bc6ed13058e6a9a9cd906ae9ed"
+        },
+        "historical_isolated_head": "f347383434c9518972823a68c3201010aae47663",
+        "historical_isolated_ordinary33": {
+          "bytes": 14894,
+          "path": "/tmp/P2-V4-CLI-ordinary33-isolated-Guide571-LzSFO07f/actual-isolated-V4-CLI-ordinary33-closed.json",
+          "sha256": "a7b1792f4166dffb7f3c0a55af0da71f0383f5260b504a3838e5ae19e23b204c"
+        },
+        "live_qualified_A_HEAD": "219ba3da0f62f772801d71715e22c506faa21126",
+        "live_qualified_D_HEAD": "cbc43a5f365502265d1e64d7bce3281f2871ef01",
+        "owning_test": "tests/unit/logic/autoformal/test_corpus_release_cli.py",
+        "physical_V4_only_flags": [
+          "--current-review",
+          "--current-review-sha256"
+        ],
+        "prior_verified_guide571_publication": {
+          "bytes": 14878,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-guide571-four-doc-three-FF-publication-small-v595.json",
+          "sha256": "e801a745c72ca6597179134be541d3751bcb4bf1f529ad5360e0e981ab36bc9b"
+        },
+        "proof_eligibility_pending": true,
+        "qualification_subsets": {
+          "new_cli": 7,
+          "retained_coordinator": 22,
+          "retained_handoff": 4
+        },
+        "qualified_commit_blobs": {
+          "scripts/ops/legal_ir/validate_uscode_corpus_release.py": "532ed0ad76bccb52a3e52fe62066ef1c0e6e6aea",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py": "770c9a612e7f35fc6fd16ed79dc5a011ed93b674"
+        },
+        "related_catalog_component": "legal-release-coordinator",
+        "revoked_reviewer_refuses_closure_and_attachment": true,
+        "schema": "live-reconciled-V4-CLI-current-review-engineering-evidence/v1",
+        "separate_same15_counts": {
+          "baseline": {
+            "errors": 0,
+            "failed": 7,
+            "passed": 8,
+            "skipped": 0
+          },
+          "selected": {
+            "errors": 0,
+            "failed": 0,
+            "passed": 15,
+            "skipped": 0
+          }
+        },
+        "separate_same15_private": {
+          "bytes": 10578,
+          "path": "/tmp/P2-physical-V4-retained-handoff-current-trust-CLI-private-cy1j1i4x/SEALED-current-V4-CLI-current-review-retained-handoff-exact-two-private.json",
+          "sha256": "d4ec744a8454e4781a2804e6ec0cdf197a844d95fccef8e1f82ec3a14568596a"
+        },
+        "task": "LIR-21",
+        "task_status_changed": false
+      },
+      "evidence_ordinal": 572,
+      "id": "phase2-v4-cli-digest-pinned-current-review-ordinary33-evidence572-20261126",
+      "observed_bytes": 5228,
+      "observed_sha256": "5210522294c151ca2c49014bae81527979b58dd3138ccd605221760bbcc51839",
+      "path": "/tmp/P2-live-V4-CLI-evidence-composer-INERT-aMJ0GRii/current-V4-CLI-engineering-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Digest-pinned current review inputs for the physical V4 CLI and retained-handoff replay controls.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }
