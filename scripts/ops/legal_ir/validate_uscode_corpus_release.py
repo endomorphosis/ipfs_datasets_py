@@ -70,6 +70,8 @@ def _parser():
     physical_request = closure.add_mutually_exclusive_group()
     physical_request.add_argument("--retain-physical-request", metavar="DEST")
     physical_request.add_argument("--replay-retained-artifacts", action="store_true")
+    closure.add_argument("--paired-cache-archive")
+    closure.add_argument("--paired-cache-archive-sha256")
     retained = commands.add_parser(_RETAINED_TYPE_COMMAND, add_help=False)
     retained.add_argument("-h", "--help", action="store_true")
     for flag in _RETAINED_REPLAY_FLAGS:
@@ -357,7 +359,8 @@ def main(argv=None):
                     f"--saved PATH --saved-sha256 SHA {_RETAINED_REPLAY_USAGE}")
                 result["retained_physical_request_usage"] = (
                     f"validate-closure --profile {_WHOLE_NORM_V4_PROFILE} --request PATH --request-sha256 SHA "
-                    "(--retain-physical-request DEST | --replay-retained-artifacts)")
+                    "(--retain-physical-request DEST | --replay-retained-artifacts "
+                    "[--paired-cache-archive PATH --paired-cache-archive-sha256 SHA])")
                 result["declared_eligibility"] = {
                     "flag": "--include-declared-eligibility",
                     "supported_profiles": [_PHYSICAL_V3_PROFILE, _WHOLE_NORM_V4_PROFILE],
@@ -375,6 +378,10 @@ def main(argv=None):
                 if ((args.retain_physical_request is not None or args.replay_retained_artifacts)
                         and args.profile != _WHOLE_NORM_V4_PROFILE):
                     raise CLIError("retained physical request options require the physical V4 profile")
+                paired_archive_args = args.paired_cache_archive, args.paired_cache_archive_sha256
+                if any(value is not None for value in paired_archive_args) and (
+                        not all(paired_archive_args) or not args.replay_retained_artifacts):
+                    raise CLIError("paired cache archive and its SHA256 require physical V4 retained replay")
                 from ipfs_datasets_py.logic.autoformal.legal_release_coordinator_v1 import (
                     MAX_CLOSURE_REQUEST_BYTES, validate_uscode_release_closure_v1,
                 )
@@ -414,6 +421,16 @@ def main(argv=None):
                     validator = validate_uscode_release_closure_v4
                 if args.replay_retained_artifacts:
                     eligibility_options["replay_retained_artifacts"] = True
+                if args.paired_cache_archive is not None:
+                    from ipfs_datasets_py.logic.autoformal.legal_corpus_definition_use_lake_v2 import (
+                        decode_parent_replay_value_v1,
+                    )
+                    archive_raw = _read_regular_file(args.paired_cache_archive, maximum_bytes=request_limit)
+                    archive_files = decode_parent_replay_value_v1(archive_raw,
+                        expected_payload_sha256=args.paired_cache_archive_sha256, max_bytes=request_limit)
+                    if type(archive_files) is not dict or len(archive_files) != 3:
+                        raise CLIError("exact three retained paired-cache tables required")
+                    eligibility_options["retained_paired_cache_files"] = archive_files
                 closure = validator(raw, expected_request_sha256=args.request_sha256,
                     **eligibility_options)
                 result = _receipt(status="success", command=command,
@@ -430,6 +447,13 @@ def main(argv=None):
                     }
                 if args.replay_retained_artifacts:
                     result["physical_input_replay"] = "embedded-reviewed-artifacts"
+                if args.paired_cache_archive is not None:
+                    result["paired_cache_replay"] = {
+                        "archive_sha256": args.paired_cache_archive_sha256,
+                        "table_count": len(archive_files),
+                        "custody": "new-local-replay-files",
+                        "original_physical_custody_reestablished": False,
+                    }
                 sys.stdout.write(json.dumps(result, sort_keys=True, ensure_ascii=False, allow_nan=False) + "\n")
                 return 0
             from ipfs_datasets_py.logic.autoformal.corpus_contracts import (

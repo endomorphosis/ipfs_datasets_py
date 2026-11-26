@@ -4647,3 +4647,113 @@ def test_physical_v4_retained_artifacts_rejects_untyped_or_native_selection(sele
     error = str(refused.value).lower()
     assert "replay" in error or "retained" in error
     assert ("bool" if selection == "nonboolean" else "native") in error
+
+
+@pytest.fixture(scope="module")
+def _closed_physical_v4_paired_cache_replay(tmp_path_factory):
+    import shutil
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+
+    root = tmp_path_factory.mktemp("physical-v4-paired-cache")
+    workspace = root / "original-caller-workspace"
+    material = _direct_physical_source_material(workspace, reviewed_version=3)
+    control = reviewed_physical_whole_norm_control_v2(material)
+    raw = control["physical_request_raw"]
+    request_sha256 = control["physical_request_sha256"]
+    assert hashlib.sha256(raw).hexdigest() == request_sha256
+    request = control["physical_request"]
+    inputs = request["physical_inputs"]
+    law_path, entity_path = (Path(inputs[role]) for role in ("law_path", "entity_path"))
+    assert law_path == material["law_path"] and entity_path == material["entity_path"]
+    assert law_path.is_relative_to(workspace) and entity_path.is_relative_to(workspace)
+
+    original = release.validate_uscode_release_closure_v4(
+        raw, expected_request_sha256=request_sha256, include_declared_eligibility=True)
+    assert original["request_sha256"] == request_sha256
+    assert original["fixture_only"] is original["local_replay_complete"] is True
+
+    location = material["paired_location"]
+    repository = Path(location["repository_root"])
+    manifest_path = location["manifest_path_in_repo"]
+    assert repository.is_relative_to(workspace) and (repository / manifest_path).is_file()
+    tables = material["original_payload"]["tables"]
+    assert set(tables) == {"paired_spans", "goals", "artifacts"}
+    archived_tables = {}
+    for descriptor in tables.values():
+        relative = descriptor["path_in_repo"]
+        path = repository / relative
+        assert not Path(relative).is_absolute() and ".." not in Path(relative).parts
+        assert Path(relative).suffix == ".parquet" and relative != manifest_path
+        body = path.read_bytes()
+        assert (len(body), hashlib.sha256(body).hexdigest()) == (descriptor["bytes"], descriptor["sha256"])
+        archived_tables[relative] = body
+    assert len(archived_tables) == 3
+
+    retained_request = root / "retained-physical-request.bin"
+    retained_request.write_bytes(raw)
+    shutil.rmtree(workspace)
+    assert not workspace.exists() and not law_path.exists() and not entity_path.exists()
+    assert not repository.exists()
+    return workspace, retained_request, raw, request_sha256, archived_tables, original
+
+
+@pytest.mark.parametrize("case", ["exact", "missing", "extra", "same-length-table", "wrong-archive-pin"])
+def test_physical_v4_cli_replays_exact_paired_cache_after_workspace_cleanup(
+        tmp_path, capsys, _closed_physical_v4_paired_cache_replay, case):
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as wire
+
+    workspace, retained_request, raw, request_sha256, archived_tables, original = (
+        _closed_physical_v4_paired_cache_replay)
+    assert not workspace.exists()
+    tables = dict(archived_tables)
+    first = min(tables)
+    if case == "missing":
+        del tables[first]
+    elif case == "extra":
+        assert "unselected.parquet" not in tables
+        tables["unselected.parquet"] = tables[first]
+    elif case == "same-length-table":
+        body = tables[first]
+        assert len(body) > 8 and body[:4] == body[-4:] == b"PAR1"
+        tables[first] = body[:4] + bytes([body[4] ^ 1]) + body[5:]
+        assert len(tables[first]) == len(body) and tables[first] != body
+
+    archive = tmp_path / "paired-cache-archive.bin"
+    archive_raw = wire.encode_parent_replay_value_v1(tables)
+    archive.write_bytes(archive_raw)
+    archive_sha256 = hashlib.sha256(archive_raw).hexdigest()
+    if case == "wrong-archive-pin":
+        archive_sha256 = "0" * 64 if archive_sha256 != "0" * 64 else "1" * 64
+    args = _portable_v4_closure_arguments(retained_request, request_sha256) + [
+        "--replay-retained-artifacts", "--paired-cache-archive", str(archive),
+        "--paired-cache-archive-sha256", archive_sha256, "--include-declared-eligibility",
+    ]
+    rc, replay = _validate_closure_with_retained_type_cli(args, capsys)
+    if case == "exact":
+        assert rc == 0 and replay["status"] == "success", replay
+        assert replay["physical_input_replay"] == "embedded-reviewed-artifacts"
+        assert replay["paired_cache_replay"] == {
+            "archive_sha256": archive_sha256,
+            "table_count": 3,
+            "custody": "new-local-replay-files",
+            "original_physical_custody_reestablished": False,
+        }
+        closure = replay["closure"]
+        assert _physical_wire(closure) == _physical_wire(original)
+        assert closure["request_sha256"] == request_sha256
+        assert closure["declared_qualification"]["dimensions"]["proof"]["status"] == "pending"
+        assert closure["declared_eligibility"]["views"]["checked_lean"]["declared_eligible"] is False
+        assert closure["native_receipt_replayed"] is closure["release_ready"] is closure["proof_verified"] is False
+    else:
+        assert rc == 1 and replay["status"] == "error", replay
+        assert "closure" not in replay and "paired_cache_replay" not in replay
+        expected = {
+            "missing": "exact three retained paired-cache tables required",
+            "extra": "exact three retained paired-cache tables required",
+            "same-length-table": "paired-cache",
+            "wrong-archive-pin": "sha256",
+        }
+        assert expected[case] in replay["error"].lower(), replay
+        assert "unrecognized arguments" not in replay["error"].lower(), replay
+    assert retained_request.read_bytes() == raw and archive.read_bytes() == archive_raw
+    assert not workspace.exists()

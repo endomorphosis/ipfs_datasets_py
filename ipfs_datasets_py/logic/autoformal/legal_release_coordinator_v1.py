@@ -215,8 +215,202 @@ def _require_hf_reviewed_graph_v4(release, descriptors, reviewed_graph):
     _need(not any(remaining.values()), error)
 
 
+def _validate_retained_paired_join_v4(report, inputs, kwargs, *,
+        expected_report_sha256, retained_paired_file_bytes):
+    """Replay original V3 join bytes through fresh files, without historical custody.
+
+    Internal V4 retained-artifact lane only. The caller selects this path;
+    v1/v2/default replay and all Native authority stay with their original owners.
+    Return the exact pinned historical report after independently decoding all
+    retained table bytes. Historic inode/timestamps remain recorded observations,
+    rather than being asserted as the newly materialized file generation.
+    """
+    import os
+    import stat
+    from pathlib import Path, PurePosixPath
+    from tempfile import TemporaryDirectory
+    from . import legal_source_span_entity_join_v1 as joins
+    from . import legal_paired_manifest_inventory_v1 as inventory
+    from . import legal_paired_payload_intake_v1 as payload
+
+    joins._digest(expected_report_sha256)
+    if type(report) is bytes:
+        report = joins._read_json(report, joins.MAX_REPORT_BYTES, "retained join report")
+    original = joins._wire(report, joins.MAX_REPORT_BYTES)
+    _need(hashlib.sha256(original).hexdigest() == expected_report_sha256,
+          "retained join report differs from independent pin")
+    historical = joins._read_json(original, joins.MAX_REPORT_BYTES, "retained join snapshot")
+    _need(type(inputs) in (list, tuple) and len(inputs) == 6,
+          "six exact original coordinate join inputs required")
+    _need(type(kwargs) is dict and set(kwargs) in (
+        {"expected_request_sha256"}, {"expected_request_sha256", "legacy_join_inputs"}),
+          "closed original coordinate join arguments required")
+    _need(kwargs.get("legacy_join_inputs") is None or type(kwargs.get("legacy_join_inputs")) is dict
+          and not kwargs["legacy_join_inputs"], "retained coordinate legacy inputs must be absent")
+    initial_kwargs = {key: ({} if key == "legacy_join_inputs" and value is not None else value)
+                      for key,value in kwargs.items()}
+    captured_inputs = tuple(inputs)
+    request_raw, source_raw, source_metadata, paired_raw, manifest_bytes, entity_raw = captured_inputs
+    _need(all(type(raw) is bytes for raw in (request_raw, source_raw, paired_raw, entity_raw)),
+          "immutable original coordinate request bytes required")
+    source_snapshot, manifest_snapshot = joins._coordinate_metadata_snapshot(
+        source_metadata, manifest_bytes, (request_raw, source_raw, paired_raw, entity_raw))
+    request, _, _ = joins._preflight(request_raw, source_raw, paired_raw, entity_raw,
+        kwargs["expected_request_sha256"], kwargs.get("legacy_join_inputs"),
+        coordinate=True, wire_source=True)
+    span_report = inventory.prepare_paired_manifest_inventory_v2(paired_raw,
+        dict(manifest_snapshot), expected_request_sha256=request["paired_inventory_request_sha256"])
+    _need(len(span_report["manifests"]) == 1, "one complete retained coordinate bundle required")
+    selected = span_report["manifests"][0]
+    location = request["paired_bundles"][0]
+    manifest_path = selected["path_in_repo"]
+    _need(manifest_path == location["manifest_path_in_repo"], "retained manifest selection differs")
+    tables = selected["manifest"]["tables"]
+    _need(type(tables) is dict and set(tables) == set(inventory.TABLES),
+          "exact three retained paired table descriptors required")
+    maximum = payload.DEFAULT_LIMITS["max_bytes"]
+    _need(type(maximum) is int and maximum == 64 * 1024**2,
+          "original paired payload byte bound changed")
+    _need(type(retained_paired_file_bytes) is dict and len(retained_paired_file_bytes) == 3
+          and all(type(key) is str for key in retained_paired_file_bytes),
+          "exact three repository-relative retained paired table bodies required")
+    declared = {manifest_path: (selected["bytes"], selected["sha256"])}
+    for descriptor in tables.values():
+        relative = descriptor["path_in_repo"]
+        _need(relative not in declared, "retained bundle paths must be distinct")
+        declared[relative] = (descriptor["bytes"], descriptor["sha256"])
+    _need(set(retained_paired_file_bytes) == set(declared) - {manifest_path},
+          "retained paired-cache table byte population differs from manifest")
+    bodies = {manifest_path: manifest_snapshot[manifest_path]}
+    total = 0
+    for relative, (length, digest) in declared.items():
+        path = PurePosixPath(relative)
+        _need(type(relative) is str and 0 < len(relative) <= 512
+              and not path.is_absolute() and str(path) == relative
+              and all(part not in ("", ".", "..") for part in relative.split("/"))
+              and "\\" not in relative, "canonical relative retained bundle path required")
+        body = bodies.get(relative) if relative == manifest_path else retained_paired_file_bytes[relative]
+        _need(type(length) is int and 0 < length <= maximum and type(body) is bytes
+              and len(body) == length, "retained paired-cache table byte length differs")
+        joins._digest(digest)
+        _need(hashlib.sha256(body).hexdigest() == digest, "retained paired-cache table byte digest differs")
+        _need(length <= maximum - total, "retained paired bundle aggregate byte bound exceeded")
+        total += length
+        bodies[relative] = body
+    retained_snapshot = {key:value for key,value in bodies.items() if key != manifest_path}
+    logical_root = location["repository_root"]
+    historic_files = historical.get("retained_file_witnesses")
+    original_paths = {str(PurePosixPath(logical_root)/relative): length
+                      for relative,(length,_) in declared.items()}
+    _need(type(historic_files) is dict and set(historic_files) == set(original_paths),
+          "historical coordinate witness population differs from declared paths")
+    for path, size in original_paths.items():
+        row = historic_files[path]
+        _need(type(row) is list and len(row) == 6
+              and all(type(value) is int and -(2**63) <= value < 2**63 for value in row)
+              and row[0] >= 0 and row[1] >= 0 and stat.S_ISREG(row[2]) and row[3] == size,
+              "historical coordinate witness shape or declared size differs")
+    owner_pins = joins._coordinate_owner_pins(joins._owners())
+
+    def originals_unchanged():
+        _need(type(inputs) in (list, tuple) and len(inputs) == 6,
+              "original coordinate inputs changed during retained replay")
+        _need(all(type(inputs[index]) is bytes and inputs[index] == captured_inputs[index]
+                  for index in (0, 1, 3, 5)), "original coordinate request bytes changed")
+        _need(type(kwargs) is dict and kwargs == initial_kwargs,
+              "original coordinate arguments changed during retained replay")
+        for index, snapshot in ((2, source_snapshot), (4, manifest_snapshot)):
+            offered = inputs[index]
+            _need(type(offered) is dict and set(offered) == set(snapshot)
+                  and all(type(offered[key]) is bytes and offered[key] == body
+                          for key,body in snapshot.items()), "original coordinate metadata changed")
+        _need(type(retained_paired_file_bytes) is dict
+              and set(retained_paired_file_bytes) == set(retained_snapshot)
+              and all(type(retained_paired_file_bytes[key]) is bytes
+                      and retained_paired_file_bytes[key] == body
+                      for key,body in retained_snapshot.items()), "retained paired body mapping changed")
+        _need(joins._wire(report, joins.MAX_REPORT_BYTES) == original
+              and joins._wire(historical, joins.MAX_REPORT_BYTES) == original,
+              "historical pinned join report changed")
+
+    def owners_unchanged():
+        _need(joins._coordinate_owner_pins(joins._owners()) == owner_pins,
+              "retained coordinate replay owner sources changed")
+
+    primary = None
+    try:
+        originals_unchanged()
+        with TemporaryDirectory(prefix="legal-v4-retained-paired-") as spelling:
+            root = Path(spelling).resolve(strict=True)
+            _need(root.is_dir() and stat.S_IMODE(root.stat().st_mode) == 0o700,
+                  "private retained bundle directory required")
+            for relative, body in bodies.items():
+                path = root
+                for part in PurePosixPath(relative).parts[:-1]:
+                    path = path/part
+                    if not path.exists():
+                        path.mkdir(mode=0o700)
+                    _need(path.resolve(strict=True) == path and path.is_dir()
+                          and stat.S_IMODE(path.stat().st_mode) == 0o700,
+                          "unaliased private retained bundle directory required")
+                path = root/relative
+                fd = os.open(path, os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW|os.O_CLOEXEC, 0o600)
+                with os.fdopen(fd, "wb") as stream:
+                    _need(stream.write(body) == len(body), "incomplete retained bundle stage")
+                    stream.flush()
+                    os.fsync(stream.fileno())
+            runtime_request = joins._read_json(request_raw, joins.MAX_REQUEST_BYTES,
+                                               "detached coordinate join request")
+            runtime_request["paired_bundles"][0]["repository_root"] = str(root)
+            runtime_raw = joins._wire(runtime_request, joins.MAX_REQUEST_BYTES)
+            runtime_kwargs = dict(initial_kwargs, expected_request_sha256=hashlib.sha256(runtime_raw).hexdigest())
+            runtime_inputs = (runtime_raw, source_raw, dict(source_snapshot), paired_raw,
+                              dict(manifest_snapshot), entity_raw)
+            runtime_location = runtime_request["paired_bundles"][0]
+            current_files = joins._coordinate_file_witnesses(runtime_location, selected)
+            current_primary = None
+            try:
+                regenerated = joins.prepare_source_span_entity_join_manifest_v3(*runtime_inputs, **runtime_kwargs)
+                _need(regenerated["request"] == runtime_request
+                      and regenerated["request_raw_utf8"] == runtime_raw.decode("utf-8")
+                      and regenerated["request_sha256"] == runtime_kwargs["expected_request_sha256"]
+                      and regenerated["retained_file_witnesses"] == current_files,
+                      "fresh retained replay request or custody observation differs")
+                _need(type(regenerated["paired_bundles"]) is list and len(regenerated["paired_bundles"]) == 1
+                      and regenerated["paired_bundles"][0]["payload_intake"]["repository_root"] == str(root),
+                      "fresh retained payload I/O root differs")
+                normalized = joins._read_json(joins._wire(regenerated, joins.MAX_REPORT_BYTES),
+                                              joins.MAX_REPORT_BYTES, "detached retained replay result")
+                normalized["request"] = request
+                normalized["request_raw_utf8"] = request_raw.decode("utf-8")
+                normalized["request_sha256"] = initial_kwargs["expected_request_sha256"]
+                normalized["retained_file_witnesses"] = historic_files
+                normalized["paired_bundles"][0]["payload_intake"]["repository_root"] = logical_root
+                _need(joins._wire(normalized, joins.MAX_REPORT_BYTES) == original,
+                      "retained join report differs outside historical location and custody observations")
+            except BaseException as error:
+                current_primary = error
+                raise
+            finally:
+                def current_files_unchanged():
+                    _need(joins._coordinate_file_witnesses(runtime_location, selected) == current_files,
+                          "fresh retained coordinate files changed during replay")
+                joins._finish_coordinate_custody((("fresh retained files", current_files_unchanged),), current_primary)
+    except BaseException as error:
+        primary = error
+        raise
+    finally:
+        joins._finish_coordinate_custody((("original retained inputs and report", originals_unchanged),
+                                         ("retained replay owner sources", owners_unchanged)), primary)
+    # No producer callbacks follow this final held-report commitment check.
+    _need(joins._wire(historical, joins.MAX_REPORT_BYTES) == original,
+          "historical retained join return changed after closing custody")
+    return historical
+
+
 def _validate_uscode_release_byte_closure(request_raw: bytes, *, expected_request_sha256: str, reviewed_version: int, _captured_native_context=None,
-        _native_transport="chunk-index/v1", original_parent_handle=None, _original_parent_context=None) -> dict:
+        _native_transport="chunk-index/v1", original_parent_handle=None, _original_parent_context=None,
+        _retained_paired_cache_files=None) -> dict:
     """Replay exact local package, source/IR/graph/dependency/Lean-text custody.
 
     The request uses the existing bounded plain-value replay codec, including
@@ -428,8 +622,15 @@ def _validate_uscode_release_byte_closure(request_raw: bytes, *, expected_reques
     _need(type(replay["join_args"]) is list and len(replay["join_args"]) == 6
           and type(replay["join_kwargs"]) is dict and set(replay["join_kwargs"]) == {"expected_request_sha256"},
           "complete explicit wire-coordinate join-v3 replay required")
-    joins.validate_source_span_entity_join_manifest_v3(join, *replay["join_args"],
-        expected_report_sha256=joins.source_span_entity_join_manifest_sha256(join), **replay["join_kwargs"])
+    if _retained_paired_cache_files is None:
+        joins.validate_source_span_entity_join_manifest_v3(join, *replay["join_args"],
+            expected_report_sha256=joins.source_span_entity_join_manifest_sha256(join), **replay["join_kwargs"])
+    else:
+        _need(reviewed_version == 4 and original_parent_handle is None and request["native"] is None,
+              "detached paired-cache replay requires the source-only physical V4 domain")
+        _validate_retained_paired_join_v4(join, replay["join_args"], replay["join_kwargs"],
+            expected_report_sha256=joins.source_span_entity_join_manifest_sha256(join),
+            retained_paired_file_bytes=_retained_paired_cache_files)
     observed_datasets = [join["source_repository"],
         {key: join["span_inventory"][key] for key in ("repository_id", "revision")},
         {key: join["entity_metadata"][key] for key in ("repository_id", "revision")}]
@@ -590,7 +791,7 @@ REVIEWED_PHYSICAL_CROSSWALK_PROFILE = "identity-text-complete-reviewed-graph/v1"
 
 def _validate_uscode_release_physical_closure(request_raw: bytes, *, expected_request_sha256: str,
         reviewed_version: int, _observe_checked_context=None, _native_transport="chunk-index/v1",
-        original_parent_handle=None, replay_retained_artifacts=False) -> dict:
+        original_parent_handle=None, replay_retained_artifacts=False, _retained_paired_cache_files=None) -> dict:
     """Replay a reviewed, exact physical law/span/entity-to-IR component.
 
     Crosswalk bytes are versioned cross-reference dependencies of every reviewed
@@ -838,6 +1039,12 @@ def _validate_uscode_release_physical_closure(request_raw: bytes, *, expected_re
             return core_validator(core_raw, expected_request_sha256=core_sha,
                 _captured_native_context=capture, _native_transport=_native_transport,
                 original_parent_handle=original_parent_handle, _original_parent_context=parent_context)
+        if _retained_paired_cache_files is not None:
+            _need(reviewed_version == 4 and replay_retained_artifacts,
+                  "detached paired-cache files require physical V4 retained replay")
+            return core_validator(core_raw, expected_request_sha256=core_sha,
+                _captured_native_context=capture, _native_transport=_native_transport,
+                _retained_paired_cache_files=_retained_paired_cache_files)
         if reviewed_version in (3, 4):
             return core_validator(core_raw, expected_request_sha256=core_sha,
                 _captured_native_context=capture, _native_transport=_native_transport)
@@ -1857,12 +2064,13 @@ def _release_v4_policy():
 
 
 def _validate_uscode_release_byte_closure_v4(request_raw, *, expected_request_sha256,
-        _captured_native_context=None, _native_transport="direct-packet/v1"):
+        _captured_native_context=None, _native_transport="direct-packet/v1", _retained_paired_cache_files=None):
     _release_v4_policy()
     _need(_native_transport == "direct-packet/v1", "physical V4 direct transport required")
     return _validate_uscode_release_byte_closure(request_raw,
         expected_request_sha256=expected_request_sha256, reviewed_version=4,
-        _captured_native_context=_captured_native_context, _native_transport=_native_transport)
+        _captured_native_context=_captured_native_context, _native_transport=_native_transport,
+        _retained_paired_cache_files=_retained_paired_cache_files)
 
 
 def _physical_v4_current_review_selection(current_review):
@@ -2035,7 +2243,7 @@ def _observe_physical_v4_checked_native(context, request_raw, selection, review)
 
 def validate_uscode_release_closure_v4(request_raw, *, expected_request_sha256,
         include_declared_eligibility=False, current_review=None, checked_native=None,
-        replay_retained_artifacts=False):
+        replay_retained_artifacts=False, retained_paired_cache_files=None):
     """Replay source-only V4 bytes, optionally joining two live observations.
 
     A caller may independently select current trust digests, evaluation time
@@ -2051,6 +2259,9 @@ def validate_uscode_release_closure_v4(request_raw, *, expected_request_sha256,
     With replay_retained_artifacts, use the exact reviewed Parquet bodies in
     the pinned request after the original local files are unavailable. The
     historical locations and the physical request digest remain unchanged.
+    When the original paired-cache repository is also unavailable, supply its
+    exact three manifest-bound table byte bodies as retained_paired_cache_files.
+    The already-embedded manifest is replayed with them under fresh custody.
     This local replay cannot consume an original Native handle.
     """
     _release_v4_policy()
@@ -2058,6 +2269,12 @@ def validate_uscode_release_closure_v4(request_raw, *, expected_request_sha256,
     _need(type(replay_retained_artifacts) is bool, "explicit boolean retained physical artifact replay required")
     _need(not replay_retained_artifacts or checked_native is None,
           "retained physical artifact replay cannot acquire Native authority")
+    if retained_paired_cache_files is not None:
+        _need(replay_retained_artifacts and type(retained_paired_cache_files) is dict,
+              "exact paired-cache material requires physical V4 retained replay")
+        _need(len(retained_paired_cache_files) == 3,
+              "exact three retained paired-cache tables required")
+        retained_paired_cache_files = dict(retained_paired_cache_files)
     _need(checked_native is None or current_review is not None,
           "checked Native requires independently selected current review")
     observer = None
@@ -2075,7 +2292,8 @@ def validate_uscode_release_closure_v4(request_raw, *, expected_request_sha256,
     report = _validate_uscode_release_physical_closure(request_raw,
         expected_request_sha256=expected_request_sha256, reviewed_version=4,
         _native_transport="direct-packet/v1", _observe_checked_context=observer,
-        replay_retained_artifacts=replay_retained_artifacts)
+        replay_retained_artifacts=replay_retained_artifacts,
+        _retained_paired_cache_files=retained_paired_cache_files)
     if observer is not None:
         _need(len(observations) == 1, "exactly one closed current review observation required")
         review, checked = observations[0]
