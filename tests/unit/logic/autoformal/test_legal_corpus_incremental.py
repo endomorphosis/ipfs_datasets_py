@@ -3209,3 +3209,98 @@ def test_parent_incremental_installed_lean_failed_donor_evicts_descendants(
     assert (cold_path / "cache.json").read_bytes() == cold_cache_raw
     assert artifacts(cold) == cold_artifacts
     assert all(path.read_bytes() == body for path, body in physical.items())
+
+
+def test_source_edition_only_change_splits_shared_definition_cache_and_matches_clean(runtime):
+    """Authored source editions; real replay owners and the existing fake compiler.
+
+    This exercises source-version invalidation without revising either authored
+    interpretation. It supplies no installed-Lean or statutory-review evidence.
+    """
+    first = _FIXTURE_MODULE.candidate("O", edition=2024, norm_id="versioned-A")
+    next_version = _FIXTURE_MODULE.candidate("O", edition=2025, norm_id="versioned-A")
+    unchanged = _FIXTURE_MODULE.candidate("P", edition=2024, norm_id="retained-B")
+    original_cases, changed_cases = [first, unchanged], [next_version, unchanged]
+
+    original_request = json.loads(first[0]["request_raw"])
+    changed_request = json.loads(next_version[0]["request_raw"])
+    assert first[0]["raw_html"] == next_version[0]["raw_html"] == unchanged[0]["raw_html"]
+    assert first[1]["raw_sha256"] == next_version[1]["raw_sha256"]
+    assert first[1]["extracted_sha256"] == next_version[1]["extracted_sha256"]
+    assert original_request["definition_request"]["document"]["document_text"] == \
+        changed_request["definition_request"]["document"]["document_text"]
+    assert original_request["definition_request"]["declaration"] == \
+        changed_request["definition_request"]["declaration"]
+    semantic_fields = (
+        "norm_id", "profile", "interpretation_status", "paragraph_index", "source_span",
+        "quantifier_span", "category_span", "modality_span", "action_span", "modality",
+        "variable", "activation_scope", "modal_context",
+    )
+    assert {key: original_request["norm_declaration"][key] for key in semantic_fields} == \
+        {key: changed_request["norm_declaration"][key] for key in semantic_fields}
+    assert original_request["norm_declaration"]["edition"] == 2024
+    assert changed_request["norm_declaration"]["edition"] == 2025
+    assert first[2]["source_version"]["record_cid"] == unchanged[2]["source_version"]["record_cid"]
+    assert first[2]["source_version"]["record_cid"] != next_version[2]["source_version"]["record_cid"]
+    assert first[3]["definition"]["scope_key"] == next_version[3]["definition"]["scope_key"]
+    assert first[3]["scope_key"] != next_version[3]["scope_key"]
+    assert original_request["source_provenance"] == changed_request["source_provenance"] == {
+        "kind": "authored_official_shape_fixture",
+        "authenticity_verified": False,
+        "independently_reviewed": False,
+        "training_admitted": False,
+    }
+
+    original_preparation, changed_preparation = prepare(original_cases), prepare(changed_cases)
+    old, current = original_preparation.to_dict(), changed_preparation.to_dict()
+    assert len(old["definition_modules"]) == 1
+    assert len(current["definition_modules"]) == 2
+    old_first, old_second = old["norm_bindings"]
+    current_first, current_second = current["norm_bindings"]
+    assert old_first["definition_module"] == old_second["definition_module"]
+    assert current_first["definition_module"] != old_first["definition_module"]
+    for key in ("module", "definition_module", "composition_theorem"):
+        assert current_second[key] == old_second[key]
+
+    cold = build(runtime, original_cases, original_preparation, "edition-only-cold")
+    cold_receipt = wire(cold[0])
+    cold_cache = (cold[1] / "cache.json").read_bytes()
+    cold_artifacts = artifacts(cold)
+    before = len(runtime[1].calls)
+    updated = build(runtime, changed_cases, changed_preparation, "edition-only-updated", previous=cold)
+    expected = set(current["expected_modules"])
+    retained = {"LegalCorpus.Prelude", old_second["definition_module"], old_second["module"]}
+    assert updated[0]["build_passed"] is True
+    assert set(updated[0]["reused_modules"]) == retained
+    assert set(updated[0]["compiled_modules"]) == expected - retained
+    assert {call["module"] for call in runtime[1].calls[before:]} == expected - retained
+    assert len(runtime[1].calls) - before == len(expected - retained)
+    assert updated[0]["reused_theorems"] == [old_second["composition_theorem"]]
+    assert len(updated[0]["fresh_theorems"]) == 1
+    updated_artifacts = artifacts(updated)
+    assert set(updated_artifacts) == expected
+    assert {row["module"] for row in cache(updated)["module_facts"]} == expected
+    assert not (set(old["expected_modules"]) - expected) & set(updated_artifacts)
+    for module in retained:
+        assert updated_artifacts[module] == cold_artifacts[module]
+
+    before_warm = len(runtime[1].calls)
+    warm = build(runtime, changed_cases, changed_preparation, "edition-only-warm", previous=updated)
+    assert warm[0]["build_passed"] is True
+    assert warm[0]["compiled_modules"] == []
+    assert set(warm[0]["reused_modules"]) == expected
+    assert warm[0]["fresh_theorems"] == []
+    assert warm[0]["backend_executed"] is False
+    assert len(runtime[1].calls) == before_warm
+    assert artifacts(warm) == updated_artifacts
+    assert warm[0]["artifact_root_cid"] == updated[0]["artifact_root_cid"]
+
+    clean = build(runtime, changed_cases, changed_preparation, "edition-only-clean")
+    assert clean[0]["build_passed"] is True
+    assert set(clean[0]["compiled_modules"]) == expected
+    assert clean[0]["reused_modules"] == []
+    assert artifacts(clean) == updated_artifacts
+    assert clean[0]["artifact_root_cid"] == updated[0]["artifact_root_cid"]
+    assert wire(cold[0]) == cold_receipt
+    assert (cold[1] / "cache.json").read_bytes() == cold_cache
+    assert artifacts(cold) == cold_artifacts
