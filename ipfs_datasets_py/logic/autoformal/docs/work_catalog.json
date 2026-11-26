@@ -35033,6 +35033,117 @@
       "root": "artifact_workspace",
       "scope": "Installed Lean and exact disk-cache checks rerun on fictional inputs against independently pinned current wrapper and proof protocol.",
       "status": "CLOSED_FICTIONAL_LOCAL_NATIVE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase1_real_duckdb_pending_producer_retirement_ordinary4_20261126",
+      "closed_runtime_facts": {
+        "Source_resource_and_parent_closed": true,
+        "actual_P1_exact1_code_publication": {
+          "bytes": 16249,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P1-SQL-pending-retirement-exact1-ordinary4-three-FF-publication-v572.json",
+          "sha256": "254ff8349d89b45069e6bb4646ff6d623b103090536eef143394762fa99d77a1"
+        },
+        "actual_P1_ordinary_SQL4_qualification": {
+          "bytes": 7973,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P1-SQL-pending-retirement-existing-R2-ordinary4-qualified-v571.json",
+          "sha256": "c55c0e06c6e27642ff1a07fbe689ca3f7d3abdf91f85d46a011892bf63e26923"
+        },
+        "actual_closed_operator_report": {
+          "bytes": 450650,
+          "path": "/tmp/Root-P1-real-DuckDB-existing-R2-ordinary4-v571-5QzDesl6/actual-output/complete-frozen-local-D-P1-current-real-DuckDB-SQL4-existing-owner-report.json",
+          "sha256": "604584bbf1d9476f679b514e267d22e2ee45c90479b85b6644e14a4ecdaf1dd8"
+        },
+        "actual_counts": {
+          "duplicates": 0,
+          "errors": 0,
+          "failures": 0,
+          "functions": 4,
+          "passed": 4,
+          "skipped": 0,
+          "tests": 4
+        },
+        "actual_raw_JUnit": {
+          "bytes": 889,
+          "logical_name": "junit.xml",
+          "path": "/tmp/Root-P1-real-DuckDB-existing-R2-ordinary4-v571-5QzDesl6/actual-output/P1-current-real-DuckDB-SQL4-run-result0-output1.bin",
+          "sha256": "eb11a1cb84c28f331c66152c3211903ba671c4859ee56e5aab6df47cbae9773f"
+        },
+        "evidence_ordinal": 566,
+        "exact_current_SQL4_READ2": {
+          "bytes": 7082,
+          "path": "/tmp/Root-P1-SQL-pending-retirement-freeze-READ2-v570-SOIQYKAJ/actual-P1-SQL-pending-retirement-frozen-READ2-closed-v570.json",
+          "sha256": "393acf63117fdacf43d817a525d23f5bc705b3a214e5e20e885d584ae528c235"
+        },
+        "exact_local_test_freeze": {
+          "bytes": 8155,
+          "path": "/tmp/Root-P1-SQL-pending-retirement-freeze-READ2-v570-SOIQYKAJ/actual-P1-SQL-pending-retirement-exact1-local-freeze-v569.json",
+          "sha256": "9a1deb5fb9d1a6dc20df0d7389b14ffac1d407d703267fc3ac5fc1194b55b2d3"
+        },
+        "exact_new_check": {
+          "fresh_store_observes_replacement_on_same_caller_owned_connection": true,
+          "late_result_miss_and_sql_rows_absent": true,
+          "new_connection_or_parallel_waiter_observation": false,
+          "same_key_replacement_persists": true,
+          "same_store_clear_inside_pending_producer": true
+        },
+        "exact_one_committed_test_body": {
+          "bytes": 30537,
+          "full9": {
+            "st_ctime_ns": "1795713395140376700",
+            "st_dev": "66306",
+            "st_gid": "1000",
+            "st_ino": "70042665",
+            "st_mode": "33204",
+            "st_mtime_ns": "1795713394553363940",
+            "st_nlink": "1",
+            "st_size": "30537",
+            "st_uid": "1000"
+          },
+          "git_mode": "100644",
+          "parent_blob": "96c87244ff3fffabec8d8fc65a7736a6d72c3da6",
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/tests/unit/logic/test_duckdb_proof_store_persistence.py",
+          "sha256": "71bd2b31da494123f57c76add563e8a2637eb640e534360218c71b7feb6143c1",
+          "stage0_and_committed_blob": "62c0be1ead2b8370410fc92648caf74ba8c47551"
+        },
+        "hosted_CI_or_new_Native_or_statutory_or_model_or_corpus_admission": false,
+        "only_new_selector": "tests/unit/logic/test_duckdb_proof_store_persistence.py::test_clear_during_pending_producer_cannot_resurrect_sql_and_replacement_is_durable",
+        "ordered_actual_cases": [
+          "tests/unit/logic/test_duckdb_proof_store_persistence.py::test_clear_from_cold_store_cannot_resurrect_any_entry",
+          "tests/unit/logic/test_duckdb_proof_store_persistence.py::test_expired_negative_entry_is_deleted_durably",
+          "tests/unit/logic/test_duckdb_proof_store_persistence.py::test_clear_during_pending_producer_cannot_resurrect_sql_and_replacement_is_durable",
+          "tests/unit/logic/legal_ir/test_proof_cache.py::test_genuine_sql_legal_shadow_requires_coherent_context_and_preserves_prior_rows"
+        ],
+        "owning_test": "tests/unit/logic/test_duckdb_proof_store_persistence.py",
+        "prior_verified_guide565_publication": {
+          "bytes": 15494,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-guide565-four-doc-three-FF-publication-small-v568.json",
+          "sha256": "b0ae67407b5c2523979cf24a1798e32499c20113a75cf45fba2b4bdaf4a2f4f0"
+        },
+        "related_catalog_component": "kernel-proof-evidence-integrity",
+        "related_legal_shadow_test": "tests/unit/logic/legal_ir/test_proof_cache.py",
+        "related_tasks": [
+          "LIR-14"
+        ],
+        "retained_control_selectors": [
+          "tests/unit/logic/test_duckdb_proof_store_persistence.py::test_clear_from_cold_store_cannot_resurrect_any_entry",
+          "tests/unit/logic/test_duckdb_proof_store_persistence.py::test_expired_negative_entry_is_deleted_durably",
+          "tests/unit/logic/legal_ir/test_proof_cache.py::test_genuine_sql_legal_shadow_requires_coherent_context_and_preserves_prior_rows"
+        ],
+        "schema": "Guide566-real-duckdb-pending-producer-retirement-evidence/v1",
+        "store_owner": "ipfs_datasets_py/logic/common/duckdb_proof_store.py",
+        "task": "LIR-15",
+        "task_status_changed": false,
+        "test_local_real_SQL": true
+      },
+      "evidence_ordinal": 566,
+      "id": "phase1-real-duckdb-pending-producer-retirement-ordinary4-evidence566-20261126",
+      "observed_bytes": 5288,
+      "observed_sha256": "f4d2f77293cb23894a4b29064f6209c998164ed5e9dfee1c7b023ad7c1347cfa",
+      "path": "/tmp/P1-SQL4-guide566-existing-composer-INERT-USjB51ob/one-guide566-real-duckdb-pending-producer-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Four real temporary DuckDB cases, including the published pending-producer retirement regression.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }

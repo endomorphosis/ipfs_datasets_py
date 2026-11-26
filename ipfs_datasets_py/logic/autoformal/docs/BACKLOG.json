@@ -4759,6 +4759,32 @@
       ],
       "status": "closed_fictional_local_native_evidence_only_no_task_status_change",
       "task": "LIR-14"
+    },
+    "phase1_real_duckdb_pending_producer_retirement_ordinary4_20261126": {
+      "actual_P1_exact1_code_publication": {
+        "bytes": 16249,
+        "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P1-SQL-pending-retirement-exact1-ordinary4-three-FF-publication-v572.json",
+        "sha256": "254ff8349d89b45069e6bb4646ff6d623b103090536eef143394762fa99d77a1"
+      },
+      "actual_P1_ordinary_SQL4_qualification": {
+        "bytes": 7973,
+        "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P1-SQL-pending-retirement-existing-R2-ordinary4-qualified-v571.json",
+        "sha256": "c55c0e06c6e27642ff1a07fbe689ca3f7d3abdf91f85d46a011892bf63e26923"
+      },
+      "evidence_ordinal": 566,
+      "facts": {
+        "bytes": 5288,
+        "path": "/tmp/P1-SQL4-guide566-existing-composer-INERT-USjB51ob/one-guide566-real-duckdb-pending-producer-scoped-facts.json",
+        "sha256": "f4d2f77293cb23894a4b29064f6209c998164ed5e9dfee1c7b023ad7c1347cfa"
+      },
+      "new_corpus_or_model_qualification": false,
+      "record_id": "phase1-real-duckdb-pending-producer-retirement-ordinary4-evidence566-20261126",
+      "related_catalog_component": "kernel-proof-evidence-integrity",
+      "related_tasks": [
+        "LIR-14"
+      ],
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
+      "task": "LIR-15"
     }
   },
   "programme_goal_hierarchy": {
