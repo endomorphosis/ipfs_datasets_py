@@ -714,7 +714,7 @@ def test_planned_physical_type_capture_binds_exact_kernel_diagnostics(mutation):
                 prepared, stdout, stderr, **options)
 
 
-def _checked_release_type_capture_fixture(label, *, checked_changes=None):
+def _checked_release_type_capture_fixture(label, *, checked_changes=None, review_changes=None):
     """Small fictional retained claims; real seals/typed validators, no execution."""
     from ipfs_datasets_py.logic.autoformal import corpus_qualification as qualification
     from ipfs_datasets_py.utils.cid_utils import cid_for_bytes
@@ -778,6 +778,7 @@ def _checked_release_type_capture_fixture(label, *, checked_changes=None):
         "at_time_utc": "2026-11-26T00:00:00Z", "caller_observation_sha256": digest("caller observation"),
         "current_assessment_sha256": digest("assessment"), "dependency_invalidation_sha256": digest("invalidation"),
         "evaluation_clock_authenticated": False, "registry_freshness_authenticated": False,
+        **({} if review_changes is None else review_changes),
     })
     checked = seal({
         "schema": "legal-corpus-physical-v4-checked-native-observation/v1",
@@ -947,3 +948,29 @@ def test_checked_release_type_capture_refuses_cross_release_and_repinned_mutatio
     with pytest.raises(ValueError):
         elaboration_native.read_checked_release_physical_whole_norm_type_capture_v2(
             request, files, stdout, stderr, **options)
+
+
+@pytest.mark.parametrize("field,value,error", [
+    pytest.param("registry_sha256", "invalid", "registry_sha256", id="registry-pin"),
+    pytest.param("policy_sha256", "A" * 64, "policy_sha256", id="policy-pin"),
+    pytest.param("reviews_sha256", True, "reviews_sha256", id="reviews-pin"),
+    pytest.param("caller_observation_sha256", None, "caller_observation_sha256", id="caller-observation-pin"),
+    pytest.param("current_assessment_sha256", "1" * 63, "current_assessment_sha256", id="assessment-pin"),
+    pytest.param("dependency_invalidation_sha256", "g" * 64, "dependency_invalidation_sha256", id="invalidation-pin"),
+    pytest.param("at_time_utc", "2026-11-26T00:00:00+00:00", "explicit UTC seconds", id="utc-format"),
+    pytest.param("at_time_utc", "2026-02-30T00:00:00Z", "valid UTC calendar", id="utc-calendar"),
+])
+def test_checked_release_type_capture_refuses_malformed_current_review_observation(field, value, error):
+    valid = _checked_release_type_capture_fixture("one")
+    changed = _checked_release_type_capture_fixture("one", review_changes={field: value})
+    report = changed["report"]
+    review = report["current_review_observation"]
+    assert review[field] == value
+    assert report["checked_native_observation"]["current_review_observation_cid"] == review["record_cid"]
+    assert report["declared_eligibility_evidence"]["current_review_observation"] == review
+    assert changed["request"] == valid["request"] and changed["files"] == valid["files"]
+    assert changed["stdout"] == valid["stdout"] and changed["stderr"] == valid["stderr"]
+    assert changed["options"]["expected_checked_release_report_sha256"] != valid["options"]["expected_checked_release_report_sha256"]
+    with pytest.raises(ValueError, match=error):
+        elaboration_native.read_checked_release_physical_whole_norm_type_capture_v2(
+            changed["request"], changed["files"], changed["stdout"], changed["stderr"], **changed["options"])

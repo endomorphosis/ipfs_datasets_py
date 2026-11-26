@@ -787,6 +787,7 @@ _CHECKED_CAPTURE_UNIT_FIELDS = {
 
 def _checked_release_type_capture_context(report):
     from . import corpus_contracts as contracts, corpus_qualification as qualification
+    from . import legal_graph_review as review_owner
 
     _need(report.get("schema") == "legal-uscode-release-closure-report/v4"
           and type(report.get("reviewed_version")) is int and report["reviewed_version"] == 4
@@ -805,6 +806,10 @@ def _checked_release_type_capture_context(report):
           "retained physical V4 report cannot widen authority or masks")
     review = contracts.validate_record(report.get("current_review_observation"),
         schema="legal-corpus-physical-v4-current-review-observation/v1", fields=_CHECKED_CAPTURE_REVIEW_FIELDS)
+    for field in _CHECKED_CAPTURE_REVIEW_FIELDS:
+        if field.endswith("_sha256"):
+            contracts.require_sha256(review[field], field)
+    review_owner._time(review["at_time_utc"])
     checked = contracts.validate_record(report.get("checked_native_observation"),
         schema="legal-corpus-physical-v4-checked-native-observation/v1", fields=(
             *_CHECKED_CAPTURE_BINDINGS, "planned_request_sha256", "current_review_observation_cid",
