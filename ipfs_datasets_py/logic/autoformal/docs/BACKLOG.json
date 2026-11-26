@@ -4379,6 +4379,34 @@
           "sha256": "3723e053c0f8fb16544785ddc28fb1ea5c4ef4d32a1d7dd7bb476b726af6d8e9"
         }
       }
+    },
+    "phase2_physical_v4_current_review_ordinary11_20261126": {
+      "component": "legal-release-coordinator",
+      "evidence_ordinal": 552,
+      "exact_two_code_paths": {
+        "owner": "ipfs_datasets_py/logic/autoformal/legal_release_coordinator_v1.py",
+        "test": "tests/unit/logic/autoformal/test_corpus_release_cli.py"
+      },
+      "external_trust_freshness_Lean_proof_or_legal_admission_credit": false,
+      "facts": {
+        "bytes": 6463,
+        "path": "/tmp/Phase2-V4-current-review-guide552-existing-composer-INERT-z44tybAx/one-guide552-Phase2-physical-V4-current-review-scoped-facts.json",
+        "sha256": "9c2c7319dfb5c35b5259cee890f31af0578d628395a8f07897ddccd68bee88fe"
+      },
+      "ordinary11": {
+        "functions": 7,
+        "new_current_review": 7,
+        "retained_v428": 4,
+        "unique_PASS": 11
+      },
+      "private_same_seven": {
+        "bytes": 8842,
+        "path": "/tmp/Root-P2-physical-current-review-v4-private-v01-cZR6Tcnp/SEALED-Phase2-physical-V4-current-review-exact2-private.json",
+        "sha256": "c8ae0e8b00feeb6360d007ac04ab4192d1663c989f18d1cb8af557c4d330e820"
+      },
+      "record_id": "phase2-physical-v4-current-review-ordinary11-evidence552-20261126",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
+      "task": "LIR-21"
     }
   },
   "programme_goal_hierarchy": {

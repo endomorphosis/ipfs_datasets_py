@@ -33062,6 +33062,130 @@
       "root": "artifact_workspace",
       "scope": "Fresh physical whole-norm closed-type capture and kernel definitional equality on signed fictional input with a separate 13-case software run.",
       "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase2_physical_v4_current_review_ordinary11_20261126",
+      "closed_software_facts": {
+        "Native_or_generic_Lean_adapter_dispatched": false,
+        "actual_ordinary11": {
+          "bytes": 18060,
+          "path": "/tmp/Root-Phase2-physical-V4-current-review-existing-ordinary11-v499-53uwhlI7/actual-Phase2-physical-v4-current-review-ordinary11-closed-small-v499.json",
+          "sha256": "6800498c831fe8cf235c1c35512e77dd2f568d5dae4fc1b2c085e7004cb176d8"
+        },
+        "actual_publication": {
+          "bytes": 18859,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-physical-v4-current-review-exact2-ordinary11-three-FF-publication-v499.json",
+          "sha256": "797138ba992f5fce0dbea443cadbb620330e5a958a766d0b30b2c0b8cc320159"
+        },
+        "changed_signed_trust_requires_new_signed_review_evidence": true,
+        "checked_lean_declared_eligible": false,
+        "component": "legal-release-coordinator",
+        "current_code_head": "0c52d3372e10dad601d28fea3e96fff7e388c48e",
+        "current_review_input_fields": [
+          "registry_sha256",
+          "policy_sha256",
+          "at_time_utc",
+          "observed_artifact_sha256s",
+          "observed_pins"
+        ],
+        "declarations_still_require_separate_authority_policy": true,
+        "evaluation_clock_authenticated": false,
+        "evidence_ordinal": 552,
+        "exact_Source_READ3": {
+          "bytes": 7565,
+          "path": "/tmp/Root-Phase2-physical-V4-current-review-postfreeze-READ3-v498-zzoPsDaC/actual-Phase2-physical-v4-current-review-READ3-v498-closed.json",
+          "sha256": "ca1176babf9a21c101da3ea9df96cfd3c3ca76b08a8160eff686bea79a1095e5"
+        },
+        "exact_Source_install": {
+          "bytes": 8861,
+          "path": "/tmp/Root-Phase2-physical-V4-current-review-existing-Source2-v497-NGfECA3i/actual-Phase2-physical-v4-current-review-exact2-Source-closed-v497.json",
+          "sha256": "612bb4c5dec5724db47a80e5b22593f9e119589c84899faeef56883c3e70df39"
+        },
+        "exact_local_freeze": {
+          "bytes": 14515,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-physical-v4-current-review-exact2-local-freeze-v497.json",
+          "sha256": "4487fe509032fe53b0750eb9e9d97229288ffd3383bac02711f3d634b224af6f"
+        },
+        "exact_two_published_paths": [
+          "ipfs_datasets_py/logic/autoformal/legal_release_coordinator_v1.py",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py"
+        ],
+        "full_eight_phase_goal_complete": false,
+        "historical_source_only_default_replay_unchanged": true,
+        "implemented_behavior": "The optional physical V4 current-review input rechecks independently supplied registry and policy digests, evaluation time, and dependency observations against the exact signed source-only replay.",
+        "model_or_training_credit": false,
+        "ordinary_Source_resource_and_parent_closed": true,
+        "ordinary_counts": {
+          "duplicates": 0,
+          "errors": 0,
+          "failures": 0,
+          "functions": 7,
+          "passed": 11,
+          "skipped": 0,
+          "tests": 11
+        },
+        "ordinary_node_ids": [
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_current_replay_refuses_genuinely_revoked_reviewer",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v3_existing_release_projects_declared_graph_eligibility",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_cli_projects_current_graph_eligibility_without_native_credit",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_declared_eligibility_keeps_native_refusal",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_projects_independently_observed_current_review",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_refuses_stale_wire_against_independent_current_review[revoked-registry]",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_refuses_stale_wire_against_independent_current_review[changed-policy]",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_refuses_stale_wire_against_independent_current_review[expiry]",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_refuses_stale_wire_against_independent_current_review[dependency]",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_refuses_stale_wire_against_independent_current_review[rollback]",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_current_review_selection_preserves_legacy_default"
+        ],
+        "ordinary_scope": "Signed fictional physical V4 current-review replay and retained V3/V4 source-only eligibility and in-process CLI controls.",
+        "ordinary_subcohorts": {
+          "new_current_review": 7,
+          "retained_v428": 4
+        },
+        "owner": "ipfs_datasets_py/logic/autoformal/legal_release_coordinator_v1.py",
+        "owning_test": "tests/unit/logic/autoformal/test_corpus_release_cli.py",
+        "prior_Guide551": {
+          "bytes": 13327,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-guide551-four-doc-three-FF-publication-small-v496.json",
+          "sha256": "33b31077436354010f590e6a2f4e9d0403afe00a6a47a1fb384d347de157a86e"
+        },
+        "private_baseline_function_did_not_accept_explicit_current_review": true,
+        "private_same_seven_reference": {
+          "bytes": 8842,
+          "path": "/tmp/Root-P2-physical-current-review-v4-private-v01-cZR6Tcnp/SEALED-Phase2-physical-V4-current-review-exact2-private.json",
+          "sha256": "c8ae0e8b00feeb6360d007ac04ab4192d1663c989f18d1cb8af557c4d330e820"
+        },
+        "raw_JUnit": {
+          "bytes": 2131,
+          "path": "/tmp/Root-Phase2-physical-V4-current-review-existing-ordinary11-v499-53uwhlI7/actual-output/corpus-release-public-v3-v4-eligibility-ordinary11-run-result0-output1.bin",
+          "sha256": "4fefef8feda827d4d19c5f35282c87c0d1f57db74453ad80d73968802f33ab8c"
+        },
+        "registry_freshness_authenticated": false,
+        "schema": "Guide552-Phase2-physical-V4-current-review-observation/v1",
+        "sealed_current_review_observation_in_release_report_and_declared_evidence": true,
+        "signed_fixture_cases": [
+          "current_signed_observations",
+          "revoked_registry_pin",
+          "changed_policy_pin",
+          "expired_review",
+          "changed_required_dependency",
+          "evaluation_time_rollback",
+          "legacy_default"
+        ],
+        "statutory_meaning_or_corpus_admission_granted": false,
+        "task": "LIR-21",
+        "task_status_changed": false,
+        "typed_ProofReceipt_issued": false
+      },
+      "evidence_ordinal": 552,
+      "id": "phase2-physical-v4-current-review-ordinary11-evidence552-20261126",
+      "observed_bytes": 6463,
+      "observed_sha256": "9c2c7319dfb5c35b5259cee890f31af0578d628395a8f07897ddccd68bee88fe",
+      "path": "/tmp/Phase2-V4-current-review-guide552-existing-composer-INERT-z44tybAx/one-guide552-Phase2-physical-V4-current-review-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Opt-in physical V4 recheck of independently supplied current review observations on signed fictional inputs.",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
     }
   ]
 }
