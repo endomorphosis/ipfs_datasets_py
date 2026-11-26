@@ -32557,6 +32557,169 @@
       "root": "artifact_workspace",
       "scope": "Published V4 conditional whole-norm request planning across five signed-fictional software cases.",
       "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase2_physical_v4_whole_norm_live_observation_R5_ordinary1_20261126",
+      "closed_software_facts": {
+        "Native_Source_resource_and_parent_closed": true,
+        "Native_compiled_modules": 10,
+        "Native_conditional_obligations": 30,
+        "Native_fixture": "signed fictional source and review",
+        "actual_ordinary1": {
+          "bytes": 19019,
+          "path": "/tmp/Root-existing-Phase2-live-observation-ordinary1-v481-CnTGuVS3/actual-Phase2-physical-live-request-ordinary1-closed-small-v481.json",
+          "sha256": "e771c4c7d6affda5f5b590365cdf5ce99571dbe94ec45bb74daecd0395647254"
+        },
+        "actual_original_R5": {
+          "bytes": 5594,
+          "path": "/tmp/Root-Phase2-original-live-planned-request-existing-R5-v480-LY0VQX3J/actual-original-R5-planned-FOL-whole-norm-live-observation-v480.json",
+          "sha256": "d17754d87012a901980d84947b892201e0c221f8a0af8c0ae6c3f984a795b587"
+        },
+        "actual_original_R5_raw_summary": {
+          "bytes": 270746,
+          "logical_name": "summary.json",
+          "origin": "actual ToolRunResult.output_files bytes; not to_dict decoded text",
+          "path": "/tmp/Root-Phase2-original-live-planned-request-existing-R5-v480-LY0VQX3J/actual-output/run.output.2.bin",
+          "sha256": "e7fd9c0342fe8980b491989fda2a65edbc26bf7037d27626b7093c27c50b6320"
+        },
+        "actual_publication": {
+          "bytes": 20966,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-live-request-observation-exact2-ordinary1-and-original-R5-three-FF-publication-v481.json",
+          "sha256": "924902bf552ddc1173e5df5af487a80d35ba95a365f4c2c2e6fd90d326ef938e"
+        },
+        "captured_bytes_over_planned_output_bound": 103853,
+        "captured_output_files_and_logs_bytes": 4298157,
+        "component": "definition-use-native",
+        "current_code_head": "2b925a90a5867e3238a0c5893e61c49a8021c390",
+        "evidence_ordinal": 549,
+        "exact_Source_READ3": {
+          "bytes": 7641,
+          "path": "/tmp/Root-Phase2-live-request-observation-postfreeze-READ3-v479-En62O0Vp/actual-Phase2-live-request-READ3-v479-closed.json",
+          "sha256": "9370a32665f1396116db3c7dfd6f1410148b0f8fd4fcd588ef26e9aa7aff04cc"
+        },
+        "exact_Source_install": {
+          "bytes": 9030,
+          "path": "/tmp/Root-Phase2-live-request-observation-existing-Source2-v478-jNWmWKj5/actual-Phase2-live-request-observation-exact2-Source-closed-v478.json",
+          "sha256": "7ea693ed4f8647486c7f7adeb27963c45664dba2f2148c786b0bb2a0c21f878e"
+        },
+        "exact_aggregate_peak_memory_bytes": null,
+        "exact_live_FOL_conditional_observation": {
+          "axiom_dependencies": [],
+          "backend_attempt_created": false,
+          "checked_under_explicit_hypotheses": true,
+          "claim_digest": "3139d64240b326f06f53c4483117f56cacdbb56a901cd3bd81ad393135d56efb",
+          "declaration": "LegalReviewedDefinitionRealization.Instance900fdfea211dafb3948bbb2b69ad41b3451e185a51fb28e79dc4dd663e2a7a8b.unit_1_whole_norm_definition_expansion",
+          "obligation_digest": "df294ccf2febf3fc4084182883fe0ce706d55ef74fff3fb2943d3ff8e3df276a",
+          "original_result_observation": {
+            "elapsed_seconds": 4.470842093229294,
+            "exact_aggregate_peak_memory_bytes": null,
+            "output_file_bytes": 4288331,
+            "raw_log_bytes": 9826,
+            "rss": {
+              "cap_bytes": 2147483648,
+              "current_bytes": 123531264,
+              "peak_sampled_bytes": 695422976
+            },
+            "verified_steps": null
+          },
+          "premise_remains_quantified": true,
+          "proof_receipt_issued": false,
+          "proposition_utf8_sha256": "75f3bb2fa73e7eb79f66d0fe5854da4bbfd55d5ea1aea91889c687b55a253e4d",
+          "qualified_request_execution": false,
+          "request_bounds_qualified": false,
+          "request_context_sha256": "2a739e6b65491d685aab61ea7fa6f65d6c2eaa7285ef83385a8763572c64ec4a",
+          "request_id": "planned_physical_whole_norm:81f346d1791c76acbf419f2c095f9d2a71cc98014b09a28c39673ad9c73feca9",
+          "request_sha256": "ce0ef455d46a197b58e293a953761c701faf013ee36f2dda0ff63cac6df6048f",
+          "retained_packet_sha256": "621e6f7ed501dd639330622f7d4da33c3bb5e35193b8cc9f860f9ff151190138",
+          "retained_receipt_sha256": "1070bee33d557ae1be13bc7b28c5df7ffd9767501dd19d78fe68a3c12816e3d3",
+          "schema": "legal-physical-whole-norm-request-observation/v1",
+          "scope": "original_whole_project_build"
+        },
+        "exact_local_freeze": {
+          "bytes": 14570,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-live-request-observation-exact2-local-freeze-v478.json",
+          "sha256": "a1c48fb3445f54a9ec4ac684b1a72c8b6ae9c82f2af77e3ca2739d378553b5c4"
+        },
+        "exact_two_published_paths": [
+          "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_native_v2.py",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py"
+        ],
+        "full_eight_phase_goal_complete": false,
+        "generic_single_file_Lean_adapter_dispatched": false,
+        "implemented_behavior": "The V4 Native build binds the selected whole-norm FOL request to the exact live handle and the original reviewed physical project. The same-handle read verifies the pinned request and preserves a scoped conditional check and the runner’s sampled RSS.",
+        "installed_Lean_used_in_original_R5": true,
+        "measured_step_count": null,
+        "model_or_training_credit": false,
+        "ordinary_Source_resource_and_parent_closed": true,
+        "ordinary_and_Native_distinct": true,
+        "ordinary_counts": {
+          "duplicates": 0,
+          "errors": 0,
+          "failures": 0,
+          "functions": 1,
+          "passed": 1,
+          "skipped": 0,
+          "tests": 1
+        },
+        "ordinary_node_ids": [
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py::test_planned_physical_invocation_and_observation_keep_measurements_separate"
+        ],
+        "ordinary_scope": "Software-only planned invocation identity, cached source callable custody, and observation projection. Actual Native FOL qualification is separately recorded.",
+        "ordinary_subcohorts": {
+          "software_request_observation_contract": 1
+        },
+        "original_admitted_parent_custody_authenticated": false,
+        "owner": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_native_v2.py",
+        "owning_test": "tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py",
+        "peak_sampled_process_tree_RSS_bytes": 695422976,
+        "planned_output_bytes": 4194304,
+        "prior_Guide548": {
+          "bytes": 12720,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-guide548-four-doc-three-FF-publication-small-v477.json",
+          "sha256": "7ead6732cd5300edae1016e7d038a2893b826054ab9a3998a3629513d7469d1c"
+        },
+        "private_software_contract_separate": {
+          "missing_before": 1,
+          "passed_after": 1,
+          "reference": {
+            "bytes": 4648,
+            "path": "/tmp/Root-P2-planned-whole-norm-live-observation-private-v01-UXTYiqPH/SEALED-private-exact2-live-whole-norm-observation-v01.json",
+            "sha256": "b0a7209a5b99cda1daeee55f55f28dbb82e30c7b19b5466a93727e0c87a8b391"
+          }
+        },
+        "raw_JUnit": {
+          "bytes": 437,
+          "path": "/tmp/Root-existing-Phase2-live-observation-ordinary1-v481-CnTGuVS3/actual-output/phase2-physical-planned-invocation-observation-ordinary1-run-result0-output1.bin",
+          "sha256": "492a715dfb05e4393f044c742a18594c0d7d673f6ac3fe33cf8322fc1b108f71"
+        },
+        "refused_live_handle_joins": [
+          {
+            "case": "omitted-plan",
+            "offered_request_sha256": null,
+            "refusal": "exact issued live success original inputs required"
+          },
+          {
+            "case": "other-exact-request-id",
+            "offered_request_sha256": "984ddda365e65e32f44168964ce0a6266d392aeeaf49996520e830cb48c8fc8a",
+            "refusal": "exact issued live success original inputs required"
+          }
+        ],
+        "request_execution_or_bounds_certified": false,
+        "schema": "Guide549-Phase2-physical-V4-conditional-whole-norm-live-observation-evidence/v1",
+        "statutory_meaning_or_corpus_admission_granted": false,
+        "task": "LIR-14",
+        "task_status_changed": false,
+        "typed_ProofReceipt_issued": false
+      },
+      "evidence_ordinal": 549,
+      "id": "phase2-physical-v4-whole-norm-live-observation-native-R5-ordinary1-evidence549-20261126",
+      "observed_bytes": 7925,
+      "observed_sha256": "9ecb82d1aa9ce395103b3500fd07ab6fe72d187077068e41598553321c604118",
+      "path": "/tmp/Phase2-live-request-guide549-existing-composer-INERT-8ik5yM6o/one-guide549-Phase2-conditional-whole-norm-live-observation-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Original live V4 conditional FOL whole-norm request observation with signed fictional source and a separate software case.",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
     }
   ]
 }

@@ -4264,6 +4264,34 @@
       "related_catalog_component": "definition-use-preservation-packet",
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
       "task": "LIR-14"
+    },
+    "phase2_physical_v4_whole_norm_live_observation_R5_ordinary1_20261126": {
+      "certified_execution_proof_or_legal_semantic_review_or_training_model_credit": false,
+      "component": "definition-use-native",
+      "evidence_ordinal": 549,
+      "facts": {
+        "bytes": 7925,
+        "path": "/tmp/Phase2-live-request-guide549-existing-composer-INERT-8ik5yM6o/one-guide549-Phase2-conditional-whole-norm-live-observation-scoped-facts.json",
+        "sha256": "9ecb82d1aa9ce395103b3500fd07ab6fe72d187077068e41598553321c604118"
+      },
+      "ordinary1": {
+        "functions": 1,
+        "unique_PASS": 1
+      },
+      "original_R5": {
+        "compiled_modules": 10,
+        "conditional_obligations": 30,
+        "live_FOL_request_observation": 1,
+        "reference": {
+          "bytes": 5594,
+          "path": "/tmp/Root-Phase2-original-live-planned-request-existing-R5-v480-LY0VQX3J/actual-original-R5-planned-FOL-whole-norm-live-observation-v480.json",
+          "sha256": "d17754d87012a901980d84947b892201e0c221f8a0af8c0ae6c3f984a795b587"
+        },
+        "refused_handle_joins": 2
+      },
+      "record_id": "phase2-physical-v4-whole-norm-live-observation-native-R5-ordinary1-evidence549-20261126",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
+      "task": "LIR-14"
     }
   },
   "programme_goal_hierarchy": {
