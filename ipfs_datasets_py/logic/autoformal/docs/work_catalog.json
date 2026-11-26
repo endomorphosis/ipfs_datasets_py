@@ -34921,6 +34921,118 @@
       "root": "artifact_workspace",
       "scope": "A new signed fictional Native V4 run retained the exact request and all three paired-cache Parquets for an independent same-code-location post-cleanup source-only replay.",
       "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase1_current_lean_proof_protocol_disk_cache_native567_20261126",
+      "closed_runtime_facts": {
+        "Source_and_resource_custody_closed": true,
+        "actual_command_counts": {
+          "compiler": 2,
+          "reuse_or_mismatch": 0,
+          "version": 1
+        },
+        "actual_current_installed_Lean_cache_v567": {
+          "bytes": 7865,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P1-current-exact-Lean-wrapper-and-cache-native-qualification-closed-v567.json",
+          "sha256": "bc870726ddc789d736465e88d68f2fb4f4188739aee7efd2e95b5550727e5555"
+        },
+        "actual_runtime_physical_IO_complete": false,
+        "current_Lean_owner_binding": {
+          "full9": {
+            "st_ctime_ns": "1795682016767408855",
+            "st_dev": "66306",
+            "st_gid": "1000",
+            "st_ino": "70042629",
+            "st_mode": "33204",
+            "st_mtime_ns": "1795682016459468231",
+            "st_nlink": "1",
+            "st_size": "103838",
+            "st_uid": "1000"
+          },
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/ipfs_datasets_py/logic/backends/kernel/lean.py",
+          "sha256": "c1050ad1ec067fc7f7c8fea08793e872511fe58029e9b1aa89ec90d2cb288313"
+        },
+        "current_proof_protocol_owner_binding": {
+          "bytes": 57510,
+          "full9": {
+            "st_ctime_ns": "1795700646295668523",
+            "st_dev": "66306",
+            "st_gid": "1000",
+            "st_ino": "70042655",
+            "st_mode": "33204",
+            "st_mtime_ns": "1795700645711979273",
+            "st_nlink": "1",
+            "st_size": "57510",
+            "st_uid": "1000"
+          },
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/ipfs_datasets_py/logic/ir_core/protocols.py",
+          "sha256": "e2dd1dc93d1efa15c7c4088145d32c52636c72e9230b16ade77ca6c6a0c2c336"
+        },
+        "current_test_source_sha256": "99e00363bbd1ea23d450af0912374fdbf4d30ab3b1802371fb8d237dccbf7da5",
+        "disk_round_trip_and_exact_reuse": true,
+        "earlier_distinct_installed_Lean_cache_v459": {
+          "bytes": 3638,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P1-current-exact-Lean-wrapper-and-cache-native-qualification-closed-v459.json",
+          "sha256": "778b7d98a9d7ebbe71fb3ed3d685bf256bf299a1c66ad42c6a9f2cfdbe6a6218"
+        },
+        "evidence_ordinal": 565,
+        "exact_current_Guide564_index_READ1": {
+          "bytes": 4521,
+          "path": "/tmp/Root-P1-current-protocol-Lean-native-cache-v567-0mR2Fihk/actual-Guide564-index-READ1-v566-closed.json",
+          "sha256": "54827db8edbe64d2a53a8c8ad7616b51aa27d696bde307211315da2043590e3f"
+        },
+        "exact_direct_existing_helper": true,
+        "fictional_fixture_only": true,
+        "hosted_CI_credit": false,
+        "independently_pinned_current_Lean_and_proof_protocol": true,
+        "installed_Lean_version": "Lean (version 4.34.1, aarch64-unknown-linux-gnu, commit 5045d0056413266e57c625dcd7c365b10e377c52, Release)",
+        "lean_wrapper_owner": "ipfs_datasets_py/logic/backends/kernel/lean.py",
+        "negative_artifact_facets": [
+          "source",
+          "obligation",
+          "assumptions"
+        ],
+        "negative_context_facets": [
+          "declaration",
+          "proposition",
+          "toolchain",
+          "backend-profile",
+          "interpretation",
+          "dependency"
+        ],
+        "owning_test": "tests/integration/logic/backends/test_kernel_backends.py",
+        "prior_Guide564": {
+          "bytes": 15798,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-guide564-four-doc-three-FF-publication-small-v565.json",
+          "sha256": "6c689d574ca7c04b32511b54d828e499b3b8f7dff56efd93f88edf296404352c"
+        },
+        "proof_protocol_owner": "ipfs_datasets_py/logic/ir_core/protocols.py",
+        "pytest_case_credit": 0,
+        "related_catalog_component": "kernel-proof-evidence-integrity",
+        "related_tasks": [
+          "LIR-21"
+        ],
+        "schema": "Guide565-current-lean-proof-protocol-disk-cache-native-evidence/v1",
+        "separate_proof_protocol_code_publication_v519": {
+          "bytes": 19184,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P1-proof-receipt-usage-and-logic-family-exact2-ordinary26-three-FF-publication-v519.json",
+          "sha256": "3f479362e01b75a7ae6472971624b9791d7b8f10ca6357e37c7233b724961778"
+        },
+        "software_version_mutation_controls": 2,
+        "software_version_mutation_controls_are_native": false,
+        "statutory_or_model_or_corpus_admission": false,
+        "task": "LIR-14",
+        "task_status_changed": false
+      },
+      "evidence_ordinal": 565,
+      "id": "phase1-current-lean-proof-protocol-disk-cache-native567-evidence565-20261126",
+      "observed_bytes": 4520,
+      "observed_sha256": "8a34089681d9496c17fc21e2d6ef0620ced7aa6447f402cf04ceb83f4dde91c9",
+      "path": "/tmp/P1-v567-current-Lean-cache-guide565-composer-INERT-iscsuje0/one-guide565-current-lean-proof-protocol-disk-cache-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Installed Lean and exact disk-cache checks rerun on fictional inputs against independently pinned current wrapper and proof protocol.",
+      "status": "CLOSED_FICTIONAL_LOCAL_NATIVE_SCOPE_ONLY"
     }
   ]
 }

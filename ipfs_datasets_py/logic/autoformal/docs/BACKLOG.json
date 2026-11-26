@@ -4733,6 +4733,32 @@
       ],
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
       "task": "LIR-14"
+    },
+    "phase1_current_lean_proof_protocol_disk_cache_native567_20261126": {
+      "actual_current_installed_Lean_cache_v567": {
+        "bytes": 7865,
+        "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P1-current-exact-Lean-wrapper-and-cache-native-qualification-closed-v567.json",
+        "sha256": "bc870726ddc789d736465e88d68f2fb4f4188739aee7efd2e95b5550727e5555"
+      },
+      "earlier_distinct_installed_Lean_cache_v459": {
+        "bytes": 3638,
+        "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P1-current-exact-Lean-wrapper-and-cache-native-qualification-closed-v459.json",
+        "sha256": "778b7d98a9d7ebbe71fb3ed3d685bf256bf299a1c66ad42c6a9f2cfdbe6a6218"
+      },
+      "evidence_ordinal": 565,
+      "facts": {
+        "bytes": 4520,
+        "path": "/tmp/P1-v567-current-Lean-cache-guide565-composer-INERT-iscsuje0/one-guide565-current-lean-proof-protocol-disk-cache-scoped-facts.json",
+        "sha256": "8a34089681d9496c17fc21e2d6ef0620ced7aa6447f402cf04ceb83f4dde91c9"
+      },
+      "new_corpus_or_model_qualification": false,
+      "record_id": "phase1-current-lean-proof-protocol-disk-cache-native567-evidence565-20261126",
+      "related_catalog_component": "kernel-proof-evidence-integrity",
+      "related_tasks": [
+        "LIR-21"
+      ],
+      "status": "closed_fictional_local_native_evidence_only_no_task_status_change",
+      "task": "LIR-14"
     }
   },
   "programme_goal_hierarchy": {
