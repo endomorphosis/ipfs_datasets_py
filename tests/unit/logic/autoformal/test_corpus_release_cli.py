@@ -4032,3 +4032,109 @@ def test_physical_v4_checked_native_refuses_unissued_exact_class_handle_before_w
     assert checked["planned_request"].digest == checked["expected_planned_request_sha256"]
     with pytest.raises(ValueError, match="live success handle was not issued by this process and native thread"):
         _validate_physical_v4_checked_native_preflight(checked, current_review=current)
+
+
+def _retained_physical_type_eligibility_fixture(label, *, checked_changes=None):
+    # Reuse the actual owning fixture and validators. Its retained Native/type
+    # assertions are authored fictional DATA, never an issued live capability.
+    from tests.unit.logic.autoformal import (
+        test_legal_corpus_definition_use_preservation_elaboration_v2 as capture_fixture,
+    )
+
+    case = capture_fixture._checked_release_type_capture_fixture(label, checked_changes=checked_changes)
+    options = dict(case["options"])
+    raw = options.pop("checked_release_report_raw")
+    options.update(expected_graph_sha256=case["report"]["graph_sha256"],
+                   expected_unit_id=case["request"].to_dict()["payload"]["context"]["unit"]["unit_id"])
+    return case, raw, options
+
+
+@pytest.mark.parametrize("release_id", ["one", "two"])
+def test_physical_v4_retained_type_evidence_preserves_pending_eligibility(release_id):
+    from copy import deepcopy
+    from ipfs_datasets_py.logic.autoformal import corpus_qualification as qualification
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    from ipfs_datasets_py.logic.autoformal import (
+        legal_corpus_definition_use_preservation_elaboration_native_v2 as capture,
+    )
+
+    case, raw, options = _retained_physical_type_eligibility_fixture(release_id)
+    before = canonical_dag_json_bytes(case["report"])
+    original_qualification = deepcopy(case["report"]["declared_qualification"])
+    original_eligibility = deepcopy(case["report"]["declared_eligibility"])
+    captured = capture.read_checked_release_physical_whole_norm_type_capture_v2(
+        case["request"], case["files"], case["stdout"], case["stderr"], **case["options"])
+    observed = release.qualify_retained_physical_type_capture_v4(
+        raw, case["request"], case["files"], case["stdout"], case["stderr"], **options)
+
+    evidence_body = {key: value for key, value in deepcopy(case["report"]["declared_eligibility_evidence"]).items()
+                     if key not in {"record_cid", "cid_scope"}}
+    evidence_body.update(schema="legal-corpus-physical-v4-qualification-evidence/v2",
+                         retained_type_capture_provenance=captured["provenance"])
+    evidence = seal_record(evidence_body)
+    qualification_body = {key: value for key, value in deepcopy(original_qualification).items()
+                          if key not in {"record_cid", "cid_scope"}}
+    qualification_body["dimensions"]["processing"]["evidence_cids"] = [evidence["record_cid"]]
+    qualified = seal_record(qualification_body)
+    assert qualification.validate_qualification(qualified,
+        artifact_cid=evidence["artifact_cid"], profile=release.CLOSURE_PROFILE_V4) == qualified
+    eligible = qualification.derive_eligibility(qualified,
+        artifact_cid=evidence["artifact_cid"], profile=release.CLOSURE_PROFILE_V4)
+    assert observed == {"declared_eligibility_evidence": evidence,
+                        "declared_qualification": qualified, "declared_eligibility": eligible}
+    assert qualified["dimensions"]["processing"]["evidence_cids"] != original_qualification["dimensions"]["processing"]["evidence_cids"]
+    for name, dimension in original_qualification["dimensions"].items():
+        assert qualified["dimensions"][name]["status"] == dimension["status"]
+        if name != "processing":
+            assert qualified["dimensions"][name] == dimension
+    assert eligible["views"] == original_eligibility["views"]
+    assert eligible["views"]["reviewed_graph"]["declared_eligible"] is True
+    assert eligible["views"]["checked_lean"]["declared_eligible"] is False
+    assert qualified["dimensions"]["proof"]["status"] == "pending"
+    assert qualified["dimensions"]["native_translation"]["status"] == "not_run"
+    assert qualified["dimensions"]["lean_compilation"]["status"] == "not_run"
+    assert all(qualified[field] is eligible[field] is False for field in qualification.AUTHORITY_FIELDS)
+    provenance = evidence["retained_type_capture_provenance"]
+    assert provenance["release_qualification_evidence_cid"] == case["report"]["declared_eligibility_evidence"]["record_cid"]
+    assert provenance["declared_qualification_cid"] == original_qualification["record_cid"]
+    assert provenance["declared_eligibility_cid"] == original_eligibility["record_cid"]
+    assert provenance["checked_release_report_sha256"] == hashlib.sha256(raw).hexdigest()
+    assert provenance["type_capture_sha256"] == hashlib.sha256(captured["type_capture"]).hexdigest()
+    assert provenance["fresh_native_execution_performed"] is provenance["proof_receipt_issued"] is False
+    assert all(value is False for value in provenance["authority"].values())
+    assert type(provenance["training_mask"]) is type(provenance["evaluation_gold_mask"]) is int
+    assert provenance["training_mask"] == provenance["evaluation_gold_mask"] == 0
+    assert all(type(case["report"][mask]) is int and case["report"][mask] == 0 for mask in (
+        "admission_mask", "release_mask", "training_mask", "gold_mask", "evaluation_gold_mask"))
+    assert canonical_dag_json_bytes(case["report"]) == before
+    assert case["options"]["checked_release_report_raw"] == raw
+
+
+@pytest.mark.parametrize("damage", ["graph-pin", "unit-pin", "foreign-report", "repinned-foreign-unit", "stdout-pin"])
+def test_physical_v4_retained_type_eligibility_refuses_foreign_or_unbound_capture(damage):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+
+    case, raw, options = _retained_physical_type_eligibility_fixture("one")
+    if damage == "graph-pin":
+        options["expected_graph_sha256"] = "f" * 64
+    elif damage == "unit-pin":
+        options["expected_unit_id"] = "other-independently-selected-unit"
+    elif damage == "foreign-report":
+        other, raw, foreign_options = _retained_physical_type_eligibility_fixture("two")
+        # The foreign report and its own selector/receipt pins are coherent;
+        # the original typed plan and its complete original sources remain held.
+        options.update({key: foreign_options[key] for key in (
+            "expected_checked_release_report_sha256", "expected_graph_sha256", "expected_unit_id",
+            "expected_retained_receipt_sha256", "expected_retained_packet_sha256")})
+    elif damage == "repinned-foreign-unit":
+        other, _, _ = _retained_physical_type_eligibility_fixture("two")
+        foreign_unit = other["report"]["checked_native_observation"]["unit"]
+        _, raw, changed_options = _retained_physical_type_eligibility_fixture(
+            "one", checked_changes={"unit": foreign_unit})
+        # Rebuilt nested seals and report digest cannot alter the caller's unit.
+        options["expected_checked_release_report_sha256"] = changed_options["expected_checked_release_report_sha256"]
+    else:
+        options["expected_stdout_sha256"] = "0" * 64
+    with pytest.raises(ValueError):
+        release.qualify_retained_physical_type_capture_v4(
+            raw, case["request"], case["files"], case["stdout"], case["stderr"], **options)

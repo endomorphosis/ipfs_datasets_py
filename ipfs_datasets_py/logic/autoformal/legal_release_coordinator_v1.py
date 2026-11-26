@@ -2052,6 +2052,59 @@ def validate_uscode_release_closure_v4(request_raw, *, expected_request_sha256,
     return report
 
 
+def qualify_retained_physical_type_capture_v4(
+        checked_release_report_raw, planned_request, original_files, stdout_raw, stderr_raw, *,
+        expected_checked_release_report_sha256, expected_graph_sha256, expected_unit_id,
+        expected_retained_receipt_sha256, expected_retained_packet_sha256,
+        expected_preparation_sha256, expected_stdout_sha256, expected_stderr_sha256):
+    """Extend a checked V4 eligibility handoff with pinned retained type evidence.
+
+    Select the graph and unit independently of the saved report. Replay the
+    original type capture before sealing the new evidence. The original report
+    remains the input anchor, and the declaration keeps its existing statuses.
+    """
+    from . import corpus_contracts as contracts, corpus_qualification as qualification
+    from . import legal_corpus_definition_use_preservation_elaboration_native_v2 as elaboration
+
+    _release_v4_policy()
+    contracts.require_sha256(expected_graph_sha256, "selected graph")
+    contracts.require_text(expected_unit_id, "selected unit ID")
+    report = contracts.load_record_bytes(
+        checked_release_report_raw, expected_sha256=expected_checked_release_report_sha256)
+    _need(report.get("graph_sha256") == expected_graph_sha256,
+          "retained type capture belongs to a different reviewed graph")
+    capture = elaboration.read_checked_release_physical_whole_norm_type_capture_v2(
+        planned_request, original_files, stdout_raw, stderr_raw,
+        checked_release_report_raw=checked_release_report_raw,
+        expected_checked_release_report_sha256=expected_checked_release_report_sha256,
+        expected_retained_receipt_sha256=expected_retained_receipt_sha256,
+        expected_retained_packet_sha256=expected_retained_packet_sha256,
+        expected_preparation_sha256=expected_preparation_sha256,
+        expected_stdout_sha256=expected_stdout_sha256, expected_stderr_sha256=expected_stderr_sha256)
+    provenance = capture["provenance"]
+    _need(provenance["unit"]["unit_id"] == expected_unit_id,
+          "retained type capture belongs to a different reviewed unit")
+
+    evidence = contracts.seal_record({
+        **{key: value for key, value in report["declared_eligibility_evidence"].items()
+           if key not in {"schema", "record_cid", "cid_scope"}},
+        "schema": "legal-corpus-physical-v4-qualification-evidence/v2",
+        "retained_type_capture_provenance": provenance,
+    })
+    previous = report["declared_qualification"]
+    dimensions = previous["dimensions"]
+    dimensions["processing"]["evidence_cids"] = [evidence["record_cid"]]
+    record = qualification.prepare_qualification(
+        artifact_cid=previous["artifact_cid"], profile=previous["profile"],
+        theorem_requested=previous["theorem_requested"], dimensions=dimensions)
+    eligibility = qualification.derive_eligibility(
+        record, artifact_cid=previous["artifact_cid"], profile=previous["profile"])
+    _need(eligibility["views"] == report["declared_eligibility"]["views"],
+          "retained type evidence cannot change release eligibility")
+    return {"declared_eligibility_evidence": evidence, "declared_qualification": record,
+            "declared_eligibility": eligibility}
+
+
 def validate_reviewed_physical_realization_context_v2(request_raw: bytes, *,
         expected_request_sha256: str) -> dict:
     """Replay the physical evidence dependency before a future compiler profile.
