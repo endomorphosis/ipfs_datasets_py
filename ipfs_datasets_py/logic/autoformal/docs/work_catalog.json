@@ -31914,6 +31914,92 @@
       "root": "artifact_workspace",
       "scope": "Published controlled Python Lean wrapper tests for exact accepted request binding and integer exit status.",
       "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase8_nested_replay_selected_split_identity_ordinary135_20261126",
+      "closed_software_facts": {
+        "READ3": {
+          "bytes": 7728,
+          "path": "/tmp/Root-P8-nested-split-exact-postfreeze-READ3-v456-med1g41m/actual-output/actual-D27-observed-D-root-initializer-Source-READ-v01-small-closeout.json",
+          "sha256": "b7a43ca07ed2a1a0715e43ba9fc4ccdf988bf11c2fdf38ee5f7042c2969e25cb"
+        },
+        "Source2": {
+          "bytes": 10375,
+          "path": "/tmp/Root-P8-nested-split-existing-Source2-v455b-pusbuqy9/actual-P8-nested-split-exact2-Source-closed-small-v455b.json",
+          "sha256": "38d3e9de9352490a520a56f4b323a89f866c7f155aceb726a5fa41e48ecf88c9"
+        },
+        "actual_ordinary135": {
+          "bytes": 77246,
+          "path": "/tmp/Root-Phase8-nested-split-existing-ordinary135-v457-7arcunjg/actual-Phase8-nested-split-exact2-ordinary135-closed-small-v457.json",
+          "sha256": "da68b003ba0289ffaa42dcbfb07e7ff33d79012d47eab633fdb2af956496243c"
+        },
+        "actual_ordinary_report": {
+          "bytes": 3597744,
+          "path": "/tmp/Root-Phase8-nested-split-existing-ordinary135-v457-7arcunjg/actual-output/complete-frozen-local-D-Phase8-external-validity-through-compiler-ordinary135-existing-owner-report.json",
+          "sha256": "7c5fe4de9497fa3adec166ee5d1334833018f076bad497c4fc411ecba0fa4363"
+        },
+        "actual_publication": {
+          "bytes": 26909,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P8-nested-split-exact2-ordinary135-three-FF-publication-v457.json",
+          "sha256": "dbcb0452ef15bc252ea430876a4e23e3f3af29036772cdfe117d6e30a529802d"
+        },
+        "actual_three_compiled_product_owners_and_four_normal_test_rewrites": true,
+        "component": "complete-norm-payload-metrics",
+        "counts": {
+          "duplicates": 0,
+          "errors": 0,
+          "failures": 0,
+          "functions": 61,
+          "passed": 135,
+          "skipped": 0,
+          "tests": 135
+        },
+        "current_code_head": "606e695eded7c4952db3c187f9ef8ab2553685e5",
+        "evidence_ordinal": 543,
+        "explicit_outer_or_nested_blocking_guards_retained": true,
+        "historical_Guide539_migration_key": "phase8_benchmark_facets_through_compiler_ordinary119_20261126",
+        "native_Lean": false,
+        "new_nested_replay7": 7,
+        "new_split_identity9": 9,
+        "nonempty_manifest_exact_assignments_digest_and_leakage_recomputed": true,
+        "ordered_selected_population_matches_collect_run_and_JUnit": true,
+        "private_same133_separate": {
+          "bytes": 11188,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/P8-split-manifest-identity-and-nested-replay-private-rh46ft23/SEALED-P8-compiler-nested-replay-and-validated-split-exact2-private133.json",
+          "sha256": "6949e76023bec29039c629d41ccc261afebb990f03881e1b3a0c01babd3eb060"
+        },
+        "raw_JUnit": {
+          "bytes": 27059,
+          "path": "/tmp/Root-Phase8-nested-split-existing-ordinary135-v457-7arcunjg/actual-output/Phase8-external-validity-through-compiler-ordinary135-run-result0-output1.bin",
+          "sha256": "93f72edc0cd69df461aec8722560131b14147a755ecd42d319f6b933b4565be7"
+        },
+        "retained_ordinary119": 119,
+        "retained_two_offline_CLI_fixtures_passed": true,
+        "rollout_gate_owner": "scripts/ops/legal_ir/hammer_leanstral_rollout_gate.py",
+        "schema": "Guide543-P8-nested-replay-and-selected-split-software-evidence/v1",
+        "scope": "Existing benchmark, semantic metrics, external-validity and compiler gate software fixtures.",
+        "separate_CLI_child_compile_attestation": false,
+        "statutory_or_proof_admission": false,
+        "subcohort_counts": {
+          "existing-CLI-descendants2": 2,
+          "in-process133": 133
+        },
+        "supplied_split_digest_checked_against_recomputed_selected_manifest": true,
+        "task": "LIR-23",
+        "task_status_changed": false,
+        "test_owner": "tests/unit/optimizers/logic_theorem_optimizer/test_compiler_system_promotion_gate.py",
+        "training_or_model_qualification": false,
+        "typed_nested_external_evidence_replayed_alongside_saved_decisions": true
+      },
+      "evidence_ordinal": 543,
+      "id": "phase8-nested-replay-selected-split-identity-ordinary135-evidence543-20261126",
+      "observed_bytes": 3907,
+      "observed_sha256": "9455f77d82ee852dabfaf5b72e3fd5d22302021dad98912c794c539339d540a4",
+      "path": "/tmp/Phase8-guide543-existing-composer-bound-bbbd_dic/one-guide543-P8-nested-replay-selected-split-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Published controlled nested external-evidence replay and selected split-manifest identity/leakage checks.",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
     }
   ]
 }
