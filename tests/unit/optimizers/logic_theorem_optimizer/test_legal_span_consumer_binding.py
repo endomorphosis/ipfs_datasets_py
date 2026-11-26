@@ -1273,3 +1273,48 @@ def test_reviewed_heldout_replays_explicit_unicode_split_fingerprints():
         with pytest.raises(owner.SourceSpanConsumerBindingError, match="invalid reviewed split fingerprint profile"):
             owner.prepare_reviewed_source_span_consumer_binding_v2(rows, **offered_options(candidate))
     assert calls == [rows]
+
+
+@pytest.mark.parametrize("version", ["v2", "v3"])
+@pytest.mark.parametrize("scenario", ["forward", "rollback", "expired-rollback"])
+def test_reviewed_replay_cannot_precede_the_binding_assessment(version, scenario):
+    from datetime import datetime, timedelta
+
+    if version == "v2":
+        _, _, _, rows, options = reviewed_public_consumer_case()
+        prepare = owner.prepare_reviewed_source_span_consumer_binding_v2
+        consume = owner.consume_reviewed_source_span_binding_v2
+    else:
+        _, _, _, rows, options = reviewed_public_mixed_consumer_case()
+        prepare = owner.prepare_reviewed_source_span_consumer_binding_v3
+        consume = owner.consume_reviewed_source_span_binding_v3
+
+    def one_second_after(instant):
+        parsed = datetime.fromisoformat(instant)
+        return (parsed + timedelta(seconds=1)).isoformat().replace("+00:00", "Z")
+
+    replay = options["admission_inputs"]
+    original_time = replay["at_time_utc"]
+    later = one_second_after(original_time)
+    if scenario == "expired-rollback":
+        expiry = min(review["expires_at_utc"] for review in replay["reviews"])
+        replay["at_time_utc"] = one_second_after(expiry)
+    elif scenario == "rollback":
+        replay["at_time_utc"] = later
+    options["expected_admission_inputs_sha256"] = owner.reviewed_admission_inputs_sha256(replay)
+    binding = prepare(rows, **options)
+    expected_status = "blocked" if scenario == "expired-rollback" else "ready"
+    assert binding.receipt()["status"] == expected_status
+    assert binding.receipt()["training_mask"] == binding.receipt()["evaluation_gold_mask"] == 0
+
+    callbacks = []
+    current_time = later if scenario == "forward" else original_time
+    current = reviewed_validation_inputs(options)
+    current["admission_inputs"] = {**replay, "at_time_utc": current_time}
+    if scenario == "forward":
+        consume(binding, rows, **current, consumer=callbacks.append)
+        assert callbacks == [rows]
+    else:
+        with pytest.raises(owner.SourceSpanConsumerBindingError, match="review evaluation time rollback"):
+            consume(binding, rows, **current, consumer=callbacks.append)
+        assert callbacks == []

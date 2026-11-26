@@ -529,6 +529,7 @@ class ReviewedSourceSpanConsumerBinding:
     _admission_identity_guard: CheckpointContentGuard
     _contract_guard: CheckpointContentGuard
     _admission_version: str
+    _assessment_time_utc: str
     _operation: str
     _target_codec: str
     _allow_fictional_fixture: bool
@@ -752,7 +753,8 @@ def _prepare_reviewed_source_span_consumer_binding(rows, *, expected_rows_sha256
     for name, value in (("_guards", guards), ("_implementation_guard", implementation_guard),
             ("_admission_identity_guard", identity_guard),
             ("_contract_guard", _guard({"version": _admission_version, "schema": schema, "profile": profile})),
-            ("_admission_version", _admission_version), ("_operation", operation),
+            ("_admission_version", _admission_version),
+            ("_assessment_time_utc", admission_copy["at_time_utc"]), ("_operation", operation),
             ("_target_codec", target_codec), ("_allow_fictional_fixture", allow_fictional_fixture),
             ("_allow_heldout_evaluation", allow_heldout_evaluation),
             ("_heldout_evaluation_purpose", heldout_evaluation_purpose),
@@ -780,7 +782,9 @@ def validate_reviewed_source_span_consumer_binding_v3(binding, rows, *, split_ma
 
 def _validate_reviewed_source_span_consumer_binding(binding, rows, *, split_manifest,
         admission_inputs, exposure_records, _admission_version, bound_component_inputs=None):
-    """Replay current admission; unchanged old receipts cannot authorize reuse."""
+    """Replay admission at the binding’s assessment time or later."""
+    from ipfs_datasets_py.logic.autoformal import legal_graph_review
+
     _require(_reviewed_binding_version(binding) == _admission_version, "reviewed binding admission contract differs")
     _require(not binding._bound_component_required or bound_component_inputs is not None,
              "current bound component replay is required for this consumer binding")
@@ -811,6 +815,9 @@ def _validate_reviewed_source_span_consumer_binding(binding, rows, *, split_mani
             record["status"] = "blocked"
         raise SourceSpanConsumerBindingError(
             "reviewed source/target/declaration/preparation/producer/trust identity changed", receipt=receipt)
+    current_time = legal_graph_review._time(fresh._assessment_time_utc)
+    prepared_time = legal_graph_review._time(binding._assessment_time_utc)
+    _require(current_time >= prepared_time, "review evaluation time rollback")
     return receipt
 
 
