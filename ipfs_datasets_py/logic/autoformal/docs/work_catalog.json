@@ -32290,6 +32290,165 @@
       "root": "artifact_workspace",
       "scope": "Published controlled source-withheld canonical decompiler predicate-clause boundary across ordinary15.",
       "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase5_v11_saved_evaluation_measurement_ordinary50_20261126",
+      "closed_software_facts": {
+        "Lean_or_model_run": false,
+        "Source_resource_and_parent_closed": true,
+        "actual_legal_semantic_review": false,
+        "actual_ordinary50": {
+          "bytes": 25859,
+          "path": "/tmp/Root-existing-P5-v11-measurement-ordinary50-v471-aZYyjKjg/actual-Phase5-v11-measurement-ordinary50-closed-small-v471.json",
+          "sha256": "aeb92e02611d01dedd193ce1a41d516c072a3fa778c6aeac9d9b9bad0f0c44ed"
+        },
+        "actual_publication": {
+          "bytes": 19071,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase5-v11-measurement-exact2-ordinary50-three-FF-publication-v471.json",
+          "sha256": "595d640004632225b90724c6c3f8076df942970690a1e48ba6a07f8ee98f37c0"
+        },
+        "component": "reviewed-original-parent-inference",
+        "current_code_head": "91d1d5909867742fbf1b7b1d9b2fc94562fcacf5",
+        "evidence_ordinal": 547,
+        "exact_Source_install": {
+          "bytes": 10504,
+          "path": "/tmp/Root-Phase5-v11-measurement-existing-Source2-v469-ARiRtwOi/actual-Phase5-v11-measurement-exact2-Source-closed-small-v469.json",
+          "sha256": "387546cc203efca4bb9b5757ba0beadf115a3b140fc4525497f30ddcffc1b552"
+        },
+        "exact_local_freeze": {
+          "bytes": 14668,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase5-v11-measurement-exact2-local-freeze-v469.json",
+          "sha256": "0da38ef05ab03de7539e9c30349d90b9e48c80fa1c42b4154eb7e228e75b7021"
+        },
+        "exact_two_published_paths": [
+          "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_inference.py",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py"
+        ],
+        "full_eight_phase_goal_complete": false,
+        "implemented_behavior": "The original-parent V11 verifier checks saved evaluation measurements against the verified generation rows and their source-input commitment. It binds the ordered producer inputs to the selected reference population and original request, checks the declared checkpoint and compiler identities, and recomputes the complete-norm payload metric before accepting the two stored metric copies.",
+        "independent_selected_roster": {
+          "bytes": 30725,
+          "path": "/tmp/P5-v11-measurement-ordinary50-existing-R2-INERT-N0vv4rIx/P5-v11-measurement-ordinary50-independent-roster-DATA.json",
+          "sha256": "524571f77839c9c8c3d17dde6f82cda0c3cbc148f67647c8a40838cde7a1ef0a"
+        },
+        "model_inference_or_decode_performed": false,
+        "ordinary_counts": {
+          "duplicates": 0,
+          "errors": 0,
+          "failures": 0,
+          "functions": 5,
+          "passed": 50,
+          "skipped": 0,
+          "tests": 50
+        },
+        "ordinary_node_ids": [
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_outputs_cover_ordered_source_population[None]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_outputs_cover_ordered_source_population[drop_middle]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_outputs_cover_ordered_source_population[only_one]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_outputs_cover_ordered_source_population[coordinated_reverse]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_outputs_cover_ordered_source_population[renamed_id]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_outputs_cover_ordered_source_population[renamed_unit]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_output_refuses_raw_derivation_or_scope_changes[raw_hash]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_output_refuses_raw_derivation_or_scope_changes[null_as_empty]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_output_refuses_raw_derivation_or_scope_changes[candidate_rewrite]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_output_refuses_raw_derivation_or_scope_changes[supplied_digest]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_output_refuses_raw_derivation_or_scope_changes[derivation]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_output_refuses_raw_derivation_or_scope_changes[population]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_output_refuses_raw_derivation_or_scope_changes[tokens]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_output_refuses_raw_derivation_or_scope_changes[profile]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_output_refuses_raw_derivation_or_scope_changes[observation]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_output_refuses_raw_derivation_or_scope_changes[loader_schema]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_output_refuses_raw_derivation_or_scope_changes[loader_pair]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_output_refuses_raw_derivation_or_scope_changes[loader_authority]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_output_refuses_raw_derivation_or_scope_changes[source]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_output_refuses_raw_derivation_or_scope_changes[exposure]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_output_refuses_raw_derivation_or_scope_changes[commitment_extra]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_raw_assembled_dispositions_preserved[abstained]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_raw_assembled_dispositions_preserved[incomplete]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_raw_assembled_dispositions_preserved[invalid_no_text]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_raw_assembled_dispositions_preserved[invalid_text]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_raw_assembled_dispositions_preserved[complete]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_terminal_evidence_matches_disposition[real-token-exhaustion]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_terminal_evidence_matches_disposition[real-unexpected-bos]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_terminal_evidence_matches_disposition[empty-decoded-body]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_terminal_evidence_matches_disposition[complete-without-eos]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_terminal_evidence_matches_disposition[complete-with-early-eos]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_terminal_evidence_matches_disposition[complete-with-wrong-bos]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_terminal_evidence_matches_disposition[complete-outside-vocab]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_terminal_evidence_matches_disposition[false-abstention]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_terminal_evidence_matches_disposition[false-incomplete-with-eos]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_terminal_evidence_matches_disposition[false-token-budget]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_terminal_evidence_matches_disposition[valid-body-called-invalid]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_terminal_evidence_matches_disposition[missing-tokenizer-receipt]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_terminal_evidence_matches_disposition[receipt-eos-disagrees-with-pinned-config]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_terminal_evidence_matches_disposition[padded-model-vocab]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_evaluation_scores_the_verified_generation[None]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_evaluation_scores_the_verified_generation[empty]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_evaluation_scores_the_verified_generation[checkpoint]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_evaluation_scores_the_verified_generation[references]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_evaluation_scores_the_verified_generation[context]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_evaluation_scores_the_verified_generation[output]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_evaluation_scores_the_verified_generation[observation]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_evaluation_scores_the_verified_generation[commitment]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_evaluation_scores_the_verified_generation[scores]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_evaluation_scores_the_verified_generation[compiler]"
+        ],
+        "ordinary_scope": "Saved fictional evaluation artifact consistency",
+        "ordinary_subcohorts": {
+          "damage15": 15,
+          "disposition5": 5,
+          "measurement10": 10,
+          "population6": 6,
+          "terminal14": 14
+        },
+        "original_model_generation_provenance_proven": false,
+        "owner": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_inference.py",
+        "owning_test": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py",
+        "physical_original_owner_qualification": false,
+        "prior_Guide546": {
+          "bytes": 12765,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-guide546-four-doc-three-FF-publication-small-v468.json",
+          "sha256": "f5604bf0bcc51d3c2d4386a2cf30499af378c2348f44c87d92f58f4a902b0aec"
+        },
+        "prior_ordinary40": {
+          "bytes": 23229,
+          "path": "/tmp/Root-existing-Phase5-v11-terminal-ordinary40-v423-m6pq4yeu/actual-Phase5-v11-terminal-config-ordinary40-closed-small-v423.json",
+          "sha256": "ddd42cd97fdfa5570da690b8ecd915be4a72185286cde9075c68b7fd2e7f59b6"
+        },
+        "private_same50_separate": {
+          "after": {
+            "failed": 0,
+            "passed": 50
+          },
+          "before": {
+            "failed": 9,
+            "passed": 41
+          },
+          "reference": {
+            "bytes": 23440,
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/P5-v11-evaluation-measurement-join-private-sl1z_6si/SEALED-exact-two-V11-evaluation-measurement-private-50.json",
+            "sha256": "60866f179bc0dd848982020891245a213e5fbf37b61d652a06a7c91f01c2b841"
+          }
+        },
+        "raw_JUnit": {
+          "bytes": 10558,
+          "path": "/tmp/Root-existing-P5-v11-measurement-ordinary50-v471-aZYyjKjg/actual-output/P5-v11-saved-evaluation-measurement-ordinary50-run-result0-output1.bin",
+          "sha256": "09685bb26f738a111de87ea2f8c59014f37d101b5116f27973e1a9c1184b8929"
+        },
+        "schema": "Guide547-Phase5-v11-saved-evaluation-measurement-software-evidence/v1",
+        "task": "LIR-19",
+        "task_status_changed": false,
+        "training_or_gold_credit": false
+      },
+      "evidence_ordinal": 547,
+      "id": "phase5-v11-saved-evaluation-measurement-ordinary50-evidence547-20261126",
+      "observed_bytes": 13533,
+      "observed_sha256": "32ab1b70b6c057da6a8ad67fa3c3fb64ba5f654c4ea18bcdccd2f3eef1b725f6",
+      "path": "/tmp/Phase5-v11-measurement-guide547-existing-composer-INERT-z4NNQNON/one-guide547-Phase5-v11-saved-evaluation-measurement-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Published saved V11 evaluation measurement consistency across 50 controlled software cases.",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
     }
   ]
 }

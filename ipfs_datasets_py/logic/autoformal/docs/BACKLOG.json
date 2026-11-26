@@ -4217,6 +4217,30 @@
       },
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
       "task": "LIR-07"
+    },
+    "phase5_v11_saved_evaluation_measurement_ordinary50_20261126": {
+      "actual_legal_semantic_review_or_training_model_credit": false,
+      "component": "reviewed-original-parent-inference",
+      "evidence_ordinal": 547,
+      "facts": {
+        "bytes": 13533,
+        "path": "/tmp/Phase5-v11-measurement-guide547-existing-composer-INERT-z4NNQNON/one-guide547-Phase5-v11-saved-evaluation-measurement-scoped-facts.json",
+        "sha256": "32ab1b70b6c057da6a8ad67fa3c3fb64ba5f654c4ea18bcdccd2f3eef1b725f6"
+      },
+      "ordinary50": {
+        "functions": 5,
+        "retained": 40,
+        "saved_measurement": 10,
+        "unique_PASS": 50
+      },
+      "record_id": "phase5-v11-saved-evaluation-measurement-ordinary50-evidence547-20261126",
+      "separate_private_same50": {
+        "after_pass": 50,
+        "before_fail": 9,
+        "before_pass": 41
+      },
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
+      "task": "LIR-19"
     }
   },
   "programme_goal_hierarchy": {
