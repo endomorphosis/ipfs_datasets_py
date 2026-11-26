@@ -616,3 +616,47 @@ def test_current_legal_aggregate_without_complete_context_refuses_sql_put(
         with pytest.raises(DuckDBProofStoreAuthorityError, match="complete current context"):
             store.put(incomplete, now=100.0)
         assert _selected_legal_coverage_sql_rows(connection, incomplete.key.digest) == ([], [], [], [], [])
+
+
+def test_clear_during_pending_producer_cannot_resurrect_sql_and_replacement_is_durable(sql_store):
+    _, connection, store = sql_store
+    retired_entry = _entry(tag="retired-producer", created_at=100.0)
+    replacement_entry = _entry(retired_entry.key, tag="after-clear", created_at=101.0)
+    calls = []
+
+    def retired_producer():
+        calls.append("retired")
+        # get_or_compute has registered this producer before invoking it.
+        store.clear()
+        return retired_entry
+
+    retired = store.get_or_compute(retired_entry.key, retired_producer, now=100.0)
+    assert calls == ["retired"]
+    assert retired.reason is CacheLookupReason.MISS
+    assert retired.entry is None and not retired.hit and not retired.usable
+    assert store.get(retired_entry.key, now=100.0) is None
+    for table in ("proof_keys", "proof_entries", "proof_key_dimensions", "premises", "proof_evidence"):
+        assert _scalar(connection, "SELECT count(*) FROM " + table) == 0
+    cold_after_clear = DuckDBProofStore(connection=connection, max_entries=16)
+    assert cold_after_clear.get(retired_entry.key, now=100.0) is None
+
+    def replacement_producer():
+        calls.append("replacement")
+        return replacement_entry
+
+    replacement = store.get_or_compute(retired_entry.key, replacement_producer, now=101.0)
+    assert calls == ["retired", "replacement"]
+    assert replacement.reason is CacheLookupReason.STORED
+    assert replacement.usable and not replacement.hit
+    _assert_observation(store.get(retired_entry.key, now=101.0), replacement_entry)
+    for table, expected in (
+        ("proof_keys", 1), ("proof_entries", 1), ("proof_key_dimensions", 15),
+        ("premises", 2), ("proof_evidence", 1),
+    ):
+        assert _scalar(connection, "SELECT count(*) FROM " + table) == expected
+    assert _scalar(connection,
+        "SELECT count(*) FROM proof_entries WHERE entry_digest=?", [retired_entry.entry_digest]) == 0
+    assert _scalar(connection,
+        "SELECT count(*) FROM proof_evidence WHERE entry_digest=?", [retired_entry.entry_digest]) == 0
+    reopened = DuckDBProofStore(connection=connection, max_entries=16)
+    _assert_observation(reopened.get(retired_entry.key, now=101.0), replacement_entry)
