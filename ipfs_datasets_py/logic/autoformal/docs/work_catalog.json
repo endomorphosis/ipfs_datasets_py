@@ -34538,6 +34538,124 @@
       "root": "artifact_workspace",
       "scope": "Published physical V4 CLI explicitly attaches independently reloaded retained eligibility beside an unchanged source-only closure.",
       "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase2_portable_physical_v4_release_request_20261126",
+      "closed_software_facts": {
+        "actual_READ4": {
+          "bytes": 10219,
+          "path": "/tmp/Root-Phase2-portable-physical-V4-existing-READ4-v547-vl9pal73/actual-Phase2-portable-physical-v4-request-READ4-v547-closed.json",
+          "sha256": "c9bc3391fd6105d48237340abd8c4ae26f5db0f28946798271b138b7086ab733"
+        },
+        "actual_Source3_install": {
+          "bytes": 11312,
+          "path": "/tmp/Root-Phase2-portable-physical-V4-existing-Source3-v546-4rqw5tmq/actual-Phase2-portable-physical-v4-request-exact3-Source-closed-v546.json",
+          "sha256": "340cee93c17ef6739940dd3b474ef2dda22615edb2ee0dd3e051bbb2a3c1fb9e"
+        },
+        "actual_ordinary_counts": {
+          "duplicates": 0,
+          "errors": 0,
+          "failures": 0,
+          "functions": 22,
+          "passed": 48,
+          "skipped": 0,
+          "tests": 48
+        },
+        "already_embedded_signed_reviewed_law_and_entity_Parquet_bytes": true,
+        "checked_Lean_declared_eligible": false,
+        "code_publication": {
+          "bytes": 23211,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-portable-physical-v4-request-exact3-ordinary48-three-FF-publication-v549.json",
+          "sha256": "6641715b6a21e0443cf99ac68edc3e40aac3167e8ff401b3e937a851ec4ba163"
+        },
+        "evaluation_gold_mask": 0,
+        "evidence_ordinal": 562,
+        "fixture_only": true,
+        "fresh_compiler_Native_or_model_execution": false,
+        "historical_v504_full_original_request_was_not_retained_or_recovered": true,
+        "historical_v504_reference_only": {
+          "bytes": 13849,
+          "path": "/tmp/Root-Phase2-V4-checked-native-existing-R5-v504-Qe09yc6x/actual-original-R5-physical-v4-current-review-checked-native-join-v504.json",
+          "sha256": "72653ffbd1973b2a30f650f4da0856ca9897a1d2b0f1cf251f71f9425dceab18"
+        },
+        "local_exact_three_freeze": {
+          "bytes": 15314,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-portable-physical-v4-request-exact3-local-freeze-v546.json",
+          "sha256": "a30fcec5a303a4c72eef21efca5d266d76c090d1f4b8667897f93c073ce9ec4e"
+        },
+        "ordinary48": {
+          "bytes": 31820,
+          "path": "/tmp/P2-portable-physical-V4-existing-ordinary48-v548-smrpl1ce/actual-P2-portable-physical-V4-ordinary48-closed-small-v548.json",
+          "sha256": "e158229e568839b8f4ab37bc22a07b7c14cd961194fff5d74255c74e96adf49a"
+        },
+        "ordinary_cohorts": {
+          "portable_request_new": 8,
+          "retained": 40
+        },
+        "ordinary_raw_JUnit": {
+          "bytes": 8904,
+          "path": "/tmp/P2-portable-physical-V4-existing-ordinary48-v548-smrpl1ce/actual-output/corpus-release-public-v4-portable-physical-artifacts-ordinary48-run-result0-output1.bin",
+          "sha256": "92256c3e76c7d5f939fda14df227fa19a80c2119c12996adaa57e6607476ebda"
+        },
+        "owning_test": "tests/unit/logic/autoformal/test_corpus_release_cli.py",
+        "prior_Guide561": {
+          "bytes": 17790,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-guide561-four-doc-three-FF-publication-small-v545.json",
+          "sha256": "f54cf4fa3efda6228315227a1eb467d2de47a55fdac7a2d8d9d93fdfb1c498a7"
+        },
+        "prior_actual_ordinary40": {
+          "bytes": 30167,
+          "path": "/tmp/P2-V4-CLI-attached-handoff-existing-ordinary40-v543-544nun89/actual-P2-retained-type-handoff-ordinary40-closed-small-v543.json",
+          "sha256": "839f283fd0d1a9b418cc9246c5f3f7c9b6fa681255e71e2f365eda03f04fd4c8"
+        },
+        "private_after": {
+          "failed": 0,
+          "passed": 9
+        },
+        "private_baseline_raw_JUnit": {
+          "bytes": 20882,
+          "path": "/tmp/Root-P2-portable-physical-V4-release-private-v01-ats1ijdf/red/result.xml",
+          "sha256": "026556071912d032d0981fc5ca0bf4380126a5ddccc84188353364a32c14d7ad"
+        },
+        "private_before": {
+          "failed": 8,
+          "passed": 1
+        },
+        "private_candidate": {
+          "bytes": 10208,
+          "path": "/tmp/Root-P2-portable-physical-V4-release-private-v01-ats1ijdf/SEALED-Phase2-portable-physical-V4-exact3.json",
+          "sha256": "a9f1b0fd5bffeb725c0fd84b03c8b075cf44970c746889ff65621a8c29c30ec9"
+        },
+        "private_candidate_raw_JUnit": {
+          "bytes": 1352,
+          "path": "/tmp/Root-P2-portable-physical-V4-release-private-v01-ats1ijdf/green/result.xml",
+          "sha256": "db14a0a878609d79d2ba8d4553d171fb33c9df3101a1d74dfd1b69e54e6e89f0"
+        },
+        "proof_receipt_or_legal_review_or_corpus_admission": false,
+        "proof_status": "pending",
+        "related_catalog_component": "legal-release-coordinator",
+        "related_tasks": [
+          "LIR-21"
+        ],
+        "release_CLI": "scripts/ops/legal_ir/validate_uscode_corpus_release.py",
+        "release_coordinator": "ipfs_datasets_py/logic/autoformal/legal_release_coordinator_v1.py",
+        "replay_recomputes_historical_physical_crosswalk_with_temporary_files_after_fixture_paths_removed": true,
+        "retained_exact_raw_physical_V4_request": true,
+        "schema": "Guide562-Phase2-portable-physical-V4-release-request/v1",
+        "task": "LIR-14",
+        "task_status_changed": false,
+        "training_mask": 0,
+        "unchanged_request_pin_closure_and_attached_retained_type_handoff": true
+      },
+      "evidence_ordinal": 562,
+      "id": "phase2-portable-physical-v4-release-request-evidence562-20261126",
+      "observed_bytes": 5060,
+      "observed_sha256": "80623728b649a41b8650643f55cba42fdbde7ac834958e53cd69d187bd84d11d",
+      "path": "/tmp/P2-portable-physical-V4-guide562-existing-composer-INERT-w81dxwan/one-guide562-Phase2-portable-physical-V4-release-request-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Physical V4 CLI retains the exact request and explicitly replays already embedded signed reviewed law and entity artifacts.",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
     }
   ]
 }
