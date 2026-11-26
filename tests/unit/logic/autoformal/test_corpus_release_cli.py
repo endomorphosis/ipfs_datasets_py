@@ -4819,3 +4819,94 @@ def test_physical_v4_applies_selected_current_trust_to_original_signed_review(
     assert current == current_before
     assert control["admission"]["semantic_use_eligible"] is True
     assert hashlib.sha256(raw).hexdigest() == pin
+
+
+@pytest.mark.parametrize("successor", ["healthy", "revoked"])
+def test_physical_v4_cli_reassesses_current_trust_before_attaching_retained_type(
+        physical_v4_retained_type_closure_cases, tmp_path, capsys, successor):
+    from copy import deepcopy
+
+    from ipfs_datasets_py.logic.autoformal import legal_graph_review as review
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+
+    control, cases = physical_v4_retained_type_closure_cases
+    *_, saved_args = _write_retained_type_eligibility_cli_files(tmp_path / "type", *cases["deontic_fol"])
+    handoff = tmp_path / "handoff.json"
+    rc, saved = _retained_type_eligibility_cli_call(saved_args + ["--output", str(handoff)], capsys)
+    assert rc == 0, saved
+    historical_bytes = handoff.read_bytes()
+    historical = json.loads(historical_bytes)["declared_eligibility_evidence"]["current_review_observation"]
+
+    current = _physical_v4_review_observation_inputs(control)
+    current["at_time_utc"] = _physical_v4_review_time_offset(current["at_time_utc"], 1)
+    registry = deepcopy(control["case"]["registry"])
+    policy = deepcopy(control["case"]["policy"])
+    registry["generation"] += 1
+    if successor == "revoked":
+        registry["revocation_generation"] += 1
+        reviewer = control["case"]["reviews"][0]["key_id"]
+        next(key for key in registry["keys"] if key["key_id"] == reviewer)["revoked_at_utc"] = current["at_time_utc"]
+    registry_sha = review.digest(registry)
+    policy["registry_sha256"] = registry_sha
+    policy_sha = review.digest(policy)
+    current["current_trust"] = {
+        "registry": registry, "policy": policy,
+        "expected_registry_sha256": registry_sha, "expected_policy_sha256": policy_sha,
+    }
+    current_path = tmp_path / "current.json"
+    current_bytes = json.dumps(current, sort_keys=True).encode("utf-8")
+    current_path.write_bytes(current_bytes)
+    request_path = tmp_path / "physical.request"
+    request_path.write_bytes(control["physical_request_raw"])
+    closure_args = ["validate-closure", "--profile", release.CLOSURE_PROFILE_V4,
+        "--request", str(request_path), "--request-sha256", control["physical_request_sha256"],
+        *saved_args[1:], "--saved", str(handoff), "--saved-sha256", saved["artifact"]["sha256"],
+        "--current-review", str(current_path), "--current-review-sha256", hashlib.sha256(current_bytes).hexdigest()]
+    rc, result = _validate_closure_with_retained_type_cli(closure_args, capsys)
+    if successor == "revoked":
+        assert rc == 1 and "current review has unresolved admission blockers" in result["error"], result
+        assert "closure" not in result and "retained_type_eligibility" not in result
+    else:
+        assert rc == 0, result
+        closure = result["closure"]
+        latest = closure["current_review_observation"]
+        assert latest["registry_sha256"] == registry_sha != historical["registry_sha256"]
+        assert latest["policy_sha256"] == policy_sha != historical["policy_sha256"]
+        assert latest["at_time_utc"] == current["at_time_utc"]
+        assert latest["graph_sha256"] == historical["graph_sha256"] == control["graph_sha"]
+        assert latest["reviews_sha256"] == historical["reviews_sha256"]
+        assert latest["evaluation_clock_authenticated"] is latest["registry_freshness_authenticated"] is False
+        assert closure["declared_eligibility_evidence"]["current_review_observation"] == latest
+        assert closure["declared_qualification"]["dimensions"]["proof"]["status"] == "pending"
+        assert closure["declared_eligibility"]["views"]["checked_lean"]["declared_eligible"] is False
+        assert closure["admission_mask"] == closure["training_mask"] == closure["evaluation_gold_mask"] == 0
+        assert result["retained_type_eligibility"]["handoff"] == json.loads(historical_bytes)
+    assert handoff.read_bytes() == historical_bytes and current_path.read_bytes() == current_bytes
+
+
+@pytest.mark.parametrize("case,error", [
+    pytest.param("missing-path", "must be supplied together", id="missing-path"),
+    pytest.param("missing-digest", "must be supplied together", id="missing-digest"),
+    pytest.param("wrong-profile", "requires the physical V4 profile", id="wrong-profile"),
+    pytest.param("wrong-digest", "record bytes differ from expected SHA256", id="wrong-digest"),
+    pytest.param("duplicate-key", "duplicate JSON key", id="duplicate-key"),
+])
+def test_current_review_cli_rejects_invalid_observation_before_physical_replay(tmp_path, capsys, case, error):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+
+    observation = tmp_path / "current.json"
+    raw = b'{"duplicate":0,"duplicate":1}' if case == "duplicate-key" else b'{}'
+    observation.write_bytes(raw)
+    selection = []
+    if case != "missing-path":
+        selection += ["--current-review", str(observation)]
+    if case != "missing-digest":
+        digest = "0" * 64 if case == "wrong-digest" else hashlib.sha256(raw).hexdigest()
+        selection += ["--current-review-sha256", digest]
+    profile = release.CLOSURE_PROFILE_V3 if case == "wrong-profile" else release.CLOSURE_PROFILE_V4
+    rc, result = _validate_closure_with_retained_type_cli([
+        "validate-closure", "--profile", profile, "--request", str(tmp_path / "absent.request"),
+        "--request-sha256", "0" * 64, *selection,
+    ], capsys)
+    assert rc == 1 and error in result["error"], result
+    assert "closure" not in result and "retained_type_eligibility" not in result

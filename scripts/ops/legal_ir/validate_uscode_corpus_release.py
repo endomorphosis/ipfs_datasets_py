@@ -72,6 +72,8 @@ def _parser():
     physical_request.add_argument("--replay-retained-artifacts", action="store_true")
     closure.add_argument("--paired-cache-archive")
     closure.add_argument("--paired-cache-archive-sha256")
+    closure.add_argument("--current-review", metavar="PATH")
+    closure.add_argument("--current-review-sha256", metavar="SHA")
     retained = commands.add_parser(_RETAINED_TYPE_COMMAND, add_help=False)
     retained.add_argument("-h", "--help", action="store_true")
     for flag in _RETAINED_REPLAY_FLAGS:
@@ -265,6 +267,22 @@ def _retained_type_eligibility(args):
         declared_eligibility_cid=handoff["declared_eligibility"]["record_cid"])
 
 
+def _current_review_for_closure(args):
+    """Load an independently pinned caller observation for physical V4 replay."""
+    path, digest = args.current_review, args.current_review_sha256
+    if path is None and digest is None:
+        return None
+    if path is None or digest is None:
+        raise CLIError("--current-review and --current-review-sha256 must be supplied together")
+    if args.profile != _WHOLE_NORM_V4_PROFILE:
+        raise CLIError("current review observation requires the physical V4 profile")
+    from ipfs_datasets_py.logic.autoformal import corpus_contracts as contracts
+
+    contracts.require_sha256(digest, "current review SHA256")
+    raw = _read_regular_file(path, maximum_bytes=contracts.MAX_RECORD_BYTES)
+    return contracts.load_record_bytes(raw, expected_sha256=digest)
+
+
 def _retained_type_for_closure(args):
     flags = _RETAINED_REPLAY_FLAGS + ("saved", "saved-sha256")
     supplied = [getattr(args, flag.replace("-", "_")) is not None for flag in flags]
@@ -361,6 +379,9 @@ def main(argv=None):
                     f"validate-closure --profile {_WHOLE_NORM_V4_PROFILE} --request PATH --request-sha256 SHA "
                     "(--retain-physical-request DEST | --replay-retained-artifacts "
                     "[--paired-cache-archive PATH --paired-cache-archive-sha256 SHA])")
+                result["current_review_usage"] = (
+                    f"validate-closure --profile {_WHOLE_NORM_V4_PROFILE} --request PATH --request-sha256 SHA "
+                    "--current-review PATH --current-review-sha256 SHA")
                 result["declared_eligibility"] = {
                     "flag": "--include-declared-eligibility",
                     "supported_profiles": [_PHYSICAL_V3_PROFILE, _WHOLE_NORM_V4_PROFILE],
@@ -382,11 +403,14 @@ def main(argv=None):
                 if any(value is not None for value in paired_archive_args) and (
                         not all(paired_archive_args) or not args.replay_retained_artifacts):
                     raise CLIError("paired cache archive and its SHA256 require physical V4 retained replay")
+                current_review = _current_review_for_closure(args)
                 from ipfs_datasets_py.logic.autoformal.legal_release_coordinator_v1 import (
                     MAX_CLOSURE_REQUEST_BYTES, validate_uscode_release_closure_v1,
                 )
                 retained_handoff = _retained_type_for_closure(args)
                 eligibility_options = {}
+                if current_review is not None:
+                    eligibility_options["current_review"] = current_review
                 if args.include_declared_eligibility or retained_handoff is not None:
                     if args.profile not in (_PHYSICAL_V3_PROFILE, _WHOLE_NORM_V4_PROFILE):
                         raise CLIError("declared eligibility requires a supported physical V3 or V4 profile")
