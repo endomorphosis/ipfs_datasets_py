@@ -35624,6 +35624,186 @@
       "root": "artifact_workspace",
       "scope": "One fixed fictional FOL unit in Lean at time zero, with original conditional theorem, exact axiom diagnostics, and changed-source-premise negative control.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase2_retained_physical_v4_type_review_metadata_ordinary25_20261126",
+      "closed_runtime_facts": {
+        "Source_resource_and_parent_closed": true,
+        "actual_Phase2_exact2_code_publication": {
+          "bytes": 38637,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-retained-type-review-UTC-SHA-exact2-ordinary25-three-FF-publication-v591.json",
+          "sha256": "f925ede41df94d0f9065ef9fc65bbe0596bf702fdbe281c3b8a62462366ef42f"
+        },
+        "actual_Phase2_ordinary25_qualification": {
+          "bytes": 35731,
+          "path": "/tmp/P2-retained-type-review-ordinary25-v528-helpers-INERT-f65vnpjw/actual-P2-retained-type-current-review-metadata-ordinary25-closed-small-v590.json",
+          "sha256": "74f1d71944079efbe2b7f5b39484a781c809f9c129ecca9f170c2940ddcc9dd1"
+        },
+        "actual_closed_ordinary_report": {
+          "bytes": 926653,
+          "path": "/tmp/P2-retained-type-review-ordinary25-v528-helpers-INERT-f65vnpjw/actual-output/complete-frozen-local-D-phase2-retained-type-current-review-metadata-ordinary25-existing-owner-report.json",
+          "sha256": "5eb7db3140ec27a225da835e75c52c213db386ecf0615d5f88376661253ca625"
+        },
+        "actual_counts": {
+          "duplicates": 0,
+          "errors": 0,
+          "failures": 0,
+          "functions": 3,
+          "passed": 25,
+          "skipped": 0,
+          "tests": 25
+        },
+        "actual_raw_JUnit": {
+          "bytes": 5920,
+          "logical_name": "junit.xml",
+          "path": "/tmp/P2-retained-type-review-ordinary25-v528-helpers-INERT-f65vnpjw/actual-output/phase2-retained-type-current-review-metadata-ordinary25-run-result0-output1.bin",
+          "sha256": "c0e5fff904caebe9ee24226c5099dbb8589d74461fd2256cd978818292ebe811"
+        },
+        "evidence_ordinal": 570,
+        "exact_current_V4_reader_review_metadata_READ3": {
+          "bytes": 9496,
+          "path": "/tmp/P2-retained-type-review-metadata-postfreeze-READ3-INERT-v589-7evfti1p/actual-V4-retained-type-review-metadata-frozen-READ3-closed-v589.json",
+          "sha256": "6750350ef69ed91315721edd180b59710eeae727a04a7d461f96f20f4a6e219b"
+        },
+        "exact_local_freeze": {
+          "bytes": 10716,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-retained-type-review-UTC-SHA-exact2-local-freeze-v588.json",
+          "sha256": "e4bd37867a44396a4f0297d18e87c5ad9bde1185b1bfb53314cee302049b3ec2"
+        },
+        "exact_two_published_body_joins": {
+          "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_elaboration_native_v2.py": {
+            "bytes": 62183,
+            "full9": {
+              "st_ctime_ns": "1795718879944782244",
+              "st_dev": "66306",
+              "st_gid": "1000",
+              "st_ino": "70042691",
+              "st_mode": "33204",
+              "st_mtime_ns": "1795718879359460780",
+              "st_nlink": "1",
+              "st_size": "62183",
+              "st_uid": "1000"
+            },
+            "git_mode": "100644",
+            "parent_blob": "ceb74732d29cebcc09399bef8c8f160683e4bd01",
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_elaboration_native_v2.py",
+            "sha256": "eba76bd725c0e83dc4d815b8f8f913dadaf1ab4d4bfd75b8dd4602b763e8b491",
+            "stage0_and_committed_blob": "2626167510a03956c3531be8f58d38e93d13a112"
+          },
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py": {
+            "bytes": 54788,
+            "full9": {
+              "st_ctime_ns": "1795718880494788101",
+              "st_dev": "66306",
+              "st_gid": "1000",
+              "st_ino": "70042692",
+              "st_mode": "33204",
+              "st_mtime_ns": "1795718879362745215",
+              "st_nlink": "1",
+              "st_size": "54788",
+              "st_uid": "1000"
+            },
+            "git_mode": "100644",
+            "parent_blob": "2b789db04ab842cc5be4272fd16711362aad5469",
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py",
+            "sha256": "aae5475cbb2525a51c5637db9130d826c2ddf8263a993be28da14b708b88a278",
+            "stage0_and_committed_blob": "910feda82faa8a4164756fde03f868998b73810c"
+          }
+        },
+        "fixture_only": true,
+        "historical_v508_type_capture_reference": {
+          "bytes": 6786,
+          "path": "/tmp/Root-Phase2-V4-type-capture-current-v504-v508-PUYIfU3w/actual-physical-whole-norm-native-elaboration-v508-closed.json",
+          "sha256": "3d9e61ca177ab00a131a3b890b4f0e4d9c5814eb1b88836eb6ed75ab8a435308"
+        },
+        "new_Native_ProofReceipt_or_statutory_or_model_qualification": false,
+        "observations": {
+          "current_clock_authentication": false,
+          "current_review_requires_calendar_valid_UTC_seconds": true,
+          "declared_proof_or_corpus_admission_authority_granted": false,
+          "existing_request_graph_and_admission_identity_joins_preserved": true,
+          "fixture_historical_review_metadata_only": true,
+          "registry_freshness_authentication": false,
+          "review_specific_sha256_fields": [
+            "registry_sha256",
+            "policy_sha256",
+            "reviews_sha256",
+            "caller_observation_sha256",
+            "current_assessment_sha256",
+            "dependency_invalidation_sha256"
+          ],
+          "six_review_specific_sha256_pins_require_lowercase_hex": true
+        },
+        "ordered_actual_cases": [
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py::test_checked_release_type_capture_preserves_exact_retained_provenance[one]",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py::test_checked_release_type_capture_preserves_exact_retained_provenance[two]",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py::test_checked_release_type_capture_refuses_cross_release_and_repinned_mutations[foreign-report]",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py::test_checked_release_type_capture_refuses_cross_release_and_repinned_mutations[foreign-plan]",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py::test_checked_release_type_capture_refuses_cross_release_and_repinned_mutations[coherent-receipt]",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py::test_checked_release_type_capture_refuses_cross_release_and_repinned_mutations[coherent-packet]",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py::test_checked_release_type_capture_refuses_cross_release_and_repinned_mutations[coherent-unit]",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py::test_checked_release_type_capture_refuses_cross_release_and_repinned_mutations[coherent-review-link]",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py::test_checked_release_type_capture_refuses_cross_release_and_repinned_mutations[nested-seal]",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py::test_checked_release_type_capture_refuses_cross_release_and_repinned_mutations[report-pin]",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py::test_checked_release_type_capture_refuses_cross_release_and_repinned_mutations[preparation-pin]",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py::test_checked_release_type_capture_refuses_cross_release_and_repinned_mutations[stdout-pin]",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py::test_checked_release_type_capture_refuses_cross_release_and_repinned_mutations[repinned-alias]",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py::test_checked_release_type_capture_refuses_cross_release_and_repinned_mutations[repinned-open-type]",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py::test_checked_release_type_capture_refuses_cross_release_and_repinned_mutations[authority-mask]",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py::test_checked_release_type_capture_refuses_cross_release_and_repinned_mutations[duplicate-component]",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py::test_checked_release_type_capture_refuses_cross_release_and_repinned_mutations[changed-component-transport]",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py::test_checked_release_type_capture_refuses_malformed_current_review_observation[registry-pin]",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py::test_checked_release_type_capture_refuses_malformed_current_review_observation[policy-pin]",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py::test_checked_release_type_capture_refuses_malformed_current_review_observation[reviews-pin]",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py::test_checked_release_type_capture_refuses_malformed_current_review_observation[caller-observation-pin]",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py::test_checked_release_type_capture_refuses_malformed_current_review_observation[assessment-pin]",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py::test_checked_release_type_capture_refuses_malformed_current_review_observation[invalidation-pin]",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py::test_checked_release_type_capture_refuses_malformed_current_review_observation[utc-format]",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py::test_checked_release_type_capture_refuses_malformed_current_review_observation[utc-calendar]"
+        ],
+        "ordinary_case_cohorts": {
+          "current_review_metadata_new": 8,
+          "retained": 17
+        },
+        "owning_test": "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py",
+        "prior_verified_guide569_publication": {
+          "bytes": 14940,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-guide569-four-doc-three-FF-publication-small-v587.json",
+          "sha256": "340a7a9000a00a154f3ea26123bf42ab779e51d53816513f4ee1e1d770c7e7c1"
+        },
+        "private_raw_same25_green": {
+          "bytes": 3694,
+          "path": "/tmp/P2-retained-type-review-UTC-and-SHA-private-8BxdcNWA/green/result.xml",
+          "sha256": "13522c3f3932ceaa11743176020e1e1f2185748c061951a85a7c4904036c7b19"
+        },
+        "private_raw_same25_red": {
+          "bytes": 21380,
+          "path": "/tmp/P2-retained-type-review-UTC-and-SHA-private-8BxdcNWA/red/result.xml",
+          "sha256": "c50085d2ebd6be9b4bbda2faf15b3d14d871da926f810ef20ff78123b0ca82dc"
+        },
+        "related_catalog_component": "definition-use-native",
+        "related_tasks": [
+          "LIR-21"
+        ],
+        "retained_checked_type_reader": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_elaboration_native_v2.py",
+        "schema": "Guide570-retained-physical-V4-type-review-metadata-evidence/v1",
+        "separate_private_same25_red_green": {
+          "bytes": 12098,
+          "path": "/tmp/P2-retained-type-review-UTC-and-SHA-private-8BxdcNWA/SEALED-P2-retained-V4-current-review-metadata-validation-exact2.json",
+          "sha256": "b1e4d132d0c78a4fe2b8bbfa24df71e3c1b49705f09853d02b9a553280b74c13"
+        },
+        "task": "LIR-14",
+        "task_status_changed": false
+      },
+      "evidence_ordinal": 570,
+      "id": "phase2-retained-physical-v4-type-review-metadata-ordinary25-evidence570-20261126",
+      "observed_bytes": 11763,
+      "observed_sha256": "6c0ae0f26b3cab6b7a2c96b385cf517739f1bb943bba68e546b11ba61b16c9f8",
+      "path": "/tmp/P2-retained-type-UTC-SHA-guide570-existing-composer-INERT-tkafdvfc/one-guide570-retained-v4-type-review-metadata-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Existing retained physical V4 checked-type reader validates review UTC and SHA-256 syntax on fictional retained-report fixtures.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }
