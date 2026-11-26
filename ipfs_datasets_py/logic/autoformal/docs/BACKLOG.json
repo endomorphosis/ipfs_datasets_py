@@ -4292,6 +4292,49 @@
       "record_id": "phase2-physical-v4-whole-norm-live-observation-native-R5-ordinary1-evidence549-20261126",
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
       "task": "LIR-14"
+    },
+    "phase2_physical_v4_whole_project_output_accounting_R5_ordinary4_20261126": {
+      "certified_execution_proof_or_legal_semantic_review_or_training_model_credit": false,
+      "component": "definition-use-native",
+      "evidence_ordinal": 550,
+      "facts": {
+        "bytes": 10169,
+        "path": "/tmp/Phase2-output-accounting-guide550-existing-composer-INERT-aPlCHy3p/one-guide550-Phase2-whole-project-output-accounting-scoped-facts.json",
+        "sha256": "4cdc56a26f3d1281b5c9a9f946b2370a0e6b67a6c36aa5d363567c21895c1a0d"
+      },
+      "ordinary4": {
+        "case_vector": [
+          1,
+          1,
+          2
+        ],
+        "functions": 3,
+        "unique_PASS": 4
+      },
+      "original_R5": {
+        "compiled_modules": 10,
+        "conditional_obligations": 30,
+        "exact_logical_output": {
+          "canonical_live_result_bytes": 237644,
+          "full_elaborated_type_payload_available": false,
+          "profile": "physical-whole-project-output/v1",
+          "requested_limit_bytes": 8388608,
+          "retained_packet_bytes": 5364196,
+          "retained_packet_member_count": 93,
+          "total_bytes": 5601840,
+          "within_requested_limit": true
+        },
+        "live_FOL_request_observation": 1,
+        "reference": {
+          "bytes": 7074,
+          "path": "/tmp/Root-Phase2-whole-project-output-existing-R5-v485-mVprYXi2/actual-original-R5-planned-FOL-whole-project-output-observation-v485.json",
+          "sha256": "0e6be3eb4ae06c7321d96ae6c4c1a05ac4d97e14c158df19585971cd46eb5a2c"
+        },
+        "refused_handle_joins": 2
+      },
+      "record_id": "phase2-physical-v4-whole-project-output-accounting-R5-ordinary4-evidence550-20261126",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
+      "task": "LIR-14"
     }
   },
   "programme_goal_hierarchy": {

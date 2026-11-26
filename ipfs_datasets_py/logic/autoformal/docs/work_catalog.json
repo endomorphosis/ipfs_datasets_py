@@ -32720,6 +32720,191 @@
       "root": "artifact_workspace",
       "scope": "Original live V4 conditional FOL whole-norm request observation with signed fictional source and a separate software case.",
       "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase2_physical_v4_whole_project_output_accounting_R5_ordinary4_20261126",
+      "closed_software_facts": {
+        "Native_Source_resource_and_parent_closed": true,
+        "Native_compiled_modules": 10,
+        "Native_conditional_obligations": 30,
+        "Native_fixture": "signed fictional source and review",
+        "actual_ordinary4": {
+          "bytes": 22733,
+          "path": "/tmp/Root-existing-Phase2-whole-project-output-ordinary4-v486-k7hRINpc/actual-Phase2-physical-whole-project-output-ordinary4-closed-small-v486.json",
+          "sha256": "6086fe613deffba37bea7c14e6f3a6909aaa80c0e129e9db1db408de8b9bffc1"
+        },
+        "actual_original_R5": {
+          "bytes": 7074,
+          "path": "/tmp/Root-Phase2-whole-project-output-existing-R5-v485-mVprYXi2/actual-original-R5-planned-FOL-whole-project-output-observation-v485.json",
+          "sha256": "0e6be3eb4ae06c7321d96ae6c4c1a05ac4d97e14c158df19585971cd46eb5a2c"
+        },
+        "actual_original_R5_raw_summary": {
+          "bytes": 272924,
+          "logical_name": "summary.json",
+          "origin": "actual ToolRunResult.output_files bytes; not to_dict decoded text",
+          "path": "/tmp/Root-Phase2-whole-project-output-existing-R5-v485-mVprYXi2/actual-output/run.output.2.bin",
+          "sha256": "6cb7f2e71370f4fbe1412f6169208ffde9977bc1245909d97f8ef1fbbe51931a"
+        },
+        "actual_publication": {
+          "bytes": 23852,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-whole-project-output-exact3-ordinary4-and-original-R5-three-FF-publication-v487.json",
+          "sha256": "69f3ae94e73ad70a19c461cf17634765dd5052bebebbe1c11fcef85de2dc990e"
+        },
+        "component": "definition-use-native",
+        "current_code_head": "7e86a73edde71965dac39379901bc5c1a4e00aa0",
+        "evidence_ordinal": 550,
+        "exact_Source_READ4": {
+          "bytes": 9403,
+          "path": "/tmp/Root-Phase2-whole-project-output-postfreeze-READ4-v484-XM1OygYR/actual-Phase2-whole-project-output-READ4-v484-closed.json",
+          "sha256": "55c8dd639529abf4d6fe2e61ebec9aeefc71589bb00ce1144340989e60f5122d"
+        },
+        "exact_Source_install": {
+          "bytes": 11602,
+          "path": "/tmp/Root-Phase2-whole-project-output-existing-Source3-v483-SUUxLNdH/actual-Phase2-whole-project-output-exact3-Source-closed-v483.json",
+          "sha256": "b653dd3f98e446e117cd52b52744c28ad5eb214a6dc1357b7ea8ee858b39ad56"
+        },
+        "exact_aggregate_peak_memory_bytes": null,
+        "exact_live_FOL_conditional_observation": {
+          "axiom_dependencies": [],
+          "backend_attempt_created": false,
+          "checked_under_explicit_hypotheses": true,
+          "claim_digest": "437bc2a77515aedc532622767e68847d0fa37d13c4f1a066774bb84358a8d330",
+          "declaration": "LegalReviewedDefinitionRealization.Instance20c7d5268ff43d73d5704f3bd3ada9327bd56e51c2e05b87565441483e319571.unit_1_whole_norm_definition_expansion",
+          "obligation_digest": "bf1a488522035a13f052593f909b7953d8fbe602e20601fc99d9e13707d86980",
+          "original_result_observation": {
+            "elapsed_seconds": 3.9819441186264157,
+            "exact_aggregate_peak_memory_bytes": null,
+            "output_file_bytes": 4288331,
+            "raw_log_bytes": 9826,
+            "rss": {
+              "cap_bytes": 2147483648,
+              "current_bytes": 126865408,
+              "peak_sampled_bytes": 692338688
+            },
+            "verified_steps": null
+          },
+          "output_accounting": {
+            "canonical_live_result_bytes": 237644,
+            "full_elaborated_type_payload_available": false,
+            "profile": "physical-whole-project-output/v1",
+            "requested_limit_bytes": 8388608,
+            "retained_packet_bytes": 5364196,
+            "retained_packet_member_count": 93,
+            "total_bytes": 5601840,
+            "within_requested_limit": true
+          },
+          "premise_remains_quantified": true,
+          "proof_receipt_issued": false,
+          "proposition_source": "∀ {Object Agent : Type} (base : LegalRelationalAstPreservation.Interpretation Object Agent)\n    (atoms : String → List (String × Object) → Nat → Prop) (t : Nat),\n    LegalRelationalAstPreservation.roleDenote base atoms LegalRelationalAstPreservation.Instancef3d35e2f35b8552ef6be59c36f68c9d50b10a1b8d3f58030676822b3a581f28e.typedSourceAst LegalRelationalAstPreservation.emptyEnvironment t →\n    (LegalRelationalAstPreservation.roleDenote base atoms LegalRelationalAstPreservation.Instance8c330ebcc0355cd4cca316859036ba2c09a1e79e802834312bcc17d511f37ea9.typedSourceAst LegalRelationalAstPreservation.emptyEnvironment t ↔\n      LegalRelationalAstPreservation.roleDenote base atoms expandedNormAst_1 LegalRelationalAstPreservation.emptyEnvironment t)",
+          "proposition_utf8_sha256": "20fd06060d182a0b39b3f49317a3d2466ce63717a252c5ddddd7e6f5e3d39a4a",
+          "qualified_request_execution": false,
+          "request_bounds_qualified": false,
+          "request_context_sha256": "01a845c183ebb00bb567c1b661e639a15a45cd0d0025b04f6ca0bbec8631c64a",
+          "request_id": "planned_physical_whole_norm:8a4b4cf20666a34283c574ef062161cb05c6e739846e4eac6e15d546b462185a",
+          "request_sha256": "65075a1f0d1fc10a4c03e2d02042063cf51be8954238d58355a9698f359d3c93",
+          "retained_packet_sha256": "dfbbe979053eed3ad3575dbdb6a2672bbb8cbf35f9ec6ed641fe88ed7969d11f",
+          "retained_receipt_sha256": "f8757c6861978e5d26d61111377c4a464de32089d5f6cf983957e2e4b293f293",
+          "schema": "legal-physical-whole-norm-request-observation/v1",
+          "scope": "original_whole_project_build"
+        },
+        "exact_local_freeze": {
+          "bytes": 15448,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-whole-project-output-exact3-local-freeze-v483.json",
+          "sha256": "cb8b078f1a46a52de00db25b4f049f345a95a3f7de74ffee597face0dbab84f1"
+        },
+        "exact_three_published_paths": [
+          "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_native_v2.py",
+          "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_kernel_requests_v2.py",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py"
+        ],
+        "full_eight_phase_goal_complete": false,
+        "generic_single_file_Lean_adapter_dispatched": false,
+        "implemented_behavior": "The opt-in whole-project output profile measures every uncompressed retained packet member once per path and adds the complete canonical sealed live result. It checks that total against the planned output annotation after capture. The result preserves the selected proposition source and the original conditional review scope.",
+        "installed_Lean_used_in_original_R5": true,
+        "measured_step_count": null,
+        "model_or_training_credit": false,
+        "ordinary_Source_resource_and_parent_closed": true,
+        "ordinary_and_Native_distinct": true,
+        "ordinary_counts": {
+          "duplicates": 0,
+          "errors": 0,
+          "failures": 0,
+          "functions": 3,
+          "passed": 4,
+          "skipped": 0,
+          "tests": 4
+        },
+        "ordinary_node_ids": [
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py::test_planned_physical_invocation_and_observation_keep_measurements_separate",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py::test_physical_whole_project_output_accounting_seals_exact_utf8_and_packet_bytes",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py::test_physical_whole_project_request_only_widens_explicit_output_annotation[legacy]",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py::test_physical_whole_project_request_only_widens_explicit_output_annotation[whole-project]"
+        ],
+        "ordinary_scope": "Software-only exact request planning, legacy compatibility and output accounting using signed fictional review fixtures. Separate direct Lean observation retained.",
+        "ordinary_subcohorts": {
+          "exact_output_size": 1,
+          "legacy_and_opt_in_signed_planning": 2,
+          "software_request_observation_contract": 1
+        },
+        "original_R5_exact_logical_output": {
+          "canonical_live_result_bytes": 237644,
+          "full_elaborated_type_payload_available": false,
+          "profile": "physical-whole-project-output/v1",
+          "requested_limit_bytes": 8388608,
+          "retained_packet_bytes": 5364196,
+          "retained_packet_member_count": 93,
+          "total_bytes": 5601840,
+          "within_requested_limit": true
+        },
+        "original_R5_outer_transport_wrapper_bytes_separate": 5927397,
+        "original_admitted_parent_custody_authenticated": false,
+        "owner": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_native_v2.py",
+        "owning_test": "tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py",
+        "peak_sampled_process_tree_RSS_bytes": 692338688,
+        "planner": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_kernel_requests_v2.py",
+        "prior_Guide549": {
+          "bytes": 13017,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-guide549-four-doc-three-FF-publication-small-v482.json",
+          "sha256": "03b5b142d62f39385cf55af030494e83e64900f9a186a46fab94c46d028f29ce"
+        },
+        "private_software_contract_separate_reference": {
+          "bytes": 8030,
+          "path": "/tmp/Root-P2-whole-project-output-accounting-private-v01-LN9JdEKK/SEALED-Phase2-whole-project-output-exact3-private.json",
+          "sha256": "300a556a6f835850dfed5a4ad2a3b5f2376d0e4eab737f903578e449302ae26f"
+        },
+        "raw_JUnit": {
+          "bytes": 1039,
+          "path": "/tmp/Root-existing-Phase2-whole-project-output-ordinary4-v486-k7hRINpc/actual-output/phase2-physical-whole-project-output-accounting-ordinary4-run-result0-output1.bin",
+          "sha256": "0b7cce965bfd970c8bde7d39676efee293e4b98581f09367534ff70ca9e2fa88"
+        },
+        "refused_live_handle_joins": [
+          {
+            "case": "omitted-plan",
+            "offered_request_sha256": null,
+            "refusal": "exact issued live success original inputs required"
+          },
+          {
+            "case": "other-exact-request-id",
+            "offered_request_sha256": "7524459cd878ebb5771dbb74e62b9dfdc7534a8829f52bda58171992ac83958b",
+            "refusal": "exact issued live success original inputs required"
+          }
+        ],
+        "request_execution_or_bounds_certified": false,
+        "schema": "Guide550-Phase2-physical-V4-whole-project-output-accounting-evidence/v1",
+        "statutory_meaning_or_corpus_admission_granted": false,
+        "task": "LIR-14",
+        "task_status_changed": false,
+        "typed_ProofReceipt_issued": false
+      },
+      "evidence_ordinal": 550,
+      "id": "phase2-physical-v4-whole-project-output-accounting-R5-ordinary4-evidence550-20261126",
+      "observed_bytes": 10169,
+      "observed_sha256": "4cdc56a26f3d1281b5c9a9f946b2370a0e6b67a6c36aa5d363567c21895c1a0d",
+      "path": "/tmp/Phase2-output-accounting-guide550-existing-composer-INERT-aPlCHy3p/one-guide550-Phase2-whole-project-output-accounting-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Exact post-capture whole-project byte accounting for one original Native FOL observation and four separate software cases.",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
     }
   ]
 }
