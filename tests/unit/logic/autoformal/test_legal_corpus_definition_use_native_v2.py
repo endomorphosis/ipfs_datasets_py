@@ -6104,8 +6104,11 @@ def test_planned_physical_invocation_and_observation_keep_measurements_separate(
 
 def test_reviewed_physical_native_binds_planned_request_to_original_live_handle(
         bound_norm_installed_lake, reviewed_physical_realization_native_control_v2, tmp_path):
+    from datetime import datetime, timedelta
+
     from ipfs_datasets_py.logic.autoformal import (
         legal_corpus_definition_use_preservation_kernel_requests_v2 as planner,
+        legal_release_coordinator_v1 as release,
     )
     from ipfs_datasets_py.logic.ir_core import protocols
 
@@ -6158,6 +6161,69 @@ def test_reviewed_physical_native_binds_planned_request_to_original_live_handle(
     assert measured["verified_steps"] is measured["exact_aggregate_peak_memory_bytes"] is None
     assert not result["qualified_request_execution"] and not result["proof_receipt_issued"]
     assert all(authority is False for authority in opened["authority"].values())
+
+    historical_review = c["kwargs"]
+    later = datetime.fromisoformat(historical_review["at_time_utc"]) + timedelta(seconds=1)
+    current_review = {
+        "registry_sha256": historical_review["expected_registry_sha256"],
+        "policy_sha256": historical_review["expected_policy_sha256"],
+        "at_time_utc": later.isoformat(timespec="seconds").replace("+00:00", "Z"),
+        "observed_artifact_sha256s": deepcopy(historical_review["observed_artifact_sha256s"]),
+        "observed_pins": deepcopy(historical_review["observed_pins"]),
+    }
+    checked_native = {
+        "handle": handle,
+        "packet_files": packet,
+        "realization": c["preparation"],
+        **pins,
+        "expected_realization_sha256": c["realization_sha"],
+        "planned_request": request,
+        "expected_planned_request_sha256": request.digest,
+    }
+
+    closed = release.validate_uscode_release_closure_v4(
+        c["physical_request_raw"], expected_request_sha256=c["physical_request_sha256"],
+        current_review=current_review, include_declared_eligibility=True,
+        checked_native=checked_native,
+    )
+    checked = closed["checked_native_observation"]
+    review = closed["current_review_observation"]
+    assert review["at_time_utc"] == current_review["at_time_utc"]
+    assert checked["live_result_cid"] == opened["record_cid"]
+    assert checked["current_review_observation_cid"] == review["record_cid"]
+    assert checked["planned_request_sha256"] == result["request_sha256"] == request.digest
+    assert checked["physical_request_sha256"] == closed["request_sha256"] == c["physical_request_sha256"]
+    assert checked["graph_sha256"] == closed["graph_sha256"] == c["graph_sha"]
+    assert checked["admission_sha256"] == closed["admission_sha256"] == c["admission_sha"]
+    assert checked["unit"] == request.to_dict()["payload"]["context"]["unit"]
+    assert checked["declaration"] == result["declaration"] == target["theorem"]
+    assert checked["checked_under_explicit_hypotheses"] is True
+    assert checked["native_execution_authenticated"] is True
+    assert checked["proof_receipt_issued"] is checked["qualified_request_execution"] is False
+    assert contracts.seal_record({
+        key: value for key, value in checked.items() if key not in {"record_cid", "cid_scope"}
+    }) == checked
+
+    evidence = closed["declared_eligibility_evidence"]
+    assert evidence["checked_native_observation"] == checked
+    assert evidence["current_review_observation"] == review
+    assert evidence["retained_native"] is None
+    assert closed["declared_qualification"]["dimensions"]["proof"]["status"] == "pending"
+    assert closed["declared_eligibility"]["views"]["reviewed_graph"]["declared_eligible"] is True
+    assert closed["declared_eligibility"]["views"]["checked_lean"]["declared_eligible"] is False
+    assert closed["original_native_parent_custody_verified"] is False
+    assert closed["admitted"] is closed["proof_verified"] is False
+    assert all(closed[mask] == 0 for mask in (
+        "admission_mask", "release_mask", "gold_mask", "training_mask", "evaluation_gold_mask",
+    ))
+
+    changed_review = dict(current_review, policy_sha256=hashlib.sha256(b"different policy").hexdigest())
+    with pytest.raises(ValueError, match="current review trust pins differ"):
+        release.validate_uscode_release_closure_v4(
+            c["physical_request_raw"], expected_request_sha256=c["physical_request_sha256"],
+            current_review=changed_review, include_declared_eligibility=True,
+            checked_native=checked_native,
+        )
 
 
 def test_physical_whole_project_output_accounting_seals_exact_utf8_and_packet_bytes():

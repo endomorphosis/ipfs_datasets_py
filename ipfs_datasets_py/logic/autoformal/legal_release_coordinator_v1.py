@@ -1472,6 +1472,7 @@ def _declared_physical_release_eligibility(request_raw, report):
             "observation_profile": native["observation_profile"],
         }
     current_review = report.get("current_review_observation")
+    checked_native = report.get("checked_native_observation")
     evidence = contracts.seal_record({
         "schema": f"legal-corpus-physical-v{version}-qualification-evidence/v1",
         "reviewed_version": version,
@@ -1493,6 +1494,7 @@ def _declared_physical_release_eligibility(request_raw, report):
         "preservation_obligations": expected_obligations,
         "retained_native": retained_native,
         **({"current_review_observation": current_review} if current_review is not None else {}),
+        **({"checked_native_observation": checked_native} if checked_native is not None else {}),
     })
     # These declarations refer to the verified local component. In particular,
     # source integrity is the exact physical byte crosswalk. Retained Native
@@ -1902,31 +1904,149 @@ def _observe_physical_v4_current_review(context, selection):
     })
 
 
+def _physical_v4_checked_native_selection(checked_native):
+    from . import corpus_contracts as contracts, legal_corpus_definition_use_native_v2 as native
+
+    pins = {"expected_receipt_sha256", "expected_packet_sha256",
+            "expected_realization_sha256", "expected_planned_request_sha256"}
+    _need(type(checked_native) is dict and set(checked_native) == pins | {
+        "handle", "packet_files", "realization", "expected_binary_sha256", "planned_request",
+    }, "closed checked Native selection required")
+    selection = dict(checked_native)
+    for field in pins - {"expected_planned_request_sha256"}:
+        contracts.require_sha256(selection[field], field)
+    _need(selection["planned_request"] is not None and selection["expected_planned_request_sha256"] is not None,
+          "exact independently pinned planned whole-norm request required")
+    contracts.require_sha256(selection["expected_planned_request_sha256"], "planned whole-norm request")
+    native._live_entry_guard(5)
+    native._live_handle_entry(selection["handle"], reviewed_version=5,
+        instance_identity_profile="reviewed-source-use/v1",
+        definition_application_profile="whole-norm-definition-expansion/v1")
+    selection["expected_binary_sha256"] = contracts.clone_json(selection["expected_binary_sha256"])
+    return selection
+
+
+def _observe_physical_v4_checked_native(context, request_raw, selection, review):
+    from . import corpus_contracts as contracts, legal_corpus_definition_use_native_v2 as native
+
+    pins = context["pins"]
+    opened = native.load_verified_reviewed_physical_definition_realization_native_v2(
+        selection["handle"], selection["packet_files"], selection["realization"],
+        context["preparation"], context["graph"], context["admission"], *context["args"],
+        expected_receipt_sha256=selection["expected_receipt_sha256"],
+        expected_packet_sha256=selection["expected_packet_sha256"],
+        expected_binary_sha256=selection["expected_binary_sha256"],
+        expected_realization_sha256=selection["expected_realization_sha256"],
+        expected_preservation_sha256=pins["preservation"],
+        expected_graph_sha256=pins["graph"], expected_admission_sha256=pins["admission"],
+        toolchain=context["toolchain"], physical_request_raw=request_raw,
+        expected_physical_request_sha256=context["physical_request_sha256"],
+        instance_identity_profile=context["instance_identity_profile"],
+        definition_application_profile=context["definition_application_profile"],
+        planned_request=selection["planned_request"],
+        expected_planned_request_sha256=selection["expected_planned_request_sha256"], **context["kwargs"])
+    plan = json.loads(native._physical_whole_norm_request_wire(
+        selection["planned_request"], selection["expected_planned_request_sha256"])[1])
+    planned = plan["payload"]["context"]
+    observation = opened["planned_whole_norm_observation"]
+    commitments = {
+        "physical_request_sha256": context["physical_request_sha256"],
+        "graph_sha256": pins["graph"], "admission_sha256": pins["admission"],
+        "preservation_sha256": pins["preservation"],
+        "realization_sha256": selection["expected_realization_sha256"],
+    }
+    _need(all(planned[key] == value for key, value in commitments.items())
+          and opened["physical_context"]["physical_request_sha256"] == commitments["physical_request_sha256"]
+          and (opened["graph_sha256"], opened["admission_sha256"], opened["preparation_sha256"])
+          == (pins["graph"], pins["admission"], commitments["realization_sha256"]),
+          "checked Native result differs from the exact physical review and realization")
+    unit = planned["unit"]
+    matching = [row for row in opened["units"] if row["unit_id"] == unit["unit_id"]]
+    _need(len(matching) == 1 and matching[0]["kind"] == "norm"
+          and all(matching[0][key] == value for key, value in unit.items())
+          and any(row["unit_id"] == unit["unit_id"] for row in context["admission"]["units"]),
+          "checked Native result differs from the selected reviewed unit")
+    _need(opened["schema"] == native.REVIEWED_PHYSICAL_DEFINITION_REALIZATION_LIVE_SUCCESS_SCHEMA
+          and opened["native_execution_authenticated"] is True
+          and opened["live_native_success_authenticated"] is True
+          and observation["checked_under_explicit_hypotheses"] is True
+          and observation["premise_remains_quantified"] is True
+          and observation["axiom_dependencies"] == []
+          and observation["declaration"] == planned["theorem"] == plan["declaration_id"]
+          and observation["request_sha256"] == selection["expected_planned_request_sha256"]
+          and observation["claim_digest"] == plan["claim_digest"]
+          and observation["obligation_digest"] == plan["obligation_digest"]
+          and observation["retained_receipt_sha256"] == selection["expected_receipt_sha256"]
+          and observation["retained_packet_sha256"] == selection["expected_packet_sha256"],
+          "exact live planned conditional Native observation required")
+    _need(all(observation[key] is False for key in ("qualified_request_execution", "proof_receipt_issued"))
+          and all(opened[key] is False for key in ("original_admitted_parent_custody_authenticated",
+              "native_execution_performed", "release_ready", "Lean_admitted"))
+          and all(opened["authority"][key] is False for key in native.AUTHORITY)
+          and all(type(opened[key]) is int and opened[key] == 0 for key in ("training_mask", "evaluation_gold_mask")),
+          "checked Native observation cannot widen proof or admission scope")
+    return contracts.seal_record({
+        "schema": "legal-corpus-physical-v4-checked-native-observation/v1",
+        **commitments,
+        "unit": unit,
+        "source_definition": planned["source_definition"],
+        "planned_request_sha256": observation["request_sha256"],
+        "current_review_observation_cid": review["record_cid"],
+        "live_result_cid": opened["record_cid"],
+        "declaration": observation["declaration"],
+        "proposition_utf8_sha256": observation["proposition_utf8_sha256"],
+        "claim_digest": observation["claim_digest"],
+        "obligation_digest": observation["obligation_digest"],
+        "retained_receipt_sha256": observation["retained_receipt_sha256"],
+        "retained_packet_sha256": observation["retained_packet_sha256"],
+        "native_execution_authenticated": True,
+        "checked_under_explicit_hypotheses": True,
+        "premise_remains_quantified": True,
+        "axiom_dependencies": [],
+        "qualified_request_execution": False,
+        "proof_receipt_issued": False,
+    })
+
+
 def validate_uscode_release_closure_v4(request_raw, *, expected_request_sha256,
-        include_declared_eligibility=False, current_review=None):
-    """Replay source-only whole-norm correspondence and optionally project eligibility.
+        include_declared_eligibility=False, current_review=None, checked_native=None):
+    """Replay source-only V4 bytes, optionally joining two live observations.
 
     A caller may independently select current trust digests, evaluation time
     and dependency observations. A change to signed trust requires new signed
     review evidence. Omission retains historical replay. The caller's clock
     and registry freshness are outside this validator's authentication scope.
+
+    With current review, checked_native may supply an original V5 handle and
+    its exact planned whole-norm request, realization, packet and independent
+    pins. The loader joins a single checked conditional theorem to the replay.
+    Graph-wide proof status and admission still require their own evidence.
     """
     _release_v4_policy()
     _need(type(include_declared_eligibility) is bool, "explicit boolean eligibility selection required")
+    _need(checked_native is None or current_review is not None,
+          "checked Native requires independently selected current review")
     observer = None
     observations = []
     if current_review is not None:
         selection = _physical_v4_current_review_selection(current_review)
+        native_selection = None if checked_native is None else _physical_v4_checked_native_selection(checked_native)
 
         def observer(context):
-            observations.append(_observe_physical_v4_current_review(context, selection))
+            review = _observe_physical_v4_current_review(context, selection)
+            checked = None if native_selection is None else _observe_physical_v4_checked_native(
+                context, request_raw, native_selection, review)
+            observations.append((review, checked))
 
     report = _validate_uscode_release_physical_closure(request_raw,
         expected_request_sha256=expected_request_sha256, reviewed_version=4,
         _native_transport="direct-packet/v1", _observe_checked_context=observer)
     if observer is not None:
         _need(len(observations) == 1, "exactly one closed current review observation required")
-        report["current_review_observation"] = observations[0]
+        review, checked = observations[0]
+        report["current_review_observation"] = review
+        if checked is not None:
+            report["checked_native_observation"] = checked
     if include_declared_eligibility:
         report.update(_declared_physical_release_eligibility(request_raw, report))
     return report

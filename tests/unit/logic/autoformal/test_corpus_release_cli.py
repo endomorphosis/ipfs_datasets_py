@@ -3933,3 +3933,102 @@ def test_physical_v4_current_review_selection_preserves_legacy_default(
     assert projected["declared_qualification"]["dimensions"]["interpretation"]["evidence_cids"] == [
         evidence["component_cids"]["admission"],
     ]
+
+
+@pytest.fixture(scope="module")
+def physical_v4_checked_native_preflight_fixture(physical_source_use_whole_norm_control_v2):
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_native_v2 as native
+    from ipfs_datasets_py.logic.autoformal import (
+        legal_corpus_definition_use_preservation_kernel_requests_v2 as planner,
+    )
+    from ipfs_datasets_py.logic.ir_core.protocols import ExecutionBounds
+
+    c = physical_source_use_whole_norm_control_v2
+    realization = c["preparation"]
+    entry = next(row for row in realization.to_dict()["theorem_bindings"]
+                 if row["binding"]["kind"] == "whole_norm_definition_expansion")
+    _, request = planner.prepare_reviewed_physical_whole_norm_kernel_request_v2(
+        realization, c["preservation"], c["graph"], c["admission"], *c["args"],
+        expected_realization_sha256=c["realization_sha"], expected_theorem=entry["theorem"],
+        expected_unit_id=entry["binding"]["unit_id"],
+        bounds=ExecutionBounds(max_output_bytes=8 * 1024**2),
+        resource_profile=planner.PHYSICAL_WHOLE_PROJECT_RESOURCE_PROFILE, **c["physical_options"])
+    assert request.payload["context"]["physical_request_sha256"] == c["physical_request_sha256"]
+    assert request.payload["context"]["realization_sha256"] == c["realization_sha"]
+
+    # Minimal packet bytes exercise only the opening envelope. They cannot
+    # establish a compiler, receipt, or issued live-success capability.
+    receipt_bytes = b"{}"
+    packet = (("build-receipt.json", receipt_bytes),)
+    checked = {
+        "handle": object.__new__(native.VerifiedReviewedPreservationNativeSuccess),
+        "packet_files": packet,
+        "realization": realization,
+        "expected_receipt_sha256": hashlib.sha256(receipt_bytes).hexdigest(),
+        "expected_packet_sha256": native.reviewed_physical_definition_realization_packet_sha256_v2(packet),
+        "expected_binary_sha256": {
+            "/fictional/toolchain/bin/lake": hashlib.sha256(b"fictional Lake binary DATA").hexdigest(),
+            "/fictional/toolchain/bin/lean": hashlib.sha256(b"fictional Lean binary DATA").hexdigest(),
+        },
+        "expected_realization_sha256": c["realization_sha"],
+        "planned_request": request,
+        "expected_planned_request_sha256": request.digest,
+    }
+    return _physical_v4_review_observation_inputs(c), checked
+
+
+def _validate_physical_v4_checked_native_preflight(checked, *, current_review=None):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+
+    # Match the outer digest so decoding would be the first unrelated failure
+    # if any checked-Native preflight requirement were evaluated too late.
+    raw = b"{unparsed physical closure DATA"
+    return release.validate_uscode_release_closure_v4(raw,
+        expected_request_sha256=hashlib.sha256(raw).hexdigest(),
+        current_review=current_review, checked_native=checked)
+
+
+def test_physical_v4_checked_native_requires_independent_current_review_first():
+    with pytest.raises(ValueError, match="checked Native requires independently selected current review"):
+        _validate_physical_v4_checked_native_preflight({"unexpected": True})
+
+
+@pytest.mark.parametrize("damage", ["missing-field", "unexpected-field"])
+def test_physical_v4_checked_native_requires_closed_selection_before_plan(
+        physical_v4_checked_native_preflight_fixture, damage):
+    current, selected = physical_v4_checked_native_preflight_fixture
+    checked = dict(selected, planned_request=None, expected_planned_request_sha256=None)
+    if damage == "missing-field":
+        del checked["expected_binary_sha256"]
+    else:
+        checked["native_execution_authenticated"] = True
+    with pytest.raises(ValueError, match="closed checked Native selection required"):
+        _validate_physical_v4_checked_native_preflight(checked, current_review=current)
+
+
+@pytest.mark.parametrize("damage", ["missing-plan", "serialized-plan", "wrong-plan-digest"])
+def test_physical_v4_checked_native_fences_plan_and_handle_before_wire(
+        physical_v4_checked_native_preflight_fixture, damage):
+    current, selected = physical_v4_checked_native_preflight_fixture
+    checked = dict(selected)
+    message = "live success handle was not issued by this process and native thread"
+    if damage == "missing-plan":
+        checked.update(planned_request=None, expected_planned_request_sha256=None)
+        message = "exact independently pinned planned whole-norm request required"
+    elif damage == "serialized-plan":
+        checked["planned_request"] = checked["planned_request"].to_dict()
+    else:
+        checked["expected_planned_request_sha256"] = "0" * 64
+    with pytest.raises(ValueError, match=message):
+        _validate_physical_v4_checked_native_preflight(checked, current_review=current)
+
+
+def test_physical_v4_checked_native_refuses_unissued_exact_class_handle_before_wire(
+        physical_v4_checked_native_preflight_fixture):
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_native_v2 as native
+
+    current, checked = physical_v4_checked_native_preflight_fixture
+    assert type(checked["handle"]) is native.VerifiedReviewedPreservationNativeSuccess
+    assert checked["planned_request"].digest == checked["expected_planned_request_sha256"]
+    with pytest.raises(ValueError, match="live success handle was not issued by this process and native thread"):
+        _validate_physical_v4_checked_native_preflight(checked, current_review=current)
