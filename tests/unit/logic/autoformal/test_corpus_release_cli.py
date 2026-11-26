@@ -3677,3 +3677,104 @@ def test_closure_cli_refuses_declared_eligibility_on_other_profiles(tmp_path, ca
     assert rc == 1 and receipt["status"] == "error"
     assert "declared eligibility requires a supported physical V3 or V4 profile" in receipt["error"]
     assert "closure" not in receipt
+
+
+@pytest.mark.parametrize("family", ["deontic_fol", "tdfol"])
+def test_physical_v4_plans_exact_conditional_whole_norm_request(
+        physical_source_use_whole_norm_control_v2, family):
+    from ipfs_datasets_py.logic.autoformal import (
+        legal_corpus_definition_use_preservation_kernel_requests_v2 as requests,
+    )
+    from ipfs_datasets_py.logic.ir_core import claims, protocols
+    import re
+
+    c = physical_source_use_whole_norm_control_v2
+    manifest = c["preparation"].to_dict()
+    unit = next(row for row in manifest["units"]
+                if row["kind"] == "norm" and row["child_family"] == family)
+    definition = next(row for row in manifest["units"] if row["kind"] == "definition")
+    entry = next(row for row in manifest["theorem_bindings"]
+                 if row["binding"]["kind"] == "whole_norm_definition_expansion"
+                 and row["binding"]["unit_id"] == unit["unit_id"])
+    theorem = entry["theorem"]
+    bounds = protocols.ExecutionBounds()
+    claim, request = requests.prepare_reviewed_physical_whole_norm_kernel_request_v2(
+        c["preparation"], c["preservation"], c["graph"], c["admission"], *c["args"],
+        expected_realization_sha256=c["realization_sha"], expected_theorem=theorem,
+        expected_unit_id=unit["unit_id"], bounds=bounds, **c["physical_options"])
+    assert type(claim) is claims.IRClaim
+    assert type(request) is protocols.BackendRequest
+    obligation, = claim.obligations
+    payload = request.to_dict()["payload"]
+    context = payload["context"]
+    proposition = payload["proposition_source"]
+    assert request.query_kind is protocols.QueryKind.THEOREM_PROOF
+    assert request.bounds == bounds
+    assert request.claim_digest == claim.digest and request.obligation_digest == obligation.digest
+    assert request.declaration_id == theorem and context["theorem_binding"] == entry["binding"]
+    assert claim.statement == obligation.statement == proposition
+    assert context["proposition_utf8_sha256"] == hashlib.sha256(proposition.encode()).hexdigest()
+    assert claim.assumptions == request.assumption_ids == ()
+    assert claim.source_refs == (unit["source_occurrence_cid"], definition["source_occurrence_cid"])
+    assert context["unit"]["complete_ir_sha256"] == unit["complete_ir_sha256"]
+    assert context["unit"]["scope_record_cid"] == unit["scope_record_cid"]
+    assert context["source_definition"]["interpretation_record_cid"] == definition["interpretation_record_cid"]
+    assert context["physical_request_sha256"] == c["physical_request_sha256"]
+    assert context["realization_sha256"] == c["realization_sha"]
+    assert context["admission_sha256"] == c["admission_sha"]
+    assert context["graph_sha256"] == c["graph_sha"]
+    assert definition["instance_module"] + ".typedSourceAst" in proposition
+    assert re.search(r"emptyEnvironment t →\n\s+\(", proposition)
+    if family == "tdfol":
+        assert "restrictObjectAtoms mixedAtoms" in proposition and "TimeFrame" in proposition
+    else:
+        assert "restrictObjectAtoms" not in proposition and "Object Agent : Type" in proposition
+    path = context["source_path"]
+    source = dict(c["preparation"].files)[path]
+    assert "example : " + proposition + " := @" + theorem.rsplit(".", 1)[1] + "\n" in source
+    assert payload["project"]["expected_modules"] == manifest["expected_modules"]
+    assert payload["project"]["module_imports"] == manifest["module_imports"]
+    assert payload["project"]["files"] == [
+        {"path": path, "bytes": len(source.encode()), "sha256": hashlib.sha256(source.encode()).hexdigest()}
+        for path, source in c["preparation"].files
+    ]
+    assert payload["dispatch_qualified"] is payload["elaborated_type_verified"] is False
+    assert all(value is False for value in payload["authority"].values())
+    assert payload["training_mask"] == payload["evaluation_gold_mask"] == 0
+
+
+@pytest.mark.parametrize("mutation", ["different-unit", "structural-sibling", "changed-project"])
+def test_physical_v4_whole_norm_request_refuses_unbound_selection(
+        physical_source_use_whole_norm_control_v2, mutation):
+    from dataclasses import replace
+    from ipfs_datasets_py.logic.autoformal import (
+        legal_corpus_definition_use_preservation_kernel_requests_v2 as requests,
+    )
+    from ipfs_datasets_py.logic.ir_core import protocols
+
+    c = physical_source_use_whole_norm_control_v2
+    preparation = c["preparation"]
+    manifest = preparation.to_dict()
+    unit, sibling = (row for row in manifest["units"] if row["kind"] == "norm")
+    entry = next(row for row in manifest["theorem_bindings"]
+                 if row["binding"]["kind"] == "whole_norm_definition_expansion"
+                 and row["binding"]["unit_id"] == unit["unit_id"])
+    theorem = entry["theorem"]
+    unit_id = unit["unit_id"]
+    message = "conditional whole-norm obligation"
+    if mutation == "different-unit":
+        unit_id = sibling["unit_id"]
+    elif mutation == "structural-sibling":
+        theorem = theorem.removesuffix("whole_norm_definition_expansion") + "expansion_source_exact"
+        assert theorem in manifest["definition_application_obligations"]
+    else:
+        message = "physical realization preparation"
+        path = theorem.rsplit(".", 1)[0].replace(".", "/") + ".lean"
+        preparation = replace(preparation, files=tuple(
+            (name, source + "\n" if name == path else source)
+            for name, source in preparation.files))
+    with pytest.raises(ValueError, match=message):
+        requests.prepare_reviewed_physical_whole_norm_kernel_request_v2(
+            preparation, c["preservation"], c["graph"], c["admission"], *c["args"],
+            expected_realization_sha256=c["realization_sha"], expected_theorem=theorem,
+            expected_unit_id=unit_id, bounds=protocols.ExecutionBounds(), **c["physical_options"])

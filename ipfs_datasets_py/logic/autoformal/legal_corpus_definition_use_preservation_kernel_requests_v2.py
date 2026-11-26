@@ -441,3 +441,114 @@ def validate_definition_use_preservation_kernel_requests_v2(
 __all__ = ['PlannedKernelTheoremRequests', 'request_sha256',
            'prepare_definition_use_preservation_kernel_requests_v2',
            'validate_definition_use_preservation_kernel_requests_v2']
+
+
+def prepare_reviewed_physical_whole_norm_kernel_request_v2(
+        preparation, preservation, graph, admission, *args, expected_realization_sha256,
+        expected_theorem, expected_unit_id, bounds, **realization_arguments):
+    """Plan one conditional theorem request in a fully replayed physical V2 project.
+
+    The proposition is Lean source scoped to its original project namespace.
+    The request carries project commitments, not an elaborated kernel type or
+    an executable single-file Lean input.
+    """
+    from . import legal_corpus_shared_lake as shared
+    from ..ir_core import claims, protocols
+
+    owned_bounds = protocols.ExecutionBounds(**_bounds_snapshot(bounds))
+    _need(type(expected_theorem) is str and bool(expected_theorem)
+          and type(expected_unit_id) is str and bool(expected_unit_id),
+          'independently selected qualified theorem and reviewed unit required')
+    verified = shared.validate_reviewed_physical_definition_realization_corpus_v2(
+        preparation, preservation, graph, admission, *args,
+        expected_realization_sha256=expected_realization_sha256, **realization_arguments)
+    manifest = verified.to_dict()
+    _need(expected_theorem in manifest['definition_application_obligations'],
+          'selected theorem is outside the verified physical definition application')
+    entry = next(row for row in manifest['theorem_bindings'] if row['theorem'] == expected_theorem)
+    binding = entry['binding']
+    _need(binding['kind'] == 'whole_norm_definition_expansion'
+          and binding['unit_id'] == expected_unit_id
+          and binding['premise_kind'] == 'independently_denoted_source_definition'
+          and binding['desired_equivalence_hypothesis'] is False,
+          'selected theorem is not the conditional whole-norm obligation for the reviewed unit')
+
+    unit = next(row for row in manifest['units'] if row['unit_id'] == expected_unit_id)
+    selection = manifest['selection']
+    definition = next(row for row in manifest['units'] if row['unit_id'] == selection['definition_unit_id'])
+    module, _, theorem = expected_theorem.rpartition('.')
+    module_path = module.replace('.', '/') + '.lean'
+    files = dict(verified.files)
+    source = files[module_path]
+    abi = shared._reviewed_definition_application_abi_example(unit, definition['instance_module'])
+    prefix, suffix = 'example : ', ' := @' + theorem + '\n'
+    _need(module in manifest['expected_modules'] and source.startswith('import ')
+          and source.count('\nnamespace ' + module + '\n') == 1
+          and source.count('\n' + entry['declaration'] + ' := by\n') == 1
+          and abi.startswith(prefix) and abi.endswith(suffix) and source.count('\n' + abi) == 1,
+          'exact project declaration and independent proposition consumer required')
+    proposition = abi[len(prefix):-len(suffix)]
+
+    context = {
+        'realization_sha256': expected_realization_sha256,
+        'realization_input_commitment_sha256': manifest['input_commitment_sha256'],
+        'physical_context_sha256': manifest['physical_context_sha256'],
+        'physical_request_sha256': manifest['physical_context']['physical_request_sha256'],
+        'preservation_sha256': manifest['reviewed_preservation_sha256'],
+        'graph_sha256': manifest['reviewed_graph_sha256'],
+        'admission_sha256': manifest['reviewed_admission_sha256'],
+        'declaration_sha256': manifest['declaration_sha256'],
+        'theorem': expected_theorem,
+        'theorem_binding': binding,
+        'source_namespace': module,
+        'source_path': module_path,
+        'proposition_utf8_sha256': _sha(proposition.encode('utf-8')),
+        'unit': {field: unit[field] for field in (
+            'unit_id', 'complete_ir_sha256', 'source_occurrence_cid', 'source_version_cid',
+            'interpretation_record_cid', 'scope_record_cid', 'relational_request_sha256',
+            'source_use_binding_sha256')},
+        'source_definition': {field: definition[field] for field in (
+            'unit_id', 'complete_ir_sha256', 'source_occurrence_cid', 'source_version_cid',
+            'interpretation_record_cid', 'scope_record_cid', 'source_use_binding_sha256')},
+    }
+    context_sha256 = _sha(_wire(context))
+    refs = tuple(dict.fromkeys((unit['source_occurrence_cid'], definition['source_occurrence_cid'])))
+    obligation = claims.ProofObligation(
+        obligation_id='physical_whole_norm_obligation:' + context_sha256,
+        statement=proposition, logic_family='lean4', source_refs=refs, metadata=context)
+    claim = claims.IRClaim(
+        claim_id='physical_whole_norm_claim:' + context_sha256, statement=proposition,
+        assumptions=(), obligations=(obligation,), domain='legal-ir',
+        declaration_id=expected_theorem, source_refs=refs)
+    request = protocols.BackendRequest.for_claim(
+        claim, obligation.obligation_id,
+        request_id='planned_physical_whole_norm:' + _sha(_wire({
+            'context_sha256': context_sha256, 'bounds': owned_bounds.to_dict()})),
+        query_kind=protocols.QueryKind.THEOREM_PROOF, bounds=owned_bounds,
+        requested_backend_id='legal-corpus-v4-physical-project-kernel@1',
+        payload={
+            'schema': 'legal-corpus-v4-planned-physical-whole-norm-request/v1',
+            'encoding': 'lean4-physical-project-proposition-source/v1',
+            'context': context, 'context_sha256': context_sha256,
+            'proposition_source': proposition,
+            'project': {
+                'target': manifest['target'], 'toolchain': manifest['toolchain'],
+                'expected_modules': manifest['expected_modules'],
+                'module_imports': manifest['module_imports'],
+                'files': [{
+                    'path': path, 'bytes': len(body.encode('utf-8')),
+                    'sha256': manifest['file_sha256'][path],
+                } for path, body in verified.files],
+            },
+            'premise_remains_quantified': True,
+            'elaborated_type_verified': False,
+            'dispatch_qualified': False,
+            'execution_profile_qualified': False,
+            'resource_policy': RESOURCE_POLICY,
+            'authority': AUTHORITY,
+            'training_mask': 0, 'evaluation_gold_mask': 0,
+        })
+    return claim, request
+
+
+__all__ += ['prepare_reviewed_physical_whole_norm_kernel_request_v2']
