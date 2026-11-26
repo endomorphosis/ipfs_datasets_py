@@ -378,3 +378,50 @@ def test_delimiter_ambiguous_atoms_abstain_and_split_clauses_render(
     assert compound.text is None
     assert compound.text_cid is None
     assert compound.component_trace == ()
+
+
+@pytest.mark.parametrize(
+    ("facet", "ambiguous_fields", "separated_fields", "expected_text"),
+    (
+        pytest.param(
+            "action", {"action": "determine_if_eligible", "object": ""},
+            {"action": "determine", "object": "", "conditions": ("eligible",)},
+            "Agency must determine if eligible.",
+            id="action-condition",
+        ),
+        pytest.param(
+            "object", {"object": "report_if_approved"}, {"conditions": ("approved",)},
+            "Agency must file report if approved.",
+            id="object-condition",
+        ),
+        pytest.param(
+            "temporal", {"temporal": ("within_thirty_days_unless_emergency",)},
+            {"temporal": ("within_thirty_days",), "exceptions": ("emergency",)},
+            "Agency must file report within thirty days unless emergency.",
+            id="temporal-exception",
+        ),
+    ),
+)
+def test_untyped_qualifier_in_predicate_abstains_without_erasing_explicit_clause(
+    facet: str, ambiguous_fields: dict, separated_fields: dict, expected_text: str,
+) -> None:
+    base = {"modality": "O", "actor": "agency", "action": "file", "object": "report"}
+    ambiguous = _request(CanonicalRule(**(base | ambiguous_fields)))
+    separated = _request(CanonicalRule(**(base | separated_fields)))
+    assert ambiguous.canonical_ir.ir_cid != separated.canonical_ir.ir_cid
+
+    owner = SourceWithheldCanonicalDecompiler()
+    resolved = owner.decompile(separated)
+    assert resolved.status is OperationStatus.SUCCESS
+    assert resolved.text == expected_text
+    assert resolved.text_cid == cid_for_bytes(expected_text.encode("utf-8"))
+    assert resolved.request_cid == separated.request_cid
+
+    refused = owner.decompile(ambiguous)
+    assert refused.request_cid == ambiguous.request_cid
+    assert refused.status is OperationStatus.ABSTAINED
+    assert refused.error is not None
+    assert refused.error.details["facet"] == facet
+    assert refused.error.code is CanonicalErrorCode.UNSUPPORTED_SEMANTICS
+    assert refused.text is None and refused.text_cid is None
+    assert refused.component_trace == ()

@@ -119,21 +119,28 @@ class _UnsupportedQualifierSurface(CanonicalContractError):
         super().__init__("canonical qualifier atom contains a structural delimiter")
 
 
+def _require_unambiguous_qualifier_surface(
+    surface: str, facet: str, *, conjunction: str | None = None
+) -> None:
+    delimiters = (
+        SOURCE_WITHHELD_DECOMPILER_CONFIG["condition_connector"],
+        SOURCE_WITHHELD_DECOMPILER_CONFIG["exception_connector"],
+    )
+    if conjunction is not None:
+        delimiters = (conjunction, *delimiters)
+    words = surface.casefold().split()
+    for delimiter in delimiters:
+        if delimiter in words:
+            raise _UnsupportedQualifierSurface(facet, delimiter)
+
+
 def _join_atoms(
     atoms: tuple[str, ...], conjunction: str, *, facet: str | None = None
 ) -> str:
     surfaces = tuple(_readable_atom(atom) for atom in atoms)
     if facet is not None:
-        delimiters = (
-            conjunction,
-            SOURCE_WITHHELD_DECOMPILER_CONFIG["condition_connector"],
-            SOURCE_WITHHELD_DECOMPILER_CONFIG["exception_connector"],
-        )
         for surface in surfaces:
-            words = surface.casefold().split()
-            for delimiter in delimiters:
-                if delimiter in words:
-                    raise _UnsupportedQualifierSurface(facet, delimiter)
+            _require_unambiguous_qualifier_surface(surface, facet, conjunction=conjunction)
     return f" {conjunction} ".join(surfaces)
 
 
@@ -174,18 +181,20 @@ def decompile_rule(rule: CanonicalRule) -> str:
     if not isinstance(rule, CanonicalRule):
         raise CanonicalContractError("rule must be CanonicalRule")
 
-    parts = [
-        _readable_atom(rule.actor),
-        _MODAL_PHRASES[rule.modality],
-        _readable_atom(rule.action),
-    ]
+    action = _readable_atom(rule.action)
+    _require_unambiguous_qualifier_surface(action, "action")
+    parts = [_readable_atom(rule.actor), _MODAL_PHRASES[rule.modality], action]
     if rule.object:
-        parts.append(_readable_atom(rule.object))
+        object_surface = _readable_atom(rule.object)
+        _require_unambiguous_qualifier_surface(object_surface, "object")
+        parts.append(object_surface)
 
     sentence = " ".join(parts)
     temporal = _temporal_not_already_in_object(rule)
     if temporal:
-        sentence += " " + _join_atoms(temporal, "and")
+        temporal_surface = _join_atoms(temporal, "and")
+        _require_unambiguous_qualifier_surface(temporal_surface, "temporal")
+        sentence += " " + temporal_surface
     if rule.conditions:
         sentence += f" {SOURCE_WITHHELD_DECOMPILER_CONFIG['condition_connector']} " + _join_atoms(
             rule.conditions, "and", facet="conditions"
