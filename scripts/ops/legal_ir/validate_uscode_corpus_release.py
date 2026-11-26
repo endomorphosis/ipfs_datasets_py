@@ -20,6 +20,15 @@ RECEIPT_SCHEMA = "legal-corpus-graph-cli-receipt/v1"
 _WHOLE_NORM_V4_PROFILE = "reviewed-source-use-whole-norm-physical-source-replay/v1"
 _PHYSICAL_V3_PROFILE = "reviewed-norm-v3-physical-three-cache-replay/v1"
 _RETAINED_TYPE_COMMAND = "retained-type-eligibility"
+_RETAINED_INPUT_FILES = ("checked-report", "probe-input", "stdout", "stderr")
+_RETAINED_SELECTION_FLAGS = ("preparation-sha256", "graph-sha256", "unit-id")
+_RETAINED_REPLAY_FLAGS = tuple(flag for name in _RETAINED_INPUT_FILES
+                               for flag in (name, name + "-sha256")) + _RETAINED_SELECTION_FLAGS
+_RETAINED_REPLAY_USAGE = (
+    "--checked-report PATH --checked-report-sha256 SHA "
+    "--probe-input PATH --probe-input-sha256 SHA --stdout PATH --stdout-sha256 SHA "
+    "--stderr PATH --stderr-sha256 SHA --preparation-sha256 SHA --graph-sha256 SHA --unit-id ID"
+)
 
 
 class CLIError(ValueError):
@@ -56,14 +65,12 @@ def _parser():
         "reviewed-norm-v3-direct",
         _WHOLE_NORM_V4_PROFILE,
     ), default="reviewed-norm-v2-local-replay/v1")
+    for flag in _RETAINED_REPLAY_FLAGS + ("saved", "saved-sha256"):
+        closure.add_argument("--" + flag)
     retained = commands.add_parser(_RETAINED_TYPE_COMMAND, add_help=False)
     retained.add_argument("-h", "--help", action="store_true")
-    for name in ("checked-report", "probe-input", "stdout", "stderr"):
-        retained.add_argument("--" + name, required=True)
-        retained.add_argument("--" + name + "-sha256", required=True)
-    retained.add_argument("--preparation-sha256", required=True)
-    retained.add_argument("--graph-sha256", required=True)
-    retained.add_argument("--unit-id", required=True)
+    for flag in _RETAINED_REPLAY_FLAGS:
+        retained.add_argument("--" + flag, required=True)
     destination = retained.add_mutually_exclusive_group(required=True)
     destination.add_argument("--output")
     destination.add_argument("--saved")
@@ -189,7 +196,7 @@ def _write_new_handoff(path, raw, *, maximum_bytes):
                 _remove_owned_file(directory_fd, stage, inode)
 
 
-def _retained_type_eligibility(args):
+def _replay_retained_type_eligibility(args):
     from ipfs_datasets_py.logic.autoformal import corpus_contracts as contracts
     from ipfs_datasets_py.logic.autoformal.legal_corpus_definition_use_preservation_elaboration_native_v2 import (
         MAX_CAPTURE_BYTES,
@@ -234,16 +241,66 @@ def _retained_type_eligibility(args):
         expected_preparation_sha256=args.preparation_sha256,
         expected_stdout_sha256=args.stdout_sha256, expected_stderr_sha256=args.stderr_sha256)
     content = canonical_dag_json_bytes(handoff)
-    if args.output is not None:
-        _write_new_handoff(args.output, content, maximum_bytes=limit)
-    elif saved != content:
+    if args.saved is not None and saved != content:
         raise CLIError("saved handoff differs from the exact retained eligibility replay")
+    return handoff, content
+
+
+def _retained_type_eligibility(args):
+    from ipfs_datasets_py.logic.autoformal.corpus_contracts import MAX_RECORD_BYTES
+
+    handoff, content = _replay_retained_type_eligibility(args)
+    if args.output is not None:
+        _write_new_handoff(args.output, content, maximum_bytes=MAX_RECORD_BYTES)
     return _receipt(status="success", command=_RETAINED_TYPE_COMMAND,
         validation_scope="retained-v4-type-eligibility-local-replay",
         mode="save" if args.output is not None else "reload",
         artifact={"path": str(Path(args.output or args.saved).absolute()), "bytes": len(content),
                   "sha256": hashlib.sha256(content).hexdigest()},
         declared_eligibility_cid=handoff["declared_eligibility"]["record_cid"])
+
+
+def _retained_type_for_closure(args):
+    flags = _RETAINED_REPLAY_FLAGS + ("saved", "saved-sha256")
+    supplied = [getattr(args, flag.replace("-", "_")) is not None for flag in flags]
+    if not any(supplied):
+        return None
+    if args.profile != _WHOLE_NORM_V4_PROFILE:
+        raise CLIError("saved retained type eligibility requires the physical V4 profile")
+    if not all(supplied):
+        raise CLIError("saved retained type eligibility requires all replay input pins and the saved handoff")
+    handoff, _ = _replay_retained_type_eligibility(args)
+    evidence = handoff["declared_eligibility_evidence"]
+    if evidence["request_sha256"] != args.request_sha256:
+        raise CLIError("saved retained type eligibility belongs to a different physical release request")
+    return handoff
+
+
+def _bind_retained_type_to_closure(closure, handoff, saved_sha256):
+    # The retained review and conditional observation are historical. Compare
+    # the exact component evidence shared with the new source-only replay.
+    evidence = handoff["declared_eligibility_evidence"]
+    historical_fields = {
+        "schema", "record_cid", "cid_scope", "current_review_observation",
+        "checked_native_observation", "retained_type_capture_provenance",
+    }
+    observed = {key: value for key, value in closure["declared_eligibility_evidence"].items()
+                if key not in historical_fields}
+    retained = {key: value for key, value in evidence.items() if key not in historical_fields}
+    if observed != retained:
+        raise CLIError("saved retained type eligibility differs from the replayed release components")
+    provenance = evidence["retained_type_capture_provenance"]
+    population = {row["unit_id"]: row for row in closure["unit_preservation_bindings"]}
+    for role, kind in (("unit", "norm"), ("source_definition", "definition")):
+        binding = provenance[role]
+        row = population.get(binding["unit_id"], {})
+        if row.get("kind") != kind or any(row.get(key) != value for key, value in binding.items()):
+            raise CLIError("saved retained type eligibility differs from the replayed unit binding")
+    if handoff["declared_eligibility"]["views"] != closure["declared_eligibility"]["views"]:
+        raise CLIError("saved retained type eligibility differs from the replayed eligibility views")
+    return {"validation_scope": "retained-v4-type-eligibility-local-replay",
+            "saved_handoff_sha256": saved_sha256,
+            "handoff": handoff}
 
 
 def _receipt(*, status, command, **values):
@@ -280,10 +337,8 @@ def main(argv=None):
             ])
             if command == _RETAINED_TYPE_COMMAND:
                 result["usage"] = [
-                    "retained-type-eligibility --checked-report PATH --checked-report-sha256 SHA "
-                    "--probe-input PATH --probe-input-sha256 SHA --stdout PATH --stdout-sha256 SHA "
-                    "--stderr PATH --stderr-sha256 SHA --preparation-sha256 SHA "
-                    "--graph-sha256 SHA --unit-id ID (--output PATH | --saved PATH --saved-sha256 SHA)",
+                    f"retained-type-eligibility {_RETAINED_REPLAY_USAGE} "
+                    "(--output PATH | --saved PATH --saved-sha256 SHA)",
                 ]
             if command == "validate-closure":
                 result["supported_profiles"] = [
@@ -294,6 +349,9 @@ def main(argv=None):
                     _WHOLE_NORM_V4_PROFILE,
                 ]
                 result["default_profile"] = "reviewed-norm-v2-local-replay/v1"
+                result["retained_type_eligibility_usage"] = (
+                    f"validate-closure --profile {_WHOLE_NORM_V4_PROFILE} --request PATH --request-sha256 SHA "
+                    f"--saved PATH --saved-sha256 SHA {_RETAINED_REPLAY_USAGE}")
                 result["declared_eligibility"] = {
                     "flag": "--include-declared-eligibility",
                     "supported_profiles": [_PHYSICAL_V3_PROFILE, _WHOLE_NORM_V4_PROFILE],
@@ -311,8 +369,9 @@ def main(argv=None):
                 from ipfs_datasets_py.logic.autoformal.legal_release_coordinator_v1 import (
                     MAX_CLOSURE_REQUEST_BYTES, validate_uscode_release_closure_v1,
                 )
+                retained_handoff = _retained_type_for_closure(args)
                 eligibility_options = {}
-                if args.include_declared_eligibility:
+                if args.include_declared_eligibility or retained_handoff is not None:
                     if args.profile not in (_PHYSICAL_V3_PROFILE, _WHOLE_NORM_V4_PROFILE):
                         raise CLIError("declared eligibility requires a supported physical V3 or V4 profile")
                     eligibility_options["include_declared_eligibility"] = True
@@ -349,6 +408,9 @@ def main(argv=None):
                 result = _receipt(status="success", command=command,
                     validation_scope="selected-component-local-replay-not-release-admission",
                     closure=closure)
+                if retained_handoff is not None:
+                    result["retained_type_eligibility"] = _bind_retained_type_to_closure(
+                        closure, retained_handoff, args.saved_sha256)
                 sys.stdout.write(json.dumps(result, sort_keys=True, ensure_ascii=False, allow_nan=False) + "\n")
                 return 0
             from ipfs_datasets_py.logic.autoformal.corpus_contracts import (

@@ -4141,8 +4141,12 @@ def test_physical_v4_retained_type_eligibility_refuses_foreign_or_unbound_captur
 
 
 def _retained_type_eligibility_cli_files(directory, label):
-    directory.mkdir()
     case, report_raw, options = _retained_physical_type_eligibility_fixture(label)
+    return _write_retained_type_eligibility_cli_files(directory, case, report_raw, options)
+
+
+def _write_retained_type_eligibility_cli_files(directory, case, report_raw, options):
+    directory.mkdir()
     probe = {
         "schema": "physical-type-probe-caller-input/v1", "request": case["request"].to_dict(),
         "request_sha256": case["request"].digest, "original_files": dict(case["files"]),
@@ -4278,3 +4282,193 @@ def test_retained_type_eligibility_cli_refuses_unsafe_save_or_reload_paths(tmp_p
         assert link.is_symlink()
         if damage == "output-parent-symlink":
             assert list(real_parent.iterdir()) == []
+
+
+def _authored_type_replay_for_physical_closure(control, reviewed_report, family):
+    """Create fictional conditional diagnostics for the exact signed fixture and real plan."""
+    from copy import deepcopy
+
+    from ipfs_datasets_py.logic.autoformal import (
+        legal_corpus_definition_use_preservation_elaboration_v2 as preparer,
+        legal_corpus_definition_use_preservation_kernel_requests_v2 as planner,
+        legal_release_coordinator_v1 as release,
+    )
+    from ipfs_datasets_py.logic.ir_core.protocols import ExecutionBounds
+    from tests.unit.logic.autoformal import (
+        test_legal_corpus_definition_use_preservation_elaboration_v2 as capture_fixture,
+    )
+
+    realization = control["preparation"]
+    manifest = realization.to_dict()
+    unit = next(row for row in manifest["units"] if row["kind"] == "norm" and row["child_family"] == family)
+    theorem = next(row["theorem"] for row in manifest["theorem_bindings"]
+                   if row["binding"]["kind"] == "whole_norm_definition_expansion"
+                   and row["binding"]["unit_id"] == unit["unit_id"])
+    _, request = planner.prepare_reviewed_physical_whole_norm_kernel_request_v2(
+        realization, control["preservation"], control["graph"], control["admission"], *control["args"],
+        expected_realization_sha256=control["realization_sha"], expected_theorem=theorem,
+        expected_unit_id=unit["unit_id"], bounds=ExecutionBounds(max_output_bytes=8 * 1024**2),
+        resource_profile=planner.PHYSICAL_WHOLE_PROJECT_RESOURCE_PROFILE, **control["physical_options"])
+    assert reviewed_report["fixture_only"] is True
+    assert reviewed_report["native_receipt_replayed"] is False
+    assert "checked_native_observation" not in reviewed_report
+    context = request.to_dict()["payload"]["context"]
+    assert context["physical_request_sha256"] == control["physical_request_sha256"]
+    report = deepcopy(reviewed_report)
+    receipt_sha = hashlib.sha256(("authored conditional fixture receipt " + family).encode()).hexdigest()
+    packet_sha = hashlib.sha256(("authored conditional fixture packet " + family).encode()).hexdigest()
+    report["checked_native_observation"] = seal_record({
+        "schema": "legal-corpus-physical-v4-checked-native-observation/v1",
+        **{key: context[key] for key in ("physical_request_sha256", "graph_sha256", "admission_sha256",
+            "preservation_sha256", "realization_sha256", "unit", "source_definition", "proposition_utf8_sha256")},
+        "planned_request_sha256": request.digest,
+        "current_review_observation_cid": report["current_review_observation"]["record_cid"],
+        "live_result_cid": cid("authored conditional fixture " + family),
+        "declaration": theorem, "claim_digest": request.claim_digest,
+        "obligation_digest": request.obligation_digest,
+        "retained_receipt_sha256": receipt_sha, "retained_packet_sha256": packet_sha,
+        "native_execution_authenticated": True, "checked_under_explicit_hypotheses": True,
+        "premise_remains_quantified": True, "axiom_dependencies": [],
+        "qualified_request_execution": False, "proof_receipt_issued": False,
+    })
+    report.update(release._declared_physical_release_eligibility(control["physical_request_raw"], report))
+    files = realization.files
+    prepared = preparer.prepare_planned_physical_whole_norm_type_probe_v2(
+        request, files, expected_request_sha256=request.digest)
+    state = prepared.to_dict()
+    original, alias = state["original_theorem"], state["alias_theorem"]
+    command = "#print axioms " + original.rsplit(".", 1)[1]
+    original_line, = [number for number, line in enumerate(dict(files)[state["source_path"]].splitlines(), 1)
+                      if line == command]
+    row = capture_fixture._checked_release_type_capture_fixture("closure-type-shape")["row"]
+    row.update(original_name=original, alias_name=alias)
+    module_path = state["probe_module"].replace(".", "/") + ".lean"
+    stdout = (
+        f"info: {state['source_path']}:{original_line}:0: '{original}' does not depend on any axioms\n"
+        f"info: {module_path}:{state['alias_axiom_report_line']}:0: '{alias}' does not depend on any axioms\n"
+        f"info: {module_path}:{state['type_report_line']}:0: CORPUS_TYPE_CHECK:"
+    ).encode() + canonical_dag_json_bytes(row) + b"\n"
+    return {"request": request, "files": files, "stdout": stdout, "stderr": b""}, canonical_dag_json_bytes(report), {
+        "expected_retained_receipt_sha256": receipt_sha,
+        "expected_retained_packet_sha256": packet_sha,
+        "expected_preparation_sha256": preparer.preparation_sha256(prepared),
+        "expected_graph_sha256": report["graph_sha256"],
+        "expected_unit_id": unit["unit_id"],
+    }
+
+
+@pytest.fixture(scope="module")
+def physical_v4_retained_type_closure_cases(physical_source_use_whole_norm_control_v2):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+
+    control = physical_source_use_whole_norm_control_v2
+    raw = control["physical_request_raw"]
+    report = release.validate_uscode_release_closure_v4(
+        raw, expected_request_sha256=control["physical_request_sha256"],
+        current_review=_physical_v4_review_observation_inputs(control))
+    return control, {family: _authored_type_replay_for_physical_closure(control, report, family)
+                     for family in ("deontic_fol", "tdfol")}
+
+
+def _validate_closure_with_retained_type_cli(argv, capsys):
+    from scripts.ops.legal_ir import validate_uscode_corpus_release as cli
+
+    rc = cli.main(argv)
+    lines = capsys.readouterr().out.splitlines()
+    assert len(lines) == 1
+    receipt = json.loads(lines[0])
+    assert receipt["command"] == "validate-closure"
+    assert all(receipt[key] is False for key in (
+        "admitted", "formalized", "proof_verified", "source_semantics_verified", "source_authenticity_verified"))
+    return rc, receipt
+
+
+@pytest.mark.parametrize("scenario", ["exact", "other-physical-request", "sibling-unit", "repinned-saved-bytes"])
+def test_physical_v4_cli_consumes_only_the_reloaded_retained_handoff(
+        physical_v4_retained_type_closure_cases, tmp_path, capsys, scenario):
+    from copy import deepcopy
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as wire
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+
+    control, cases = physical_v4_retained_type_closure_cases
+    family = "tdfol" if scenario == "sibling-unit" else "deontic_fol"
+    *_, saved_args = _write_retained_type_eligibility_cli_files(tmp_path / family, *cases[family])
+    destination = tmp_path / "handoff.json"
+    rc, saved = _retained_type_eligibility_cli_call(saved_args + ["--output", str(destination)], capsys)
+    assert rc == 0, saved
+    content = destination.read_bytes()
+    assert saved["artifact"]["sha256"] == hashlib.sha256(content).hexdigest()
+    saved_replay = saved_args[1:]
+    expected_error = None
+
+    based_on_request = control["physical_request_raw"]
+    if scenario == "other-physical-request":
+        other_request = deepcopy(control["physical_request"])
+        for role in ("law_path", "entity_path"):
+            original = Path(other_request["physical_inputs"][role])
+            relocated = tmp_path / original.name
+            relocated.write_bytes(original.read_bytes())
+            other_request["physical_inputs"][role] = str(relocated)
+        based_on_request = wire.encode_parent_replay_value_v1(
+            other_request, max_bytes=release.MAX_CLOSURE_REQUEST_BYTES_V3)
+        assert based_on_request != control["physical_request_raw"]
+        expected_error = "different physical release request"
+    elif scenario == "sibling-unit":
+        sibling = json.loads(content)["declared_eligibility_evidence"]["retained_type_capture_provenance"]
+        assert sibling["graph_sha256"] == control["graph_sha"]
+        intended = cases["deontic_fol"][2]["expected_unit_id"]
+        assert sibling["unit"]["unit_id"] != intended
+        saved_replay[saved_replay.index("--unit-id") + 1] = intended
+        expected_error = "different reviewed unit"
+    elif scenario == "repinned-saved-bytes":
+        # The same JSON has different bytes, even when the caller updates its digest.
+        content += b"\n"
+        destination.write_bytes(content)
+        expected_error = "differs from the exact retained eligibility replay"
+
+    physical = tmp_path / "physical.request"
+    physical.write_bytes(based_on_request)
+    closure_args = [
+        "validate-closure", "--profile", release.CLOSURE_PROFILE_V4, "--request", str(physical),
+        "--request-sha256", hashlib.sha256(based_on_request).hexdigest(),
+    ]
+    if scenario in ("exact", "other-physical-request"):
+        rc, original = _validate_closure_with_retained_type_cli(
+            closure_args + ["--include-declared-eligibility"], capsys)
+        assert rc == 0, original
+        assert "retained_type_eligibility" not in original
+        assert original["closure"]["graph_sha256"] == control["graph_sha"]
+    rc, joined = _validate_closure_with_retained_type_cli(
+        closure_args + saved_replay + ["--saved", str(destination),
+            "--saved-sha256", hashlib.sha256(content).hexdigest()], capsys)
+    if expected_error is not None:
+        assert rc == 1 and expected_error in joined["error"], joined
+        assert "closure" not in joined and "retained_type_eligibility" not in joined
+    else:
+        assert rc == 0, joined
+        attached = joined.pop("retained_type_eligibility")
+        assert joined == original
+        assert attached == {
+            "validation_scope": "retained-v4-type-eligibility-local-replay",
+            "saved_handoff_sha256": saved["artifact"]["sha256"], "handoff": json.loads(content),
+        }
+        closure = joined["closure"]
+        assert closure["declared_qualification"]["dimensions"]["proof"]["status"] == "pending"
+        assert closure["declared_qualification"]["dimensions"]["lean_compilation"]["status"] == "not_run"
+        assert closure["declared_eligibility"]["views"]["checked_lean"]["declared_eligible"] is False
+        assert closure["admission_mask"] == closure["training_mask"] == closure["evaluation_gold_mask"] == 0
+        assert "current_review_observation" not in closure and "checked_native_observation" not in closure
+        assert closure["native_receipt_replayed"] is closure["release_ready"] is closure["proof_verified"] is False
+    assert destination.read_bytes() == content
+
+
+@pytest.mark.parametrize("profile,error", [
+    ("reviewed-source-use-whole-norm-physical-source-replay/v1", "requires all replay input pins"),
+    ("reviewed-norm-v3-physical-three-cache-replay/v1", "requires the physical V4 profile"),
+])
+def test_closure_cli_refuses_partial_or_unsupported_retained_selection_before_read(tmp_path, capsys, profile, error):
+    args = ["validate-closure", "--profile", profile, "--request", str(tmp_path / "missing"),
+            "--request-sha256", "0" * 64, "--saved", str(tmp_path / "missing-saved")]
+    rc, receipt = _validate_closure_with_retained_type_cli(args, capsys)
+    assert rc == 1 and error in receipt["error"], receipt
+    assert "closure" not in receipt and "retained_type_eligibility" not in receipt
