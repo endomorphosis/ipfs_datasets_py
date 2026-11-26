@@ -1437,25 +1437,108 @@ def _validate_uscode_release_byte_closure_v3(request_raw: bytes, *, expected_req
         original_parent_handle=original_parent_handle, _original_parent_context=_original_parent_context)
 
 
+def _declared_physical_release_eligibility(request_raw, report):
+    """Project evidence from the completed physical V3 or V4 replay."""
+    from ipfs_datasets_py.utils.cid_utils import cid_for_bytes
+    from . import corpus_contracts as contracts, corpus_qualification as qualification
+    from . import legal_corpus_definition_use_lake_v2 as wire
+
+    version = report["reviewed_version"]
+    request_limit = MAX_CLOSURE_REQUEST_BYTES_V3 if version == 4 else MAX_CLOSURE_REQUEST_BYTES
+    request = wire.decode_parent_replay_value_v1(
+        request_raw, expected_payload_sha256=report["request_sha256"],
+        max_bytes=request_limit,
+    )
+    artifacts = {row["artifact_id"]: row for row in request["artifacts"]}
+    component = request["component"]
+    admission = _reviewed_json_artifact_v3(artifacts[component["admission"]]["payload"])
+    preserved = artifacts[component["preservation"]]
+    preservation = wire.decode_parent_replay_value_v1(
+        preserved["payload"], expected_payload_sha256=preserved["sha256"],
+        max_bytes=MAX_CLOSURE_REQUEST_BYTES,
+    )
+    expected_obligations = json.loads(preservation["manifest_json"])["preservation_obligations"]
+    cids = {role: cid_for_bytes(artifacts[component[role]]["payload"]) for role in (
+        "graph", "reviewed_crosswalk", "admission", "preservation", "dependency",
+    )}
+    artifact_cid = cids["graph"]
+    native = request["native"]
+    retained_native = None
+    if report["native_receipt_replayed"]:
+        retained_native = {
+            "receipt_cid": cid_for_bytes(artifacts[native["receipt"]]["payload"]),
+            "packet_index_cid": cid_for_bytes(artifacts[native["packet_index"]]["payload"]),
+            "packet_sha256": report["native_packet_transport"]["logical_packet_inventory_sha256"],
+            "observation_profile": native["observation_profile"],
+        }
+    evidence = contracts.seal_record({
+        "schema": f"legal-corpus-physical-v{version}-qualification-evidence/v1",
+        "reviewed_version": version,
+        **({key: report[key] for key in (
+            "instance_identity_profile", "definition_application_profile",
+        )} if version == 4 else {}),
+        "artifact_cid": artifact_cid,
+        "profile": report["profile"],
+        "request_sha256": report["request_sha256"],
+        "component_cids": cids,
+        "graph_sha256": report["graph_sha256"],
+        "admission_sha256": report["admission_sha256"],
+        "preservation_sha256": report["preservation_sha256"],
+        "reviewed_crosswalk_sha256": report["reviewed_crosswalk_sha256"],
+        "ordered_unit_ids": report["unit_ids"],
+        "fixture_only": report["fixture_only"],
+        "permitted_uses": admission["permitted_uses"],
+        "formal_assumptions": admission["formal_assumptions"],
+        "preservation_obligations": expected_obligations,
+        "retained_native": retained_native,
+    })
+    # These declarations refer to the verified local component. In particular,
+    # source integrity is the exact physical byte crosswalk. Retained Native
+    # observations carry no new compilation or theorem-discharge status.
+    dimensions = {
+        "processing": ("complete", evidence["record_cid"]),
+        "source_integrity": ("verified", cids["reviewed_crosswalk"]),
+        "interpretation": ("reviewed", cids["admission"]),
+        "representation": ("supported_complete", cids["preservation"]),
+        "dependency": ("resolved", cids["dependency"]),
+    }
+    record = qualification.prepare_qualification(
+        artifact_cid=artifact_cid, profile=report["profile"],
+        theorem_requested=bool(expected_obligations),
+        dimensions={name: {"status": state, "evidence_cids": [cid]}
+                    for name, (state, cid) in dimensions.items()},
+    )
+    return {
+        "declared_eligibility_evidence": evidence,
+        "declared_qualification": record,
+        "declared_eligibility": qualification.derive_eligibility(
+            record, artifact_cid=artifact_cid, profile=report["profile"]),
+    }
+
+
 def validate_uscode_release_closure_v3(request_raw: bytes, *, expected_request_sha256: str,
-        original_parent_handle=None) -> dict:
-    """Replay V3 bytes; optionally consume one actual in-process A parent handle.
+        original_parent_handle=None, include_declared_eligibility=False) -> dict:
+    """Replay V3 bytes and optionally project the checked local graph evidence.
 
     None retains the existing retained-only path. The request wire cannot supply
-    the opaque handle, and replay grants no new execution, release or legal authority.
+    the opaque original parent handle. The opt-in eligibility is declarative,
+    with conditional obligations and retained observations kept as evidence.
     """
     _release_v3_policy()
-    if original_parent_handle is None:
-        return _validate_uscode_release_physical_closure(request_raw, expected_request_sha256=expected_request_sha256, reviewed_version=3)
+    _need(type(include_declared_eligibility) is bool, "explicit boolean eligibility selection required")
     if original_parent_handle is not None:
         entry_guard = _release_original_parent_entry_guard_v3
         if (entry_guard is not _RELEASE_ORIGINAL_PARENT_ENTRY_GUARD_V3
                 or entry_guard.__code__ is not _RELEASE_ORIGINAL_PARENT_ENTRY_CODE_V3):
             raise ReleaseCoordinatorError("original-parent coordinator entry generation changed: entry guard")
         entry_guard()
-    return _validate_uscode_release_physical_closure(request_raw, expected_request_sha256=expected_request_sha256,
-        reviewed_version=3, original_parent_handle=original_parent_handle)
-
+    report = _validate_uscode_release_physical_closure(
+        request_raw, expected_request_sha256=expected_request_sha256,
+        reviewed_version=3, original_parent_handle=original_parent_handle,
+    )
+    if include_declared_eligibility:
+        report.update(_declared_physical_release_eligibility(request_raw, report))
+    return report
 
 def validate_reviewed_physical_realization_context_v1(request_raw: bytes, *,
         expected_request_sha256: str) -> dict:
@@ -1751,12 +1834,21 @@ def _validate_uscode_release_byte_closure_v4(request_raw, *, expected_request_sh
         _captured_native_context=_captured_native_context, _native_transport=_native_transport)
 
 
-def validate_uscode_release_closure_v4(request_raw, *, expected_request_sha256):
-    """Replay source-only whole-norm physical correspondence, without Native authority."""
+def validate_uscode_release_closure_v4(request_raw, *, expected_request_sha256,
+        include_declared_eligibility=False):
+    """Replay source-only whole-norm correspondence and optionally project eligibility.
+
+    The projection binds the upstream preservation obligations, which are
+    distinct from any later physical realization or Native results.
+    """
     _release_v4_policy()
-    return _validate_uscode_release_physical_closure(request_raw,
+    _need(type(include_declared_eligibility) is bool, "explicit boolean eligibility selection required")
+    report = _validate_uscode_release_physical_closure(request_raw,
         expected_request_sha256=expected_request_sha256, reviewed_version=4,
         _native_transport="direct-packet/v1")
+    if include_declared_eligibility:
+        report.update(_declared_physical_release_eligibility(request_raw, report))
+    return report
 
 
 def validate_reviewed_physical_realization_context_v2(request_raw: bytes, *,

@@ -16,6 +16,7 @@ from pathlib import Path
 
 RECEIPT_SCHEMA = "legal-corpus-graph-cli-receipt/v1"
 _WHOLE_NORM_V4_PROFILE = "reviewed-source-use-whole-norm-physical-source-replay/v1"
+_PHYSICAL_V3_PROFILE = "reviewed-norm-v3-physical-three-cache-replay/v1"
 
 
 class CLIError(ValueError):
@@ -44,10 +45,11 @@ def _parser():
     closure.add_argument("-h", "--help", action="store_true")
     closure.add_argument("--request", required=True)
     closure.add_argument("--request-sha256", required=True)
+    closure.add_argument("--include-declared-eligibility", action="store_true")
     closure.add_argument("--profile", choices=(
         "reviewed-norm-v2-local-replay/v1",
         "reviewed-norm-v2-physical-three-cache-replay/v1",
-        "reviewed-norm-v3-physical-three-cache-replay/v1",
+        _PHYSICAL_V3_PROFILE,
         "reviewed-norm-v3-direct",
         _WHOLE_NORM_V4_PROFILE,
     ), default="reviewed-norm-v2-local-replay/v1")
@@ -138,11 +140,15 @@ def main(argv=None):
                 result["supported_profiles"] = [
                     "reviewed-norm-v2-local-replay/v1",
                     "reviewed-norm-v2-physical-three-cache-replay/v1",
-                    "reviewed-norm-v3-physical-three-cache-replay/v1",
+                    _PHYSICAL_V3_PROFILE,
                     "reviewed-norm-v3-direct",
                     _WHOLE_NORM_V4_PROFILE,
                 ]
                 result["default_profile"] = "reviewed-norm-v2-local-replay/v1"
+                result["declared_eligibility"] = {
+                    "flag": "--include-declared-eligibility",
+                    "supported_profiles": [_PHYSICAL_V3_PROFILE, _WHOLE_NORM_V4_PROFILE],
+                }
         else:
             args = parser.parse_args(arguments)
             command = args.command
@@ -152,6 +158,11 @@ def main(argv=None):
                 from ipfs_datasets_py.logic.autoformal.legal_release_coordinator_v1 import (
                     MAX_CLOSURE_REQUEST_BYTES, validate_uscode_release_closure_v1,
                 )
+                eligibility_options = {}
+                if args.include_declared_eligibility:
+                    if args.profile not in (_PHYSICAL_V3_PROFILE, _WHOLE_NORM_V4_PROFILE):
+                        raise CLIError("declared eligibility requires a supported physical V3 or V4 profile")
+                    eligibility_options["include_declared_eligibility"] = True
                 request_limit = MAX_CLOSURE_REQUEST_BYTES
                 if args.profile in ("reviewed-norm-v3-direct", _WHOLE_NORM_V4_PROFILE):
                     from ipfs_datasets_py.logic.autoformal.legal_release_coordinator_v1 import (
@@ -165,7 +176,7 @@ def main(argv=None):
                         validate_uscode_release_closure_v2,
                     )
                     validator = validate_uscode_release_closure_v2
-                elif args.profile == "reviewed-norm-v3-physical-three-cache-replay/v1":
+                elif args.profile == _PHYSICAL_V3_PROFILE:
                     from ipfs_datasets_py.logic.autoformal.legal_release_coordinator_v1 import (
                         validate_uscode_release_closure_v3,
                     )
@@ -180,7 +191,8 @@ def main(argv=None):
                         validate_uscode_release_closure_v4,
                     )
                     validator = validate_uscode_release_closure_v4
-                closure = validator(raw, expected_request_sha256=args.request_sha256)
+                closure = validator(raw, expected_request_sha256=args.request_sha256,
+                    **eligibility_options)
                 result = _receipt(status="success", command=command,
                     validation_scope="selected-component-local-replay-not-release-admission",
                     closure=closure)
