@@ -2018,3 +2018,82 @@ def test_lean_outcome_rejects_fields_from_another_request(field):
     assert changed.metadata == outcome.result.metadata and changed.witness == outcome.result.witness
     with pytest.raises(LeanKernelError, match="outcome result .*request"):
         replace(outcome, result=changed)
+
+
+@pytest.mark.parametrize("returncode", [False, 0.0, True, "0", None, 1])
+def test_lean_malformed_or_failed_exit_status_cannot_establish_proof(returncode):
+    from dataclasses import replace
+
+    report = _axiom_message("'wanted' does not depend on any axioms")
+    positive = _lean_output(report)
+    assert type(positive.returncode) is int and positive.returncode == 0
+    assert evaluate_lean_kernel_output(positive, declaration="wanted")[0] is True
+    process = replace(positive, returncode=returncode)
+    assert process.returncode is returncode
+    accepted, _, diagnostics = evaluate_lean_kernel_output(
+        process, declaration="wanted")
+    assert accepted is False
+    assert diagnostics
+
+
+@pytest.mark.parametrize("returncode", [False, 0.0])
+def test_lean_exact_source_bound_report_cannot_rescue_noninteger_exit_status(returncode):
+    from dataclasses import replace
+
+    report = _axiom_message(
+        "'wanted' does not depend on any axioms",
+        fileName="Input.lean", pos={"line": 17, "column": 0})
+    positive = _lean_output(report)
+    binding = {"declaration": "wanted", "expected_source_path": "Input.lean",
+               "expected_source_line": 17}
+    assert evaluate_lean_kernel_output(positive, **binding)[0] is True
+    accepted, axiom_report, diagnostics = evaluate_lean_kernel_output(
+        replace(positive, returncode=returncode), **binding)
+    assert accepted is False
+    assert axiom_report is not None and axiom_report.declaration == "wanted"
+    assert diagnostics
+
+
+@pytest.mark.parametrize("changed", [
+    "match", "equivalent-source-alias", "declaration", "proposition",
+    "source", "translation", "missing-obligation",
+])
+def test_lean_outcome_binds_accepted_receipt_to_request_payload(changed):
+    from dataclasses import replace
+
+    from ipfs_datasets_py.logic.backends.kernel import lean
+
+    source = "theorem wanted : True := by trivial\ntheorem alternative : True := by trivial\n"
+    outcome, calls, original_request = _bound_lean_outcome(source=source)
+    assert len(calls) == 1 and outcome.receipt.accepted
+    payload = original_request.payload.to_dict()
+    if changed == "equivalent-source-alias":
+        payload["checked_source"] = payload.pop("source")
+    elif changed == "declaration":
+        payload["expected_declaration"] = "alternative"
+    elif changed == "proposition":
+        payload["expected_proposition"] = "(True)"
+    elif changed == "source":
+        payload["source"] += "-- separately submitted exact source\n"
+    elif changed == "translation":
+        payload["translation"] = _translation("lean4")
+    elif changed == "missing-obligation":
+        del payload["expected_declaration"]
+        del payload["expected_proposition"]
+
+    request = replace(original_request, payload=FrozenMap(payload))
+    binding = lean.LeanSourceBinding.bind(request, source)
+    receipt = replace(outcome.receipt, request_digest=request.digest, source_binding=binding)
+    assert lean.LeanKernelReceipt.from_dict(receipt.to_dict()) == receipt
+    metadata = outcome.result.metadata.to_dict()
+    metadata.update(kernel_receipt=receipt.to_dict(), source_binding=binding.to_dict())
+    result = replace(outcome.result, result_id=lean._result_id("lean", request),
+                     metadata=metadata, witness=receipt._theorem_witness())
+    kwargs = dict(request=request, request_digest=request.digest, source_binding=binding,
+                  receipt=receipt, result=result)
+    if changed in {"match", "equivalent-source-alias"}:
+        assert replace(outcome, **kwargs).result.status is ResultStatus.PROVED
+    else:
+        with pytest.raises(LeanKernelError, match="outcome accepted receipt .*request"):
+            replace(outcome, **kwargs)
+    assert len(calls) == 1

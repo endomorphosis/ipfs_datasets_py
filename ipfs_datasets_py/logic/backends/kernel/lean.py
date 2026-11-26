@@ -633,6 +633,16 @@ class LeanKernelOutcome:
             raise LeanKernelError("outcome source binding does not match receipt")
         if not isinstance(self.request, BackendRequest) or self.request.digest != self.request_digest:
             raise LeanKernelError("outcome request does not match the originating backend request")
+        if self.receipt.accepted:
+            source, _, translation = _payload_source(self.request)
+            payload = self.request.payload
+            if (
+                self.receipt.submitted_source != source
+                or self.receipt.translation != translation
+                or self.receipt.theorem_name != payload.get("expected_declaration")
+                or self.receipt.expected_proposition != payload.get("expected_proposition")
+            ):
+                raise LeanKernelError("outcome accepted receipt does not match the source or obligation in its backend request")
         if (
             self.result.backend_id != self.receipt.toolchain.kernel_id
             or self.result.result_id != _result_id(self.result.backend_id, self.request)
@@ -1292,6 +1302,10 @@ def evaluate_lean_kernel_output(
     unapproved = set(axiom_report.axioms) - set(_approved_axioms(approved_axioms))
     if unapproved:
         diagnostics.append("Lean proof depends on unapproved axioms")
+        return False, axiom_report, bound_diagnostics(diagnostics)
+
+    if type(process.returncode) is not int:
+        diagnostics.append("lean produced a non-integer exit status")
         return False, axiom_report, bound_diagnostics(diagnostics)
 
     if process.returncode != 0:
