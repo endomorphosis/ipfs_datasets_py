@@ -33700,6 +33700,118 @@
       "root": "artifact_workspace",
       "scope": "Published reader and test change binding original Lean axiom diagnostics to their prepared source coordinates.",
       "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase1_proof_receipt_usage_and_logic_family_20261126",
+      "closed_software_facts": {
+        "actual_READ3": {
+          "bytes": 8404,
+          "path": "/tmp/Root-P1-receipt-usage-logic-postfreeze-READ3-v517-QLL8r8du/actual-P1-receipt-usage-logic-READ3-v517-closed.json",
+          "sha256": "2915df143ff0e664073fb2c6b16b61e4aec85b3e994d4caccf688bf2e7e5c957"
+        },
+        "actual_Source2_install": {
+          "bytes": 8669,
+          "path": "/tmp/Root-P1-receipt-usage-logic-existing-Source2-v516-wEsKaFoR/actual-P1-receipt-usage-logic-exact2-Source-closed-v516.json",
+          "sha256": "460bea0ed973ab3719874e9b9bb25d6ef1881b20117313dbc5226f7535e4b3d5"
+        },
+        "actual_ordinary_counts": {
+          "duplicates": 0,
+          "errors": 0,
+          "failures": 0,
+          "functions": 14,
+          "passed": 26,
+          "skipped": 0,
+          "tests": 26
+        },
+        "actual_proof_measurements_newly_observed": false,
+        "both_receipt_issuers_bind_exact_attempt_usage": true,
+        "certified_proof_or_execution_bounds": false,
+        "checked_usage_fields": [
+          "elapsed_ms",
+          "steps",
+          "peak_memory_bytes",
+          "output_bytes"
+        ],
+        "code_publication": {
+          "bytes": 19184,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P1-proof-receipt-usage-and-logic-family-exact2-ordinary26-three-FF-publication-v519.json",
+          "sha256": "3f479362e01b75a7ae6472971624b9791d7b8f10ca6357e37c7233b724961778"
+        },
+        "evidence_ordinal": 556,
+        "local_exact_two_freeze": {
+          "bytes": 14421,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P1-proof-receipt-usage-and-logic-family-exact2-local-freeze-v516.json",
+          "sha256": "ef5841c636d7391632e69ee5915d49eacd31f8d9b1dc11a9a557e16d11c6d265"
+        },
+        "model_or_training_credit": false,
+        "new_Lean_or_Native_execution": false,
+        "ordinary26": {
+          "bytes": 20332,
+          "path": "/tmp/Root-P1-receipt-usage-logic-existing-ordinary26-v518-ul1C4TTE/actual-P1-receipt-binding-ordinary26-closed-small-v518.json",
+          "sha256": "1735b45c65d64cf5845157d63e6f4079bafb051bb0202d529757c2c6c7730f47"
+        },
+        "ordinary_cohorts": {
+          "changed_logic_family_cases": 2,
+          "changed_usage_cases": 8,
+          "retained_protocol_cases": 16
+        },
+        "ordinary_raw_JUnit": {
+          "bytes": 4456,
+          "path": "/tmp/Root-P1-receipt-usage-logic-existing-ordinary26-v518-ul1C4TTE/actual-output/phase1-proof-receipt-exact-usage-ordinary26-run-result0-output1.bin",
+          "sha256": "68068df8e1856a05fa6c9e93a7147291b1bb1749375e2d8557fdb66b07e5b4bd"
+        },
+        "owning_test": "tests/unit/logic/ir_core/test_claims_protocols.py",
+        "prior_Guide555": {
+          "bytes": 14353,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-guide555-four-doc-three-FF-publication-small-v515.json",
+          "sha256": "26be013c155ef35f704f54859338a1d857148bd7f4f14b185d5c1f4bc3a6e810"
+        },
+        "private_authored_after": {
+          "failed": 0,
+          "passed": 26
+        },
+        "private_authored_before": {
+          "failed": 10,
+          "passed": 16
+        },
+        "private_candidate": {
+          "bytes": 7499,
+          "path": "/tmp/Root-P1-proof-receipt-exact-usage-private-v01-aOMrmzQj/SEALED-exact2-P1-receipt-usage-and-logic-family.json",
+          "sha256": "38b926cea84752bacfb3fb0e96ca9b83cd694ff95e5c18eb9ad7d753ae0559ec"
+        },
+        "private_same26_green": {
+          "bytes": 4436,
+          "path": "/tmp/Root-P1-proof-receipt-exact-usage-private-v01-aOMrmzQj/combined-green/result.xml",
+          "sha256": "7137fd6e9c4fee31bf17d254048a8b69cd3d12a3345511ab8a15457abc144211"
+        },
+        "private_same26_red": {
+          "bytes": 8827,
+          "path": "/tmp/Root-P1-proof-receipt-exact-usage-private-v01-aOMrmzQj/combined-red/result.xml",
+          "sha256": "dd50f44aa7f551ea1866a06697549c61a2cd7be6f6fbbb48cc044639409cf5fa"
+        },
+        "protocol_owner": "ipfs_datasets_py/logic/ir_core/protocols.py",
+        "related_catalog_component": "kernel-proof-evidence-integrity",
+        "related_task": "LIR-21",
+        "request_logic_family_bound_to_selected_obligation": true,
+        "schema": "Guide556-Phase1-proof-receipt-usage-and-logic-family/v1",
+        "separate_private_cache_consumer_retention": {
+          "bytes": 3364,
+          "path": "/tmp/P1-current-cache-protocol-retention-private-whcdinfv/actual-combined-cache-retention-closeout.json",
+          "sha256": "e1b498329ef5774113eaa2b04c66143118d17bec09f558446381002d1043ea35"
+        },
+        "source_review_or_corpus_admission": false,
+        "task": "LIR-14",
+        "task_status_changed": false
+      },
+      "evidence_ordinal": 556,
+      "id": "phase1-proof-receipt-usage-and-logic-family-evidence556-20261126",
+      "observed_bytes": 4467,
+      "observed_sha256": "594ea8812093b5cda9a5909dc8cac49ad7dec2ecf1642bf6654ceee693f86878",
+      "path": "/tmp/P1-receipt-binding-guide556-existing-composer-INERT-dw2pkypl/one-guide556-Phase1-proof-receipt-usage-and-logic-family-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Published proof and result receipt issuers bind result usage to the exact attempt and request logic family to the selected obligation.",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
     }
   ]
 }

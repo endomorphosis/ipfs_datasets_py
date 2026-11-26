@@ -4495,6 +4495,30 @@
       },
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
       "task": "LIR-14"
+    },
+    "phase1_proof_receipt_usage_and_logic_family_20261126": {
+      "code_publication": {
+        "bytes": 19184,
+        "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P1-proof-receipt-usage-and-logic-family-exact2-ordinary26-three-FF-publication-v519.json",
+        "sha256": "3f479362e01b75a7ae6472971624b9791d7b8f10ca6357e37c7233b724961778"
+      },
+      "evidence_ordinal": 556,
+      "facts": {
+        "bytes": 4467,
+        "path": "/tmp/P1-receipt-binding-guide556-existing-composer-INERT-dw2pkypl/one-guide556-Phase1-proof-receipt-usage-and-logic-family-scoped-facts.json",
+        "sha256": "594ea8812093b5cda9a5909dc8cac49ad7dec2ecf1642bf6654ceee693f86878"
+      },
+      "new_native_or_proof_or_corpus_admission_credit": false,
+      "record_id": "phase1-proof-receipt-usage-and-logic-family-evidence556-20261126",
+      "related_catalog_component": "kernel-proof-evidence-integrity",
+      "related_task": "LIR-21",
+      "software_qualification": {
+        "bytes": 20332,
+        "path": "/tmp/Root-P1-receipt-usage-logic-existing-ordinary26-v518-ul1C4TTE/actual-P1-receipt-binding-ordinary26-closed-small-v518.json",
+        "sha256": "1735b45c65d64cf5845157d63e6f4079bafb051bb0202d529757c2c6c7730f47"
+      },
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
+      "task": "LIR-14"
     }
   },
   "programme_goal_hierarchy": {
