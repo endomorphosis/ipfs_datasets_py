@@ -35144,6 +35144,234 @@
       "root": "artifact_workspace",
       "scope": "Four real temporary DuckDB cases, including the published pending-producer retirement regression.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase2_v4_current_trust_saved_span_ordinary17_20261126",
+      "closed_runtime_facts": {
+        "Source_resource_and_parent_closed": true,
+        "actual_Phase2_exact6_code_publication": {
+          "bytes": 27711,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-V4-current-trust-exact6-ordinary17-three-FF-publication-v577.json",
+          "sha256": "9724466cc453e1c83022eae7d36b54fcc73da77c7419772e37630eb00149357d"
+        },
+        "actual_Phase2_ordinary17_qualification": {
+          "bytes": 13471,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P2-V4-current-trust-saved-span-ordinary17-closed-v576.json",
+          "sha256": "7ac2214d7a670ccbcd12403143eb8d25be102c16668187bf870b8ab6b630563b"
+        },
+        "actual_closed_ordinary_report": {
+          "bytes": 899305,
+          "path": "/tmp/Root-existing-V4-current-trust-ordinary17-v576-namespace-retry-u3i20rw9/actual-output/complete-frozen-local-D-Phase2-V4-current-trust-saved-span-ordinary17-existing-owner-report.json",
+          "sha256": "263b8a91240b0566a17f5ce1f14b167d9af5e389f9769fb47135e310e147be6f"
+        },
+        "actual_counts": {
+          "duplicates": 0,
+          "errors": 0,
+          "failures": 0,
+          "functions": 9,
+          "passed": 17,
+          "skipped": 0,
+          "tests": 17
+        },
+        "actual_raw_JUnit": {
+          "bytes": 3641,
+          "logical_name": "junit.xml",
+          "path": "/tmp/Root-existing-V4-current-trust-ordinary17-v576-namespace-retry-u3i20rw9/actual-output/Phase2-V4-current-trust-saved-span-ordinary17-run-result0-output1.bin",
+          "sha256": "a0e12b0087964e431134100785fa1279c3900ef0180c7efb263aa39d204861a6"
+        },
+        "evidence_ordinal": 567,
+        "exact_current_V4_trust_READ7": {
+          "bytes": 14946,
+          "path": "/tmp/P2-V4-current-trust-exact6-freeze-READ7-INERT-azu5nthx/actual-V4-current-trust-six-test-frozen-READ7-closed-v575.json",
+          "sha256": "2be163e23e0e84221cf4bb3a01c4973043e05854cbfb307f13e7f96535225787"
+        },
+        "exact_local_freeze": {
+          "bytes": 15879,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-V4-current-trust-exact6-local-freeze-v574.json",
+          "sha256": "23daef81eb3149854d9da87f1a35f454d33403f2de73f027321b908eb4ac838c"
+        },
+        "exact_six_published_body_joins": {
+          "ipfs_datasets_py/logic/autoformal/legal_reviewed_norm_admission_v3.py": {
+            "bytes": 34912,
+            "full9": {
+              "st_ctime_ns": "1795715406173534940",
+              "st_dev": "66306",
+              "st_gid": "1000",
+              "st_ino": "70042682",
+              "st_mode": "33204",
+              "st_mtime_ns": "1795715405573970361",
+              "st_nlink": "1",
+              "st_size": "34912",
+              "st_uid": "1000"
+            },
+            "git_mode": "100644",
+            "parent_blob": "9086c3727401385b045b8faa66b9a84ebf7b6dda",
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/ipfs_datasets_py/logic/autoformal/legal_reviewed_norm_admission_v3.py",
+            "sha256": "30f9e1f2554b030241aeb8ec8ffc1f6c98816eee2732c83e59dbf3c0b36de50e",
+            "stage0_and_committed_blob": "66a763ea5d49f4e850100e4dee77e9b35e68b457"
+          },
+          "ipfs_datasets_py/logic/formalization/autoencoder/alignment_relation_mask_handoff.py": {
+            "bytes": 46237,
+            "full9": {
+              "st_ctime_ns": "1795715406726801342",
+              "st_dev": "66306",
+              "st_gid": "1000",
+              "st_ino": "70042683",
+              "st_mode": "33204",
+              "st_mtime_ns": "1795715405577615077",
+              "st_nlink": "1",
+              "st_size": "46237",
+              "st_uid": "1000"
+            },
+            "git_mode": "100644",
+            "parent_blob": "1cebb620d95be59f264dc46ceb88267ca42b815f",
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/ipfs_datasets_py/logic/formalization/autoencoder/alignment_relation_mask_handoff.py",
+            "sha256": "c039572c8a83f8464d9b633b54c569ac170cfcad8f9b7fea55de6ede1c906e01",
+            "stage0_and_committed_blob": "6883f1b2418da72bc910707d2dc690ba1af93d31"
+          },
+          "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_consumer_binding.py": {
+            "bytes": 59952,
+            "full9": {
+              "st_ctime_ns": "1795715407269543312",
+              "st_dev": "66306",
+              "st_gid": "1000",
+              "st_ino": "70042685",
+              "st_mode": "33204",
+              "st_mtime_ns": "1795715405581724308",
+              "st_nlink": "1",
+              "st_size": "59952",
+              "st_uid": "1000"
+            },
+            "git_mode": "100644",
+            "parent_blob": "1e00a32ce03f758dc68a3f5652a935492cacb028",
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_consumer_binding.py",
+            "sha256": "4fa7f523e99879e74c3a333b31ece53b6556360df2b2ce9441c0e2f471d08f20",
+            "stage0_and_committed_blob": "4f28fe460536fe969adbad8e6f8e0c37a0adaa2d"
+          },
+          "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_structured_retrieval.py": {
+            "bytes": 84401,
+            "full9": {
+              "st_ctime_ns": "1795715407813547467",
+              "st_dev": "66306",
+              "st_gid": "1000",
+              "st_ino": "70042686",
+              "st_mode": "33204",
+              "st_mtime_ns": "1795715405585091806",
+              "st_nlink": "1",
+              "st_size": "84401",
+              "st_uid": "1000"
+            },
+            "git_mode": "100644",
+            "parent_blob": "501cf42c0871daabb970b718c2de2ac960ff8c15",
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_structured_retrieval.py",
+            "sha256": "fdcf1fae15f6fe9ec4986097b698d0ea535042f5fc047678b4184b647ef215ea",
+            "stage0_and_committed_blob": "93e2cf5deccd2014cd20c553bab3705e73614a4c"
+          },
+          "tests/unit/logic/formalization/autoencoder/test_alignment_relation_mask_handoff.py": {
+            "bytes": 79013,
+            "full9": {
+              "st_ctime_ns": "1795715408362551660",
+              "st_dev": "66306",
+              "st_gid": "1000",
+              "st_ino": "70042687",
+              "st_mode": "33204",
+              "st_mtime_ns": "1795715405589245597",
+              "st_nlink": "1",
+              "st_size": "79013",
+              "st_uid": "1000"
+            },
+            "git_mode": "100644",
+            "parent_blob": "789cbe06c69cc28c25a1aa2b81b2158fd571e34c",
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/tests/unit/logic/formalization/autoencoder/test_alignment_relation_mask_handoff.py",
+            "sha256": "a7d246b14ed16f92ca31bb19dd934cb326e32a028eabe4cbb62ec0b42335503b",
+            "stage0_and_committed_blob": "fdf9428183d6d60fd4795f92704210f806ae1ef5"
+          },
+          "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_consumer_binding.py": {
+            "bytes": 75797,
+            "full9": {
+              "st_ctime_ns": "1795715408913555869",
+              "st_dev": "66306",
+              "st_gid": "1000",
+              "st_ino": "70042688",
+              "st_mode": "33204",
+              "st_mtime_ns": "1795715405592837753",
+              "st_nlink": "1",
+              "st_size": "75797",
+              "st_uid": "1000"
+            },
+            "git_mode": "100644",
+            "parent_blob": "eabe0950d22c4f2162813e4782db1d2a7d44251e",
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_consumer_binding.py",
+            "sha256": "f35c64ddaac85802ef2d33f65827d722dc836c741de17d4cb1686e315857b46b",
+            "stage0_and_committed_blob": "d4fad9ed5995e5a2db6c7921cfbf45b574f81a62"
+          }
+        },
+        "fixture_only": true,
+        "mask_test": "tests/unit/logic/formalization/autoencoder/test_alignment_relation_mask_handoff.py",
+        "observations": {
+          "current_fictional_endpoint_revocation_vetoes_old_signed_inputs": true,
+          "current_key_and_historical_report_map_excluded_as_independent_pair_evidence": true,
+          "later_same_trust_roots_can_replay": true,
+          "omitted_trust_for_saved_binding_refuses_before_callback": true,
+          "signed_history_retained": true
+        },
+        "ordered_actual_cases": [
+          "tests/unit/logic/formalization/autoencoder/test_alignment_relation_mask_handoff.py::test_reviewed_v4_endpoint_current_trust_preserves_signed_inputs[unchanged]",
+          "tests/unit/logic/formalization/autoencoder/test_alignment_relation_mask_handoff.py::test_reviewed_v4_endpoint_current_trust_preserves_signed_inputs[revoked]",
+          "tests/unit/logic/formalization/autoencoder/test_alignment_relation_mask_handoff.py::test_reviewed_v4_endpoint_current_trust_preserves_signed_inputs[partial]",
+          "tests/unit/logic/formalization/autoencoder/test_alignment_relation_mask_handoff.py::test_reviewed_v4_endpoint_current_trust_preserves_signed_inputs[v3]",
+          "tests/unit/logic/formalization/autoencoder/test_alignment_relation_mask_handoff.py::test_reviewed_v4_both_contexts_replay_current_dependencies_independently",
+          "tests/unit/logic/formalization/autoencoder/test_alignment_relation_mask_handoff.py::test_reviewed_v4_current_trust_key_is_not_independent_pair_process_evidence",
+          "tests/unit/logic/formalization/autoencoder/test_alignment_relation_mask_handoff.py::test_reviewed_v4_historical_endpoint_report_map_remains_excluded_with_current_trust",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_evaluation_artifacts.py::test_reviewed_v4_rich_candidate_replays_actual_signed_masks_before_any_ranking",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_evaluation_artifacts.py::test_reviewed_v4_endpoint_admission_withdrawal_blocks_saved_masks_and_ranking",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_consumer_binding.py::test_reviewed_v3_current_trust_source_and_resealed_ir_mutations_block_old_ready_binding[revoked]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_consumer_binding.py::test_reviewed_replay_cannot_precede_the_binding_assessment[forward-v2]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_consumer_binding.py::test_reviewed_replay_cannot_precede_the_binding_assessment[forward-v3]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_consumer_binding.py::test_reviewed_replay_cannot_precede_the_binding_assessment[rollback-v2]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_consumer_binding.py::test_reviewed_replay_cannot_precede_the_binding_assessment[rollback-v3]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_consumer_binding.py::test_reviewed_replay_cannot_precede_the_binding_assessment[expired-rollback-v2]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_consumer_binding.py::test_reviewed_replay_cannot_precede_the_binding_assessment[expired-rollback-v3]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_consumer_binding.py::test_reviewed_v3_saved_current_trust_binding_refuses_omitted_trust"
+        ],
+        "ordinary_case_cohorts": {
+          "new3": 3,
+          "prior7": 7,
+          "retained_v523_assessment_clock6": 6,
+          "retained_v523_revoked1": 1
+        },
+        "prior_verified_guide566_publication": {
+          "bytes": 14204,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-guide566-four-doc-three-FF-publication-small-v573.json",
+          "sha256": "5ba77f892c1f0985c2eb6ca29fde2735461c24d46bf70c11f05989f7be66eedb"
+        },
+        "proof_legal_semantics_statutory_authentication_model_training_or_corpus_admission": false,
+        "related_catalog_component": "reviewed-train-relation-masks",
+        "related_tasks": [
+          "LIR-03",
+          "LIR-20"
+        ],
+        "relation_mask_owner": "ipfs_datasets_py/logic/formalization/autoencoder/alignment_relation_mask_handoff.py",
+        "saved_span_owner": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_consumer_binding.py",
+        "schema": "Guide567-fictional-V4-current-endpoint-trust-and-saved-span-evidence/v1",
+        "separate_private_fixture_16_pass_and_3_retained_red": {
+          "bytes": 17719,
+          "path": "/tmp/Root-P2-V4-current-trust-saved-span-rebase-v574-7STPXuSw/actual-private-exact-six-trust-comparisons-and-retention-v574.json",
+          "sha256": "36da6b7b335faff7b9ba8700aa8c889faf6f686888b99bc1cc76d6eab3a67272"
+        },
+        "span_test": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_consumer_binding.py",
+        "task": "LIR-17",
+        "task_status_changed": false
+      },
+      "evidence_ordinal": 567,
+      "id": "phase2-v4-current-trust-saved-span-ordinary17-evidence567-20261126",
+      "observed_bytes": 12370,
+      "observed_sha256": "f8de10dca68bce834b22814b0bb38752daeca762d805b64abaa1e4f947eb9ff2",
+      "path": "/tmp/P2-V4-current-trust-guide567-composer-INERT-xp7jHXZJ/one-guide567-fictional-current-endpoint-trust-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Independently selected current trust and saved binding replay with signed fictional V4 endpoints.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }

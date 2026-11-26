@@ -4785,6 +4785,33 @@
       ],
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
       "task": "LIR-15"
+    },
+    "phase2_v4_current_trust_saved_span_ordinary17_20261126": {
+      "actual_Phase2_exact6_code_publication": {
+        "bytes": 27711,
+        "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-V4-current-trust-exact6-ordinary17-three-FF-publication-v577.json",
+        "sha256": "9724466cc453e1c83022eae7d36b54fcc73da77c7419772e37630eb00149357d"
+      },
+      "actual_Phase2_ordinary17_qualification": {
+        "bytes": 13471,
+        "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P2-V4-current-trust-saved-span-ordinary17-closed-v576.json",
+        "sha256": "7ac2214d7a670ccbcd12403143eb8d25be102c16668187bf870b8ab6b630563b"
+      },
+      "evidence_ordinal": 567,
+      "facts": {
+        "bytes": 12370,
+        "path": "/tmp/P2-V4-current-trust-guide567-composer-INERT-xp7jHXZJ/one-guide567-fictional-current-endpoint-trust-scoped-facts.json",
+        "sha256": "f8de10dca68bce834b22814b0bb38752daeca762d805b64abaa1e4f947eb9ff2"
+      },
+      "new_corpus_or_model_qualification": false,
+      "record_id": "phase2-v4-current-trust-saved-span-ordinary17-evidence567-20261126",
+      "related_catalog_component": "reviewed-train-relation-masks",
+      "related_tasks": [
+        "LIR-03",
+        "LIR-20"
+      ],
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
+      "task": "LIR-17"
     }
   },
   "programme_goal_hierarchy": {
