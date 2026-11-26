@@ -31607,6 +31607,84 @@
       "root": "artifact_workspace",
       "scope": "Published candidate inventory envelope correction.",
       "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase8_benchmark_facets_through_compiler_ordinary119_20261126",
+      "closed_software_facts": {
+        "READ8": {
+          "bytes": 15201,
+          "path": "/tmp/Root-Phase8-composed-postfreeze-READ8-v439-efGNu3wY/actual-output/actual-D27-observed-D-root-initializer-Source-READ-v01-small-closeout.json",
+          "sha256": "69b6a2a765658ee88c986c76b9549930cf308e5cc7d21cb9d95ec0bd3a3c15bc"
+        },
+        "Source7": {
+          "bytes": 10115,
+          "path": "/tmp/Root-Phase8-composed-benchmark-existing-Source7-v438-SYsrVV5Q/actual-Phase8-benchmark-facets-exact7-Source-closed-small-v438.json",
+          "sha256": "ff9510947913ee7096ac8a42c792071b0898189462d9e5ed9d9a49f519479ab6"
+        },
+        "actual_ordinary119": {
+          "bytes": 74343,
+          "path": "/tmp/Root-Phase8-existing-composed-ordinary119-v440-chO1n7HY/actual-Phase8-composed-exact7-ordinary119-closed-small-v440.json",
+          "sha256": "92b1ae26b315ffd1b4d0dfd4c614e9d46086b1104c9c112ecde474764856eca6"
+        },
+        "actual_publication": {
+          "bytes": 19770,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase8-benchmark-facets-exact7-ordinary119-three-FF-publication-v440.json",
+          "sha256": "f1765cfd9ac8e253d736916fd939584d064c29131353a5d0791b0fafbe497f55"
+        },
+        "actual_three_compiled_product_owners_and_four_normal_test_rewrites": true,
+        "component": "complete-norm-payload-metrics",
+        "counts": {
+          "duplicates": 0,
+          "errors": 0,
+          "failures": 0,
+          "functions": 58,
+          "passed": 119,
+          "skipped": 0,
+          "tests": 119
+        },
+        "current_code_head": "d8d688db0d1cf0bafd504a42d33e627ddc6c9261",
+        "evidence_ordinal": 539,
+        "initial_Source_stage_refusal": {
+          "bytes": 160941,
+          "path": "/tmp/Root-Phase8-composed-benchmark-existing-Source7-v437-eInHeUcx/actual-output/actual-existing-seven-Python-code-CAS-receipt.json",
+          "sha256": "e7efc9f93098326d9689483ed2a9c2730ce159ab03880631fcd01af806fc7469"
+        },
+        "native_Lean": false,
+        "ordered_selected_population_checked_when_independent_expected_selection_supplied": true,
+        "private_same117_separate": {
+          "bytes": 18065,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/P8-benchmark-facets-through-final-compiler-private-cVjxPbQ5/SEALED-P8-benchmark-facets-through-compiler-exact7-private117.json",
+          "sha256": "497b37cb8a3272e50439f24d059799f9228d3d511574c7ce8e0ea95d0f6df747"
+        },
+        "raw_JUnit": {
+          "bytes": 23765,
+          "path": "/tmp/Root-Phase8-existing-composed-ordinary119-v440-chO1n7HY/actual-output/Phase8-external-validity-through-compiler-ordinary119-run-result0-output1.bin",
+          "sha256": "79b057d574cd01f85adc3f0939804063bbe121dd0770e7cd0b6d2faed35d7492"
+        },
+        "retained_two_CLI_fixtures_passed": true,
+        "schema": "Guide539-Phase8-benchmark-facets-and-gates-ordinary119-verified-evidence/v1",
+        "semantic_metrics_owner": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_semantic_metrics.py",
+        "separate_CLI_child_compile_attestation": false,
+        "serialized_legacy_observations_do_not_define_structure_or_obligation_facets": true,
+        "statutory_or_proof_admission": false,
+        "subcohort_counts": {
+          "existing-CLI-descendants2": 2,
+          "in-process117": 117
+        },
+        "task": "LIR-23",
+        "task_status_changed": false,
+        "training_or_model_qualification": false,
+        "unmeasured_required_semantic_facets_receive_no_credit": true
+      },
+      "evidence_ordinal": 539,
+      "id": "phase8-benchmark-facets-through-compiler-ordinary119-evidence539-20261126",
+      "observed_bytes": 3370,
+      "observed_sha256": "9dcb46e63189826e6a146625ca2d8fbdf5f19a02cbeee11290c353206fa74059",
+      "path": "/tmp/Root-one-guide539-existing-Source4-v441-8nfgbTPs/one-guide539-Phase8-benchmark-facets-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Published benchmark, semantic metrics, external-validity and compiler gate software corrections.",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
     }
   ]
 }

@@ -4053,6 +4053,24 @@
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
       "statutory_or_proof_credit": false,
       "task": "LIR-07"
+    },
+    "phase8_benchmark_facets_through_compiler_ordinary119_20261126": {
+      "evidence_ordinal": 539,
+      "facts": {
+        "bytes": 3370,
+        "path": "/tmp/Root-one-guide539-existing-Source4-v441-8nfgbTPs/one-guide539-Phase8-benchmark-facets-scoped-facts.json",
+        "sha256": "9dcb46e63189826e6a146625ca2d8fbdf5f19a02cbeee11290c353206fa74059"
+      },
+      "ordinary119": {
+        "functions": 58,
+        "in_process": 117,
+        "offline_CLI": 2,
+        "unique_PASS": 119
+      },
+      "record_id": "phase8-benchmark-facets-through-compiler-ordinary119-evidence539-20261126",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
+      "statutory_model_or_proof_credit": false,
+      "task": "LIR-23"
     }
   },
   "programme_goal_hierarchy": {
