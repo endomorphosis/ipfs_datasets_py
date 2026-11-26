@@ -34211,6 +34211,161 @@
       "root": "artifact_workspace",
       "scope": "Published V4 release coordinator attaches exact retained type provenance to declared eligibility with unchanged views and pending proof.",
       "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase2_retained_type_eligibility_cli_save_reload_20261126",
+      "closed_software_facts": {
+        "actual_READ3": {
+          "bytes": 8597,
+          "path": "/tmp/Root-Phase2-retained-type-CLI-postfreeze-existing-READ3-v537-a94157el/actual-Phase2-retained-type-CLI-READ3-v537-closed.json",
+          "sha256": "ad65581f7d8a3910434ec18ff1e635d2990e74a4841845b6a98ab79a20dc8494"
+        },
+        "actual_Source2_install": {
+          "bytes": 8738,
+          "path": "/tmp/Root-Phase2-retained-type-CLI-existing-Source2-v536-xxbr4yv7/actual-Phase2-retained-type-CLI-exact2-Source-closed-v536.json",
+          "sha256": "b653fab3a588a49f9c5c8cc6206ec51ef792a26d5730b0a01069e2637401cb4e"
+        },
+        "actual_ordinary_counts": {
+          "duplicates": 0,
+          "errors": 0,
+          "failures": 0,
+          "functions": 16,
+          "passed": 34,
+          "skipped": 0,
+          "tests": 34
+        },
+        "checked_Lean_declared_eligible": false,
+        "code_publication": {
+          "bytes": 21589,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-retained-type-CLI-save-reload-exact2-ordinary34-three-FF-publication-v539.json",
+          "sha256": "e0968bc65aa3b31c7f2d5e0de04f1207f0ad56b034c14815bb66a4d0a149959e"
+        },
+        "evaluation_gold_mask": 0,
+        "evidence_ordinal": 560,
+        "exact_candidate_view_receipts": true,
+        "exact_final_retained_cli_replay": {
+          "bytes": 2482,
+          "path": "/tmp/Root-P2-retained-type-eligibility-CLI-private-v01-u49txfw8/final/stdout.json",
+          "sha256": "8419dc52d3b9aae54d7f22ffde46100f5ed9b2ca2bd03c09d207c9bbb857b64e"
+        },
+        "exact_saved_and_reloaded_handoff": {
+          "bytes": 14585,
+          "path": "/tmp/Root-P2-retained-type-eligibility-CLI-private-v01-u49txfw8/final/handoff.json",
+          "sha256": "cb06285f6f2edfc1d98ea912c0e38b4c7a2f17c4ba0f82d4ce6c1d2b4cdca704"
+        },
+        "fixture_only": true,
+        "fresh_compiler_Native_or_model_execution": false,
+        "local_exact_two_freeze": {
+          "bytes": 14461,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-retained-type-eligibility-CLI-exact2-local-freeze-v536.json",
+          "sha256": "4ab77e092d73050c7ef9a4404b0e70dde4c1ff1b284e30c0c86416140c3a6d94"
+        },
+        "ordinary34": {
+          "bytes": 28620,
+          "path": "/tmp/P2-retained-type-CLI-ordinary34-v538-static-handoff-kU3niiJ0/actual-P2-retained-type-eligibility-save-reload-ordinary34-closed-small-v538.json",
+          "sha256": "a72669b58253989d9898cd1da288429756b53b7282c1cdf2507f7dd98f72739b"
+        },
+        "ordinary_cohorts": {
+          "retained": 25,
+          "type_cli_new": 9
+        },
+        "ordinary_raw_JUnit": {
+          "bytes": 6263,
+          "path": "/tmp/P2-retained-type-CLI-ordinary34-v538-static-handoff-kU3niiJ0/actual-output/corpus-release-public-v3-v4-retained-type-save-reload-ordinary34-run-result0-output1.bin",
+          "sha256": "f9552b3788bdc2ffa369dfc6c4f85271f4ae96b2afa92391edf0174bb0659464"
+        },
+        "original_v534_retained_handoff": {
+          "bytes": 14585,
+          "path": "/tmp/Root-P2-retained-type-eligibility-private-v01-kRBf6Uqt/candidate/actual-retained-type-eligibility-handoff.json",
+          "sha256": "cb06285f6f2edfc1d98ea912c0e38b4c7a2f17c4ba0f82d4ce6c1d2b4cdca704"
+        },
+        "owning_test": "tests/unit/logic/autoformal/test_corpus_release_cli.py",
+        "prior_Guide559": {
+          "bytes": 15966,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-guide559-four-doc-three-FF-publication-small-v535.json",
+          "sha256": "5e64fd8bcbafcd19243bc40977b48f51266b387627554c7e05cc7c6e66e44ec2"
+        },
+        "prior_actual_ordinary25": {
+          "bytes": 26785,
+          "path": "/tmp/P2-retained-type-eligibility-v533-static-handoff-9pJ0XHO5/actual-P2-retained-type-eligibility-ordinary25-closed-small-v533.json",
+          "sha256": "3b45684e938658952d9f572a12fd1a30509683fca73e4d35eef217739a78a8b7"
+        },
+        "prior_coordinator_publication": {
+          "bytes": 20781,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-retained-type-eligibility-exact2-ordinary25-three-FF-publication-v534.json",
+          "sha256": "57bf109793203c16125d8f6e1d947e4d5d33cae4b5e945ea80f75811a7a49cde"
+        },
+        "private_before": {
+          "missing_API_failures": 9,
+          "passed": 1
+        },
+        "private_candidate": {
+          "bytes": 7412,
+          "path": "/tmp/Root-P2-retained-type-eligibility-CLI-private-v01-u49txfw8/SEALED-P2-retained-type-CLI-save-reload-exact2.json",
+          "sha256": "83fb1c0ab944e5104571ca60c621cb9b564a281540c97fc19c9851045d721b0c"
+        },
+        "private_final": {
+          "failed": 0,
+          "passed": 10
+        },
+        "private_first_candidate": {
+          "failed_overwrite_parent_metadata": 1,
+          "passed": 9
+        },
+        "private_same10_GREEN": {
+          "bytes": 1483,
+          "path": "/tmp/Root-P2-retained-type-eligibility-CLI-private-v01-u49txfw8/authored-green/result.xml",
+          "sha256": "cb5f529460597e29390a191d732f6dccf275f7820796d413b50a6ed0cdd4f158"
+        },
+        "private_same10_first_candidate": {
+          "bytes": 4689,
+          "path": "/tmp/Root-P2-retained-type-eligibility-CLI-private-v01-u49txfw8/authored-first-candidate/result.xml",
+          "sha256": "2133ce10656bee27d73d1b61d0e0f67e98a16f619d9afe2a36fdbf530e180d45"
+        },
+        "private_same10_missing_API_baseline": {
+          "bytes": 18776,
+          "path": "/tmp/Root-P2-retained-type-eligibility-CLI-private-v01-u49txfw8/authored-red/result.xml",
+          "sha256": "f72d957685a12271dff2ff847e1a279a6144c85ef2ac76c93f61dfdba0b780fb"
+        },
+        "proof_receipt_or_legal_review_or_corpus_admission": false,
+        "proof_status": "pending",
+        "refusals": {
+          "changed_bytes": "saved handoff differs from expected SHA256",
+          "linked_saved": "[Errno 40] Too many levels of symbolic links: 'symlink.json'",
+          "overwrite": "retained eligibility output already exists; overwrite refused",
+          "repinned_changed_bytes": "saved handoff differs from the exact retained eligibility replay",
+          "sibling_unit": "retained type capture belongs to a different reviewed unit",
+          "wrong_graph": "retained type capture belongs to a different reviewed graph"
+        },
+        "related_catalog_component": "legal-release-coordinator",
+        "related_tasks": [
+          "LIR-21"
+        ],
+        "release_CLI": "scripts/ops/legal_ir/validate_uscode_corpus_release.py",
+        "retained_cli_baseline": {
+          "bytes": 588,
+          "path": "/tmp/Root-P2-retained-type-eligibility-CLI-private-v01-u49txfw8/baseline/stdout.json",
+          "sha256": "d736810f7de32241263f2c37ae1222e36a49a1224154b0f4208ee64d708f93ed"
+        },
+        "schema": "Guide560-Phase2-retained-type-eligibility-CLI-save-reload/v1",
+        "separate_private_concurrency_and_rollback": {
+          "bytes": 245,
+          "path": "/tmp/Root-P2-retained-type-eligibility-CLI-private-v01-u49txfw8/output-edges/stdout.json",
+          "sha256": "dfcd15292c1848456a68a58870136dc85355a19b42567f30090e2aa70b3b3a9e"
+        },
+        "task": "LIR-14",
+        "task_status_changed": false,
+        "training_mask": 0
+      },
+      "evidence_ordinal": 560,
+      "id": "phase2-retained-type-eligibility-cli-save-reload-evidence560-20261126",
+      "observed_bytes": 6880,
+      "observed_sha256": "884eb11b1abad8850b2db3e06a4ff48474c0abb792dcf851fe0a9c4da9d21e92",
+      "path": "/tmp/P2-retained-type-eligibility-CLI-guide560-existing-composer-INERT-_svx9s1e/one-guide560-Phase2-retained-type-eligibility-CLI-save-reload-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Published release CLI saves and reloads byte-exact retained type eligibility under independently selected input pins.",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
     }
   ]
 }
