@@ -4838,6 +4838,32 @@
       ],
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
       "task": "LIR-14"
+    },
+    "phase2_fixed_fictional_fol_native_20261126": {
+      "actual_v586_fixed_fictional_native_observation": {
+        "bytes": 15695,
+        "path": "/tmp/Root-physical-V4-fixed-fictional-premise-existing-R5-v586-6jhv9t1t/actual-fixed-fictional-physical-whole-norm-R5-closed.json",
+        "sha256": "730e42b0085e5b6cae1963d8c881ffa039c64755eb5d63e359c6fc970e1670df"
+      },
+      "evidence_ordinal": 569,
+      "facts": {
+        "bytes": 4208,
+        "path": "/tmp/P2-fixed-fictional-native-guide569-existing-composer-INERT-37ctedia/one-guide569-fixed-fictional-Native-scoped-facts.json",
+        "sha256": "03e48cb425fb24be8770f5c37e2b7c0657adbace6a15706400aacd987fe590f1"
+      },
+      "new_corpus_or_model_qualification": false,
+      "prior_v585_compiled_but_propext_policy_refusal": {
+        "bytes": 1703,
+        "path": "/tmp/Root-physical-V4-fixed-fictional-premise-existing-R5-v585-js8354_9/actual-v585-axiom-policy-refusal-closed.json",
+        "sha256": "aa67193e178df13978c319d425826e637c777bf0febeac3845f7bb691f3c7220"
+      },
+      "record_id": "phase2-fixed-fictional-fol-native-evidence569-20261126",
+      "related_catalog_component": "definition-use-native",
+      "related_tasks": [
+        "LIR-21"
+      ],
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
+      "task": "LIR-14"
     }
   },
   "programme_goal_hierarchy": {

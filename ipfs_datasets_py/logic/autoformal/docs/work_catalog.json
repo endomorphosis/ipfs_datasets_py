@@ -35528,6 +35528,102 @@
       "root": "artifact_workspace",
       "scope": "Opt-in independent current trust replay for the original signed fictional physical V4 review, with proof still pending.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase2_fixed_fictional_fol_native_20261126",
+      "closed_runtime_facts": {
+        "Source_resource_and_parent_closed": true,
+        "actual_v586_fixed_fictional_native_observation": {
+          "bytes": 15695,
+          "path": "/tmp/Root-physical-V4-fixed-fictional-premise-existing-R5-v586-6jhv9t1t/actual-fixed-fictional-physical-whole-norm-R5-closed.json",
+          "sha256": "730e42b0085e5b6cae1963d8c881ffa039c64755eb5d63e359c6fc970e1670df"
+        },
+        "actual_v586_full_report": {
+          "bytes": 21374540,
+          "path": "/tmp/Root-physical-V4-fixed-fictional-premise-existing-R5-v586-6jhv9t1t/actual-output/complete-direct-current-R5-physical-native-report.json",
+          "sha256": "97b0fce97929ff964aa741ea7c3125e39188e3cf7b15b00fecdbc141e87b55e0"
+        },
+        "actual_v586_worker_summary": {
+          "bytes": 52068,
+          "path": "/tmp/Root-physical-V4-fixed-fictional-premise-existing-R5-v586-6jhv9t1t/actual-output/run.output.2.bin",
+          "sha256": "a4d717b5b82c9bcdb33189e136bd04fd8c4c705dbb33f3bcc3e3452c66003c55"
+        },
+        "code_change_or_publication_for_this_observation": false,
+        "derived_project_and_declarations": {
+          "bytes": 13121,
+          "path": "/tmp/Root-physical-V4-fixed-fictional-premise-existing-R5-v586-6jhv9t1t/exact-input-and-theorem-map.json",
+          "sha256": "c882f565524b55c399a5861f36d45babaacff086f2c26db7c0ca6611ffa1ca88"
+        },
+        "evidence_ordinal": 569,
+        "exact_aggregate_peak_memory_bytes": null,
+        "exact_current_Guide568_index_READ1": {
+          "bytes": 3541,
+          "path": "/tmp/Root-physical-V4-fixed-fictional-premise-existing-R5-v586-6jhv9t1t/actual-Guide568-index-READ1-v584-closed.json",
+          "sha256": "db7e1ef03259178eb93dbfd625e77b50848d2e639a121755480cc6a6ba89db7a"
+        },
+        "exact_fixture_scope": {
+          "compiled_modules": 11,
+          "exact_returned_source_bodies": 40,
+          "fixed_Nat_time": 0,
+          "logic_family": "FOL",
+          "officer_objects": 2,
+          "original_theorems_empty_axioms": 30,
+          "retained_olean_inputs": 0,
+          "supplemental_theorems_empty_axioms": 4,
+          "units": 1
+        },
+        "fixture_only": true,
+        "full_v586_Source_only_precharge": {
+          "bytes": 1839,
+          "path": "/tmp/Root-physical-V4-fixed-fictional-premise-existing-R5-v586-6jhv9t1t/Source-only-R5-fixed-fictional-premise-full-retained-v586.json",
+          "sha256": "9ba7a9a11e1365cee171a51edffc88f4aca1b8a62d7575c8c46c78ef2003efd7"
+        },
+        "native_owner": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_native_v2.py",
+        "observations": {
+          "changed_table_refutes_same_source_premise": true,
+          "existing_conditional_theorem_applied_to_fixed_interpretation": true,
+          "nontrivial_frozen_table": true,
+          "original_hypotheses_remain_quantified": true,
+          "original_v585_strict_axiom_policy_kept": true,
+          "source_definition_holds_at_fixed_time": true
+        },
+        "ordinary_pytest_count": 0,
+        "original_v563_request_context": {
+          "bytes": 17614,
+          "path": "/tmp/Root-Phase2-V4-checked-native-complete-archive-existing-R5-v563-dPdI5ec9/actual-R5-physical-v4-checked-release-retained-request-and-paired-cache-v563.json",
+          "sha256": "102b023c93f2312ffa07f45a07155c379b471a13bc694c7770ba7aaed7f516fc"
+        },
+        "prior_v585_compiled_but_propext_policy_refusal": {
+          "bytes": 1703,
+          "path": "/tmp/Root-physical-V4-fixed-fictional-premise-existing-R5-v585-js8354_9/actual-v585-axiom-policy-refusal-closed.json",
+          "sha256": "aa67193e178df13978c319d425826e637c777bf0febeac3845f7bb691f3c7220"
+        },
+        "prior_verified_guide568_publication": {
+          "bytes": 14574,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-guide568-four-doc-three-FF-publication-small-v583.json",
+          "sha256": "2dc9a82bea913c832fa17c8288d035cb9712267ec1894921604fa930b64adc68"
+        },
+        "related_catalog_component": "definition-use-native",
+        "related_tasks": [
+          "LIR-21"
+        ],
+        "schema": "Guide569-fixed-fictional-FOL-Native-evidence/v1",
+        "selected_original_declaration": "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_1_whole_norm_definition_expansion",
+        "task": "LIR-14",
+        "task_status_changed": false,
+        "typed_ProofReceipt_or_statutory_or_corpus_admission_or_model_quality": false,
+        "verified_steps": null,
+        "whole_project_request_bounded": false
+      },
+      "evidence_ordinal": 569,
+      "id": "phase2-fixed-fictional-fol-native-evidence569-20261126",
+      "observed_bytes": 4208,
+      "observed_sha256": "03e48cb425fb24be8770f5c37e2b7c0657adbace6a15706400aacd987fe590f1",
+      "path": "/tmp/P2-fixed-fictional-native-guide569-existing-composer-INERT-37ctedia/one-guide569-fixed-fictional-Native-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "One fixed fictional FOL unit in Lean at time zero, with original conditional theorem, exact axiom diagnostics, and changed-source-premise negative control.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }
