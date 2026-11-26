@@ -4546,6 +4546,32 @@
       },
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
       "task": "LIR-06"
+    },
+    "phase2_checked_release_retained_type_capture_provenance_20261126": {
+      "code_publication": {
+        "bytes": 19884,
+        "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-retained-type-checked-release-provenance-exact2-ordinary32-three-FF-publication-v529.json",
+        "sha256": "1c7fb3e4eb25c83bac3a8d4b548df434ff1659db4eeb9b7534d2b98131c35053"
+      },
+      "evidence_ordinal": 558,
+      "facts": {
+        "bytes": 6022,
+        "path": "/tmp/P2-retained-native-type-provenance-guide558-existing-composer-INERT-kn5unrq5/one-guide558-Phase2-retained-type-capture-checked-release-provenance-scoped-facts.json",
+        "sha256": "13747bed2a8c4238dcd10f36937ab1a7551d7a135ab6ba69a5407a5fdc60ead0"
+      },
+      "new_legal_or_proof_or_training_admission": false,
+      "record_id": "phase2-checked-release-retained-type-capture-provenance-evidence558-20261126",
+      "related_catalog_component": "definition-use-native",
+      "related_tasks": [
+        "LIR-21"
+      ],
+      "software_qualification": {
+        "bytes": 30485,
+        "path": "/tmp/P2-checked-release-type-capture-ordinary32-v528-handoff-INERT-hOXWnz9j/actual-P2-checked-release-type-capture-ordinary32-closed-small-v528.json",
+        "sha256": "1ac76fa857414c6914a9788ef9d646562cdea859e43e0f5de6d682ae876b40c6"
+      },
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
+      "task": "LIR-14"
     }
   },
   "programme_goal_hierarchy": {

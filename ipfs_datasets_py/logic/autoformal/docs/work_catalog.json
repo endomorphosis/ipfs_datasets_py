@@ -33921,6 +33921,141 @@
       "root": "artifact_workspace",
       "scope": "Published reviewed V2 and V3 source-span consumers reject a replay assessment earlier than the binding assessment.",
       "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase2_checked_release_retained_type_capture_provenance_20261126",
+      "closed_software_facts": {
+        "actual_READ3": {
+          "bytes": 8940,
+          "path": "/tmp/Root-Phase2-type-provenance-postfreeze-existing-READ3-v527-0h8_q4yl/actual-Phase2-type-provenance-READ3-v527-closed.json",
+          "sha256": "ce2b92e325ca8eb0f58fbadc75dbbc8f6b67aa01a951935a392ee033a1bf6efa"
+        },
+        "actual_Source2_install": {
+          "bytes": 9133,
+          "path": "/tmp/Root-Phase2-type-provenance-existing-Source2-v526-67qp8o12/actual-Phase2-type-provenance-exact2-Source-closed-v526.json",
+          "sha256": "88ff488b9febe3bc0b900312e45cf2bc8b88594679f46626a61f6c48d8b1d3d9"
+        },
+        "actual_ordinary_counts": {
+          "duplicates": 0,
+          "errors": 0,
+          "failures": 0,
+          "functions": 5,
+          "passed": 32,
+          "skipped": 0,
+          "tests": 32
+        },
+        "checked_under_explicit_hypotheses": true,
+        "code_publication": {
+          "bytes": 19884,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-retained-type-checked-release-provenance-exact2-ordinary32-three-FF-publication-v529.json",
+          "sha256": "1c7fb3e4eb25c83bac3a8d4b548df434ff1659db4eeb9b7534d2b98131c35053"
+        },
+        "evaluation_gold_mask": 0,
+        "evidence_ordinal": 558,
+        "exact_unmodified_v508_type_sidecar": {
+          "bytes": 12915,
+          "path": "/tmp/Root-Phase2-V4-type-capture-current-v504-v508-PUYIfU3w/actual-physical-whole-norm-closed-type-checks-v508.json",
+          "sha256": "3cf0a96c785f038389cb87c20b75f084a69fa15e122dc049ab79bfbe768aacf1"
+        },
+        "fixture_only": true,
+        "local_exact_two_freeze": {
+          "bytes": 14624,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-type-provenance-exact2-local-freeze-v526.json",
+          "sha256": "42b9ab71e6bd73e70922024e47d14c2fc31bcf6e99bcee6f2e000bbff925f5d9"
+        },
+        "new_compiler_or_Native_or_model_execution": false,
+        "ordinary32": {
+          "bytes": 30485,
+          "path": "/tmp/P2-checked-release-type-capture-ordinary32-v528-handoff-INERT-hOXWnz9j/actual-P2-checked-release-type-capture-ordinary32-closed-small-v528.json",
+          "sha256": "1ac76fa857414c6914a9788ef9d646562cdea859e43e0f5de6d682ae876b40c6"
+        },
+        "ordinary_cohorts": {
+          "retained": 15,
+          "type_provenance_new": 17
+        },
+        "ordinary_raw_JUnit": {
+          "bytes": 7328,
+          "path": "/tmp/P2-checked-release-type-capture-ordinary32-v528-handoff-INERT-hOXWnz9j/actual-output/phase2-checked-release-type-capture-ordinary32-run-result0-output1.bin",
+          "sha256": "3cbe0066c4939a8d8c5a8ea2eae61043b7989f6a1a9ad46e6ce835818ed82857"
+        },
+        "original_v504_checked_fictional_release": {
+          "bytes": 13849,
+          "path": "/tmp/Root-Phase2-V4-checked-native-existing-R5-v504-Qe09yc6x/actual-original-R5-physical-v4-current-review-checked-native-join-v504.json",
+          "sha256": "72653ffbd1973b2a30f650f4da0856ca9897a1d2b0f1cf251f71f9425dceab18"
+        },
+        "original_v508_closed_type_capture": {
+          "bytes": 6786,
+          "path": "/tmp/Root-Phase2-V4-type-capture-current-v504-v508-PUYIfU3w/actual-physical-whole-norm-native-elaboration-v508-closed.json",
+          "sha256": "3d9e61ca177ab00a131a3b890b4f0e4d9c5814eb1b88836eb6ed75ab8a435308"
+        },
+        "owning_test": "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py",
+        "premise_remains_quantified": true,
+        "prior_Guide557": {
+          "bytes": 13816,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-guide557-four-doc-three-FF-publication-small-v525.json",
+          "sha256": "efb01142a7529c139a39ce394dcfb13cd8d3885b969fdc90e58ffb47bbdf2d2e"
+        },
+        "private_authored_after": {
+          "failed": 0,
+          "passed": 32
+        },
+        "private_authored_before": {
+          "failed": 17,
+          "passed": 15
+        },
+        "private_candidate": {
+          "bytes": 10871,
+          "path": "/tmp/Root-P2-checked-release-native-type-provenance-private-v01-AqoZAR3C/SEALED-P2-retained-type-checked-release-provenance-exact2.json",
+          "sha256": "224da488f3a8aad11f177f42350552edface7590e2283b860f3bea122988e3de"
+        },
+        "private_same32_GREEN": {
+          "bytes": 4492,
+          "path": "/tmp/Root-P2-checked-release-native-type-provenance-private-v01-AqoZAR3C/authored-green/result.xml",
+          "sha256": "8488d85344922c064c582b3e905610f44c2003846d2c05961377305b312fe126"
+        },
+        "private_same32_RED": {
+          "bytes": 70927,
+          "path": "/tmp/Root-P2-checked-release-native-type-provenance-private-v01-AqoZAR3C/authored-red/result.xml",
+          "sha256": "32dcd0bcd6a5b2d39991ae216184f2970de476779e1b7f6ac9d53e7744df6a49"
+        },
+        "proof_or_model_or_training_credit": false,
+        "proof_receipt_or_source_review_or_corpus_admission": false,
+        "related_catalog_component": "definition-use-native",
+        "related_tasks": [
+          "LIR-21"
+        ],
+        "retained_baseline": {
+          "bytes": 451,
+          "path": "/tmp/Root-P2-checked-release-native-type-provenance-private-v01-AqoZAR3C/baseline/stdout.json",
+          "sha256": "e98a94934fb46fc8b75323fa42281b07885c9f29b4153cc123f33837daf0ff52"
+        },
+        "retained_provenance_record": {
+          "bytes": 4199,
+          "path": "/tmp/Root-P2-checked-release-native-type-provenance-private-v01-AqoZAR3C/candidate/actual-bound-closed-type-provenance.json",
+          "sha256": "6d77377f11351d90d0f82595cc21b3c8a6c335142b3148685b9d3c8f89ece087"
+        },
+        "retained_provenance_record_cid": "baguqeeram6jcsi2jwdev3omdv7njiehxkoc2cf7vf5ndybxcohitanriiufq",
+        "retained_replay_with_exact_refusals": {
+          "bytes": 2765,
+          "path": "/tmp/Root-P2-checked-release-native-type-provenance-private-v01-AqoZAR3C/candidate/stdout.json",
+          "sha256": "7f27958a63e802ea44b2dd29fb7d6fe740ef0658122748a76b34a05c02071a49"
+        },
+        "retained_type_reader": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_elaboration_native_v2.py",
+        "schema": "Guide558-Phase2-retained-type-capture-checked-release-provenance/v1",
+        "separate_v493_valid_standalone_but_refused_under_v504": true,
+        "task": "LIR-14",
+        "task_status_changed": false,
+        "training_mask": 0
+      },
+      "evidence_ordinal": 558,
+      "id": "phase2-checked-release-retained-type-capture-provenance-evidence558-20261126",
+      "observed_bytes": 6022,
+      "observed_sha256": "13747bed2a8c4238dcd10f36937ab1a7551d7a135ab6ba69a5407a5fdc60ead0",
+      "path": "/tmp/P2-retained-native-type-provenance-guide558-existing-composer-INERT-kn5unrq5/one-guide558-Phase2-retained-type-capture-checked-release-provenance-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Published retained physical type-capture reader binds closed types to the independently pinned signed fictional V4 checked release and planned theorem.",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
     }
   ]
 }
