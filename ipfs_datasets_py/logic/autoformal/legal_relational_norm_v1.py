@@ -936,7 +936,8 @@ def _classify_relational(codec, payload, payload_raw, payload_text, payload_sha,
     _walk_typed(expression["root"], constructors, binders, names)
     roles = payload.get("argument_roles")
     retained_roles = _json_copy(roles) if type(roles) is list else None
-    ast_sha = hashlib.sha256(_wire(expression, MAX_REQUEST_BYTES)).hexdigest()
+    # The inventory retains candidates outside the selected codec's limits.
+    ast_sha = hashlib.sha256(_wire(expression, INTERFACE_MAX_BYTES)).hexdigest()
     digest = expression.get("content_digest") if type(expression.get("content_digest")) is str else None
     if any(_reserved_identifier(name) for name in names):
         return _interface_record(candidate_id, codec, "ambiguous", "reserved_identifier",
@@ -973,7 +974,7 @@ def _classify_native(payload, payload_raw, payload_text, payload_sha, candidate_
     _need(type(ast_value) is dict, "complete candidate native AST required")
     constructors, binders = [], []
     _walk_native(ast_value, constructors, binders)
-    ast_sha = hashlib.sha256(_wire(ast_value, native.MAX_RECORD_BYTES)).hexdigest()
+    ast_sha = hashlib.sha256(_wire(ast_value, INTERFACE_MAX_BYTES)).hexdigest()
     if _native_formula_ast_conflict(payload):
         return _interface_record(candidate_id, "native_unary_preservation", "ambiguous",
             "formula_ast_conflict", payload_text, payload_sha, ast_sha, "native_ast", None,

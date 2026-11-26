@@ -1483,3 +1483,70 @@ def test_mixed_cap_permission_counts_each_event_time_pair(mixed_retained_reports
 
     assert check(local_members) == [True, True]
     assert check(overflow) == [False, True]
+
+
+@pytest.mark.parametrize("codec", ["mixed_relational", "native_unary_preservation"])
+def test_candidate_inventory_retains_candidate_above_its_codec_limit(codec):
+    from dataclasses import replace
+    from ipfs_datasets_py.logic.autoformal import legal_native_ast_preservation as native
+
+    small = mixed_member_request()
+    positive = interface_row("authored:small", "mixed_relational", small)
+    _, positive_report = interface_prepare([positive])
+    assert positive_report["candidate_records"][0]["disposition"] == "representable"
+
+    if codec == "mixed_relational":
+        original = ast.TypedExpression.from_dict(small["expression"])
+        obj, event, time = (signatures.LogicSort(name) for name in ("Object", "EventFrame", "TimeFrame"))
+        predicates = [
+            ast.mk_predicate(f"fixture:event:{index}:claim", "Member", [
+                ast.mk_variable(f"fixture:event:{index}:actor", "actor", obj),
+                ast.mk_variable(f"fixture:event:{index}:event", "event", event),
+                ast.mk_variable(f"fixture:event:{index}:moment", "moment", time),
+            ])
+            for index in range(650)
+        ]
+        root = ast.mk_and("fixture:event:all", *predicates)
+        for name, sort in (("moment", time), ("event", event), ("actor", obj)):
+            root = ast.mk_forall(f"fixture:event:bind:{name}", [ast.Binder(name, sort)], root)
+        expression = replace(original, root=root, content_digest="").to_dict()
+        assert ast.TypedExpression.from_dict(expression).to_dict() == expression
+        assert len(wire(expression)) > bridge.MAX_REQUEST_BYTES
+        payload = dict(small, expression=expression)
+        roles, toolchain = small["argument_roles"], None
+    else:
+        variable = {"node_type": "Variable", "name": "Bound" + "Name" * 30, "sort": None}
+        predicate = {"node_type": "Predicate", "name": "Declaration" + "Name" * 29,
+                     "arguments": [variable]}
+        layer = [predicate] * 2580
+        while len(layer) > 1:
+            layer = [
+                {"node_type": "BinaryFormula", "operator": {"enum": "LogicOperator", "value": "∧"},
+                 "left": layer[index], "right": layer[index + 1]}
+                if index + 1 < len(layer) else layer[index]
+                for index in range(0, len(layer), 2)
+            ]
+        expression = {"node_type": "QuantifiedFormula", "quantifier": {"enum": "Quantifier", "value": "∀"},
+                      "variable": variable, "formula": layer[0]}
+        assert len(wire(expression)) > native.MAX_RECORD_BYTES
+        payload = {"schema": "legal-native-family-route/v1", "family": "fol", "native_ast": expression}
+        roles, toolchain = None, NATIVE_TOOLCHAIN
+
+    offered = interface_row("authored:above-codec-limit", codec, payload, toolchain)
+    raw, report = interface_prepare([positive, offered])
+    assert len(raw) < bridge.INTERFACE_MAX_BYTES
+    retained, unsupported = report["candidate_records"]
+    assert retained == positive_report["candidate_records"][0]
+    assert unsupported["candidate_id"] == offered["candidate_id"]
+    assert unsupported["disposition"] == "unsupported"
+    assert unsupported["reason"] == "qualified_codec_refuses"
+    assert unsupported["payload_raw_utf8"] == offered["payload_raw_utf8"]
+    assert unsupported["payload_sha256"] == offered["payload_sha256"]
+    assert unsupported["candidate_ast_sha256"] == hashlib.sha256(wire(expression)).hexdigest()
+    assert unsupported["argument_roles"] == roles
+    assert unsupported["replacement_ast"] is None and unsupported["codec_projection_sha256"] is None
+    assert not any(unsupported[flag] for flag in ("legal_acceptance", "admitted", "formalized"))
+    assert bridge.validate_candidate_ir_interface_v1(
+        report, raw, expected_request_sha256=hashlib.sha256(raw).hexdigest(),
+        expected_report_sha256=bridge.candidate_ir_interface_sha256(report),
+    ) == report
