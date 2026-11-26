@@ -31840,6 +31840,80 @@
       "root": "artifact_workspace",
       "scope": "Published software fixture evidence for civil-deadline statement attachment in the existing round-trip scorer.",
       "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase1_lean_request_binding_integer_exit_status_ordinary81_20261126",
+      "closed_software_facts": {
+        "READ3": {
+          "bytes": 7626,
+          "path": "/tmp/Root-P1-combined-Lean-exact-postfreeze-READ3-v452-cgizdq_t/actual-output/actual-D27-observed-D-root-initializer-Source-READ-v01-small-closeout.json",
+          "sha256": "4bb67ba3cde3caa5c73451c1a36dc78d1ab7713909177f66035c6ba865df3eaf"
+        },
+        "Source2": {
+          "bytes": 10161,
+          "path": "/tmp/Root-P1-combined-request-returncode-existing-Source2-v451-tf0jgxhx/actual-P1-combined-request-returncode-exact2-Source-closed-small-v451.json",
+          "sha256": "16833210a264d08bfa3f5d1334ef6f9bd35cdf8b321c56afd3a299dd3cd84c23"
+        },
+        "accepted_receipt_bound_to_request_source_translation_theorem_declaration_and_expected_proposition": true,
+        "actual_installed_Lean_invoked": false,
+        "actual_ordinary81": {
+          "bytes": 18416,
+          "path": "/tmp/Root-P1-combined-Lean-ordinary81-v453-ft9ky5rw/actual-P1-combined-Lean-ordinary81-qualified-Source-closed-small-v453.json",
+          "sha256": "708b24e08437dea2a6f910d32415328f2aa53fde7f41dba5c9e881dee81ed7ce"
+        },
+        "actual_ordinary_report": {
+          "bytes": 2006329,
+          "path": "/tmp/Root-P1-combined-Lean-ordinary81-v453-ft9ky5rw/actual-output/complete-frozen-local-D-phase1-lean-request-81-existing-owner-report.json",
+          "sha256": "e5d457bbb023982f97b43f8ac40463d3653bd0e6b2b380fa0392b0aea2751fa1"
+        },
+        "actual_publication": {
+          "bytes": 17465,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P1-combined-Lean-exact2-ordinary81-three-FF-publication-v453.json",
+          "sha256": "f47c1e57d1a7ba624400e953abcf95525dddff84a625bb41849dc0028e43b876"
+        },
+        "component": "kernel-proof-evidence-integrity",
+        "counts": {
+          "duplicates": 0,
+          "errors": 0,
+          "failures": 0,
+          "functions": 16,
+          "passed": 81,
+          "skipped": 0,
+          "tests": 81
+        },
+        "current_code_head": "8b628c46653814e0a5d8d293acbf5214db7d409b",
+        "evidence_ordinal": 542,
+        "historical_Guide514_migration_key": "current_user_goal_sampled_header_lean_outcome_typed_feedback_ordinary_engineering_milestone514_20261124",
+        "lean_wrapper_owner": "ipfs_datasets_py/logic/backends/kernel/lean.py",
+        "ordered_selected_population_matches_collect_run_and_JUnit": true,
+        "raw_JUnit": {
+          "bytes": 15504,
+          "logical_name": "junit.xml",
+          "path": "/tmp/Root-P1-combined-Lean-ordinary81-v453-ft9ky5rw/actual-output/phase1-lean-request-81-run-result0-output1.bin",
+          "sha256": "495fd019e5e37d4bf88a9fbfdc63347c0d6dc58a47775981f31a2728f2f5b9cf"
+        },
+        "schema": "Guide542-P1-Lean-request-binding-and-exit-status-software-evidence/v1",
+        "scope": "Existing Python Lean wrapper with controlled software fixtures.",
+        "statutory_or_proof_admission": false,
+        "subcohort_counts": {
+          "new_integer_exit8": 8,
+          "new_request_binding7": 7,
+          "retained66": 66
+        },
+        "success_requires_exact_builtin_integer_zero_exit_status": true,
+        "task_status_changed": false,
+        "test_owner": "tests/integration/logic/backends/test_kernel_backends.py",
+        "training_or_model_qualification": false
+      },
+      "evidence_ordinal": 542,
+      "id": "phase1-lean-request-binding-integer-exit-status-ordinary81-evidence542-20261126",
+      "observed_bytes": 3052,
+      "observed_sha256": "2a58a7c795e3d37f0fe720c4d27fa54e3eaa86b3baa667b798fe4f991c25bf7a",
+      "path": "/tmp/Phase1-Lean-guide542-existing-composer-bound-Wbt8bNnE/one-guide542-P1-Lean-request-and-exit-status-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Published controlled Python Lean wrapper tests for exact accepted request binding and integer exit status.",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
     }
   ]
 }

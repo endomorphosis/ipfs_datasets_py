@@ -4107,6 +4107,25 @@
       "record_id": "phase6-civil-deadline-statement-attachment-ordinary47-evidence541-20261126",
       "status": "closed_software_evidence_only_no_task_status_change",
       "statutory_model_or_proof_credit": false
+    },
+    "phase1_lean_request_binding_integer_exit_status_ordinary81_20261126": {
+      "component": "kernel-proof-evidence-integrity",
+      "evidence_ordinal": 542,
+      "facts": {
+        "bytes": 3052,
+        "path": "/tmp/Phase1-Lean-guide542-existing-composer-bound-Wbt8bNnE/one-guide542-P1-Lean-request-and-exit-status-scoped-facts.json",
+        "sha256": "2a58a7c795e3d37f0fe720c4d27fa54e3eaa86b3baa667b798fe4f991c25bf7a"
+      },
+      "ordinary81": {
+        "functions": 16,
+        "integer_exit": 8,
+        "request_binding": 7,
+        "retained": 66,
+        "unique_PASS": 81
+      },
+      "record_id": "phase1-lean-request-binding-integer-exit-status-ordinary81-evidence542-20261126",
+      "status": "closed_software_evidence_only_no_task_status_change",
+      "statutory_model_or_proof_credit": false
     }
   },
   "programme_goal_hierarchy": {
