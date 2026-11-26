@@ -32905,6 +32905,163 @@
       "root": "artifact_workspace",
       "scope": "Exact post-capture whole-project byte accounting for one original Native FOL observation and four separate software cases.",
       "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase2_physical_v4_whole_norm_type_capture_R5_ordinary13_20261126",
+      "closed_software_facts": {
+        "actual_ordinary13": {
+          "bytes": 25574,
+          "path": "/tmp/Root-Phase2-physical-type-probe-existing-ordinary13-v494-UabN8hiH/actual-Phase2-physical-type-probe-ordinary13-closed-small-v494.json",
+          "sha256": "3f8500964f2ddbd320384f7bc0fe5ad0065d57bbddef021a3c2eb29dbf9fe8b8"
+        },
+        "actual_publication": {
+          "bytes": 20204,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-planned-physical-type-probe-exact3-ordinary13-and-product-R5-three-FF-publication-v495.json",
+          "sha256": "46edac917b97ed2bc366c393e429de4e9370b0c64588acfc024db4a12e408f17"
+        },
+        "actual_v493_Source_resource_and_parent_closed": true,
+        "actual_v493_product_build": {
+          "bytes": 5273,
+          "path": "/tmp/Root-Phase2-physical-type-probe-product-existing-R5-v493-PBHwnajq/actual-physical-whole-norm-native-elaboration-v493-closed.json",
+          "sha256": "3723e053c0f8fb16544785ddc28fb1ea5c4ef4d32a1d7dd7bb476b726af6d8e9"
+        },
+        "actual_v493_raw_summary": {
+          "bytes": 42923,
+          "logical_name": "summary.json",
+          "origin": "actual ToolRunResult.output_files bytes; not to_dict decoded text",
+          "path": "/tmp/Root-Phase2-physical-type-probe-product-existing-R5-v493-PBHwnajq/actual-output/run.output.2.bin",
+          "sha256": "acc08b14acd1b5552d50d20172ed53ffe2cc079804ce6b4a62b614d3dd17e699"
+        },
+        "alias_axiom_inventory": [],
+        "alias_theorem": "LegalReviewedDefinitionRealization.Instance20c7d5268ff43d73d5704f3bd3ada9327bd56e51c2e05b87565441483e319571.physical_whole_norm_type_65075a1f0d1fc10a4c03e2d02042063cf51be8954238d58355a9698f359d3c93",
+        "alias_type_sha256": "184995734c9de74c30b63b9f465a1d09f98414878ed33a89b0315a226b8d4c54",
+        "both_closed_kernel_checked_propositions": true,
+        "compiled_modules": 11,
+        "current_code_head": "26d95ffee70aff6012ed840ee8782ecf83d2031a",
+        "difference_confined_to_binder_display_names": true,
+        "evidence_ordinal": 551,
+        "exact_Source_READ4": {
+          "bytes": 9614,
+          "path": "/tmp/Root-Phase2-physical-type-probe-postfreeze-READ4-v492-AkHPVpyf/actual-Phase2-planned-physical-type-probe-READ4-v492-closed.json",
+          "sha256": "63588dadec4d391585c96d7871004282d6eefe51fb43e7210e4c089d0014c513"
+        },
+        "exact_Source_install": {
+          "bytes": 11815,
+          "path": "/tmp/Root-Phase2-physical-type-probe-existing-Source3-v491-11Ub2PP7/actual-Phase2-planned-physical-type-probe-exact3-Source-closed-v491.json",
+          "sha256": "26847bb117102eb72bc09a7da96061f945cc0d102f7f5614278347021dd4d508"
+        },
+        "exact_aggregate_peak_memory_bytes": null,
+        "exact_local_freeze": {
+          "bytes": 15544,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-planned-physical-type-probe-exact3-local-freeze-v491.json",
+          "sha256": "1d79f7b89f5becfcbcdedd5bb5d05ae3cfb037027610335fffbfbc0e74463781"
+        },
+        "exact_raw_expression_equality_observed": false,
+        "exact_three_published_paths": [
+          "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_elaboration_v2.py",
+          "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_elaboration_native_v2.py",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py"
+        ],
+        "fixture": "signed fictional source and review",
+        "fresh_source_only_build": true,
+        "full_closed_elaborated_type_capture": {
+          "bytes": 12915,
+          "path": "/tmp/Root-Phase2-physical-type-probe-product-existing-R5-v493-PBHwnajq/actual-physical-whole-norm-closed-type-checks-v493.json",
+          "sha256": "5d63fe2bbc83fda1007441e21bee012f7464fc7ce729003893e33d728032f487"
+        },
+        "full_eight_phase_goal_complete": false,
+        "full_type_capture_equal_across_builds": true,
+        "generic_single_file_Lean_adapter_dispatched": false,
+        "implemented_behavior": "The physical whole-norm probe builds a namespace-preserving alias from the exact planned proposition. Its diagnostic reader verifies pinned source and log identities and retains both closed elaborated Lean types and the kernel definitional-equality observation.",
+        "installed_Lean_used_in_v493": true,
+        "kernel_definitional_equality_observed": true,
+        "measured_step_count": null,
+        "model_or_training_credit": false,
+        "ordinary_Source_resource_and_parent_closed": true,
+        "ordinary_counts": {
+          "duplicates": 0,
+          "errors": 0,
+          "failures": 0,
+          "functions": 3,
+          "passed": 13,
+          "skipped": 0,
+          "tests": 13
+        },
+        "ordinary_node_ids": [
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py::test_planned_physical_type_probe_preserves_original_proposition_and_sources",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py::test_planned_physical_type_probe_refuses_changed_original_binding[request-digest]",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py::test_planned_physical_type_probe_refuses_changed_original_binding[original-source]",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py::test_planned_physical_type_probe_refuses_changed_original_binding[repinned-missing-ABI]",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py::test_planned_physical_type_capture_binds_exact_kernel_diagnostics[None]",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py::test_planned_physical_type_capture_binds_exact_kernel_diagnostics[wrong-line]",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py::test_planned_physical_type_capture_binds_exact_kernel_diagnostics[duplicate]",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py::test_planned_physical_type_capture_binds_exact_kernel_diagnostics[no-original-axioms]",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py::test_planned_physical_type_capture_binds_exact_kernel_diagnostics[stderr-marker]",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py::test_planned_physical_type_capture_binds_exact_kernel_diagnostics[defeq-false]",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py::test_planned_physical_type_capture_binds_exact_kernel_diagnostics[loose-variable]",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py::test_planned_physical_type_capture_binds_exact_kernel_diagnostics[wrong-digest]",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py::test_planned_physical_type_capture_binds_exact_kernel_diagnostics[expr-equal-contradiction]"
+        ],
+        "ordinary_scope": "Software-only physical type probe assembly and strict diagnostic readback. Separate installed Lean fixture run retained.",
+        "ordinary_subcohorts": {
+          "changed_source_or_request_refusal": 3,
+          "exact_type_capture_and_refusals": 9,
+          "physical_probe_assembly": 1
+        },
+        "original_admitted_parent_custody_authenticated": false,
+        "original_empty_axiom_obligations": 30,
+        "original_hypotheses_remain_quantified": true,
+        "original_theorem": "LegalReviewedDefinitionRealization.Instance20c7d5268ff43d73d5704f3bd3ada9327bd56e51c2e05b87565441483e319571.unit_1_whole_norm_definition_expansion",
+        "original_type_sha256": "e4edcdbcf7af401f23d47b7770f2d4ad8bc416d06ea32ac0f3c2c37b47b134a4",
+        "original_v485_live_build_or_handle_reused": false,
+        "owner": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_elaboration_native_v2.py",
+        "owning_test": "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py",
+        "preparer": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_elaboration_v2.py",
+        "prior_Guide550": {
+          "bytes": 13421,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-guide550-four-doc-three-FF-publication-small-v488.json",
+          "sha256": "df00fc144a8add92d4480c5d2ed8652edff2fe7d21c3baf5f444d7610f4502a9"
+        },
+        "private_software_contract_separate_reference": {
+          "bytes": 7247,
+          "path": "/tmp/Root-P2-planned-physical-type-probe-exact3-private-v01-hpGGiiKe/SEALED-Phase2-planned-physical-type-probe-exact3-private.json",
+          "sha256": "1e6c343e6ad171e75104c2120969c0a2d5f921c3790ef32908c4ae940f838d27"
+        },
+        "product_preparation_sha256": "545a5ee648dcfd9b5e95e021c9d63c4b6771fa49b619ebf21dd760474b1ece17",
+        "raw_JUnit": {
+          "bytes": 3032,
+          "path": "/tmp/Root-Phase2-physical-type-probe-existing-ordinary13-v494-UabN8hiH/actual-output/phase2-physical-whole-norm-type-probe-ordinary13-run-result0-output1.bin",
+          "sha256": "f7c28effd005242f113f13617df5bc7815bb881d005784797fb0a5a3b23737b4"
+        },
+        "related_catalog_component": "definition-use-native",
+        "request_execution_or_bounds_certified": false,
+        "request_sha256": "65075a1f0d1fc10a4c03e2d02042063cf51be8954238d58355a9698f359d3c93",
+        "retained_olean_inputs": 0,
+        "schema": "Guide551-Phase2-physical-V4-closed-elaborated-type-observation/v1",
+        "separate_v490_feasibility_build": {
+          "bytes": 4808,
+          "path": "/tmp/Root-Phase2-physical-type-probe-from-existing-packet-v490-PzaMYCQ0/actual-physical-whole-norm-native-elaboration-v490-closed.json",
+          "sha256": "6bca4a1c71c455298d8ef54fb5d80e037ee90d87ec3e1ee7e11ee3173e34cf9e"
+        },
+        "separate_v490_type_capture": {
+          "bytes": 12915,
+          "path": "/tmp/Root-Phase2-physical-type-probe-from-existing-packet-v490-PzaMYCQ0/actual-physical-whole-norm-closed-type-checks-v490.json",
+          "sha256": "5d63fe2bbc83fda1007441e21bee012f7464fc7ce729003893e33d728032f487"
+        },
+        "statutory_meaning_or_corpus_admission_granted": false,
+        "task": "LIR-14",
+        "task_status_changed": false,
+        "typed_ProofReceipt_issued": false
+      },
+      "evidence_ordinal": 551,
+      "id": "phase2-physical-v4-whole-norm-type-capture-R5-ordinary13-evidence551-20261126",
+      "observed_bytes": 10092,
+      "observed_sha256": "065ea44a9636cbb6c014ce5e306c9b554a4ba2f81ecbe33c25a50b376c9780fb",
+      "path": "/tmp/Phase2-physical-type-probe-guide551-existing-composer-INERT-3hcApd2t/one-guide551-Phase2-physical-whole-norm-closed-type-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Fresh physical whole-norm closed-type capture and kernel definitional equality on signed fictional input with a separate 13-case software run.",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
     }
   ]
 }

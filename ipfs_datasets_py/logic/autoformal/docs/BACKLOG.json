@@ -4335,6 +4335,50 @@
       "record_id": "phase2-physical-v4-whole-project-output-accounting-R5-ordinary4-evidence550-20261126",
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
       "task": "LIR-14"
+    },
+    "phase2_physical_v4_whole_norm_type_capture_R5_ordinary13_20261126": {
+      "certified_execution_proof_or_legal_semantic_review_or_training_model_credit": false,
+      "evidence_ordinal": 551,
+      "facts": {
+        "bytes": 10092,
+        "path": "/tmp/Phase2-physical-type-probe-guide551-existing-composer-INERT-3hcApd2t/one-guide551-Phase2-physical-whole-norm-closed-type-scoped-facts.json",
+        "sha256": "065ea44a9636cbb6c014ce5e306c9b554a4ba2f81ecbe33c25a50b376c9780fb"
+      },
+      "ordinary13": {
+        "case_vector": [
+          1,
+          3,
+          9
+        ],
+        "functions": 3,
+        "unique_PASS": 13
+      },
+      "record_id": "phase2-physical-v4-whole-norm-type-capture-R5-ordinary13-evidence551-20261126",
+      "related_catalog_component": "definition-use-native",
+      "separate_v490_earlier_feasibility": {
+        "bytes": 4808,
+        "path": "/tmp/Root-Phase2-physical-type-probe-from-existing-packet-v490-PzaMYCQ0/actual-physical-whole-norm-native-elaboration-v490-closed.json",
+        "sha256": "6bca4a1c71c455298d8ef54fb5d80e037ee90d87ec3e1ee7e11ee3173e34cf9e"
+      },
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
+      "task": "LIR-14",
+      "v493_clean_build": {
+        "alias_own_empty_axiom_inventory": true,
+        "closed_type_capture": {
+          "bytes": 12915,
+          "path": "/tmp/Root-Phase2-physical-type-probe-product-existing-R5-v493-PBHwnajq/actual-physical-whole-norm-closed-type-checks-v493.json",
+          "sha256": "5d63fe2bbc83fda1007441e21bee012f7464fc7ce729003893e33d728032f487"
+        },
+        "compiled_modules": 11,
+        "kernel_definitional_equality": true,
+        "original_empty_axiom_obligations": 30,
+        "raw_expression_equality": false,
+        "reference": {
+          "bytes": 5273,
+          "path": "/tmp/Root-Phase2-physical-type-probe-product-existing-R5-v493-PBHwnajq/actual-physical-whole-norm-native-elaboration-v493-closed.json",
+          "sha256": "3723e053c0f8fb16544785ddc28fb1ea5c4ef4d32a1d7dd7bb476b726af6d8e9"
+        }
+      }
     }
   },
   "programme_goal_hierarchy": {
