@@ -31130,6 +31130,107 @@
       "root": "artifact_workspace",
       "scope": "Published Phase7 controlled proof-feedback binding and one separately managed installed-Lean Phase1 failure case.",
       "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase6_canonical_qualifier_boundaries_ordinary12_closed_evidence_20261126",
+      "closed_software_facts": {
+        "Lean_or_model_run": false,
+        "Source_resource_and_parent_closed": true,
+        "actual_legal_semantic_review": false,
+        "evidence_ordinal": 535,
+        "exact_local_freeze": {
+          "bytes": 12676,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase6-canonical-qualifiers-exact2-local-freeze-v416.json",
+          "sha256": "075413f32776af82bc7d70e381f5079376cd5e522daecad470693ea12e24e5ec"
+        },
+        "exact_two_published_paths": [
+          "ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+          "tests/unit/logic/legal_ir/test_canonical_decompiler.py"
+        ],
+        "frozen_and_published_D_HEAD": "f76fd8d98e0646da5145c9346b8d927ae25a274a",
+        "frozen_five_T1_benchmark_fixture_matches": 5,
+        "full_eight_phase_goal_complete": false,
+        "historical_costs_and_attempts_retained": true,
+        "implemented_behavior": "Canonical V1 now abstains with a typed unsupported result when a condition or exception atom carries a frozen clause delimiter. The controlled split-clause alternatives still render, and all five frozen T1 benchmark texts and output CIDs match the retained adapter expectations.",
+        "ordinary_counts": {
+          "duplicates": 0,
+          "errors": 0,
+          "failures": 0,
+          "functions": 10,
+          "passed": 12,
+          "skipped": 0,
+          "tests": 12
+        },
+        "ordinary_node_ids": [
+          "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_all_frozen_t1_outputs_match_selected_benchmark_adapter",
+          "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_temporal_phrase_already_in_the_object_is_not_repeated",
+          "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_frozen_grammar_preserves_polarity_roles_and_every_facet",
+          "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_success_has_raw_text_cid_and_deterministic_component_trace",
+          "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_attribution_receipt_binds_only_public_canonical_inputs_and_t1",
+          "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_only_exact_frozen_config_and_policy_are_accepted",
+          "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_invalid_requests_and_component_errors_are_typed_failures",
+          "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_decompiler_is_stateless_source_withheld_and_model_free",
+          "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_production_module_has_no_benchmark_dependency",
+          "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_delimiter_ambiguous_atoms_abstain_and_split_clauses_render[condition-conjunction]",
+          "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_delimiter_ambiguous_atoms_abstain_and_split_clauses_render[exception-disjunction]",
+          "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_delimiter_ambiguous_atoms_abstain_and_split_clauses_render[condition-exception-boundary]"
+        ],
+        "ordinary_qualification": {
+          "bytes": 18604,
+          "path": "/tmp/Root-existing-Phase6-canonical-qualifier-ordinary12-v418-ky_iyukk/actual-Phase6-canonical-qualifiers-ordinary12-closed-small-v418.json",
+          "sha256": "fbc2e4e7760c5ef97f595c02ba56c54436df242672669aa46fe681b903b90810"
+        },
+        "ordinary_subcohorts": {
+          "qualifier3": 3,
+          "retained9": 9
+        },
+        "owner": "ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+        "owning_test": "tests/unit/logic/legal_ir/test_canonical_decompiler.py",
+        "prior_Guide534": {
+          "bytes": 12742,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-guide534-four-doc-three-FF-publication-small-v414.json",
+          "sha256": "078aaea77813d857baaa7c5f98838717dd780dc31aa414b93ba5b9d98e6cd146"
+        },
+        "private_same12_separate": {
+          "after": {
+            "failed": 0,
+            "passed": 12
+          },
+          "before": {
+            "failed": 3,
+            "passed": 9
+          },
+          "reference": {
+            "bytes": 33510,
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/phase6-obligation-inverse-private-72776lwj/canonical-qualifier-boundaries-private-v01/SEALED-Phase6-canonical-qualifiers-actual-private-full12-and-ordinary-inputs-v02.json",
+            "sha256": "d8b283bf51f014dbb2d32478ddfc0181f66f3c7c61dbeb79b2c6761daf58c19a"
+          }
+        },
+        "published_two_file_ordinary12_release": {
+          "bytes": 13338,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase6-canonical-qualifiers-exact2-ordinary12-three-FF-publication-v418.json",
+          "sha256": "c4392bf3968eb3f448d1adf8ef1869b69ab61faa03c62c5579b98223f9b0a036"
+        },
+        "raw_JUnit": {
+          "bytes": 2205,
+          "path": "/tmp/Root-existing-Phase6-canonical-qualifier-ordinary12-v418-ky_iyukk/actual-output/P6-canonical-qualifier-ordinary12-run-result0-output1.bin",
+          "sha256": "668933e2d8a7149feafad9c73f501ba753b15274f8e148143590f8780751be1d"
+        },
+        "schema": "Guide535-Phase6-canonical-qualifier-ordinary12-closed-engineering-evidence/v1",
+        "scope": "Controlled canonical V1 source-withheld software decompilation.",
+        "task": "LIR-07",
+        "task_status_changed": false,
+        "training_or_gold_credit": false
+      },
+      "evidence_ordinal": 535,
+      "id": "phase6-canonical-qualifier-boundaries-ordinary12-closed-evidence535-20261126",
+      "observed_bytes": 5353,
+      "observed_sha256": "a83ea9ae1aecb7c594e9f534101cfaacfd6dc8f1db8c4ede1d0b9258b2f2af54",
+      "path": "/tmp/Phase6-guide535-reusable-private-INERT-FQdzzYz6/one-guide535-Phase6-canonical-qualifier-ordinary12-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Published controlled canonical V1 qualifier eligibility across a separately qualified ordinary12 cohort.",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
     }
   ]
 }

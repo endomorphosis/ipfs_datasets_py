@@ -3965,6 +3965,30 @@
       "record_id": "phase7-published-producer-ordinary74-phase1-lir15-direct-native-evidence534-20261126",
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
       "training_and_gold_masks": 0
+    },
+    "phase6_canonical_qualifier_boundaries_ordinary12_closed_evidence_20261126": {
+      "actual_legal_semantic_review_or_training_model_credit": false,
+      "evidence_ordinal": 535,
+      "facts": {
+        "bytes": 5353,
+        "path": "/tmp/Phase6-guide535-reusable-private-INERT-FQdzzYz6/one-guide535-Phase6-canonical-qualifier-ordinary12-scoped-facts.json",
+        "sha256": "a83ea9ae1aecb7c594e9f534101cfaacfd6dc8f1db8c4ede1d0b9258b2f2af54"
+      },
+      "five_frozen_benchmark_texts_and_CIDs_preserved": true,
+      "ordinary12": {
+        "functions": 10,
+        "qualifier_boundary": 3,
+        "retained": 9,
+        "unique_PASS": 12
+      },
+      "record_id": "phase6-canonical-qualifier-boundaries-ordinary12-closed-evidence535-20261126",
+      "separate_private_same12": {
+        "after_pass": 12,
+        "before_fail": 3,
+        "before_pass": 9
+      },
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
+      "task": "LIR-07"
     }
   },
   "programme_goal_hierarchy": {
