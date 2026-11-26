@@ -633,6 +633,15 @@ class LeanKernelOutcome:
             raise LeanKernelError("outcome source binding does not match receipt")
         if not isinstance(self.request, BackendRequest) or self.request.digest != self.request_digest:
             raise LeanKernelError("outcome request does not match the originating backend request")
+        if self.request.requested_backend_id and self.request.requested_backend_id not in {
+            LeanKernelBackend.backend_id,
+            *LeanKernelBackend.aliases,
+        }:
+            raise LeanKernelError(
+                f"outcome request targets {self.request.requested_backend_id!r}, not {LeanKernelBackend.backend_id!r}"
+            )
+        if self.request.query_kind is not QueryKind.THEOREM_PROOF:
+            raise LeanKernelError("outcome request must be a theorem_proof query")
         if self.receipt.accepted:
             source, _, translation = _payload_source(self.request)
             payload = self.request.payload

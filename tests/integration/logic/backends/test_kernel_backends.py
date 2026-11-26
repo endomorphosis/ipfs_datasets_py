@@ -2097,3 +2097,138 @@ def test_lean_outcome_binds_accepted_receipt_to_request_payload(changed):
         with pytest.raises(LeanKernelError, match="outcome accepted receipt .*request"):
             replace(outcome, **kwargs)
     assert len(calls) == 1
+
+
+@pytest.mark.parametrize("requested_backend_id", ["rocq", "cvc5", "lean4-wasm"])
+def test_lean_outcome_rejects_foreign_requested_backend_after_complete_rebind(requested_backend_id):
+    from dataclasses import replace
+
+    from ipfs_datasets_py.logic.backends.kernel import lean
+
+    outcome, calls, original_request = _bound_lean_outcome()
+    assert outcome.receipt.accepted and len(calls) == 1
+    request = replace(original_request, requested_backend_id=requested_backend_id)
+    assert request.digest != original_request.digest
+    source = outcome.receipt.submitted_source
+    binding = lean.LeanSourceBinding.bind(request, source)
+    receipt = replace(outcome.receipt, request_digest=request.digest, source_binding=binding)
+    assert lean.LeanKernelReceipt.from_dict(receipt.to_dict()) == receipt
+    metadata = outcome.result.metadata.to_dict()
+    metadata.update(kernel_receipt=receipt.to_dict(), source_binding=binding.to_dict())
+    result = replace(outcome.result, result_id=lean._result_id("lean", request),
+                     metadata=metadata, witness=receipt._theorem_witness())
+    # The public dispatch route already rejects this target before any callback.
+    runner, direct_calls = _process_runner("")
+    backend = LeanKernelBackend(runner=runner, native_identity_probe=_fictional_native_identity,
+        native_probe=lambda: _available_native("lean", "fixture-not-an-executed-compiler"))
+    with pytest.raises(LeanKernelError, match="request targets"):
+        backend.run(request)
+    assert direct_calls == []
+    # Complete cryptographic rebinding cannot turn a foreign target into Lean authority.
+    with pytest.raises(LeanKernelError, match="outcome request targets"):
+        replace(outcome, request=request, request_digest=request.digest,
+                source_binding=binding, receipt=receipt, result=result)
+    assert len(calls) == 1
+
+
+@pytest.mark.parametrize("requested_backend_id", ["", "lean", "lean4", "lean-kernel"])
+def test_lean_outcome_preserves_default_and_supported_requested_backend_aliases(requested_backend_id):
+    from dataclasses import replace
+
+    from ipfs_datasets_py.logic.backends.kernel import lean
+
+    outcome, calls, original_request = _bound_lean_outcome()
+    assert outcome.receipt.accepted and len(calls) == 1
+    request = replace(original_request, requested_backend_id=requested_backend_id)
+    binding = lean.LeanSourceBinding.bind(request, outcome.receipt.submitted_source)
+    receipt = replace(outcome.receipt, request_digest=request.digest, source_binding=binding)
+    assert lean.LeanKernelReceipt.from_dict(receipt.to_dict()) == receipt
+    metadata = outcome.result.metadata.to_dict()
+    metadata.update(kernel_receipt=receipt.to_dict(), source_binding=binding.to_dict())
+    result = replace(outcome.result, result_id=lean._result_id("lean", request),
+                     metadata=metadata, witness=receipt._theorem_witness())
+    rebound = replace(outcome, request=request, request_digest=request.digest,
+                      source_binding=binding, receipt=receipt, result=result)
+    assert rebound.result.status is ResultStatus.PROVED and rebound.receipt.accepted
+    assert rebound.receipt.theorem_name == outcome.receipt.theorem_name
+    assert rebound.receipt.expected_proposition == outcome.receipt.expected_proposition
+    assert rebound.receipt.submitted_source == outcome.receipt.submitted_source
+    assert len(calls) == 1
+
+
+@pytest.mark.skipif(os.environ.get("IPFS_DATASETS_RUN_NATIVE_LEAN") != "1",
+                    reason="explicit native Lean resource authorization required")
+def test_lean_native_v3_expected_declaration_distinguishes_namespaced_decoy(tmp_path):
+    """Hold source and proposition fixed while switching equal short names."""
+    from ipfs_datasets_py.logic.backends.resource_admission import ResourceAdmittedToolRunner
+
+    executable = os.environ.get("IPFS_DATASETS_LEAN_EXECUTABLE", "")
+    version = os.environ.get("IPFS_DATASETS_LEAN_VERSION", "4.34.1")
+    assert executable and Path(executable).is_absolute() and Path(executable).is_file()
+    runner = ResourceAdmittedToolRunner(cpu_slots=1, child_process_slots=1)
+    backend = LeanKernelBackend(executable=executable, backend_version=version, runner=runner)
+    source = ("theorem wanted : True := by trivial\n"
+              "namespace Law\n"
+              "theorem wanted : False → False := fun h => h\n"
+              "end Law\n")
+    proposition = "True"
+    bounds = ExecutionBounds(timeout_ms=30000, max_steps=100,
+        max_memory_bytes=512 * 1024**2, max_output_bytes=65536)
+    rows = []
+    for name, declaration, accepted in (("root_positive", "wanted", True),
+                                        ("namespaced_wrong_type", "Law.wanted", False)):
+        outcome = backend.run(_request(family="lean4", encoding="lean4", source=source,
+            expected_declaration=declaration, expected_proposition=proposition, bounds=bounds))
+        receipt = outcome.receipt
+        rows.append({"case": name, "outcome": outcome.to_dict()})
+        assert receipt.submitted_source == source and receipt.theorem_name == declaration
+        assert receipt.expected_proposition == proposition and receipt.expected_proposition_checked is accepted
+        assert receipt.native_identity is not None and receipt.native_identity_checked_after_compile
+        assert receipt.accepted is accepted
+        if accepted:
+            assert outcome.result.status is ResultStatus.PROVED
+            assert receipt.axiom_report is not None and receipt.axiom_report.axioms == ()
+            assert receipt.axiom_report.declaration == receipt.expected_obligation_declaration
+        else:
+            assert outcome.result.status is ResultStatus.ERROR and receipt.axiom_report is None
+            assert any("type mismatch" in message.lower() for message in receipt.diagnostics)
+    assert len({row["outcome"]["receipt"]["expected_obligation_declaration"] for row in rows}) == 2
+    report = {"schema": "native-lean-v3-namespaced-declaration-check/v1", "native_Lean_executed": True,
+        "toolchain_version": version, "cases": rows, "statutory_or_source_semantic_admission": False}
+    destination = Path(os.environ.get("IPFS_DATASETS_NATIVE_LEAN_REPORT",
+        str(tmp_path / "native-lean-v3-namespaced-declaration-result.json")))
+    destination.write_text(json.dumps(report, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+
+
+@pytest.mark.parametrize("query_kind", [
+    "satisfiability", "runtime_monitor", "evidence_readiness", "policy_approval",
+])
+def test_lean_outcome_rejects_non_theorem_request_after_complete_rebind(query_kind):
+    from dataclasses import replace
+
+    from ipfs_datasets_py.logic.backends.kernel import lean
+    from ipfs_datasets_py.logic.ir_core.protocols import QueryKind
+
+    outcome, calls, original_request = _bound_lean_outcome()
+    assert outcome.receipt.accepted and len(calls) == 1
+    request = replace(original_request, query_kind=QueryKind(query_kind))
+    assert request.digest != original_request.digest
+    assert request.query_kind is not QueryKind.THEOREM_PROOF
+    binding = lean.LeanSourceBinding.bind(request, outcome.receipt.submitted_source)
+    receipt = replace(outcome.receipt, request_digest=request.digest, source_binding=binding)
+    assert lean.LeanKernelReceipt.from_dict(receipt.to_dict()) == receipt
+    metadata = outcome.result.metadata.to_dict()
+    metadata.update(kernel_receipt=receipt.to_dict(), source_binding=binding.to_dict())
+    result = replace(outcome.result, result_id=lean._result_id("lean", request),
+                     metadata=metadata, witness=receipt._theorem_witness())
+    runner, direct_calls = _process_runner("")
+    backend = LeanKernelBackend(runner=runner, native_identity_probe=_fictional_native_identity,
+        native_probe=lambda: _available_native("lean", "fixture-not-an-executed-compiler"))
+    with pytest.raises(LeanKernelError, match="does not support|only answers theorem_proof"):
+        backend.run(request)
+    assert direct_calls == []
+    # Constructor scope only: this fixture supplies no policy, review or admission authority.
+    with pytest.raises(LeanKernelError, match="outcome request .*theorem_proof"):
+        replace(outcome, request=request, request_digest=request.digest,
+                source_binding=binding, receipt=receipt, result=result)
+    assert len(calls) == 1
