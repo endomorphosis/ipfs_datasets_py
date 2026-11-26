@@ -4147,6 +4147,27 @@
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
       "statutory_model_or_proof_credit": false,
       "task": "LIR-23"
+    },
+    "phase1_current_lean_wrapper_disk_cache_native459_20261126": {
+      "component": "kernel-proof-evidence-integrity",
+      "evidence_ordinal": 544,
+      "facts": {
+        "bytes": 3590,
+        "path": "/tmp/Phase1-native-guide544-existing-composer-bound-46doz785/one-guide544-current-Lean-wrapper-native-cache-scoped-facts.json",
+        "sha256": "45651096b28abc88755c8047bbe5ae82b05b7a6201ef8d0c4e7a9046026d1471"
+      },
+      "local_native": {
+        "artifact_negative_facets": 3,
+        "compiler_commands": 2,
+        "context_negative_facets": 6,
+        "pytest_credit": 0,
+        "reuse_or_mismatch_commands": 0,
+        "software_version_controls": 2,
+        "version_commands": 1
+      },
+      "record_id": "phase1-current-lean-wrapper-disk-cache-native459-evidence544-20261126",
+      "status": "closed_fictional_local_native_evidence_only_no_task_status_change",
+      "statutory_model_or_full_goal_credit": false
     }
   },
   "programme_goal_hierarchy": {

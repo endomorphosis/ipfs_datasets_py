@@ -32000,6 +32000,99 @@
       "root": "artifact_workspace",
       "scope": "Published controlled nested external-evidence replay and selected split-manifest identity/leakage checks.",
       "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase1_current_lean_wrapper_disk_cache_native459_20261126",
+      "closed_software_facts": {
+        "actual_commands": {
+          "compiler": 2,
+          "reuse_or_mismatch": 0,
+          "version": 1
+        },
+        "actual_current_native459": {
+          "bytes": 3638,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P1-current-exact-Lean-wrapper-and-cache-native-qualification-closed-v459.json",
+          "sha256": "778b7d98a9d7ebbe71fb3ed3d685bf256bf299a1c66ad42c6a9f2cfdbe6a6218"
+        },
+        "actual_runtime_physical_IO_complete": false,
+        "caller_Source_and_Native_resource_custody_closed": true,
+        "component": "kernel-proof-evidence-integrity",
+        "current_Lean_owner_binding": {
+          "full9": {
+            "st_ctime_ns": "1795682016767408855",
+            "st_dev": "66306",
+            "st_gid": "1000",
+            "st_ino": "70042629",
+            "st_mode": "33204",
+            "st_mtime_ns": "1795682016459468231",
+            "st_nlink": "1",
+            "st_size": "103838",
+            "st_uid": "1000"
+          },
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/ipfs_datasets_py/logic/backends/kernel/lean.py",
+          "sha256": "c1050ad1ec067fc7f7c8fea08793e872511fe58029e9b1aa89ec90d2cb288313"
+        },
+        "current_code_head": "637d5e8901de8dbf2f09f2bdfa1a2c0b7527736d",
+        "current_test_source_sha256": "99e00363bbd1ea23d450af0912374fdbf4d30ab3b1802371fb8d237dccbf7da5",
+        "disk_round_trip_and_exact_reuse": true,
+        "evidence_ordinal": 544,
+        "fictional_fixture_only": true,
+        "full_Phase1_or_eight_phase_goal_complete": false,
+        "helper_alone_claims_outer_resource_closure": false,
+        "hosted_CI_credit": false,
+        "hosted_v453_status_separate": {
+          "billing_lock_annotation": true,
+          "conclusion": "failure",
+          "head_sha": "8b628c46653814e0a5d8d293acbf5214db7d409b",
+          "native_job_id": 139790367858,
+          "primary_source": "https://github.com/endomorphosis/ipfs_datasets_py/actions/runs/45785233015/job/139790367858",
+          "run_id": 45785233015,
+          "started_steps": false,
+          "status": "completed"
+        },
+        "lean_wrapper_owner": "ipfs_datasets_py/logic/backends/kernel/lean.py",
+        "local_Lean_version_stdout": "Lean (version 4.34.1, aarch64-unknown-linux-gnu, commit 5045d0056413266e57c625dcd7c365b10e377c52, Release)",
+        "negative_artifact_facets": [
+          "source",
+          "obligation",
+          "assumptions"
+        ],
+        "negative_context_facets": [
+          "declaration",
+          "proposition",
+          "toolchain",
+          "backend-profile",
+          "interpretation",
+          "dependency"
+        ],
+        "prior_Guide542_migration_key": "phase1_lean_request_binding_integer_exit_status_ordinary81_20261126",
+        "prior_distinct_P1_code_publication": {
+          "bytes": 17465,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P1-combined-Lean-exact2-ordinary81-three-FF-publication-v453.json",
+          "sha256": "f47c1e57d1a7ba624400e953abcf95525dddff84a625bb41849dc0028e43b876"
+        },
+        "prior_distinct_P1_ordinary81": {
+          "bytes": 18416,
+          "path": "/tmp/Root-P1-combined-Lean-ordinary81-v453-ft9ky5rw/actual-P1-combined-Lean-ordinary81-qualified-Source-closed-small-v453.json",
+          "sha256": "708b24e08437dea2a6f910d32415328f2aa53fde7f41dba5c9e881dee81ed7ce"
+        },
+        "pytest_case_credit": 0,
+        "schema": "Guide544-current-Lean-wrapper-disk-cache-local-native-evidence/v1",
+        "software_reissued_version_controls": 2,
+        "statutory_corpus_or_model_admission": false,
+        "task_status_changed": false,
+        "test_owner": "tests/integration/logic/backends/test_kernel_backends.py",
+        "version_mutation_controls_are_new_native_results": false
+      },
+      "evidence_ordinal": 544,
+      "id": "phase1-current-lean-wrapper-disk-cache-native459-evidence544-20261126",
+      "observed_bytes": 3590,
+      "observed_sha256": "45651096b28abc88755c8047bbe5ae82b05b7a6201ef8d0c4e7a9046026d1471",
+      "path": "/tmp/Phase1-native-guide544-existing-composer-bound-46doz785/one-guide544-current-Lean-wrapper-native-cache-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Current existing Lean wrapper and exact disk proof-cache checks on fictional data; local native only, separate from prior software and hosted CI.",
+      "status": "CLOSED_FICTIONAL_LOCAL_NATIVE_SCOPE_ONLY"
     }
   ]
 }
