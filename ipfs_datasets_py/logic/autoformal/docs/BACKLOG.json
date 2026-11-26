@@ -4071,6 +4071,24 @@
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
       "statutory_model_or_proof_credit": false,
       "task": "LIR-23"
+    },
+    "phase1_lir15_source_edition_incremental_ordinary4_20261126": {
+      "evidence_ordinal": 540,
+      "facts": {
+        "bytes": 3099,
+        "path": "/tmp/Phase1-LIR15-guide540-existing-composer-INERT-hy6ieln5/one-guide540-LIR15-source-edition-scoped-facts.json",
+        "sha256": "2fb8c661c7ba47f9c5c021d52d27d47672f7c9bfcaf100b6a2e98ce6a7c7dbb9"
+      },
+      "ordinary4": {
+        "functions": 4,
+        "retained": 3,
+        "source_edition_only": 1,
+        "unique_PASS": 4
+      },
+      "record_id": "phase1-lir15-source-edition-incremental-ordinary4-evidence540-20261126",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
+      "statutory_model_or_proof_credit": false,
+      "task": "LIR-15"
     }
   },
   "programme_goal_hierarchy": {

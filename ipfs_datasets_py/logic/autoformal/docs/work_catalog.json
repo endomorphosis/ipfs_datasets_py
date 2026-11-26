@@ -31685,6 +31685,83 @@
       "root": "artifact_workspace",
       "scope": "Published benchmark, semantic metrics, external-validity and compiler gate software corrections.",
       "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase1_lir15_source_edition_incremental_ordinary4_20261126",
+      "closed_software_facts": {
+        "READ3": {
+          "bytes": 7743,
+          "path": "/tmp/Root-LIR15-edition-postfreeze-READ3-v443-ct8QK9TO/actual-output/actual-D27-observed-D-root-initializer-Source-READ-v01-small-closeout.json",
+          "sha256": "425528dcc443b5e271926910b89f059e1ea86ed3d2310332abc64e380e0b3174"
+        },
+        "Source1": {
+          "bytes": 4733,
+          "path": "/tmp/Root-P1-LIR15-edition-existing-Source1-v442-vCVPzhDr/actual-LIR15-source-edition-exact1-Source-closed-small-v442.json",
+          "sha256": "ba307fe9af4e3a8155baff8d69fcec36c5e79a77cf46e5ac9330f86741ded516"
+        },
+        "actual_ordinary4": {
+          "bytes": 24871,
+          "path": "/tmp/Root-existing-LIR15-edition-ordinary4-v444-ZMufyIaY/actual-LIR15-source-edition-ordinary4-closed-small-v444.json",
+          "sha256": "486e837f4ffd12a72f9d71a754c012933d8dd164a38c8440e816a82205b2947a"
+        },
+        "actual_publication": {
+          "bytes": 13020,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P1-LIR15-edition-exact1-ordinary4-three-FF-publication-v444.json",
+          "sha256": "2e8f23876f8b973d8657d6db70821c47dfc5c961711a46ddc34d5501d0a11d5f"
+        },
+        "authored_fake_compiler": true,
+        "component": "incremental-corpus",
+        "counts": {
+          "duplicates": 0,
+          "errors": 0,
+          "failures": 0,
+          "functions": 4,
+          "passed": 4,
+          "skipped": 0,
+          "tests": 4
+        },
+        "current_code_head": "d58f9a004ea8bf27ff234bb1b55e1eda7a49a6a4",
+        "evidence_ordinal": 540,
+        "exact_affected_recompile_and_retained_branch_reuse_under_fixture": true,
+        "existing_public_API": "build_incremental_shared_corpus",
+        "failed_branch_invalidation_separate_retained_control": true,
+        "incremental_artifacts_and_root_match_clean_build": true,
+        "incremental_owner": "ipfs_datasets_py/logic/autoformal/legal_corpus_incremental.py",
+        "installed_Lean_invoked": false,
+        "ordered_selected_population_matches_collect_run_and_JUnit": true,
+        "product_code_changed": false,
+        "raw_JUnit": {
+          "bytes": 984,
+          "path": "/tmp/Root-existing-LIR15-edition-ordinary4-v444-ZMufyIaY/actual-output/Phase1-LIR15-source-edition-ordinary4-run-result0-output1.bin",
+          "sha256": "b7ecfd07c2f4d2afd7b30cc7a78d9101c7aa1d09b8b2d8680f3a6a2efdded01b"
+        },
+        "schema": "Guide540-LIR15-source-edition-incremental-software-evidence/v1",
+        "source_edition_only_split_shared_definition_group_and_preserved_unaffected_branch": true,
+        "statutory_or_proof_admission": false,
+        "subcohort_counts": {
+          "retained_legacy_incremental3": 3,
+          "source_edition_only1": 1
+        },
+        "task": "LIR-15",
+        "task_status_changed": false,
+        "test_only_source_proposal": {
+          "bytes": 9807,
+          "path": "/tmp/Main-board-stall-evidence-refresh-private-v01/LIR15-source-version-private-v01/sealed-existing-LIR15-source-edition-only-one-test-UNRUN-v01.json",
+          "sha256": "81c12dc7656f40087815f2efffd7cb1316605d6d128b1452e637b045ad9ac4ba"
+        },
+        "test_owner": "tests/unit/logic/autoformal/test_legal_corpus_incremental.py",
+        "training_or_model_qualification": false,
+        "unchanged_warm_build_zero_compiles_and_no_fresh_theorem_observations": true
+      },
+      "evidence_ordinal": 540,
+      "id": "phase1-lir15-source-edition-incremental-ordinary4-evidence540-20261126",
+      "observed_bytes": 3099,
+      "observed_sha256": "2fb8c661c7ba47f9c5c021d52d27d47672f7c9bfcaf100b6a2e98ce6a7c7dbb9",
+      "path": "/tmp/Phase1-LIR15-guide540-existing-composer-INERT-hy6ieln5/one-guide540-LIR15-source-edition-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Published test-only evidence for edition-only incremental invalidation under the authored fake compiler.",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
     }
   ]
 }
