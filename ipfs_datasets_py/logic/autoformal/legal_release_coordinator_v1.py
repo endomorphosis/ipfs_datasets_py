@@ -2076,9 +2076,11 @@ def _validate_uscode_release_byte_closure_v4(request_raw, *, expected_request_sh
 def _physical_v4_current_review_selection(current_review):
     from . import corpus_contracts as contracts, legal_graph_review as review
 
-    _need(type(current_review) is dict and set(current_review) == {
-        "registry_sha256", "policy_sha256", "at_time_utc", "observed_artifact_sha256s", "observed_pins",
-    }, "closed current review observation required")
+    required = {"registry_sha256", "policy_sha256", "at_time_utc", "observed_artifact_sha256s", "observed_pins"}
+    _need(type(current_review) is dict and set(current_review) - {"current_trust"} == required,
+          "closed current review observation required")
+    _need("current_trust" not in current_review or type(current_review["current_trust"]) is dict,
+          "current endpoint trust must be a mapping")
     selection = contracts.clone_json(current_review)
     for field in ("registry_sha256", "policy_sha256"):
         contracts.require_sha256(selection[field], "current review " + field)
@@ -2099,11 +2101,14 @@ def _observe_physical_v4_current_review(context, selection):
           "current review trust pins differ from the signed replay trust")
     _need(review._time(selection["at_time_utc"]) >= review._time(prior["at_time_utc"]),
           "current review evaluation time rollback")
-    assessment = admissions.assess_reviewed_norm_admission_v3(*context["args"], **{
-        **prior, "at_time_utc": selection["at_time_utc"],
-        "observed_artifact_sha256s": selection["observed_artifact_sha256s"],
-        "observed_pins": selection["observed_pins"],
-    })
+    assessment_inputs = {**prior, "at_time_utc": selection["at_time_utc"],
+                         "observed_artifact_sha256s": selection["observed_artifact_sha256s"],
+                         "observed_pins": selection["observed_pins"]}
+    if "current_trust" in selection:
+        _, assessment = admissions._assess_reviewed_norm_admission_v3_with_current_trust(
+            *context["args"], current_trust=selection["current_trust"], **assessment_inputs)
+    else:
+        assessment = admissions.assess_reviewed_norm_admission_v3(*context["args"], **assessment_inputs)
     historical = context["admission"]
     _need(assessment["semantic_use_eligible"] is True,
           "current review has unresolved admission blockers")
@@ -2120,13 +2125,14 @@ def _observe_physical_v4_current_review(context, selection):
         observed_artifact_sha256s=selection["observed_artifact_sha256s"],
         observed_pins=selection["observed_pins"])
     _need(not invalidation["stale_artifact_ids"], "current review dependency closure is stale")
+    trust_pins = assessment.get("current_trust", selection)
     return contracts.seal_record({
         "schema": "legal-corpus-physical-v4-current-review-observation/v1",
         "request_sha256": context["physical_request_sha256"],
         "graph_sha256": context["pins"]["graph"],
         "admission_sha256": context["pins"]["admission"],
-        "registry_sha256": selection["registry_sha256"],
-        "policy_sha256": selection["policy_sha256"],
+        "registry_sha256": trust_pins["registry_sha256"],
+        "policy_sha256": trust_pins["policy_sha256"],
         "reviews_sha256": prior["expected_reviews_sha256"],
         "at_time_utc": selection["at_time_utc"],
         "caller_observation_sha256": hashlib.sha256(_canonical(selection)).hexdigest(),
@@ -2247,9 +2253,10 @@ def validate_uscode_release_closure_v4(request_raw, *, expected_request_sha256,
     """Replay source-only V4 bytes, optionally joining two live observations.
 
     A caller may independently select current trust digests, evaluation time
-    and dependency observations. A change to signed trust requires new signed
-    review evidence. Omission retains historical replay. The caller's clock
-    and registry freshness are outside this validator's authentication scope.
+    and dependency observations. The review selection binds the original signed
+    registry and policy. Its optional current_trust registry and policy can veto
+    reuse under their independently supplied pins. The caller's clock and
+    registry freshness remain outside this validator's authentication scope.
 
     With current review, checked_native may supply an original V5 handle and
     its exact planned whole-norm request, realization, packet and independent

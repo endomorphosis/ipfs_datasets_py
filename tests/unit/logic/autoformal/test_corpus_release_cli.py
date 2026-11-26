@@ -4757,3 +4757,65 @@ def test_physical_v4_cli_replays_exact_paired_cache_after_workspace_cleanup(
         assert "unrecognized arguments" not in replay["error"].lower(), replay
     assert retained_request.read_bytes() == raw and archive.read_bytes() == archive_raw
     assert not workspace.exists()
+
+
+@pytest.mark.parametrize("successor", ["original", "healthy", "revoked", "wrong-pin"])
+def test_physical_v4_applies_selected_current_trust_to_original_signed_review(
+        physical_source_use_whole_norm_control_v2, successor):
+    from copy import deepcopy
+
+    from ipfs_datasets_py.logic.autoformal import (
+        legal_graph_review as review,
+        legal_release_coordinator_v1 as release,
+    )
+
+    control = physical_source_use_whole_norm_control_v2
+    raw, pin = control["physical_request_raw"], control["physical_request_sha256"]
+    current = _physical_v4_review_observation_inputs(control)
+    current["at_time_utc"] = _physical_v4_review_time_offset(current["at_time_utc"], 1)
+    registry = deepcopy(control["case"]["registry"])
+    policy = deepcopy(control["case"]["policy"])
+    if successor != "original":
+        registry["generation"] += 1
+    if successor == "revoked":
+        registry["revocation_generation"] += 1
+        review_key = control["case"]["reviews"][0]["key_id"]
+        key = next(row for row in registry["keys"] if row["key_id"] == review_key)
+        key["revoked_at_utc"] = current["at_time_utc"]
+    registry_pin = review.digest(registry)
+    policy["registry_sha256"] = registry_pin
+    policy_pin = review.digest(policy)
+    current["current_trust"] = {
+        "registry": registry,
+        "policy": policy,
+        "expected_registry_sha256": current["registry_sha256"] if successor == "wrong-pin" else registry_pin,
+        "expected_policy_sha256": policy_pin,
+    }
+    current_before = deepcopy(current)
+    options = dict(expected_request_sha256=pin, include_declared_eligibility=True, current_review=current)
+    if successor == "revoked":
+        with pytest.raises(ValueError, match="current review has unresolved admission blockers"):
+            release.validate_uscode_release_closure_v4(raw, **options)
+    elif successor == "wrong-pin":
+        with pytest.raises(ValueError, match="independently pinned trust input differs"):
+            release.validate_uscode_release_closure_v4(raw, **options)
+    else:
+        report = release.validate_uscode_release_closure_v4(raw, **options)
+        observation = report["current_review_observation"]
+        assert observation["registry_sha256"] == registry_pin
+        assert observation["policy_sha256"] == policy_pin
+        assert observation["reviews_sha256"] == control["kwargs"]["expected_reviews_sha256"]
+        assert observation["admission_sha256"] == control["admission_sha"]
+        assert observation["request_sha256"] == report["request_sha256"] == pin
+        assert observation["graph_sha256"] == report["graph_sha256"] == control["graph_sha"]
+        assert observation["evaluation_clock_authenticated"] is False
+        assert observation["registry_freshness_authenticated"] is False
+        assert report["declared_eligibility_evidence"]["current_review_observation"] == observation
+        assert report["declared_eligibility"]["views"]["reviewed_graph"]["declared_eligible"] is True
+        assert report["declared_eligibility"]["views"]["checked_lean"]["declared_eligible"] is False
+        assert report["declared_qualification"]["dimensions"]["proof"]["status"] == "pending"
+        assert report["admitted"] is report["proof_verified"] is False
+        assert report["training_mask"] == report["evaluation_gold_mask"] == 0
+    assert current == current_before
+    assert control["admission"]["semantic_use_eligible"] is True
+    assert hashlib.sha256(raw).hexdigest() == pin
