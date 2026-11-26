@@ -4207,3 +4207,427 @@ def verify_current_asset_contribution_inventory_v1(
         "native_admission": False, "completion_authority": False, "semantic_admission": False,
         "training_authorized": False, "supervision_masks": {"evaluation_gold": 0, "training": 0}}
 
+
+def plan_agent_turn_recovery_v1(snapshot: Mapping[str, Any]) -> dict[str, Any]:
+    """Select independent, already authorized work after an agent turn stops.
+
+    This is a deterministic scheduling boundary, not an execution owner. The
+    caller supplies its current task frontier and authoritative observations,
+    persists returned policy_holds, and uses the existing atomic claim and
+    resource/source admission for selected tasks. A timeout is an unknown
+    observation, never proof that an owner died. A policy refusal is terminal
+    for its operation_key, including aliases or subsequent turn IDs.
+
+    No provider, file, process or task store is accessed. Supplied evidence and
+    spent budgets remain intact. This metadata cannot authenticate its own
+    observations, establish cleanup, authorize retries or admit legal meaning.
+    """
+    try:
+        raw = json.dumps(snapshot, sort_keys=True, separators=(",", ":"), allow_nan=False)
+        if len(raw.encode("utf-8")) > 4 * 1024 * 1024:
+            raise ValueError("agent frontier exceeds metadata limit")
+        frame = json.loads(raw)
+    except (TypeError, ValueError, RecursionError) as exc:
+        raise ValueError("bounded finite JSON agent frontier required") from exc
+
+    def need(value: bool, message: str) -> None:
+        if not value:
+            raise ValueError(message)
+
+    def identifier(value: Any) -> bool:
+        return isinstance(value, str) and 0 < len(value) <= 4096 and bool(value.strip()) and "\x00" not in value
+
+    def names(value: Any) -> bool:
+        return (type(value) is list and all(identifier(item) for item in value)
+                and len(value) == len(set(value)))
+
+    need(type(frame) is dict and not {"goal_control", "operation_history", "reconciliation_history", "execution_hold"} & frame.keys(),
+         "goal-aware recovery requires frontier/v2")
+    need(type(frame) is dict and frame.get("schema") == "legal-ir-agent-turn-frontier/v1",
+         "agent frontier schema required")
+    need(identifier(frame.get("frontier_id")), "frontier_id required")
+    width = frame.get("max_parallel")
+    need(type(width) is int and 1 <= width <= 64, "max_parallel must be between 1 and 64")
+    tasks, observations, holds = (frame.get(key) for key in ("tasks", "observations", "policy_holds"))
+    need(type(tasks) is list and len(tasks) <= 4096, "bounded task list required")
+    need(type(observations) is list and len(observations) <= 4096, "bounded current observations required")
+    need(type(holds) is list and len(holds) <= 4096, "retained policy_holds required")
+    holds = list(holds)
+    by_id: dict[str, dict[str, Any]] = {}
+    for task in tasks:
+        need(type(task) is dict and identifier(task.get("task_id")), "task_id required")
+        task_id = task["task_id"]
+        need(task_id not in by_id and identifier(task.get("operation_key")), "duplicate task or missing operation_key")
+        need(names(task.get("depends_on")) and names(task.get("exclusive_keys")), "explicit dependencies and exclusive keys required")
+        need(type(task.get("ready")) is bool and type(task.get("authorized")) is bool, "explicit ready/authorized flags required")
+        used, limit = task.get("attempts_used"), task.get("max_attempts")
+        need(type(used) is int and used >= 0 and type(limit) is int and limit > 0,
+             "existing attempt counters required")
+        by_id[task_id] = task
+
+    current: dict[str, dict[str, Any]] = {}
+    observed_jobs = set()
+    states = {"inProgress", "completed", "failed", "interrupted", "observation_unavailable"}
+    for observation in observations:
+        need(type(observation) is dict, "observation must be an object")
+        task_id = observation.get("task_id")
+        need(identifier(task_id) and task_id in by_id and task_id not in current,
+             "one current observation per known task required")
+        need(identifier(observation.get("thread_id")) and identifier(observation.get("turn_id")),
+             "exact existing thread and turn IDs required")
+        job = (observation["thread_id"], observation["turn_id"])
+        need(job not in observed_jobs, "one task per observed job required")
+        observed_jobs.add(job)
+        need(isinstance(observation.get("status"), str) and observation["status"] in states,
+             "unsupported agent status")
+        need(type(observation.get("cleanup_confirmed")) is bool
+             and type(observation.get("accepted")) is bool, "explicit cleanup/acceptance observations required")
+        need("error" in observation and (observation["error"] is None or type(observation["error"]) is dict),
+             "structured error or null required")
+        need(type(observation.get("evidence_refs", [])) is list, "evidence_refs must be a list")
+        error = observation.get("error") or {}
+        need(all(error.get(key) is None or isinstance(error[key], str)
+                 for key in ("code", "type", "message")), "error selectors must be strings or null")
+        need(observation["accepted"] is False or (observation["status"] == "completed"
+             and observation["cleanup_confirmed"] and observation.get("error") is None),
+             "acceptance requires completed, closed owner evidence without an error")
+        current[task_id] = observation
+
+    held_operations = set()
+    hold_events = set()
+    for hold in holds:
+        need(type(hold) is dict and identifier(hold.get("operation_key"))
+             and identifier(hold.get("task_id")) and identifier(hold.get("thread_id"))
+             and identifier(hold.get("turn_id")), "retained policy hold identity required")
+        need(type(hold.get("error")) is dict and type(hold.get("evidence_refs")) is list,
+             "original structured policy error and evidence list required")
+        need(all(hold["error"].get(key) is None or isinstance(hold["error"][key], str)
+                 for key in ("code", "type", "message")), "retained error selectors must be strings or null")
+        key = (hold["operation_key"], hold["thread_id"], hold["turn_id"])
+        need(key not in hold_events, "duplicate retained policy hold")
+        hold_events.add(key)
+        held_operations.add(hold["operation_key"])
+
+    poll_targets = []
+    occupied_keys = set()
+    for task_id, observation in current.items():
+        task = by_id[task_id]
+        status, error = observation["status"], observation.get("error") or {}
+        policy_stop = (error.get("code") in ("policy_refusal", "content_filter", "safety_refusal")
+                       or error.get("type") in ("policy_refusal", "content_filter", "safety_refusal")
+                       or (isinstance(error.get("message"), str) and error["message"].startswith(
+                           "This content was flagged for possible cybersecurity risk.")))
+        if policy_stop:
+            key = (task["operation_key"], observation["thread_id"], observation["turn_id"])
+            if key not in hold_events:
+                holds.append({"operation_key": task["operation_key"], "task_id": task_id,
+                              "thread_id": observation["thread_id"], "turn_id": observation["turn_id"],
+                              "error": error, "evidence_refs": observation.get("evidence_refs", [])})
+                hold_events.add(key)
+            held_operations.add(task["operation_key"])
+        if status in {"inProgress", "observation_unavailable"}:
+            poll_targets.append({"task_id": task_id, "thread_id": observation["thread_id"],
+                                 "turn_id": observation["turn_id"], "status": status})
+        if status in {"inProgress", "observation_unavailable"} or not observation["cleanup_confirmed"]:
+            occupied_keys.update(task["exclusive_keys"])
+
+    accepted = {key for key, value in current.items()
+                if value["status"] == "completed" and value["accepted"] and value["cleanup_confirmed"]
+                and by_id[key]["operation_key"] not in held_operations}
+    observed_operations = {by_id[key]["operation_key"] for key in current}
+    occupied_slots = sum(value["status"] in {"inProgress", "observation_unavailable"}
+                         or not value["cleanup_confirmed"] for value in current.values())
+    available = max(0, width - occupied_slots)
+    selected, decisions, selected_operations = [], [], set()
+    for task in tasks:
+        task_id, operation = task["task_id"], task["operation_key"]
+        observation = current.get(task_id)
+        reasons = []
+        if operation in held_operations:
+            reasons.append("policy_refusal_requires_review")
+        if observation is not None:
+            reasons.append("poll_existing_owner" if observation["status"] in {"inProgress", "observation_unavailable"}
+                           else "completed" if task_id in accepted else "terminal_attempt_preserved")
+        elif operation in observed_operations:
+            reasons.append("operation_has_existing_attempt")
+        if observation is None and task["attempts_used"] > 0:
+            reasons.append("prior_attempt_requires_reconciliation")
+        if not task["ready"]:
+            reasons.append("not_ready")
+        if not task["authorized"]:
+            reasons.append("not_authorized")
+        if task["attempts_used"] >= task["max_attempts"]:
+            reasons.append("attempt_budget_exhausted")
+        dependencies = [key for key in task["depends_on"] if key not in accepted]
+        if dependencies:
+            reasons.append("dependencies_not_accepted")
+        conflicts = sorted(set(task["exclusive_keys"]) & occupied_keys)
+        if conflicts:
+            reasons.append("exclusive_scope_held")
+        if operation in selected_operations:
+            reasons.append("operation_already_selected")
+        if not reasons and len(selected) >= available:
+            reasons.append("parallel_capacity_full")
+        if not reasons:
+            selected.append(task_id)
+            selected_operations.add(operation)
+            occupied_keys.update(task["exclusive_keys"])
+        decisions.append({"task_id": task_id, "selected": not reasons, "reasons": reasons,
+                          "unaccepted_dependencies": dependencies, "conflicting_keys": conflicts})
+    return {
+        "schema": "legal-ir-agent-turn-recovery/v1", "frontier_id": frame["frontier_id"],
+        "status": "continue_independent" if selected else "poll_existing" if poll_targets
+                  else "review_required" if holds else "frontier_closed" if len(accepted) == len(tasks) else "blocked",
+        "selected_task_ids": selected, "poll_targets": poll_targets, "task_decisions": decisions,
+        "occupied_slots": occupied_slots,
+        "cleanup_required": [key for key, value in current.items() if not value["cleanup_confirmed"]],
+        "policy_holds": holds, "preserved_snapshot": frame,
+        "snapshot_sha256": hashlib.sha256(raw.encode("utf-8")).hexdigest(),
+        "requires_existing_atomic_claim_and_admission": True, "dispatch_authorized": False,
+        "retries_authorized": False, "attempt_budgets_reset": False, "workers_started": False,
+        "goal_complete": False, "admitted": False,
+    }
+
+
+def plan_agent_turn_recovery_v2(snapshot: Mapping[str, Any]) -> dict[str, Any]:
+    """Reconcile saved goal state and keep independent authorized work moving.
+
+    The existing supervisor supplies authenticated, ordered control metadata
+    and persists both histories and policy holds. Revisions share one explicit
+    authority/goal ordering domain. This function opens no files, calls
+    no provider, mutates no goal and grants no dispatch or retry authority.
+    A newer active directive can identify a stale saved pause; an explicit
+    pause, unknown ordering or run-wide execution hold cannot be bypassed.
+    """
+    raw = _handoff_reconciliation_bytes_v2(snapshot)
+    frame = json.loads(raw)
+
+    def need(condition: bool, reason: str) -> None:
+        if not condition:
+            raise ValueError(reason)
+
+    def text(value: Any) -> bool:
+        return (type(value) is str and 0 < len(value) <= 4096
+                and bool(value.strip()) and "\x00" not in value)
+
+    need(type(frame) is dict and frame.get("schema") == "legal-ir-agent-turn-frontier/v2",
+         "v2 agent frontier required")
+    required = {"goal_control", "operation_history", "reconciliation_history", "execution_hold"}
+    need(required <= frame.keys(), "explicit goal control and retained histories required")
+    control = frame["goal_control"]
+    need(type(control) is dict and text(control.get("goal_id")) and text(control.get("authority_id"))
+         and text(control.get("owner_task_id")), "goal and existing owner identity required")
+    intent, observed = control.get("intent"), control.get("observed")
+    for record in (intent, observed):
+        need(type(record) is dict and record.get("goal_id") == control["goal_id"]
+             and record.get("authority_id") == control["authority_id"]
+             and text(record.get("directive_id")) and type(record.get("revision")) is int
+             and record["revision"] >= 0, "same-goal ordered control records required")
+    need(intent["revision"] > 0 and intent.get("state") in ("active", "paused"),
+         "explicit active or paused directive required")
+    need(observed.get("state") in ("active", "paused", "blocked", "completed", "unknown"),
+         "explicit observed goal state required")
+    need(intent["revision"] != observed["revision"]
+         or intent["directive_id"] == observed["directive_id"],
+         "equal control revisions must identify the same directive")
+    directives_by_revision = {}
+    revisions_by_directive = {}
+
+    def directive(revision: int, identifier: str) -> None:
+        need(revision not in directives_by_revision or directives_by_revision[revision] == identifier,
+             "one immutable directive per control revision required")
+        need(identifier not in revisions_by_directive or revisions_by_directive[identifier] == revision,
+             "directive identity cannot acquire another revision")
+        directives_by_revision[revision] = identifier
+        revisions_by_directive[identifier] = revision
+
+    for record in (intent, observed):
+        directive(record["revision"], record["directive_id"])
+
+    tasks, observations = frame.get("tasks"), frame.get("observations")
+    history = frame["operation_history"]
+    need(type(tasks) is list and type(observations) is list
+         and type(history) is list and len(history) <= 4096, "bounded retained operation history required")
+    # Validate the original frontier through the existing planner before using
+    # any untrusted identifiers as mapping keys. V1 never sees v2 controls.
+    legacy = json.loads(json.dumps({key: frame.get(key) for key in
+                                   ("frontier_id", "max_parallel", "tasks", "observations", "policy_holds")}))
+    legacy["schema"] = "legal-ir-agent-turn-frontier/v1"
+    plan_agent_turn_recovery_v1(legacy)
+    by_task = {task["task_id"]: task for task in tasks}
+    current = {item["task_id"]: item for item in observations}
+    retained = {}
+    retained_task_ids = set()
+    for entry in history:
+        need(type(entry) is dict and set(entry) == {"task", "observation"},
+             "retained operation requires original task and observation")
+        task, observation = entry["task"], entry["observation"]
+        historical_report = plan_agent_turn_recovery_v1({**legacy, "tasks": [task],
+                                                        "observations": [observation], "policy_holds": []})
+        for prior_hold in historical_report["policy_holds"]:
+            same = [item for item in legacy["policy_holds"] if all(item.get(key) == prior_hold[key]
+                    for key in ("operation_key", "thread_id", "turn_id"))]
+            need(not same or same == [prior_hold], "retained policy evidence cannot be rewritten")
+            if not same:
+                legacy["policy_holds"].append(prior_hold)
+        operation = task["operation_key"]
+        need(operation not in retained and task["task_id"] not in retained_task_ids,
+             "one retained original attempt per operation and task required")
+        retained[operation] = entry
+        retained_task_ids.add(task["task_id"])
+        newer_task = by_task.get(task["task_id"])
+        if newer_task is not None:
+            need(newer_task["operation_key"] == operation
+                 and newer_task["exclusive_keys"] == task["exclusive_keys"]
+                 and newer_task["depends_on"] == task["depends_on"]
+                 and newer_task["attempts_used"] >= task["attempts_used"]
+                 and newer_task["max_attempts"] == task["max_attempts"],
+                 "retained operation identity, scopes and spent limits cannot be rewritten")
+        newer = current.get(task["task_id"])
+        if newer is not None:
+            need((newer["thread_id"], newer["turn_id"])
+                 == (observation["thread_id"], observation["turn_id"]),
+                 "existing operation cannot acquire a replacement owner or turn")
+            if observation["status"] in ("completed", "failed", "interrupted"):
+                need(newer["status"] == observation["status"]
+                     and newer["error"] == observation["error"]
+                     and (not observation["cleanup_confirmed"] or newer["cleanup_confirmed"])
+                     and (not observation["accepted"] or newer["accepted"]),
+                     "terminal attempt or accepted evidence cannot be replaced")
+            retained[operation] = {"task": newer_task, "observation": newer}
+        else:
+            # Omitted owners still hold their scopes/capacity and are polled
+            # by their original IDs. Terminal attempts still block aliases.
+            if newer_task is None:
+                legacy["tasks"].append(task)
+                by_task[task["task_id"]] = task
+            else:
+                retained[operation] = {"task": newer_task, "observation": observation}
+            legacy["observations"].append(observation)
+            current[task["task_id"]] = observation
+    for item in observations:
+        task = by_task[item["task_id"]]
+        operation = task["operation_key"]
+        prior = retained.get(operation)
+        need(prior is None or prior["task"]["task_id"] == task["task_id"],
+             "operation alias cannot report another original attempt")
+        retained[operation] = {"task": task, "observation": item}
+
+    owner_id = control["owner_task_id"]
+    need(owner_id in current, "exact current or retained owner observation required")
+    owner = current[owner_id]
+    hold = frame["execution_hold"]
+    need(hold is None or (type(hold) is dict and text(hold.get("kind"))
+                         and text(hold.get("reason")) and type(hold.get("evidence_refs")) is list),
+         "execution hold must retain its kind, reason and evidence")
+    goal_block = ("explicit_goal_pause" if intent["state"] == "paused" else
+                  "newer_goal_control_exists" if observed["revision"] > intent["revision"] else
+                  "goal_state_unknown" if observed["state"] == "unknown" else
+                  "blocked_goal_requires_owner_review" if observed["state"] == "blocked" else
+                  "completed_goal_requires_owner_review" if observed["state"] == "completed" else
+                  "goal_control_conflict" if observed["state"] == "paused"
+                  and observed["revision"] == intent["revision"] else None)
+    if hold is not None or goal_block is not None:
+        # Change only a detached scheduling projection; original permissions,
+        # limits, refusals and control observations remain in preserved_snapshot.
+        legacy["tasks"] = [{**task, "authorized": False} for task in legacy["tasks"]]
+    report = plan_agent_turn_recovery_v1(legacy)
+
+    reconciliations = frame["reconciliation_history"]
+    need(type(reconciliations) is list and len(reconciliations) <= 4096,
+         "bounded reconciliation history required")
+    request_ids = set()
+    pending_requests = []
+    observed_pause_cycles = set()
+    for entry in reconciliations:
+        need(type(entry) is dict and set(entry) == {"request", "status", "result"}
+             and entry["status"] in ("requested", "completed", "failed", "unknown"),
+             "original reconciliation request and outcome required")
+        request = entry["request"]
+        need(type(request) is dict and request.get("goal_id") == control["goal_id"]
+             and request.get("authority_id") == control["authority_id"]
+             and request.get("action") == "reconcile_saved_goal"
+             and text(request.get("directive_id"))
+             and type(request.get("directive_revision")) is int
+             and request["directive_revision"] > 0, "reconciliation directive identity required")
+        expected_owner = request.get("expected_owner")
+        expected_goal = request.get("expected_goal_observation")
+        need(type(expected_owner) is dict and all(text(expected_owner.get(name))
+             for name in ("task_id", "thread_id", "turn_id"))
+             and type(expected_goal) is dict and expected_goal.get("goal_id") == control["goal_id"]
+             and expected_goal.get("authority_id") == control["authority_id"]
+             and type(expected_goal.get("revision")) is int
+             and 0 <= expected_goal["revision"] < request["directive_revision"]
+             and text(expected_goal.get("directive_id"))
+             and expected_goal.get("state") == "paused"
+             and request.get("desired_state") == "active", "original reconciliation guards required")
+        directive(request["directive_revision"], request["directive_id"])
+        directive(expected_goal["revision"], expected_goal["directive_id"])
+        need(request["directive_revision"] <= intent["revision"],
+             "current intent cannot roll back a retained reconciliation directive")
+        need(observed["revision"] >= expected_goal["revision"],
+             "saved goal observation cannot roll back a retained pause cycle")
+        same_cycle = (observed["revision"], observed["directive_id"]) == (
+            expected_goal["revision"], expected_goal["directive_id"])
+        need(same_cycle or entry["status"] in ("requested", "unknown")
+             or observed["state"] != "paused" or observed["revision"] > request["directive_revision"],
+             "a new pause cycle must follow its closed reconciliation directive")
+        key = {name: request[name] for name in
+               ("goal_id", "authority_id", "action", "directive_id", "directive_revision")}
+        identifier = hashlib.sha256(_handoff_reconciliation_bytes_v2(key)).hexdigest()
+        need(request.get("request_id") == identifier and identifier not in request_ids,
+             "unique stable reconciliation request identity required")
+        request_ids.add(identifier)
+        observed_pause_cycles.add((expected_goal["revision"], expected_goal["directive_id"]))
+        if entry["status"] in ("requested", "unknown"):
+            pending_requests.append(identifier)
+    key = {"goal_id": control["goal_id"], "authority_id": control["authority_id"],
+           "action": "reconcile_saved_goal",
+           "directive_id": intent["directive_id"], "directive_revision": intent["revision"]}
+    request_id = hashlib.sha256(_handoff_reconciliation_bytes_v2(key)).hexdigest()
+    stale = observed["state"] == "paused" and observed["revision"] < intent["revision"]
+    requests = []
+    reconciliation_reason = None
+    if stale and hold is None and goal_block is None:
+        held_operations = {entry["operation_key"] for entry in report["policy_holds"]}
+        if pending_requests:
+            reconciliation_reason = "existing_reconciliation_pending"
+        elif (observed["revision"], observed["directive_id"]) in observed_pause_cycles:
+            reconciliation_reason = "pause_cycle_already_reconciled"
+        elif request_id in request_ids:
+            reconciliation_reason = "reconciliation_already_requested"
+        elif owner["status"] in ("inProgress", "observation_unavailable"):
+            reconciliation_reason = "poll_existing_owner"
+        elif not owner["cleanup_confirmed"]:
+            reconciliation_reason = "owner_cleanup_required"
+        elif by_task[owner_id]["operation_key"] in held_operations or owner["error"] is not None:
+            reconciliation_reason = "owner_error_requires_review"
+        else:
+            request = {**key, "request_id": request_id,
+                       "expected_owner": {name: owner[name] for name in ("task_id", "thread_id", "turn_id")},
+                       "expected_goal_observation": observed, "desired_state": "active"}
+            requests.append(request)
+            reconciliations.append({"request": request, "status": "requested", "result": None})
+            pending_requests.append(request_id)
+            reconciliation_reason = "reconcile_saved_goal"
+
+    original_ids = {task["task_id"] for task in frame["tasks"]}
+    report.update({
+        "schema": "legal-ir-agent-turn-recovery/v2",
+        "status": "execution_hold" if hold is not None else
+                  "goal_paused" if goal_block == "explicit_goal_pause" else
+                  "control_reconciliation_required" if goal_block else
+                  report["status"] if report["selected_task_ids"] or report["poll_targets"] else
+                  "owner_reconciliation_required" if requests else
+                  "owner_reconciliation_pending" if stale else report["status"],
+        "task_decisions": [row for row in report["task_decisions"] if row["task_id"] in original_ids],
+        "goal_block": goal_block, "execution_hold": hold,
+        "owner_reconciliation_requests": requests, "reconciliation_reason": reconciliation_reason,
+        "pending_owner_reconciliation_ids": pending_requests,
+        "reconciliation_history": reconciliations,
+        "operation_history": list(retained.values()),
+        "preserved_snapshot": json.loads(raw),
+        "snapshot_sha256": hashlib.sha256(raw).hexdigest(),
+        "goal_mutation_authorized": False, "owner_resume_authorized": False,
+    })
+    return report

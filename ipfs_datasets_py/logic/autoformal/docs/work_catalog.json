@@ -5805,7 +5805,23 @@
       ],
       "path": "ipfs_datasets_py/logic/autoformal/supervisor_loop.py",
       "required": true,
-      "status": "implementation_present"
+      "status": "implementation_present",
+      "agent_owner_goal_control_recovery": {
+        "api": [
+          "plan_agent_turn_recovery_v1",
+          "plan_agent_turn_recovery_v2"
+        ],
+        "cli": "scripts/ops/legal_ir/run_autoformal_supervisor.py agent-turn-recovery",
+        "evidence": {
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-agent-owner-goal-control-recovery-local67-v01.json",
+          "bytes": 3809,
+          "sha256": "63edb176fb3c13612c7a82b23fcfaab7350cdd008dd5e1836d9bb2672311ea6d"
+        },
+        "qualification": "67 current-checkout unit/CLI cases plus 151 subtests passed; broader regression suite unqualified after dependency and memory failures.",
+        "scope": "Local metadata scheduling and owner-reconciliation requests only; no live goal mutation, dispatch, retry, Native Lean, legal or corpus admission.",
+        "publication_status": "local_uncommitted",
+        "task_and_component_population_unchanged": true
+      }
     },
     {
       "apis": [

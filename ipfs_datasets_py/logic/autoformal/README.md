@@ -1,5 +1,9 @@
 # Legal autoformalization
 
+## Agent continuation recovery
+
+The existing supervisor now has goal-aware recovery metadata for stale saved pauses, independent authorized work, exact owner polling and durable attempt/reconciliation history. Explicit pauses and execution holds remain effective; it does not issue execution or goal-resume authority. See [operations](docs/OPERATIONS.md#agent-owner-pauses-and-independent-continuations).
+
 ## AArch64 Native policy fixtures — 2026-11-16
 
 A separate audited run met seven Native policy-fixture expectations using eight actual Lean4.34.1 AArch64 commands (three version queries and five compilations). It accepted the empty-axiom conjunction, refused a wrong goal, unapproved Classical dependencies, wrong configured version and malformed quoted identifier, and accepted the three foundations only when explicitly approved. All seven retain authority disposition `reject`, zero pytest credit and false admission. This adds no cache-reuse, full-toolchain, AMD64 CI, statutory, model or corpus qualification and does not complete Phase1. See the [handoff](docs/HANDOFF.md#aarch64-native-policy-fixtures--2026-11-16).

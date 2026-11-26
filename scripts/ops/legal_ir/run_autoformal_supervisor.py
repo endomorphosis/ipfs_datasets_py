@@ -3885,6 +3885,9 @@ def recover_retained_validation_capacity_main_v1(argv):
 
 def main(argv: list[str] | None = None) -> int:
     effective_argv = list(sys.argv[1:] if argv is None else argv)
+    if effective_argv and effective_argv[0] == "agent-turn-recovery":
+        return agent_turn_recovery_main_v1(effective_argv[1:])
+    effective_argv = list(sys.argv[1:] if argv is None else argv)
     if effective_argv and effective_argv[0] == "recover-retained-validation-capacity":
         return recover_retained_validation_capacity_main_v1(effective_argv[1:])
     if effective_argv and effective_argv[0] == "asset-inventory-0101":
@@ -4233,6 +4236,38 @@ def main(argv: list[str] | None = None) -> int:
     run_configured_portal_implementation_daemon(
         native_args, repo_root=repository, logger=logging.getLogger("autoformal.supervisor"),
     )
+    return 0
+
+
+def agent_turn_recovery_main_v1(argv: list[str]) -> int:
+    """Plan independent continuations from saved agent metadata; start no work."""
+    parser = argparse.ArgumentParser(description=agent_turn_recovery_main_v1.__doc__)
+    parser.add_argument("--inputs", type=Path, required=True)
+    parser.add_argument("--output", type=Path)
+    args = parser.parse_args(argv)
+    if args.output is not None and args.inputs.resolve() == args.output.resolve():
+        parser.error("agent frontier input and output must be distinct")
+    if str(ROOT) not in sys.path:
+        sys.path.insert(0, str(ROOT))
+    from ipfs_datasets_py.logic.autoformal.supervisor_loop import (
+        _handoff_reconciliation_bytes_v2,
+        plan_agent_turn_recovery_v1,
+        plan_agent_turn_recovery_v2,
+    )
+    try:
+        snapshot = _read_handoff_metadata_v2(args.inputs)
+        planner = (plan_agent_turn_recovery_v2 if snapshot.get("schema") == "legal-ir-agent-turn-frontier/v2"
+                   else plan_agent_turn_recovery_v1)
+        result = planner(snapshot)
+        raw = _handoff_reconciliation_bytes_v2(result)
+        if args.output is None:
+            sys.stdout.write(raw.decode("utf-8"))
+        else:
+            _write_handoff_metadata_v2(args.output, raw)
+    except (OSError, ValueError) as exc:
+        print(json.dumps({"schema": "legal-ir-agent-turn-recovery-error/v1", "error": str(exc),
+                          "workers_started": False, "retries_authorized": False}), file=sys.stderr)
+        return 2
     return 0
 
 

@@ -1,5 +1,56 @@
 # Operations and evidence ownership
 
+## Agent-owner pauses and independent continuations
+
+Use the existing supervisor's metadata command when one agent stops while
+other work remains. This does not launch a second supervisor or restart a
+worker:
+
+```sh
+python scripts/ops/legal_ir/run_autoformal_supervisor.py agent-turn-recovery \
+  --inputs frontier.json --output recovery.json
+```
+
+For goal-aware recovery, supply `legal-ir-agent-turn-frontier/v2`. In addition
+to the original tasks, observations, policy holds and finite parallel width,
+it requires:
+
+- `goal_control`: the goal ID, common authority ID, original owner task ID,
+  and explicit `intent`/`observed` records. Each record carries the same goal
+  and authority, a directive ID, ordered revision and state. Revisions must
+  belong to that one authenticated goal-control sequence; unrelated counters
+  or an agent's prose are not resume evidence.
+- `operation_history`: original `{task, observation}` pairs, including exact
+  thread/turn IDs, scopes, spent attempts and outcomes. Persist returned
+  entries even when tasks leave the current frontier. Aliases cannot replay
+  an existing attempt; live or uncertain owners retain scope and capacity.
+- `reconciliation_history`: original `{request, status, result}` records.
+  A newer active directive can identify an older saved **pause** and produce
+  one `reconcile_saved_goal` request for the existing owner. An outstanding
+  request remains outstanding; changing a frontier or resume ID cannot retry
+  the same pause cycle. A new cycle must follow the prior closed directive.
+- `execution_hold`: explicit `null` or the original run-wide hold's `kind`,
+  `reason` and `evidence_refs`. Usage, policy or resource restrictions remain
+  effective across resume directives and disjoint tasks.
+
+An explicit pause suppresses new work. Unknown, blocked, completed or
+contradictory goal state requires owner reconciliation. Already-active state
+needs no resume. Independent tasks can be selected while an older saved pause
+is reconciled, but only with their existing authorization, accepted dependencies,
+remaining attempts, available capacity and disjoint declared scopes. Preserve
+returned policy holds as well as both histories. V1 inputs remain supported for
+old turn-only callers, but reject V2 control fields rather than silently ignore
+them.
+
+The result is scheduling DATA: `dispatch_authorized`, `retries_authorized`,
+`workers_started`, `owner_resume_authorized`, `goal_mutation_authorized`,
+`goal_complete` and `admitted` remain false. The existing owner must verify the
+expected goal/owner observation before applying a reconciliation request, and
+use its existing atomic claims, Source leases and runtime admission before any
+selected work. No request authorizes an explicit user pause override, quota
+bypass, legal approval or corpus admission. Input and output files must differ;
+output creation is exclusive and existing evidence is never overwritten.
+
 ## CLI4 separate original custody and retained failures — 2026-11-15
 
 The audited corrected Source5 operation installed two changed bodies and recaptured three same-byte bodies with fresh identities; its separate readback closed. Separate original A144v02 and H34 cohorts passed independent audits: 144 selected cases in 3.934s and 34 new health cases in 1.413s, each with zero failures/errors/skips. Their original Source R+A, Native-resource, sampled-process and genuine-wait custody closed separately in 168.173s and 168.301s before each initial 420s cutoff.
