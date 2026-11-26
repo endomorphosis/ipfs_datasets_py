@@ -35372,6 +35372,162 @@
       "root": "artifact_workspace",
       "scope": "Independently selected current trust and saved binding replay with signed fictional V4 endpoints.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase2_physical_v4_current_trust_ordinary22_20261126",
+      "closed_runtime_facts": {
+        "Source_resource_and_parent_closed": true,
+        "actual_Phase2_exact2_code_publication": {
+          "bytes": 22197,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-physical-V4-current-trust-exact2-ordinary22-three-FF-publication-v582.json",
+          "sha256": "071d63ddcc64989609a452f3a2cfdde373a125f171160a520e945a0f96556c9e"
+        },
+        "actual_Phase2_ordinary22_qualification": {
+          "bytes": 27590,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-physical-V4-current-trust-ordinary22-closed-v581.json",
+          "sha256": "7abeecce49e8924910738de1f76036ebb3557a261246207a624e6b99dfa7cd21"
+        },
+        "actual_closed_ordinary_report": {
+          "bytes": 818502,
+          "path": "/tmp/P2-physical-V4-current-trust-existing-ordinary22-INERT-smb89s6r/actual-output/complete-frozen-local-D-corpus-release-physical-v4-current-trust-ordinary22-existing-owner-report.json",
+          "sha256": "1e668e69484c1dc54d4a7d225468c350bc540e8df0aacffe6830c5c2ec428596"
+        },
+        "actual_counts": {
+          "duplicates": 0,
+          "errors": 0,
+          "failures": 0,
+          "functions": 12,
+          "passed": 22,
+          "skipped": 0,
+          "tests": 22
+        },
+        "actual_raw_JUnit": {
+          "bytes": 4101,
+          "logical_name": "junit.xml",
+          "path": "/tmp/P2-physical-V4-current-trust-existing-ordinary22-INERT-smb89s6r/actual-output/corpus-release-physical-v4-current-trust-ordinary22-run-result0-output1.bin",
+          "sha256": "2708d9e1d68197ec36cae5ca573138c16f523ece74114bacb9de983e1e92386c"
+        },
+        "evidence_ordinal": 568,
+        "exact_current_V4_trust_READ3": {
+          "bytes": 9135,
+          "path": "/tmp/P2-physical-V4-release-current-trust-exact2-freeze-READ3-INERT-1t7d7yp0/actual-V4-current-trust-two-test-frozen-READ3-closed-v580.json",
+          "sha256": "de805d2f730a0c47ebb0b3a9b5834b3bfb45567ef81e21fe0da29ce3befd8a45"
+        },
+        "exact_local_freeze": {
+          "bytes": 9930,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-physical-V4-current-trust-exact2-local-freeze-v579.json",
+          "sha256": "609e827e344345163e00f7fe44192af4a5bfc0c3f91df298bc9d26fdfcfa0145"
+        },
+        "exact_two_published_body_joins": {
+          "ipfs_datasets_py/logic/autoformal/legal_release_coordinator_v1.py": {
+            "bytes": 168024,
+            "full9": {
+              "st_ctime_ns": "1795717267333141087",
+              "st_dev": "66306",
+              "st_gid": "1000",
+              "st_ino": "70042676",
+              "st_mode": "33204",
+              "st_mtime_ns": "1795717266740808161",
+              "st_nlink": "1",
+              "st_size": "168024",
+              "st_uid": "1000"
+            },
+            "git_mode": "100644",
+            "parent_blob": "395f611d7d36741125c84864865501bf4dd6b72a",
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/ipfs_datasets_py/logic/autoformal/legal_release_coordinator_v1.py",
+            "sha256": "ddc5e64b56e6cde041f321e3044088cb74020d57cb3215a2d092757a96b78f2b",
+            "stage0_and_committed_blob": "804144f8d656652ecf39db698ee6f389d2bf3833"
+          },
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py": {
+            "bytes": 289075,
+            "full9": {
+              "st_ctime_ns": "1795717267886147567",
+              "st_dev": "66306",
+              "st_gid": "1000",
+              "st_ino": "70042681",
+              "st_mode": "33188",
+              "st_mtime_ns": "1795717266744104200",
+              "st_nlink": "1",
+              "st_size": "289075",
+              "st_uid": "1000"
+            },
+            "git_mode": "100644",
+            "parent_blob": "e482b18b7101c32d1db8f07eada01c064784419b",
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/tests/unit/logic/autoformal/test_corpus_release_cli.py",
+            "sha256": "72e1d37fcd47fa63271561b8fceb6dbda94f42599ab722a818a31dcb41bc0501",
+            "stage0_and_committed_blob": "ee46a5ac88429283b8d778993783edc456f1b2c4"
+          }
+        },
+        "fixture_only": true,
+        "observations": {
+          "authenticated_caller_clock_or_registry_freshness": false,
+          "checked_lean_declared_eligible": false,
+          "declared_proof_status": "pending",
+          "evaluation_gold_mask": 0,
+          "healthy_independently_pinned_current_trust_succeeds": true,
+          "independent_registry_pin_mismatch_refuses": true,
+          "original_signed_review_unchanged": true,
+          "selected_current_revocation_vetoes_replay": true,
+          "training_mask": 0
+        },
+        "ordered_actual_cases": [
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_current_replay_refuses_genuinely_revoked_reviewer",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v3_existing_release_projects_declared_graph_eligibility",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_cli_projects_current_graph_eligibility_without_native_credit",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_declared_eligibility_keeps_native_refusal",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_projects_independently_observed_current_review",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_refuses_stale_wire_against_independent_current_review[revoked-registry]",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_refuses_stale_wire_against_independent_current_review[changed-policy]",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_refuses_stale_wire_against_independent_current_review[expiry]",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_refuses_stale_wire_against_independent_current_review[dependency]",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_refuses_stale_wire_against_independent_current_review[rollback]",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_current_review_selection_preserves_legacy_default",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_checked_native_requires_independent_current_review_first",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_checked_native_requires_closed_selection_before_plan[missing-field]",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_checked_native_requires_closed_selection_before_plan[unexpected-field]",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_checked_native_fences_plan_and_handle_before_wire[missing-plan]",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_checked_native_fences_plan_and_handle_before_wire[serialized-plan]",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_checked_native_fences_plan_and_handle_before_wire[wrong-plan-digest]",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_checked_native_refuses_unissued_exact_class_handle_before_wire",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_applies_selected_current_trust_to_original_signed_review[original]",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_applies_selected_current_trust_to_original_signed_review[healthy]",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_applies_selected_current_trust_to_original_signed_review[revoked]",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_applies_selected_current_trust_to_original_signed_review[wrong-pin]"
+        ],
+        "ordinary_case_cohorts": {
+          "current_trust_new": 4,
+          "retained": 18
+        },
+        "owning_test": "tests/unit/logic/autoformal/test_corpus_release_cli.py",
+        "prior_verified_guide567_publication": {
+          "bytes": 17531,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-guide567-four-doc-three-FF-publication-small-v578.json",
+          "sha256": "9ca016ae1a80bb98c9d8cad5ac59d48c338d14255096cd0d1867ac3814bf6cf9"
+        },
+        "proof_legal_semantics_statutory_authentication_model_training_or_corpus_admission": false,
+        "related_catalog_component": "legal-release-coordinator",
+        "related_tasks": [
+          "LIR-21"
+        ],
+        "release_coordinator": "ipfs_datasets_py/logic/autoformal/legal_release_coordinator_v1.py",
+        "schema": "Guide568-fictional-physical-V4-current-trust-evidence/v1",
+        "separate_private_same_four_red_green": {
+          "bytes": 5454,
+          "path": "/tmp/Root-P2-physical-V4-current-trust-replay-private-v579-jhhvj2f3/SEALED-current-V4-release-trust-exact-two-private.json",
+          "sha256": "f8996c10e574a693ee62ef5c1744ddcf2c3928f275f6bae1509913968d3927ef"
+        },
+        "task": "LIR-14",
+        "task_status_changed": false
+      },
+      "evidence_ordinal": 568,
+      "id": "phase2-physical-v4-current-trust-ordinary22-evidence568-20261126",
+      "observed_bytes": 8897,
+      "observed_sha256": "da8d45fd6a627b439f592b01161c13df6244e6ce8427e7afe9f786ea8ae6fbc7",
+      "path": "/tmp/P2-physical-V4-current-trust-guide568-composer-INERT-b5k63jxm/one-guide568-fictional-physical-v4-current-trust-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Opt-in independent current trust replay for the original signed fictional physical V4 review, with proof still pending.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }

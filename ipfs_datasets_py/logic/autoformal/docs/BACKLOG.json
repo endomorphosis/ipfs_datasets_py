@@ -4812,6 +4812,32 @@
       ],
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
       "task": "LIR-17"
+    },
+    "phase2_physical_v4_current_trust_ordinary22_20261126": {
+      "actual_Phase2_exact2_code_publication": {
+        "bytes": 22197,
+        "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-physical-V4-current-trust-exact2-ordinary22-three-FF-publication-v582.json",
+        "sha256": "071d63ddcc64989609a452f3a2cfdde373a125f171160a520e945a0f96556c9e"
+      },
+      "actual_Phase2_ordinary22_qualification": {
+        "bytes": 27590,
+        "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-physical-V4-current-trust-ordinary22-closed-v581.json",
+        "sha256": "7abeecce49e8924910738de1f76036ebb3557a261246207a624e6b99dfa7cd21"
+      },
+      "evidence_ordinal": 568,
+      "facts": {
+        "bytes": 8897,
+        "path": "/tmp/P2-physical-V4-current-trust-guide568-composer-INERT-b5k63jxm/one-guide568-fictional-physical-v4-current-trust-scoped-facts.json",
+        "sha256": "da8d45fd6a627b439f592b01161c13df6244e6ce8427e7afe9f786ea8ae6fbc7"
+      },
+      "new_corpus_or_model_qualification": false,
+      "record_id": "phase2-physical-v4-current-trust-ordinary22-evidence568-20261126",
+      "related_catalog_component": "legal-release-coordinator",
+      "related_tasks": [
+        "LIR-21"
+      ],
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
+      "task": "LIR-14"
     }
   },
   "programme_goal_hierarchy": {
