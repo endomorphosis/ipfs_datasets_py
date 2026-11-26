@@ -712,3 +712,238 @@ def test_planned_physical_type_capture_binds_exact_kernel_diagnostics(mutation):
         with pytest.raises(ValueError):
             elaboration_native.read_planned_physical_whole_norm_type_capture_v2(
                 prepared, stdout, stderr, **options)
+
+
+def _checked_release_type_capture_fixture(label, *, checked_changes=None):
+    """Small fictional retained claims; real seals/typed validators, no execution."""
+    from ipfs_datasets_py.logic.autoformal import corpus_qualification as qualification
+    from ipfs_datasets_py.utils.cid_utils import cid_for_bytes
+
+    def digest(role):
+        return sha(("fictional " + label + " " + role).encode())
+
+    def record_cid(role):
+        return seal({"schema": "authored-type-capture-fixture-leaf/v1",
+                     "label": label, "role": role})["record_cid"]
+
+    request, files = _planned_physical_probe_inputs()
+    context = request.to_dict()["payload"]["context"]
+    units = {}
+    for role, unit_id in (("unit", "norm-" + label), ("source_definition", "definition-" + label)):
+        units[role] = {
+            "unit_id": unit_id, "complete_ir_sha256": digest(role + " ir"),
+            "interpretation_record_cid": record_cid(role + " interpretation"),
+            "scope_record_cid": record_cid(role + " scope"),
+            "source_occurrence_cid": record_cid(role + " occurrence"),
+            "source_use_binding_sha256": digest(role + " use"),
+            "source_version_cid": record_cid("source version"),
+        }
+    units["unit"]["relational_request_sha256"] = digest("relational request")
+    component_raw = {role: canonical({"fictional": label, "role": role})
+                     for role in ("graph", "admission", "preservation", "reviewed_crosswalk", "dependency")}
+    context.update({"physical_request_sha256": digest("physical request"),
+                    **{role + "_sha256": sha(component_raw[role])
+                       for role in ("graph", "admission", "preservation")},
+                    "realization_sha256": digest("realization"), **units})
+    # The original V4 report commits decoded preparation separately from raw transport.
+    context["preservation_sha256"] = digest("decoded preservation preparation")
+    payload = request.to_dict()["payload"]
+    payload.update(context=context, context_sha256=sha(canonical(context)))
+    request = replace(request, request_id="authored-checked-type-" + label, payload=payload,
+                      claim_digest=digest("claim"), obligation_digest=digest("obligation"))
+    prepared = owner.prepare_planned_physical_whole_norm_type_probe_v2(
+        request, files, expected_request_sha256=request.digest)
+    state = prepared.to_dict()
+    original_type = {"kind": "forallE", "binder_name": {"kind": "str",
+        "parent": {"kind": "anonymous"}, "value": "p"}, "binder_info": "default",
+        "binder_type": {"kind": "sort", "level": {"kind": "zero"}}, "body": {"kind": "bvar", "index": 0}}
+    row = {
+        "schema": owner.PHYSICAL_TYPE_OBSERVATION_SCHEMA,
+        "original_name": state["original_theorem"], "alias_name": state["alias_theorem"],
+        "original_type": original_type,
+        "alias_type": {**original_type, "binder_name": {"kind": "anonymous"}},
+        "original_level_params": [], "alias_level_params": [], "expr_equal": False,
+        "kernel_defeq": True, "original_kernel_check": True, "alias_kernel_check": True,
+        "closed_types": True, "prop_type": True, "level_params_equal": True,
+    }
+    module = state["probe_module"] + ".lean"
+    stdout = (f"info: {state['source_path']}:5:0: '{state['original_theorem']}' does not depend on any axioms\n"
+              f"info: {module}:{state['alias_axiom_report_line']}:0: '{state['alias_theorem']}' does not depend on any axioms\n"
+              f"info: {module}:{state['type_report_line']}:0: CORPUS_TYPE_CHECK:").encode() + canonical(row) + b"\n"
+    review = seal({
+        "schema": "legal-corpus-physical-v4-current-review-observation/v1",
+        "request_sha256": context["physical_request_sha256"], "graph_sha256": context["graph_sha256"],
+        "admission_sha256": context["admission_sha256"], "registry_sha256": digest("registry"),
+        "policy_sha256": digest("policy"), "reviews_sha256": digest("reviews"),
+        "at_time_utc": "2026-11-26T00:00:00Z", "caller_observation_sha256": digest("caller observation"),
+        "current_assessment_sha256": digest("assessment"), "dependency_invalidation_sha256": digest("invalidation"),
+        "evaluation_clock_authenticated": False, "registry_freshness_authenticated": False,
+    })
+    checked = seal({
+        "schema": "legal-corpus-physical-v4-checked-native-observation/v1",
+        **{key: context[key] for key in ("physical_request_sha256", "graph_sha256", "admission_sha256",
+            "preservation_sha256", "realization_sha256", "unit", "source_definition", "proposition_utf8_sha256")},
+        "planned_request_sha256": request.digest, "current_review_observation_cid": review["record_cid"],
+        "live_result_cid": record_cid("retained conditional native result"),
+        "declaration": request.declaration_id, "claim_digest": request.claim_digest,
+        "obligation_digest": request.obligation_digest,
+        "retained_receipt_sha256": digest("original receipt"), "retained_packet_sha256": digest("original packet inventory"),
+        "native_execution_authenticated": True, "checked_under_explicit_hypotheses": True,
+        "premise_remains_quantified": True, "axiom_dependencies": [],
+        "qualified_request_execution": False, "proof_receipt_issued": False,
+        **({} if checked_changes is None else checked_changes),
+    })
+    report = {
+        "schema": "legal-uscode-release-closure-report/v4", "reviewed_version": 4,
+        "profile": "reviewed-source-use-whole-norm-physical-source-replay/v1",
+        "instance_identity_profile": "reviewed-source-use/v1",
+        "definition_application_profile": "whole-norm-definition-expansion/v1",
+        "local_replay_complete": True, "local_source_cache_entity_bindings_verified": True,
+        "independent_reviewed_crosswalk_verified": True,
+        **dict.fromkeys(("admission_mask", "release_mask", "training_mask", "gold_mask", "evaluation_gold_mask"), 0),
+        **dict.fromkeys(("admitted", "release_ready", "release_eligible", "formalized", "proof_verified",
+                        "source_semantics_verified", "model_or_compiler_execution_performed"), False),
+        "request_sha256": context["physical_request_sha256"],
+        **{role + "_sha256": sha(component_raw[role])
+           for role in ("graph", "admission", "preservation", "reviewed_crosswalk")},
+        "artifacts": [{"artifact_id": "fictional:" + label + ":" + role, "family": role,
+                       "bytes": len(raw), "sha256": sha(raw)} for role, raw in component_raw.items()],
+        "fixture_only": True, "current_review_observation": review, "checked_native_observation": checked,
+        "unit_ids": [checked["unit"]["unit_id"], checked["source_definition"]["unit_id"]],
+        "unit_preservation_bindings": [{**checked[key], "kind": kind}
+                                       for key, kind in (("unit", "norm"), ("source_definition", "definition"))],
+    }
+    report["preservation_sha256"] = context["preservation_sha256"]
+    components = {role: cid_for_bytes(raw) for role, raw in component_raw.items()}
+    evidence = seal({
+        "schema": "legal-corpus-physical-v4-qualification-evidence/v1",
+        **{key: report[key] for key in ("reviewed_version", "instance_identity_profile", "definition_application_profile",
+            "profile", "request_sha256", "graph_sha256", "admission_sha256", "preservation_sha256",
+            "reviewed_crosswalk_sha256", "fixture_only")},
+        "artifact_cid": components["graph"], "component_cids": components,
+        "ordered_unit_ids": report["unit_ids"], "permitted_uses": ["fictional_test_only"],
+        "formal_assumptions": [], "preservation_obligations": [request.obligation_id],
+        "retained_native": None,
+        "current_review_observation": review, "checked_native_observation": checked,
+    })
+    dimensions = {name: {"status": status, "evidence_cids": refs} for name, status, refs in (
+        ("processing", "complete", [evidence["record_cid"]]),
+        ("source_integrity", "verified", [components["reviewed_crosswalk"]]),
+        ("interpretation", "reviewed", [components["admission"], review["record_cid"]]),
+        ("representation", "supported_complete", [components["preservation"]]),
+        ("dependency", "resolved", [components["dependency"]]),
+    )}
+    declared = qualification.prepare_qualification(artifact_cid=components["graph"], profile=report["profile"],
+                                                   theorem_requested=True, dimensions=dimensions)
+    report.update(declared_eligibility_evidence=evidence, declared_qualification=declared,
+                  declared_eligibility=qualification.derive_eligibility(
+                      declared, artifact_cid=components["graph"], profile=report["profile"]))
+    raw = canonical(report)
+    return {"request": request, "files": files, "prepared": prepared, "row": row, "stdout": stdout,
+            "stderr": b"", "report": report, "options": {
+                "checked_release_report_raw": raw, "expected_checked_release_report_sha256": sha(raw),
+                "expected_retained_receipt_sha256": digest("original receipt"),
+                "expected_retained_packet_sha256": digest("original packet inventory"),
+                "expected_preparation_sha256": owner.preparation_sha256(prepared),
+                "expected_stdout_sha256": sha(stdout), "expected_stderr_sha256": sha(b""),
+            }}
+
+
+@pytest.mark.parametrize("release_id", ["one", "two"])
+def test_checked_release_type_capture_preserves_exact_retained_provenance(release_id):
+    case = _checked_release_type_capture_fixture(release_id)
+    report_before = canonical(case["report"])
+    observed = elaboration_native.read_checked_release_physical_whole_norm_type_capture_v2(
+        case["request"], case["files"], case["stdout"], case["stderr"], **case["options"])
+    original = elaboration_native.read_planned_physical_whole_norm_type_capture_v2(
+        case["prepared"], case["stdout"], case["stderr"], **{key: case["options"][key] for key in (
+            "expected_preparation_sha256", "expected_stdout_sha256", "expected_stderr_sha256")})
+    assert set(observed) == {"type_capture", "provenance"}
+    assert observed["type_capture"] == original == canonical({case["request"].declaration_id: case["row"]})
+    provenance = observed["provenance"]
+    assert seal(provenance) == provenance
+    checked = case["report"]["checked_native_observation"]
+    for key in ("physical_request_sha256", "graph_sha256", "admission_sha256", "preservation_sha256",
+                "realization_sha256", "unit", "source_definition", "proposition_utf8_sha256", "declaration",
+                "planned_request_sha256", "claim_digest", "obligation_digest",
+                "retained_receipt_sha256", "retained_packet_sha256"):
+        assert provenance[key] == checked[key]
+    assert provenance["checked_native_observation_cid"] == checked["record_cid"]
+    assert provenance["current_review_observation_cid"] == checked["current_review_observation_cid"]
+    assert provenance["retained_live_result_cid"] == checked["live_result_cid"]
+    assert provenance["release_qualification_evidence_cid"] == case["report"]["declared_eligibility_evidence"]["record_cid"]
+    assert provenance["declared_qualification_cid"] == case["report"]["declared_qualification"]["record_cid"]
+    assert provenance["declared_eligibility_cid"] == case["report"]["declared_eligibility"]["record_cid"]
+    assert provenance["checked_release_report_sha256"] == sha(report_before)
+    assert provenance["type_capture_sha256"] == sha(original)
+    assert provenance["planned_context_sha256"] == case["request"].to_dict()["payload"]["context_sha256"]
+    for key, option in (("probe_preparation_sha256", "expected_preparation_sha256"),
+                        ("probe_stdout_sha256", "expected_stdout_sha256"), ("probe_stderr_sha256", "expected_stderr_sha256")):
+        assert provenance[key] == case["options"][option]
+    assert provenance["fixture_only"] is True and provenance["premise_remains_quantified"] is True
+    preserved_transport = next(row for row in case["report"]["artifacts"] if row["family"] == "preservation")
+    assert preserved_transport["sha256"] != provenance["preservation_sha256"]
+    assert provenance["checked_under_explicit_hypotheses"] is True and provenance["axiom_dependencies"] == []
+    assert provenance["fresh_native_execution_performed"] is False and provenance["proof_receipt_issued"] is False
+    assert provenance["authority"] == owner.AUTHORITY and all(value is False for value in provenance["authority"].values())
+    assert type(provenance["training_mask"]) is int and provenance["training_mask"] == 0
+    assert type(provenance["evaluation_gold_mask"]) is int and provenance["evaluation_gold_mask"] == 0
+    assert canonical(case["report"]) == report_before
+    assert case["report"]["declared_eligibility"]["views"]["checked_lean"]["declared_eligible"] is False
+    assert case["report"]["declared_qualification"]["dimensions"]["proof"]["status"] == "pending"
+
+
+@pytest.mark.parametrize("damage", ["foreign-report", "foreign-plan", "coherent-receipt", "coherent-packet",
+    "coherent-unit", "coherent-review-link", "nested-seal", "report-pin", "preparation-pin", "stdout-pin",
+    "repinned-alias", "repinned-open-type", "authority-mask", "duplicate-component", "changed-component-transport"])
+def test_checked_release_type_capture_refuses_cross_release_and_repinned_mutations(damage):
+    case = _checked_release_type_capture_fixture("one")
+    request, files, stdout, stderr = (case[key] for key in ("request", "files", "stdout", "stderr"))
+    options = dict(case["options"])
+    if damage == "foreign-report":
+        other = _checked_release_type_capture_fixture("two")
+        options.update({key: other["options"][key] for key in (
+            "checked_release_report_raw", "expected_checked_release_report_sha256",
+            "expected_retained_receipt_sha256", "expected_retained_packet_sha256")})
+    elif damage == "foreign-plan":
+        other = _checked_release_type_capture_fixture("two")
+        request, files = other["request"], other["files"]
+    elif damage.startswith("coherent-"):
+        if damage in ("coherent-receipt", "coherent-packet"):
+            field = "retained_receipt_sha256" if damage == "coherent-receipt" else "retained_packet_sha256"
+            changes = {field: sha(("different exact " + field).encode())}
+        elif damage == "coherent-unit":
+            changes = {"unit": _checked_release_type_capture_fixture("two")["report"]["checked_native_observation"]["unit"]}
+        else:
+            changes = {"current_review_observation_cid": case["report"]["declared_qualification"]["record_cid"]}
+        changed = _checked_release_type_capture_fixture("one", checked_changes=changes)
+        options.update({key: changed["options"][key] for key in (
+            "checked_release_report_raw", "expected_checked_release_report_sha256")})
+    elif damage in ("nested-seal", "authority-mask", "duplicate-component", "changed-component-transport"):
+        report = deepcopy(case["report"])
+        if damage == "nested-seal":
+            report["checked_native_observation"]["claim_digest"] = "f" * 64
+        elif damage == "authority-mask":
+            report["admission_mask"] = 1
+        elif damage == "duplicate-component":
+            report["artifacts"].append(deepcopy(report["artifacts"][0]))
+        else:
+            next(row for row in report["artifacts"] if row["family"] == "preservation")["sha256"] = "f" * 64
+        options.update(checked_release_report_raw=canonical(report),
+                       expected_checked_release_report_sha256=sha(canonical(report)))
+    elif damage.endswith("-pin"):
+        field = {"report-pin": "expected_checked_release_report_sha256",
+                 "preparation-pin": "expected_preparation_sha256", "stdout-pin": "expected_stdout_sha256"}[damage]
+        options[field] = "0" * 64
+    else:
+        row = deepcopy(case["row"])
+        if damage == "repinned-alias":
+            row["alias_name"] += "Foreign"
+        else:
+            row["alias_type"]["body"]["index"] = 1
+        assert stdout.count(canonical(case["row"])) == 1
+        stdout = stdout.replace(canonical(case["row"]), canonical(row))
+        options["expected_stdout_sha256"] = sha(stdout)
+    with pytest.raises(ValueError):
+        elaboration_native.read_checked_release_physical_whole_norm_type_capture_v2(
+            request, files, stdout, stderr, **options)

@@ -761,3 +761,207 @@ def read_planned_physical_whole_norm_type_capture_v2(
 
 
 __all__ += ["read_planned_physical_whole_norm_type_capture_v2"]
+
+
+_CHECKED_CAPTURE_BINDINGS = (
+    "physical_request_sha256", "graph_sha256", "admission_sha256", "preservation_sha256",
+    "realization_sha256", "unit", "source_definition", "proposition_utf8_sha256",
+)
+_CHECKED_CAPTURE_REVIEW_FIELDS = (
+    "request_sha256", "graph_sha256", "admission_sha256", "registry_sha256", "policy_sha256",
+    "reviews_sha256", "at_time_utc", "caller_observation_sha256", "current_assessment_sha256",
+    "dependency_invalidation_sha256", "evaluation_clock_authenticated", "registry_freshness_authenticated",
+)
+_CHECKED_CAPTURE_EVIDENCE_FIELDS = (
+    "reviewed_version", "instance_identity_profile", "definition_application_profile", "artifact_cid",
+    "profile", "request_sha256", "component_cids", "graph_sha256", "admission_sha256",
+    "preservation_sha256", "reviewed_crosswalk_sha256", "ordered_unit_ids", "fixture_only",
+    "permitted_uses", "formal_assumptions", "preservation_obligations", "retained_native",
+    "current_review_observation", "checked_native_observation",
+)
+_CHECKED_CAPTURE_UNIT_FIELDS = {
+    "unit_id", "complete_ir_sha256", "interpretation_record_cid", "scope_record_cid",
+    "source_occurrence_cid", "source_use_binding_sha256", "source_version_cid",
+}
+
+
+def _checked_release_type_capture_context(report):
+    from . import corpus_contracts as contracts, corpus_qualification as qualification
+
+    _need(report.get("schema") == "legal-uscode-release-closure-report/v4"
+          and type(report.get("reviewed_version")) is int and report["reviewed_version"] == 4
+          and report.get("profile") == "reviewed-source-use-whole-norm-physical-source-replay/v1"
+          and report.get("instance_identity_profile") == "reviewed-source-use/v1"
+          and report.get("definition_application_profile") == "whole-norm-definition-expansion/v1"
+          and all(report.get(field) is True for field in (
+              "local_replay_complete", "local_source_cache_entity_bindings_verified",
+              "independent_reviewed_crosswalk_verified")),
+          "complete local reviewed physical V4 closure required")
+    masks = ("admission_mask", "release_mask", "training_mask", "gold_mask", "evaluation_gold_mask")
+    _need(all(type(report.get(mask)) is int and report[mask] == 0 for mask in masks)
+          and all(report.get(field) is False for field in (
+              "admitted", "release_ready", "release_eligible", "formalized", "proof_verified",
+              "source_semantics_verified", "model_or_compiler_execution_performed")),
+          "retained physical V4 report cannot widen authority or masks")
+    review = contracts.validate_record(report.get("current_review_observation"),
+        schema="legal-corpus-physical-v4-current-review-observation/v1", fields=_CHECKED_CAPTURE_REVIEW_FIELDS)
+    checked = contracts.validate_record(report.get("checked_native_observation"),
+        schema="legal-corpus-physical-v4-checked-native-observation/v1", fields=(
+            *_CHECKED_CAPTURE_BINDINGS, "planned_request_sha256", "current_review_observation_cid",
+            "live_result_cid", "declaration", "claim_digest", "obligation_digest", "retained_receipt_sha256",
+            "retained_packet_sha256", "native_execution_authenticated", "checked_under_explicit_hypotheses",
+            "premise_remains_quantified", "axiom_dependencies", "qualified_request_execution", "proof_receipt_issued",
+        ))
+    _need(all(review[field] is False for field in (
+              "evaluation_clock_authenticated", "registry_freshness_authenticated"))
+          and checked["current_review_observation_cid"] == review["record_cid"]
+          and all(checked[field] is True for field in (
+              "native_execution_authenticated", "checked_under_explicit_hypotheses", "premise_remains_quantified"))
+          and all(checked[field] is False for field in ("qualified_request_execution", "proof_receipt_issued"))
+          and checked["axiom_dependencies"] == [],
+          "matching retained review and conditional Native observation required")
+    _need(checked["physical_request_sha256"] == review["request_sha256"] == report.get("request_sha256")
+          and all(checked[field] == review[field] == report.get(field)
+                  for field in ("graph_sha256", "admission_sha256"))
+          and checked["preservation_sha256"] == report.get("preservation_sha256"),
+          "checked Native identity differs from the reviewed release")
+    for field in ("physical_request_sha256", "graph_sha256", "admission_sha256", "preservation_sha256",
+                  "realization_sha256", "proposition_utf8_sha256", "planned_request_sha256", "claim_digest",
+                  "obligation_digest", "retained_receipt_sha256", "retained_packet_sha256"):
+        contracts.require_sha256(checked[field], field)
+    contracts.require_cid(checked["live_result_cid"], "retained live result", codecs=("dag-json",))
+
+    population = report.get("unit_preservation_bindings")
+    ids = report.get("unit_ids")
+    _need(type(population) is list and all(type(row) is dict and type(row.get("unit_id")) is str
+                                           for row in population)
+          and ids == [row["unit_id"] for row in population] and len(ids) == len(set(ids)),
+          "exact reviewed preservation population required")
+    units = {row["unit_id"]: row for row in population}
+    for field, kind, fields in (
+            ("unit", "norm", _CHECKED_CAPTURE_UNIT_FIELDS | {"relational_request_sha256"}),
+            ("source_definition", "definition", _CHECKED_CAPTURE_UNIT_FIELDS)):
+        selected = contracts.require_keys(checked[field], fields, field)
+        unit_id = contracts.require_text(selected["unit_id"], field + " ID")
+        for key in fields - {"unit_id"}:
+            if key.endswith("_sha256"):
+                contracts.require_sha256(selected[key], key)
+            else:
+                contracts.require_cid(selected[key], key, codecs=("dag-json",))
+        preserved = units.get(unit_id, {})
+        _need(preserved.get("kind") == kind
+              and all(preserved.get(key) == value for key, value in selected.items()),
+              "checked Native unit or source definition differs from the reviewed release")
+
+    evidence = contracts.validate_record(report.get("declared_eligibility_evidence"),
+        schema="legal-corpus-physical-v4-qualification-evidence/v1", fields=_CHECKED_CAPTURE_EVIDENCE_FIELDS)
+    _need(all(evidence[field] == report.get(field) for field in (
+              "reviewed_version", "instance_identity_profile", "definition_application_profile", "profile",
+              "request_sha256", "graph_sha256", "admission_sha256", "preservation_sha256",
+              "reviewed_crosswalk_sha256", "fixture_only"))
+          and type(evidence["fixture_only"]) is bool and evidence["ordered_unit_ids"] == ids
+          and evidence["current_review_observation"] == review and evidence["checked_native_observation"] == checked,
+          "declared qualification evidence differs from the checked release")
+    roles = ("graph", "admission", "preservation", "dependency", "reviewed_crosswalk")
+    components = contracts.require_keys(evidence["component_cids"], roles, "release components")
+    artifacts = report.get("artifacts")
+    _need(type(artifacts) is list and all(type(row) is dict for row in artifacts),
+          "exact physical release artifact inventory required")
+    for role in roles:
+        matches = [row for row in artifacts if row.get("family") == role]
+        _need(len(matches) == 1, "exact release component artifact required: " + role)
+        transport_sha256 = matches[0].get("sha256")
+        contracts.require_cid_sha256(components[role], transport_sha256, role)
+        # The preservation identity above hashes its decoded preparation, not its transport bytes.
+        if role in ("graph", "admission", "reviewed_crosswalk"):
+            _need(transport_sha256 == evidence[role + "_sha256"], "release component digest differs: " + role)
+    artifact_cid = evidence["artifact_cid"]
+    _need(artifact_cid == components["graph"], "declared qualification must bind the exact reviewed graph")
+    declared = qualification.validate_qualification(report.get("declared_qualification"),
+        artifact_cid=artifact_cid, profile=evidence["profile"])
+    eligibility = qualification.validate_eligibility(report.get("declared_eligibility"), declared,
+        artifact_cid=artifact_cid, profile=evidence["profile"])
+    dimensions = declared["dimensions"]
+    _need(declared["theorem_requested"] is True
+          and dimensions["native_translation"]["status"] == "not_run"
+          and dimensions["lean_compilation"]["status"] == "not_run"
+          and dimensions["proof"]["status"] == "pending"
+          and dimensions["processing"]["evidence_cids"] == [evidence["record_cid"]]
+          and dimensions["interpretation"]["evidence_cids"] == [components["admission"], review["record_cid"]]
+          and eligibility["views"]["reviewed_graph"]["declared_eligible"] is True
+          and eligibility["views"]["checked_lean"]["declared_eligible"] is False,
+          "conditional type evidence must retain reviewed graph and pending Lean qualification")
+    return checked, evidence, declared, eligibility
+
+
+def read_checked_release_physical_whole_norm_type_capture_v2(
+        planned_request, original_files, stdout_raw, stderr_raw, *,
+        checked_release_report_raw, expected_checked_release_report_sha256,
+        expected_retained_receipt_sha256, expected_retained_packet_sha256,
+        expected_preparation_sha256, expected_stdout_sha256, expected_stderr_sha256):
+    """Join a retained type capture to an independently pinned checked V4 report.
+
+    Use the independently retained report and the original receipt and logical
+    packet inventory pins from the probe selection. Recreate the probe from its checked plan and exact original project, then
+    replay the separately pinned logs. The returned provenance describes this
+    retained join and carries no new execution, proof, review, or admission.
+    """
+    from . import corpus_contracts as contracts
+    from . import legal_corpus_definition_use_native_v2 as native
+    from . import legal_corpus_definition_use_preservation_elaboration_v2 as preparer
+
+    report = contracts.load_record_bytes(
+        checked_release_report_raw, expected_sha256=expected_checked_release_report_sha256)
+    checked, evidence, declared, eligibility = _checked_release_type_capture_context(report)
+    _pin(expected_retained_receipt_sha256, "original retained receipt")
+    _pin(expected_retained_packet_sha256, "original retained packet inventory")
+    _need(checked["retained_receipt_sha256"] == expected_retained_receipt_sha256
+          and checked["retained_packet_sha256"] == expected_retained_packet_sha256,
+          "retained receipt or packet inventory differs from the checked release")
+    request_pin = checked["planned_request_sha256"]
+    plan_wire = native._physical_whole_norm_request_wire(planned_request, request_pin)
+    plan = native._parse(plan_wire[1], native.MAX_RECORD_BYTES)
+    payload = plan["payload"]
+    context = payload.get("context")
+    _need(type(context) is dict and all(context.get(field) == checked[field] for field in _CHECKED_CAPTURE_BINDINGS)
+          and plan["declaration_id"] == checked["declaration"] == context.get("theorem")
+          and all(plan[field] == checked[field] for field in ("claim_digest", "obligation_digest")),
+          "planned theorem identity or context differs from the checked release")
+
+    prepared = preparer.prepare_planned_physical_whole_norm_type_probe_v2(
+        planned_request, original_files, expected_request_sha256=request_pin)
+    type_capture = read_planned_physical_whole_norm_type_capture_v2(prepared, stdout_raw, stderr_raw,
+        expected_preparation_sha256=expected_preparation_sha256,
+        expected_stdout_sha256=expected_stdout_sha256, expected_stderr_sha256=expected_stderr_sha256)
+    provenance = contracts.seal_record({
+        "schema": "legal-corpus-physical-v4-checked-release-type-capture-provenance/v1",
+        "checked_release_report_sha256": expected_checked_release_report_sha256,
+        "checked_native_observation_cid": checked["record_cid"],
+        "current_review_observation_cid": checked["current_review_observation_cid"],
+        "retained_live_result_cid": checked["live_result_cid"],
+        "release_qualification_evidence_cid": evidence["record_cid"],
+        "declared_qualification_cid": declared["record_cid"],
+        "declared_eligibility_cid": eligibility["record_cid"],
+        "reviewed_graph_cid": evidence["artifact_cid"],
+        **{field: checked[field] for field in (
+            *_CHECKED_CAPTURE_BINDINGS, "declaration", "planned_request_sha256", "claim_digest",
+            "obligation_digest", "retained_receipt_sha256", "retained_packet_sha256")},
+        "planned_context_sha256": payload["context_sha256"],
+        "probe_preparation_sha256": expected_preparation_sha256,
+        "probe_stdout_sha256": expected_stdout_sha256,
+        "probe_stderr_sha256": expected_stderr_sha256,
+        "type_capture_sha256": _sha(type_capture),
+        "fixture_only": evidence["fixture_only"],
+        "checked_under_explicit_hypotheses": True,
+        "premise_remains_quantified": True,
+        "axiom_dependencies": [],
+        "fresh_native_execution_performed": False,
+        "proof_receipt_issued": False,
+        "authority": dict(AUTHORITY),
+        "training_mask": 0,
+        "evaluation_gold_mask": 0,
+    })
+    return {"type_capture": type_capture, "provenance": provenance}
+
+
+__all__ += ["read_checked_release_physical_whole_norm_type_capture_v2"]
