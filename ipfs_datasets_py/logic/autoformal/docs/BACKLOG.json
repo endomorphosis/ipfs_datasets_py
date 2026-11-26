@@ -4949,6 +4949,32 @@
       "related_catalog_component": "legal-release-coordinator",
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
       "task": "LIR-21"
+    },
+    "phase1_lean_theorem_request_routing_and_namespaced_native_20261126": {
+      "actual_live_ordinary92": {
+        "bytes": 24231,
+        "path": "/tmp/Root-P1-Lean-live-ordinary92-reconcile-v596/actual-live-reconciled-P1-Lean-ordinary92-closed.json",
+        "sha256": "0e515a1f804ff04a70446d1fedeb27d0a63a73a030c4978bcac8bce767e7b5b5"
+      },
+      "actual_namespaced_Native2": {
+        "bytes": 111081,
+        "path": "/tmp/Root-P1-Lean-live-ordinary92-reconcile-v596/actual-native2-output/complete-native3-direct-existing-owner-report.json",
+        "sha256": "c617e83857ff671cd733c316519527256728bc2325043364253cbba7b5840f14"
+      },
+      "evidence_ordinal": 573,
+      "facts": {
+        "bytes": 5643,
+        "path": "/tmp/P1-Lean92-Native2-guide573-existing-composer-INERT-kVMIQxSz/current-Lean-theorem-request-ordinary92-Native2-scoped-facts.json",
+        "sha256": "731de40656e9bf8b2c0f3d29431f6239aff5bf63834c6bb5c99bb5dc37f9bf56"
+      },
+      "record_id": "phase1-lean-theorem-request-routing-ordinary92-native2-evidence573-20261126",
+      "related_catalog_component": "kernel-proof-evidence-integrity",
+      "related_tasks": [
+        "LIR-21"
+      ],
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
+      "statutory_or_corpus_admission_or_model_quality": false,
+      "task": "LIR-14"
     }
   },
   "programme_goal_hierarchy": {

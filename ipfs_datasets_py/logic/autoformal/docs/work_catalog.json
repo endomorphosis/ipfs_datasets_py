@@ -36073,6 +36073,144 @@
       "root": "artifact_workspace",
       "scope": "Digest-pinned current review inputs for the physical V4 CLI and retained-handoff replay controls.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase1_lean_theorem_request_routing_and_namespaced_native_20261126",
+      "closed_runtime_facts": {
+        "Source_resource_and_parent_closed_in_both_runs": true,
+        "actual_live_code_publication": {
+          "bytes": 14753,
+          "path": "/tmp/Root-P1-Lean-live-ordinary92-reconcile-v596/actual-P1-Lean-ordinary92-and-Native2-three-FF-publication.json",
+          "sha256": "1f52975ebd4cc8572b2a0da750a173d1ca5596c643f21e8dd2b5c1de0a02b5d6"
+        },
+        "actual_live_exact_two_freeze": {
+          "bytes": 5801,
+          "path": "/tmp/Root-P1-Lean-live-ordinary92-reconcile-v596/actual-isolated-exact-two-local-freeze.json",
+          "sha256": "afa47b34b755f9bd2c53bb36d68b10c069dd005d4e0b66a7b4338ebf6bb1d9de"
+        },
+        "actual_live_ordinary92": {
+          "bytes": 24231,
+          "path": "/tmp/Root-P1-Lean-live-ordinary92-reconcile-v596/actual-live-reconciled-P1-Lean-ordinary92-closed.json",
+          "sha256": "0e515a1f804ff04a70446d1fedeb27d0a63a73a030c4978bcac8bce767e7b5b5"
+        },
+        "actual_live_ordinary92_raw_JUnit": {
+          "bytes": 17502,
+          "path": "/tmp/P1-Lean-live-ordinary92-controls-INERT-31cgkog4/actual-output/phase1-lean-request-92-run-result0-output1.bin",
+          "sha256": "2790ac6c972a372f05fb99988377214fd6d1e88379fcd88476ac65d5ef203366"
+        },
+        "actual_live_ordinary92_report": {
+          "bytes": 2109568,
+          "path": "/tmp/P1-Lean-live-ordinary92-controls-INERT-31cgkog4/actual-output/complete-frozen-local-D-phase1-lean-request-92-existing-owner-report.json",
+          "sha256": "038fc414bb1942c3b6fe92e9617907abd426aa056d5f1b905a588e67efb4980e"
+        },
+        "actual_live_reconciled_Source42_READ3": {
+          "bytes": 9607,
+          "path": "/tmp/P1-Lean92-live-READ3-controls-XYXyet7M/actual-isolated-P1-Lean92-READ3-closed.json",
+          "sha256": "23eacdbf0c260382158deca5da4c29ddca3c7e3fab5901f253c2040cae3002a1"
+        },
+        "actual_live_reconciled_Source42_epoch": {
+          "bytes": 6319,
+          "path": "/tmp/Root-P1-Lean-live-ordinary92-reconcile-v596/actual-live-reconciled-Source42-content-epoch-closed.json",
+          "sha256": "3fb04725ccfc2b5c4a5fc0a60392bfed468b38adeec9b9a67dad8266d113351e"
+        },
+        "actual_namespaced_Native2": {
+          "bytes": 111081,
+          "path": "/tmp/Root-P1-Lean-live-ordinary92-reconcile-v596/actual-native2-output/complete-native3-direct-existing-owner-report.json",
+          "sha256": "c617e83857ff671cd733c316519527256728bc2325043364253cbba7b5840f14"
+        },
+        "actual_native2_cases": [
+          {
+            "accepted": true,
+            "case": "root_positive",
+            "compiler_event_index": 1,
+            "compiler_input_sha256": "538c97296bb45738bf2d0fae75d642eba33ebad91f5991935daf760f9d79b11c",
+            "compiler_returncode": 0,
+            "declaration": "wanted",
+            "expected_obligation_declaration": "_ipfs_expected_obligation_38fe5fbf5354b782717b02a98bed9cf74490f8a4e397bc3a08d214b1610de01d",
+            "version_event_index": 0
+          },
+          {
+            "accepted": false,
+            "case": "namespaced_wrong_type",
+            "compiler_event_index": 2,
+            "compiler_input_sha256": "abe0a6e85ed8447957cea6d85261c0750bbddd7baf8c621b4182e8a00cb4b6e5",
+            "compiler_returncode": 1,
+            "declaration": "Law.wanted",
+            "expected_obligation_declaration": "_ipfs_expected_obligation_b6a407a8075451a3040b103c5da2c04dd1e1ef4fce0bdc45db5ccbe17777a304",
+            "version_event_index": 0
+          }
+        ],
+        "actual_native2_command_counts": {
+          "all": 3,
+          "compiler": 2,
+          "unclassified": 0,
+          "version": 1
+        },
+        "actual_native2_test_report": {
+          "bytes": 41748,
+          "path": "/tmp/Root-P1-Lean-live-ordinary92-reconcile-v596/actual-native2-output/original-test-temp/native-lean-v3-namespaced-declaration-result.json",
+          "sha256": "ea6a8288a4cd1a94a8af6342e9d4d548f776e38acaa013a335431240ffb2549c"
+        },
+        "actual_native2_version": "4.34.1",
+        "actual_ordinary92_counts": {
+          "errors": 0,
+          "failures": 0,
+          "functions": 19,
+          "passed": 92,
+          "skipped": 0,
+          "tests": 92
+        },
+        "evidence_ordinal": 573,
+        "exact_candidate": {
+          "bytes": 9386,
+          "path": "/tmp/P1-Guide571-Lean-routing-query-kind-native-composed-private-RXZkJ57d/SEALED-private-Lean-routing-query-kind-native-namespaced-exact-two.json",
+          "sha256": "d07b254324a63bb6c35ff9ee56d5f6f478fb69c4c91a668446e9eed66e3e0f32"
+        },
+        "lean_owner": "ipfs_datasets_py/logic/backends/kernel/lean.py",
+        "live_qualified_A_HEAD": "219ba3da0f62f772801d71715e22c506faa21126",
+        "live_qualified_D_HEAD": "30e1f2f81538b1e472a858a7984f1fba64fc6836",
+        "namespaced_wrong_type_actual": "False → False",
+        "namespaced_wrong_type_expected": "True",
+        "native2_pytest_case_credit": 0,
+        "native_scope_full_Phase1_complete": false,
+        "ordinary92_subsets": {
+          "backend_routing": 7,
+          "query_kind": 4,
+          "retained": 81
+        },
+        "ordinary_collect_run_raw_JUnit_order_equal": true,
+        "owning_test": "tests/integration/logic/backends/test_kernel_backends.py",
+        "physical_IO_accounting_complete": false,
+        "prior_verified_guide572_publication": {
+          "bytes": 2632,
+          "path": "/tmp/Root-V4-CLI-live-main-reconcile-EsXXzUG0/actual-Guide572-four-docs-three-FF-publication.json",
+          "sha256": "8812bb7dc362d7a2815d4e438a972b1eef0d29034b9349a7c87dee4d7add083b"
+        },
+        "qualified_commit_blobs": {
+          "ipfs_datasets_py/logic/backends/kernel/lean.py": "7ee0cdb71958b052038fa467230dbf86dd0c3fb2",
+          "tests/integration/logic/backends/test_kernel_backends.py": "005655a32c50d14e20a4a65b1bc7d3773d8061d6"
+        },
+        "reconstructed_Lean_outcomes_match_dispatch_backend_and_query_kind": true,
+        "related_catalog_component": "kernel-proof-evidence-integrity",
+        "related_tasks": [
+          "LIR-21"
+        ],
+        "root_accepted_axioms": [],
+        "root_expected_proposition": "True",
+        "schema": "live-reconciled-Lean-theorem-request-and-native-namespace-engineering-evidence/v1",
+        "statutory_or_corpus_admission_or_model_quality": false,
+        "task": "LIR-14",
+        "task_status_changed": false
+      },
+      "evidence_ordinal": 573,
+      "id": "phase1-lean-theorem-request-routing-ordinary92-native2-evidence573-20261126",
+      "observed_bytes": 5643,
+      "observed_sha256": "731de40656e9bf8b2c0f3d29431f6239aff5bf63834c6bb5c99bb5dc37f9bf56",
+      "path": "/tmp/P1-Lean92-Native2-guide573-existing-composer-INERT-kVMIQxSz/current-Lean-theorem-request-ordinary92-Native2-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Lean theorem request binding in reconstructed outcomes, ordinary92 software qualification and two separate direct namespace cases.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }
