@@ -31231,6 +31231,156 @@
       "root": "artifact_workspace",
       "scope": "Published controlled canonical V1 qualifier eligibility across a separately qualified ordinary12 cohort.",
       "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase5_decoder_v11_request_config_terminal_evidence_ordinary40_20261126",
+      "closed_software_facts": {
+        "Source_resource_and_parent_closed": true,
+        "all_prior_costs_retained": true,
+        "component": "reviewed-original-parent-inference",
+        "earlier_fixture_generation_policy_setup_mismatches": {
+          "after": {
+            "bytes": 17668,
+            "path": "/tmp/Phase5-v11-terminal-request-tokenizer-join-private-sN6hwcuX/owning40-after.json",
+            "sha256": "e9382c6e920e916261f08d5c8710447891f3590adbe61a1cb7feb32953c9765a"
+          },
+          "before": {
+            "bytes": 17670,
+            "path": "/tmp/Phase5-v11-terminal-request-tokenizer-join-private-sN6hwcuX/owning40-before.json",
+            "sha256": "1e46907278ce5bf771106ac1d2865d91c04c6343c0653cac8c47c24418570d3e"
+          }
+        },
+        "evidence_ordinal": 536,
+        "exact_local_freeze": {
+          "bytes": 11702,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase5-v11-terminal-config-exact2-local-freeze-v421.json",
+          "sha256": "674aab17226a8cbadac6c233d238ca7ec84faf90f5fccb7e6e82229e170d8c34"
+        },
+        "exact_two_published_paths": [
+          "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_inference.py",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py"
+        ],
+        "former_private_same38_reference": {
+          "bytes": 13162,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/Phase5-existing-v11-terminal-evidence-private-v611016p/SEALED-Phase5-v11-actual-private-owning38-lineage-and-retention.json",
+          "sha256": "a6a4430884f9ace54ea0a50c825dae8989f836c3ce0608ac1dace116ee3fd49b"
+        },
+        "frozen_and_published_D_HEAD": "32ed119df3fef04e2e2feac5f0fe09c861833b56",
+        "full_eight_phase_goal_complete": false,
+        "implemented_behavior": "Saved v11 terminal evidence is checked against the request-pinned model configuration for declared BOS/EOS and padded model vocabulary compatibility. The logical tokenizer vocabulary remains producer-reported.",
+        "model_inference_or_decode_performed": false,
+        "model_quality_training_or_legal_authority": false,
+        "ordinary_counts": {
+          "duplicates": 0,
+          "errors": 0,
+          "failures": 0,
+          "functions": 4,
+          "passed": 40,
+          "skipped": 0,
+          "tests": 40
+        },
+        "ordinary_node_ids": [
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_outputs_cover_ordered_source_population[None]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_outputs_cover_ordered_source_population[drop_middle]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_outputs_cover_ordered_source_population[only_one]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_outputs_cover_ordered_source_population[coordinated_reverse]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_outputs_cover_ordered_source_population[renamed_id]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_outputs_cover_ordered_source_population[renamed_unit]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_output_refuses_raw_derivation_or_scope_changes[raw_hash]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_output_refuses_raw_derivation_or_scope_changes[null_as_empty]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_output_refuses_raw_derivation_or_scope_changes[candidate_rewrite]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_output_refuses_raw_derivation_or_scope_changes[supplied_digest]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_output_refuses_raw_derivation_or_scope_changes[derivation]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_output_refuses_raw_derivation_or_scope_changes[population]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_output_refuses_raw_derivation_or_scope_changes[tokens]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_output_refuses_raw_derivation_or_scope_changes[profile]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_output_refuses_raw_derivation_or_scope_changes[observation]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_output_refuses_raw_derivation_or_scope_changes[loader_schema]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_output_refuses_raw_derivation_or_scope_changes[loader_pair]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_output_refuses_raw_derivation_or_scope_changes[loader_authority]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_output_refuses_raw_derivation_or_scope_changes[source]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_output_refuses_raw_derivation_or_scope_changes[exposure]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_output_refuses_raw_derivation_or_scope_changes[commitment_extra]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_raw_assembled_dispositions_preserved[abstained]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_raw_assembled_dispositions_preserved[incomplete]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_raw_assembled_dispositions_preserved[invalid_no_text]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_raw_assembled_dispositions_preserved[invalid_text]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_raw_assembled_dispositions_preserved[complete]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_terminal_evidence_matches_disposition[real-token-exhaustion]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_terminal_evidence_matches_disposition[real-unexpected-bos]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_terminal_evidence_matches_disposition[empty-decoded-body]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_terminal_evidence_matches_disposition[complete-without-eos]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_terminal_evidence_matches_disposition[complete-with-early-eos]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_terminal_evidence_matches_disposition[complete-with-wrong-bos]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_terminal_evidence_matches_disposition[complete-outside-vocab]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_terminal_evidence_matches_disposition[false-abstention]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_terminal_evidence_matches_disposition[false-incomplete-with-eos]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_terminal_evidence_matches_disposition[false-token-budget]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_terminal_evidence_matches_disposition[valid-body-called-invalid]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_terminal_evidence_matches_disposition[missing-tokenizer-receipt]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_terminal_evidence_matches_disposition[receipt-eos-disagrees-with-pinned-config]",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py::test_reviewed_inference_v11_saved_terminal_evidence_matches_disposition[padded-model-vocab]"
+        ],
+        "ordinary_qualification": {
+          "bytes": 23229,
+          "path": "/tmp/Root-existing-Phase5-v11-terminal-ordinary40-v423-m6pq4yeu/actual-Phase5-v11-terminal-config-ordinary40-closed-small-v423.json",
+          "sha256": "ddd42cd97fdfa5570da690b8ecd915be4a72185286cde9075c68b7fd2e7f59b6"
+        },
+        "ordinary_subcohorts": {
+          "damage15": 15,
+          "disposition5": 5,
+          "population6": 6,
+          "terminal14": 14
+        },
+        "owner": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_inference.py",
+        "owning_test": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_inference.py",
+        "physical_original_owner_qualification": false,
+        "prior_38_cases_retained": true,
+        "prior_Guide535": {
+          "bytes": 12845,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-guide535-four-doc-three-FF-publication-small-v419.json",
+          "sha256": "e75f939c5cc52fd1c52f86ba95c27d98f25829c4af308155d35875868b43415f"
+        },
+        "private_same40_separate": {
+          "after": {
+            "failed": 0,
+            "passed": 40
+          },
+          "before": {
+            "failed": 1,
+            "passed": 39
+          },
+          "reference": {
+            "bytes": 19602,
+            "path": "/tmp/Phase5-v11-terminal-request-tokenizer-join-private-sN6hwcuX/SEALED-Phase5-v11-terminal-request-pinned-config-exact2-v02.json",
+            "sha256": "19bd0853de8dfe8d35ad71f96e28a488051d1ff3c95b62b41ac80fdc15256751"
+          }
+        },
+        "published_two_file_ordinary40_release": {
+          "bytes": 12995,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase5-v11-terminal-config-exact2-ordinary40-three-FF-publication-v423.json",
+          "sha256": "54e40f5403d316315d03a6f24f9fcb2b0a4bddb526ff1cefc81e6be42a28c554"
+        },
+        "raw_JUnit": {
+          "bytes": 8591,
+          "path": "/tmp/Root-existing-Phase5-v11-terminal-ordinary40-v423-m6pq4yeu/actual-output/P5-v11-saved-terminal-evidence-ordinary40-run-result0-output1.bin",
+          "sha256": "ab3de14da65d27f4493913a72a53e01db2cbc608ce9bc47fb2809b1082b4e623"
+        },
+        "saved_config_mismatch_refusal_and_padded_vocab_positive": true,
+        "schema": "Guide536-Phase5-v11-terminal-config-ordinary40-closed-engineering-evidence/v1",
+        "scope": "Fictional v11 saved-artifact validation, including terminal evidence joined to request-pinned configuration. No physical original owner evaluation, decoder generation, fitted weights, or measured quality.",
+        "task": "LIR-19",
+        "task_status_changed": false
+      },
+      "evidence_ordinal": 536,
+      "id": "phase5-decoder-v11-request-config-terminal-ordinary40-evidence536-20261126",
+      "observed_bytes": 11909,
+      "observed_sha256": "4741224a04cabf97d4802176867545a0295d1b12c1f10034027d9cf7ca47d5c5",
+      "path": "/tmp/Phase5-guide536-reusable-private-INERT-TtDl5ba8/one-guide536-Phase5-v11-terminal-ordinary40-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Published fictional decoder v11 saved-artifact validation with request-pinned terminal evidence.",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
     }
   ]
 }

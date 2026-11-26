@@ -3989,6 +3989,32 @@
       },
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
       "task": "LIR-07"
+    },
+    "phase5_decoder_v11_request_config_terminal_evidence_ordinary40_20261126": {
+      "actual_original_owner_or_model_quality_credit": false,
+      "evidence_ordinal": 536,
+      "facts": {
+        "bytes": 11909,
+        "path": "/tmp/Phase5-guide536-reusable-private-INERT-TtDl5ba8/one-guide536-Phase5-v11-terminal-ordinary40-scoped-facts.json",
+        "sha256": "4741224a04cabf97d4802176867545a0295d1b12c1f10034027d9cf7ca47d5c5"
+      },
+      "ordinary40": {
+        "damage15": 15,
+        "disposition5": 5,
+        "functions": 4,
+        "population6": 6,
+        "terminal14": 14,
+        "unique_PASS": 40
+      },
+      "prior_38_cases_retained": true,
+      "record_id": "phase5-decoder-v11-request-config-terminal-ordinary40-evidence536-20261126",
+      "separate_private_same40": {
+        "after_pass": 40,
+        "before_fail": 1,
+        "before_pass": 39
+      },
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
+      "task": "LIR-19"
     }
   },
   "programme_goal_hierarchy": {
