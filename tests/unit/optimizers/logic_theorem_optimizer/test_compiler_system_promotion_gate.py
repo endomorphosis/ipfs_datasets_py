@@ -503,3 +503,164 @@ def test_compiler_replays_selected_benchmark_semantic_coverage(evaluation):
         assert result["external_validity_score"] == 0.5
     elif evaluation == "subset":
         assert "external_validity:external_benchmark_scores:selected_population_mismatch" in gate.failures
+
+
+@pytest.mark.parametrize("alias", ["external_validity", "external_validity_evidence"])
+@pytest.mark.parametrize("mode", ["nested-only", "matching-saved", "conflicting-saved"])
+def test_compiler_replays_nested_external_gate_evidence(alias, mode, tmp_path, capsys):
+    from tests.unit.optimizers.logic_theorem_optimizer.test_external_validity_promotion_gate import (
+        _actual_external_benchmark_report,
+    )
+    from scripts.ops.legal_ir.hammer_leanstral_rollout_gate import external_validity_promotion_gate
+
+    raw = _make_external_subgate_input(current=True)
+    producer_report = _actual_external_benchmark_report()
+    rows = producer_report["external_validity"]["packet_results"]
+    assert producer_report["accepted"] is True and len(rows) == 2
+    raw["expected_external_benchmark"] = {
+        "benchmark_digest": producer_report["benchmark_digest"],
+        "packet_ids": [row["packet_id"] for row in rows],
+    }
+    raw["evidence"]["external_benchmark_scores"] = _bind(producer_report)
+
+    evidence = _complete_evidence()
+    if mode == "nested-only":
+        del evidence["external_validity"]
+    else:
+        evidence["external_validity"] = _save_external_subgate_decision(raw, tmp_path, capsys)
+    if mode == "conflicting-saved":
+        raw["expected_external_benchmark"]["packet_ids"].reverse()
+
+    expected_acceptance = mode != "conflicting-saved"
+    assert external_validity_promotion_gate(raw).accepted is expected_acceptance
+    evidence["evidence"][alias] = raw
+    decision = compiler_system_promotion_gate(evidence)
+
+    assert decision.accepted is expected_acceptance, decision.failures
+    if expected_acceptance:
+        assert decision.failures == []
+        scores = decision.metrics["external_validity"]["evidence_domains"]["external_benchmark_scores"]
+        assert scores["selected_population_reconciled"] is True
+    else:
+        assert "external_validity:external_validity_inputs_disagree" in decision.failures
+        assert "external_validity:external_benchmark_scores:selected_population_mismatch" in decision.failures
+
+
+def test_compiler_keeps_legacy_nested_external_domain_status(tmp_path, capsys):
+    raw = _make_external_subgate_input(current=True)
+    evidence = _complete_evidence()
+    evidence["external_validity"] = _save_external_subgate_decision(raw, tmp_path, capsys)
+    evidence["evidence"]["external_validity"] = {"accepted": True}
+    decision = compiler_system_promotion_gate(evidence)
+    assert decision.accepted and decision.failures == []
+
+
+@pytest.mark.parametrize(
+    "case",
+    ["matching", "different-clean-manifest", "detached-declared-digest", "no-declared-digest",
+     "leak-hidden-by-compact-pass", "outer-guard-blocks", "nested-guard-blocks",
+     "null-manifest", "invalid-manifest-schema"],
+)
+def test_compiler_binds_split_manifest_actually_validated(case):
+    from dataclasses import replace
+
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_eval_splits import (
+        HOLDOUT_SPLIT,
+        REPRESENTATION_PROMOTION_OPERATION,
+        TRAIN_SPLIT,
+        build_legal_ir_eval_splits,
+    )
+
+    def split_examples(prefix, *, shared_text=False):
+        records = []
+        for suffix in ("a", "b"):
+            text_suffix = "shared" if shared_text else suffix
+            records.append({
+                "sample_id": f"{prefix}-{suffix}",
+                "source_document_id": f"{prefix}-{suffix}",
+                "source": "fictional-split-fixture",
+                "citation": f"test-{prefix}-{suffix}",
+                "jurisdiction": "fixture-jurisdiction",
+                "statute_family": "fixture-procedure",
+                "span_start": 0,
+                "span_end": 44,
+                "effective_date": "2020-01-01",
+                "text": f"Fictional reference {prefix} {text_suffix} clause.",
+            })
+        return records
+
+    selected = build_legal_ir_eval_splits(split_examples("selected"))
+    actual = selected
+    if case == "different-clean-manifest":
+        actual = build_legal_ir_eval_splits(split_examples("different"))
+        assert actual.digest != selected.digest
+    elif case == "leak-hidden-by-compact-pass":
+        source_group = build_legal_ir_eval_splits(split_examples("shared", shared_text=True))
+        actual = replace(source_group, assignments={"shared-a": TRAIN_SPLIT, "shared-b": HOLDOUT_SPLIT})
+        selected = actual
+    assert actual.guard_result().passed is (case != "leak-hidden-by-compact-pass")
+
+    def bind_selected_digest(value):
+        if isinstance(value, dict):
+            if "split_manifest_digest" in value:
+                value["split_manifest_digest"] = selected.digest
+            for field in value.values():
+                bind_selected_digest(field)
+
+    external = _make_external_subgate_input(current=True)
+    evidence = _complete_evidence()
+    for envelope in (external, evidence):
+        bind_selected_digest(envelope)
+        assert envelope["evidence_bindings"]["split_manifest_digest"] == selected.digest
+
+    nested = actual.to_dict(include_digest=case != "no-declared-digest")
+    split_packet = external["evidence"]["leak_free_splits"]
+    blocked_guard = {
+        "passed": True, "violations": [], "blocked_operations": [REPRESENTATION_PROMOTION_OPERATION],
+    }
+    if case == "detached-declared-digest":
+        nested["split_manifest_digest"] = "sha256:" + "f" * 64
+    elif case == "leak-hidden-by-compact-pass":
+        # Both carried guards say pass, although the changed assignment actually leaks.
+        passing_guard = {"passed": True, "violations": [], "blocked_operations": []}
+        split_packet["legal_ir_split_guard"] = passing_guard
+        nested["legal_ir_split_guard"] = passing_guard
+    elif case == "outer-guard-blocks":
+        split_packet["legal_ir_split_guard"] = blocked_guard
+    elif case == "nested-guard-blocks":
+        nested["legal_ir_split_guard"] = blocked_guard
+    elif case == "null-manifest":
+        nested = None
+    elif case == "invalid-manifest-schema":
+        nested["schema_version"] = "invalid-fixture-split-schema"
+
+    split_packet["legal_ir_split_manifest"] = nested
+    evidence["external_validity"] = external
+    result = compiler_system_promotion_gate(evidence)
+    should_pass = case in ("matching", "no-declared-digest")
+    assert result.accepted is should_pass, result.failures
+    external_metrics = result.metrics["external_validity"]
+    details = external_metrics["evidence_domains"]["leak_free_splits"]
+    if case in ("null-manifest", "invalid-manifest-schema"):
+        assert "external_validity:leak_free_splits:split_manifest_invalid" in result.failures
+        assert "validated_split_manifest_digest" not in details
+        return
+
+    actual_digest = "sha256:" + actual.digest.removeprefix("sha256:")
+    assert details["validated_split_manifest_digest"] == actual.digest
+    assert external_metrics["bindings"]["split_manifest_digest"]["sources"]["validated_split_manifest"] == actual_digest
+    if should_pass:
+        assert result.failures == [] and details["split_guard"]["passed"] is True
+        assert result.metrics["bindings"]["split_manifest_digest"]["canonical"] == actual_digest
+    elif case == "different-clean-manifest":
+        assert details["split_guard"]["passed"] is True
+        assert any(
+            failure.startswith("external_validity:external_validity_binding_mismatch:split_manifest_digest:")
+            for failure in result.failures
+        )
+    elif case == "detached-declared-digest":
+        assert "external_validity:leak_free_splits:declared_split_manifest_digest_mismatch" in result.failures
+    else:
+        assert "external_validity:leak_free_splits:representation_promotion_blocked" in result.failures
+        if case == "leak-hidden-by-compact-pass":
+            assert details["split_guard"]["violations"]

@@ -15,6 +15,7 @@ from typing import Any, Iterable, Mapping, Sequence
 
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_eval_splits import (
     REPRESENTATION_PROMOTION_OPERATION,
+    LegalIRSplitManifest,
     split_guard_blocks_operation,
     split_guard_from_payload,
 )
@@ -2153,6 +2154,11 @@ def external_validity_promotion_gate(
         domain_status[domain] = not domain_failures
         domain_metrics[domain] = domain_entry
 
+    split_digest = domain_metrics.get("leak_free_splits", {}).get(
+        "validated_split_manifest_digest"
+    )
+    if split_digest is not None:
+        evidence_packets["validated_split_manifest"] = {"split_manifest_digest": split_digest}
     binding_metrics, binding_failures = _external_validity_binding_failures(
         payload,
         evidence_packets,
@@ -2452,6 +2458,16 @@ def _compiler_system_external_validity_result(
         "external_validity_evidence",
     )
     packets = [packet for key in aliases if isinstance(packet := payload.get(key), Mapping)]
+    evidence = payload.get("evidence")
+    if isinstance(evidence, Mapping):
+        # Replay typed gate packets wherever the compiler accepts domain evidence.
+        # Unversioned nested status summaries remain domain metadata.
+        packets.extend(
+            packet
+            for key in aliases
+            if isinstance(packet := evidence.get(key), Mapping)
+            and _schema_version(packet) == EXTERNAL_VALIDITY_PROMOTION_SCHEMA_VERSION
+        )
     if not packets and _schema_version(payload) == EXTERNAL_VALIDITY_PROMOTION_SCHEMA_VERSION:
         packets.append(payload)
     if not packets:
@@ -3032,11 +3048,48 @@ def _leak_free_split_failures(
 ) -> tuple[list[str], list[str], dict[str, Any]]:
     failures = _schema_failures("leak_free_splits", packet, (LEGAL_IR_EVAL_SPLITS_SCHEMA_VERSION,))
     failures.extend(_status_failures("leak_free_splits", packet))
-    split_guard = split_guard_from_payload(packet)
     details: dict[str, Any] = {"schema_version": _schema_version(packet)}
+    # A compact guard can add a refusal. A supplied manifest always needs its
+    # own validation and provides the observed identity used by the gate.
+    carried = {key: value for key, value in packet.items() if key != "legal_ir_split_manifest"}
+    split_guard = split_guard_from_payload(carried)
+    guards = [split_guard]
+    if "legal_ir_split_manifest" in packet:
+        manifest_body = packet["legal_ir_split_manifest"]
+        try:
+            if not isinstance(manifest_body, Mapping):
+                raise ValueError("expected a split manifest object")
+            manifest = LegalIRSplitManifest.from_mapping(manifest_body)
+            if not manifest.examples or set(manifest.assignments) != {
+                example.sample_id for example in manifest.examples
+            }:
+                raise ValueError("split manifest must assign its exact nonempty population")
+            manifest_digest = manifest.digest
+            split_guard = manifest.guard_result()
+            nested_guard = split_guard_from_payload({
+                "legal_ir_split_guard": manifest_body.get("legal_ir_split_guard"),
+                "split_guard": manifest_body.get("split_guard"),
+            })
+        except (TypeError, ValueError):
+            failures.append("leak_free_splits:split_manifest_invalid")
+        else:
+            guards.extend((split_guard, nested_guard))
+            details["validated_split_manifest_digest"] = manifest_digest
+            if "split_manifest_digest" in manifest_body:
+                declared = manifest_body["split_manifest_digest"]
+                if type(declared) is not str or (
+                    _normalize_binding_value("split_manifest_digest", declared)
+                    != _normalize_binding_value("split_manifest_digest", manifest_digest)
+                ):
+                    failures.append("leak_free_splits:declared_split_manifest_digest_mismatch")
     if split_guard is not None:
         details["split_guard"] = split_guard.to_dict()
-    if split_guard_blocks_operation(packet, REPRESENTATION_PROMOTION_OPERATION):
+    if any(
+        guard is not None and split_guard_blocks_operation(
+            guard.to_dict(), REPRESENTATION_PROMOTION_OPERATION
+        )
+        for guard in guards
+    ):
         failures.append("leak_free_splits:representation_promotion_blocked")
     leakage_count = _first_finite(
         packet,
