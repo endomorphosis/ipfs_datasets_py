@@ -999,6 +999,7 @@ def _verify_result_bindings(
         request.obligation_id == obligation.obligation_id,
         request.obligation_digest == obligation.digest,
         request.assumption_ids == obligation.assumption_ids,
+        request.logic_family == obligation.logic_family,
         attempt.request_digest == request.digest,
         attempt.backend_id == result.backend_id,
         attempt.backend_version == result.backend_version,
@@ -1011,6 +1012,7 @@ def _verify_result_bindings(
         result.authority.scope_digest == request.digest,
         result.authority.kind is request.query_kind.authority_kind,
         result.bounds == request.bounds == attempt.bounds,
+        result.usage == attempt.usage,
         not attempt.output_digest or result.output_digest == attempt.output_digest,
         not request.requested_backend_id or attempt.backend_id == request.requested_backend_id,
         attempt.status is AttemptStatus.SUCCEEDED

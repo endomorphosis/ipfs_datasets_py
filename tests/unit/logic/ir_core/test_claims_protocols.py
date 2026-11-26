@@ -553,3 +553,63 @@ def test_proof_backend_is_solver_neutral_structural_protocol() -> None:
     backend = FakeBackend()
     assert isinstance(backend, ProofBackend)
     assert backend.supports(_request())
+
+
+@pytest.mark.parametrize(
+    ("receipt_type", "signer_option"),
+    [(ProofReceipt, "verifier"), (ResultReceipt, "issuer")],
+    ids=["proof", "result"],
+)
+@pytest.mark.parametrize("metric", ["elapsed_ms", "steps", "peak_memory_bytes", "output_bytes"])
+def test_receipt_rejects_usage_changed_from_attempt(
+    receipt_type: type[ProofReceipt] | type[ResultReceipt], signer_option: str, metric: str
+) -> None:
+    claim = _claim()
+    request, attempt, result = _result(QueryKind.THEOREM_PROOF, ResultStatus.PROVED)
+    saved = result.to_dict()
+    saved["usage"][metric] = 0
+    changed = BoundedResult.from_dict(saved)
+
+    assert changed.attempt_digest == attempt.digest
+    assert changed.usage != attempt.usage
+    with pytest.raises(ProtocolValidationError, match="bindings are inconsistent"):
+        receipt_type.issue(
+            claim,
+            request,
+            attempt,
+            changed,
+            receipt_id="receipt:changed-usage",
+            **{signer_option: "test-verifier"},
+        )
+
+
+@pytest.mark.parametrize(
+    ("receipt_type", "signer_option"),
+    [(ProofReceipt, "verifier"), (ResultReceipt, "issuer")],
+    ids=["proof", "result"],
+)
+def test_receipt_rejects_logic_family_changed_from_obligation(
+    receipt_type: type[ProofReceipt] | type[ResultReceipt], signer_option: str
+) -> None:
+    claim = _claim()
+    original, _, result = _result(QueryKind.THEOREM_PROOF, ResultStatus.PROVED)
+    request = BackendRequest.from_dict({**original.to_dict(), "logic_family": "propositional"})
+    assert request.obligation_digest == original.obligation_digest
+    attempt = _attempt(request)
+    changed = ProofResult.for_attempt(
+        request,
+        attempt,
+        result_id=result.result_id,
+        authority=replace(result.authority, scope_digest=request.digest),
+        status=result.status,
+    )
+
+    with pytest.raises(ProtocolValidationError, match="bindings are inconsistent"):
+        receipt_type.issue(
+            claim,
+            request,
+            attempt,
+            changed,
+            receipt_id="receipt:changed-logic-family",
+            **{signer_option: "test-verifier"},
+        )
