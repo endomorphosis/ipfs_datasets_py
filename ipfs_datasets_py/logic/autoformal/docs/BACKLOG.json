@@ -4193,6 +4193,30 @@
         "LIR-06",
         "LIR-20"
       ]
+    },
+    "phase6_canonical_predicate_clause_boundary_ordinary15_20261126": {
+      "actual_legal_semantic_review_or_training_model_credit": false,
+      "evidence_ordinal": 546,
+      "facts": {
+        "bytes": 6417,
+        "path": "/tmp/Phase6-canonical-predicate-boundary-guide546-existing-composer-INERT-8RtmkEmF/one-guide546-Phase6-predicate-clause-boundary-scoped-facts.json",
+        "sha256": "517de65d1bcba3475c11ef4eb82425d6548d6fc794c6e55db318b8a0835e698f"
+      },
+      "five_frozen_benchmark_texts_and_CIDs_preserved": true,
+      "ordinary15": {
+        "functions": 11,
+        "predicate_clause_boundary": 3,
+        "retained": 12,
+        "unique_PASS": 15
+      },
+      "record_id": "phase6-canonical-predicate-clause-boundary-ordinary15-evidence546-20261126",
+      "separate_private_same15": {
+        "after_pass": 15,
+        "before_fail": 3,
+        "before_pass": 12
+      },
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
+      "task": "LIR-07"
     }
   },
   "programme_goal_hierarchy": {

@@ -32176,6 +32176,120 @@
       "root": "artifact_workspace",
       "scope": "Test-only V4 replay with a fictional signed endpoint admission withdrawal supplied as an explicit observation. No actual ranking or real review.",
       "status": "CLOSED_FICTIONAL_SOFTWARE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase6_canonical_predicate_clause_boundary_ordinary15_20261126",
+      "closed_software_facts": {
+        "Lean_or_model_run": false,
+        "Source_resource_and_parent_closed": true,
+        "actual_legal_semantic_review": false,
+        "actual_ordinary15": {
+          "bytes": 19753,
+          "path": "/tmp/Root-existing-Phase6-canonical-predicate-boundary-ordinary15-v467-TKiOdjwq/actual-Phase6-canonical-predicate-boundary-ordinary15-closed-small-v467.json",
+          "sha256": "86c199e899d97a80bd2bc1d419575650fb7f0268c434d10e3d708d530ed54385"
+        },
+        "actual_publication": {
+          "bytes": 19589,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase6-canonical-predicate-boundary-exact2-ordinary15-three-FF-publication-v467.json",
+          "sha256": "762505fde8f3c97b90c0676226ba8cb41bef01af33e6dbf905cdfef3279a9c42"
+        },
+        "current_code_head": "13936a947c8ca681abff0722f01018f921a39255",
+        "evidence_ordinal": 546,
+        "exact_Source_install": {
+          "bytes": 10803,
+          "path": "/tmp/Root-Phase6-canonical-predicate-boundary-existing-Source2-v465-SKcxsPxo/actual-Phase6-canonical-predicate-boundary-exact2-Source-closed-small-v465.json",
+          "sha256": "ea763d9818129be481886b20079669663c27873282afb3acc71c73032527dfd8"
+        },
+        "exact_local_freeze": {
+          "bytes": 14678,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase6-canonical-predicate-boundary-exact2-local-freeze-v465.json",
+          "sha256": "e94b951703208fe80f3b5405e0eba637020df2629d889a179237a40ad519d741"
+        },
+        "exact_two_published_paths": [
+          "ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+          "tests/unit/logic/legal_ir/test_canonical_decompiler.py"
+        ],
+        "frozen_five_T1_benchmark_fixture_matches": 5,
+        "full_eight_phase_goal_complete": false,
+        "implemented_behavior": "The canonical decompiler now abstains with an unsupported-semantics result that identifies the action, object, or temporal facet when its rendered text contains a standalone condition or exception connector. Explicitly typed qualifying clauses still render. All five frozen benchmark texts and their output CIDs still match.",
+        "ordinary_counts": {
+          "duplicates": 0,
+          "errors": 0,
+          "failures": 0,
+          "functions": 11,
+          "passed": 15,
+          "skipped": 0,
+          "tests": 15
+        },
+        "ordinary_node_ids": [
+          "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_all_frozen_t1_outputs_match_selected_benchmark_adapter",
+          "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_temporal_phrase_already_in_the_object_is_not_repeated",
+          "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_frozen_grammar_preserves_polarity_roles_and_every_facet",
+          "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_success_has_raw_text_cid_and_deterministic_component_trace",
+          "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_attribution_receipt_binds_only_public_canonical_inputs_and_t1",
+          "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_only_exact_frozen_config_and_policy_are_accepted",
+          "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_invalid_requests_and_component_errors_are_typed_failures",
+          "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_decompiler_is_stateless_source_withheld_and_model_free",
+          "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_production_module_has_no_benchmark_dependency",
+          "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_delimiter_ambiguous_atoms_abstain_and_split_clauses_render[condition-conjunction]",
+          "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_delimiter_ambiguous_atoms_abstain_and_split_clauses_render[exception-disjunction]",
+          "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_delimiter_ambiguous_atoms_abstain_and_split_clauses_render[condition-exception-boundary]",
+          "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_untyped_qualifier_in_predicate_abstains_without_erasing_explicit_clause[action-condition]",
+          "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_untyped_qualifier_in_predicate_abstains_without_erasing_explicit_clause[object-condition]",
+          "tests/unit/logic/legal_ir/test_canonical_decompiler.py::test_untyped_qualifier_in_predicate_abstains_without_erasing_explicit_clause[temporal-exception]"
+        ],
+        "ordinary_subcohorts": {
+          "qualifier3": 3,
+          "retained9": 9,
+          "untyped_predicate_qualifier3": 3
+        },
+        "owner": "ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+        "owning_test": "tests/unit/logic/legal_ir/test_canonical_decompiler.py",
+        "prior_Guide545": {
+          "bytes": 12683,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-guide545-four-doc-three-FF-publication-small-v464.json",
+          "sha256": "e2b3ab45660f67d7a079a5cc3829e35b647ac2e350dd3668cf66c6cd2c11f7e8"
+        },
+        "prior_ordinary12": {
+          "bytes": 18604,
+          "path": "/tmp/Root-existing-Phase6-canonical-qualifier-ordinary12-v418-ky_iyukk/actual-Phase6-canonical-qualifiers-ordinary12-closed-small-v418.json",
+          "sha256": "fbc2e4e7760c5ef97f595c02ba56c54436df242672669aa46fe681b903b90810"
+        },
+        "private_same15_separate": {
+          "after": {
+            "failed": 0,
+            "passed": 15
+          },
+          "before": {
+            "failed": 3,
+            "passed": 12
+          },
+          "reference": {
+            "bytes": 12271,
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/phase6-obligation-inverse-private-72776lwj/canonical-tail-qualifier-collisions-private-5b25lier/SEALED-Phase6-predicate-clause-boundary-exact2-private.json",
+            "sha256": "4c7f303ed0e946e36a9d46ecdb37cce6e16c4a6fa46e92ea1de4ceb844caf049"
+          }
+        },
+        "raw_JUnit": {
+          "bytes": 2780,
+          "path": "/tmp/Root-existing-Phase6-canonical-predicate-boundary-ordinary15-v467-TKiOdjwq/actual-output/P6-canonical-qualifier-ordinary15-run-result0-output1.bin",
+          "sha256": "fd95a2692717ad30d431d72fe1de5c1ae144a425bd2085a6291d1c129290cec0"
+        },
+        "schema": "Guide546-Phase6-canonical-predicate-clause-boundary-software-evidence/v1",
+        "source_withheld_controlled_software_only": true,
+        "task": "LIR-07",
+        "task_status_changed": false,
+        "training_or_gold_credit": false
+      },
+      "evidence_ordinal": 546,
+      "id": "phase6-canonical-predicate-clause-boundary-ordinary15-evidence546-20261126",
+      "observed_bytes": 6417,
+      "observed_sha256": "517de65d1bcba3475c11ef4eb82425d6548d6fc794c6e55db318b8a0835e698f",
+      "path": "/tmp/Phase6-canonical-predicate-boundary-guide546-existing-composer-INERT-8RtmkEmF/one-guide546-Phase6-predicate-clause-boundary-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Published controlled source-withheld canonical decompiler predicate-clause boundary across ordinary15.",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
     }
   ]
 }
