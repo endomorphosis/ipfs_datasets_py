@@ -6158,3 +6158,137 @@ def test_reviewed_physical_native_binds_planned_request_to_original_live_handle(
     assert measured["verified_steps"] is measured["exact_aggregate_peak_memory_bytes"] is None
     assert not result["qualified_request_execution"] and not result["proof_receipt_issued"]
     assert all(authority is False for authority in opened["authority"].values())
+
+
+def test_physical_whole_project_output_accounting_seals_exact_utf8_and_packet_bytes():
+    from ipfs_datasets_py.logic.autoformal import (
+        legal_corpus_definition_use_preservation_kernel_requests_v2 as planner,
+    )
+
+    proposition = "∀ (x : Nat), x = x"
+    packet = {
+        "Realization.lean": b"same content",
+        "source-readback/Realization.lean": b"same content",
+        "logs/stdout": b"pass\n",
+        "build-receipt.json": b"{}",
+    }
+    packet_bytes = sum(map(len, packet.values()))
+
+    def open_record(limit):
+        request = {
+            "payload": {
+                "resource_profile": planner.PHYSICAL_WHOLE_PROJECT_RESOURCE_PROFILE,
+                "proposition_source": proposition,
+            },
+            "bounds": {"max_output_bytes": limit},
+        }
+        payload = {
+            "schema": "authored-physical-accounting-check/v1",
+            "planned_whole_norm_observation": {
+                "qualified_request_execution": False,
+                "request_bounds_qualified": False,
+                "backend_attempt_created": False,
+                "proof_receipt_issued": False,
+            },
+        }
+        result = native._seal_physical_whole_project_observation(payload, packet, request, contracts)
+        assert contracts.validate_record(result, schema=payload["schema"],
+                                         fields=("planned_whole_norm_observation",)) == result
+        observation = result["planned_whole_norm_observation"]
+        encoded = contracts.canonical_dag_json_bytes(result)
+        assert observation["proposition_source"] == proposition and proposition.encode() in encoded
+        assert all(observation[key] is False for key in (
+            "qualified_request_execution", "request_bounds_qualified",
+            "backend_attempt_created", "proof_receipt_issued",
+        ))
+        assert observation["output_accounting"] == {
+            "profile": request["payload"]["resource_profile"],
+            "retained_packet_member_count": len(packet),
+            "retained_packet_bytes": packet_bytes,
+            "canonical_live_result_bytes": len(encoded),
+            "total_bytes": packet_bytes + len(encoded),
+            "requested_limit_bytes": limit,
+            "within_requested_limit": packet_bytes + len(encoded) <= limit,
+            "full_elaborated_type_payload_available": False,
+        }
+        return observation["output_accounting"]
+
+    result = open_record(4096)
+    assert result["within_requested_limit"]
+    exact = result["total_bytes"]
+    if len(str(exact)) < len(str(result["requested_limit_bytes"])):
+        exact -= len(str(result["requested_limit_bytes"])) - len(str(exact))
+    result = open_record(exact)
+    assert result["total_bytes"] == exact and result["within_requested_limit"]
+    result = open_record(exact - 1)
+    assert result["total_bytes"] > result["requested_limit_bytes"]
+    assert not result["within_requested_limit"]
+
+
+@pytest.mark.parametrize("use_whole_project", [False, True], ids=["legacy", "whole-project"])
+def test_physical_whole_project_request_only_widens_explicit_output_annotation(
+        reviewed_physical_realization_native_control_v2, use_whole_project):
+    from ipfs_datasets_py.logic.autoformal import (
+        legal_corpus_definition_use_preservation_kernel_requests_v2 as planner,
+    )
+    from ipfs_datasets_py.logic.ir_core import protocols
+
+    c = reviewed_physical_realization_native_control_v2
+    options = reviewed_physical_realization_native_options_v2(c)
+    inputs = (c["preparation"], c["preservation"], c["graph"], c["admission"], *c["args"])
+    target = next(row for row in c["preparation"].to_dict()["theorem_bindings"]
+                  if row["binding"]["kind"] == "whole_norm_definition_expansion")
+
+    def plan(limit, **profile):
+        return planner.prepare_reviewed_physical_whole_norm_kernel_request_v2(
+            *inputs, expected_theorem=target["theorem"], expected_unit_id=target["binding"]["unit_id"],
+            bounds=protocols.ExecutionBounds(max_output_bytes=limit), **options, **profile)
+
+    four_mib = 4 * 1024**2
+    with pytest.raises(ValueError, match="bounded proposed execution annotations"):
+        plan(four_mib + 1)
+    if use_whole_project:
+        profile = planner.PHYSICAL_WHOLE_PROJECT_RESOURCE_PROFILE
+        with pytest.raises(ValueError, match="exact physical whole-project resource profile"):
+            plan(four_mib, resource_profile="unrecognized/v1")
+        with pytest.raises(ValueError, match="bounded proposed execution annotations"):
+            plan(49 * 1024**2 + 1, resource_profile=profile)
+        limit = 8 * 1024**2
+        claim, request = plan(limit, resource_profile=profile)
+    else:
+        limit = four_mib
+        claim, request = plan(limit)
+    wire = request.to_dict()
+    payload = wire["payload"]
+    assert wire["bounds"]["max_output_bytes"] == limit
+    assert wire["claim_digest"] == claim.digest
+    assert wire["obligation_digest"] == claim.obligations[0].digest
+    assert wire["declaration_id"] == target["theorem"]
+    assert all(value is False for value in payload["authority"].values())
+    assert payload["dispatch_qualified"] is payload["execution_profile_qualified"] is False
+    assert payload["training_mask"] == payload["evaluation_gold_mask"] == 0
+    binding = native._physical_whole_norm_request_wire(request, request.digest)
+    assert native._parse(binding[1], native.MAX_RECORD_BYTES) == wire
+
+    identity = {"context_sha256": payload["context_sha256"], "bounds": wire["bounds"]}
+    if use_whole_project:
+        assert payload["schema"] == "legal-corpus-v4-planned-physical-whole-norm-request/v2"
+        assert payload["resource_profile"] == profile
+        identity["resource_profile"] = profile
+        output = payload["resource_policy"]["output_bytes"]
+        assert output["accounting_profile"] == profile
+        assert output["plan_ceiling_bytes"] == 49 * 1024**2
+        assert output["per_file_or_stream_ceiling_is_an_aggregate_bound"] is False
+        assert output["full_elaborated_type_payload_available"] is False
+        wrong_profile = dict(payload)
+        wrong_profile.pop("resource_profile")
+    else:
+        assert payload["schema"] == "legal-corpus-v4-planned-physical-whole-norm-request/v1"
+        assert "resource_profile" not in payload
+        assert payload["resource_policy"] == planner.RESOURCE_POLICY
+        wrong_profile = {**payload, "resource_profile": "physical-whole-project-output/v1"}
+    assert request.request_id == "planned_physical_whole_norm:" + hashlib.sha256(
+        contracts.canonical_dag_json_bytes(identity)).hexdigest()
+    forged = replace(request, payload=wrong_profile)
+    with pytest.raises(ValueError, match="planned physical whole-norm request profile"):
+        native._physical_whole_norm_request_wire(forged, forged.digest)

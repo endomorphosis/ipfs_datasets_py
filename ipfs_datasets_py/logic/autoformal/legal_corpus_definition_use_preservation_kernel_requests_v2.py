@@ -23,6 +23,11 @@ BACKEND_ID = 'legal-corpus-v2-closed-kernel-theorem-native@1'
 ENCODING = 'lean4-kernel-proposition-json/v1'
 MAX_RECORD_BYTES = 8 * 1024**2
 MAX_REQUESTS = 15
+PHYSICAL_WHOLE_PROJECT_RESOURCE_PROFILE = 'physical-whole-project-output/v1'
+PHYSICAL_WHOLE_PROJECT_REQUEST_SCHEMA = 'legal-corpus-v4-planned-physical-whole-norm-request/v2'
+# Existing physical packet allowance (48 MiB) plus the canonical live record (1 MiB).
+# This ceiling applies to planning annotations, independent of native admission.
+PHYSICAL_WHOLE_PROJECT_MAX_OUTPUT_BYTES = 49 * 1024**2
 _PROTOCOLS = 'ipfs_datasets_py.logic.ir_core.protocols'
 _SELF_PIN = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
 AUTHORITY = dict.fromkeys(('source', 'legal', 'review', 'proof', 'model', 'training', 'gold', 'corpus_admission'), False)
@@ -72,7 +77,10 @@ RESOURCE_POLICY = {
 _CONSTANTS_PIN = hashlib.sha256(json.dumps(
     {'schema': SCHEMA, 'profile': PROFILE, 'backend_id': BACKEND_ID, 'encoding': ENCODING,
      'max_record_bytes': MAX_RECORD_BYTES, 'max_requests': MAX_REQUESTS, 'protocols_module': _PROTOCOLS,
-     'policy': RESOURCE_POLICY, 'authority': AUTHORITY, 'false_flags': FALSE_FLAGS},
+     'policy': RESOURCE_POLICY, 'authority': AUTHORITY, 'false_flags': FALSE_FLAGS,
+     'physical_output_contract': [PHYSICAL_WHOLE_PROJECT_RESOURCE_PROFILE,
+                                  PHYSICAL_WHOLE_PROJECT_REQUEST_SCHEMA,
+                                  PHYSICAL_WHOLE_PROJECT_MAX_OUTPUT_BYTES]},
     sort_keys=True, separators=(',', ':'), ensure_ascii=False, allow_nan=False).encode()).hexdigest()
 
 
@@ -112,7 +120,7 @@ def _registered(name):
     return cls
 
 
-def _bounds_snapshot(bounds):
+def _bounds_snapshot(bounds, *, output_limit=4 * 1024**2):
     _source_unchanged()
     cls = _registered('ExecutionBounds')
     _need(type(bounds) is cls, 'exact genuine finite ExecutionBounds required')
@@ -121,7 +129,7 @@ def _bounds_snapshot(bounds):
     _need(set(value) == {'timeout_ms', 'max_steps', 'max_memory_bytes', 'max_output_bytes'}
           and all(type(v) is int and v > 0 for v in value.values())
           and value['timeout_ms'] <= 60_000 and value['max_steps'] <= 1_000_000_000
-          and value['max_memory_bytes'] <= 2 * 1024**3 and value['max_output_bytes'] <= 4 * 1024**2,
+          and value['max_memory_bytes'] <= 2 * 1024**3 and value['max_output_bytes'] <= output_limit,
           'bounded proposed execution annotations required')
     return value
 
@@ -131,7 +139,10 @@ def _constants_unchanged():
                        'max_record_bytes': MAX_RECORD_BYTES, 'max_requests': MAX_REQUESTS,
                        'protocols_module': _PROTOCOLS,
                        'policy': RESOURCE_POLICY, 'authority': AUTHORITY,
-                       'false_flags': FALSE_FLAGS})) == _CONSTANTS_PIN
+                       'false_flags': FALSE_FLAGS,
+                       'physical_output_contract': [PHYSICAL_WHOLE_PROJECT_RESOURCE_PROFILE,
+                                                    PHYSICAL_WHOLE_PROJECT_REQUEST_SCHEMA,
+                                                    PHYSICAL_WHOLE_PROJECT_MAX_OUTPUT_BYTES]})) == _CONSTANTS_PIN
 
 
 def _source_unchanged():
@@ -445,17 +456,24 @@ __all__ = ['PlannedKernelTheoremRequests', 'request_sha256',
 
 def prepare_reviewed_physical_whole_norm_kernel_request_v2(
         preparation, preservation, graph, admission, *args, expected_realization_sha256,
-        expected_theorem, expected_unit_id, bounds, **realization_arguments):
+        expected_theorem, expected_unit_id, bounds, resource_profile=None, **realization_arguments):
     """Plan one conditional theorem request in a fully replayed physical V2 project.
 
     The proposition is Lean source scoped to its original project namespace.
     The request carries project commitments, not an elaborated kernel type or
-    an executable single-file Lean input.
+    an executable single-file Lean input. Opting into whole-project accounting
+    selects an aggregate output annotation over the original retained packet
+    and canonical live result. It does not grant native admission.
     """
     from . import legal_corpus_shared_lake as shared
     from ..ir_core import claims, protocols
 
-    owned_bounds = protocols.ExecutionBounds(**_bounds_snapshot(bounds))
+    _need(resource_profile is None or (
+        type(resource_profile) is str and resource_profile == PHYSICAL_WHOLE_PROJECT_RESOURCE_PROFILE),
+        'exact physical whole-project resource profile required')
+    whole_project_output = resource_profile is not None
+    output_limit = PHYSICAL_WHOLE_PROJECT_MAX_OUTPUT_BYTES if whole_project_output else 4 * 1024**2
+    owned_bounds = protocols.ExecutionBounds(**_bounds_snapshot(bounds, output_limit=output_limit))
     _need(type(expected_theorem) is str and bool(expected_theorem)
           and type(expected_unit_id) is str and bool(expected_unit_id),
           'independently selected qualified theorem and reviewed unit required')
@@ -520,14 +538,35 @@ def prepare_reviewed_physical_whole_norm_kernel_request_v2(
         claim_id='physical_whole_norm_claim:' + context_sha256, statement=proposition,
         assumptions=(), obligations=(obligation,), domain='legal-ir',
         declaration_id=expected_theorem, source_refs=refs)
+    request_identity = {'context_sha256': context_sha256, 'bounds': owned_bounds.to_dict()}
+    resource_policy = RESOURCE_POLICY
+    schema = 'legal-corpus-v4-planned-physical-whole-norm-request/v1'
+    profile_fields = {}
+    if whole_project_output:
+        request_identity['resource_profile'] = resource_profile
+        profile_fields['resource_profile'] = resource_profile
+        schema = PHYSICAL_WHOLE_PROJECT_REQUEST_SCHEMA
+        resource_policy = {
+            **RESOURCE_POLICY,
+            'invocation_scope': 'original whole physical project for one selected conditional theorem',
+            'output_bytes': {
+                'unit': 'bytes',
+                'required_scope': 'uncompressed retained packet members once per path and canonical sealed live result',
+                'accounting_profile': resource_profile,
+                'measurement_policy': 'exact post-capture logical bytes without archive or runner transport wrappers',
+                'plan_ceiling_bytes': PHYSICAL_WHOLE_PROJECT_MAX_OUTPUT_BYTES,
+                'per_file_or_stream_ceiling_is_an_aggregate_bound': False,
+                'full_elaborated_type_payload_available': False,
+            },
+        }
     request = protocols.BackendRequest.for_claim(
         claim, obligation.obligation_id,
-        request_id='planned_physical_whole_norm:' + _sha(_wire({
-            'context_sha256': context_sha256, 'bounds': owned_bounds.to_dict()})),
+        request_id='planned_physical_whole_norm:' + _sha(_wire(request_identity)),
         query_kind=protocols.QueryKind.THEOREM_PROOF, bounds=owned_bounds,
         requested_backend_id='legal-corpus-v4-physical-project-kernel@1',
         payload={
-            'schema': 'legal-corpus-v4-planned-physical-whole-norm-request/v1',
+            'schema': schema,
+            **profile_fields,
             'encoding': 'lean4-physical-project-proposition-source/v1',
             'context': context, 'context_sha256': context_sha256,
             'proposition_source': proposition,
@@ -544,7 +583,7 @@ def prepare_reviewed_physical_whole_norm_kernel_request_v2(
             'elaborated_type_verified': False,
             'dispatch_qualified': False,
             'execution_profile_qualified': False,
-            'resource_policy': RESOURCE_POLICY,
+            'resource_policy': resource_policy,
             'authority': AUTHORITY,
             'training_mask': 0, 'evaluation_gold_mask': 0,
         })

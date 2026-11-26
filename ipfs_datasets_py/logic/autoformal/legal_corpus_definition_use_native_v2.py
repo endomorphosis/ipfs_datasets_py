@@ -3389,10 +3389,20 @@ def _physical_whole_norm_request_wire(request, expected_sha256):
     _pin(expected_sha256, "independently selected planned whole-norm request")
     _need(type(request) is protocols.BackendRequest and request.digest == expected_sha256,
           "exact independently pinned planned whole-norm request required")
+    from . import legal_corpus_definition_use_preservation_kernel_requests_v2 as planner
     row = request.to_dict()
+    payload = row["payload"]
+    schema = payload.get("schema")
+    resource_profile = payload.get("resource_profile")
+    _need(type(schema) is str, "planned physical whole-norm request profile required")
+    legacy = (schema == "legal-corpus-v4-planned-physical-whole-norm-request/v1"
+              and "resource_profile" not in payload)
+    whole_project = (schema == planner.PHYSICAL_WHOLE_PROJECT_REQUEST_SCHEMA
+                     and type(resource_profile) is str
+                     and resource_profile == planner.PHYSICAL_WHOLE_PROJECT_RESOURCE_PROFILE)
     _need(row["requested_backend_id"] == "legal-corpus-v4-physical-project-kernel@1"
-          and row["payload"].get("schema") == "legal-corpus-v4-planned-physical-whole-norm-request/v1"
-          and row["payload"].get("encoding") == "lean4-physical-project-proposition-source/v1",
+          and (legacy or whole_project)
+          and payload.get("encoding") == "lean4-physical-project-proposition-source/v1",
           "planned physical whole-norm request profile required")
     return expected_sha256, _wire(row, MAX_RECORD_BYTES)
 
@@ -3460,6 +3470,37 @@ def _physical_planned_success_observation(plan, receipt, resource_wire, *,
             "verified_steps": None,
         },
     }
+
+
+def _seal_physical_whole_project_observation(record, packet_members, request, contracts):
+    """Account for the retained packet and the full sealed live record exactly once."""
+    observation = record["planned_whole_norm_observation"]
+    payload = request["payload"]
+    observation["proposition_source"] = payload["proposition_source"]
+    limit = request["bounds"]["max_output_bytes"]
+    packet_bytes = sum(len(body) for body in packet_members.values())
+    accounting = {
+        "profile": payload["resource_profile"],
+        "retained_packet_member_count": len(packet_members),
+        "retained_packet_bytes": packet_bytes,
+        "canonical_live_result_bytes": 0,
+        "total_bytes": packet_bytes,
+        "requested_limit_bytes": limit,
+        "within_requested_limit": True,
+        "full_elaborated_type_payload_available": False,
+    }
+    observation["output_accounting"] = accounting
+    # Only the decimal lengths of two counters and the one boolean can change
+    # the encoded length. Start from the smallest representation and verify the
+    # fixed point against the complete sealed record, including its CID.
+    for _ in range(6):
+        result = contracts.seal_record(record)
+        size = len(contracts.canonical_dag_json_bytes(result))
+        if size == accounting["canonical_live_result_bytes"]:
+            return result
+        accounting.update(canonical_live_result_bytes=size, total_bytes=packet_bytes + size,
+                          within_requested_limit=packet_bytes + size <= limit)
+    raise ValueError("whole-project result output accounting did not stabilize")
 
 
 def _build_verified_reviewed_norm_preservation_native(preparation, graph, admission, *args,
@@ -3768,7 +3809,7 @@ def _load_verified_reviewed_norm_preservation_native(handle, packet_files, prepa
             _planned_whole_norm_binding, receipt, sampled_rss,
             expected_receipt_sha256=expected_receipt_sha256, expected_packet_sha256=expected_packet_sha256)
     fence()
-    result = owners[1].contracts.seal_record({
+    result_payload = {
         **{key: value for key, value in replay.items() if key not in {"schema", "profile", "record_cid", "cid_scope"}},
         **binding,
         "schema": live_schema, "profile": live_profile,
@@ -3780,7 +3821,14 @@ def _load_verified_reviewed_norm_preservation_native(handle, packet_files, prepa
         "missing_prerequisites": [
             "Independently trusted original admitted-success parent Source/native/storage custody adapter for this reviewed profile.",
             "Source-matched actual native qualification and reviewed release-native consumer integration."],
-        "scope": "Exact current-review replay joined to a fresh native-owner execution in this cooperative process/native thread; no original parent-admission, kernel recheck, legal or release authority."})
+        "scope": "Exact current-review replay joined to a fresh native-owner execution in this cooperative process/native thread; no original parent-admission, kernel recheck, legal or release authority."}
+    contracts = owners[1].contracts
+    planned_request = (None if _planned_whole_norm_binding is None
+                       else _parse(_planned_whole_norm_binding[1], MAX_RECORD_BYTES))
+    if planned_request is not None and "resource_profile" in planned_request["payload"]:
+        result = _seal_physical_whole_project_observation(result_payload, contents, planned_request, contracts)
+    else:
+        result = contracts.seal_record(result_payload)
     fence()
     return result
 
@@ -5568,7 +5616,8 @@ def _bind_live_success_independent_guard_v1():
                     preparation, preservation, graph, admission, *args,
                     expected_realization_sha256=expected_realization_sha256,
                     expected_theorem=row["declaration_id"], expected_unit_id=unit,
-                    bounds=planned_request.bounds, expected_preservation_sha256=expected_preservation_sha256,
+                    bounds=planned_request.bounds, resource_profile=row["payload"].get("resource_profile"),
+                    expected_preservation_sha256=expected_preservation_sha256,
                     expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
                     toolchain=toolchain, physical_request_raw=physical_request_raw,
                     expected_physical_request_sha256=expected_physical_request_sha256,
