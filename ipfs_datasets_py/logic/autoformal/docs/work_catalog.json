@@ -33418,6 +33418,175 @@
       "root": "artifact_workspace",
       "scope": "Same-live direct R5 conditional theorem observation joined to an exact signed fictional V4 release replay and independently supplied review.",
       "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase2_physical_v4_v504_closed_type_capture_20261126",
+      "closed_software_facts": {
+        "actual_Source_resources_parent_closed": true,
+        "actual_compiled_modules": 11,
+        "actual_current_closed_type_sidecar": {
+          "bytes": 12915,
+          "path": "/tmp/Root-Phase2-V4-type-capture-current-v504-v508-PUYIfU3w/actual-physical-whole-norm-closed-type-checks-v508.json",
+          "sha256": "3cf0a96c785f038389cb87c20b75f084a69fa15e122dc049ab79bfbe768aacf1"
+        },
+        "actual_current_reader_three_case_roundtrip": {
+          "bytes": 2362,
+          "path": "/tmp/Root-Phase2-V4-type-capture-current-v504-v508-PUYIfU3w/private-reader-replay/actual-v508-current-type-reader-three-cases.json",
+          "sha256": "864df922ad40f841c9abd2d5405571231ae4291e260d7e589f275d33e1527d6a"
+        },
+        "actual_current_v508_elaboration": {
+          "bytes": 6786,
+          "path": "/tmp/Root-Phase2-V4-type-capture-current-v504-v508-PUYIfU3w/actual-physical-whole-norm-native-elaboration-v508-closed.json",
+          "sha256": "3d9e61ca177ab00a131a3b890b4f0e4d9c5814eb1b88836eb6ed75ab8a435308"
+        },
+        "actual_full_native_report": {
+          "bytes": 24130156,
+          "path": "/tmp/Root-Phase2-V4-type-capture-current-v504-v508-PUYIfU3w/actual-output/complete-direct-current-R5-physical-native-report.json",
+          "sha256": "90e18861dcd6862bfdb74f85eb07c59353f0c52fff7f4c493bf4e8c6a6159134"
+        },
+        "actual_independent_closed_type_readback": {
+          "bytes": 2550,
+          "path": "/tmp/P2-v508-current-v504-physical-type-readback-private-gcmo2DAA/actual-independent-closed-type-readback-v508.json",
+          "sha256": "adbb7bf3bd8e0c3cfe3a73e404dfc51a91d5923c6837c54e09e56d466a8f3ca1"
+        },
+        "actual_native_elapsed_seconds": 4.763164442963898,
+        "actual_terminal_event": {
+          "bytes": 516,
+          "path": "/tmp/Root-Phase2-V4-type-capture-current-v504-v508-PUYIfU3w/operator.stdout",
+          "sha256": "909ef2257de52dbda623e8943ad9dcb0ab708b4752f8cef2e0c0d641efb1e8c7"
+        },
+        "actual_v507_source_index_READ1": {
+          "bytes": 4497,
+          "path": "/tmp/Root-Phase2-V4-type-capture-current-v504-v508-PUYIfU3w/actual-Guide553-Source-index-READ1-closed-small-v507.json",
+          "sha256": "393362fd49ac760efdb6f816862aee43070cc630beae83474d440accca27e1f3"
+        },
+        "added_probe_modules": 1,
+        "alias_theorem": "LegalReviewedDefinitionRealization.Instancef5afa3098c0f9a769c99c9c185073b0469de1fbd79dffc6dc541a8ce0ba039d4.physical_whole_norm_type_18f7e9d0a96893e2c711bfa6b32cd743e0d7de02c74d0f253085379dc3ab68b0",
+        "alias_type_sha256": "f3f1a233d7adfdd1b798cb519f7c2108b57452489697725d7656db3da615169d",
+        "authority": {
+          "corpus_admission": false,
+          "gold": false,
+          "legal": false,
+          "model": false,
+          "proof": false,
+          "review": false,
+          "source": false,
+          "training": false
+        },
+        "binder_display_names_only": true,
+        "both_closed_kernel_checked_propositions": true,
+        "current_D_HEAD": "2a6556e1b9b20c07ad71999c91baf3ebabcd9ae1",
+        "current_type_probe_inputs": {
+          "bytes": 4981,
+          "path": "/tmp/Root-Phase2-V4-type-capture-current-v504-v508-PUYIfU3w/READY-physical-type-probe-exact-R5-input-and-Source-epoch.json",
+          "sha256": "a4a1b6627dc02085a5406fc8aeb2d5d260d8fd20b7631ec1c79c779b334028a3"
+        },
+        "evaluation_gold_mask": 0,
+        "evidence_ordinal": 554,
+        "exact_aggregate_peak_memory_bytes": null,
+        "exact_checked_release_anchors": {
+          "checked_native_observation_cid": "baguqeerayxj2dhqemrcugxlxnsek3rlwjir67eygwwdk7vlm5ivtjgxwwifa",
+          "checked_release_report_bytes": 71974,
+          "checked_release_report_sha256": "70f1f546c6e86c24bf925d2a8c911e222b3f9b7668d66599a897f17a802f3b05",
+          "current_review_observation_cid": "baguqeera3q2s3yurpatlpszdebabqyxr34jql66ek2rorwprdpzb6ml6xoqq",
+          "declared_eligibility_cid": "baguqeera77iqpvb4lxrkdrhbofgbw4fvmbwtem4svzzx7gkgins2qjejrtaq",
+          "declared_qualification_cid": "baguqeera2h6xip2zdmwjwxqmw756o3c5hg24jjztnupv2bxquubdmc2nxq6q",
+          "extra_compiler_commands": 0,
+          "extra_native_builds": 0,
+          "native_live_result_cid": "baguqeera3mlvyukf4byjcmrvyzmdq4fozyu4amq577yhhr6bagvl3h5rl2aq",
+          "physical_request_sha256": "abff511379fd0b4d2c819ac036689ee3aefd100f5cbc5d7a743adf7e957d49a9",
+          "planned_request_sha256": "18f7e9d0a96893e2c711bfa6b32cd743e0d7de02c74d0f253085379dc3ab68b0",
+          "same_original_handle_and_caller_thread": true,
+          "semantic_source_or_corpus_admission_claimed": false
+        },
+        "exact_native_expr_equal": false,
+        "exact_native_original_and_alias_kernel_defeq": true,
+        "exact_planned_request_sha256": "18f7e9d0a96893e2c711bfa6b32cd743e0d7de02c74d0f253085379dc3ab68b0",
+        "exact_type_comparison": "binder_display_names_only",
+        "existing_v505_product_publication": {
+          "bytes": 35871,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-physical-v4-checked-native-exact3-ordinary18-and-original-R5-three-FF-publication-v505.json",
+          "sha256": "7ea158e83a9a6f3a9e79f50ed042ff8055cb1223c40e30508c4a52a9411d431f"
+        },
+        "explicit_alias_axiom_inventory": [],
+        "full_eight_phase_goal_complete": false,
+        "measured_step_count": null,
+        "model_or_training_credit": false,
+        "new_product_publication_or_ordinary_cohort": false,
+        "original_empty_axiom_obligations": 30,
+        "original_hypotheses_remain_quantified": true,
+        "original_physical_wire_sha256": "abff511379fd0b4d2c819ac036689ee3aefd100f5cbc5d7a743adf7e957d49a9",
+        "original_retained_packet_sha256": "1be6270ff6f19416325076797e3250aa82003483ef30348c00011702b4d7c269",
+        "original_retained_receipt_sha256": "0107dd7f6927d9bd39b82c30b8c0a85c9c3785491332c62754da9e0035a74ae1",
+        "original_theorem": "LegalReviewedDefinitionRealization.Instancef5afa3098c0f9a769c99c9c185073b0469de1fbd79dffc6dc541a8ce0ba039d4.unit_1_whole_norm_definition_expansion",
+        "original_type_sha256": "0e88a7fec8cc51d95a96bfa6ff6e0b47991615f645d4dd6e62a533f5f00942c8",
+        "original_v504_build_or_handle_reused": false,
+        "original_v504_checked_release": {
+          "bytes": 13849,
+          "path": "/tmp/Root-Phase2-V4-checked-native-existing-R5-v504-Qe09yc6x/actual-original-R5-physical-v4-current-review-checked-native-join-v504.json",
+          "sha256": "72653ffbd1973b2a30f650f4da0856ca9897a1d2b0f1cf251f71f9425dceab18"
+        },
+        "original_v504_files_bound": 39,
+        "owner": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_elaboration_native_v2.py",
+        "preparer": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_elaboration_v2.py",
+        "prior_Guide553": {
+          "bytes": 13086,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-guide553-four-doc-three-FF-publication-small-v506.json",
+          "sha256": "8bdab2f83897d47e8c8dd0d069ecfd3c6a4bdbcf85b1ae4b7213a0f61194b298"
+        },
+        "product_preparation": {
+          "bytes": 25766,
+          "path": "/tmp/Root-Phase2-V4-type-capture-current-v504-v508-PUYIfU3w/private-preparation/exact-current-type-preparation-pin.json",
+          "sha256": "b3dc3fab076cd034c0a9c4260488081e2be35d7ae85a7654c6d1634145e722cd"
+        },
+        "related_catalog_component": "definition-use-native",
+        "related_release_task": "LIR-21",
+        "request_execution_or_bounds_certified": false,
+        "retained_olean_inputs": 0,
+        "schema": "Guide554-Phase2-physical-V4-v504-bound-closed-type-capture/v1",
+        "selected_proposition_utf8_sha256": "68868775b7b644c1b433dcb4bada01f1386c7a537c60c3d935b67d3252b4ed39",
+        "selected_unit": {
+          "complete_ir_sha256": "f169afdd1b747db78bbacae39d7f8811e8c5964db3eead6a242517cf96674e87",
+          "interpretation_record_cid": "baguqeeraqdytml2mgaw27zdu4bzuuzlcdiz2dknno6fduc3kf3u5pahg2wcq",
+          "relational_request_sha256": "eb855e1fd9492f53e8e2628b622244648dc1f943a2bb3a7b1e12e86843ba67db",
+          "scope_record_cid": "baguqeeratn2oiskk4rz377q4jful7k3kye6ntlub5zw7ygmu43fdvrgau4oq",
+          "source_occurrence_cid": "baguqeera6qcaooej742c3grqrf6ahfzmtzrjv5ncz7s5jaaqfqujnsjninrq",
+          "source_use_binding_sha256": "70fc4ec46ab0e69821bc0799ab4048a90cfc6f2cdba961ce0226c6f3c3eb8a63",
+          "source_version_cid": "baguqeeranrbookqtp4rpsgdydepykv75n4audquypwk3wtwi6rssp4esr3gq",
+          "unit_id": "fixture:physical-crosswalk/unit-2"
+        },
+        "separate_clean_source_only_build": true,
+        "separate_earlier_type_capture": {
+          "bytes": 5273,
+          "path": "/tmp/Root-Phase2-physical-type-probe-product-existing-R5-v493-PBHwnajq/actual-physical-whole-norm-native-elaboration-v493-closed.json",
+          "sha256": "3723e053c0f8fb16544785ddc28fb1ea5c4ef4d32a1d7dd7bb476b726af6d8e9"
+        },
+        "signed_fictional_input_scope": true,
+        "source_definition": {
+          "complete_ir_sha256": "f7a6f740e9d2900045cda9bffd288a4b697fd8a45d1b4bac99c3d963f97c2e0b",
+          "interpretation_record_cid": "baguqeeraqdytml2mgaw27zdu4bzuuzlcdiz2dknno6fduc3kf3u5pahg2wcq",
+          "scope_record_cid": "baguqeeratn2oiskk4rz377q4jful7k3kye6ntlub5zw7ygmu43fdvrgau4oq",
+          "source_occurrence_cid": "baguqeeraqz65mtsfpgxn4lk4iiwt7x6gxfarzognlek5vdsoav45qexlkhuq",
+          "source_use_binding_sha256": "9f410b2ec5cacf02aede2cfad24bf0e439e643b3853cf5781552e90950238d45",
+          "source_version_cid": "baguqeera3jcsbwxjpevob5yzz6mhlf6rpfkaot6wk4oxfvbbsdkjoeboa5aq",
+          "unit_id": "fixture:physical-crosswalk/unit-1"
+        },
+        "source_review_or_statutory_legal_or_corpus_admission": false,
+        "task": "LIR-14",
+        "task_status_changed": false,
+        "training_mask": 0,
+        "typed_ProofReceipt_issued": false,
+        "whole_graph_proof_status": "pending"
+      },
+      "evidence_ordinal": 554,
+      "id": "phase2-physical-v4-v504-closed-type-capture-evidence554-20261126",
+      "observed_bytes": 9293,
+      "observed_sha256": "0e8fa204827668603cd7f91e506fd5a4defd0db79b6304c588f0abf485138609",
+      "path": "/tmp/Phase2-V4-checked-release-type-guide554-existing-composer-INERT-G1mHpSLg/one-guide554-Phase2-physical-V4-v504-closed-type-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Fresh source-only closed-type capture on the exact v504 planned theorem from the signed fictional checked release.",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
     }
   ]
 }

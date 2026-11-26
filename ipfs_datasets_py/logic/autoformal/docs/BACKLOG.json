@@ -4436,6 +4436,42 @@
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
       "task": "LIR-21",
       "whole_graph_proof_or_legal_or_corpus_admission_credit": false
+    },
+    "phase2_physical_v4_v504_closed_type_capture_20261126": {
+      "binder_display_names_only": true,
+      "bound_checked_release": {
+        "bytes": 13849,
+        "path": "/tmp/Root-Phase2-V4-checked-native-existing-R5-v504-Qe09yc6x/actual-original-R5-physical-v4-current-review-checked-native-join-v504.json",
+        "sha256": "72653ffbd1973b2a30f650f4da0856ca9897a1d2b0f1cf251f71f9425dceab18"
+      },
+      "closed_type_capture": {
+        "bytes": 12915,
+        "path": "/tmp/Root-Phase2-V4-type-capture-current-v504-v508-PUYIfU3w/actual-physical-whole-norm-closed-type-checks-v508.json",
+        "sha256": "3cf0a96c785f038389cb87c20b75f084a69fa15e122dc049ab79bfbe768aacf1"
+      },
+      "current_type_observation": {
+        "bytes": 6786,
+        "path": "/tmp/Root-Phase2-V4-type-capture-current-v504-v508-PUYIfU3w/actual-physical-whole-norm-native-elaboration-v508-closed.json",
+        "sha256": "3d9e61ca177ab00a131a3b890b4f0e4d9c5814eb1b88836eb6ed75ab8a435308"
+      },
+      "evidence_ordinal": 554,
+      "facts": {
+        "bytes": 9293,
+        "path": "/tmp/Phase2-V4-checked-release-type-guide554-existing-composer-INERT-G1mHpSLg/one-guide554-Phase2-physical-V4-v504-closed-type-scoped-facts.json",
+        "sha256": "0e8fa204827668603cd7f91e506fd5a4defd0db79b6304c588f0abf485138609"
+      },
+      "kernel_definitional_equality": true,
+      "proof_or_corpus_admission_credit": false,
+      "raw_expression_equality": false,
+      "record_id": "phase2-physical-v4-v504-closed-type-capture-evidence554-20261126",
+      "related_catalog_component": "definition-use-native",
+      "separate_v493_capture": {
+        "bytes": 5273,
+        "path": "/tmp/Root-Phase2-physical-type-probe-product-existing-R5-v493-PBHwnajq/actual-physical-whole-norm-native-elaboration-v493-closed.json",
+        "sha256": "3723e053c0f8fb16544785ddc28fb1ea5c4ef4d32a1d7dd7bb476b726af6d8e9"
+      },
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
+      "task": "LIR-14"
     }
   },
   "programme_goal_hierarchy": {
