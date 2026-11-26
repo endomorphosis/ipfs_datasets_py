@@ -1461,3 +1461,39 @@ def test_effective_date_calendar_type_refuses_duplicates_and_invalid_values():
         exact.has_started_on(datetime(2032, 2, 29))
     with pytest.raises(ValueError):
         NormV2("O", "agency", "publish", "rule", temporal=(exact, exact))
+
+
+@pytest.mark.parametrize("change, expected_due_dates_exact", [
+    ("none", True),
+    ("different-unit", True),
+    ("different-statement", False),
+])
+def test_civil_deadline_same_due_date_preserves_statement_attachment(change, expected_due_dates_exact):
+    from datetime import date
+
+    from ipfs_datasets_py.logic.legal_ir.extended_compiler import compile_extended
+    from ipfs_datasets_py.logic.legal_ir.extended_decompiler import TYPED_DEADLINE_PROSE_PROFILE
+
+    agency = 'Norm: "agency" must "file" "report".'
+    clerk = 'Norm: "clerk" must "archive" "record".'
+    timing = ' Temporal: within 1 calendar day after event "notice".'
+    reference_text = agency + timing + "\n" + clerk
+    reference = compile_extended(reference_text, profile=TYPED_DEADLINE_PROSE_PROFILE)
+    assert reference is not None
+    if change == "different-unit":
+        candidate = reference_text.replace("calendar day", "business day")
+    elif change == "different-statement":
+        candidate = agency + "\n" + clerk + timing
+    else:
+        candidate = reference_text
+
+    report = scorer.score_deadline_legal_text_roundtrip(
+        reference, candidate, anchor_dates={"notice": date(2024, 5, 28)},
+        workday_calendar=_civil_deadline_may_2024_calendar())
+    assert report["status"] == "complete_candidate_scored"
+    assert report["reference_due_dates"] == report["candidate_due_dates"] == ["2024-05-29"]
+    measurements = report["measurements"]
+    assert measurements["complete_typed_structure_exact"] is (change == "none")
+    assert measurements["canonical_prose_exact"] is (change == "none")
+    assert measurements["due_dates_exact"] is expected_due_dates_exact, measurements
+    assert measurements["proof_validity_verified"] is measurements["source_correspondence_verified"] is False

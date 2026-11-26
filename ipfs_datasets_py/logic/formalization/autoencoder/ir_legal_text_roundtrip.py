@@ -617,8 +617,9 @@ def score_deadline_legal_text_roundtrip(reference_ir, candidate_text, *,
     """Score controlled deadline prose and its due dates in one declared context.
 
     The inverse receives only the candidate prose and its fixed profile.
-    The date and workday context is used after reconstruction. Equality of
-    due dates is specific to that context.
+    The date and workday context is used after reconstruction. Due date
+    equality compares ordered dates at their original statement positions
+    in that context. The date lists in the report show the dates alone.
     """
     from datetime import date
 
@@ -638,24 +639,24 @@ def score_deadline_legal_text_roundtrip(reference_ir, candidate_text, *,
     _require(all(type(name) is str and type(value) is date for name, value in anchors.items()),
              "anchor dates must map event names to civil dates")
 
-    def due_dates(ir):
+    def due_dates_by_statement(ir):
         result = []
-        for statement in ir.statements:
+        for statement_index, statement in enumerate(ir.statements):
             if type(statement) is NormV2:
                 for deadline in statement.temporal:
                     if type(deadline) is TemporalDeadline:
                         _require(deadline.anchor in anchors, "missing civil date for deadline anchor")
                         due = evaluate_civil_deadline(deadline, anchors[deadline.anchor],
                                                       workday_calendar=workday_calendar)
-                        result.append(due.isoformat())
+                        result.append((statement_index, due.isoformat()))
         return result
 
     profile = TYPED_DEADLINE_PROSE_PROFILE
     reference, candidate, reference_prose, candidate_prose, measurements = _compile_extended_roundtrip(
         reference_ir, candidate_text, profile=profile, original_text=original_text)
-    reference_dates = due_dates(reference)
+    reference_dates = due_dates_by_statement(reference)
     _require(bool(reference_dates), "reference must contain at least one evaluable deadline")
-    candidate_dates = None if candidate is None else due_dates(candidate)
+    candidate_dates = None if candidate is None else due_dates_by_statement(candidate)
     return {
         "schema": "legal-civil-deadline-text-roundtrip-score/v1",
         "profile": profile,
@@ -664,8 +665,8 @@ def score_deadline_legal_text_roundtrip(reference_ir, candidate_text, *,
         "abstention_count": int(candidate is None),
         "normalized_reference_prose": reference_prose,
         "normalized_candidate_prose": candidate_prose,
-        "reference_due_dates": reference_dates,
-        "candidate_due_dates": candidate_dates,
+        "reference_due_dates": [due for _, due in reference_dates],
+        "candidate_due_dates": None if candidate_dates is None else [due for _, due in candidate_dates],
         "measurements": {
             **measurements,
             "due_dates_exact": None if candidate_dates is None else candidate_dates == reference_dates,
