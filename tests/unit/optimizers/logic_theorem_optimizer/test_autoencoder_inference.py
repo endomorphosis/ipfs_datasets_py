@@ -3382,39 +3382,118 @@ def test_reviewed_inference_old_callback_cannot_admit_digest_omitted_policy(tmp_
         inference._check_reviewed_generation_policy(request, policy)
 
 
-def _reviewed_v11_saved_control(tmp_path, disposition):
+def _reviewed_v11_bind_saved_source_control(worker, inputs, request, generation, offered):
+    """Build the fictional source commitments independently of the saved outputs."""
+    call = generation["last_call"]
+    receipt = call["input_receipt"]
+    tokenizer = receipt["tokenizer_contract"]
+    profile = "reviewed-source-selection-context/v2"
+    selection = {"schema": "caller-known-interpretation-selection/v1",
+        "interpretation_id": "fixture:interpretation", "selection_mode": "identifier_only"}
+    governing = {"jurisdiction": "fixture:jurisdiction", "instrument_id": "fixture:instrument",
+        "governing_edition": "fixture:edition", "legal_as_of_utc": "2025-01-01T00:00:00Z",
+        "valid_from_utc": "2025-01-01T00:00:00Z", "valid_until_utc": None}
+    rows, arguments, records, row_commitments = [], [], [], []
+    for identity, unit in offered:
+        binding = {"source_version_cid": "fixture:version", "occurrence_cid": unit,
+            "document_revision": "fixture:revision"}
+        rows.append({"id": identity, "unit_id": unit, "governing_context": governing,
+            "source_binding": binding})
+        source_text = f"Fictional saved-output control for {unit}."
+        arguments.append({"id": identity, "source_text": source_text,
+            "context": {"permitted": [], "retrieved": []}})
+        wire = inputs._reviewed_wire({"profile": profile, "source_text": source_text,
+            "governing_context": governing, "source_binding": binding, "selection_context": selection})
+        tokens = [tokenizer["bos_token_id"], *wire, tokenizer["eos_token_id"]]
+        records.append({"id": identity, "unit_id": unit, "source_wire": wire.decode("utf-8"),
+            "source_token_ids": tokens})
+        row_commitments.append({"id": identity, "unit_id": unit,
+            "source_text_sha256": worker._digest(source_text.encode("utf-8")),
+            "source_wire_sha256": worker._digest(wire),
+            "source_token_ids_sha256": worker._digest(inputs._reviewed_wire(tokens))})
+
+    contexts = {"profile": profile, "selection_context": selection, "rows": rows}
+    contexts_raw = inputs._reviewed_wire(contexts)
+    path = Path(request["source_contexts_artifact"]["path"])
+    path.write_bytes(contexts_raw)
+    contexts_sha = worker._digest(contexts_raw)
+    request["source_contexts_artifact"] = {"path": str(path), "bytes": len(contexts_raw), "sha256": contexts_sha}
+    commitment = generation["input_commitment"]
+    commitment["source_contexts_sha256"] = contexts_sha
+    generation["input_profile_id"] = "reviewed-decoder-digest-omitted-producer/v1:" + worker._digest(inputs._reviewed_wire(commitment))
+    call["source_arguments_sha256"] = worker._digest(inputs._reviewed_wire(arguments))
+    call["source_records_sha256"] = worker._digest(inputs._reviewed_wire(records))
+    receipt.update(schema="reviewed-decoder-generation-input-receipt/v1",
+        profile="source-only-reviewed-decoder-generation-inputs/v1",
+        source_profile=profile, record_count=len(offered), source_contexts_sha256=contexts_sha,
+        source_arguments_sha256=call["source_arguments_sha256"],
+        selection_context_sha256=worker._digest(inputs._reviewed_wire(selection)),
+        prepared_records_sha256=call["source_records_sha256"], row_commitments=row_commitments,
+        max_source_tokens=request["max_source_tokens"], supplied_examples="empty_only",
+        **dict.fromkeys(("semantic_selection_supported", "source_facts_authenticated",
+            "current_admission_replayed", "backend_execution_authorized", "target_access_performed",
+            "training_stage_access_performed", "proof_authority", "corpus_admitted"), False))
+
+
+def _reviewed_v11_saved_control(tmp_path, disposition, *, model_vocab_padding=0, model_eos=None):
     from tests.unit.optimizers.logic_theorem_optimizer import test_autoencoder_training_worker as numerical
     worker, request, policy = _reviewed_v11_parent_policy_data(tmp_path, "producer")
     inputs, codec, target = numerical._digest_omitted_small_generation_target()
-    request["max_output_tokens"] = 65536
-    policy["max_output_tokens"] = request["max_output_tokens"]
-    text = inputs.encode_reviewed_decoder_digest_omitted_target(target, target_codec=codec) if disposition == "complete" else ("not-json" if disposition == "invalid_text" else None)
-    outcome = "invalid" if disposition in {"invalid_text", "invalid_no_text"} else disposition
+    full_text = inputs.encode_reviewed_decoder_digest_omitted_target(target, target_codec=codec)
+    body = list(full_text.encode("utf-8"))
+    request["max_output_tokens"] = policy["max_output_tokens"] = len(body) + 3
+    bos, eos, vocab = 256, 257, 258
+    config = tmp_path / "model-config.json"
+    config.write_bytes(worker._json_bytes({
+        "model_type": "qwen2",
+        "vocab_size": vocab + model_vocab_padding,
+        "bos_token_id": bos,
+        "eos_token_id": eos if model_eos is None else model_eos,
+    }))
+    request["assets"]["model_config_artifact"] = {
+        "path": str(config), "bytes": config.stat().st_size, "sha256": _sha(config),
+    }
+    policy["assets"] = [request["assets"][name] for name in (
+        "recipe_artifact", "model_config_artifact", "tokenizer_artifact", "license_artifact",
+    )]
+    outcomes = {
+        "complete": ("complete", [bos, *body, eos], full_text, None),
+        "abstained": ("abstained", [bos, eos], None, "empty_output"),
+        "incomplete": ("incomplete", [bos], None, "generation_time_limit_without_eos"),
+        "output_limit": ("incomplete", [bos] + [3] * (request["max_output_tokens"] - 1),
+            None, "output_limit_without_eos"),
+        "unexpected_bos": ("invalid", [bos, 3, bos], None, "unexpected_bos_in_output"),
+        "invalid_no_text": ("invalid", [bos, 0xC3, eos], None, "invalid_output_transport"),
+        "invalid_text": ("invalid", [bos, ord("{"), eos], "{", "invalid_complete_norm_json"),
+        "invalid_empty_text": ("invalid", [bos, 3, eos], "", "invalid_complete_norm_json"),
+    }
+    outcome, tokens, text, reason = outcomes[disposition]
     candidate = target if outcome == "complete" else None
     raw = {"id": "fixture:source-only-row", "unit_id": "fixture:unit", "outcome": outcome,
-        "candidate": candidate, "generated_token_ids": [0, 3, 2] if text is not None else [0, 3],
-        "generated_text": text, "reason": None if outcome == "complete" else "fixture:" + disposition}
+        "candidate": candidate, "generated_token_ids": tokens, "generated_text": text, "reason": reason}
     proof = {"id": raw["id"], "raw_model_text_sha256": None if text is None else worker._digest(text.encode("utf-8")),
         "assembled_full_target_sha256": worker._digest(inputs._reviewed_wire(target)) if outcome == "complete" else None,
         "outcome": outcome, "computed_field": "typed_expression.content_digest", "other_fields_repaired": False}
-    # Coverage fixture only: these offered identities are not reference targets.
-    contexts = {"profile": "reviewed-source-selection-context/v2",
-        "rows": [{"id": raw["id"], "unit_id": raw["unit_id"]}]}
-    context_path = Path(request["source_contexts_artifact"]["path"])
-    context_path.write_bytes(worker._json_bytes(contexts))
-    request["source_contexts_artifact"] = {"path": str(context_path), "bytes": context_path.stat().st_size, "sha256": _sha(context_path)}
-    policy["source_contexts_sha256"] = worker._digest(worker._json_bytes(contexts))
     exposure = {"fixture": "independent original source-only exposure"}
     path = tmp_path / "exposure.json"; path.write_bytes(worker._json_bytes(exposure))
     request["exposure_artifact"] = {"path": str(path), "bytes": path.stat().st_size, "sha256": _sha(path)}
     commitment = {**policy, "source_sha256": request["source_sha256"],
         "exposure_sha256": worker._digest(inputs._reviewed_wire(exposure)),
         "supplied_context_supported": "empty_permitted_and_retrieved_only"}
+    # Fictional saved tokenizer DATA only. No tokenizer is loaded or called.
+    pipeline = b"Fictional UTF-8 byte-domain control"
+    tokenizer = {"schema": "reviewed-decoder-tokenizer-contract/v2",
+        "bos_token_id": bos, "eos_token_id": eos, "vocab_size": vocab,
+        "pipeline_kind": "fictional_fixed_byte", "pipeline_sha256": worker._digest(pipeline),
+        "pipeline_bytes": len(pipeline)}
     generation = {"schema": "reviewed-decoder-digest-omitted-source-producer-observation/v1",
         "input_commitment": commitment,
-        "input_profile_id": "reviewed-decoder-digest-omitted-producer/v1:" + worker._digest(inputs._reviewed_wire(commitment)),
-        "last_call": {"raw_generation_outputs": [raw], "producer_outputs": [{key: raw[key] for key in ("id", "outcome", "candidate")}],
+        "last_call": {"completed": True, "entry_pair_match": True, "exit_pair_match": True,
+            "exception_type": None, "input_receipt": {"tokenizer_contract": tokenizer},
+            "raw_generation_outputs": [raw],
+            "producer_outputs": [{key: raw[key] for key in ("id", "outcome", "candidate")}],
             "output_derivation": [proof]}}
+    _reviewed_v11_bind_saved_source_control(worker, inputs, request, generation, [(raw["id"], raw["unit_id"])])
     loader = {"schema": "reviewed-local-digest-omitted-decoder-runtime-load/v1", "target_codec": codec,
         "expected_backend_identity": request["backend_identity"], "loaded_backend_identity": request["backend_identity"],
         "producer_pins": request["source_sha256"], "artifacts": [request["assets"][key] for key in
@@ -3485,6 +3564,68 @@ def test_reviewed_inference_v11_saved_output_refuses_raw_derivation_or_scope_cha
         inference._check_reviewed_evaluation_outputs(write(), request)
 
 
+@pytest.mark.parametrize(("disposition", "damage"), [
+    pytest.param("output_limit", None, id="real-token-exhaustion"),
+    pytest.param("unexpected_bos", None, id="real-unexpected-bos"),
+    pytest.param("invalid_empty_text", None, id="empty-decoded-body"),
+    pytest.param("complete", "missing-eos", id="complete-without-eos"),
+    pytest.param("complete", "early-eos", id="complete-with-early-eos"),
+    pytest.param("complete", "wrong-bos", id="complete-with-wrong-bos"),
+    pytest.param("complete", "outside-vocab", id="complete-outside-vocab"),
+    pytest.param("abstained", "false-abstention", id="false-abstention"),
+    pytest.param("incomplete", "incomplete-with-eos", id="false-incomplete-with-eos"),
+    pytest.param("incomplete", "false-token-budget", id="false-token-budget"),
+    pytest.param("complete", "valid-body-called-invalid", id="valid-body-called-invalid"),
+    pytest.param("complete", "missing-tokenizer-receipt", id="missing-tokenizer-receipt"),
+    pytest.param("complete", "model-eos", id="receipt-eos-disagrees-with-pinned-config"),
+    pytest.param("complete", "padded-vocab", id="padded-model-vocab"),
+])
+def test_reviewed_inference_v11_saved_terminal_evidence_matches_disposition(tmp_path, disposition, damage):
+    worker, _, request, generation, _, write = _reviewed_v11_saved_control(
+        tmp_path, disposition, model_vocab_padding=4096 if damage == "padded-vocab" else 0,
+        model_eos=255 if damage == "model-eos" else None,
+    )
+    call = generation["last_call"]
+    raw = call["raw_generation_outputs"][0]
+    output = call["producer_outputs"][0]
+    proof = call["output_derivation"][0]
+    tokenizer = call["input_receipt"]["tokenizer_contract"]
+    bos, eos, vocab = (tokenizer[key] for key in ("bos_token_id", "eos_token_id", "vocab_size"))
+    tokens = raw["generated_token_ids"]
+    if damage == "missing-eos" or damage == "false-abstention":
+        tokens[-1] = 3
+    elif damage == "early-eos":
+        tokens.insert(1, eos)
+    elif damage == "wrong-bos":
+        tokens[0] = 3
+    elif damage == "outside-vocab":
+        tokens[1] = vocab
+    elif damage == "incomplete-with-eos":
+        tokens.append(eos)
+    elif damage == "false-token-budget":
+        raw["reason"] = "output_limit_without_eos"
+        raw["generated_token_ids"] = [bos, 3]
+    elif damage == "valid-body-called-invalid":
+        raw.update(outcome="invalid", candidate=None, reason="invalid_complete_norm_json")
+        output.update(outcome="invalid", candidate=None)
+        proof.update(outcome="invalid", assembled_full_target_sha256=None)
+    elif damage == "missing-tokenizer-receipt":
+        del call["input_receipt"]
+
+    cycle = write()
+    original = worker._json_bytes(generation)
+    if damage is None or damage == "padded-vocab":
+        inference._check_reviewed_evaluation_outputs(cycle, request)
+    elif damage == "model-eos":
+        with pytest.raises(ValueError, match="request-pinned model configuration"):
+            inference._check_reviewed_evaluation_outputs(cycle, request)
+    else:
+        with pytest.raises(ValueError):
+            inference._check_reviewed_evaluation_outputs(cycle, request)
+    assert worker._json_bytes(generation) == original
+    assert all(_sha(Path(ref["path"])) == ref["sha256"] for ref in cycle["output_artifacts"].values())
+
+
 def test_reviewed_inference_v11_source_only_physical_original_owner(reviewed_physical_owner, monkeypatch, capsys):
     """Tiny fictional real-owner dispatch/cleanup, not vendor or quality proof."""
     facts = reviewed_physical_owner
@@ -3536,13 +3677,7 @@ def _reviewed_v11_three_source_coverage_control(tmp_path):
         for row, (identity, unit) in zip(call[name], offered, strict=True):
             row["id"] = identity
             if name == "raw_generation_outputs": row["unit_id"] = unit
-    contexts = {"profile": "reviewed-source-selection-context/v2",
-        "rows": [{"id": identity, "unit_id": unit} for identity, unit in offered]}
-    path = Path(request["source_contexts_artifact"]["path"])
-    path.write_bytes(worker._json_bytes(contexts))
-    request["source_contexts_artifact"] = {"path": str(path), "bytes": path.stat().st_size, "sha256": _sha(path)}
-    generation["input_commitment"]["source_contexts_sha256"] = worker._digest(worker._json_bytes(contexts))
-    generation["input_profile_id"] = "reviewed-decoder-digest-omitted-producer/v1:" + worker._digest(inputs._reviewed_wire(generation["input_commitment"]))
+    _reviewed_v11_bind_saved_source_control(worker, inputs, request, generation, offered)
     return worker, request, generation, write, offered
 
 
