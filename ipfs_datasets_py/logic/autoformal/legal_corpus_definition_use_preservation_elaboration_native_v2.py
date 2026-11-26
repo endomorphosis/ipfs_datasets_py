@@ -645,3 +645,111 @@ def build_definition_use_preservation_elaboration_native_v2(
 
 __all__ = ["preparation_sha256", "validate_definition_use_preservation_elaboration_native_v2",
            "build_definition_use_preservation_elaboration_native_v2"]
+
+
+def read_planned_physical_whole_norm_type_capture_v2(
+        preparation, stdout_raw, stderr_raw, *, expected_preparation_sha256,
+        expected_stdout_sha256, expected_stderr_sha256):
+    """Read one pinned physical type observation without running a compiler.
+
+    The two complete closed types can differ in raw expression identity.
+    The retained observation must report kernel definitional equality, both
+    constant checks, and both types' proposition status.
+    """
+    from . import legal_corpus_definition_use_preservation_elaboration_v2 as preparer
+
+    _pin(expected_preparation_sha256, "physical elaboration preparation")
+    _pin(expected_stdout_sha256, "physical elaboration stdout")
+    _pin(expected_stderr_sha256, "physical elaboration stderr")
+    envelope = preparer._envelope(preparation)
+    _need(_sha(preparer._wire(envelope)) == expected_preparation_sha256,
+          "exact pinned physical elaboration preparation required")
+    manifest = _parse(envelope["manifest_json"].encode("utf-8"))
+    _need(manifest.get("schema") == preparer.PHYSICAL_PROBE_SCHEMA
+          and manifest.get("profile") == preparer.PHYSICAL_PROBE_PROFILE,
+          "exact physical whole-norm elaboration preparation schema and profile required")
+    for raw, expected in ((stdout_raw, expected_stdout_sha256), (stderr_raw, expected_stderr_sha256)):
+        _need(type(raw) is bytes and len(raw) <= MAX_CAPTURE_BYTES and _sha(raw) == expected,
+              "exact pinned bounded physical elaboration log bytes required")
+    try:
+        stdout = stdout_raw.decode("utf-8")
+        stderr = stderr_raw.decode("utf-8")
+    except UnicodeError as error:
+        raise ValueError("physical elaboration logs require exact UTF-8") from error
+
+    original = manifest["original_theorem"]
+    alias = manifest["alias_theorem"]
+    probe = manifest["probe_module"]
+    identifier = re.compile(r"[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)*")
+    _need(all(type(name) is str and len(name) <= 256 and identifier.fullmatch(name)
+              for name in (original, alias, probe))
+          and original != alias and "." in original
+          and original.rsplit(".", 1)[0] == alias.rsplit(".", 1)[0]
+          and manifest["source_path"] == original.rsplit(".", 1)[0].replace(".", "/") + ".lean",
+          "exact physical original and namespace-preserving probe identities required")
+    type_line = manifest["type_report_line"]
+    alias_line = manifest["alias_axiom_report_line"]
+    _need(type(type_line) is int and type(alias_line) is int and 0 < alias_line < type_line,
+          "exact positive physical type and alias report locations required")
+
+    name = probe.replace(".", "/") + ".lean"
+    source = dict(preparation.files).get(name)
+    _need(type(source) is str and _sha(source.encode("utf-8")) == manifest["probe_source_sha256"],
+          "exact physical type probe source required")
+    lines = source.splitlines()
+    _need(type_line <= len(lines)
+          and lines[alias_line - 1] == "#print axioms " + alias.rsplit(".", 1)[1]
+          and lines[type_line - 1] == "run_elab CorpusPreservationElaboration.check `" + original + " `" + alias,
+          "physical observation lines differ from the pinned probe source")
+    probe_path = re.escape(name)
+    source_path = re.escape(manifest["source_path"])
+    info = r"info: (?:\./)*"
+    type_report = re.compile(info + probe_path + rf":{type_line}:0: CORPUS_TYPE_CHECK:(.+)")
+    axiom_reports = {
+        original: re.compile(info + source_path + r":[1-9][0-9]*:[0-9]+: "
+                             + re.escape(f"'{original}' does not depend on any axioms")),
+        alias: re.compile(info + probe_path + rf":{alias_line}:0: "
+                          + re.escape(f"'{alias}' does not depend on any axioms")),
+    }
+    axioms_word = re.compile(r"\b(?:axiom|axioms|sorry|sorryAx)\b")
+    selected_names = re.compile(r"(?<![A-Za-z0-9_.])(?:"
+                               + re.escape(original) + "|" + re.escape(alias)
+                               + r")(?![A-Za-z0-9_.])")
+    probe_location = re.compile(info + probe_path + r":[1-9][0-9]*:[0-9]+: ")
+    value = None
+    empty_axioms = set()
+    for line in stdout.splitlines():
+        if "CORPUS_TYPE_CHECK" in line:
+            match = type_report.fullmatch(line)
+            _need(value is None and match is not None,
+                  "exactly one anchored physical theorem type observation required")
+            value = _parse(match.group(1).encode("utf-8"))
+        elif axioms_word.search(line) and (selected_names.search(line) or probe_location.match(line)):
+            matched = [name for name, pattern in axiom_reports.items() if pattern.fullmatch(line)]
+            _need(len(matched) == 1 and matched[0] not in empty_axioms,
+                  "exact unique empty original and alias axiom observations required")
+            empty_axioms.add(matched[0])
+    _need(not any("CORPUS_TYPE_CHECK" in line
+                  or axioms_word.search(line) and (selected_names.search(line) or probe_location.match(line))
+                  for line in stderr.splitlines()),
+          "stderr cannot establish physical theorem type or axiom observations")
+    _need(value is not None and empty_axioms == set(axiom_reports),
+          "missing exact physical theorem type or empty axiom observation")
+    _need(set(value) == _TYPE_FIELDS
+          and value["schema"] == preparer.PHYSICAL_TYPE_OBSERVATION_SCHEMA
+          and value["original_name"] == original and value["alias_name"] == alias
+          and type(value["expr_equal"]) is bool
+          and all(value[field] is True for field in _TRUE_TYPE_FLAGS - {"expr_equal"}),
+          "exact physical theorem identities and successful closed kernel checks required")
+    _need(type(value["original_type"]) is dict and type(value["alias_type"]) is dict
+          and type(value["original_level_params"]) is list and type(value["alias_level_params"]) is list
+          and _wire(value["original_level_params"]) == _wire(value["alias_level_params"]),
+          "complete closed physical types and exact equal universe parameters required")
+    _need(value["expr_equal"] is (_wire(value["original_type"]) == _wire(value["alias_type"])),
+          "observed exact expression equality contradicts the retained types")
+    _closed_type(value["original_type"], value["original_level_params"])
+    _closed_type(value["alias_type"], value["alias_level_params"])
+    return _wire({original: value})
+
+
+__all__ += ["read_planned_physical_whole_norm_type_capture_v2"]

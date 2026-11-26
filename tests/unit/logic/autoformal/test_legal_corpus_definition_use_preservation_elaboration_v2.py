@@ -567,3 +567,143 @@ def test_deep_closed_type_capture_is_separate_from_compact_sealed_receipt(prepar
                                      fields=("native_observations",)) == sealed
     assert sealed["native_observations"]["type_checks_file"] == descriptor
 
+
+
+def _planned_physical_probe_inputs():
+    """Authored source/diagnostic data for the pure preparation and readback APIs."""
+    from ipfs_datasets_py.logic.ir_core.protocols import ExecutionBounds, QueryKind
+
+    theorem = "PhysicalFixture.useDefinition"
+    proposition = "∀ {Actor : Type}, True → True"
+    toolchain = "leanprover/lean4:v4.34.1"
+    source_path = "PhysicalFixture.lean"
+    files = (
+        (source_path, "import Lean\nnamespace PhysicalFixture\n"
+         "theorem useDefinition : " + proposition + " := by intros; trivial\n"
+         "example : " + proposition + " := @useDefinition\nend PhysicalFixture\n"),
+        ("lakefile.toml", 'name = "fixture"\n[[lean_lib]]\nname = "legal"\nroots = ["PhysicalFixture"]\n'),
+        ("lean-toolchain", toolchain + "\n"),
+    )
+    context = {
+        "theorem": theorem, "source_namespace": "PhysicalFixture", "source_path": source_path,
+        "proposition_utf8_sha256": sha(proposition.encode()),
+        "theorem_binding": {
+            "kind": "whole_norm_definition_expansion",
+            "premise_kind": "independently_denoted_source_definition",
+            "desired_equivalence_hypothesis": False,
+        },
+    }
+    payload = {
+        "schema": "legal-corpus-v4-planned-physical-whole-norm-request/v2",
+        "resource_profile": "physical-whole-project-output/v1",
+        "encoding": "lean4-physical-project-proposition-source/v1",
+        "context": context, "context_sha256": sha(canonical(context)), "proposition_source": proposition,
+        "project": {
+            "target": "legal", "toolchain": toolchain, "expected_modules": ["PhysicalFixture"],
+            "module_imports": {"PhysicalFixture": []},
+            "files": [{"path": path, "bytes": len(body.encode()), "sha256": sha(body.encode())}
+                      for path, body in files],
+        },
+        "authority": owner.AUTHORITY,
+        "premise_remains_quantified": True, "elaborated_type_verified": False,
+        "dispatch_qualified": False, "execution_profile_qualified": False,
+    }
+    request = BackendRequest(
+        request_id="authored-physical-probe", claim_id="authored-physical-claim", claim_digest="1" * 64,
+        obligation_id="authored-physical-obligation", obligation_digest="2" * 64, assumption_ids=(),
+        logic_family="lean4", declaration_id=theorem, query_kind=QueryKind.THEOREM_PROOF,
+        bounds=ExecutionBounds(max_output_bytes=8 * 1024**2),
+        requested_backend_id="legal-corpus-v4-physical-project-kernel@1", payload=payload,
+    )
+    return request, files
+
+
+def test_planned_physical_type_probe_preserves_original_proposition_and_sources():
+    request, files = _planned_physical_probe_inputs()
+    prepared = owner.prepare_planned_physical_whole_norm_type_probe_v2(
+        request, files, expected_request_sha256=request.digest)
+    state = prepared.to_dict()
+    project = dict(prepared.files)
+    original = dict(files)
+    probe = project["PhysicalWholeNormElaboration.lean"].splitlines()
+    assert set(project) == {*original, "PhysicalWholeNormElaboration.lean"}
+    assert all(project[path] == original[path] for path in original if path != "lakefile.toml")
+    assert 'roots = ["PhysicalFixture","PhysicalWholeNormElaboration"]' in project["lakefile.toml"]
+    alias = "PhysicalFixture.physical_whole_norm_type_" + request.digest
+    assert state["original_theorem"] == request.declaration_id and state["alias_theorem"] == alias
+    assert state["request_sha256"] == request.digest and state["obligation_digest"] == request.obligation_digest
+    assert probe[state["alias_axiom_report_line"] - 1] == "#print axioms " + alias.rsplit(".", 1)[1]
+    assert probe[state["type_report_line"] - 1].endswith("`" + request.declaration_id + " `" + alias)
+    assert any(" : ∀ {Actor : Type}, True → True := @_root_.PhysicalFixture.useDefinition" in row for row in probe)
+    assert state["file_sha256"] == {path: sha(body.encode()) for path, body in project.items()}
+    assert state["preparation_only"] and not state["elaborated_type_verified"]
+    assert all(value is False for value in state["authority"].values())
+
+
+@pytest.mark.parametrize("mutation", ["request-digest", "original-source", "repinned-missing-ABI"])
+def test_planned_physical_type_probe_refuses_changed_original_binding(mutation):
+    request, files = _planned_physical_probe_inputs()
+    expected = request.digest
+    if mutation == "request-digest":
+        expected = "0" * 64
+    elif mutation == "original-source":
+        files = ((files[0][0], files[0][1] + "\n"), *files[1:])
+    else:
+        source, body = files[0]
+        files = ((source, body.replace("example :", "#check")), *files[1:])
+        payload = request.to_dict()["payload"]
+        payload["project"]["files"][0] = {"path": source, "bytes": len(files[0][1].encode()),
+                                           "sha256": sha(files[0][1].encode())}
+        request = replace(request, payload=payload)
+        expected = request.digest
+    with pytest.raises(ValueError, match="independently pinned|original namespace ABI"):
+        owner.prepare_planned_physical_whole_norm_type_probe_v2(
+            request, files, expected_request_sha256=expected)
+
+
+@pytest.mark.parametrize("mutation", [None, "wrong-line", "duplicate", "no-original-axioms",
+    "stderr-marker", "defeq-false", "loose-variable", "wrong-digest", "expr-equal-contradiction"])
+def test_planned_physical_type_capture_binds_exact_kernel_diagnostics(mutation):
+    request, files = _planned_physical_probe_inputs()
+    prepared = owner.prepare_planned_physical_whole_norm_type_probe_v2(
+        request, files, expected_request_sha256=request.digest)
+    state = prepared.to_dict()
+    original, alias = state["original_theorem"], state["alias_theorem"]
+    original_type = {
+        "kind": "forallE", "binder_name": {"kind": "str", "parent": {"kind": "anonymous"}, "value": "p"},
+        "binder_info": "default", "binder_type": {"kind": "sort", "level": {"kind": "zero"}},
+        "body": {"kind": "bvar", "index": 0},
+    }
+    row = {
+        "schema": owner.PHYSICAL_TYPE_OBSERVATION_SCHEMA, "original_name": original, "alias_name": alias,
+        "original_type": original_type, "alias_type": {**original_type, "binder_name": {"kind": "anonymous"}},
+        "original_level_params": [], "alias_level_params": [], "expr_equal": False,
+        "kernel_defeq": True, "original_kernel_check": True, "alias_kernel_check": True,
+        "closed_types": True, "prop_type": True, "level_params_equal": True,
+    }
+    module = state["probe_module"] + ".lean"
+    if mutation == "expr-equal-contradiction":
+        row["expr_equal"] = True
+    if mutation == "defeq-false":
+        row["kernel_defeq"] = False
+    if mutation == "loose-variable":
+        row["alias_type"]["body"] = {"kind": "bvar", "index": 1}
+    line = state["type_report_line"] + (1 if mutation == "wrong-line" else 0)
+    marker = f"info: {module}:{line}:0: CORPUS_TYPE_CHECK:".encode() + canonical(row) + b"\n"
+    original_report = f"info: {state['source_path']}:5:0: '{original}' does not depend on any axioms\n".encode()
+    alias_report = f"info: {module}:{state['alias_axiom_report_line']}:0: '{alias}' does not depend on any axioms\n".encode()
+    stdout = (b"" if mutation == "no-original-axioms" else original_report) + alias_report + marker
+    if mutation == "duplicate":
+        stdout += marker
+    stderr = marker if mutation == "stderr-marker" else b""
+    options = dict(expected_preparation_sha256=owner.preparation_sha256(prepared),
+                   expected_stdout_sha256="0" * 64 if mutation == "wrong-digest" else sha(stdout),
+                   expected_stderr_sha256=sha(stderr))
+    if mutation is None:
+        retained = elaboration_native.read_planned_physical_whole_norm_type_capture_v2(
+            prepared, stdout, stderr, **options)
+        assert retained == canonical({original: row})
+    else:
+        with pytest.raises(ValueError):
+            elaboration_native.read_planned_physical_whole_norm_type_capture_v2(
+                prepared, stdout, stderr, **options)

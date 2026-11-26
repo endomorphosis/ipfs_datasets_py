@@ -20,6 +20,10 @@ PROFILE = "replayed-corpus-preservation-exact-header-elaboration/v1"
 OBSERVATION_SCHEMA = "legal-corpus-v2-native-theorem-type-check/v1"
 OBSERVATION_PREFIX = "CORPUS_TYPE_CHECK:"
 PROJECT_ROOT = "LegalCorpusV2Elaboration"
+PHYSICAL_PROBE_SCHEMA = "legal-corpus-v4-planned-physical-whole-norm-elaboration-preparation/v1"
+PHYSICAL_PROBE_PROFILE = "independent-physical-whole-norm-proposition-elaboration/v1"
+PHYSICAL_TYPE_OBSERVATION_SCHEMA = "legal-physical-whole-norm-closed-type-probe/v1"
+PHYSICAL_PROBE_MODULE = "PhysicalWholeNormElaboration"
 MAX_RECORD_BYTES = 8 * 1024 * 1024
 MAX_FILES = 17
 MAX_MODULES = 13
@@ -198,10 +202,17 @@ class ElaborationPreparation:
 def _envelope(preparation):
     _need(type(preparation) is ElaborationPreparation, "exact elaboration preparation storage type required")
     manifest = ElaborationPreparation.to_dict(preparation)
-    _need(type(manifest) is dict and manifest.get("schema") == SCHEMA and manifest.get("profile") == PROFILE,
+    _need(type(manifest) is dict, "exact elaboration preparation manifest required")
+    key = (manifest.get("schema"), manifest.get("profile"))
+    _need(key in ((SCHEMA, PROFILE), (PHYSICAL_PROBE_SCHEMA, PHYSICAL_PROBE_PROFILE)),
           "exact elaboration preparation schema/profile required")
-    _need(type(preparation.files) is tuple and len(preparation.files) == MAX_FILES,
-          "exact seventeen immutable elaboration preparation files required")
+    _need(type(preparation.files) is tuple, "exact immutable elaboration preparation files required")
+    if key == (SCHEMA, PROFILE):
+        _need(len(preparation.files) == MAX_FILES, "exact seventeen immutable elaboration preparation files required")
+    else:
+        from . import legal_corpus_definition_use_native_v2 as native
+        _need(2 <= len(preparation.files) <= native.MAX_REVIEWED_PRESERVATION_FILES + 1,
+              "bounded additive physical elaboration sources required")
     rows, previous, budget = [], None, MAX_RECORD_BYTES
     for pair in preparation.files:
         _need(type(pair) is tuple and len(pair) == 2 and type(pair[0]) is str and type(pair[1]) is str,
@@ -435,6 +446,9 @@ def validate_definition_use_preservation_elaboration_v2(
         expected_elaboration_preparation_sha256, expected_lineage_sha256,
         expected_packet_observation_sha256, **packet_arguments):
     """Regenerate all seventeen files and full current typed/source bindings."""
+    _need(type(preparation) is ElaborationPreparation
+          and preparation.to_dict().get("schema") == SCHEMA,
+          "exact elaboration preparation schema/profile required")
     _pin(expected_elaboration_preparation_sha256, "complete current elaboration preparation")
     envelope = _envelope(preparation)
     original = _wire(envelope)
@@ -451,4 +465,135 @@ def validate_definition_use_preservation_elaboration_v2(
 
 __all__ = ["ElaborationPreparation", "preparation_sha256", "elaboration_preparation_sha256",
            "prepare_definition_use_preservation_elaboration_v2",
-           "validate_definition_use_preservation_elaboration_v2"]
+           "validate_definition_use_preservation_elaboration_v2",
+           "prepare_planned_physical_whole_norm_type_probe_v2"]
+
+
+def prepare_planned_physical_whole_norm_type_probe_v2(
+        request, original_files, *, expected_request_sha256):
+    """Prepare one source-only type probe over an independently pinned physical request.
+
+    The request pin must come from the original verified planning or execution
+    boundary. This assembler neither dispatches Lean nor authenticates custody.
+    """
+    from . import corpus_contracts as contracts
+    from . import legal_corpus_definition_use_native_v2 as native
+    from . import legal_corpus_definition_use_preservation_kernel_requests_v2 as planner
+
+    _pin(expected_request_sha256, "exact planned physical request")
+    _need(_sha(Path(__file__).read_bytes()) == _SELF_PIN, "elaboration preparation owner changed")
+    binding = native._physical_whole_norm_request_wire(request, expected_request_sha256)
+    row = native._parse(binding[1], native.MAX_RECORD_BYTES)
+    payload = row["payload"]
+    _need(payload["schema"] == planner.PHYSICAL_WHOLE_PROJECT_REQUEST_SCHEMA
+          and payload["premise_remains_quantified"] is True
+          and all(payload[key] is False for key in (
+              "elaborated_type_verified", "dispatch_qualified", "execution_profile_qualified"))
+          and payload["authority"] == AUTHORITY and all(value is False for value in payload["authority"].values()),
+          "exact planned whole-project source proposition required")
+    context = payload["context"]
+    project = payload["project"]
+    theorem = row["declaration_id"]
+    namespace, separator, short = theorem.rpartition(".")
+    identifier = re.compile(r"[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)*\Z")
+    source_path = namespace.replace(".", "/") + ".lean"
+    _need(bool(separator) and identifier.fullmatch(theorem) is not None
+          and theorem == context["theorem"] and namespace == context["source_namespace"]
+          and source_path == context["source_path"]
+          and _sha(native._wire(context, native.MAX_RECORD_BYTES)) == payload["context_sha256"]
+          and context["theorem_binding"]["kind"] == "whole_norm_definition_expansion"
+          and context["theorem_binding"]["premise_kind"] == "independently_denoted_source_definition"
+          and context["theorem_binding"]["desired_equivalence_hypothesis"] is False,
+          "exact namespaced conditional whole-norm theorem required")
+
+    modules = project["expected_modules"]
+    _need(type(modules) is list and 1 <= len(modules) <= native.MAX_REVIEWED_PRESERVATION_MODULES
+          and all(type(name) is str and identifier.fullmatch(name) for name in modules)
+          and len(set(modules)) == len(modules) and namespace in modules
+          and PHYSICAL_PROBE_MODULE not in modules and set(project["module_imports"]) == set(modules)
+          and project["target"] == "legal", "exact original source-only Lake module roster required")
+    _need(type(original_files) is tuple and 1 <= len(original_files) <= native.MAX_REVIEWED_PRESERVATION_FILES,
+          "bounded immutable original source files required")
+    pins = []
+    files = {}
+    budget = MAX_RECORD_BYTES
+    for item in original_files:
+        _need(type(item) is tuple and len(item) == 2 and all(type(v) is str for v in item),
+              "exact immutable original path and source text required")
+        path, source = item
+        _need(0 < len(path) <= 256 and re.fullmatch(r"[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*", path)
+              and all(part not in {"", ".", "..", ".lake"} for part in path.split("/"))
+              and (path.endswith((".lean", ".toml", ".txt", ".json")) or path == "lean-toolchain")
+              and path not in files, "unique safe original source-only path required")
+        _need(len(source) <= budget and "\x00" not in source, "bounded original UTF-8 source text required")
+        raw = source.encode("utf-8")
+        budget -= len(raw)
+        _need(budget >= 0, "complete original source byte bound exceeded")
+        files[path] = source
+        pins.append({"path": path, "bytes": len(raw), "sha256": _sha(raw)})
+    _need(pins == project["files"] and list(files) == sorted(files)
+          and set(modules) == {path[:-5].replace("/", ".") for path in files if path.endswith(".lean")}
+          and files.get("lean-toolchain") == project["toolchain"] + "\n",
+          "exact independently pinned original UTF-8 project required")
+
+    proposition = payload["proposition_source"]
+    _need(type(proposition) is str and bool(proposition)
+          and _sha(proposition.encode("utf-8")) == context["proposition_utf8_sha256"]
+          and files[source_path].count("\nnamespace " + namespace + "\n") == 1
+          and files[source_path].count("\nexample : " + proposition + " := @" + short + "\n") == 1,
+          "independent proposition must match the original namespace ABI exactly")
+    checker = _physical_type_checker()
+    alias_short = "physical_whole_norm_type_" + expected_request_sha256
+    _need(not any(alias_short in body for body in files.values()), "physical probe alias would shadow original source")
+    alias = namespace + "." + alias_short
+    roots = "roots = " + json.dumps(modules, separators=(",", ":")) + "\n"
+    next_modules = [*modules, PHYSICAL_PROBE_MODULE]
+    next_roots = "roots = " + json.dumps(next_modules, separators=(",", ":")) + "\n"
+    lake = files.get("lakefile.toml", "")
+    _need(lake.count(roots) == 1 and lake.count("roots = ") == 1, "exact original Lake roots required")
+    files["lakefile.toml"] = lake.replace(roots, next_roots, 1)
+    prefix = (
+        "import Lean\nimport " + namespace + "\n\n" + checker + "\n"
+        "namespace " + namespace + "\n"
+        "theorem " + alias_short + " : " + proposition + " := @_root_." + theorem + "\n"
+    )
+    axiom_line = prefix.count("\n") + 1
+    prefix += "#print axioms " + alias_short + "\nend " + namespace + "\n\n"
+    type_line = prefix.count("\n") + 1
+    probe = prefix + "run_elab CorpusPreservationElaboration.check `" + theorem + " `" + alias + "\n"
+    probe_path = PHYSICAL_PROBE_MODULE + ".lean"
+    files[probe_path] = probe
+    manifest = contracts.seal_record({
+        "schema": PHYSICAL_PROBE_SCHEMA, "profile": PHYSICAL_PROBE_PROFILE,
+        "request_sha256": expected_request_sha256, "request_context_sha256": payload["context_sha256"],
+        "claim_digest": row["claim_digest"], "obligation_digest": row["obligation_digest"],
+        "source_path": source_path, "original_theorem": theorem, "alias_theorem": alias,
+        "proposition_utf8_sha256": context["proposition_utf8_sha256"], "probe_module": PHYSICAL_PROBE_MODULE,
+        "probe_source_sha256": _sha(probe.encode("utf-8")), "checker_template_sha256": _sha(checker.encode("utf-8")),
+        "alias_axiom_report_line": axiom_line, "type_report_line": type_line,
+        "expected_modules": next_modules, "original_file_pins": pins, "toolchain": project["toolchain"],
+        "file_sha256": {path: _sha(body.encode("utf-8")) for path, body in files.items()},
+        "preparation_only": True, "authority": dict(AUTHORITY), "training_mask": 0, "evaluation_gold_mask": 0,
+        **FALSE_FLAGS,
+    })
+    preparation = ElaborationPreparation(_wire(manifest).decode("utf-8"), tuple(sorted(files.items())))
+    preparation_sha256(preparation)
+    _need(request.digest == expected_request_sha256 and _sha(Path(__file__).read_bytes()) == _SELF_PIN,
+          "planned request or elaboration owner changed during preparation")
+    return preparation
+
+
+def _physical_type_checker():
+    # The independent ABI spells the premise as an anonymous arrow. Record
+    # exact Expr equality, and let Lean decide kernel definitional equality.
+    result = LEAN_CHECKER
+    for before, after in (
+        ('  unless Expr.equal original.type alias.type do\n    throwError "corpus type mismatch: exact original and alias expressions differ"',
+         "  let exactExpr := Expr.equal original.type alias.type"),
+        ('("schema", toJson "legal-corpus-v2-native-theorem-type-check/v1")',
+         '("schema", toJson "' + PHYSICAL_TYPE_OBSERVATION_SCHEMA + '")'),
+        ('("expr_equal", toJson true)', '("expr_equal", toJson exactExpr)'),
+    ):
+        _need(result.count(before) == 1, "closed exact physical type checker derivation required")
+        result = result.replace(before, after, 1)
+    return result
