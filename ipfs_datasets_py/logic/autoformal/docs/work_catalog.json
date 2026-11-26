@@ -31381,6 +31381,141 @@
       "root": "artifact_workspace",
       "scope": "Published fictional decoder v11 saved-artifact validation with request-pinned terminal evidence.",
       "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase2_physical_v3_v4_declared_graph_eligibility_ordinary15_20261126",
+      "closed_software_facts": {
+        "Source_resource_and_parent_closed": true,
+        "V3_retained_observation_scope": "fictional-authored-observation/v1",
+        "V4_Native_authority_refused": true,
+        "actual_Native_or_Lean_execution": false,
+        "admission_mask": 0,
+        "all_prior_costs_retained": true,
+        "checked_Lean_declared_eligible": false,
+        "component": "legal-release-coordinator",
+        "current_v428_RUN_child_CLI_exact_code_witness": false,
+        "current_v428_RUN_parent_CLI_and_qualification_compiled": {
+          "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/ipfs_datasets_py/logic/autoformal/corpus_qualification.py": "e1a8540a6dd2889803138c510aa1f297316b64329e6e155eee4d90c250a12eae",
+          "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/repositories/datasets/scripts/ops/legal_ir/validate_uscode_corpus_release.py": "80357f303be5da9175867d82d2e80d7e551490a55b724e151202d6ec9fda6afa"
+        },
+        "declared_graph_eligibility_scope": "declared_evidence_only_not_admission",
+        "earlier_v428_pre_effect_bind_refusal": {
+          "bytes": 2309,
+          "path": "/tmp/Root-existing-Phase2-declared-eligibility-ordinary15-v428-u7fq_p49/pre-effect-bind-refusal-retained.json",
+          "sha256": "3656ee8dc9762d249f85ba32e196e31dc0968a9836de81e54a7f7b5b6e7b1809"
+        },
+        "evaluation_gold_mask": 0,
+        "evidence_ordinal": 537,
+        "exact_local_freeze": {
+          "bytes": 12622,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-declared-eligibility-exact3-local-freeze-v426.json",
+          "sha256": "845a6dff4f9c110f9e5c88fbf582c9ae9a2aa5c278764a900a809b1a488c57e5"
+        },
+        "exact_three_published_paths": [
+          "ipfs_datasets_py/logic/autoformal/legal_release_coordinator_v1.py",
+          "scripts/ops/legal_ir/validate_uscode_corpus_release.py",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py"
+        ],
+        "external_statutory_meaning_or_corpus_release_authority": false,
+        "fixture_only": true,
+        "frozen_and_published_D_HEAD": "7e4245f1641637fae7f514f3fbfa9728346f1ae4",
+        "full_eight_phase_goal_complete": false,
+        "gold_mask": 0,
+        "immutable_Hub_readback_verified": false,
+        "implemented_behavior": "Physical V3 and V4 replay now offer an opt-in declared eligibility view for the exact locally replayed graph. Replaying signed fictional meaning and its byte-bound source, representation, and dependencies supports the declared reviewed-graph view. The checked-Lean view remains ineligible. Upstream preservation obligations stay proof-pending, and the V3 retained authored observation supplies receipt and packet references only.",
+        "lean_compilation": "not_run",
+        "ordinary_cohorts": {
+          "added": 6,
+          "retained_V4": 9
+        },
+        "ordinary_counts": {
+          "duplicates": 0,
+          "errors": 0,
+          "failures": 0,
+          "functions": 12,
+          "passed": 15,
+          "skipped": 0,
+          "tests": 15
+        },
+        "ordinary_node_ids": [
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_complete_source_use_whole_norm_project_is_independently_replayed",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_closure_v4_actual_explicit_cli_is_source_only[False]",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_closure_v4_actual_explicit_cli_is_source_only[True]",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_closure_v4_cli_refuses_native_selection",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_current_replay_refuses_genuinely_revoked_reviewer",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_refuses_hf_graph_different_from_independently_reviewed_graph[node-companion]",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_refuses_hf_graph_different_from_independently_reviewed_graph[edge-identity]",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_refuses_hf_graph_different_from_independently_reviewed_graph[flat-edge-endpoint]",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_reviewed_hf_graph_allows_optional_legal_id",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v3_existing_release_projects_declared_graph_eligibility",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v3_retained_native_keeps_conditional_evidence_on_its_graph",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v3_eligibility_requires_current_replay_of_the_exact_graph",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_cli_projects_current_graph_eligibility_without_native_credit",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_declared_eligibility_keeps_native_refusal",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_closure_cli_refuses_declared_eligibility_on_other_profiles"
+        ],
+        "ordinary_qualification": {
+          "bytes": 20615,
+          "path": "/tmp/Root-existing-Phase2-declared-eligibility-ordinary15-v428-u7fq_p49/actual-Phase2-declared-eligibility-ordinary15-closed-small-v428.json",
+          "sha256": "92a72cacddad488c25216d2e9efee324a42b4491b74587833e7a9c389b4dc723"
+        },
+        "original_parent_custody": false,
+        "owner": "ipfs_datasets_py/logic/autoformal/legal_release_coordinator_v1.py",
+        "owning_test": "tests/unit/logic/autoformal/test_corpus_release_cli.py",
+        "prior_Guide536": {
+          "bytes": 13093,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-guide536-four-doc-three-FF-publication-small-v424.json",
+          "sha256": "c77ea9489e30352a1d4826e8ebda97e5c25be7b67ea208fbde0d582866b6fcf9"
+        },
+        "prior_private_full_fixture_limit_stop": {
+          "exit": {
+            "bytes": 4,
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/P2-physical-release-eligibility-v3-v4-cli-private-95hfukau/qualified-v4-cli/exit",
+            "sha256": "e3b9c2844b5a5c2677b3a2279db2ec8487491dd9a23d6b22fac153391b3bb63c"
+          },
+          "report": {
+            "bytes": 0,
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/P2-physical-release-eligibility-v3-v4-cli-private-95hfukau/qualified-v4-cli/actual.json",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "stderr": {
+            "bytes": 0,
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/P2-physical-release-eligibility-v3-v4-cli-private-95hfukau/qualified-v4-cli/stderr.log",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        "private_six_guarded_controls": {
+          "bytes": 18200,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/P2-physical-release-eligibility-v3-v4-cli-private-95hfukau/SEALED-existing-physical-release-eligibility-v3-v4-cli-exact3-private.json",
+          "sha256": "6844e9311cbea58c1ddb2a261d71354fbbf80a05046a1b5196f5cd7198a3d280"
+        },
+        "proof_status": "pending",
+        "public_CLI": "scripts/ops/legal_ir/validate_uscode_corpus_release.py",
+        "published_three_file_ordinary15_release": {
+          "bytes": 14985,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-declared-eligibility-exact3-ordinary15-three-FF-publication-v428.json",
+          "sha256": "c8f0d647f497e11f4eff7fa3f71bcab046b49d7682d4013f5a0579f96b4bf769"
+        },
+        "raw_JUnit": {
+          "bytes": 2789,
+          "path": "/tmp/Root-existing-Phase2-declared-eligibility-ordinary15-v428-u7fq_p49/actual-output/corpus-release-public-v3-v4-eligibility-ordinary15-run-result0-output1.bin",
+          "sha256": "d97080dc3879f0f7dc1505a9695effa54ff5cd6b33fc98f1607515b6bbac7bc8"
+        },
+        "release_mask": 0,
+        "schema": "Guide537-Phase2-physical-declared-eligibility-ordinary15-closed-engineering-evidence/v1",
+        "task": "LIR-21",
+        "task_status_changed": false,
+        "training_mask": 0
+      },
+      "evidence_ordinal": 537,
+      "id": "phase2-physical-declared-graph-eligibility-ordinary15-evidence537-20261126",
+      "observed_bytes": 8397,
+      "observed_sha256": "08b8cd48663ccd64d54514683d9f9a3b923fee3756f8e96d612d89221546c311",
+      "path": "/tmp/Phase2-guide537-reusable-private-INERT-8pqj3urd/one-guide537-Phase2-declared-eligibility-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Published opt-in local replay projection for signed fictional physical V3 and V4.",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
     }
   ]
 }
