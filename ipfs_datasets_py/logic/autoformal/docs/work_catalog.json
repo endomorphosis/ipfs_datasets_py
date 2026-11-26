@@ -34056,6 +34056,161 @@
       "root": "artifact_workspace",
       "scope": "Published retained physical type-capture reader binds closed types to the independently pinned signed fictional V4 checked release and planned theorem.",
       "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase2_retained_type_evidence_checked_release_eligibility_20261126",
+      "closed_software_facts": {
+        "actual_READ3": {
+          "bytes": 8648,
+          "path": "/tmp/Root-Phase2-type-eligibility-postfreeze-existing-READ3-v532-3xb_t7cc/actual-Phase2-type-eligibility-READ3-v532-closed.json",
+          "sha256": "9b482d32667d1624696631b7f6644e05c4649a74a327bc1aa67dcde7ca0bc0cd"
+        },
+        "actual_Source2_install": {
+          "bytes": 8786,
+          "path": "/tmp/Root-Phase2-retained-type-eligibility-existing-Source2-v531-2smk3b5w/actual-Phase2-type-eligibility-exact2-Source-closed-v531.json",
+          "sha256": "13bb0a529dd244c1d4596f2f5a754fe153a3b8d736842355aad7257e31472073"
+        },
+        "actual_ordinary_counts": {
+          "duplicates": 0,
+          "errors": 0,
+          "failures": 0,
+          "functions": 13,
+          "passed": 25,
+          "skipped": 0,
+          "tests": 25
+        },
+        "actual_retained_eligibility_handoff": {
+          "bytes": 14585,
+          "path": "/tmp/Root-P2-retained-type-eligibility-private-v01-kRBf6Uqt/candidate/actual-retained-type-eligibility-handoff.json",
+          "sha256": "cb06285f6f2edfc1d98ea912c0e38b4c7a2f17c4ba0f82d4ce6c1d2b4cdca704"
+        },
+        "all_existing_eligibility_views_preserved": true,
+        "checked_Lean_declared_eligible": false,
+        "code_publication": {
+          "bytes": 20781,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-retained-type-eligibility-exact2-ordinary25-three-FF-publication-v534.json",
+          "sha256": "57bf109793203c16125d8f6e1d947e4d5d33cae4b5e945ea80f75811a7a49cde"
+        },
+        "emitted_eligibility_record_cids": {
+          "declared_eligibility": "baguqeera5t44haqjyk2tjyzddyenfwsjasau42vcmyk7iedou53xtuyyz4ga",
+          "declared_eligibility_evidence": "baguqeerakdrx5k2p33z3dggkxigau2bplmabsuq2vn4sabsssaipvmakolia",
+          "declared_qualification": "baguqeerak4smxvwo3xhqzcjcyisa72pqoakw7emqsiu3twbq6lrqmhr2c5ba"
+        },
+        "evaluation_gold_mask": 0,
+        "evidence_ordinal": 559,
+        "fixture_only": true,
+        "fresh_compiler_Native_or_model_execution": false,
+        "independent_graph_and_unit_selection": true,
+        "local_exact_two_freeze": {
+          "bytes": 14488,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-retained-type-eligibility-exact2-local-freeze-v531.json",
+          "sha256": "fe2aa0439a65b530b8059e7bc7d5c3d304cc247643c46af949e9df789708c7ce"
+        },
+        "ordinary25": {
+          "bytes": 26785,
+          "path": "/tmp/P2-retained-type-eligibility-v533-static-handoff-9pJ0XHO5/actual-P2-retained-type-eligibility-ordinary25-closed-small-v533.json",
+          "sha256": "3b45684e938658952d9f572a12fd1a30509683fca73e4d35eef217739a78a8b7"
+        },
+        "ordinary_cohorts": {
+          "retained": 18,
+          "type_eligibility_new": 7
+        },
+        "ordinary_raw_JUnit": {
+          "bytes": 4666,
+          "path": "/tmp/P2-retained-type-eligibility-v533-static-handoff-9pJ0XHO5/actual-output/corpus-release-public-v3-v4-retained-type-eligibility-ordinary25-run-result0-output1.bin",
+          "sha256": "d3c06dd7e89e491cdd47043fc3a61232c4caf0b92d6096c7c91f368cb79e202a"
+        },
+        "original_type_provenance": {
+          "bytes": 4199,
+          "path": "/tmp/Root-P2-checked-release-native-type-provenance-private-v01-AqoZAR3C/candidate/actual-bound-closed-type-provenance.json",
+          "sha256": "6d77377f11351d90d0f82595cc21b3c8a6c335142b3148685b9d3c8f89ece087"
+        },
+        "original_v504_checked_fictional_release": {
+          "bytes": 13849,
+          "path": "/tmp/Root-Phase2-V4-checked-native-existing-R5-v504-Qe09yc6x/actual-original-R5-physical-v4-current-review-checked-native-join-v504.json",
+          "sha256": "72653ffbd1973b2a30f650f4da0856ca9897a1d2b0f1cf251f71f9425dceab18"
+        },
+        "original_v508_closed_type_capture": {
+          "bytes": 6786,
+          "path": "/tmp/Root-Phase2-V4-type-capture-current-v504-v508-PUYIfU3w/actual-physical-whole-norm-native-elaboration-v508-closed.json",
+          "sha256": "3d9e61ca177ab00a131a3b890b4f0e4d9c5814eb1b88836eb6ed75ab8a435308"
+        },
+        "owning_test": "tests/unit/logic/autoformal/test_corpus_release_cli.py",
+        "previous_v529_published_reader": {
+          "bytes": 19884,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-retained-type-checked-release-provenance-exact2-ordinary32-three-FF-publication-v529.json",
+          "sha256": "1c7fb3e4eb25c83bac3a8d4b548df434ff1659db4eeb9b7534d2b98131c35053"
+        },
+        "prior_Guide558": {
+          "bytes": 15283,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-guide558-four-doc-three-FF-publication-small-v530.json",
+          "sha256": "d9aceef01887cc2cd8eb45ee6f269555959e674ecddf30cb6867658fc216f07e"
+        },
+        "prior_actual_ordinary18": {
+          "bytes": 19447,
+          "path": "/tmp/Root-Phase2-V4-checked-native-existing-ordinary18-v503-4aplaumH/actual-Phase2-physical-v4-checked-native-ordinary18-closed-small-v503.json",
+          "sha256": "0a5a2e3abbccb16151b94f3a19173e238f69446cbd62124af4b0fabc5de8c0e5"
+        },
+        "private_authored_after": {
+          "failed": 0,
+          "passed": 8
+        },
+        "private_authored_before": {
+          "missing_API_failures": 7,
+          "passed": 1
+        },
+        "private_candidate": {
+          "bytes": 6628,
+          "path": "/tmp/Root-P2-retained-type-eligibility-private-v01-kRBf6Uqt/SEALED-P2-retained-type-eligibility-exact2.json",
+          "sha256": "59cc43807d69a64afb7ea963627f678dae26432084ec8c0e14ac18c2e1ced919"
+        },
+        "private_same8_GREEN": {
+          "bytes": 1272,
+          "path": "/tmp/Root-P2-retained-type-eligibility-private-v01-kRBf6Uqt/authored-green/result.xml",
+          "sha256": "0be9d33771fcc2d49b2af07ef2e1bf8086309f2747cdb13f10f31f4b00bc3502"
+        },
+        "private_same8_missing_API_baseline": {
+          "bytes": 16819,
+          "path": "/tmp/Root-P2-retained-type-eligibility-private-v01-kRBf6Uqt/authored-red/result.xml",
+          "sha256": "47db31e169634c18c8513436d02c64f8df8a614ee76878b7218fe653bb47844c"
+        },
+        "proof_receipt_or_legal_review_or_corpus_admission": false,
+        "proof_status": "pending",
+        "refusals": {
+          "correct_log_with_wrong_independent_pin": "exact pinned bounded physical elaboration log bytes required",
+          "other_actual_graph_selected": "retained type capture belongs to a different reviewed graph",
+          "other_capture_under_current_report": "retained receipt or packet inventory differs from the checked release",
+          "other_norm_of_same_graph_selected": "retained type capture belongs to a different reviewed unit"
+        },
+        "related_catalog_component": "legal-release-coordinator",
+        "related_tasks": [
+          "LIR-21"
+        ],
+        "release_coordinator": "ipfs_datasets_py/logic/autoformal/legal_release_coordinator_v1.py",
+        "retained_baseline": {
+          "bytes": 292,
+          "path": "/tmp/Root-P2-retained-type-eligibility-private-v01-kRBf6Uqt/baseline/stdout.json",
+          "sha256": "18f534f4e3fb728c2c01e1ae97dd48c9911bc5466cc53707a4f07fa2018c949e"
+        },
+        "retained_replay": {
+          "bytes": 2854,
+          "path": "/tmp/Root-P2-retained-type-eligibility-private-v01-kRBf6Uqt/candidate/stdout.json",
+          "sha256": "8b8fad5f3f0509aa0fab34b8d4d4c02de54bdc7ec1a0f58c936d3cb287238d8d"
+        },
+        "schema": "Guide559-Phase2-retained-type-evidence-checked-release-eligibility/v1",
+        "task": "LIR-14",
+        "task_status_changed": false,
+        "training_mask": 0
+      },
+      "evidence_ordinal": 559,
+      "id": "phase2-retained-type-evidence-checked-release-eligibility-evidence559-20261126",
+      "observed_bytes": 7236,
+      "observed_sha256": "64d6d356b44dcf88193779ea0df5b60dfe0897b3dba48aaa63d8468fbf63514b",
+      "path": "/tmp/P2-retained-type-eligibility-guide559-existing-composer-INERT-jvizq1ds/one-guide559-Phase2-retained-type-evidence-checked-release-eligibility-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Published V4 release coordinator attaches exact retained type provenance to declared eligibility with unchanged views and pending proof.",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
     }
   ]
 }
