@@ -110,8 +110,31 @@ def _readable_atom(atom: str) -> str:
     return " ".join(atom.replace("_", " ").split())
 
 
-def _join_atoms(atoms: tuple[str, ...], conjunction: str) -> str:
-    return f" {conjunction} ".join(_readable_atom(atom) for atom in atoms)
+class _UnsupportedQualifierSurface(CanonicalContractError):
+    """The frozen prose grammar cannot encode this typed clause boundary."""
+
+    def __init__(self, facet: str, delimiter: str) -> None:
+        self.facet = facet
+        self.delimiter = delimiter
+        super().__init__("canonical qualifier atom contains a structural delimiter")
+
+
+def _join_atoms(
+    atoms: tuple[str, ...], conjunction: str, *, facet: str | None = None
+) -> str:
+    surfaces = tuple(_readable_atom(atom) for atom in atoms)
+    if facet is not None:
+        delimiters = (
+            conjunction,
+            SOURCE_WITHHELD_DECOMPILER_CONFIG["condition_connector"],
+            SOURCE_WITHHELD_DECOMPILER_CONFIG["exception_connector"],
+        )
+        for surface in surfaces:
+            words = surface.casefold().split()
+            for delimiter in delimiters:
+                if delimiter in words:
+                    raise _UnsupportedQualifierSurface(facet, delimiter)
+    return f" {conjunction} ".join(surfaces)
 
 
 def _phrase_in_text(text: str, phrase: str) -> bool:
@@ -165,11 +188,11 @@ def decompile_rule(rule: CanonicalRule) -> str:
         sentence += " " + _join_atoms(temporal, "and")
     if rule.conditions:
         sentence += f" {SOURCE_WITHHELD_DECOMPILER_CONFIG['condition_connector']} " + _join_atoms(
-            rule.conditions, "and"
+            rule.conditions, "and", facet="conditions"
         )
     if rule.exceptions:
         sentence += f" {SOURCE_WITHHELD_DECOMPILER_CONFIG['exception_connector']} " + _join_atoms(
-            rule.exceptions, "or"
+            rule.exceptions, "or", facet="exceptions"
         )
     if not sentence.strip():
         raise CanonicalContractError("rule cannot produce a nonblank sentence")
@@ -182,9 +205,10 @@ def _failure(
     message: str,
     *,
     details: Mapping[str, object] | None = None,
+    status: OperationStatus = OperationStatus.FAILED,
 ) -> DecompilerResult:
     return DecompilerResult(
-        status=OperationStatus.FAILED,
+        status=status,
         request_cid=request_cid,
         error=CanonicalError(
             code=code,
@@ -322,6 +346,14 @@ class SourceWithheldCanonicalDecompiler:
 
         try:
             text = " ".join(decompile_rule(rule) for rule in request.canonical_ir.rules)
+        except _UnsupportedQualifierSurface as exc:
+            return _failure(
+                request_cid,
+                CanonicalErrorCode.UNSUPPORTED_SEMANTICS,
+                str(exc),
+                details={"facet": exc.facet, "delimiter": exc.delimiter},
+                status=OperationStatus.ABSTAINED,
+            )
         except CanonicalContractError as exc:
             return _failure(
                 request_cid,

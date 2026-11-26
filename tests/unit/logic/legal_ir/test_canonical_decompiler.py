@@ -322,3 +322,59 @@ def test_production_module_has_no_benchmark_dependency() -> None:
 
     assert "from benchmarks" not in source
     assert "import benchmarks" not in source
+
+
+@pytest.mark.parametrize(
+    ("compound_facets", "split_facets", "expected_text"),
+    (
+        pytest.param(
+            {"conditions": ("approval_and_notice",)},
+            {"conditions": ("approval", "notice")},
+            "Agency must file report if approval and notice.",
+            id="condition-conjunction",
+        ),
+        pytest.param(
+            {"exceptions": ("fire_or_flood",)},
+            {"exceptions": ("fire", "flood")},
+            "Agency must file report unless fire or flood.",
+            id="exception-disjunction",
+        ),
+        pytest.param(
+            {"conditions": ("approval_unless_fire",)},
+            {"conditions": ("approval",), "exceptions": ("fire",)},
+            "Agency must file report if approval unless fire.",
+            id="condition-exception-boundary",
+        ),
+    ),
+)
+def test_delimiter_ambiguous_atoms_abstain_and_split_clauses_render(
+    compound_facets: dict[str, tuple[str, ...]],
+    split_facets: dict[str, tuple[str, ...]],
+    expected_text: str,
+) -> None:
+    compound_rule = CanonicalRule("O", "agency", "file", "report", **compound_facets)
+    split_rule = CanonicalRule("O", "agency", "file", "report", **split_facets)
+    compound_request = _request(compound_rule)
+    split_request = _request(split_rule)
+    assert compound_rule.to_dict() != split_rule.to_dict()
+    assert compound_request.canonical_ir.ir_cid != split_request.canonical_ir.ir_cid
+
+    decompiler = SourceWithheldCanonicalDecompiler()
+    split = decompiler.decompile(split_request)
+    assert split.status is OperationStatus.SUCCESS
+    assert split.error is None
+    assert split.request_cid == split_request.request_cid
+    assert split.text == expected_text
+    assert split.text_cid == cid_for_bytes(expected_text.encode("utf-8"))
+    assert len(split.component_trace) == 1
+    assert split.component_trace[0].input_cid == split_request.canonical_ir.ir_cid
+    assert split.component_trace[0].output_cid == split.text_cid
+
+    compound = decompiler.decompile(compound_request)
+    assert compound.request_cid == compound_request.request_cid
+    assert compound.status is OperationStatus.ABSTAINED
+    assert compound.error is not None
+    assert compound.error.code is CanonicalErrorCode.UNSUPPORTED_SEMANTICS
+    assert compound.text is None
+    assert compound.text_cid is None
+    assert compound.component_trace == ()
