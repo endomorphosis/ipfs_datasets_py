@@ -33812,6 +33812,115 @@
       "root": "artifact_workspace",
       "scope": "Published proof and result receipt issuers bind result usage to the exact attempt and request logic family to the selected obligation.",
       "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase2_reviewed_source_consumer_assessment_time_20261126",
+      "closed_software_facts": {
+        "actual_READ3": {
+          "bytes": 8802,
+          "path": "/tmp/Root-Phase2-review-time-rollback-postfreeze-READ3-v522-9gb625zq/actual-Phase2-reviewed-consumer-time-READ3-v522-closed.json",
+          "sha256": "d0040961a999792b7cc5aaf0563ffcab177230949413a8dcd756f632cf4096b3"
+        },
+        "actual_Source2_install": {
+          "bytes": 9035,
+          "path": "/tmp/Root-Phase2-review-time-rollback-existing-Source2-v521-nypuR935/actual-Phase2-review-time-rollback-exact2-Source-closed-v521.json",
+          "sha256": "c2c3fca60dde1cc564d187dd73d2bdefcd5b3f0e65c60f0d396772aa752d3a73"
+        },
+        "actual_ordinary_counts": {
+          "duplicates": 0,
+          "errors": 0,
+          "failures": 0,
+          "functions": 8,
+          "passed": 15,
+          "skipped": 0,
+          "tests": 15
+        },
+        "backdating_cannot_reuse_expired_review": true,
+        "code_publication": {
+          "bytes": 19344,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-reviewed-consumer-assessment-time-exact2-ordinary15-three-FF-publication-v524.json",
+          "sha256": "95c064723f74c720b0bf6edff7b00d32135c20e2e4ceae7b3537f93f8ad95250"
+        },
+        "consumer_owner": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_consumer_binding.py",
+        "earlier_replay_rejected_before_consumer": true,
+        "evaluation_clock_authenticated": false,
+        "evaluation_gold_mask": 0,
+        "evidence_ordinal": 557,
+        "local_exact_two_freeze": {
+          "bytes": 14590,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-reviewed-consumer-time-rollback-exact2-local-freeze-v521.json",
+          "sha256": "b69faf4b4887a0b27abe8c8ab211b29cf331a97949aa7e46af5428306735532e"
+        },
+        "new_Lean_or_Native_execution": false,
+        "ordinary15": {
+          "bytes": 20254,
+          "path": "/tmp/Root-P2-reviewed-consumer-time-ordinary15-v523-retry-dumwh9js/actual-P2-reviewed-consumer-time-rollback-ordinary15-closed-small-v523.json",
+          "sha256": "baceec65364c63dfa5469b60030698c5ab09061c41be6d0702421a95fc94fad6"
+        },
+        "ordinary_cohorts": {
+          "expired_rollback_cases": 2,
+          "forward_cases": 2,
+          "retained_consumer_cases": 9,
+          "rollback_cases": 2
+        },
+        "ordinary_raw_JUnit": {
+          "bytes": 3308,
+          "path": "/tmp/Root-P2-reviewed-consumer-time-ordinary15-v523-retry-dumwh9js/actual-output/phase2-reviewed-consumer-time-rollback-ordinary15-run-result0-output1.bin",
+          "sha256": "ec13255e1ad4dffd15f2d9e26fef3afbd78d506c676958a299c1a228d87aa6dc"
+        },
+        "owning_test": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_consumer_binding.py",
+        "prior_Guide556": {
+          "bytes": 13694,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-guide556-four-doc-three-FF-publication-small-v520.json",
+          "sha256": "6e026f08d90a2a38b20244145faf5308fb9bf0fabdcbcbe2ddfee50204c4a2ff"
+        },
+        "private_authored_after": {
+          "failed": 0,
+          "passed": 15
+        },
+        "private_authored_before": {
+          "failed": 4,
+          "passed": 11
+        },
+        "private_candidate": {
+          "bytes": 7975,
+          "path": "/tmp/Root-Phase2-reviewed-consumer-time-rollback-private-v01-XWqTZLrh/SEALED-P2-reviewed-consumer-assessment-time-exact2.json",
+          "sha256": "68462fb14459a26c0047bec80ada0830893ede1d3544103299e1a5be2c95bd75"
+        },
+        "private_same15_green": {
+          "bytes": 3288,
+          "path": "/tmp/Root-Phase2-reviewed-consumer-time-rollback-private-v01-XWqTZLrh/green/result.xml",
+          "sha256": "80d46a73f8c5a9f32003f48093743870e6c215e6f1a646d89ee217acd9701b8b"
+        },
+        "private_same15_red": {
+          "bytes": 5656,
+          "path": "/tmp/Root-Phase2-reviewed-consumer-time-rollback-private-v01-XWqTZLrh/red/result.xml",
+          "sha256": "86ba1df112fb9a9a669e42909afca20acb573b9288fc8c4780b4d61510956617"
+        },
+        "proof_or_model_or_training_credit": false,
+        "registry_freshness_authenticated": false,
+        "related_catalog_component": "source-span-consumer-binding",
+        "related_tasks": [
+          "LIR-22",
+          "LIR-21"
+        ],
+        "reviewed_V2_and_V3_assessment_time_floor": true,
+        "schema": "Guide557-Phase2-reviewed-source-consumer-assessment-time/v1",
+        "signed_fictional_review_fixtures_only": true,
+        "source_review_or_corpus_admission": false,
+        "task": "LIR-06",
+        "task_status_changed": false,
+        "training_mask": 0
+      },
+      "evidence_ordinal": 557,
+      "id": "phase2-reviewed-source-consumer-assessment-time-evidence557-20261126",
+      "observed_bytes": 4385,
+      "observed_sha256": "e1dc9449c051cbd386f45bd52aa75fe043dd6576ea116b9db1a80496ae79f81e",
+      "path": "/tmp/P2-reviewed-source-consumer-guide557-existing-composer-INERT-2eur388d/one-guide557-Phase2-reviewed-source-consumer-assessment-time-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Published reviewed V2 and V3 source-span consumers reject a replay assessment earlier than the binding assessment.",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
     }
   ]
 }

@@ -4519,6 +4519,33 @@
       },
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
       "task": "LIR-14"
+    },
+    "phase2_reviewed_source_consumer_assessment_time_20261126": {
+      "code_publication": {
+        "bytes": 19344,
+        "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-reviewed-consumer-assessment-time-exact2-ordinary15-three-FF-publication-v524.json",
+        "sha256": "95c064723f74c720b0bf6edff7b00d32135c20e2e4ceae7b3537f93f8ad95250"
+      },
+      "evidence_ordinal": 557,
+      "facts": {
+        "bytes": 4385,
+        "path": "/tmp/P2-reviewed-source-consumer-guide557-existing-composer-INERT-2eur388d/one-guide557-Phase2-reviewed-source-consumer-assessment-time-scoped-facts.json",
+        "sha256": "e1dc9449c051cbd386f45bd52aa75fe043dd6576ea116b9db1a80496ae79f81e"
+      },
+      "new_legal_or_proof_or_training_admission": false,
+      "record_id": "phase2-reviewed-source-consumer-assessment-time-evidence557-20261126",
+      "related_catalog_component": "source-span-consumer-binding",
+      "related_tasks": [
+        "LIR-22",
+        "LIR-21"
+      ],
+      "software_qualification": {
+        "bytes": 20254,
+        "path": "/tmp/Root-P2-reviewed-consumer-time-ordinary15-v523-retry-dumwh9js/actual-P2-reviewed-consumer-time-rollback-ordinary15-closed-small-v523.json",
+        "sha256": "baceec65364c63dfa5469b60030698c5ab09061c41be6d0702421a95fc94fad6"
+      },
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
+      "task": "LIR-06"
     }
   },
   "programme_goal_hierarchy": {
