@@ -33587,6 +33587,119 @@
       "root": "artifact_workspace",
       "scope": "Fresh source-only closed-type capture on the exact v504 planned theorem from the signed fictional checked release.",
       "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase2_physical_reader_original_axiom_location_20261126",
+      "closed_software_facts": {
+        "actual_ordinary_counts": {
+          "duplicates": 0,
+          "errors": 0,
+          "failures": 0,
+          "functions": 3,
+          "passed": 15,
+          "skipped": 0,
+          "tests": 15
+        },
+        "actual_shifted_diagnostic": {
+          "column": 0,
+          "line": 276,
+          "source_line_kind": "following example"
+        },
+        "actual_v508_original_axiom_print": {
+          "column": 0,
+          "line": 275
+        },
+        "code_publication": {
+          "bytes": 19159,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-physical-reader-original-axiom-location-exact2-ordinary15-three-FF-publication-v514.json",
+          "sha256": "07eb1abcc7f7fab8ac5e219b2ca65fb57119485e8c0709bc4566093e0b9491be"
+        },
+        "corpus_or_statutory_admission": false,
+        "evidence_ordinal": 555,
+        "historical_v508_native": {
+          "bytes": 6786,
+          "path": "/tmp/Root-Phase2-V4-type-capture-current-v504-v508-PUYIfU3w/actual-physical-whole-norm-native-elaboration-v508-closed.json",
+          "sha256": "3d9e61ca177ab00a131a3b890b4f0e4d9c5814eb1b88836eb6ed75ab8a435308"
+        },
+        "local_exact_two_freeze": {
+          "bytes": 14666,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-physical-reader-original-axiom-location-exact2-local-freeze-v511.json",
+          "sha256": "63ebc926aeaff181bb092505c5019ffd84882fb59810b4ecf88d7d4721aef295"
+        },
+        "model_or_training_credit": false,
+        "new_Lean_or_Native_execution": false,
+        "ordinary15": {
+          "bytes": 26282,
+          "path": "/tmp/Root-Phase2-physical-original-location-existing-ordinary15-v513-snZ4a8ON/actual-Phase2-physical-type-probe-ordinary15-closed-small-v513.json",
+          "sha256": "d85b151fe9369075c67099920f8226ff37f125a990fdbe0bfef242d4f7a983b0"
+        },
+        "ordinary_cohorts": {
+          "changed_source_or_request_refusal": 3,
+          "exact_type_capture_and_refusals": 11,
+          "physical_probe_assembly": 1
+        },
+        "original_and_alias_positions_source_bound": true,
+        "owning_test": "tests/unit/logic/autoformal/test_legal_corpus_definition_use_preservation_elaboration_v2.py",
+        "prior_Guide554": {
+          "bytes": 14102,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-guide554-four-doc-three-FF-publication-small-v509.json",
+          "sha256": "ba23e0cf57ac07a9ab1720308d447cb100748641b08130e2a30bc9404b65a75b"
+        },
+        "private_authored_after": {
+          "failed": 0,
+          "passed": 11
+        },
+        "private_authored_before": {
+          "failed": 2,
+          "passed": 9
+        },
+        "private_authored_green": {
+          "bytes": 1087,
+          "path": "/tmp/Root-P2-physical-reader-original-axiom-location-private-v01-osAqcgvR/authored-green.json",
+          "sha256": "a0435d029b9f2253b95e53ce052a8b307faaa81da33e0c42eb87d53fbdef05b3"
+        },
+        "private_authored_red": {
+          "bytes": 1198,
+          "path": "/tmp/Root-P2-physical-reader-original-axiom-location-private-v01-osAqcgvR/authored-red.json",
+          "sha256": "4632194922a6d99071c53f8c865603aca8100e0998c181c61cf6aefbc87e3404"
+        },
+        "private_candidate": {
+          "bytes": 4179,
+          "path": "/tmp/Root-P2-physical-reader-original-axiom-location-private-v01-osAqcgvR/SEALED-exact2-current-original-axiom-location-private.json",
+          "sha256": "850da8c06368be89bfc815af99da9187d7174ad4531450704c6e4a77028d716f"
+        },
+        "reader": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_elaboration_native_v2.py",
+        "related_catalog_component": "definition-use-native",
+        "retained_v508_reader_green": {
+          "bytes": 4190,
+          "path": "/tmp/P2-v508-original-axiom-line-private-2l_79f4l/candidate-green-v02/actual-original-axiom-location-mismatch.json",
+          "sha256": "13d7b48ec527857ec20f551e31dfe1696934c71bfb5f562dde1ed3f673371215"
+        },
+        "retained_v508_reader_red": {
+          "bytes": 4159,
+          "path": "/tmp/P2-v508-original-axiom-line-private-2l_79f4l/actual/actual-original-axiom-location-mismatch.json",
+          "sha256": "d8fddf538a4cdf08b9a7e2820ee0703db0430c59425d74facae30f9c5f305f06"
+        },
+        "schema": "Guide555-Phase2-physical-reader-original-axiom-location/v1",
+        "separate_retained_v493_positive": {
+          "bytes": 850,
+          "path": "/tmp/Root-P2-physical-reader-original-axiom-location-private-v01-osAqcgvR/actual-v493-retained-distinct-positive.json",
+          "sha256": "ac97c3903b74c3a4a35ac3c80c3ec9cd0d0373c65a9a765de62779a9888f7e7c"
+        },
+        "task": "LIR-14",
+        "task_status_changed": false,
+        "typed_ProofReceipt_issued": false,
+        "unchanged_original_retained_logs_preserve_exact_sidecar": true
+      },
+      "evidence_ordinal": 555,
+      "id": "phase2-physical-reader-original-axiom-location-evidence555-20261126",
+      "observed_bytes": 4604,
+      "observed_sha256": "a6207e16a1b8911322a352f9158806e013ac7143a91884c3deb31c66170be27b",
+      "path": "/tmp/P2-Guide555-existing-composer-INERT-lzs4u2z6/one-guide555-Phase2-physical-reader-original-axiom-location-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Published reader and test change binding original Lean axiom diagnostics to their prepared source coordinates.",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
     }
   ]
 }

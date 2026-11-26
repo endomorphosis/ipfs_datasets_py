@@ -4472,6 +4472,29 @@
       },
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
       "task": "LIR-14"
+    },
+    "phase2_physical_reader_original_axiom_location_20261126": {
+      "code_publication": {
+        "bytes": 19159,
+        "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-physical-reader-original-axiom-location-exact2-ordinary15-three-FF-publication-v514.json",
+        "sha256": "07eb1abcc7f7fab8ac5e219b2ca65fb57119485e8c0709bc4566093e0b9491be"
+      },
+      "evidence_ordinal": 555,
+      "facts": {
+        "bytes": 4604,
+        "path": "/tmp/P2-Guide555-existing-composer-INERT-lzs4u2z6/one-guide555-Phase2-physical-reader-original-axiom-location-scoped-facts.json",
+        "sha256": "a6207e16a1b8911322a352f9158806e013ac7143a91884c3deb31c66170be27b"
+      },
+      "new_native_or_proof_or_corpus_admission_credit": false,
+      "record_id": "phase2-physical-reader-original-axiom-location-evidence555-20261126",
+      "related_catalog_component": "definition-use-native",
+      "software_qualification": {
+        "bytes": 26282,
+        "path": "/tmp/Root-Phase2-physical-original-location-existing-ordinary15-v513-snZ4a8ON/actual-Phase2-physical-type-probe-ordinary15-closed-small-v513.json",
+        "sha256": "d85b151fe9369075c67099920f8226ff37f125a990fdbe0bfef242d4f7a983b0"
+      },
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
+      "task": "LIR-14"
     }
   },
   "programme_goal_hierarchy": {
