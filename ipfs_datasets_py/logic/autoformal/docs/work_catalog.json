@@ -32449,6 +32449,114 @@
       "root": "artifact_workspace",
       "scope": "Published saved V11 evaluation measurement consistency across 50 controlled software cases.",
       "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase2_physical_v4_conditional_whole_norm_planning_ordinary5_20261126",
+      "closed_software_facts": {
+        "Generic_Lean_adapter_dispatched": false,
+        "Main_Lean_adapter_dispatched": false,
+        "Source_resource_and_parent_closed": true,
+        "actual_legal_semantic_review": false,
+        "actual_ordinary5": {
+          "bytes": 17456,
+          "path": "/tmp/Root-existing-Phase2-whole-norm-ordinary5-v476-RiuKqppY/actual-Phase2-physical-whole-norm-ordinary5-closed-small-v476.json",
+          "sha256": "212f71bdeac3abd2113892f1e605eac0e5275c4f67fc5a75b00096a3776f3254"
+        },
+        "actual_publication": {
+          "bytes": 17366,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-physical-whole-norm-plan-exact2-ordinary5-three-FF-publication-v476.json",
+          "sha256": "2279299f775e212fb7cbc54829196f92d9d2335656e00702031f26e5d05f35e7"
+        },
+        "aggregate_peak_memory_qualification": "unresolved",
+        "current_code_head": "b42e72c5ef24e5bf4c09e18c6a562ebf5d109e33",
+        "elaborated_type_verified": false,
+        "evidence_ordinal": 548,
+        "exact_Source_READ3": {
+          "bytes": 7604,
+          "path": "/tmp/Root-Phase2-physical-whole-norm-postfreeze-READ3-v475-w11oxx05/actual-Phase2-physical-whole-norm-READ3-v475-closed.json",
+          "sha256": "e35738884e39b0a45594dee72649a1f3e406c03757e0b5406791c2459d4a9c23"
+        },
+        "exact_Source_install": {
+          "bytes": 8946,
+          "path": "/tmp/Root-Phase2-physical-whole-norm-request-existing-Source2-v474-LAnda7C2/actual-Phase2-physical-whole-norm-plan-exact2-Source-closed-v474.json",
+          "sha256": "2274c212ea39ed90b965806330cc40e0aef597889b330b166bc17125a6788c5b"
+        },
+        "exact_local_freeze": {
+          "bytes": 14578,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-physical-whole-norm-plan-exact2-local-freeze-v474.json",
+          "sha256": "fbfdc5125cd76d5ef2c5ee6e82b7a924e3acfb078b24195caac92e164e63e661"
+        },
+        "exact_two_published_paths": [
+          "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_kernel_requests_v2.py",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py"
+        ],
+        "full_eight_phase_goal_complete": false,
+        "implemented_behavior": "The V4 physical release planner prepares a conditional whole-norm theorem request for the exact reviewed unit and definition. It binds the declaration and physical project to the selected source and preservation evidence. The tests accept the FOL and TDFOL fixtures and refuse a different unit, a structural-sibling theorem, and a changed project.",
+        "independent_selected_roster": {
+          "bytes": 17000,
+          "path": "/tmp/Phase2-physical-whole-norm-request-ordinary5-INERT-aegjbl2i/READY-existing-v428-physical-whole-norm-ordinary5-INERT.json",
+          "sha256": "fe580345cfa03aad59ed583075340d7b76d0a2fc804aa5545f1250f045ee56f5"
+        },
+        "model_or_training_credit": false,
+        "ordinary_counts": {
+          "duplicates": 0,
+          "errors": 0,
+          "failures": 0,
+          "functions": 2,
+          "passed": 5,
+          "skipped": 0,
+          "tests": 5
+        },
+        "ordinary_node_ids": [
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_plans_exact_conditional_whole_norm_request[deontic_fol]",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_plans_exact_conditional_whole_norm_request[tdfol]",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_whole_norm_request_refuses_unbound_selection[different-unit]",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_whole_norm_request_refuses_unbound_selection[structural-sibling]",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_whole_norm_request_refuses_unbound_selection[changed-project]"
+        ],
+        "ordinary_scope": "Conditional request planning with signed fictional source",
+        "ordinary_subcohorts": {
+          "positive_FOL_and_TDFOL": 2,
+          "refusal_controls": 3
+        },
+        "owner": "ipfs_datasets_py/logic/autoformal/legal_corpus_definition_use_preservation_kernel_requests_v2.py",
+        "owning_test": "tests/unit/logic/autoformal/test_corpus_release_cli.py",
+        "prior_Guide547": {
+          "bytes": 12669,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-guide547-four-doc-three-FF-publication-small-v472.json",
+          "sha256": "afad145d9058124d4895af41109c6a7d4ae1dbf8e8ace6b4c587345e7d90da35"
+        },
+        "private_same5_separate": {
+          "candidate_passed": 5,
+          "prior_api_missing_cases": 5,
+          "reference": {
+            "bytes": 8462,
+            "path": "/tmp/Root-P2-physical-project-request-private-v01-4b7Iliax/SEALED-existing-physical-v4-conditional-kernel-requests-exact2-private.json",
+            "sha256": "3870eff77488d609e7fb3d2e11804d2ae0cf1819f6f72f8609cc5fcc0e9564af"
+          }
+        },
+        "proof_result_or_receipt_issued": false,
+        "proved_step_count_qualification": "unresolved",
+        "raw_JUnit": {
+          "bytes": 1111,
+          "path": "/tmp/Root-existing-Phase2-whole-norm-ordinary5-v476-RiuKqppY/actual-output/corpus-release-physical-v4-whole-norm-request-ordinary5-run-result0-output1.bin",
+          "sha256": "d3b37a561a1a76153b3d1c3876ea5fdfccf1d2766683dcf281620bf3dd0fa263"
+        },
+        "related_catalog_component": "definition-use-preservation-packet",
+        "schema": "Guide548-Phase2-physical-V4-conditional-whole-norm-request-software-evidence/v1",
+        "source_review_or_corpus_admission_granted": false,
+        "task": "LIR-14",
+        "task_status_changed": false
+      },
+      "evidence_ordinal": 548,
+      "id": "phase2-physical-v4-conditional-whole-norm-planning-ordinary5-evidence548-20261126",
+      "observed_bytes": 5499,
+      "observed_sha256": "4cd2fdb4235611e334673f666fd44a23ba8ab417f85e6423e819db6373bb9d94",
+      "path": "/tmp/Phase2-physical-whole-norm-guide548-existing-composer-INERT-7lsSHqM7/one-guide548-Phase2-conditional-whole-norm-request-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Published V4 conditional whole-norm request planning across five signed-fictional software cases.",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
     }
   ]
 }

@@ -4241,6 +4241,29 @@
       },
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
       "task": "LIR-19"
+    },
+    "phase2_physical_v4_conditional_whole_norm_planning_ordinary5_20261126": {
+      "actual_proof_or_legal_semantic_review_or_training_model_credit": false,
+      "evidence_ordinal": 548,
+      "facts": {
+        "bytes": 5499,
+        "path": "/tmp/Phase2-physical-whole-norm-guide548-existing-composer-INERT-7lsSHqM7/one-guide548-Phase2-conditional-whole-norm-request-scoped-facts.json",
+        "sha256": "4cd2fdb4235611e334673f666fd44a23ba8ab417f85e6423e819db6373bb9d94"
+      },
+      "ordinary5": {
+        "functions": 2,
+        "positive_FOL_and_TDFOL": 2,
+        "refusal_controls": 3,
+        "unique_PASS": 5
+      },
+      "private_same5_separate": {
+        "candidate_passed": 5,
+        "prior_api_missing_cases": 5
+      },
+      "record_id": "phase2-physical-v4-conditional-whole-norm-planning-ordinary5-evidence548-20261126",
+      "related_catalog_component": "definition-use-preservation-packet",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
+      "task": "LIR-14"
     }
   },
   "programme_goal_hierarchy": {
