@@ -32093,6 +32093,89 @@
       "root": "artifact_workspace",
       "scope": "Current existing Lean wrapper and exact disk proof-cache checks on fictional data; local native only, separate from prior software and hosted CI.",
       "status": "CLOSED_FICTIONAL_LOCAL_NATIVE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase2_reviewed_v4_endpoint_admission_withdrawal_ordinary10_20261126",
+      "closed_software_facts": {
+        "Native_or_SQL_execution": false,
+        "actual_model_forward": false,
+        "actual_ordinary10": {
+          "bytes": 23455,
+          "path": "/tmp/Root-existing-V4-withdrawal-ordinary10-v463-v8upovgi/actual-V4-endpoint-withdrawal-ordinary10-closed-small-v463.json",
+          "sha256": "b3ae532ddf6aea72e4261cfee294f8e37361b5f558382ab1eb099bbf380b19ec"
+        },
+        "actual_publication": {
+          "bytes": 17318,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-V4-endpoint-withdrawal-exact1-ordinary10-three-FF-publication-v463.json",
+          "sha256": "225c274b62bb4724e2d93383cad3e8825ffe436243a812127f42dd711a880986"
+        },
+        "added_exact_selector": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_evaluation_artifacts.py::test_reviewed_v4_endpoint_admission_withdrawal_blocks_saved_masks_and_ranking",
+        "automatic_current_trust_discovery_qualification": false,
+        "collect_run_and_JUnit_exact_population": true,
+        "component": "reviewed-rich-retrieval-context",
+        "counts": {
+          "duplicates": 0,
+          "errors": 0,
+          "failures": 0,
+          "functions": 6,
+          "passed": 10,
+          "skipped": 0,
+          "tests": 10
+        },
+        "current_code_head": "1f5ccf48036df2991cd2544ed0fcd71bf90e5684",
+        "evidence_ordinal": 545,
+        "exact_known_fixture": {
+          "bytes": 13562,
+          "path": "/tmp/P2-V4-current-admission-withdrawal-test-only-private-EFrOMQn8/SEALED-V4-actual-endpoint-admission-withdrawal-one-test-private.json",
+          "sha256": "e3d5ecb35ff8716cb772f6e0187ad01b7992f92ddfd2b91818b9aa770f245342"
+        },
+        "executor_receives_explicit_missing_pair_admission_observation": true,
+        "existing_task_references": [
+          "LIR-03",
+          "LIR-06",
+          "LIR-20"
+        ],
+        "fictional_V3_endpoint_review_re_signed_and_independently_verified_with_key_revoked": true,
+        "objective_positive_and_permitted_negative_masks_all_zero_after_withdrawal": true,
+        "original_saved_endpoint_reports_unchanged": true,
+        "prior_ready_mask_receipt_rejected_under_withdrawn_observation": true,
+        "product_source_changed": false,
+        "ranked_retrieval_returns_zero_candidates_and_abstains_before_ranking": true,
+        "raw_JUnit": {
+          "bytes": 2331,
+          "logical_name": "junit.xml",
+          "path": "/tmp/Root-existing-V4-withdrawal-ordinary10-v463-v8upovgi/actual-output/Phase2-V4-endpoint-admission-withdrawal-ordinary10-run-result0-output1.bin",
+          "sha256": "2f6d22a410fa310f089187eaad9273ca6c5ba3a4fac0e129b265a670e8b5fd76"
+        },
+        "real_statutory_review_corpus_or_training_admission": false,
+        "related_components": [
+          "reviewed-train-relation-masks",
+          "reviewed-mixed-sort-admission-v3"
+        ],
+        "schema": "Guide545-V4-checked-endpoint-admission-withdrawal-software-evidence/v1",
+        "subcohort_counts": {
+          "explicit_endpoint_admission_withdrawal_new1": 1,
+          "v350_retained9": 9
+        },
+        "task_status_changed": false,
+        "test_only": true,
+        "test_owner": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_evaluation_artifacts.py",
+        "v350_retained9": {
+          "bytes": 7734,
+          "path": "/tmp/Root-existing-P4-shared-view-ordinary9-selected-v350-t5j307ck/actual-ordinary9-closed-small-v350.json",
+          "sha256": "1a7622afc2501950d0b34e18a47a0cb67ea22e3a7306fb7566ac9eedfcbe4e58"
+        },
+        "whole_file_or_full_goal_complete": false
+      },
+      "evidence_ordinal": 545,
+      "id": "phase2-reviewed-v4-endpoint-admission-withdrawal-ordinary10-evidence545-20261126",
+      "observed_bytes": 3290,
+      "observed_sha256": "d89b5d89481791b5445d1bbd4314bd596548c9b3279cd873f9cfe64c4822f9be",
+      "path": "/tmp/Phase2-V4-withdrawal-guide545-existing-composer-INERT-1ZrlbUKQ/one-guide545-V4-withdrawal-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Test-only V4 replay with a fictional signed endpoint admission withdrawal supplied as an explicit observation. No actual ranking or real review.",
+      "status": "CLOSED_FICTIONAL_SOFTWARE_SCOPE_ONLY"
     }
   ]
 }

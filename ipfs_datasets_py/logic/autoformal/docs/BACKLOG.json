@@ -4168,6 +4168,31 @@
       "record_id": "phase1-current-lean-wrapper-disk-cache-native459-evidence544-20261126",
       "status": "closed_fictional_local_native_evidence_only_no_task_status_change",
       "statutory_model_or_full_goal_credit": false
+    },
+    "phase2_reviewed_v4_endpoint_admission_withdrawal_ordinary10_20261126": {
+      "component": "reviewed-rich-retrieval-context",
+      "evidence_ordinal": 545,
+      "facts": {
+        "bytes": 3290,
+        "path": "/tmp/Phase2-V4-withdrawal-guide545-existing-composer-INERT-1ZrlbUKQ/one-guide545-V4-withdrawal-scoped-facts.json",
+        "sha256": "d89b5d89481791b5445d1bbd4314bd596548c9b3279cd873f9cfe64c4822f9be"
+      },
+      "ordinary_software": {
+        "errors": 0,
+        "failures": 0,
+        "new": 1,
+        "passed": 10,
+        "retained": 9,
+        "skips": 0
+      },
+      "record_id": "phase2-reviewed-v4-endpoint-admission-withdrawal-ordinary10-evidence545-20261126",
+      "status": "closed_controlled_fictional_software_evidence_only_no_task_status_change",
+      "statutory_model_or_full_goal_credit": false,
+      "task_references": [
+        "LIR-03",
+        "LIR-06",
+        "LIR-20"
+      ]
     }
   },
   "programme_goal_hierarchy": {
