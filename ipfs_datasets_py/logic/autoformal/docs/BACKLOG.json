@@ -3934,6 +3934,37 @@
       "record_id": "phase1-finite-ttl-ordinary81-phase7-private-producer74-evidence533-20261125",
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
       "training_and_gold_masks": 0
+    },
+    "phase7_published_producer_ordinary74_phase1_lir15_direct_native_closed_evidence_20261126": {
+      "all24_tasks126_components533_old_evidence_values_preserved": true,
+      "evidence_ordinal": 534,
+      "facts": {
+        "bytes": 13613,
+        "path": "/tmp/P7-P1-guide534-inert-private-v01-3LueUQsD/one-existing-guide534-Phase7-ordinary74-and-LIR15-Native-scoped-facts.json",
+        "sha256": "b1636c04c0da5bfef860dd8b8e81fbccb32ec0f9fb8703f24c9ef942053a8306"
+      },
+      "full_eight_phase_goal_complete": false,
+      "phase1_direct_managed_native": {
+        "affected_dependents_blocked": 3,
+        "cold_module_compiles": 10,
+        "credited_direct_cases": 1,
+        "deliberate_donor_compile_failures": 1,
+        "independent_outputs_reused": 6,
+        "pytest_case_credit": 0,
+        "test_only_publication": true,
+        "version_probes": 4
+      },
+      "phase7_published_ordinary": {
+        "functions": 21,
+        "producer_binding": 22,
+        "retained": 52,
+        "unique_PASS": 74
+      },
+      "prior_attempts_and_charges_retained": true,
+      "real_review_proof_promotion_and_model_pending": true,
+      "record_id": "phase7-published-producer-ordinary74-phase1-lir15-direct-native-evidence534-20261126",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
+      "training_and_gold_masks": 0
     }
   },
   "programme_goal_hierarchy": {

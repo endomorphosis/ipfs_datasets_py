@@ -30876,6 +30876,260 @@
       "root": "artifact_workspace",
       "scope": "Independent engineering evidence for published Phase1 in-memory TTL validation and private Phase7 producer binding.",
       "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase7_published_producer_ordinary74_phase1_lir15_direct_native_closed_evidence_20261126",
+      "closed_software_facts": {
+        "actual_LIR15_managed_Native_v413": {
+          "bytes": 4890,
+          "path": "/tmp/Root-P1-LIR15-existing-v355-managed-actual-v413-Ozpo4FWZ/actual-current-LIR15-installed-Lean-failed-donor-closeout-v413.json",
+          "sha256": "c78448b557ce1b533866493e07ed632f47c1b0a1da5ea222eb27bdcceff39152"
+        },
+        "actual_LIR15_test_publication_v413": {
+          "bytes": 13078,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P1-LIR15-native-test-exact1-three-FF-publication-v413.json",
+          "sha256": "06835337281ee76abf9221f7da3bb0a1a4710c6fd8646424c0cec1c9b19c9ee3"
+        },
+        "actual_LIR15_verification": {
+          "bytes": 6524,
+          "path": "/tmp/P7-P1-guide534-inert-private-v01-3LueUQsD/verified-guide534-closed-v413-LIR15-facts.json",
+          "sha256": "9775f62e59e2bc3c0a435990c979602054b11b4e0b7bbfc727d9bf4fb19f98d4"
+        },
+        "actual_Phase7_code_publication": {
+          "bytes": 12348,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P7-feedback-producer-exact2-ordinary74-three-FF-publication-v408.json",
+          "sha256": "d76d2816fba99823258674a059188daba27c9b68a0aa587010038b0da5018a01"
+        },
+        "actual_Phase7_ordinary74_qualification": {
+          "bytes": 29686,
+          "path": "/tmp/Root-existing-P7-proof-feedback-producer-ordinary74-v408-I2OIF22S/actual-P7-proof-feedback-producer-ordinary74-closed-small-v408.json",
+          "sha256": "671b96fdcaac1b7273dc37a39f417632aa638530ee821b6f8fe9542e1284791e"
+        },
+        "actual_receipt_authority_approved_review_or_trainer_handoff": false,
+        "components_preserved": 126,
+        "evaluation_gold_mask": 0,
+        "evidence_ordinal": 534,
+        "evidence_scopes_and_counts_kept_separate": true,
+        "full_eight_phase_goal_complete": false,
+        "model_executed": false,
+        "phase1_lir15_direct_installed_lean": {
+          "cold_build": {
+            "bytes": 25213,
+            "path": "/tmp/Root-P1-LIR15-existing-v355-managed-actual-v413-Ozpo4FWZ/actual-output/original-test-temp/failed-donor-cold/build-receipt.json",
+            "sha256": "d2bd98871056e707061a69a6c9930ec3c3e3674e39290832591e6c6c87d89320"
+          },
+          "cold_compile_successes": 10,
+          "compact": {
+            "bytes": 4890,
+            "path": "/tmp/Root-P1-LIR15-existing-v355-managed-actual-v413-Ozpo4FWZ/actual-current-LIR15-installed-Lean-failed-donor-closeout-v413.json",
+            "sha256": "c78448b557ce1b533866493e07ed632f47c1b0a1da5ea222eb27bdcceff39152"
+          },
+          "diagnostic_column": 7,
+          "diagnostic_line": 7,
+          "exact_closed_READ2": {
+            "bytes": 6298,
+            "path": "/tmp/Root-P1-LIR15-exact-test-and-index-READ2-v410-rg1eejVd/actual-output/actual-D27-observed-D-root-initializer-Source-READ-v01-small-closeout.json",
+            "sha256": "9cf508935872dbb4c0b493f159e660e5efa7260dcbbb7bce24f05b45ba62c221"
+          },
+          "exact_freeze": {
+            "bytes": 9672,
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P1-LIR15-native-test-exact1-local-freeze-v409.json",
+            "sha256": "8be03d6d8f429ff7580efdb8dee1fc47f86e5a192ad0cd32b997e0fbc43f27be"
+          },
+          "exact_install": {
+            "bytes": 4404,
+            "path": "/tmp/Root-P1-LIR15-failed-donor-native-test-Source1-v409-BmR1o6m1/actual-P1-LIR15-native-test-exact1-Source-closed-small-v409.json",
+            "sha256": "c05cd25c1b26b519a8aba4524137b50f0898cf0d533c3ee66a3989e008fbcdf3"
+          },
+          "exact_native_events_indexed_not_duplicated": true,
+          "expected_donor_compiler_returncode": 1,
+          "failed_build": {
+            "bytes": 24110,
+            "path": "/tmp/Root-P1-LIR15-existing-v355-managed-actual-v413-Ozpo4FWZ/actual-output/original-test-temp/failed-donor-affected/build-receipt.json",
+            "sha256": "4636d048dc6fa04b4505d2d20542df4976cc0454d514f9e9f7e94d18ed2dbbcf"
+          },
+          "failed_donor_compiler_observation": {
+            "bytes": 3620,
+            "path": "/tmp/Root-P1-LIR15-existing-v355-managed-actual-v413-Ozpo4FWZ/actual-output/original-test-temp/failed-donor-affected/module-executions.jsonl",
+            "sha256": "975415afa86a884d3b45328e90ef9518b6d0c0698a7b87dfd281a8eeec9f5c15"
+          },
+          "failed_donor_compiles": 1,
+          "fault_request": {
+            "bytes": 2400,
+            "path": "/tmp/Root-P1-LIR15-existing-v355-managed-actual-v413-Ozpo4FWZ/actual-output/original-test-temp/intentional-lean-failure-request.json",
+            "sha256": "5b64f52951d755a0a31778315f3c8cf98a336bb92940b00bd6a4d726873bf2af"
+          },
+          "faulted_input": {
+            "bytes": 1314,
+            "path": "/tmp/Root-P1-LIR15-existing-v355-managed-actual-v413-Ozpo4FWZ/actual-output/original-test-temp/intentional-lean-failure-input.lean.DATA",
+            "sha256": "dfb3e10c9e761d7e3e0e97e486c149154b17e8e1460fe6ae6e54a91baa62a177"
+          },
+          "fresh_theorems_in_failed_build": 0,
+          "frozen_candidate": "d5a31aa7583e7eea64e55529af9bbfcd9fff18f5",
+          "frozen_candidate_tree": "92bdb7f88adbac69ae7ef30e21debc79a381e0ee",
+          "full_report": {
+            "bytes": 112481,
+            "path": "/tmp/Root-P1-LIR15-existing-v355-managed-actual-v413-Ozpo4FWZ/actual-output/complete-lir15-native-failed-donor-owner-report.json",
+            "sha256": "31d90453ebc6588c761af7434fa15ee94c8443d75c56b3139ee0a7d97a92d8eb"
+          },
+          "known_explicit_bytes_read_before_output": 19419633,
+          "lean_diagnostic": "lean.unknownIdentifier",
+          "original_prepared_input": {
+            "bytes": 1268,
+            "path": "/tmp/Root-P1-LIR15-existing-v355-managed-actual-v413-Ozpo4FWZ/actual-output/original-test-temp/failed-donor-affected/project/LegalCorpusParent/Definitiond045f1d9e68690d5c47eb81581a7bedbb6df20b0f3c1ab431ad28d8f95a9542f.lean",
+            "sha256": "6b4bd6405dfadcad50ea4f64be8074364344b846c163829f14647c6d06c67cf6"
+          },
+          "physical_IO_accounting_complete": false,
+          "prior_private_verifier_literal_check_refusal": "The first read-only validation expected a diagnostic-budget phrase in saved stderr. The retained traceback names the exact MAX_DIAGNOSTIC_BYTES assertion; no output was written on that call.",
+          "prior_v411": {
+            "bytes": 92253,
+            "path": "/tmp/Root-P1-LIR15-existing-v355-managed-actual-v411-bJLSYiAv/actual-output/complete-lir15-native-failed-donor-owner-report.json",
+            "sha256": "99d368bfc9f71d6dc69609531ecc093c61435499ac1bc1f2a5ce639a19cd07f2"
+          },
+          "prior_v412_and_current_same_diagnostic_ceiling_bytes": 16777216,
+          "prior_v412_completed_command_observations_only": true,
+          "prior_v412_refusal": {
+            "bytes": 9997,
+            "path": "/tmp/Root-P1-LIR15-existing-v355-managed-actual-v413-Ozpo4FWZ/v412-retained-events-and-aggregate-publication-refusal.json",
+            "sha256": "3eb66240522aaebba27bbb2eaac4978a9994936501a7296e05d03a052b7f07bb"
+          },
+          "prior_v412_terminal_returncode": 1,
+          "pytest_case_credit": 0,
+          "qualification_scope": "One direct owning fixture/case invocation on signed fictional parent definitions. Installed Lean diagnostic from one deliberately altered compiler input, dependent artifact eviction, independent artifact reuse. Zero pytest case credits.",
+          "retained_Source_charge": {
+            "bytes": 1558,
+            "path": "/tmp/Root-P1-LIR15-existing-v355-managed-actual-v413-Ozpo4FWZ/Source-only-current-P1-LIR15-existing-v355-prepaid.json",
+            "sha256": "7dfd41f58c5d40da99a090fdb286920fd60a16a12091865f642d344cc1ebb584"
+          },
+          "reused_historical_theorem_observations": 3,
+          "selected_nodeid": "tests/unit/logic/autoformal/test_legal_corpus_incremental.py::test_parent_incremental_installed_lean_failed_donor_evicts_descendants[fol]",
+          "six_independent_modules_reused_exact_bytes": [
+            "LegalCorpusParent.Prelude",
+            "LegalCorpusParent.Definition1fc5da8db14b32a4171effad8130df2641a85d13f4b9c5eec6eff2eb82dbdde5",
+            "LegalCorpusParent.Definitiondddf15ad2ceb7ec69dccfea315bf72bed8e7793d1bbeff17280c3b81c17f8531",
+            "LegalCorpusParent.Definitione17cc7f6baa18777c65abf9cdebc902357de9b93849ebc541b4b6c088bf9490a",
+            "LegalCorpusParent.Alias92208ec46d13b3478043df56770f121b279efe2447c1affd4b550e662c75ec14",
+            "LegalCorpusParent.Joint17a2a57e56c9287cf1b86997d0a05d31d3b2025f02a1add10f630775dd69e272"
+          ],
+          "source_resource_and_parent_closed": true,
+          "statutory_admission_review_trainer_and_model_qualification": false,
+          "terminal_returncode": 0,
+          "tests_only": true,
+          "transitive_dependents_blocked": [
+            "LegalCorpusParent",
+            "LegalCorpusParent.Aliase2dd8ac62b4a89bcf5961c7c16f09c7bb9ffcb84021116464da481bfd71bb773",
+            "LegalCorpusParent.Jointa91408d8048c495006b379d0a039aac5b6ceb255c338b9b2d1f7abce2298923f"
+          ],
+          "unchanged_root_evicted": true,
+          "version_probes": 4
+        },
+        "phase7_published_ordinary74": {
+          "actual_approved_review": false,
+          "actual_trainer_handoff": false,
+          "cohorts": {
+            "producer22": 22,
+            "retained52": 52
+          },
+          "draft_ordinary_summary": "Published ordinary qualification passed 74 unique cases across 21 functions: 52 retained and 22 producer-binding cases. The cases cover controlled fictional proof-feedback builder assembly and structural target binding. Approved review, externally verified receipt authority and the actual trainer handoff remain unqualified.",
+          "exact_counts": {
+            "duplicates": 0,
+            "errors": 0,
+            "failures": 0,
+            "functions": 21,
+            "passed": 74,
+            "skipped": 0,
+            "tests": 74
+          },
+          "external_receipt_authority_verified": false,
+          "model_result": false,
+          "ordinary_scope": "Controlled fictional proof-feedback builder assembly and structural target binding. Approved review, externally verified receipt authority and actual trainer handoff remain unqualified.",
+          "private_same74_separate_reference": {
+            "bytes": 21243,
+            "path": "/tmp/Root-P7-proof-feedback-producer-binding-private-v01-9KDRHBEf/SEALED-P7-proof-feedback-producer-target-binding-exact-two-private-same74.json",
+            "sha256": "ac2b3d8808b36231d400acd2194a3853dae6b144e877ac1cd8ba18776fa1a03f"
+          },
+          "publication": {
+            "bytes": 12348,
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P7-feedback-producer-exact2-ordinary74-three-FF-publication-v408.json",
+            "sha256": "d76d2816fba99823258674a059188daba27c9b68a0aa587010038b0da5018a01"
+          },
+          "publication_and_exact_test_order_verified": true,
+          "published_repositories": {
+            "accelerate": {
+              "HEAD": "190cb69b9035ea210d9af8817fbe76caf890b48f",
+              "clean_worktree_and_index": true,
+              "origin_main": "190cb69b9035ea210d9af8817fbe76caf890b48f",
+              "tree": "a60ed4b66f2d828b6e22ace48588fb83c32fc7c6"
+            },
+            "datasets": {
+              "HEAD": "52f05cbf9b3f3c1e1a3c8a1e2119ab9ef0d0a06d",
+              "clean_worktree_and_index": true,
+              "origin_main": "52f05cbf9b3f3c1e1a3c8a1e2119ab9ef0d0a06d",
+              "tree": "a0825d224b2f48a442bb666bde5c26219bc38f0b"
+            },
+            "hallucinate": {
+              "HEAD": "e35c777379e3743f96e80cfe49e7d9cdb809c45d",
+              "clean_worktree_and_index": true,
+              "origin_main": "e35c777379e3743f96e80cfe49e7d9cdb809c45d",
+              "tree": "8f5ebf701f1f11d9dbbc39cc0396f2f122fd83cc"
+            },
+            "root": {
+              "HEAD": "92dceda7d2ad1f4bf47f5375a9942a8381e9cee6",
+              "clean_worktree_and_index": true,
+              "origin_main": "92dceda7d2ad1f4bf47f5375a9942a8381e9cee6",
+              "tree": "bc716a5316809a3593e08fcf3be25e9502c34405"
+            }
+          },
+          "qualification": {
+            "bytes": 29686,
+            "path": "/tmp/Root-existing-P7-proof-feedback-producer-ordinary74-v408-I2OIF22S/actual-P7-proof-feedback-producer-ordinary74-closed-small-v408.json",
+            "sha256": "671b96fdcaac1b7273dc37a39f417632aa638530ee821b6f8fe9542e1284791e"
+          },
+          "raw_JUnit": {
+            "bytes": 13949,
+            "path": "/tmp/Root-existing-P7-proof-feedback-producer-ordinary74-v408-I2OIF22S/actual-output/P7-proof-feedback-producer-ordinary74-run-result0-output1.bin",
+            "sha256": "267a31e35448742ba6ac7781afd406d8e71be5e0a19522717e486827bbc6645a"
+          }
+        },
+        "previous_evidence_records_preserved": 533,
+        "prior_verified_guide533_publication": {
+          "bytes": 12575,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-guide533-four-doc-three-FF-publication-small-v404.json",
+          "sha256": "87af261f6454840b39034605f417a53699db85b7938c3372e68d9d5fe90569dc"
+        },
+        "retained_v411": {
+          "SDK_returned_one_probe_result": true,
+          "Source_resource_and_parent_closed": true,
+          "controller_error": "'NativeToolLifecycleObservation' object has no attribute 'kernel_containment_attested'",
+          "managed_native_qualification": false,
+          "public_build_wrapper_executed": false,
+          "pytest_case_credit": 0,
+          "report": {
+            "bytes": 92253,
+            "path": "/tmp/Root-P1-LIR15-existing-v355-managed-actual-v411-bJLSYiAv/actual-output/complete-lir15-native-failed-donor-owner-report.json",
+            "sha256": "99d368bfc9f71d6dc69609531ecc093c61435499ac1bc1f2a5ce639a19cd07f2"
+          },
+          "retained_full_precharge": {
+            "bytes": 1289,
+            "path": "/tmp/Root-P1-LIR15-existing-v355-managed-actual-v411-bJLSYiAv/Source-only-current-P1-LIR15-existing-v355-prepaid.json",
+            "sha256": "f780280ea2e563f986559e3ca29037b90c2af25a14cdcdea0fde58975aa94681"
+          },
+          "retained_full_precharge_bytes": 134217728
+        },
+        "schema": "Guide534-closed-ordinary74-and-direct-managed-LIR15-native-evidence/v1",
+        "statutory_meaning_or_proof_promotion": false,
+        "tasks_preserved": 24,
+        "training_mask": 0
+      },
+      "evidence_ordinal": 534,
+      "id": "phase7-published-producer-ordinary74-phase1-lir15-direct-native-evidence534-20261126",
+      "observed_bytes": 13613,
+      "observed_sha256": "b1636c04c0da5bfef860dd8b8e81fbccb32ec0f9fb8703f24c9ef942053a8306",
+      "path": "/tmp/P7-P1-guide534-inert-private-v01-3LueUQsD/one-existing-guide534-Phase7-ordinary74-and-LIR15-Native-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Published Phase7 controlled proof-feedback binding and one separately managed installed-Lean Phase1 failure case.",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
     }
   ]
 }
