@@ -428,6 +428,80 @@ def assess_reviewed_norm_admission_v3(preparation, registry, policy, reviews, *,
     return _reviewed_finish(original, detached, commitment, pins, report)
 
 
+def _assess_reviewed_norm_admission_v3_with_current_trust(preparation, registry, policy, reviews, *,
+        current_trust, **kwargs):
+    """Return the V3 assessment and a separately pinned current-trust veto view."""
+    original = dict(preparation=preparation, registry=registry, policy=policy, reviews=reviews,
+                    current_trust=current_trust, kwargs=kwargs)
+    detached, commitment = norm._snapshot(original)
+    pins = _reviewed_pins()
+    auth = _auth()
+    original_registry, original_policy = detached["registry"], detached["policy"]
+    original_report = assess_reviewed_norm_admission_v3(detached["preparation"], original_registry,
+        original_policy, detached["reviews"], **detached["kwargs"])
+
+    trust = detached["current_trust"]
+    trust_fields = {"registry", "policy", "expected_registry_sha256", "expected_policy_sha256"}
+    _keys(trust, trust_fields, "current endpoint trust")
+    registry_pin, policy_pin = trust["expected_registry_sha256"], trust["expected_policy_sha256"]
+    current_registry, current_policy = trust["registry"], trust["policy"]
+    keys, revoked = auth._trust(current_registry, current_policy, registry_pin, policy_pin,
+                               action=REVIEWED_ACTION, audience=REVIEWED_AUDIENCE)
+    _need(current_registry["process_id"] == original_registry["process_id"]
+          and current_registry["mode"] == original_registry["mode"]
+          and current_policy["policy_id"] == original_policy["policy_id"],
+          "current endpoint trust process, mode or policy identity differs")
+    generations = ("generation", "revocation_generation")
+    _need(all(current_registry[k] >= original_registry[k] for k in generations)
+          and (any(current_registry[k] > original_registry[k] for k in generations)
+               or registry_pin == detached["kwargs"]["expected_registry_sha256"]),
+          "current endpoint trust registry is not a comparable generation")
+
+    evaluation_text = detached["kwargs"]["at_time_utc"]
+    evaluation = auth._time(evaluation_text)
+    reasons = set()
+    for name, value in (("registry", current_registry), ("policy", current_policy)):
+        start, end = auth._interval(value)
+        if not start <= evaluation < end:
+            reasons.add("current_trust_" + name + "_not_current")
+
+    original_keys = {key["key_id"]: key for key in original_registry["keys"]}
+    for review in detached["reviews"]:
+        key = keys.get(review["key_id"])
+        issued = auth._time(review["issued_at_utc"])
+        if (evaluation - issued).total_seconds() > current_policy["max_review_age_seconds"]:
+            reasons.add("current_trust_review_age_exceeded")
+        if key is None:
+            reasons.add("current_trust_key_missing")
+            continue
+        original_key = original_keys.get(review["key_id"])
+        if original_key is None or any(key[field] != original_key[field]
+                for field in ("principal_id", "signer_did", "public_key_hex")):
+            reasons.add("current_trust_key_identity_differs")
+        if review["role"] not in key["roles"]:
+            reasons.add("current_trust_review_role_withdrawn")
+        if review["subject"]["scope_id"] not in key["scope_ids"]:
+            reasons.add("current_trust_review_scope_withdrawn")
+        start, end = auth._interval(key)
+        if not start <= evaluation < end:
+            reasons.add("current_trust_key_not_current")
+        if key["revoked_at_utc"] is not None and auth._time(key["revoked_at_utc"]) <= evaluation:
+            reasons.add("current_trust_key_revoked")
+        principal_revocation = revoked.get(review["principal_id"])
+        if principal_revocation is not None and auth._time(principal_revocation) <= evaluation:
+            reasons.add("current_trust_principal_revoked")
+
+    report = dict(original_report)
+    report["current_trust"] = {"input_sha256": auth.digest(trust), "registry_sha256": registry_pin,
+        "policy_sha256": policy_pin, "evaluation_time_utc": evaluation_text,
+        "original_trust_assessment_sha256": report["review_authority"]["assessment_sha256"],
+        "blockers": sorted(reasons), "registry_freshness_authenticated": False}
+    if reasons:
+        report.update(semantic_use_eligible=False, permitted_uses=[], training_mask=0, evaluation_gold_mask=0,
+                      blockers=sorted(reasons.union(report["blockers"])))
+    return original_report, _reviewed_finish(original, detached, commitment, pins, report)
+
+
 def validate_reviewed_norm_admission_v3(report, *args, expected_report_sha256, **kwargs):
     """Recompute eligibility from complete original inputs, never saved flags."""
     original = dict(report=report, args=list(args), kwargs=kwargs)

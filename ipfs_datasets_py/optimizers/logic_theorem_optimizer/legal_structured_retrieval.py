@@ -606,13 +606,14 @@ def _rich_profile_identity(identity, expected_sha256):
 
 
 def _rich_current_assessment(identity, entry, inputs, admission, *, _admission_version="v2"):
+    from ...logic.formalization.autoencoder import alignment_relation_mask_handoff as handoff
+
     observations = inputs["current_endpoint_observations"][identity]
-    arguments = dict(entry["kwargs"], at_time_utc=inputs["at_time_utc"],
-        observed_artifact_sha256s=observations["observed_artifact_sha256s"],
-        observed_pins=observations["observed_pins"])
-    assess = (admission.assess_reviewed_norm_admission_v3 if _admission_version in ("v3", "v4")
-              else admission.assess_reviewed_norm_admission_v2)
-    report = assess(*entry["args"], **arguments)
+    arguments = handoff._current_endpoint_assessment_inputs(entry, observations, inputs["at_time_utc"],
+        _admission_version=_admission_version)
+    endpoint_version = "v3" if _admission_version in ("v3", "v4") else "v2"
+    _, report = handoff._assess_current_endpoint(admission, entry["args"], arguments,
+        endpoint_version=endpoint_version)
     # The canonical consumer takes the same full replay as keyword arguments.
     _require(type(entry["args"]) is list and len(entry["args"]) == 4,
              "exact original complete admission arguments required")

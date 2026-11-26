@@ -1096,3 +1096,240 @@ def test_reviewed_v4_explicit_cross_context_positive_requires_new_pair_review_no
     assert report["objective_positive_pair_count"] == sum(map(sum, case["expected_positive_mask"])) + 1
     assert admission.norm._snapshot(case["preparation_inputs"]["endpoint_admissions"])[1] == original_endpoints
     assert report["legal_applicability_verified"] is report["controlling_authority"] is False
+
+
+@pytest.mark.parametrize("scenario", ["unchanged", "revoked", "partial", "v3"])
+def test_reviewed_v4_endpoint_current_trust_preserves_signed_inputs(monkeypatch, scenario):
+    from ipfs_datasets_py.logic.autoformal import legal_graph_review as auth
+    from ipfs_datasets_py.logic.autoformal import legal_reviewed_norm_admission_v3 as admission
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_span_consumer_binding as bound
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_structured_retrieval as structured
+
+    case = fixtures.reviewed_pair_fixture_v3() if scenario == "v3" else fixtures.reviewed_pair_fixture_v4()
+    compile_masks = (subject.compile_reviewed_train_relation_masks_v3 if scenario == "v3"
+                     else subject.compile_reviewed_train_relation_masks_v4)
+    args, original = reviewed_mask_arguments_v2(case)
+    historical = original["preparation_inputs"]["endpoint_admissions"]
+    original_pin = admission.norm._snapshot(historical)[1]
+    baseline = compile_masks(*args, **original)
+    assert baseline["reviewed_objective_mask_ready"] is True
+
+    offered = deepcopy(original)
+    observations = offered["current_endpoint_observations"]
+    identities = sorted(observations)
+    target = identities[-1]
+    for identity in identities:
+        _, old_registry, old_policy, signed_reviews = historical[identity]["args"]
+        fresh_registry, fresh_policy = deepcopy(old_registry), deepcopy(old_policy)
+        evaluation = original["at_time_utc"]
+        assert all(auth._time(review["issued_at_utc"]) < auth._time(evaluation) for review in signed_reviews)
+        fresh_registry["generation"] += 1
+        fresh_registry["valid_from_utc"] = fresh_policy["valid_from_utc"] = evaluation
+        for key in fresh_registry["keys"]:
+            key["valid_from_utc"] = evaluation
+        if scenario == "revoked" and identity == target:
+            fresh_registry["revocation_generation"] += 1
+            reviewed_key = next(key for key in fresh_registry["keys"] if key["key_id"] == signed_reviews[0]["key_id"])
+            reviewed_key["revoked_at_utc"] = evaluation
+        fresh_policy["registry_sha256"] = auth.digest(fresh_registry)
+        observations[identity]["current_trust"] = {
+            "registry": fresh_registry, "policy": fresh_policy,
+            "expected_registry_sha256": auth.digest(fresh_registry),
+            "expected_policy_sha256": auth.digest(fresh_policy),
+        }
+        assert auth.digest(fresh_registry) != auth.digest(old_registry)
+
+    assert offered["preparation_inputs"]["endpoint_admissions"] == historical
+    if scenario == "partial":
+        observations[target].pop("current_trust")
+        with pytest.raises(ValueError, match="complete current trust"):
+            compile_masks(*args, **offered)
+        return
+    if scenario == "v3":
+        with pytest.raises(ValueError, match="current endpoint dependency observations"):
+            compile_masks(*args, **offered)
+        return
+
+    current = compile_masks(*args, **offered)
+    assert current["original_endpoint_snapshot_time_utc"] == baseline["original_endpoint_snapshot_time_utc"]
+    assert set(current["current_endpoint_trust_sha256s"]) == set(identities)
+    assert current["current_endpoint_assessment_sha256s"] != baseline["current_endpoint_assessment_sha256s"]
+    assert admission.norm._snapshot(historical)[1] == original_pin
+    assert current["production_contrastive_mask"] == current["training_gold_mask"] == current["evaluation_gold_mask"] == 0
+    if scenario == "unchanged":
+        assert current["reviewed_objective_mask_ready"] is True
+        assert current["objective_positive_mask"] == baseline["objective_positive_mask"]
+        assert current["objective_permitted_negative_mask"] == baseline["objective_permitted_negative_mask"]
+        report, inputs = structured._rich_current_assessment(
+            target, historical[target], offered, admission, _admission_version="v4",
+        )
+        assert admission.norm_content_adjudication_sha256(report) == (
+            current["current_endpoint_assessment_sha256s"][target]
+        )
+        assert bound._reviewed_assessment_for_version(inputs, "v3") == report
+    else:
+        with pytest.raises(ValueError, match="receipt differs from complete replay"):
+            subject.validate_reviewed_train_relation_masks_v4(
+                baseline, *args, expected_receipt_sha256=admission.norm_content_adjudication_sha256(baseline), **offered,
+            )
+        assert current["reviewed_objective_mask_ready"] is False
+        assert not any(map(any, current["objective_positive_mask"]))
+        assert not any(map(any, current["objective_permitted_negative_mask"]))
+        assert "current_trust_key_revoked" in current["current_endpoint_blockers"][target]
+        assert not any(current["current_endpoint_blockers"][identity] for identity in identities if identity != target)
+        model = object.__new__(structured.joint.ReviewedLegalJointRetriever)
+        model._checkpoint = {"schema": structured.joint.REVIEWED_V4_SCHEMA}
+
+        def forbidden(*args, **kwargs):
+            pytest.fail("freshly revoked endpoint reached ranking")
+
+        monkeypatch.setattr(structured.joint.ReviewedLegalJointRetriever, "retrieve", forbidden)
+        query = {"id": "fixture:trust-revoked-query", "source_text": "Independent fictional query."}
+        result = structured.build_reviewed_rich_context_candidates_v4(
+            model, [query], *args, retrieval_inputs=offered, example_consumer_inputs={},
+        )
+        assert result["status"] == "abstained_current_index_unavailable"
+        assert result["rows"] == [] and result["model_forward_executed"] is False
+        assert "endpoint_current_training_admission_unavailable:" + target in result["blockers"]
+
+
+def test_reviewed_v4_current_trust_key_is_not_independent_pair_process_evidence(reviewed_pair_case_v4):
+    import hashlib
+
+    from ipfs_datasets_py.logic.autoformal import legal_graph_review as auth
+    from ipfs_datasets_py.logic.autoformal import legal_reviewed_norm_admission_v3 as admission
+
+    case = reviewed_pair_clone_v2(reviewed_pair_case_v4)
+    historical = case["preparation_inputs"]["endpoint_admissions"]
+    historical_pin = admission.norm._snapshot(historical)[1]
+    evaluation = case["at_time_utc"]
+    target = sorted(historical)[-1]
+    current_trust = {}
+    for endpoint, entry in historical.items():
+        _, original_registry, original_policy, _ = entry["args"]
+        registry, policy = deepcopy(original_registry), deepcopy(original_policy)
+        registry["generation"] += 1
+        registry["valid_from_utc"] = policy["valid_from_utc"] = evaluation
+        for key in registry["keys"]:
+            key["valid_from_utc"] = evaluation
+        registry_pin = auth.digest(registry)
+        policy["registry_sha256"] = registry_pin
+        current_trust[endpoint] = {
+            "registry": registry, "policy": policy,
+            "expected_registry_sha256": registry_pin,
+            "expected_policy_sha256": auth.digest(policy),
+        }
+
+    _, original_registry, _, signed_reviews = historical[target]["args"]
+    key_id = signed_reviews[0]["key_id"]
+    registry = current_trust[target]["registry"]
+    selected_key = next(key for key in registry["keys"] if key["key_id"] == key_id)
+    original_key = next(key for key in original_registry["keys"] if key["key_id"] == key_id)
+    assert selected_key != original_key
+
+    raw = admission.norm._wire(selected_key)
+    evidence_id = "fixture:aliased-v4-current-endpoint-review-key"
+    ref = {"artifact_id": evidence_id, "sha256": hashlib.sha256(raw).hexdigest()}
+    for pair in case["preparation_inputs"]["body"]["pairs"]:
+        if pair["relation"] in ("corresponding", "equivalent", "incompatible"):
+            pair["evidence_refs"] = [deepcopy(ref)]
+    _refresh_reviewed_pair_ledger(case, "v4")
+    case["evidence"][evidence_id] = raw
+    for claim in case["reviews"]:
+        for obligation in claim["context_closure"]["obligations"]:
+            obligation["evidence_refs"] = [obligation["evidence_refs"][0], deepcopy(ref)]
+    reviewed_pair_resign_v2(case)
+    pair_review_pin = auth.digest(case["reviews"])
+
+    baseline = reviewed_mask_compile_v4(case)
+    assert baseline["reviewed_objective_mask_ready"] is True
+    assert baseline["objective_positive_pair_count"] > 0
+    assert baseline["objective_permitted_negative_pair_count"] > 0
+    for endpoint, trust in current_trust.items():
+        case["current_endpoint_observations"][endpoint]["current_trust"] = trust
+
+    report = reviewed_mask_compile_v4(case)
+    assert report["review_authority"] == baseline["review_authority"]
+    assert not any(report["current_endpoint_blockers"].values())
+    assert report["current_endpoint_trust_sha256s"] == {
+        endpoint: auth.digest(trust) for endpoint, trust in current_trust.items()
+    }
+    assert report["body_sha256"] == baseline["body_sha256"]
+    assert report["original_endpoint_snapshot_time_utc"] == baseline["original_endpoint_snapshot_time_utc"]
+    assert auth.digest(case["reviews"]) == pair_review_pin
+    assert admission.norm._snapshot(case["preparation_inputs"]["endpoint_admissions"])[1] == historical_pin
+    assert report["reviewed_pair_labels_authenticated"] is report["reviewed_objective_mask_ready"] is False
+    assert not any(map(any, report["objective_positive_mask"]))
+    assert not any(map(any, report["objective_permitted_negative_mask"]))
+    assert "every_pair_review_obligation_needs_whole_ledger_and_independent_process_evidence" in report["objective_blockers"]
+    assert "reviewed_relationship_independent_process_evidence_missing_or_changed" in report["objective_blockers"]
+
+
+def test_reviewed_v4_historical_endpoint_report_map_remains_excluded_with_current_trust(reviewed_pair_case_v4):
+    import hashlib
+
+    from ipfs_datasets_py.logic.autoformal import legal_graph_review as auth
+    from ipfs_datasets_py.logic.autoformal import legal_reviewed_norm_admission_v3 as admission
+
+    case = reviewed_pair_clone_v2(reviewed_pair_case_v4)
+    historical = case["preparation_inputs"]["endpoint_admissions"]
+    historical_pin = admission.norm._snapshot(historical)[1]
+    observations = case["current_endpoint_observations"]
+    evaluation = case["at_time_utc"]
+    historical_reports = {}
+    current_trust = {}
+    for endpoint, entry in historical.items():
+        historical_reports[endpoint] = admission.assess_reviewed_norm_admission_v3(
+            *entry["args"], **dict(entry["kwargs"], at_time_utc=evaluation, **observations[endpoint])
+        )
+        _, old_registry, old_policy, _ = entry["args"]
+        registry, policy = deepcopy(old_registry), deepcopy(old_policy)
+        registry["generation"] += 1
+        registry_pin = auth.digest(registry)
+        policy["registry_sha256"] = registry_pin
+        current_trust[endpoint] = {
+            "registry": registry, "policy": policy,
+            "expected_registry_sha256": registry_pin,
+            "expected_policy_sha256": auth.digest(policy),
+        }
+
+    raw = admission.norm._wire(historical_reports)
+    evidence_id = "fixture:aliased-v4-historical-endpoint-report-map"
+    ref = {"artifact_id": evidence_id, "sha256": hashlib.sha256(raw).hexdigest()}
+    for pair in case["preparation_inputs"]["body"]["pairs"]:
+        if pair["relation"] in ("corresponding", "equivalent", "incompatible"):
+            pair["evidence_refs"] = [deepcopy(ref)]
+    _refresh_reviewed_pair_ledger(case, "v4")
+    case["evidence"][evidence_id] = raw
+    for claim in case["reviews"]:
+        for obligation in claim["context_closure"]["obligations"]:
+            obligation["evidence_refs"] = [obligation["evidence_refs"][0], deepcopy(ref)]
+    reviewed_pair_resign_v2(case)
+    pair_review_pin = auth.digest(case["reviews"])
+
+    legacy = reviewed_mask_compile_v4(case)
+    assert legacy["current_endpoint_assessment_sha256s"] == {
+        endpoint: admission.norm_content_adjudication_sha256(report)
+        for endpoint, report in historical_reports.items()
+    }
+    assert legacy["review_authority"]["review_prerequisites_satisfied_under_selected_trust"] is True
+    for endpoint, trust in current_trust.items():
+        observations[endpoint]["current_trust"] = trust
+    current = reviewed_mask_compile_v4(case)
+    assert current["current_endpoint_assessment_sha256s"] != legacy["current_endpoint_assessment_sha256s"]
+    assert current["current_endpoint_trust_sha256s"] == {
+        endpoint: auth.digest(trust) for endpoint, trust in current_trust.items()
+    }
+    assert current["review_authority"] == legacy["review_authority"]
+    assert current["body_sha256"] == legacy["body_sha256"]
+    assert current["original_endpoint_snapshot_time_utc"] == legacy["original_endpoint_snapshot_time_utc"]
+    assert auth.digest(case["reviews"]) == pair_review_pin
+    assert admission.norm._snapshot(historical)[1] == historical_pin
+
+    for report in (legacy, current):
+        assert not any(report["current_endpoint_blockers"].values())
+        assert report["reviewed_pair_labels_authenticated"] is report["reviewed_objective_mask_ready"] is False
+        assert not any(map(any, report["objective_positive_mask"]))
+        assert not any(map(any, report["objective_permitted_negative_mask"]))
+        assert "every_pair_review_obligation_needs_whole_ledger_and_independent_process_evidence" in report["objective_blockers"]
+        assert "reviewed_relationship_independent_process_evidence_missing_or_changed" in report["objective_blockers"]

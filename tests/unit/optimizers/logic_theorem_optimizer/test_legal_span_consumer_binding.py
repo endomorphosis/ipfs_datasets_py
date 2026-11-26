@@ -1318,3 +1318,83 @@ def test_reviewed_replay_cannot_precede_the_binding_assessment(version, scenario
         with pytest.raises(owner.SourceSpanConsumerBindingError, match="review evaluation time rollback"):
             consume(binding, rows, **current, consumer=callbacks.append)
         assert callbacks == []
+
+
+def test_reviewed_v3_saved_current_trust_binding_refuses_omitted_trust():
+    from datetime import datetime, timedelta
+
+    from ipfs_datasets_py.logic.autoformal import legal_graph_review as auth
+    from ipfs_datasets_py.logic.autoformal import legal_reviewed_norm_admission_v3 as admission
+    from tests.unit.logic.formalization.autoencoder import test_alignment_relation_declarations as fixtures
+
+    # Reuse a signed V3 endpoint already carried by the fictional V4 pair fixture.
+    pair = fixtures.reviewed_pair_fixture_v4(prepare=False)["preparation_inputs"]
+    identity = "fixture:v4-admission-a"
+    endpoint = pair["endpoint_admissions"][identity]
+    reviewed = endpoint["report"]
+    assert reviewed["semantic_use_eligible"] and reviewed["fixture_only"]
+    units = {unit["unit_id"]: unit for unit in reviewed["units"]}
+    rows = []
+    for source in pair["body"]["source_endpoints"]:
+        if source["admission_id"] == identity:
+            unit = units[source["unit_id"]]
+            assert source["source_sha256"] == source_digest(unit["source_text"])
+            assert source["formal_view_sha256"] == admission.norm_content_adjudication_sha256(unit["canonical_ir"])
+            rows.append({"id": source["split_sample_id"], "unit_id": unit["unit_id"],
+                         "source_text": unit["source_text"], "canonical_ir": deepcopy(unit["canonical_ir"])})
+    assert len(rows) == 2
+    rows, sidecars = case(rows=rows)
+    split = pair["split_manifest"]
+    legacy_inputs = dict(zip(("preparation", "registry", "policy", "reviews"), endpoint["args"], strict=True),
+                         **endpoint["kwargs"])
+    legacy_pin = owner.reviewed_admission_inputs_sha256(legacy_inputs)
+    original_time = legacy_inputs["at_time_utc"]
+    later = (datetime.fromisoformat(original_time) + timedelta(seconds=1)).isoformat().replace("+00:00", "Z")
+    registry, policy = deepcopy(legacy_inputs["registry"]), deepcopy(legacy_inputs["policy"])
+    registry["generation"] += 1
+    registry["valid_from_utc"] = policy["valid_from_utc"] = original_time
+    for key in registry["keys"]:
+        key["valid_from_utc"] = original_time
+    policy["registry_sha256"] = auth.digest(registry)
+    assert policy["registry_sha256"] != legacy_inputs["expected_registry_sha256"]
+    current_trust = dict(registry=registry, policy=policy, expected_registry_sha256=auth.digest(registry),
+                         expected_policy_sha256=auth.digest(policy))
+
+    options = {key: sidecars[key] for key in
+               ("expected_rows_sha256", "exposure_records", "expected_exposure_sha256", "operation")}
+    options.update(split_manifest=split, expected_split_manifest_sha256=digest(split), allow_fictional_fixture=True)
+    prepare = owner.prepare_reviewed_source_span_consumer_binding_v3
+    validate = owner.validate_reviewed_source_span_consumer_binding_v3
+    consume = owner.consume_reviewed_source_span_binding_v3
+    legacy = prepare(rows, **options, admission_inputs=legacy_inputs, expected_admission_inputs_sha256=legacy_pin)
+    assert legacy.receipt()["status"] == "ready"
+    trusted_inputs = {**legacy_inputs, "current_trust": current_trust}
+    bound = prepare(rows, **options, admission_inputs=trusted_inputs,
+                    expected_admission_inputs_sha256=owner.reviewed_admission_inputs_sha256(trusted_inputs))
+    assert type(bound) is owner.ReviewedSourceSpanConsumerBinding
+    saved = bound.receipt()
+    assert saved["status"] == "ready" and saved["ready_row_count"] == len(rows)
+    assert saved["training_mask"] == saved["evaluation_gold_mask"] == 0
+
+    omitted = dict(split_manifest=split, exposure_records=sidecars["exposure_records"],
+                   admission_inputs={**legacy_inputs, "at_time_utc": later})
+    fresh = {**omitted, "admission_inputs": {**omitted["admission_inputs"], "current_trust": current_trust}}
+    assert validate(legacy, rows, **omitted)["status"] == "ready"
+    replay = validate(bound, rows, **fresh)
+    assert replay["status"] == "ready"
+    assert replay["admission_identity_sha256"] == saved["admission_identity_sha256"]
+    assert replay["admission_assessment_sha256"] != saved["admission_assessment_sha256"]
+
+    calls = []
+    consume(bound, rows, **fresh, consumer=calls.append)
+    assert calls == [rows]
+    calls.clear()
+    with pytest.raises(owner.SourceSpanConsumerBindingError, match="trust identity changed") as caught:
+        consume(bound, rows, **omitted, consumer=calls.append)
+    assert calls == []
+    refusal = caught.value.receipt
+    assert refusal["status"] == "blocked" and refusal["ready_row_count"] == 0
+    assert refusal["blocked_row_count"] == len(rows) and all(row["status"] == "blocked" for row in refusal["rows"])
+    assert {"reason": "reviewed_admission_identity_changed"} in refusal["blockers"]
+    assert bound.receipt() == saved
+    assert owner.reviewed_admission_inputs_sha256(legacy_inputs) == legacy_pin

@@ -313,7 +313,7 @@ def _reviewed_pins(_admission_version="v2"):
 
 
 def _reviewed_process_exclusions(prepared, original_inputs, registry, policy, reviews, current_endpoint_reports,
-        *, _admission_version="v2"):
+        *, endpoint_trust=None, endpoint_reports_before_trust=None, _admission_version="v2"):
     """Inventory bounded known custody bytes before accepting independent evidence.
 
     Hash complete ordinary JSON records and exact bytes/text, plus declared
@@ -373,11 +373,34 @@ def _reviewed_process_exclusions(prepared, original_inputs, registry, policy, re
         # endpoint admission closures above; never harvest nominated evidence
         # references merely because the pair declaration names them.
         visit(prepared["body"]["context_set"], True)
+        if endpoint_trust is not None:
+            visit(endpoint_trust, True)
+            # An augmented report has different bytes. Its original report and
+            # the complete original map still belong to the admission replay.
+            visit(endpoint_reports_before_trust, True)
     # These hashes catch aliases of the whole preparation/registry/policy or a
     # signed pair claim without excluding the nominated process-reference pins.
     for value in (prepared, registry, policy, reviews):
         visit(value, False)
     return ids, hashes
+
+
+def _current_endpoint_assessment_inputs(entry, observations, at_time_utc, *, _admission_version):
+    fields = {"observed_artifact_sha256s", "observed_pins"}
+    use_trust = _admission_version == "v4" and type(observations) is dict and "current_trust" in observations
+    if use_trust:
+        fields.add("current_trust")
+    _closed(observations, fields, "current endpoint dependency observations")
+    return dict(entry["kwargs"], at_time_utc=at_time_utc, **observations)
+
+
+def _assess_current_endpoint(admission, admission_args, arguments, *, endpoint_version):
+    if "current_trust" in arguments:
+        return admission._assess_reviewed_norm_admission_v3_with_current_trust(*admission_args, **arguments)
+    assess = (admission.assess_reviewed_norm_admission_v3 if endpoint_version == "v3"
+              else admission.assess_reviewed_norm_admission_v2)
+    report = assess(*admission_args, **arguments)
+    return report, report
 
 
 def _compile_reviewed_train_relation_masks(preparation, registry, policy, reviews, *,
@@ -446,15 +469,22 @@ def _compile_reviewed_train_relation_masks(preparation, registry, policy, review
     current_observations = copied["current_endpoint_observations"]
     _require(type(current_observations) is dict and set(current_observations) == set(original_endpoints),
              "complete explicit current observations for every original endpoint admission required")
+    endpoint_trust = None
+    if _admission_version == "v4":
+        with_trust = {identity for identity, observations in current_observations.items()
+                      if type(observations) is dict and "current_trust" in observations}
+        if with_trust:
+            _require(with_trust == set(original_endpoints), "complete current trust for every V4 endpoint required")
+            endpoint_trust = {identity: current_observations[identity]["current_trust"]
+                              for identity in original_endpoints}
     current_endpoint_digests, current_endpoint_blockers, current_endpoint_reports = {}, {}, {}
+    endpoint_reports_before_trust = {}
     for identity, entry in original_endpoints.items():
-        observations = current_observations[identity]
-        _closed(observations, {"observed_artifact_sha256s", "observed_pins"}, "current endpoint dependency observations")
-        current_inputs = dict(entry["kwargs"], at_time_utc=at_time_utc,
-            observed_artifact_sha256s=observations["observed_artifact_sha256s"], observed_pins=observations["observed_pins"])
-        assess_endpoint = (admission.assess_reviewed_norm_admission_v3 if endpoint_version == "v3"
-                           else admission.assess_reviewed_norm_admission_v2)
-        current = assess_endpoint(*entry["args"], **current_inputs)
+        current_inputs = _current_endpoint_assessment_inputs(entry, current_observations[identity],
+            at_time_utc, _admission_version=_admission_version)
+        baseline, current = _assess_current_endpoint(admission, entry["args"], current_inputs,
+            endpoint_version=endpoint_version)
+        endpoint_reports_before_trust[identity] = baseline
         current_endpoint_reports[identity] = current
         current_endpoint_digests[identity] = admission.norm_content_adjudication_sha256(current)
         current_endpoint_blockers[identity] = list(current["blockers"])
@@ -481,6 +511,7 @@ def _compile_reviewed_train_relation_masks(preparation, registry, policy, review
         blockers.append("exact_whole_pair_ledger_evidence_missing_or_changed")
     forbidden_ids, forbidden_sha = _reviewed_process_exclusions(checked, copied["preparation_inputs"],
         copied["registry"], copied["policy"], copied["reviews"], current_endpoint_reports,
+        endpoint_trust=endpoint_trust, endpoint_reports_before_trust=endpoint_reports_before_trust,
         _admission_version=_admission_version)
 
     def independent(ref):
@@ -559,6 +590,10 @@ def _compile_reviewed_train_relation_masks(preparation, registry, policy, review
         report.update(context_set=context_set, context_set_sha256=context_set_sha256,
                       endpoint_admission_version=endpoint_version,
                       legal_applicability_verified=False, controlling_authority=False)
+        if endpoint_trust is not None:
+            report["current_endpoint_trust_sha256s"] = {
+                identity: value["current_trust"]["input_sha256"]
+                for identity, value in current_endpoint_reports.items()}
     report["content_sha256"] = admission.norm_content_adjudication_sha256(report)
     _require(admission.norm._snapshot(original)[1] == commitment and admission.norm._snapshot(copied)[1] == commitment,
              "reviewed pair mask inputs changed during operation")

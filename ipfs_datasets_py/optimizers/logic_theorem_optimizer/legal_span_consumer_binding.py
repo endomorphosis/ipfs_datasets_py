@@ -425,8 +425,11 @@ def _reviewed_assessment_for_version(admission_inputs, version):
     owner = _reviewed_admission_for_version(version)
     _require(type(admission_inputs) is dict, "complete admission replay mapping required")
     try:
-        report = (owner.assess_reviewed_norm_admission_v2(**admission_inputs) if version == "v2"
-                  else owner.assess_reviewed_norm_admission_v3(**admission_inputs))
+        if version == "v3" and "current_trust" in admission_inputs:
+            _, report = owner._assess_reviewed_norm_admission_v3_with_current_trust(**admission_inputs)
+        else:
+            report = (owner.assess_reviewed_norm_admission_v2(**admission_inputs) if version == "v2"
+                      else owner.assess_reviewed_norm_admission_v3(**admission_inputs))
     except (ValueError, TypeError, KeyError, OverflowError, RecursionError) as error:
         raise SourceSpanConsumerBindingError("reviewed admission replay failed: " + str(error)) from error
     _preflight(report)
@@ -516,6 +519,8 @@ def _reviewed_stable_identity(report, admission_inputs, bound_component_identity
             "policy_sha256": admission_inputs["expected_policy_sha256"],
             "provenance_kind": report["provenance_kind"], "producer_pins": report["producer_pins"],
             "units": report["units"]}
+    if "current_trust" in admission_inputs:
+        result["current_trust_input_sha256"] = report["current_trust"]["input_sha256"]
     if bound_component_identity is not None:
         result["bound_component_identity"] = bound_component_identity
     return result
