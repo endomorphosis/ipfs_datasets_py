@@ -31762,6 +31762,84 @@
       "root": "artifact_workspace",
       "scope": "Published test-only evidence for edition-only incremental invalidation under the authored fake compiler.",
       "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase6_civil_deadline_statement_attachment_ordinary47_closed_software_evidence_20261126",
+      "closed_software_facts": {
+        "READ4": {
+          "bytes": 9016,
+          "path": "/tmp/Root-Phase6-deadline-attachment-postfreeze-READ4-v447-xQ6tc4K8/actual-output/actual-D27-observed-D-root-initializer-Source-READ-v01-small-closeout.json",
+          "sha256": "fa4cc92698114a92c37a64dca75f10dfaf2f9f28fe68b525981b6d2e92609557"
+        },
+        "Source2": {
+          "bytes": 10156,
+          "path": "/tmp/Root-Phase6-deadline-attachment-Source2-v446b-ayagpre9/actual-Phase6-deadline-attachment-exact2-Source-closed-small-v446b.json",
+          "sha256": "0355cb0c5e97a94838cdb2c1701d479d5685190293570b592dc57b5f3ebb5a8d"
+        },
+        "actual_ordinary47": {
+          "bytes": 3902,
+          "path": "/tmp/Root-Phase6-deadline-attachment-existing-ordinary47-v448-tewx8_wa/actual-Phase6-deadline-attachment-ordinary47-qualified-Source-closed-small-v448.json",
+          "sha256": "5024937b70b9f07b42c83f24b560ec63e95ca93aa09a9ea43aa336ed190e868d"
+        },
+        "actual_ordinary_report": {
+          "bytes": 1336891,
+          "path": "/tmp/Root-Phase6-deadline-attachment-existing-ordinary47-v448-tewx8_wa/actual-output/complete-frozen-local-D-phase6-civil-deadline-statement-attachment47-existing-owner-report.json",
+          "sha256": "d2c0a1862ad629fd3a6b8f61f3b2d25b0d201940338cd5188d49a047024e3da3"
+        },
+        "actual_publication": {
+          "bytes": 18785,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase6-deadline-attachment-exact2-ordinary47-three-FF-publication-v448.json",
+          "sha256": "c75af61698462e714cf8ef602b93f23a4c115e6a0155e5d42919011cb066406e"
+        },
+        "component": "legal-original-text-roundtrip",
+        "counts": {
+          "duplicates": 0,
+          "errors": 0,
+          "failures": 0,
+          "functions": 22,
+          "passed": 47,
+          "skipped": 0,
+          "tests": 47
+        },
+        "current_code_head": "2fb234a23c3b7aa548272b7351c3c26b70bd9fe1",
+        "evidence_ordinal": 541,
+        "existing_public_API": "score_relational_legal_text_roundtrip",
+        "legal_date_or_applicability_attested": false,
+        "ordered_selected_population_matches_collect_run_and_JUnit": true,
+        "prior_Guide526_migration_key": "phase6_effective_date_source_withheld_ordinary44_closed_software_evidence_20261125",
+        "raw_JUnit": {
+          "bytes": 10132,
+          "logical_name": "junit.xml",
+          "path": "/tmp/Root-Phase6-deadline-attachment-existing-ordinary47-v448-tewx8_wa/actual-output/phase6-civil-deadline-statement-attachment47-run-result0-output1.bin",
+          "sha256": "d4bd707c0b03eb06a6b34a86853332da261e501ccd784a2752c60a9701c18ce3"
+        },
+        "schema": "Guide541-civil-deadline-statement-attachment-software-evidence/v1",
+        "scope": "Controlled civil-deadline round-trip software fixtures.",
+        "scoped_behavior": {
+          "equal_due_date_on_other_statement_is_unequal": true,
+          "equal_due_date_with_different_typed_units_on_same_statement_retained": true,
+          "ordered_statement_position_and_date_are_compared": true,
+          "supplied_calendar_context_is_fixture_bound": true
+        },
+        "scorer_owner": "ipfs_datasets_py/logic/formalization/autoencoder/ir_legal_text_roundtrip.py",
+        "statutory_or_proof_admission": false,
+        "subcohort_counts": {
+          "statement_attachment_new3": 3,
+          "v335_retained44": 44
+        },
+        "task_status_changed": false,
+        "test_owner": "tests/unit/logic/formalization/autoencoder/test_ir_legal_text_roundtrip.py",
+        "training_or_model_qualification": false
+      },
+      "evidence_ordinal": 541,
+      "id": "phase6-civil-deadline-statement-attachment-ordinary47-evidence541-20261126",
+      "observed_bytes": 3326,
+      "observed_sha256": "a4a3a34286948e7c9a883e844d084b556ca9fc156b043fede9d6ca0ae25c9b75",
+      "path": "/tmp/Phase6-guide541-existing-composer-INERT-3ppTQFsS/one-guide541-Phase6-civil-deadline-statement-attachment-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Published software fixture evidence for civil-deadline statement attachment in the existing round-trip scorer.",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
     }
   ]
 }

@@ -4089,6 +4089,24 @@
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
       "statutory_model_or_proof_credit": false,
       "task": "LIR-15"
+    },
+    "phase6_civil_deadline_statement_attachment_ordinary47_closed_software_evidence_20261126": {
+      "component": "legal-original-text-roundtrip",
+      "evidence_ordinal": 541,
+      "facts": {
+        "bytes": 3326,
+        "path": "/tmp/Phase6-guide541-existing-composer-INERT-3ppTQFsS/one-guide541-Phase6-civil-deadline-statement-attachment-scoped-facts.json",
+        "sha256": "a4a3a34286948e7c9a883e844d084b556ca9fc156b043fede9d6ca0ae25c9b75"
+      },
+      "ordinary47": {
+        "functions": 22,
+        "retained": 44,
+        "statement_attachment": 3,
+        "unique_PASS": 47
+      },
+      "record_id": "phase6-civil-deadline-statement-attachment-ordinary47-evidence541-20261126",
+      "status": "closed_software_evidence_only_no_task_status_change",
+      "statutory_model_or_proof_credit": false
     }
   },
   "programme_goal_hierarchy": {
