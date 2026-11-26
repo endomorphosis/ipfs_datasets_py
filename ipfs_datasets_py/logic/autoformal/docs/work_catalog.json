@@ -35804,6 +35804,133 @@
       "root": "artifact_workspace",
       "scope": "Existing retained physical V4 checked-type reader validates review UTC and SHA-256 syntax on fictional retained-report fixtures.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase1_current_lean_native_expected_proposition_policy_20261126",
+      "closed_runtime_facts": {
+        "Source_resource_and_parent_closed": true,
+        "actual_command_counts": {
+          "all": 5,
+          "compiler": 3,
+          "version": 2
+        },
+        "actual_current_Native3": {
+          "bytes": 25969,
+          "path": "/tmp/Root-P1-Guide570-existing-Native3-expected-policy-v594-ichhgq4e/actual-current-Lean-Native3-expected-policy-cases-closed-v594.json",
+          "sha256": "e90ee8f0f69209b185a059998545c802b771ca8e728080beeeeff246895689eb"
+        },
+        "actual_native3_full_report": {
+          "bytes": 117576,
+          "path": "/tmp/Root-P1-Guide570-existing-Native3-expected-policy-v594-ichhgq4e/actual-output/complete-native3-direct-existing-owner-report.json",
+          "sha256": "e18f5a3b36b2977729f923c4fd66cc0b58a8edc8c126cec27e5dd4c0f5b58288"
+        },
+        "actual_native3_test_report": {
+          "bytes": 67157,
+          "path": "/tmp/Root-P1-Guide570-existing-Native3-expected-policy-v594-ichhgq4e/actual-output/original-test-temp/native-lean-v2-result.json",
+          "sha256": "302ce95a1d1ba9935cfd693c8c466dab84b3412326112806e6485281ec606696"
+        },
+        "cases": [
+          {
+            "accepted": true,
+            "axioms": [],
+            "case": "positive",
+            "compiler_returncode": 0,
+            "compiler_source": {
+              "bytes": 433,
+              "path": "/tmp/Root-P1-Guide570-existing-Native3-expected-policy-v594-ichhgq4e/actual-output/native-2-input-0.bin",
+              "sha256": "0060e62264fdd8342ce8ef7106c765a99ad412e12609ce6fc83813b2beed1828"
+            },
+            "expected_proposition_checked": true,
+            "generated_obligation": "_ipfs_expected_obligation_c62f1fbe78a56a3323d62324ce541edbef6034fa6f352abffc1207ab0dbdf0a8"
+          },
+          {
+            "accepted": false,
+            "axioms": null,
+            "case": "wrong_type",
+            "compiler_returncode": 1,
+            "compiler_source": {
+              "bytes": 338,
+              "path": "/tmp/Root-P1-Guide570-existing-Native3-expected-policy-v594-ichhgq4e/actual-output/native-3-input-0.bin",
+              "sha256": "e426a48bdb67f4dfdf38e983e98f7e1f2ad51fb86e8daaa7161adeefe4214cab"
+            },
+            "expected_proposition_checked": false,
+            "generated_obligation": "_ipfs_expected_obligation_50141f561ca7d948ab22f84d6b11a1362efd1322d8d759163ce0bb213fc691bd"
+          },
+          {
+            "accepted": false,
+            "axioms": [
+              "propext",
+              "Classical.choice",
+              "Quot.sound"
+            ],
+            "case": "unapproved_dependency",
+            "compiler_returncode": 0,
+            "compiler_source": {
+              "bytes": 402,
+              "path": "/tmp/Root-P1-Guide570-existing-Native3-expected-policy-v594-ichhgq4e/actual-output/native-4-input-0.bin",
+              "sha256": "e219338b24ca8e001409d87f5874802fd2778e2f615236f123aa488999701ac5"
+            },
+            "expected_proposition_checked": false,
+            "generated_obligation": "_ipfs_expected_obligation_2dac548009030208a20956fb4fae44fe2ac8eb085b3656b2d3deb2f25dc92d0f"
+          }
+        ],
+        "code_change_or_publication_for_this_observation": false,
+        "current_Lean_owner_sha256": "c1050ad1ec067fc7f7c8fea08793e872511fe58029e9b1aa89ec90d2cb288313",
+        "current_owning_test_sha256": "99e00363bbd1ea23d450af0912374fdbf4d30ab3b1802371fb8d237dccbf7da5",
+        "current_protocol_owner_sha256": "e2dd1dc93d1efa15c7c4088145d32c52636c72e9230b16ade77ca6c6a0c2c336",
+        "evidence_ordinal": 571,
+        "exact_current_Guide570_index_READ1": {
+          "bytes": 4541,
+          "path": "/tmp/Root-P1-Guide570-existing-Native3-expected-policy-v594-ichhgq4e/actual-Guide570-index-READ1-closed.json",
+          "sha256": "11a791e23122a738bc753c16b2264632c7821091a4a4587c789dfa4e6680fbb6"
+        },
+        "fixture_only": true,
+        "full_Native3_Source_only_precharge": {
+          "bytes": 1423,
+          "path": "/tmp/Root-P1-Guide570-existing-Native3-expected-policy-v594-ichhgq4e/Source-only-current-Native3-full-retained-cap.json",
+          "sha256": "af9ebf4238a00b943b838b225d277419fe134a1bde78a3f25147ca852de6d593"
+        },
+        "historical_v39_Native3_observation": {
+          "bytes": 2874,
+          "path": "/tmp/Root-current-Native3-5commands-3cases-authenticated-PASS-v39.json",
+          "sha256": "0955d8bd4fc9ce8a6eb9c84cd0d12b5f4d61f496c9a8d9d3b4061119b6dbf664"
+        },
+        "hosted_CI_or_Phase1_or_statutory_or_corpus_admission_or_model_quality": false,
+        "installed_Lean": "Lean (version 4.34.1, aarch64-unknown-linux-gnu, commit 5045d0056413266e57c625dcd7c365b10e377c52, Release)",
+        "native_owner": "ipfs_datasets_py/logic/backends/kernel/lean.py",
+        "ordinary_pytest_count": 0,
+        "owning_test": "tests/integration/logic/backends/test_kernel_backends.py",
+        "physical_IO_accounting_complete": false,
+        "prior_v567_positive_cache_observation": {
+          "bytes": 7865,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P1-current-exact-Lean-wrapper-and-cache-native-qualification-closed-v567.json",
+          "sha256": "bc870726ddc789d736465e88d68f2fb4f4188739aee7efd2e95b5550727e5555"
+        },
+        "prior_verified_guide570_publication": {
+          "bytes": 15127,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-guide570-four-doc-three-FF-publication-small-v592.json",
+          "sha256": "ca01b3b4bb3e551e03c89e5421e7d30057c3f6cf3da951b7f20008d4f4acf148"
+        },
+        "proof_protocol_owner": "ipfs_datasets_py/logic/ir_core/protocols.py",
+        "quoted_screen_or_namespaced_decoy_or_cache_requalification": false,
+        "related_catalog_component": "kernel-proof-evidence-integrity",
+        "related_tasks": [
+          "LIR-21"
+        ],
+        "schema": "Guide571-current-Native3-proof-policy-evidence/v1",
+        "selected_test_function": "test_lean_native_v2_expected_type_and_dependency_policy",
+        "task": "LIR-14",
+        "task_status_changed": false
+      },
+      "evidence_ordinal": 571,
+      "id": "phase1-current-lean-native-expected-proposition-policy-evidence571-20261126",
+      "observed_bytes": 5599,
+      "observed_sha256": "c5e2fa20f20a9f2b5e7fb69be2b1156220762a7a6f38d0ed521fef7c5e1dcb1a",
+      "path": "/tmp/P1-Native3-guide571-existing-composer-INERT-cjie_mqz/one-guide571-current-Native3-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Current installed Lean expected-proposition acceptance, wrong-type compiler rejection and axiom-policy refusal.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }

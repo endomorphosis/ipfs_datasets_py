@@ -4890,6 +4890,37 @@
       ],
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
       "task": "LIR-14"
+    },
+    "phase1_current_lean_native_expected_proposition_policy_20261126": {
+      "actual_current_Native3": {
+        "bytes": 25969,
+        "path": "/tmp/Root-P1-Guide570-existing-Native3-expected-policy-v594-ichhgq4e/actual-current-Lean-Native3-expected-policy-cases-closed-v594.json",
+        "sha256": "e90ee8f0f69209b185a059998545c802b771ca8e728080beeeeff246895689eb"
+      },
+      "evidence_ordinal": 571,
+      "facts": {
+        "bytes": 5599,
+        "path": "/tmp/P1-Native3-guide571-existing-composer-INERT-cjie_mqz/one-guide571-current-Native3-scoped-facts.json",
+        "sha256": "c5e2fa20f20a9f2b5e7fb69be2b1156220762a7a6f38d0ed521fef7c5e1dcb1a"
+      },
+      "historical_v39_Native3_observation": {
+        "bytes": 2874,
+        "path": "/tmp/Root-current-Native3-5commands-3cases-authenticated-PASS-v39.json",
+        "sha256": "0955d8bd4fc9ce8a6eb9c84cd0d12b5f4d61f496c9a8d9d3b4061119b6dbf664"
+      },
+      "new_corpus_or_model_qualification": false,
+      "prior_v567_positive_cache_observation": {
+        "bytes": 7865,
+        "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-P1-current-exact-Lean-wrapper-and-cache-native-qualification-closed-v567.json",
+        "sha256": "bc870726ddc789d736465e88d68f2fb4f4188739aee7efd2e95b5550727e5555"
+      },
+      "record_id": "phase1-current-lean-native-expected-proposition-policy-evidence571-20261126",
+      "related_catalog_component": "kernel-proof-evidence-integrity",
+      "related_tasks": [
+        "LIR-21"
+      ],
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
+      "task": "LIR-14"
     }
   },
   "programme_goal_hierarchy": {
