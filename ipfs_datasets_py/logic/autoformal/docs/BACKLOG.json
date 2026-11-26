@@ -4407,6 +4407,35 @@
       "record_id": "phase2-physical-v4-current-review-ordinary11-evidence552-20261126",
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
       "task": "LIR-21"
+    },
+    "phase2_physical_v4_same_live_checked_native_ordinary18_20261126": {
+      "actual_direct_R5": {
+        "compiled_modules": 10,
+        "conditional_build_obligations": 30,
+        "reference": {
+          "bytes": 13849,
+          "path": "/tmp/Root-Phase2-V4-checked-native-existing-R5-v504-Qe09yc6x/actual-original-R5-physical-v4-current-review-checked-native-join-v504.json",
+          "sha256": "72653ffbd1973b2a30f650f4da0856ca9897a1d2b0f1cf251f71f9425dceab18"
+        },
+        "selected_conditional_theorem_observation": 1
+      },
+      "component": "legal-release-coordinator",
+      "evidence_ordinal": 553,
+      "facts": {
+        "bytes": 14359,
+        "path": "/tmp/Phase2-V4-checked-native-guide553-existing-composer-INERT-RyW7lTy1/reconciled/one-guide553-Phase2-physical-V4-same-live-checked-native-scoped-facts.json",
+        "sha256": "4fe2e6eda5b9f7217c31ee19a4620831d035dace4a5b5aa5728410ac809bebfc"
+      },
+      "ordinary18": {
+        "functions": 11,
+        "new_checked_native_preflight": 7,
+        "retained_v499": 11,
+        "unique_PASS": 18
+      },
+      "record_id": "phase2-physical-v4-same-live-checked-native-ordinary18-evidence553-20261126",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
+      "task": "LIR-21",
+      "whole_graph_proof_or_legal_or_corpus_admission_credit": false
     }
   },
   "programme_goal_hierarchy": {

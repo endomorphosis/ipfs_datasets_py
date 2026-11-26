@@ -33186,6 +33186,238 @@
       "root": "artifact_workspace",
       "scope": "Opt-in physical V4 recheck of independently supplied current review observations on signed fictional inputs.",
       "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase2_physical_v4_same_live_checked_native_ordinary18_20261126",
+      "closed_software_facts": {
+        "actual_R5_Raw_summary": {
+          "bytes": 346975,
+          "logical_name": "summary.json",
+          "origin": "actual ToolRunResult.output_files bytes; not to_dict decoded text",
+          "path": "/tmp/Root-Phase2-V4-checked-native-existing-R5-v504-Qe09yc6x/actual-output/run.output.2.bin",
+          "sha256": "9ccb1c9e9141525f0b2ae30c2e406f664fe1febdd83335576e2961ff592084ab"
+        },
+        "actual_direct_R5_same_live_checked_native_observation": {
+          "bytes": 13849,
+          "path": "/tmp/Root-Phase2-V4-checked-native-existing-R5-v504-Qe09yc6x/actual-original-R5-physical-v4-current-review-checked-native-join-v504.json",
+          "sha256": "72653ffbd1973b2a30f650f4da0856ca9897a1d2b0f1cf251f71f9425dceab18"
+        },
+        "actual_logical_output_accounting": {
+          "canonical_live_result_bytes": 237643,
+          "full_elaborated_type_payload_available": false,
+          "profile": "physical-whole-project-output/v1",
+          "requested_limit_bytes": 8388608,
+          "retained_packet_bytes": 5364170,
+          "retained_packet_member_count": 93,
+          "total_bytes": 5601813,
+          "within_requested_limit": true
+        },
+        "actual_ordinary18": {
+          "bytes": 19447,
+          "path": "/tmp/Root-Phase2-V4-checked-native-existing-ordinary18-v503-4aplaumH/actual-Phase2-physical-v4-checked-native-ordinary18-closed-small-v503.json",
+          "sha256": "0a5a2e3abbccb16151b94f3a19173e238f69446cbd62124af4b0fabc5de8c0e5"
+        },
+        "actual_publication": {
+          "bytes": 35871,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-physical-v4-checked-native-exact3-ordinary18-and-original-R5-three-FF-publication-v505.json",
+          "sha256": "7ea158e83a9a6f3a9e79f50ed042ff8055cb1223c40e30508c4a52a9411d431f"
+        },
+        "build_conditional_obligations": 30,
+        "built_modules": 10,
+        "checked_lean_declared_eligible": false,
+        "checked_native_observation": {
+          "admission_sha256": "8cbd2feda37e93e91dc59ce6612c3b0dbb5f7208b8eecea12b0005ef60bdc81c",
+          "axiom_dependencies": [],
+          "checked_under_explicit_hypotheses": true,
+          "cid_scope": "payload_without_record_cid/v1",
+          "claim_digest": "9061f922d77534314d7b72ee1a9cff63fd0c893d305cc09d16885c8b27216856",
+          "current_review_observation_cid": "baguqeera3q2s3yurpatlpszdebabqyxr34jql66ek2rorwprdpzb6ml6xoqq",
+          "declaration": "LegalReviewedDefinitionRealization.Instancef5afa3098c0f9a769c99c9c185073b0469de1fbd79dffc6dc541a8ce0ba039d4.unit_1_whole_norm_definition_expansion",
+          "graph_sha256": "c80f55b2f975dacbd0286fa01d1d69f0b58c1fd343b7273fc5c71322fd4f5d9d",
+          "live_result_cid": "baguqeera3mlvyukf4byjcmrvyzmdq4fozyu4amq577yhhr6bagvl3h5rl2aq",
+          "native_execution_authenticated": true,
+          "obligation_digest": "304178b133597a74db6f2edbe2ae08f16d43191893fe0a29c3a0535e6760401e",
+          "physical_request_sha256": "abff511379fd0b4d2c819ac036689ee3aefd100f5cbc5d7a743adf7e957d49a9",
+          "planned_request_sha256": "18f7e9d0a96893e2c711bfa6b32cd743e0d7de02c74d0f253085379dc3ab68b0",
+          "premise_remains_quantified": true,
+          "preservation_sha256": "34c283a07156bceefc8df6ea7494f736abf9e819213d7b3da656046b888a1349",
+          "proof_receipt_issued": false,
+          "proposition_utf8_sha256": "68868775b7b644c1b433dcb4bada01f1386c7a537c60c3d935b67d3252b4ed39",
+          "qualified_request_execution": false,
+          "realization_sha256": "1c4f78f090ba01ea78c43de1000276cb1a2e4cd79976e263f6a2a39c7e0012c5",
+          "record_cid": "baguqeerayxj2dhqemrcugxlxnsek3rlwjir67eygwwdk7vlm5ivtjgxwwifa",
+          "retained_packet_sha256": "1be6270ff6f19416325076797e3250aa82003483ef30348c00011702b4d7c269",
+          "retained_receipt_sha256": "0107dd7f6927d9bd39b82c30b8c0a85c9c3785491332c62754da9e0035a74ae1",
+          "schema": "legal-corpus-physical-v4-checked-native-observation/v1",
+          "source_definition": {
+            "complete_ir_sha256": "f7a6f740e9d2900045cda9bffd288a4b697fd8a45d1b4bac99c3d963f97c2e0b",
+            "interpretation_record_cid": "baguqeeraqdytml2mgaw27zdu4bzuuzlcdiz2dknno6fduc3kf3u5pahg2wcq",
+            "scope_record_cid": "baguqeeratn2oiskk4rz377q4jful7k3kye6ntlub5zw7ygmu43fdvrgau4oq",
+            "source_occurrence_cid": "baguqeeraqz65mtsfpgxn4lk4iiwt7x6gxfarzognlek5vdsoav45qexlkhuq",
+            "source_use_binding_sha256": "9f410b2ec5cacf02aede2cfad24bf0e439e643b3853cf5781552e90950238d45",
+            "source_version_cid": "baguqeera3jcsbwxjpevob5yzz6mhlf6rpfkaot6wk4oxfvbbsdkjoeboa5aq",
+            "unit_id": "fixture:physical-crosswalk/unit-1"
+          },
+          "unit": {
+            "complete_ir_sha256": "f169afdd1b747db78bbacae39d7f8811e8c5964db3eead6a242517cf96674e87",
+            "interpretation_record_cid": "baguqeeraqdytml2mgaw27zdu4bzuuzlcdiz2dknno6fduc3kf3u5pahg2wcq",
+            "relational_request_sha256": "eb855e1fd9492f53e8e2628b622244648dc1f943a2bb3a7b1e12e86843ba67db",
+            "scope_record_cid": "baguqeeratn2oiskk4rz377q4jful7k3kye6ntlub5zw7ygmu43fdvrgau4oq",
+            "source_occurrence_cid": "baguqeera6qcaooej742c3grqrf6ahfzmtzrjv5ncz7s5jaaqfqujnsjninrq",
+            "source_use_binding_sha256": "70fc4ec46ab0e69821bc0799ab4048a90cfc6f2cdba961ce0226c6f3c3eb8a63",
+            "source_version_cid": "baguqeeranrbookqtp4rpsgdydepykv75n4audquypwk3wtwi6rssp4esr3gq",
+            "unit_id": "fixture:physical-crosswalk/unit-2"
+          }
+        },
+        "component": "legal-release-coordinator",
+        "current_code_head": "e8db47d651fa77687358d754d1f0d04aae4a2c9f",
+        "current_review_observation": {
+          "admission_sha256": "8cbd2feda37e93e91dc59ce6612c3b0dbb5f7208b8eecea12b0005ef60bdc81c",
+          "at_time_utc": "2026-10-15T12:03:01Z",
+          "caller_observation_sha256": "6b5b515e473413d1ea86568ac41f43938804a292d3ff1ba9766e9b283c41ea11",
+          "cid_scope": "payload_without_record_cid/v1",
+          "current_assessment_sha256": "7a498889adcbd769785dfce5918440cacc30cb252a65f31c3bef9c17d0c6c2a0",
+          "dependency_invalidation_sha256": "4cb1bb5d43b6c28acfd0132743d985f6a52a9bf9130b5550df63ec31ad7abbf9",
+          "evaluation_clock_authenticated": false,
+          "graph_sha256": "c80f55b2f975dacbd0286fa01d1d69f0b58c1fd343b7273fc5c71322fd4f5d9d",
+          "policy_sha256": "5dcad4b886ff9fc3b445e82abb86efd9b33ede91a742859b1e5759e34f28c096",
+          "record_cid": "baguqeera3q2s3yurpatlpszdebabqyxr34jql66ek2rorwprdpzb6ml6xoqq",
+          "registry_freshness_authenticated": false,
+          "registry_sha256": "45eea051b7b4b520c89071bbb3554312a3715214dccc25ba36463ea80e493989",
+          "request_sha256": "abff511379fd0b4d2c819ac036689ee3aefd100f5cbc5d7a743adf7e957d49a9",
+          "reviews_sha256": "f75b6bab72b1b09055613d155491b7f832485a9cd5a7f3f84454b774e18daf1a",
+          "schema": "legal-corpus-physical-v4-current-review-observation/v1"
+        },
+        "evaluation_gold_mask": 0,
+        "evidence_ordinal": 553,
+        "exact_Source_READ4": {
+          "bytes": 9155,
+          "path": "/tmp/Root-Phase2-V4-checked-native-postfreeze-READ4-v502-82MWKe4g/actual-Phase2-physical-v4-checked-native-READ4-v502-closed.json",
+          "sha256": "fc5e070a878e3d682e3d5a5d76342ef7aaa422513f107f062d8b1dfe705b058c"
+        },
+        "exact_Source_install": {
+          "bytes": 11474,
+          "path": "/tmp/Root-Phase2-V4-checked-native-existing-Source3-v501-uiO9HpBU/actual-Phase2-physical-v4-checked-native-exact3-Source-closed-v501.json",
+          "sha256": "2f7110af1ac275a9c47897da6e360d76ea0139d7ae51602afcee9e9984f7cef9"
+        },
+        "exact_aggregate_peak_memory_bytes": null,
+        "exact_local_freeze": {
+          "bytes": 15361,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-physical-v4-checked-native-exact3-local-freeze-v501.json",
+          "sha256": "f6ed5c65b6c5f5be10ddd07d603ea3aacd9fb66c040e5af65da98dc043b8eaa0"
+        },
+        "exact_native_owning_test": "tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py",
+        "exact_selected_joined_conditional_theorems": 1,
+        "exact_three_published_paths": [
+          "ipfs_datasets_py/logic/autoformal/legal_release_coordinator_v1.py",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py",
+          "tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py"
+        ],
+        "execution_bounds_certified": false,
+        "extra_compiler_commands_for_join": 0,
+        "full_eight_phase_goal_complete": false,
+        "implemented_behavior": "The opt-in physical V4 release path binds independently selected current review to one checked theorem from the exact planned whole-norm request, realization, and retained Native packet.",
+        "legal_or_corpus_or_release_authority": false,
+        "measured_step_count": null,
+        "model_or_training_credit": false,
+        "ordinary_Source_resource_and_parent_closed": true,
+        "ordinary_counts": {
+          "duplicates": 0,
+          "errors": 0,
+          "failures": 0,
+          "functions": 11,
+          "passed": 18,
+          "skipped": 0,
+          "tests": 18
+        },
+        "ordinary_node_ids": [
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_current_replay_refuses_genuinely_revoked_reviewer",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v3_existing_release_projects_declared_graph_eligibility",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_cli_projects_current_graph_eligibility_without_native_credit",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_declared_eligibility_keeps_native_refusal",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_projects_independently_observed_current_review",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_refuses_stale_wire_against_independent_current_review[revoked-registry]",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_refuses_stale_wire_against_independent_current_review[changed-policy]",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_refuses_stale_wire_against_independent_current_review[expiry]",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_refuses_stale_wire_against_independent_current_review[dependency]",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_refuses_stale_wire_against_independent_current_review[rollback]",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_current_review_selection_preserves_legacy_default",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_checked_native_requires_independent_current_review_first",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_checked_native_requires_closed_selection_before_plan[missing-field]",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_checked_native_requires_closed_selection_before_plan[unexpected-field]",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_checked_native_fences_plan_and_handle_before_wire[missing-plan]",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_checked_native_fences_plan_and_handle_before_wire[serialized-plan]",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_checked_native_fences_plan_and_handle_before_wire[wrong-plan-digest]",
+          "tests/unit/logic/autoformal/test_corpus_release_cli.py::test_physical_v4_checked_native_refuses_unissued_exact_class_handle_before_wire"
+        ],
+        "ordinary_scope": "Signed fictional physical V4 checked-Native preflight refusal and retained V3/V4 current-review and source-only controls.",
+        "ordinary_subcohorts": {
+          "new_checked_native_preflight": 7,
+          "retained_v499": 11
+        },
+        "original_admitted_parent_custody_authenticated": false,
+        "owner": "ipfs_datasets_py/logic/autoformal/legal_release_coordinator_v1.py",
+        "owning_test": "tests/unit/logic/autoformal/test_corpus_release_cli.py",
+        "prior_Guide552": {
+          "bytes": 12729,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-guide552-four-doc-three-FF-publication-small-v500.json",
+          "sha256": "b42c5cb89202634bafa1a37fc7c304585d23bb27117845122ac6fd557ea51f79"
+        },
+        "private_same_seven_reference": {
+          "bytes": 14056,
+          "path": "/tmp/Root-P2-physical-V4-live-checked-native-private-v02-H0isj9cF/SEALED-Phase2-physical-v4-checked-native-exact3-private.json",
+          "sha256": "a85e06470214ea0a0f65e1aa4fd82cecde0a06477493f8d7489fb1aa61569505"
+        },
+        "quantified_premise_preserved": true,
+        "raw_JUnit": {
+          "bytes": 3382,
+          "path": "/tmp/Root-Phase2-V4-checked-native-existing-ordinary18-v503-4aplaumH/actual-output/corpus-release-public-v3-v4-eligibility-ordinary18-run-result0-output1.bin",
+          "sha256": "b3301e7acc6588cc45de9f2720a5f2b61947e5a0793927b5e2eca1760aade6db"
+        },
+        "same_live_join_refusals": [
+          {
+            "case": "checked-native-without-current-review",
+            "refusal": "checked Native requires independently selected current review"
+          },
+          {
+            "case": "same-live-handle-other-exact-request-id",
+            "offered_request_sha256": "3ca74287b18ac8c2d44702fbf5b2ff518e2f5e4cb764012b32b94f747261546c",
+            "original_request_sha256": "18f7e9d0a96893e2c711bfa6b32cd743e0d7de02c74d0f253085379dc3ab68b0",
+            "refusal": "exact issued live success original inputs required"
+          },
+          {
+            "case": "same-live-handle-revoked-current-registry",
+            "historical_policy_sha256": "5dcad4b886ff9fc3b445e82abb86efd9b33ede91a742859b1e5759e34f28c096",
+            "historical_registry_sha256": "45eea051b7b4b520c89071bbb3554312a3715214dccc25ba36463ea80e493989",
+            "independently_assessed_reviewer_revoked": true,
+            "refusal": "current review trust pins differ from the signed replay trust",
+            "selected_policy_sha256": "a603fd0129381974717e1d40ddf40d5ea9f86c0d258a6cd5b17dec57b86d9136",
+            "selected_registry_sha256": "aa0df72d5167d9a8cafddb7f9692d006d8a53ab1fb71266124f91fdcc61c0f69"
+          }
+        ],
+        "same_original_process_native_thread_handle": true,
+        "schema": "Guide553-Phase2-physical-V4-same-live-checked-native-observation/v1",
+        "selected_theorem_axiom_dependencies": [],
+        "separate_earlier_v493_type_capture": {
+          "bytes": 5273,
+          "path": "/tmp/Root-Phase2-physical-type-probe-product-existing-R5-v493-PBHwnajq/actual-physical-whole-norm-native-elaboration-v493-closed.json",
+          "sha256": "3723e053c0f8fb16544785ddc28fb1ea5c4ef4d32a1d7dd7bb476b726af6d8e9"
+        },
+        "task": "LIR-21",
+        "task_status_changed": false,
+        "training_mask": 0,
+        "typed_ProofReceipt_issued": false,
+        "whole_graph_proof_status": "pending"
+      },
+      "evidence_ordinal": 553,
+      "id": "phase2-physical-v4-same-live-checked-native-ordinary18-evidence553-20261126",
+      "observed_bytes": 14359,
+      "observed_sha256": "4fe2e6eda5b9f7217c31ee19a4620831d035dace4a5b5aa5728410ac809bebfc",
+      "path": "/tmp/Phase2-V4-checked-native-guide553-existing-composer-INERT-RyW7lTy1/reconciled/one-guide553-Phase2-physical-V4-same-live-checked-native-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Same-live direct R5 conditional theorem observation joined to an exact signed fictional V4 release replay and independently supplied review.",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
     }
   ]
 }
