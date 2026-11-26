@@ -4707,6 +4707,32 @@
       ],
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
       "task": "LIR-14"
+    },
+    "phase2_native_complete_paired_cache_post_cleanup_replay_20261126": {
+      "actual_R5_retained_physical_request": {
+        "bytes": 17614,
+        "path": "/tmp/Root-Phase2-V4-checked-native-complete-archive-existing-R5-v563-dPdI5ec9/actual-R5-physical-v4-checked-release-retained-request-and-paired-cache-v563.json",
+        "sha256": "102b023c93f2312ffa07f45a07155c379b471a13bc694c7770ba7aaed7f516fc"
+      },
+      "actual_post_cleanup_CLI_replay_closeout": {
+        "bytes": 5886,
+        "path": "/tmp/Root-Phase2-V4-complete-archive-existing-SDK-replay-v564-HybFJvGP/actual-v564-existing-physical-v4-paired-cache-post-cleanup-CLI-replay.json",
+        "sha256": "0e4b2d0e7168826519aeba829d3ca25150d41ad272451090bb0fe317d3e3d6ea"
+      },
+      "evidence_ordinal": 564,
+      "facts": {
+        "bytes": 5312,
+        "path": "/tmp/P2-Guide564-existing-composer-INERT-5ve3lxyb/one-guide564-Phase2-fresh-checked-native-request-post-cleanup-source-replay-scoped-facts.json",
+        "sha256": "f1e9ec16acddcb49f0932bfe81cdd3d7f622b2fa82f03d0657ce6e6e519d85a2"
+      },
+      "new_legal_or_proof_or_training_admission": false,
+      "record_id": "phase2-native-complete-paired-cache-post-cleanup-replay-evidence564-20261126",
+      "related_catalog_component": "legal-release-coordinator",
+      "related_tasks": [
+        "LIR-21"
+      ],
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
+      "task": "LIR-14"
     }
   },
   "programme_goal_hierarchy": {

@@ -34806,6 +34806,121 @@
       "root": "artifact_workspace",
       "scope": "Software-only paired-cache byte replay after a fictional fixture workspace closes; earlier v552 replay refusal remains separate.",
       "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase2_native_complete_paired_cache_post_cleanup_replay_20261126",
+      "closed_runtime_facts": {
+        "actual_CLI_executed_separately_after_R5_workspace_cleanup": true,
+        "actual_R5_compiled_modules": 10,
+        "actual_R5_conditional_obligations": 30,
+        "actual_R5_retained_physical_request": {
+          "bytes": 17614,
+          "path": "/tmp/Root-Phase2-V4-checked-native-complete-archive-existing-R5-v563-dPdI5ec9/actual-R5-physical-v4-checked-release-retained-request-and-paired-cache-v563.json",
+          "sha256": "102b023c93f2312ffa07f45a07155c379b471a13bc694c7770ba7aaed7f516fc"
+        },
+        "actual_post_cleanup_CLI_receipt": {
+          "bytes": 66869,
+          "path": "/tmp/Root-Phase2-V4-complete-archive-existing-SDK-replay-v564-HybFJvGP/actual-output/run.output.0.bin",
+          "sha256": "d31d4e86f03cef2b435e7ebcfece6572c70dd8884bb1237869fb1d7502dfb810"
+        },
+        "actual_post_cleanup_CLI_replay_closeout": {
+          "bytes": 5886,
+          "path": "/tmp/Root-Phase2-V4-complete-archive-existing-SDK-replay-v564-HybFJvGP/actual-v564-existing-physical-v4-paired-cache-post-cleanup-CLI-replay.json",
+          "sha256": "0e4b2d0e7168826519aeba829d3ca25150d41ad272451090bb0fe317d3e3d6ea"
+        },
+        "admission_mask": 0,
+        "checked_Lean_declared_eligible": false,
+        "corpus_admission_or_legal_review_or_proof_receipt": false,
+        "evaluation_gold_mask": 0,
+        "evidence_ordinal": 564,
+        "exact_six_R5_output_names": [
+          "native-packet-members.json",
+          "native-packet.zip",
+          "opening.json",
+          "paired-cache.bin",
+          "physical-request.bin",
+          "summary.json"
+        ],
+        "fixture_only": true,
+        "fresh_original_conditional_Native_observation": true,
+        "fresh_temporary_custody": true,
+        "gold_mask": 0,
+        "historical_v552_incomplete_archive": {
+          "bytes": 4675,
+          "path": "/tmp/Root-Phase2-V4-checked-native-request-retained-existing-R5-v552-Q60co6bh/actual-Phase2-exact-V4-native-retention-with-detached-replay-refusal-v555.json",
+          "sha256": "44eb27752414604baf8d31c09408e520cc7fc54e973b0b4f52ffb5f6b11270cd"
+        },
+        "historical_v552_missing_parquets_recovered": false,
+        "new_code_or_ordinary_publication_claimed": false,
+        "new_type_capture_or_model_execution": false,
+        "original_physical_custody_reestablished": false,
+        "original_producer_code_locations_retained": true,
+        "portable_replay_compiler_execution": false,
+        "portable_source_only_CLI_closure_canonical_bytes_equal_to_before_cleanup": true,
+        "prior_Guide563": {
+          "bytes": 15584,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-guide563-four-doc-three-FF-publication-small-v561.json",
+          "sha256": "e1d90c1d599398af0a56829d8894607ab991b5314b3f5ea8bda6f8c9d50e03e2"
+        },
+        "proof_status": "pending",
+        "related_catalog_component": "legal-release-coordinator",
+        "related_tasks": [
+          "LIR-21"
+        ],
+        "release_CLI": "scripts/ops/legal_ir/validate_uscode_corpus_release.py",
+        "release_coordinator": "ipfs_datasets_py/logic/autoformal/legal_release_coordinator_v1.py",
+        "release_mask": 0,
+        "retained_exact_three_paired_cache_tables": {
+          "artifacts": {
+            "bytes": 12614,
+            "path_in_repo": "autoformal/uscode/paired-v3/artifacts/fictional-physical-crosswalk/artifacts-40ffa22f0fec296e7d14532f74b43dc7aa46fc2321d7e10635d39ec55d9b5e46-ff9f5b6e138e57e705be2200e4656fd352106921cb66a2bb6e289fe0255c82a2.parquet",
+            "sha256": "ff9f5b6e138e57e705be2200e4656fd352106921cb66a2bb6e289fe0255c82a2"
+          },
+          "goals": {
+            "bytes": 7653,
+            "path_in_repo": "autoformal/uscode/paired-v3/goals/fictional-physical-crosswalk/goals-40ffa22f0fec296e7d14532f74b43dc7aa46fc2321d7e10635d39ec55d9b5e46-38ccfbc956ad5bd53a35ba1ee1b223087061bc04c4543c33ee4f540c981f0a94.parquet",
+            "sha256": "38ccfbc956ad5bd53a35ba1ee1b223087061bc04c4543c33ee4f540c981f0a94"
+          },
+          "paired_spans": {
+            "bytes": 32535,
+            "path_in_repo": "autoformal/uscode/paired-v3/paired_spans/fictional-physical-crosswalk/paired_spans-40ffa22f0fec296e7d14532f74b43dc7aa46fc2321d7e10635d39ec55d9b5e46-7b11fbfa4eed3062cc7f675a28086b4c25b71bde7c3b2dfeda5591625106fd5b.parquet",
+            "sha256": "7b11fbfa4eed3062cc7f675a28086b4c25b71bde7c3b2dfeda5591625106fd5b"
+          }
+        },
+        "retained_paired_cache_archive": {
+          "bytes": 53480,
+          "path": "/tmp/Root-Phase2-V4-checked-native-complete-archive-existing-R5-v563-dPdI5ec9/actual-output/run.output.5.bin",
+          "sha256": "cd81d74107299691376a4ba57b78f8e30495aead8de84021f4e069547a8c3482"
+        },
+        "retained_paired_cache_manifest": {
+          "bytes": 2442,
+          "path_in_repo": "autoformal/uscode/paired-v3/manifests/fictional-physical-crosswalk/manifest-e10af9b294829c830378c32be97bbe9366d78f66b81c10dc61e88f8479cf04cf.json",
+          "sha256": "9d41c45fcc2f8bbddd27e00fbc35c7727b7fa0cb2f65eb356dd568064f133bff"
+        },
+        "retained_physical_request": {
+          "bytes": 1088724,
+          "path": "/tmp/Root-Phase2-V4-checked-native-complete-archive-existing-R5-v563-dPdI5ec9/actual-output/run.output.4.bin",
+          "sha256": "b24f0f7d23d54fe3182aeaf59771bd36a1f7b4109c1b897a881757b86f9dfe02"
+        },
+        "schema": "Guide564-Phase2-native-complete-paired-cache-post-cleanup-replay/v1",
+        "selected_theorem_premise_remains_quantified": true,
+        "source_only_original_path_projection": {
+          "canonical_bytes": 63614,
+          "sha256": "67b503855d3b579c7a87bc165d9945b991a07c219bf55ce2ea74eb34f2cd4d67"
+        },
+        "task": "LIR-14",
+        "task_status_changed": false,
+        "training_mask": 0
+      },
+      "evidence_ordinal": 564,
+      "id": "phase2-native-complete-paired-cache-post-cleanup-replay-evidence564-20261126",
+      "observed_bytes": 5312,
+      "observed_sha256": "f1e9ec16acddcb49f0932bfe81cdd3d7f622b2fa82f03d0657ce6e6e519d85a2",
+      "path": "/tmp/P2-Guide564-existing-composer-INERT-5ve3lxyb/one-guide564-Phase2-fresh-checked-native-request-post-cleanup-source-replay-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "A new signed fictional Native V4 run retained the exact request and all three paired-cache Parquets for an independent same-code-location post-cleanup source-only replay.",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
     }
   ]
 }
