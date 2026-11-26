@@ -6016,3 +6016,145 @@ def test_physical_native_workspace_and_file_caps_keep_exact_declared_compiler_ar
             {"reviewed_version": version, "timeout": 60, "outputs": {"diagnostic-only": b""}})
         assert retained == (selected if version == 5 else legacy)
         assert process._linux_resource_argv(argv, retained) == expected
+
+
+def test_planned_physical_invocation_and_observation_keep_measurements_separate():
+    from ipfs_datasets_py.logic.ir_core import protocols
+
+    sources = {"Realization.lean": "theorem example : True := True.intro\n"}
+    module = "Realization"
+    theorem = module + ".example"
+    context = {"proposition_utf8_sha256": hashlib.sha256(b"True").hexdigest()}
+    request = protocols.BackendRequest(
+        request_id="authored-invocation-contract", claim_id="authored-claim", declaration_id=theorem,
+        claim_digest="1" * 64, obligation_id="authored-obligation", obligation_digest="2" * 64,
+        assumption_ids=(), logic_family="lean4", query_kind=protocols.QueryKind.THEOREM_PROOF,
+        requested_backend_id="legal-corpus-v4-physical-project-kernel@1",
+        payload={
+            "schema": "legal-corpus-v4-planned-physical-whole-norm-request/v1",
+            "encoding": "lean4-physical-project-proposition-source/v1",
+            "context": context, "context_sha256": "3" * 64,
+            "project": {
+                "target": "legal", "toolchain": TOOLCHAIN, "expected_modules": [module],
+                "files": [{"path": path, "bytes": len(body.encode()),
+                           "sha256": hashlib.sha256(body.encode()).hexdigest()}
+                          for path, body in sources.items()],
+            },
+        })
+    planner, snapshots = native._physical_planned_request_modules()
+    for snapshot in snapshots:
+        native._live_check_module_bindings(snapshot)
+    with patch.object(planner, "prepare_reviewed_physical_whole_norm_kernel_request_v2",
+                      lambda *args, **kwargs: (None, request)):
+        with pytest.raises(ValueError, match="live success callable bindings changed: source origin"):
+            native._physical_planned_request_modules()
+
+    plan = native._physical_whole_norm_request_wire(request, request.digest)
+    assert native._physical_whole_norm_request_wire(None, None) is None
+    for candidate, pin in ((request, "0" * 64), (request.to_dict(), request.digest)):
+        with pytest.raises(ValueError, match="exact independently pinned"):
+            native._physical_whole_norm_request_wire(candidate, pin)
+    invocation = process.ToolRunRequest(
+        argv=("/unused/lake", "--offline", "--no-cache", "build", "legal"),
+        input_files=sources, output_paths=(".lake/build/lib/lean/Realization.olean", *sources),
+        environment={"ELAN_TOOLCHAIN": TOOLCHAIN})
+    native._check_physical_planned_invocation(plan, invocation)
+    for change in (
+        {"input_files": {"Realization.lean": sources["Realization.lean"] + "\n"}},
+        {"output_paths": ("Realization.lean",)},
+        {"argv": invocation.argv[:-1] + ("other",)},
+        {"environment": {"ELAN_TOOLCHAIN": "different"}},
+    ):
+        with pytest.raises(ValueError, match="differs from original native invocation"):
+            native._check_physical_planned_invocation(plan, replace(invocation, **change))
+
+    # Authored result checks the projection only. No original handle is minted.
+    limits = process.ToolRunLimits(resident_memory_bytes=2 * 1024**3)
+    raw = process.ToolRunResult("authored-boundary/v1", process.ToolRuntime.NATIVE, invocation.argv, 0, "", "", 1.25, {})
+    empty = {"current_bytes": None, "peak_sampled_bytes": None, "cap_bytes": None}
+    assert native._physical_sampled_rss(raw, process) == empty
+    observation = process._tool_resource_observation(
+        limits, dispatched=True, returncode=0, rss_current_bytes=2000, rss_peak_sampled_bytes=4000)
+    rss = native._physical_sampled_rss(replace(raw, resource_observation=observation), process)
+    assert rss == {"current_bytes": 2000, "peak_sampled_bytes": 4000, "cap_bytes": 2 * 1024**3}
+    receipt = {
+        "build_passed": True, "conditional_kernel_status": "checked_under_explicit_hypotheses",
+        "conditional_theorems": [theorem], "theorem_axiom_dependencies": {theorem: []},
+        "reviewed_execution_evidence": {
+            "result": {"elapsed_seconds": 1.25},
+            "output_file_refs": {"source": {"bytes": 110}, "artifact": {"bytes": 20}},
+            "raw_logs": {"stdout": {"bytes": 12}},
+        },
+    }
+    pins = {"expected_receipt_sha256": "4" * 64, "expected_packet_sha256": "5" * 64}
+    projected = native._physical_planned_success_observation(plan, receipt, native._wire(rss, native.MAX_RECORD_BYTES), **pins)
+    assert projected["request_sha256"] == request.digest
+    assert projected["obligation_digest"] == request.obligation_digest and projected["declaration"] == theorem
+    assert projected["scope"] == "original_whole_project_build"
+    assert projected["original_result_observation"] == {
+        "elapsed_seconds": 1.25, "output_file_bytes": 130, "raw_log_bytes": 12, "rss": rss,
+        "exact_aggregate_peak_memory_bytes": None, "verified_steps": None,
+    }
+    assert projected["request_bounds_qualified"] is projected["proof_receipt_issued"] is False
+    for changes in ({"conditional_theorems": [theorem + "_sibling"]},
+                    {"theorem_axiom_dependencies": {theorem: ["authored-axiom"]}}):
+        with pytest.raises(ValueError, match="original conditional theorem and axiom"):
+            native._physical_planned_success_observation(plan, receipt | changes, native._wire(rss, native.MAX_RECORD_BYTES), **pins)
+
+
+def test_reviewed_physical_native_binds_planned_request_to_original_live_handle(
+        bound_norm_installed_lake, reviewed_physical_realization_native_control_v2, tmp_path):
+    from ipfs_datasets_py.logic.autoformal import (
+        legal_corpus_definition_use_preservation_kernel_requests_v2 as planner,
+    )
+    from ipfs_datasets_py.logic.ir_core import protocols
+
+    executable, binary_pins = bound_norm_installed_lake
+    c = reviewed_physical_realization_native_control_v2
+    options = reviewed_physical_realization_native_options_v2(c)
+    inputs = (c["preparation"], c["preservation"], c["graph"], c["admission"], *c["args"])
+    manifest = c["preparation"].to_dict()
+    target = next(row for row in manifest["theorem_bindings"]
+                  if row["binding"]["kind"] == "whole_norm_definition_expansion")
+    claim, request = planner.prepare_reviewed_physical_whole_norm_kernel_request_v2(
+        *inputs, expected_theorem=target["theorem"], expected_unit_id=target["binding"]["unit_id"],
+        bounds=protocols.ExecutionBounds(timeout_ms=60_000, max_memory_bytes=2 * 1024**3,
+            max_output_bytes=4 * 1024**2), **options)
+    output = tmp_path / "original-request-bound-physical-build"
+    native_arguments = dict(**options, lake_executable=str(executable), timeout_seconds=60)
+    with pytest.raises(ValueError, match="exact independently pinned planned"):
+        native.build_verified_reviewed_physical_definition_realization_native_v2(
+            *inputs, **native_arguments, output_directory=output, planned_request=request,
+            expected_planned_request_sha256="0" * 64)
+    assert not output.exists()
+    handle = native.build_verified_reviewed_physical_definition_realization_native_v2(
+        *inputs, **native_arguments, output_directory=output, planned_request=request,
+        expected_planned_request_sha256=request.digest)
+    packet = reviewed_live_success_packet_v2(output)
+    receipt_raw = dict(packet)["build-receipt.json"]
+    receipt = json.loads(receipt_raw)
+    pins = dict(expected_receipt_sha256=hashlib.sha256(receipt_raw).hexdigest(),
+        expected_packet_sha256=native.reviewed_physical_definition_realization_packet_sha256_v2(packet),
+        expected_binary_sha256=binary_pins)
+    alternative = replace(request, request_id=request.request_id + "-other")
+    for changes in ({}, {"planned_request": alternative, "expected_planned_request_sha256": alternative.digest}):
+        with pytest.raises(ValueError, match="exact issued live success original inputs"):
+            native.load_verified_reviewed_physical_definition_realization_native_v2(
+                handle, packet, *inputs, **options, **pins, **changes)
+    assert "planned_whole_norm_observation" not in receipt
+    opened = native.load_verified_reviewed_physical_definition_realization_native_v2(
+        handle, packet, *inputs, **options, **pins, planned_request=request,
+        expected_planned_request_sha256=request.digest)
+    result = opened["planned_whole_norm_observation"]
+    assert opened["live_native_success_authenticated"] and opened["native_execution_authenticated"]
+    assert result["request_sha256"] == request.digest and result["claim_digest"] == claim.digest
+    assert result["declaration"] == target["theorem"] and result["axiom_dependencies"] == []
+    assert result["premise_remains_quantified"] and result["checked_under_explicit_hypotheses"]
+    assert result["retained_receipt_sha256"] == pins["expected_receipt_sha256"]
+    measured = result["original_result_observation"]
+    assert measured["elapsed_seconds"] == receipt["elapsed_seconds"] > 0
+    assert measured["output_file_bytes"] >= sum(receipt["artifact_bytes"].values()) > 0
+    assert measured["raw_log_bytes"] == sum(receipt["log_bytes"].values())
+    assert measured["verified_steps"] is measured["exact_aggregate_peak_memory_bytes"] is None
+    assert not result["qualified_request_execution"] and not result["proof_receipt_issued"]
+    assert all(authority is False for authority in opened["authority"].values())

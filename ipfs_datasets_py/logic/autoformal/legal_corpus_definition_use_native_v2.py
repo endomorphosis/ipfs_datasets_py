@@ -3368,11 +3368,106 @@ def _live_review_components(owners, reviewed_version):
     return ((graph, admission, preservation, legacy, legacy.norm, legacy.content, legacy.reader), legacy)
 
 
+def _physical_planned_request_modules():
+    """Authenticate the additional opted-in owners before using their callables."""
+    from . import legal_corpus_definition_use_preservation_kernel_requests_v2 as planner
+    from ..ir_core import claims, protocols
+    autoformal = Path(__file__).resolve().parent
+    expected = (autoformal / "legal_corpus_definition_use_preservation_kernel_requests_v2.py",
+                autoformal.parent / "ir_core/claims.py", autoformal.parent / "ir_core/protocols.py")
+    modules = (planner, claims, protocols)
+    _need(tuple(Path(module.__file__).resolve() for module in modules) == expected,
+          "live success callable bindings changed: canonical planning owner paths")
+    return planner, tuple(_live_compiled_module_bindings(module) for module in modules)
+
+
+def _physical_whole_norm_request_wire(request, expected_sha256):
+    """Detach the exact typed request before any native operation."""
+    if request is None and expected_sha256 is None:
+        return None
+    from ..ir_core import protocols
+    _pin(expected_sha256, "independently selected planned whole-norm request")
+    _need(type(request) is protocols.BackendRequest and request.digest == expected_sha256,
+          "exact independently pinned planned whole-norm request required")
+    row = request.to_dict()
+    _need(row["requested_backend_id"] == "legal-corpus-v4-physical-project-kernel@1"
+          and row["payload"].get("schema") == "legal-corpus-v4-planned-physical-whole-norm-request/v1"
+          and row["payload"].get("encoding") == "lean4-physical-project-proposition-source/v1",
+          "planned physical whole-norm request profile required")
+    return expected_sha256, _wire(row, MAX_RECORD_BYTES)
+
+
+def _check_physical_planned_invocation(binding, invocation):
+    """Match the planned source closure against the actual whole-project invocation."""
+    request = _parse(binding[1], MAX_RECORD_BYTES)
+    project = request["payload"]["project"]
+    sources = invocation.input_files
+    observed = [{"path": path, "bytes": len(raw), "sha256": _sha(raw)}
+                for path, body in sources.items()
+                for raw in (body.encode("utf-8") if type(body) is str else body,)]
+    outputs = [".lake/build/lib/lean/" + name.replace(".", "/") + ".olean"
+               for name in project["expected_modules"]]
+    _need(observed == project["files"]
+          and list(invocation.output_paths) == outputs + list(sources)
+          and tuple(invocation.argv[1:]) == ("--offline", "--no-cache", "build", project["target"])
+          and invocation.environment.get("ELAN_TOOLCHAIN") == project["toolchain"],
+          "planned whole-norm project differs from original native invocation")
+
+
+def _physical_sampled_rss(run, process):
+    """Keep real samples distinct from the cap and from an exact peak."""
+    observed = run.resource_observation
+    if observed is None:
+        return {"current_bytes": None, "peak_sampled_bytes": None, "cap_bytes": None}
+    _need(type(observed) is process.ToolResourceObservation, "original native resource observation required")
+    rss = observed.to_dict()["rss"]
+    _need(set(rss) == {"current_bytes", "peak_sampled_bytes", "cap_bytes"}
+          and all(value is None or (type(value) is int and value >= 0) for value in rss.values()),
+          "typed native RSS samples and cap required")
+    return rss
+
+
+def _physical_planned_success_observation(plan, receipt, resource_wire, *,
+        expected_receipt_sha256, expected_packet_sha256):
+    request = _parse(plan[1], MAX_RECORD_BYTES)
+    payload = request["payload"]
+    theorem = request["declaration_id"]
+    _need(receipt["build_passed"] is True
+          and receipt["conditional_kernel_status"] == "checked_under_explicit_hypotheses"
+          and receipt["conditional_theorems"].count(theorem) == 1
+          and receipt["theorem_axiom_dependencies"].get(theorem) == [],
+          "exact original conditional theorem and axiom observation required")
+    execution = receipt["reviewed_execution_evidence"]
+    return {
+        "schema": "legal-physical-whole-norm-request-observation/v1",
+        "request_sha256": plan[0], "request_id": request["request_id"],
+        "claim_digest": request["claim_digest"], "obligation_digest": request["obligation_digest"],
+        "declaration": theorem, "request_context_sha256": payload["context_sha256"],
+        "proposition_utf8_sha256": payload["context"]["proposition_utf8_sha256"],
+        "retained_receipt_sha256": expected_receipt_sha256,
+        "retained_packet_sha256": expected_packet_sha256,
+        "scope": "original_whole_project_build",
+        "checked_under_explicit_hypotheses": True,
+        "premise_remains_quantified": True, "axiom_dependencies": [],
+        "qualified_request_execution": False, "request_bounds_qualified": False,
+        "backend_attempt_created": False, "proof_receipt_issued": False,
+        "original_result_observation": {
+            "elapsed_seconds": execution["result"]["elapsed_seconds"],
+            "output_file_bytes": sum(row["bytes"] for row in execution["output_file_refs"].values()),
+            "raw_log_bytes": sum(row["bytes"] for row in execution["raw_logs"].values()),
+            "rss": _parse(resource_wire, MAX_RECORD_BYTES),
+            "exact_aggregate_peak_memory_bytes": None,
+            "verified_steps": None,
+        },
+    }
+
+
 def _build_verified_reviewed_norm_preservation_native(preparation, graph, admission, *args,
         _live_integrity_state, reviewed_version, expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256,
         toolchain, lake_executable, output_directory, timeout_seconds=60, cancellation=None, instance_identity_profile=None, definition_application_profile=None,
         realization_preservation=None, expected_upstream_preservation_sha256=None,
-        physical_request_raw=None, expected_physical_request_sha256=None, **kwargs):
+        physical_request_raw=None, expected_physical_request_sha256=None,
+        _planned_whole_norm_binding=None, **kwargs):
     """Issue an opaque handle after one fresh default native build and replay.
 
     Existing Source/native/storage admission remains with the original caller.
@@ -3382,6 +3477,8 @@ def _build_verified_reviewed_norm_preservation_native(preparation, graph, admiss
 
     _need(reviewed_version == 5 or physical_request_raw is expected_physical_request_sha256 is None,
           "physical request requires the explicit physical realization live domain")
+    _need(reviewed_version == 5 or _planned_whole_norm_binding is None,
+          "planned whole-norm request requires the explicit physical realization live domain")
     domain_arguments = ({} if reviewed_version not in (4, 5) else {
         "realization_preservation": realization_preservation,
         "expected_upstream_preservation_sha256": expected_upstream_preservation_sha256})
@@ -3419,8 +3516,12 @@ def _build_verified_reviewed_norm_preservation_native(preparation, graph, admiss
     (build_schema, native_profile, live_schema, live_profile, receipt_binding, pin_reader,
      packet_hasher, retained_loader, validator, formatter, receipt_scope) = domain
     authority_snapshot = dict(AUTHORITY)
-    original = _live_original_inputs(preparation, graph, admission, args, kwargs, **domain_arguments,
-        **_reviewed_definition_application_kwargs(definition_application_profile))
+    def bound_original_inputs(candidate):
+        original = _live_original_inputs(candidate, graph, admission, args, kwargs, **domain_arguments,
+            **_reviewed_definition_application_kwargs(definition_application_profile))
+        return original if _planned_whole_norm_binding is None else (original, _planned_whole_norm_binding)
+
+    original = bound_original_inputs(preparation)
     owners = _owners()
     integrity_fence(owners)
     process = owners[3]
@@ -3429,8 +3530,7 @@ def _build_verified_reviewed_norm_preservation_native(preparation, graph, admiss
     def fence():
         integrity_fence(owners)
         _need(_live_success_domain(reviewed_version, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)) == domain, "live success domain changed during build")
-        _need(_live_original_inputs(preparation, graph, admission, args, kwargs, **domain_arguments,
-            **_reviewed_definition_application_kwargs(definition_application_profile)) == original,
+        _need(bound_original_inputs(preparation) == original,
               "live success original inputs changed during build")
 
     def execution(stage, values):
@@ -3454,12 +3554,22 @@ def _build_verified_reviewed_norm_preservation_native(preparation, graph, admiss
               "original default live success native execution required")
         if stage == "before":
             _need(not observed, "single original live success native invocation required")
+            if _planned_whole_norm_binding is not None:
+                _check_physical_planned_invocation(_planned_whole_norm_binding, invocation)
             observed.update(runner=runner, invocation=invocation)
         else:
             _need(stage == "after" and observed.get("runner") is runner
                   and observed.get("invocation") is invocation and "projection" not in observed
                   and type(values["run"]) is process.ToolRunResult,
                   "same original live success native invocation/result required")
+            if _planned_whole_norm_binding is not None:
+                try:
+                    sampled = _physical_sampled_rss(values["run"], process)
+                    observed["sampled_rss"] = _wire(sampled, MAX_RECORD_BYTES)
+                except (ValueError, TypeError, KeyError) as error:
+                    if persistence_trusted(owners):
+                        raise _LiveNativeObserverRefusal(str(error)) from error
+                    raise
             observed["projection"] = _wire(_reviewed_native_execution_projection(
                 invocation, values["run"], process, physical_realization=reviewed_version == 5), MAX_RECEIPT_BYTES)
 
@@ -3521,7 +3631,10 @@ def _build_verified_reviewed_norm_preservation_native(preparation, graph, admiss
         joins = _live_freeze_inputs((reviewed_version, expected_preservation_sha256, expected_graph_sha256,
             expected_admission_sha256, toolchain, receipt["binary_sha256"],
             old["producer_pins"], receipt_hash, packet_hash))
-        return packet, joins, observed["projection"]
+        projection = observed["projection"]
+        if _planned_whole_norm_binding is not None:
+            projection = (projection, observed["sampled_rss"])
+        return packet, joins, projection
 
     packet, joins, projection = _reviewed_preservation_native_operation(
         preparation, graph, admission, args, kwargs,
@@ -3553,7 +3666,8 @@ def _load_verified_reviewed_norm_preservation_native(handle, packet_files, prepa
         _live_integrity_state, reviewed_version, expected_receipt_sha256, expected_packet_sha256, expected_binary_sha256,
         expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain, instance_identity_profile=None, definition_application_profile=None,
         realization_preservation=None, expected_upstream_preservation_sha256=None,
-        physical_request_raw=None, expected_physical_request_sha256=None, **kwargs):
+        physical_request_raw=None, expected_physical_request_sha256=None,
+        _planned_whole_norm_binding=None, **kwargs):
     """Join this process's live issuance to exact bytes and current review state.
 
     Reads invoke no compiler, executable, cleanup action or historical PID probe.
@@ -3562,6 +3676,8 @@ def _load_verified_reviewed_norm_preservation_native(handle, packet_files, prepa
 
     _need(reviewed_version == 5 or physical_request_raw is expected_physical_request_sha256 is None,
           "physical request requires the explicit physical realization live domain")
+    _need(reviewed_version == 5 or _planned_whole_norm_binding is None,
+          "planned whole-norm request requires the explicit physical realization live domain")
     domain_arguments = ({} if reviewed_version not in (4, 5) else {
         "realization_preservation": realization_preservation,
         "expected_upstream_preservation_sha256": expected_upstream_preservation_sha256})
@@ -3602,8 +3718,12 @@ def _load_verified_reviewed_norm_preservation_native(handle, packet_files, prepa
     contents, _ = (_reviewed_physical_retained_packet_v2 if reviewed_version == 5 else _reviewed_retained_packet)(packet_files)
     packet = tuple(sorted(contents.items()))
     _need(packet == entry[2], "exact issued live success packet required")
-    original = _live_original_inputs(preparation, graph, admission, args, kwargs, **domain_arguments,
-        **_reviewed_definition_application_kwargs(definition_application_profile))
+    def bound_original_inputs(candidate):
+        original = _live_original_inputs(candidate, graph, admission, args, kwargs, **domain_arguments,
+            **_reviewed_definition_application_kwargs(definition_application_profile))
+        return original if _planned_whole_norm_binding is None else (original, _planned_whole_norm_binding)
+
+    original = bound_original_inputs(preparation)
     _need(original == entry[5], "exact issued live success original inputs required")
     owners = _owners()
     integrity_fence(owners)
@@ -3613,8 +3733,7 @@ def _load_verified_reviewed_norm_preservation_native(handle, packet_files, prepa
         _need(_live_handle_entry(handle, reviewed_version=reviewed_version, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)) is entry,
               "same issued live success handle required")
         integrity_fence(owners)
-        _need(_live_original_inputs(preparation, graph, admission, args, kwargs, **domain_arguments,
-            **_reviewed_definition_application_kwargs(definition_application_profile)) == original,
+        _need(bound_original_inputs(preparation) == original,
               "live success original inputs changed during read")
 
     replay = retained_loader(packet, preparation, graph, admission, *args,
@@ -3627,18 +3746,27 @@ def _load_verified_reviewed_norm_preservation_native(handle, packet_files, prepa
     joins = _live_freeze_inputs((reviewed_version, expected_preservation_sha256, expected_graph_sha256,
         expected_admission_sha256, toolchain, expected_binary_sha256,
         replay["producer_pins"], expected_receipt_sha256, expected_packet_sha256))
-    _need(joins == entry[3] and _wire(_parse(contents["build-receipt.json"], MAX_RECEIPT_BYTES)
-          ["reviewed_execution_evidence"], MAX_RECEIPT_BYTES) == entry[4],
+    receipt = _parse(contents["build-receipt.json"], MAX_RECEIPT_BYTES)
+    projection = entry[4]
+    if _planned_whole_norm_binding is not None:
+        _need(type(projection) is tuple and len(projection) == 2
+              and all(type(value) is bytes for value in projection),
+              "same original request-bound native observation required")
+        projection, sampled_rss = projection
+    _need(joins == entry[3] and _wire(receipt["reviewed_execution_evidence"], MAX_RECEIPT_BYTES) == projection,
           "exact issued live success commitments required")
     checked = validator(preparation, graph, admission, *args,
         expected_preservation_sha256=expected_preservation_sha256,
         expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
         toolchain=toolchain, **domain_arguments, **kwargs, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
     fence()
-    _need(_live_original_inputs(checked, graph, admission, args, kwargs, **domain_arguments,
-        **_reviewed_definition_application_kwargs(definition_application_profile)) == original,
+    _need(bound_original_inputs(checked) == original,
           "exact issued live success regenerated project required")
     binding = receipt_binding(checked.to_dict(), admission, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)) if reviewed_version in (3, 4, 5) else {}
+    if _planned_whole_norm_binding is not None:
+        binding["planned_whole_norm_observation"] = _physical_planned_success_observation(
+            _planned_whole_norm_binding, receipt, sampled_rss,
+            expected_receipt_sha256=expected_receipt_sha256, expected_packet_sha256=expected_packet_sha256)
     fence()
     result = owners[1].contracts.seal_record({
         **{key: value for key, value in replay.items() if key not in {"schema", "profile", "record_cid", "cid_scope"}},
@@ -5409,7 +5537,8 @@ def _bind_live_success_independent_guard_v1():
 
     def build_verified_reviewed_physical_definition_realization_native_v2(preparation, preservation, graph, admission, *args,
                 expected_realization_sha256, expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256,
-                toolchain, lake_executable, output_directory, physical_request_raw, expected_physical_request_sha256, timeout_seconds=60, cancellation=None, instance_identity_profile, definition_application_profile, **kwargs):
+                toolchain, lake_executable, output_directory, physical_request_raw, expected_physical_request_sha256, timeout_seconds=60, cancellation=None, instance_identity_profile, definition_application_profile,
+                planned_request=None, expected_planned_request_sha256=None, **kwargs):
             """Issue this explicit reviewed domain through the shared original live engine."""
             _reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)
             _need(type(timeout_seconds) in (int, float) and math.isfinite(timeout_seconds)
@@ -5422,11 +5551,39 @@ def _bind_live_success_independent_guard_v1():
                     or not all((guarded.__kwdefaults__ or {})[key] is value
                                for key, value in guard_keywords)):
                 raise ValueError("live success callable bindings changed: independent guard")
-            if "_live_integrity_state" in kwargs:
-                raise ValueError("private live integrity hook cannot be supplied")
+            if "_live_integrity_state" in kwargs or "_planned_whole_norm_binding" in kwargs:
+                raise ValueError("private live integrity hook or planned binding cannot be supplied")
             entry_guard(5)
+            planning_modules = ()
+            if planned_request is not None or expected_planned_request_sha256 is not None:
+                planner, planning_modules = _physical_planned_request_modules()
+            plan = _physical_whole_norm_request_wire(planned_request, expected_planned_request_sha256)
+            if plan is not None:
+                planning_owners = _owners()
+                integrity(planning_owners, reviewed_version=5)
+                row = _parse(plan[1], MAX_RECORD_BYTES)
+                unit = row["payload"].get("context", {}).get("unit", {}).get("unit_id")
+                _need(type(unit) is str and bool(unit), "planned whole-norm unit identity required")
+                _, expected = planner.prepare_reviewed_physical_whole_norm_kernel_request_v2(
+                    preparation, preservation, graph, admission, *args,
+                    expected_realization_sha256=expected_realization_sha256,
+                    expected_theorem=row["declaration_id"], expected_unit_id=unit,
+                    bounds=planned_request.bounds, expected_preservation_sha256=expected_preservation_sha256,
+                    expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
+                    toolchain=toolchain, physical_request_raw=physical_request_raw,
+                    expected_physical_request_sha256=expected_physical_request_sha256,
+                    instance_identity_profile=instance_identity_profile,
+                    definition_application_profile=definition_application_profile, **kwargs)
+                _need(_physical_whole_norm_request_wire(expected, expected_planned_request_sha256)
+                      == _physical_whole_norm_request_wire(planned_request, expected_planned_request_sha256) == plan,
+                      "canonical planned whole-norm request changed before native dispatch")
+                for snapshot in planning_modules:
+                    _live_check_module_bindings(snapshot)
+                integrity(planning_owners, reviewed_version=5)
+                entry_guard(5)
             result = original_build_core(
                 preparation, graph, admission, *args, _live_integrity_state=integrity_state, reviewed_version=5,
+                _planned_whole_norm_binding=plan,
                 expected_preservation_sha256=expected_realization_sha256,
                 realization_preservation=preservation, expected_upstream_preservation_sha256=expected_preservation_sha256,
                 physical_request_raw=physical_request_raw, expected_physical_request_sha256=expected_physical_request_sha256,
@@ -5442,6 +5599,8 @@ def _bind_live_success_independent_guard_v1():
                                    for key, value in integrity_state[3])):
                     raise ValueError("live success callable bindings changed: captured public integrity")
                 integrity(reviewed_version=5)
+                for snapshot in planning_modules:
+                    _live_check_module_bindings(snapshot)
             except BaseException:
                 if type(result) is issued_handle_class:
                     issued_handles.pop(result, None)
@@ -5450,7 +5609,8 @@ def _bind_live_success_independent_guard_v1():
 
     def load_verified_reviewed_physical_definition_realization_native_v2(handle, packet_files, preparation, preservation, graph, admission, *args,
                 expected_receipt_sha256, expected_packet_sha256, expected_binary_sha256,
-                expected_realization_sha256, expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain, physical_request_raw, expected_physical_request_sha256, instance_identity_profile, definition_application_profile, **kwargs):
+                expected_realization_sha256, expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain, physical_request_raw, expected_physical_request_sha256, instance_identity_profile, definition_application_profile,
+                planned_request=None, expected_planned_request_sha256=None, **kwargs):
             """Join this explicit domain's original live issuance without new execution."""
             _reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)
             if (globals().get("_live_handle_entry") is not original_handle_entry
@@ -5469,11 +5629,16 @@ def _bind_live_success_independent_guard_v1():
                     or not all((guarded.__kwdefaults__ or {})[key] is value
                                for key, value in guard_keywords)):
                 raise ValueError("live success callable bindings changed: independent guard")
-            if "_live_integrity_state" in kwargs:
-                raise ValueError("private live integrity hook cannot be supplied")
+            if "_live_integrity_state" in kwargs or "_planned_whole_norm_binding" in kwargs:
+                raise ValueError("private live integrity hook or planned binding cannot be supplied")
             entry_guard(5)
+            planning_modules = ()
+            if planned_request is not None or expected_planned_request_sha256 is not None:
+                _, planning_modules = _physical_planned_request_modules()
+            plan = _physical_whole_norm_request_wire(planned_request, expected_planned_request_sha256)
             result = original_load_core(
                 handle, packet_files, preparation, graph, admission, *args, _live_integrity_state=integrity_state, reviewed_version=5,
+                _planned_whole_norm_binding=plan,
                 expected_receipt_sha256=expected_receipt_sha256, expected_packet_sha256=expected_packet_sha256,
                 expected_binary_sha256=expected_binary_sha256,
                 expected_preservation_sha256=expected_realization_sha256,
@@ -5488,6 +5653,8 @@ def _bind_live_success_independent_guard_v1():
                                for key, value in integrity_state[3])):
                 raise ValueError("live success callable bindings changed: captured public integrity")
             integrity(reviewed_version=5)
+            for snapshot in planning_modules:
+                _live_check_module_bindings(snapshot)
             return result
 
     functions = {name: value for name, value in tuple(globals().items())
