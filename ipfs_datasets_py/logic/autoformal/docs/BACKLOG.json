@@ -4624,6 +4624,32 @@
       },
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
       "task": "LIR-14"
+    },
+    "phase2_physical_v4_cli_attached_retained_type_eligibility_20261126": {
+      "code_publication": {
+        "bytes": 22547,
+        "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-retained-type-closure-exact2-ordinary40-three-FF-publication-v544.json",
+        "sha256": "64e0812c3dafada255bb6444c454dafd1845567c056a528c58a5fba67f47fd7c"
+      },
+      "evidence_ordinal": 561,
+      "facts": {
+        "bytes": 8568,
+        "path": "/tmp/P2-physical-v4-CLI-retained-attachment-guide561-existing-composer-INERT-x5nrikjv/one-guide561-Phase2-physical-v4-CLI-attached-retained-type-eligibility-scoped-facts.json",
+        "sha256": "f906e92660b01f97ee4b4433198db210e54f7ad2d0890f1217b7ef0ce495cb96"
+      },
+      "new_legal_or_proof_or_training_admission": false,
+      "record_id": "phase2-physical-v4-cli-attached-retained-type-eligibility-evidence561-20261126",
+      "related_catalog_component": "legal-release-coordinator",
+      "related_tasks": [
+        "LIR-21"
+      ],
+      "software_qualification": {
+        "bytes": 30167,
+        "path": "/tmp/P2-V4-CLI-attached-handoff-existing-ordinary40-v543-544nun89/actual-P2-retained-type-handoff-ordinary40-closed-small-v543.json",
+        "sha256": "839f283fd0d1a9b418cc9246c5f3f7c9b6fa681255e71e2f365eda03f04fd4c8"
+      },
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
+      "task": "LIR-14"
     }
   },
   "programme_goal_hierarchy": {

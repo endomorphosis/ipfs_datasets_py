@@ -34366,6 +34366,178 @@
       "root": "artifact_workspace",
       "scope": "Published release CLI saves and reloads byte-exact retained type eligibility under independently selected input pins.",
       "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase2_physical_v4_cli_attached_retained_type_eligibility_20261126",
+      "closed_software_facts": {
+        "actual_READ3": {
+          "bytes": 8662,
+          "path": "/tmp/Root-Phase2-V4-retained-handoff-attachment-existing-READ3-v542-rrs9l9uw/actual-Phase2-retained-type-closure-READ3-v542-closed.json",
+          "sha256": "48d01248728d7c187a12faf17d03e48dc58ce261fe203494568044520cac61ae"
+        },
+        "actual_Source2_install": {
+          "bytes": 9893,
+          "path": "/tmp/Root-Phase2-retained-type-closure-EOF-correction-Source1-v541-n8sodqvt/actual-Phase2-retained-type-closure-exact2-Source-closed-v541-corrected.json",
+          "sha256": "d44ca861649317c173efd66ab12682aef21fa94f377ff54cda8e353b5eb6d75c"
+        },
+        "actual_ordinary_counts": {
+          "duplicates": 0,
+          "errors": 0,
+          "failures": 0,
+          "functions": 18,
+          "passed": 40,
+          "skipped": 0,
+          "tests": 40
+        },
+        "checked_Lean_declared_eligible": false,
+        "code_publication": {
+          "bytes": 22547,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-retained-type-closure-exact2-ordinary40-three-FF-publication-v544.json",
+          "sha256": "64e0812c3dafada255bb6444c454dafd1845567c056a528c58a5fba67f47fd7c"
+        },
+        "evaluation_gold_mask": 0,
+        "evidence_ordinal": 561,
+        "exact_Source2_and_Source1_EOF_correction_lineage": {
+          "actual_Source1": {
+            "bytes": 4208,
+            "path": "/tmp/Root-Phase2-retained-type-closure-EOF-correction-Source1-v541-n8sodqvt/actual-Phase2-previous-owned-EOL-Source1-closed.json",
+            "sha256": "b84a338fd724c89e98a2de14dc6d0af18e165b7769f6b4bb3a75d2827fdc0979"
+          },
+          "actual_Source1_raw": {
+            "bytes": 47492,
+            "path": "/tmp/Root-Phase2-retained-type-closure-EOF-correction-Source1-v541-n8sodqvt/actual-output/actual-existing-four-Python-code-CAS-receipt.json",
+            "sha256": "bad51f15d98a98021abcbb1e77204197b687b407536f7079fe6a6aa250b98a51"
+          },
+          "composite": {
+            "bytes": 9893,
+            "path": "/tmp/Root-Phase2-retained-type-closure-EOF-correction-Source1-v541-n8sodqvt/actual-Phase2-retained-type-closure-exact2-Source-closed-v541-corrected.json",
+            "sha256": "d44ca861649317c173efd66ab12682aef21fa94f377ff54cda8e353b5eb6d75c"
+          },
+          "correction_full_charge": {
+            "bytes": 2114,
+            "path": "/tmp/Root-Phase2-retained-type-closure-EOF-correction-Source1-v541-n8sodqvt/Source-only-existing-one-target-cap-full-retained.json",
+            "sha256": "378f76ebe8e3259222975f79c4e67e6841b45706d2d32aa7b509f346ca2f0b42"
+          },
+          "final_candidate": {
+            "bytes": 11525,
+            "path": "/tmp/Root-Phase2-retained-type-closure-EOF-correction-Source1-v541-n8sodqvt/SEALED-final-exact2-one-EOF-newline-candidate.json",
+            "sha256": "15a1caed8428afa92c530d740bb6adad256f4833d75e247d44a5557b04b571d7"
+          },
+          "initial_Source2": {
+            "bytes": 8858,
+            "path": "/tmp/Root-Phase2-release-attached-retained-type-existing-Source2-v541-aym0cy9i/actual-Phase2-retained-type-closure-exact2-Source-closed-v541.json",
+            "sha256": "8c81250cbe6b4e7b199e6167816d6699da7afcfc431c9c2ab5dd8b1989003b4f"
+          },
+          "initial_candidate": {
+            "bytes": 10656,
+            "path": "/tmp/Root-P2-release-consumes-retained-type-private-v01-90tq4783/SEALED-Phase2-V4-retained-handoff-attachment-private-exact2.json",
+            "sha256": "0c6ebfc9d62da7bb31ef4610a72068a4cc0ac700fe66c8e996680df41461ddce"
+          },
+          "initial_correction_refusal": {
+            "bytes": 2773,
+            "path": "/tmp/Root-Phase2-retained-type-closure-EOF-correction-Source1-v541-ffrxdop4/actual-output/actual-existing-four-Python-code-CAS-receipt.json",
+            "sha256": "7cb91109d9a919f440f2510f5bffd629eeeaef04ae4f521361889e864b2df072"
+          },
+          "initial_correction_refusal_full_charge": {
+            "bytes": 1549,
+            "path": "/tmp/Root-Phase2-retained-type-closure-EOF-correction-Source1-v541-ffrxdop4/Source-only-existing-one-target-cap-full-retained.json",
+            "sha256": "9e9a2c5af40ad1989f1b897bc0ce43b9c99ec64265bcad9f9ae91dd967ec826e"
+          },
+          "pre_stage_whitespace_refusal": "test_corpus_release_cli.py:4475: new blank line at EOF"
+        },
+        "exact_release_request_component_norm_definition_and_existing_views_bound": true,
+        "fixture_only": true,
+        "fresh_compiler_Native_or_model_execution": false,
+        "local_exact_two_freeze": {
+          "bytes": 15444,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-retained-type-closure-exact2-local-freeze-v541.json",
+          "sha256": "1a7940a1011b516fac2a005dcbbfa2f4f4e5a28a3f097ccd6b491cf664146d3a"
+        },
+        "ordinary40": {
+          "bytes": 30167,
+          "path": "/tmp/P2-V4-CLI-attached-handoff-existing-ordinary40-v543-544nun89/actual-P2-retained-type-handoff-ordinary40-closed-small-v543.json",
+          "sha256": "839f283fd0d1a9b418cc9246c5f3f7c9b6fa681255e71e2f365eda03f04fd4c8"
+        },
+        "ordinary_cohorts": {
+          "new_attachment_cases": 6,
+          "retained": 34
+        },
+        "ordinary_raw_JUnit": {
+          "bytes": 7496,
+          "path": "/tmp/P2-V4-CLI-attached-handoff-existing-ordinary40-v543-544nun89/actual-output/corpus-release-public-v4-retained-type-handoff-ordinary40-run-result0-output1.bin",
+          "sha256": "f6984d812200ec1a94551fadf32a93268b529104bba3f32f3bcae7add07319d5"
+        },
+        "owning_test": "tests/unit/logic/autoformal/test_corpus_release_cli.py",
+        "physical_V4_explicit_full_retained_input_selection": true,
+        "prior_Guide560": {
+          "bytes": 15433,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-guide560-four-doc-three-FF-publication-small-v540.json",
+          "sha256": "f88485ffae6ee5074068b08d534348e2e66f5bddd48b196745d1bfae205319e3"
+        },
+        "prior_actual_ordinary34": {
+          "bytes": 28620,
+          "path": "/tmp/P2-retained-type-CLI-ordinary34-v538-static-handoff-kU3niiJ0/actual-P2-retained-type-eligibility-save-reload-ordinary34-closed-small-v538.json",
+          "sha256": "a72669b58253989d9898cd1da288429756b53b7282c1cdf2507f7dd98f72739b"
+        },
+        "prior_save_reload_publication": {
+          "bytes": 21589,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-retained-type-CLI-save-reload-exact2-ordinary34-three-FF-publication-v539.json",
+          "sha256": "e0968bc65aa3b31c7f2d5e0de04f1207f0ad56b034c14815bb66a4d0a149959e"
+        },
+        "private_after": {
+          "failed": 0,
+          "passed": 7
+        },
+        "private_baseline_raw_JUnit": {
+          "bytes": 26159,
+          "path": "/tmp/Root-P2-release-consumes-retained-type-private-v01-90tq4783/red-v02/result.xml",
+          "sha256": "d6be233a27d7b20005ce54b1d8f9cd4624ae34ca39133c748f172857c85de656"
+        },
+        "private_before": {
+          "failed": 6,
+          "failed_cases": [
+            "test_physical_v4_cli_consumes_only_the_reloaded_retained_handoff[exact]",
+            "test_physical_v4_cli_consumes_only_the_reloaded_retained_handoff[other-physical-request]",
+            "test_physical_v4_cli_consumes_only_the_reloaded_retained_handoff[sibling-unit]",
+            "test_physical_v4_cli_consumes_only_the_reloaded_retained_handoff[repinned-saved-bytes]",
+            "test_closure_cli_refuses_partial_or_unsupported_retained_selection_before_read[reviewed-source-use-whole-norm-physical-source-replay/v1-requires all replay input pins]",
+            "test_closure_cli_refuses_partial_or_unsupported_retained_selection_before_read[reviewed-norm-v3-physical-three-cache-replay/v1-requires the physical V4 profile]"
+          ],
+          "passed": 1
+        },
+        "private_candidate": {
+          "bytes": 11525,
+          "path": "/tmp/Root-Phase2-retained-type-closure-EOF-correction-Source1-v541-n8sodqvt/SEALED-final-exact2-one-EOF-newline-candidate.json",
+          "sha256": "15a1caed8428afa92c530d740bb6adad256f4833d75e247d44a5557b04b571d7"
+        },
+        "private_candidate_raw_JUnit": {
+          "bytes": 1279,
+          "path": "/tmp/Root-P2-release-consumes-retained-type-private-v01-90tq4783/repeat-green/result.xml",
+          "sha256": "57b1e95248762707a93ecc7a29ed5aad3300e2549b19feb197c491ae5b20c733"
+        },
+        "proof_receipt_or_legal_review_or_corpus_admission": false,
+        "proof_status": "pending",
+        "related_catalog_component": "legal-release-coordinator",
+        "related_tasks": [
+          "LIR-21"
+        ],
+        "release_CLI": "scripts/ops/legal_ir/validate_uscode_corpus_release.py",
+        "retained_checked_review_and_conditional_observation_detached_from_ordinary_source_replay": true,
+        "schema": "Guide561-Phase2-physical-v4-CLI-attached-retained-type-eligibility/v1",
+        "task": "LIR-14",
+        "task_status_changed": false,
+        "training_mask": 0,
+        "unchanged_ordinary_closure_payload": true
+      },
+      "evidence_ordinal": 561,
+      "id": "phase2-physical-v4-cli-attached-retained-type-eligibility-evidence561-20261126",
+      "observed_bytes": 8568,
+      "observed_sha256": "f906e92660b01f97ee4b4433198db210e54f7ad2d0890f1217b7ef0ce495cb96",
+      "path": "/tmp/P2-physical-v4-CLI-retained-attachment-guide561-existing-composer-INERT-x5nrikjv/one-guide561-Phase2-physical-v4-CLI-attached-retained-type-eligibility-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Published physical V4 CLI explicitly attaches independently reloaded retained eligibility beside an unchanged source-only closure.",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
     }
   ]
 }
