@@ -580,7 +580,8 @@ def _planned_physical_probe_inputs():
     files = (
         (source_path, "import Lean\nnamespace PhysicalFixture\n"
          "theorem useDefinition : " + proposition + " := by intros; trivial\n"
-         "example : " + proposition + " := @useDefinition\nend PhysicalFixture\n"),
+         "example : " + proposition + " := @useDefinition\n"
+         "#print axioms useDefinition\nend PhysicalFixture\n"),
         ("lakefile.toml", 'name = "fixture"\n[[lean_lib]]\nname = "legal"\nroots = ["PhysicalFixture"]\n'),
         ("lean-toolchain", toolchain + "\n"),
     )
@@ -661,7 +662,8 @@ def test_planned_physical_type_probe_refuses_changed_original_binding(mutation):
             request, files, expected_request_sha256=expected)
 
 
-@pytest.mark.parametrize("mutation", [None, "wrong-line", "duplicate", "no-original-axioms",
+@pytest.mark.parametrize("mutation", [None, "wrong-line", "wrong-original-line",
+    "wrong-original-column", "duplicate", "no-original-axioms",
     "stderr-marker", "defeq-false", "loose-variable", "wrong-digest", "expr-equal-contradiction"])
 def test_planned_physical_type_capture_binds_exact_kernel_diagnostics(mutation):
     request, files = _planned_physical_probe_inputs()
@@ -690,7 +692,10 @@ def test_planned_physical_type_capture_binds_exact_kernel_diagnostics(mutation):
         row["alias_type"]["body"] = {"kind": "bvar", "index": 1}
     line = state["type_report_line"] + (1 if mutation == "wrong-line" else 0)
     marker = f"info: {module}:{line}:0: CORPUS_TYPE_CHECK:".encode() + canonical(row) + b"\n"
-    original_report = f"info: {state['source_path']}:5:0: '{original}' does not depend on any axioms\n".encode()
+    original_line = 6 if mutation == "wrong-original-line" else 5
+    original_column = 1 if mutation == "wrong-original-column" else 0
+    original_report = (f"info: {state['source_path']}:{original_line}:{original_column}: "
+                       f"'{original}' does not depend on any axioms\n").encode()
     alias_report = f"info: {module}:{state['alias_axiom_report_line']}:0: '{alias}' does not depend on any axioms\n".encode()
     stdout = (b"" if mutation == "no-original-axioms" else original_report) + alias_report + marker
     if mutation == "duplicate":

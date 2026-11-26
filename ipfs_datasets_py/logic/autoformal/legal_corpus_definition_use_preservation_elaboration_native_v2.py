@@ -693,7 +693,8 @@ def read_planned_physical_whole_norm_type_capture_v2(
           "exact positive physical type and alias report locations required")
 
     name = probe.replace(".", "/") + ".lean"
-    source = dict(preparation.files).get(name)
+    files = dict(preparation.files)
+    source = files.get(name)
     _need(type(source) is str and _sha(source.encode("utf-8")) == manifest["probe_source_sha256"],
           "exact physical type probe source required")
     lines = source.splitlines()
@@ -701,12 +702,19 @@ def read_planned_physical_whole_norm_type_capture_v2(
           and lines[alias_line - 1] == "#print axioms " + alias.rsplit(".", 1)[1]
           and lines[type_line - 1] == "run_elab CorpusPreservationElaboration.check `" + original + " `" + alias,
           "physical observation lines differ from the pinned probe source")
+    original_source = files.get(manifest["source_path"])
+    _need(type(original_source) is str, "exact physical original theorem source required")
+    original_command = "#print axioms " + original.rsplit(".", 1)[1]
+    original_lines = [number for number, line in enumerate(original_source.split("\n"), 1)
+                      if line == original_command]
+    _need(len(original_lines) == 1, "exact unique original theorem axiom command required")
+    original_axiom_line, = original_lines
     probe_path = re.escape(name)
     source_path = re.escape(manifest["source_path"])
     info = r"info: (?:\./)*"
     type_report = re.compile(info + probe_path + rf":{type_line}:0: CORPUS_TYPE_CHECK:(.+)")
     axiom_reports = {
-        original: re.compile(info + source_path + r":[1-9][0-9]*:[0-9]+: "
+        original: re.compile(info + source_path + rf":{original_axiom_line}:0: "
                              + re.escape(f"'{original}' does not depend on any axioms")),
         alias: re.compile(info + probe_path + rf":{alias_line}:0: "
                           + re.escape(f"'{alias}' does not depend on any axioms")),
