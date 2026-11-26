@@ -4541,3 +4541,95 @@ def test_reviewed_rich_heldout_same_extracted_view_refuses_before_actual_produce
     with pytest.raises(ValueError, match="heldout and TRAIN share a reviewed extracted source view"):
         _producer_evaluate(options, producer)
     assert not calls
+
+
+def test_reviewed_v4_endpoint_admission_withdrawal_blocks_saved_masks_and_ranking(monkeypatch):
+    """Propagate a genuinely revoked fictional admission through the existing observation map."""
+    from copy import deepcopy
+    from ipfs_datasets_py.logic.autoformal import legal_norm_content_adjudication_v1 as legacy
+    from ipfs_datasets_py.logic.autoformal import legal_reviewed_norm_admission_v3 as admission
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_structured_retrieval as structured
+    from tests.unit.logic.autoformal import test_legal_reviewed_norm_admission_v3 as mixed
+    from tests.unit.logic.formalization.autoencoder import test_alignment_relation_mask_handoff as masks
+
+    signed_endpoints = []
+    refresh = mixed.refresh_signed_reviews
+
+    def remember_signed_endpoint(current, owner):
+        result = refresh(current, owner)
+        signed_endpoints.append(current)
+        return result
+
+    # Keep the actual fixture's independently generated endpoint keys.
+    with monkeypatch.context() as capture:
+        capture.setattr(mixed, "refresh_signed_reviews", remember_signed_endpoint)
+        case = masks.fixtures.reviewed_pair_fixture_v4()
+    assert len(signed_endpoints) == 2
+    args, original = masks.reviewed_mask_arguments_v2(case)
+    mask = masks.subject
+    ready = mask.compile_reviewed_train_relation_masks_v4(*args, **original)
+    assert ready["reviewed_objective_mask_ready"] is True
+    assert (ready["source_row_count"], ready["formal_row_count"]) == (4, 6)
+    assert ready["objective_positive_mask"] == case["expected_positive_mask"]
+    assert ready["objective_permitted_negative_pair_count"] > 0
+    assert ready["production_contrastive_mask"] == ready["training_gold_mask"] == ready["evaluation_gold_mask"] == 0
+    receipt_pin = legacy.norm_content_adjudication_sha256(ready)
+    assert mask.validate_reviewed_train_relation_masks_v4(
+        ready, *args, expected_receipt_sha256=receipt_pin, **original,
+    ) == ready
+
+    identity = "fixture:v4-admission-b"
+    historical = original["preparation_inputs"]["endpoint_admissions"][identity]
+    helper = mixed.fixture
+    current = signed_endpoints[1]
+    assert legacy.norm_content_adjudication_sha256(current["preparation"]) == (
+        historical["kwargs"]["expected_preparation_sha256"]
+    )
+    current_args, current_options = helper.reviewed_assessment_arguments_v2(admission, current)
+    baseline = admission.assess_reviewed_norm_admission_v3(*current_args, **current_options)
+    assert baseline["semantic_use_eligible"] and "training" in baseline["permitted_uses"]
+    assert legacy.norm_content_adjudication_sha256(baseline) == historical["expected_report_sha256"]
+    review_id = current["reviews"][0]["review_id"]
+    key_id = current["reviews"][0]["key_id"]
+    current["registry"]["revocation_generation"] += 1
+    key = next(row for row in current["registry"]["keys"] if row["key_id"] == key_id)
+    key["revoked_at_utc"] = current_options["at_time_utc"]
+    helper.reviewed_resign_v2(current)
+    mixed.assert_signatures_valid(current)
+    current_args, current_options = helper.reviewed_assessment_arguments_v2(admission, current)
+    revoked = admission.assess_reviewed_norm_admission_v3(*current_args, **current_options)
+    review = next(row for row in revoked["review_authority"]["reviews"] if row["review_id"] == review_id)
+    assert "key_revoked" in review["blockers"]
+    assert revoked["semantic_use_eligible"] is False and revoked["permitted_uses"] == []
+    assert revoked["training_mask"] == revoked["evaluation_gold_mask"] == 0
+
+    offered = deepcopy(original)
+    dependency_id = case["preparation_inputs"]["body"]["ledger_id"] + ":admission:" + identity
+    assert original["observed_artifact_sha256s"][dependency_id] == historical["expected_report_sha256"]
+    offered["observed_artifact_sha256s"][dependency_id] = None
+    blocked = mask.compile_reviewed_train_relation_masks_v4(*args, **offered)
+    assert blocked["reviewed_objective_mask_ready"] is False
+    assert not any(blocked["current_endpoint_blockers"].values())
+    assert "required_dependency_closure_not_current" in blocked["objective_blockers"]
+    assert not any(map(any, blocked["objective_positive_mask"]))
+    assert not any(map(any, blocked["objective_permitted_negative_mask"]))
+    with pytest.raises(ValueError, match="receipt differs from complete replay"):
+        mask.validate_reviewed_train_relation_masks_v4(
+            ready, *args, expected_receipt_sha256=receipt_pin, **offered,
+        )
+
+    model = object.__new__(structured.joint.ReviewedLegalJointRetriever)
+    model._checkpoint = {"schema": structured.joint.REVIEWED_V4_SCHEMA}
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("withdrawn endpoint admission reached ranking")
+
+    monkeypatch.setattr(structured.joint.ReviewedLegalJointRetriever, "retrieve", forbidden)
+    query = {"id": "fixture:withdrawn-admission-query", "source_text": "Independent fictional query."}
+    result = structured.build_reviewed_rich_context_candidates_v4(
+        model, [query], *args, retrieval_inputs=offered, example_consumer_inputs={},
+    )
+    assert result["status"] == "abstained_current_index_unavailable"
+    assert result["candidate_count"] == 0 and result["abstention_count"] == 1
+    assert result["rows"] == [] and result["model_forward_executed"] is False
+    assert "required_dependency_closure_not_current" in result["blockers"]
