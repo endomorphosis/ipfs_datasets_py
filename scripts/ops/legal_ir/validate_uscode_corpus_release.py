@@ -67,6 +67,9 @@ def _parser():
     ), default="reviewed-norm-v2-local-replay/v1")
     for flag in _RETAINED_REPLAY_FLAGS + ("saved", "saved-sha256"):
         closure.add_argument("--" + flag)
+    physical_request = closure.add_mutually_exclusive_group()
+    physical_request.add_argument("--retain-physical-request", metavar="DEST")
+    physical_request.add_argument("--replay-retained-artifacts", action="store_true")
     retained = commands.add_parser(_RETAINED_TYPE_COMMAND, add_help=False)
     retained.add_argument("-h", "--help", action="store_true")
     for flag in _RETAINED_REPLAY_FLAGS:
@@ -352,6 +355,9 @@ def main(argv=None):
                 result["retained_type_eligibility_usage"] = (
                     f"validate-closure --profile {_WHOLE_NORM_V4_PROFILE} --request PATH --request-sha256 SHA "
                     f"--saved PATH --saved-sha256 SHA {_RETAINED_REPLAY_USAGE}")
+                result["retained_physical_request_usage"] = (
+                    f"validate-closure --profile {_WHOLE_NORM_V4_PROFILE} --request PATH --request-sha256 SHA "
+                    "(--retain-physical-request DEST | --replay-retained-artifacts)")
                 result["declared_eligibility"] = {
                     "flag": "--include-declared-eligibility",
                     "supported_profiles": [_PHYSICAL_V3_PROFILE, _WHOLE_NORM_V4_PROFILE],
@@ -366,6 +372,9 @@ def main(argv=None):
                 sys.stdout.write(json.dumps(result, sort_keys=True, ensure_ascii=False, allow_nan=False) + "\n")
                 return 0
             if command == "validate-closure":
+                if ((args.retain_physical_request is not None or args.replay_retained_artifacts)
+                        and args.profile != _WHOLE_NORM_V4_PROFILE):
+                    raise CLIError("retained physical request options require the physical V4 profile")
                 from ipfs_datasets_py.logic.autoformal.legal_release_coordinator_v1 import (
                     MAX_CLOSURE_REQUEST_BYTES, validate_uscode_release_closure_v1,
                 )
@@ -403,6 +412,8 @@ def main(argv=None):
                         validate_uscode_release_closure_v4,
                     )
                     validator = validate_uscode_release_closure_v4
+                if args.replay_retained_artifacts:
+                    eligibility_options["replay_retained_artifacts"] = True
                 closure = validator(raw, expected_request_sha256=args.request_sha256,
                     **eligibility_options)
                 result = _receipt(status="success", command=command,
@@ -411,6 +422,14 @@ def main(argv=None):
                 if retained_handoff is not None:
                     result["retained_type_eligibility"] = _bind_retained_type_to_closure(
                         closure, retained_handoff, args.saved_sha256)
+                if args.retain_physical_request is not None:
+                    _write_new_handoff(args.retain_physical_request, raw, maximum_bytes=request_limit)
+                    result["retained_physical_request"] = {
+                        "path": str(Path(args.retain_physical_request).absolute()),
+                        "bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest(),
+                    }
+                if args.replay_retained_artifacts:
+                    result["physical_input_replay"] = "embedded-reviewed-artifacts"
                 sys.stdout.write(json.dumps(result, sort_keys=True, ensure_ascii=False, allow_nan=False) + "\n")
                 return 0
             from ipfs_datasets_py.logic.autoformal.corpus_contracts import (

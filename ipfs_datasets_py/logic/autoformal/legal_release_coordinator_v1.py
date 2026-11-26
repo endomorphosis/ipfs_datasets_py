@@ -589,7 +589,8 @@ REVIEWED_PHYSICAL_CROSSWALK_PROFILE = "identity-text-complete-reviewed-graph/v1"
 
 
 def _validate_uscode_release_physical_closure(request_raw: bytes, *, expected_request_sha256: str,
-        reviewed_version: int, _observe_checked_context=None, _native_transport="chunk-index/v1", original_parent_handle=None) -> dict:
+        reviewed_version: int, _observe_checked_context=None, _native_transport="chunk-index/v1",
+        original_parent_handle=None, replay_retained_artifacts=False) -> dict:
     """Replay a reviewed, exact physical law/span/entity-to-IR component.
 
     Crosswalk bytes are versioned cross-reference dependencies of every reviewed
@@ -627,6 +628,8 @@ def _validate_uscode_release_physical_closure(request_raw: bytes, *, expected_re
 
     _need(type(reviewed_version) is int and reviewed_version in (2, 3, 4),
           "explicit supported physical reviewed closure version required")
+    _need(type(replay_retained_artifacts) is bool and (not replay_retained_artifacts or reviewed_version == 4),
+          "retained physical artifact replay requires the explicit V4 domain")
     _need(type(_native_transport) is str and _native_transport in ("chunk-index/v1", "direct-packet/v1"),
           "explicit supported physical native transport required")
     direct = _native_transport == "direct-packet/v1"
@@ -745,6 +748,12 @@ def _validate_uscode_release_physical_closure(request_raw: bytes, *, expected_re
           "unsupported physical closure schema/profile")
     physical_inputs = request["physical_inputs"]
     keys(physical_inputs, {"law_path", "entity_path"}, "retained physical inputs")
+    if replay_retained_artifacts:
+        _need(request["native"] is None, "retained physical artifact replay cannot acquire Native authority")
+        for spelling in physical_inputs.values():
+            path = Path(text(spelling, "original physical path"))
+            _need(path.anchor == os.sep and ".." not in path.parts,
+                  "literal absolute original physical path required")
     component, pins = request["component"], request["pins"]
     extra_roles = {"reviewed_crosswalk", "entity_parquet"}
     base_roles = {"admission", "graph", "dependency", "preservation", "replay", "hf_package", "source_span_entity_join"}
@@ -928,8 +937,24 @@ def _validate_uscode_release_physical_closure(request_raw: bytes, *, expected_re
     closing_failures = []
     try:
         with ExitStack() as stack:
-            law_path, law_fence = stack.enter_context(held_file(physical_inputs["law_path"], law_artifact.content))
-            entity_path, entity_fence = stack.enter_context(held_file(physical_inputs["entity_path"], entity_raw))
+            paths = physical_inputs
+            if replay_retained_artifacts:
+                from tempfile import TemporaryDirectory
+
+                # The exact request already carries both descriptor-bound
+                # Parquet bodies. Its original locators stay in the hashed wire.
+                directory = Path(stack.enter_context(
+                    TemporaryDirectory(prefix="legal-v4-retained-physical-"))).resolve(strict=True)
+                paths = {}
+                for role, filename, content in (("law_path", "laws.parquet", law_artifact.content),
+                                                 ("entity_path", "entity.parquet", entity_raw)):
+                    path = directory / filename
+                    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+                    with os.fdopen(fd, "wb") as stream:
+                        stream.write(content)
+                    paths[role] = str(path)
+            law_path, law_fence = stack.enter_context(held_file(paths["law_path"], law_artifact.content))
+            entity_path, entity_fence = stack.enter_context(held_file(paths["entity_path"], entity_raw))
             captured_context = []
             if _observe_checked_context is None:
                 opened = core_replay()
@@ -2009,7 +2034,8 @@ def _observe_physical_v4_checked_native(context, request_raw, selection, review)
 
 
 def validate_uscode_release_closure_v4(request_raw, *, expected_request_sha256,
-        include_declared_eligibility=False, current_review=None, checked_native=None):
+        include_declared_eligibility=False, current_review=None, checked_native=None,
+        replay_retained_artifacts=False):
     """Replay source-only V4 bytes, optionally joining two live observations.
 
     A caller may independently select current trust digests, evaluation time
@@ -2021,9 +2047,17 @@ def validate_uscode_release_closure_v4(request_raw, *, expected_request_sha256,
     its exact planned whole-norm request, realization, packet and independent
     pins. The loader joins a single checked conditional theorem to the replay.
     Graph-wide proof status and admission still require their own evidence.
+
+    With replay_retained_artifacts, use the exact reviewed Parquet bodies in
+    the pinned request after the original local files are unavailable. The
+    historical locations and the physical request digest remain unchanged.
+    This local replay cannot consume an original Native handle.
     """
     _release_v4_policy()
     _need(type(include_declared_eligibility) is bool, "explicit boolean eligibility selection required")
+    _need(type(replay_retained_artifacts) is bool, "explicit boolean retained physical artifact replay required")
+    _need(not replay_retained_artifacts or checked_native is None,
+          "retained physical artifact replay cannot acquire Native authority")
     _need(checked_native is None or current_review is not None,
           "checked Native requires independently selected current review")
     observer = None
@@ -2040,7 +2074,8 @@ def validate_uscode_release_closure_v4(request_raw, *, expected_request_sha256,
 
     report = _validate_uscode_release_physical_closure(request_raw,
         expected_request_sha256=expected_request_sha256, reviewed_version=4,
-        _native_transport="direct-packet/v1", _observe_checked_context=observer)
+        _native_transport="direct-packet/v1", _observe_checked_context=observer,
+        replay_retained_artifacts=replay_retained_artifacts)
     if observer is not None:
         _need(len(observations) == 1, "exactly one closed current review observation required")
         review, checked = observations[0]

@@ -4472,3 +4472,178 @@ def test_closure_cli_refuses_partial_or_unsupported_retained_selection_before_re
     rc, receipt = _validate_closure_with_retained_type_cli(args, capsys)
     assert rc == 1 and error in receipt["error"], receipt
     assert "closure" not in receipt and "retained_type_eligibility" not in receipt
+
+
+def _owned_portable_v4_request(tmp_path, physical_closure_material_v3):
+    material = _physical_source_material(
+        tmp_path / "owned-portable-material",
+        source_texts=physical_closure_material_v3["texts"],
+    )
+    control = reviewed_physical_whole_norm_control_v2(material)
+    request = control["physical_request"]
+    raw = control["physical_request_raw"]
+    pin = hashlib.sha256(raw).hexdigest()
+    assert pin == control["physical_request_sha256"]
+    paths = tuple(Path(request["physical_inputs"][key]) for key in ("law_path", "entity_path"))
+    for key, path in zip(("law", "entity"), paths, strict=True):
+        assert path == Path(material[key + "_path"]) and path.is_relative_to(tmp_path)
+        assert path != Path(physical_closure_material_v3[key + "_path"])
+        assert path.read_bytes() == material[key + "_bytes"]
+    return control, raw, pin, paths
+
+
+def _portable_v4_closure_arguments(path, pin):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+
+    return ["validate-closure", "--profile", release.CLOSURE_PROFILE_V4,
+            "--request", str(path), "--request-sha256", pin]
+
+
+def test_physical_v4_replays_retained_request_after_owning_paths_disappear(
+        tmp_path, capsys, physical_closure_material_v3):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+
+    control, raw, pin, physical_paths = _owned_portable_v4_request(tmp_path, physical_closure_material_v3)
+    original_request = tmp_path / "original.request"
+    original_request.write_bytes(raw)
+    review = release.validate_uscode_release_closure_v4(
+        raw, expected_request_sha256=pin, current_review=_physical_v4_review_observation_inputs(control))
+    case = _authored_type_replay_for_physical_closure(control, review, "deontic_fol")
+    *_, sidecar_args = _write_retained_type_eligibility_cli_files(tmp_path / "authored-sidecar", *case)
+    saved_type = tmp_path / "retained-type.json"
+    rc, saved = _retained_type_eligibility_cli_call(sidecar_args + ["--output", str(saved_type)], capsys)
+    assert rc == 0 and saved["status"] == "success", saved
+    sidecar_bytes = saved_type.read_bytes()
+    attachment = sidecar_args[1:] + ["--saved", str(saved_type), "--saved-sha256", saved["artifact"]["sha256"]]
+
+    retained_request = tmp_path / "retained.request"
+    args = _portable_v4_closure_arguments(original_request, pin) + attachment
+    rc, original = _validate_closure_with_retained_type_cli(args + [
+        "--retain-physical-request", str(retained_request),
+    ], capsys)
+    assert rc == 0 and original["status"] == "success", original
+    assert original.pop("retained_physical_request") == {
+        "path": str(retained_request), "bytes": len(raw), "sha256": pin,
+    }
+    assert "physical_input_replay" not in original
+    assert retained_request.read_bytes() == raw
+    assert original["retained_type_eligibility"]["handoff"] == json.loads(sidecar_bytes)
+
+    # Remove only the per-test live inputs. The module fixture is shared with
+    # older controls. The saved wire keeps the original absolute spellings.
+    original_request.unlink()
+    for path in physical_paths:
+        path.unlink()
+    assert not original_request.exists() and all(not path.exists() for path in physical_paths)
+    replay_args = _portable_v4_closure_arguments(retained_request, pin) + attachment
+    rc, unavailable = _validate_closure_with_retained_type_cli(replay_args, capsys)
+    assert rc == 1 and unavailable["status"] == "error", unavailable
+    assert "closure" not in unavailable and "physical_input_replay" not in unavailable
+
+    wrong_pin = "0" * 64 if pin != "0" * 64 else "1" * 64
+    rc, unpinned = _validate_closure_with_retained_type_cli(
+        _portable_v4_closure_arguments(retained_request, wrong_pin)
+        + ["--replay-retained-artifacts"], capsys)
+    assert rc == 1 and unpinned["status"] == "error" and "sha256" in unpinned["error"].lower(), unpinned
+    assert "closure" not in unpinned and "retained_type_eligibility" not in unpinned
+
+    rc, replayed = _validate_closure_with_retained_type_cli(
+        replay_args + ["--replay-retained-artifacts"], capsys)
+    assert rc == 0 and replayed["status"] == "success", replayed
+    assert replayed.pop("physical_input_replay") == "embedded-reviewed-artifacts"
+    assert replayed == original
+    closure = replayed["closure"]
+    assert closure["request_sha256"] == pin and closure["fixture_only"] is True
+    assert closure["local_replay_complete"] is closure["independent_reviewed_crosswalk_verified"] is True
+    assert closure["declared_qualification"]["dimensions"]["proof"]["status"] == "pending"
+    assert closure["declared_eligibility"]["views"]["checked_lean"]["declared_eligible"] is False
+    assert closure["native_receipt_replayed"] is closure["release_ready"] is closure["proof_verified"] is False
+    assert closure["admission_mask"] == closure["training_mask"] == closure["evaluation_gold_mask"] == 0
+    assert retained_request.read_bytes() == raw and saved_type.read_bytes() == sidecar_bytes
+    assert all(not path.exists() for path in physical_paths)
+
+
+@pytest.mark.parametrize("damage", ["overwrite", "changed-live-bytes"])
+def test_physical_v4_retention_refuses_overwrite_and_changed_live_bytes(
+        tmp_path, capsys, physical_closure_material_v3, damage):
+    _, raw, pin, physical_paths = _owned_portable_v4_request(tmp_path, physical_closure_material_v3)
+    original_request = tmp_path / "original.request"
+    original_request.write_bytes(raw)
+    retained_request = tmp_path / "retained.request"
+    args = _portable_v4_closure_arguments(original_request, pin) + ["--retain-physical-request", str(retained_request)]
+
+    if damage == "overwrite":
+        sentinel = b"unrelated prior bytes"
+        retained_request.write_bytes(sentinel)
+        fields = ("st_ctime_ns", "st_dev", "st_gid", "st_ino", "st_mode",
+                  "st_mtime_ns", "st_nlink", "st_size", "st_uid")
+        before = retained_request.lstat()
+        parent_before = tmp_path.lstat()
+        expected = "overwrite refused"
+    else:
+        law_path = physical_paths[0]
+        original_law = law_path.read_bytes()
+        assert len(original_law) > 8 and original_law[:4] == b"PAR1"
+        changed_law = original_law[:4] + bytes([original_law[4] ^ 1]) + original_law[5:]
+        law_path.write_bytes(changed_law)
+        assert len(changed_law) == len(original_law)
+        expected = "differs from exact reviewed artifact bytes"
+
+    rc, refused = _validate_closure_with_retained_type_cli(args, capsys)
+    assert rc == 1 and refused["status"] == "error" and expected in refused["error"], refused
+    assert "retained_physical_request" not in refused and "closure" not in refused
+    if damage == "overwrite":
+        assert retained_request.read_bytes() == sentinel
+        assert all(getattr(retained_request.lstat(), field) == getattr(before, field) for field in fields)
+        assert all(getattr(tmp_path.lstat(), field) == getattr(parent_before, field) for field in fields)
+    else:
+        assert not retained_request.exists() and law_path.read_bytes() == changed_law
+    assert original_request.read_bytes() == raw
+
+
+@pytest.mark.parametrize("selection", ["non-v4-retain", "non-v4-replay", "mutual"])
+def test_closure_cli_refuses_retained_physical_options_before_read(tmp_path, capsys, selection):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+
+    profile = release.CLOSURE_PROFILE_V4 if selection == "mutual" else release.CLOSURE_PROFILE_V3
+    retained_request = tmp_path / "retained.request"
+    retain = ["--retain-physical-request", str(retained_request)]
+    replay = ["--replay-retained-artifacts"]
+    options = {"non-v4-retain": retain, "non-v4-replay": replay, "mutual": retain + replay}[selection]
+    args = ["validate-closure", "--profile", profile, "--request", str(tmp_path / "missing.request"),
+            "--request-sha256", "0" * 64, *options]
+    # The argparse mutex can refuse before main() sets its command field.
+    from scripts.ops.legal_ir import validate_uscode_corpus_release as cli
+
+    rc = cli.main(args)
+    lines = capsys.readouterr().out.splitlines()
+    assert len(lines) == 1
+    refused = json.loads(lines[0])
+    assert rc == 1 and refused["status"] == "error", refused
+    assert all(refused[key] is False for key in (
+        "admitted", "formalized", "proof_verified", "source_semantics_verified", "source_authenticity_verified"))
+    error = refused["error"]
+    if selection == "mutual":
+        assert "--retain-physical-request" in error and "--replay-retained-artifacts" in error
+        assert "not allowed" in error or "mutually exclusive" in error
+    else:
+        assert "require the physical V4 profile" in error
+    assert "closure" not in refused and "retained_physical_request" not in refused
+    assert not retained_request.exists()
+
+
+@pytest.mark.parametrize("selection", ["nonboolean", "checked-native"])
+def test_physical_v4_retained_artifacts_rejects_untyped_or_native_selection(selection):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+
+    raw = b"must not decode an unselected physical request"
+    if selection == "nonboolean":
+        kwargs = {"replay_retained_artifacts": 1}
+    else:
+        kwargs = {"replay_retained_artifacts": True, "checked_native": {}}
+    with pytest.raises(ValueError) as refused:
+        release.validate_uscode_release_closure_v4(
+            raw, expected_request_sha256=hashlib.sha256(raw).hexdigest(), **kwargs)
+    error = str(refused.value).lower()
+    assert "replay" in error or "retained" in error
+    assert ("bool" if selection == "nonboolean" else "native") in error
