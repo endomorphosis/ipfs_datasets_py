@@ -3382,7 +3382,7 @@ def test_reviewed_inference_old_callback_cannot_admit_digest_omitted_policy(tmp_
         inference._check_reviewed_generation_policy(request, policy)
 
 
-def _reviewed_v11_bind_saved_source_control(worker, inputs, request, generation, offered):
+def _reviewed_v11_bind_saved_source_control(worker, inputs, request, generation, offered, *, reference_target):
     """Build the fictional source commitments independently of the saved outputs."""
     call = generation["last_call"]
     receipt = call["input_receipt"]
@@ -3412,6 +3412,13 @@ def _reviewed_v11_bind_saved_source_control(worker, inputs, request, generation,
             "source_wire_sha256": worker._digest(wire),
             "source_token_ids_sha256": worker._digest(inputs._reviewed_wire(tokens))})
 
+    references = [{"id": argument["id"], "source_text": argument["source_text"],
+        "canonical_ir": reference_target} for argument in arguments]
+    references_raw = worker._json_bytes(references)
+    reference_path = Path(request["source_contexts_artifact"]["path"]).with_name("selected-rows.json")
+    reference_path.write_bytes(references_raw)
+    request["rows_artifact"] = {"path": str(reference_path), "bytes": len(references_raw),
+        "sha256": worker._digest(references_raw)}
     contexts = {"profile": profile, "selection_context": selection, "rows": rows}
     contexts_raw = inputs._reviewed_wire(contexts)
     path = Path(request["source_contexts_artifact"]["path"])
@@ -3433,6 +3440,32 @@ def _reviewed_v11_bind_saved_source_control(worker, inputs, request, generation,
         **dict.fromkeys(("semantic_selection_supported", "source_facts_authenticated",
             "current_admission_replayed", "backend_execution_authorized", "target_access_performed",
             "training_stage_access_performed", "proof_authority", "corpus_admitted"), False))
+
+
+def _reviewed_v11_saved_evaluation(worker, inputs, request, generation):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_semantic_metrics as metrics
+
+    rows = json.loads(Path(request["rows_artifact"]["path"]).read_bytes())
+    arguments = [{"id": row["id"], "source_text": row["source_text"],
+        "context": {"permitted": [], "retrieved": []}} for row in rows]
+    outputs = generation["last_call"]["producer_outputs"]
+    output_by_id = {item["id"]: item for item in outputs}
+    # For malformed generation controls, the saved report is still only
+    # a bookkeeping fixture. The terminal checks must refuse those first.
+    cases = []
+    for row in rows:
+        result = output_by_id.get(row["id"], {"candidate": None, "outcome": "incomplete"})
+        cases.append({"case_id": row["id"], "reference": row["canonical_ir"],
+            "candidate": result["candidate"], "outcome": result["outcome"]})
+    comparison = metrics.evaluate_complete_norm_payloads(cases)
+    payload = {"configuration": {"checkpoint_declarations": request["checkpoint_declarations"]},
+        "reference_population": rows, "producer_arguments": arguments, "producer_outputs": outputs,
+        "declared_compiler_identity": request["compiler_commit"], "comparison": comparison}
+    return {"schema_version": "legal-ir-evaluation-artifact-v1",
+        "compiler_artifact": {"reviewed_source_span_producer_evaluation": payload},
+        "metrics": {"complete_norm_payload": comparison},
+        "metadata": {"source_generation_observation": generation,
+            "source_generation_input_commitment_sha256": worker._digest(inputs._reviewed_wire(generation["input_commitment"]))}}
 
 
 def _reviewed_v11_saved_control(tmp_path, disposition, *, model_vocab_padding=0, model_eos=None):
@@ -3493,7 +3526,13 @@ def _reviewed_v11_saved_control(tmp_path, disposition, *, model_vocab_padding=0,
             "raw_generation_outputs": [raw],
             "producer_outputs": [{key: raw[key] for key in ("id", "outcome", "candidate")}],
             "output_derivation": [proof]}}
-    _reviewed_v11_bind_saved_source_control(worker, inputs, request, generation, [(raw["id"], raw["unit_id"])])
+    _reviewed_v11_bind_saved_source_control(worker, inputs, request, generation, [(raw["id"], raw["unit_id"])],
+        reference_target=target)
+    request.setdefault("compiler_commit", "fixture:compiler")
+    request["checkpoint_declarations"] = {
+        "encoder": {"id": "fixture:encoder", "sha256": "a" * 64},
+        "decoder": {"id": request["backend_identity"]["backend_id"], "sha256": request["assets"]["model_checkpoint"]["sha256"]},
+    }
     loader = {"schema": "reviewed-local-digest-omitted-decoder-runtime-load/v1", "target_codec": codec,
         "expected_backend_identity": request["backend_identity"], "loaded_backend_identity": request["backend_identity"],
         "producer_pins": request["source_sha256"], "artifacts": [request["assets"][key] for key in
@@ -3506,7 +3545,8 @@ def _reviewed_v11_saved_control(tmp_path, disposition, *, model_vocab_padding=0,
     output = tmp_path / "outputs"; output.mkdir(); request["output_directory"] = str(output)
     def write():
         paths, descriptors = {}, {}
-        for name, value in (("evaluation", {}), ("loader", loader), ("generation", generation)):
+        evaluation = _reviewed_v11_saved_evaluation(worker, inputs, request, generation)
+        for name, value in (("evaluation", evaluation), ("loader", loader), ("generation", generation)):
             path = output / (name + ".json"); path.write_bytes(worker._json_bytes(value))
             paths[name] = str(path); descriptors[name] = {"path": str(path), "bytes": path.stat().st_size, "sha256": _sha(path)}
         return {"output_artifacts": descriptors, "inference": {"profile": request["schema"], **paths}}
@@ -3677,7 +3717,8 @@ def _reviewed_v11_three_source_coverage_control(tmp_path):
         for row, (identity, unit) in zip(call[name], offered, strict=True):
             row["id"] = identity
             if name == "raw_generation_outputs": row["unit_id"] = unit
-    _reviewed_v11_bind_saved_source_control(worker, inputs, request, generation, offered)
+    reference = json.loads(Path(request["rows_artifact"]["path"]).read_bytes())[0]["canonical_ir"]
+    _reviewed_v11_bind_saved_source_control(worker, inputs, request, generation, offered, reference_target=reference)
     return worker, request, generation, write, offered
 
 
@@ -3786,3 +3827,45 @@ def test_reviewed_inference_child_environment_preserves_only_existing_original_u
         assert environment["HF_HUB_OFFLINE"] == environment["TRANSFORMERS_OFFLINE"] == "1"
         assert not Path(private_home).exists() and not Path(original_userbase).exists()
     assert dict(os.environ) == before
+
+
+@pytest.mark.parametrize("damage", [None, "empty", "checkpoint", "references", "context", "output",
+    "observation", "commitment", "scores", "compiler"])
+def test_reviewed_inference_v11_evaluation_scores_the_verified_generation(tmp_path, damage):
+    worker, _, request, _, _, save = _reviewed_v11_saved_control(tmp_path, "complete")
+    cycle = save()
+    evaluation_path = Path(cycle["output_artifacts"]["evaluation"]["path"])
+    evaluation = json.loads(evaluation_path.read_bytes())
+    payload = evaluation["compiler_artifact"]["reviewed_source_span_producer_evaluation"]
+    if damage == "empty":
+        evaluation = {}
+    elif damage == "checkpoint":
+        payload["configuration"]["checkpoint_declarations"]["decoder"]["sha256"] = "f" * 64
+    elif damage == "references":
+        payload["reference_population"][0]["source_text"] += " changed"
+    elif damage == "context":
+        payload["producer_arguments"][0]["context"]["retrieved"].append("different example")
+    elif damage == "output":
+        payload["producer_outputs"][0].update(candidate=None, outcome="abstained")
+    elif damage == "observation":
+        evaluation["metadata"]["source_generation_observation"]["last_call"]["completed"] = False
+    elif damage == "commitment":
+        evaluation["metadata"]["source_generation_input_commitment_sha256"] = "e" * 64
+    elif damage == "scores":
+        for score in (payload["comparison"], evaluation["metrics"]["complete_norm_payload"]):
+            score["denominator"] += 1
+    elif damage == "compiler":
+        payload["declared_compiler_identity"] = "fixture:another-compiler"
+    raw = worker._json_bytes(evaluation)
+    evaluation_path.write_bytes(raw)
+    cycle["output_artifacts"]["evaluation"].update(bytes=len(raw), sha256=_sha(evaluation_path))
+    fixed = {name: Path(cycle["output_artifacts"][name]["path"]).read_bytes()
+        for name in ("generation", "loader")}
+    if damage is None:
+        inference._check_reviewed_evaluation_outputs(cycle, request)
+    else:
+        with pytest.raises(ValueError, match="v11 evaluation|parent typed-structure"):
+            inference._check_reviewed_evaluation_outputs(cycle, request)
+    assert evaluation_path.read_bytes() == raw
+    for name, before in fixed.items():
+        assert Path(cycle["output_artifacts"][name]["path"]).read_bytes() == before

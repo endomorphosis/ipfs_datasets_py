@@ -187,19 +187,18 @@ def _parent_typed_structure_source_pins():
     return pins
 
 
-def _build_parent_typed_structure_audit(cycle, request, cycle_reference, request_sha256, source_pins):
-    """Content-bound audit DATA; only the original parent can publish it."""
+def _reviewed_evaluation_measurement_cases(rows, evaluation, generation, checkpoint_declarations):
+    """Join the original inputs and outputs and verify the stored structural measurement."""
     from . import autoencoder_training_worker as worker
     from . import legal_ir_semantic_metrics as metrics
-    def read(descriptor):
-        return worker._parse_json(worker._reviewed_decoder_artifact(
-            worker.CheckpointArtifact.from_dict(descriptor), limit=REVIEWED_EVALUATION_OUTPUT_LIMIT))
-    rows = read(request["rows_artifact"])
-    evaluation = read(cycle["output_artifacts"]["evaluation"])
-    generation = read(cycle["output_artifacts"]["generation"])
-    payload = evaluation.get("compiler_artifact", {}).get("reviewed_source_span_producer_evaluation", {})
+    artifacts = evaluation.get("compiler_artifact") if type(evaluation) is dict else None
+    payload = artifacts.get("reviewed_source_span_producer_evaluation") if type(artifacts) is dict else None
+    configuration = payload.get("configuration") if type(payload) is dict else None
+    stored_metrics = evaluation.get("metrics") if type(evaluation) is dict else None
+    if type(configuration) is not dict or type(stored_metrics) is not dict or type(generation) is not dict:
+        raise ValueError("parent typed-structure requires the complete saved evaluation and generation")
     if (type(rows) is not list or not rows or worker._json_bytes(payload.get("reference_population")) != worker._json_bytes(rows)
-            or worker._json_bytes(payload.get("configuration", {}).get("checkpoint_declarations")) != worker._json_bytes(request["checkpoint_declarations"])):
+            or worker._json_bytes(configuration.get("checkpoint_declarations")) != worker._json_bytes(checkpoint_declarations)):
         raise ValueError("parent typed-structure reference population/checkpoint differs from request")
     outputs = payload.get("producer_outputs")
     last = generation.get("last_call")
@@ -228,15 +227,31 @@ def _build_parent_typed_structure_audit(cycle, request, cycle_reference, request
         if (type(output) is not dict or set(output) != {"id", "candidate", "outcome"}
                 or type(emitted) is not dict or not {"id", "candidate", "outcome"} <= set(emitted)
                 or type(argument) is not dict or set(argument) != {"id", "source_text", "context"}
+                or type(row) is not dict or not {"id", "source_text", "canonical_ir"} <= set(row)
                 or row["id"] != output["id"] or row["id"] != emitted["id"] or row["id"] != argument["id"]
                 or worker._json_bytes(argument["source_text"]) != worker._json_bytes(row["source_text"])
                 or worker._json_bytes({key: emitted[key] for key in ("id", "candidate", "outcome")}) != worker._json_bytes(output)):
             raise ValueError("parent typed-structure source/output join differs")
         cases.append(dict(case_id=row["id"], reference=row["canonical_ir"], candidate=output["candidate"], outcome=output["outcome"]))
     exact = metrics.evaluate_complete_norm_payloads(cases)
-    if (worker._json_bytes(exact) != worker._json_bytes(evaluation.get("metrics", {}).get("complete_norm_payload"))
+    if (worker._json_bytes(exact) != worker._json_bytes(stored_metrics.get("complete_norm_payload"))
             or worker._json_bytes(exact) != worker._json_bytes(payload.get("comparison"))):
         raise ValueError("parent typed-structure original metric observation differs")
+    return cases, join_scope
+
+
+def _build_parent_typed_structure_audit(cycle, request, cycle_reference, request_sha256, source_pins):
+    """Content-bound audit DATA; only the original parent can publish it."""
+    from . import autoencoder_training_worker as worker
+    from . import legal_ir_semantic_metrics as metrics
+    def read(descriptor):
+        return worker._parse_json(worker._reviewed_decoder_artifact(
+            worker.CheckpointArtifact.from_dict(descriptor), limit=REVIEWED_EVALUATION_OUTPUT_LIMIT))
+    rows = read(request["rows_artifact"])
+    evaluation = read(cycle["output_artifacts"]["evaluation"])
+    generation = read(cycle["output_artifacts"]["generation"])
+    cases, join_scope = _reviewed_evaluation_measurement_cases(
+        rows, evaluation, generation, request["checkpoint_declarations"])
     report = metrics.evaluate_complete_norm_typed_structure(cases)
     return dict(schema="reviewed-original-parent-typed-structure-audit/v1",
         profile=metrics.CANONICAL_TYPED_STRUCTURE_PROFILE, request_sha256=request_sha256,
@@ -444,11 +459,17 @@ def _check_reviewed_evaluation_outputs(cycle, request):
     if (type(descriptors) is not dict or set(descriptors) != set(paths)
             or cycle.get("inference") != {"profile": request["schema"], **paths}):
         raise ValueError("reviewed output artifacts must bind the exact closed output paths")
+    digest_omitted = request["schema"] == REVIEWED_DIGEST_OMITTED_EVALUATION_REQUEST_SCHEMA
+    evaluation_bytes = None
     for name, path in paths.items():
         reference = worker.CheckpointArtifact.from_dict(descriptors[name])
         if reference.path != path:
             raise ValueError("reviewed output artifact path differs from original request")
-        worker._reviewed_decoder_artifact(reference, limit=REVIEWED_EVALUATION_OUTPUT_LIMIT, load=False)
+        load_evaluation = digest_omitted and name == "evaluation"
+        body = worker._reviewed_decoder_artifact(reference, limit=REVIEWED_EVALUATION_OUTPUT_LIMIT,
+                                                 load=load_evaluation)
+        if load_evaluation:
+            evaluation_bytes = body
     if "generation_policy" in request:
         generation = worker._parse_json(worker._reviewed_decoder_artifact(
             worker.CheckpointArtifact.from_dict(descriptors["generation"]), limit=REVIEWED_EVALUATION_OUTPUT_LIMIT))
@@ -456,7 +477,6 @@ def _check_reviewed_evaluation_outputs(cycle, request):
         policy_keys = {"schema", "backend_identity", "assets", "model_checkpoint", "optimizer_checkpoint",
             "source_contexts_sha256", "admission_inputs_sha256", "max_source_tokens", "max_output_tokens",
             "operation", "training_requested", "restore_requested", "admission_profile", "generation_policy"}
-        digest_omitted = request["schema"] == REVIEWED_DIGEST_OMITTED_EVALUATION_REQUEST_SCHEMA
         qwen2 = digest_omitted or request["schema"] in ("reviewed-source-evaluation-request/v9", "reviewed-source-evaluation-request/v10")
         if digest_omitted:
             policy_keys.add("output_derivation")
@@ -488,6 +508,19 @@ def _check_reviewed_evaluation_outputs(cycle, request):
                 worker.CheckpointArtifact.from_dict(descriptors["loader"]), limit=REVIEWED_EVALUATION_OUTPUT_LIMIT))
             _check_digest_omitted_loader_output(loader, request)
             _check_digest_omitted_generation_outputs(generation, request)
+            evaluation = worker._parse_json(evaluation_bytes)
+            metadata = evaluation.get("metadata") if type(evaluation) is dict else None
+            if (type(metadata) is not dict or evaluation.get("schema_version") != "legal-ir-evaluation-artifact-v1"
+                    or worker._json_bytes(metadata.get("source_generation_observation")) != worker._json_bytes(generation)
+                    or metadata.get("source_generation_input_commitment_sha256") != worker._digest(inputs._reviewed_wire(commitment))):
+                raise ValueError("v11 evaluation generation observation differs from the verified output")
+            rows = worker._parse_json(worker._reviewed_decoder_artifact(
+                worker.CheckpointArtifact.from_dict(request["rows_artifact"]), limit=REVIEWED_EVALUATION_OUTPUT_LIMIT))
+            _reviewed_evaluation_measurement_cases(rows, evaluation, generation, request["checkpoint_declarations"])
+            payload = evaluation["compiler_artifact"]["reviewed_source_span_producer_evaluation"]
+            if (payload.get("declared_compiler_identity") != request["compiler_commit"]
+                    or worker._digest(inputs._reviewed_wire(payload["producer_arguments"])) != generation["last_call"]["source_arguments_sha256"]):
+                raise ValueError("v11 evaluation compiler or source arguments differ from the original request")
 
 
 def _read_reviewed_evaluation_request(request_artifact):
