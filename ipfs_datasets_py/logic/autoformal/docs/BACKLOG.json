@@ -4676,6 +4676,37 @@
       },
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
       "task": "LIR-14"
+    },
+    "phase2_retained_paired_cache_source_only_replay_20261126": {
+      "actual_code_publication": {
+        "bytes": 23545,
+        "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-detached-paired-v4-replay-exact3-ordinary53-three-FF-publication-v560.json",
+        "sha256": "ee36f8727809d2bae3988b67d54a565c9080673d1af375dd0d2d878f2129cb72"
+      },
+      "actual_ordinary53": {
+        "bytes": 33731,
+        "path": "/tmp/P2-paired-cache-ordinary53-existing-v548-nonclock-INERT-wb8j3nry/actual-P2-detached-paired-v4-replay-ordinary53-closed-small-v559.json",
+        "sha256": "e7881293b6f27fc0cc7cd788abc1f5d73719ab4f9e000fba13810edb867db3fc"
+      },
+      "evidence_ordinal": 563,
+      "facts": {
+        "bytes": 6765,
+        "path": "/tmp/P2-paired-cache-replay-guide563-existing-composer-INERT-f22ynxdq/one-guide563-existing-paired-cache-replay-scoped-facts.json",
+        "sha256": "a9c2e62f2ff223d9ee9f10879596e3eddae308175e75234539c7a43ebcfc7a21"
+      },
+      "new_legal_or_proof_or_training_admission": false,
+      "preserved_actual_v552_v555_partial_evidence": {
+        "bytes": 4675,
+        "path": "/tmp/Root-Phase2-V4-checked-native-request-retained-existing-R5-v552-Q60co6bh/actual-Phase2-exact-V4-native-retention-with-detached-replay-refusal-v555.json",
+        "sha256": "44eb27752414604baf8d31c09408e520cc7fc54e973b0b4f52ffb5f6b11270cd"
+      },
+      "record_id": "phase2-retained-paired-cache-source-only-replay-evidence563-20261126",
+      "related_catalog_component": "legal-release-coordinator",
+      "related_tasks": [
+        "LIR-21"
+      ],
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
+      "task": "LIR-14"
     }
   },
   "programme_goal_hierarchy": {

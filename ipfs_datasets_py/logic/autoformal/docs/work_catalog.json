@@ -34656,6 +34656,156 @@
       "root": "artifact_workspace",
       "scope": "Physical V4 CLI retains the exact request and explicitly replays already embedded signed reviewed law and entity artifacts.",
       "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase2_retained_paired_cache_source_only_replay_20261126",
+      "closed_runtime_facts": {
+        "actual_READ4": {
+          "bytes": 10014,
+          "path": "/tmp/Root-Phase2-V4-paired-replay-existing-READ4-candidate-v558-QXzRpAa7/actual-Phase2-detached-paired-v4-replay-READ4-v558-closed.json",
+          "sha256": "3d12a2bdeaf393869835d68907a59221ee74c8beea61b609817415e947c80b77"
+        },
+        "actual_Source3_install": {
+          "bytes": 12072,
+          "path": "/tmp/Root-Phase2-V4-paired-replay-existing-Source3-candidate-v557-RxWFCxZ3/actual-Phase2-detached-paired-v4-replay-exact3-Source-closed-v557.json",
+          "sha256": "e15664cc8e2debdcc52c6c56066b0e808f9957bb747a4c18ef6d9f6aa0cdc3a7"
+        },
+        "actual_code_publication": {
+          "bytes": 23545,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-detached-paired-v4-replay-exact3-ordinary53-three-FF-publication-v560.json",
+          "sha256": "ee36f8727809d2bae3988b67d54a565c9080673d1af375dd0d2d878f2129cb72"
+        },
+        "actual_ordinary53": {
+          "bytes": 33731,
+          "path": "/tmp/P2-paired-cache-ordinary53-existing-v548-nonclock-INERT-wb8j3nry/actual-P2-detached-paired-v4-replay-ordinary53-closed-small-v559.json",
+          "sha256": "e7881293b6f27fc0cc7cd788abc1f5d73719ab4f9e000fba13810edb867db3fc"
+        },
+        "actual_ordinary_counts": {
+          "duplicates": 0,
+          "errors": 0,
+          "failures": 0,
+          "functions": 23,
+          "passed": 53,
+          "skipped": 0,
+          "tests": 53
+        },
+        "admission_mask": 0,
+        "checked_Lean_declared_eligible": false,
+        "evaluation_gold_mask": 0,
+        "evidence_ordinal": 563,
+        "existing_join_and_payload_owner_bytes_unchanged": true,
+        "fixture_only": true,
+        "fresh_temporary_file_custody_verified": true,
+        "gold_mask": 0,
+        "historic_v504_original_request_recovered": false,
+        "local_exact_three_freeze": {
+          "bytes": 15368,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-Phase2-detached-paired-v4-replay-exact3-local-freeze-v557.json",
+          "sha256": "2a6f4883f3a34793385d28e1fe84339a707657e17cba81e44a267da7e8b08df2"
+        },
+        "new_Native_or_Lean_or_type_capture_execution": false,
+        "new_model_training_legal_review_or_corpus_admission": false,
+        "ordinary_cohorts": {
+          "paired_cache_new": 5,
+          "retained": 48
+        },
+        "ordinary_raw_JUnit": {
+          "bytes": 9806,
+          "path": "/tmp/P2-paired-cache-ordinary53-existing-v548-nonclock-INERT-wb8j3nry/actual-output/corpus-release-public-v4-paired-cache-archive-ordinary53-run-result0-output1.bin",
+          "sha256": "9afa6bee23236f9477bb1a5cd312233c579ee20680ac577b2e7b4fdb49df7a15"
+        },
+        "original_code_location_pins_preserved": true,
+        "original_filesystem_custody_reestablished": false,
+        "original_request_and_historical_report_commitments_preserved": true,
+        "original_v552_missing_paired_Parquets_recovered": false,
+        "owning_test": "tests/unit/logic/autoformal/test_corpus_release_cli.py",
+        "paired_table_companion_exact_population_length_and_SHA_checked": true,
+        "preserved_actual_v552_v555_partial_evidence": {
+          "bytes": 4675,
+          "path": "/tmp/Root-Phase2-V4-checked-native-request-retained-existing-R5-v552-Q60co6bh/actual-Phase2-exact-V4-native-retention-with-detached-replay-refusal-v555.json",
+          "sha256": "44eb27752414604baf8d31c09408e520cc7fc54e973b0b4f52ffb5f6b11270cd"
+        },
+        "prior_Guide562": {
+          "bytes": 14332,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-guide562-four-doc-three-FF-publication-small-v550.json",
+          "sha256": "156c97e801426c315dee3586eeebb3a37fedcae653d008709cbd3ec404e3828f"
+        },
+        "prior_actual_ordinary48": {
+          "bytes": 31820,
+          "path": "/tmp/P2-portable-physical-V4-existing-ordinary48-v548-smrpl1ce/actual-P2-portable-physical-V4-ordinary48-closed-small-v548.json",
+          "sha256": "e158229e568839b8f4ab37bc22a07b7c14cd961194fff5d74255c74e96adf49a"
+        },
+        "prior_exact_retained_V4_raw_request": {
+          "bytes": 1088585,
+          "path": "/tmp/Root-Phase2-V4-checked-native-request-retained-existing-R5-v552-Q60co6bh/actual-output/run.output.4.bin",
+          "sha256": "948a16db27ed27f28cd61e95fa80f8e4f0b040d55aafd8d3201a6044f76f2974"
+        },
+        "prior_signed_fictional_R5_native": {
+          "bytes": 15315,
+          "path": "/tmp/Root-Phase2-V4-checked-native-request-retained-existing-R5-v552-Q60co6bh/actual-R5-physical-v4-checked-release-retained-request-v552.json",
+          "sha256": "5ed0c6a57ae7f27b7358dfecd810393dcb9e86dd0f711ccb5d0e670e2d664f17"
+        },
+        "prior_signed_fictional_conditional_obligations": 30,
+        "prior_signed_fictional_native_modules": 10,
+        "prior_v552_full_post_cleanup_replay_passed": false,
+        "prior_v552_three_paired_Parquets_still_missing": true,
+        "private_after": {
+          "failed": 0,
+          "passed": 14
+        },
+        "private_before": {
+          "failed": 5,
+          "passed": 9
+        },
+        "private_candidate": {
+          "bytes": 11198,
+          "path": "/tmp/Root-Phase2-V4-existing-detached-paired-replay-candidate-private-v01-RuQwlVNT/SEALED-existing-physical-V4-paired-cache-replay-private-exact3-same14.json",
+          "sha256": "bc30c313a93a5d9b0502090ab919471df95f3f6bc7786ebb82b9f8e9abe0e809"
+        },
+        "private_fixture_full_workspace_cleanup_source_only_closure_preserved": true,
+        "private_same14_GREEN": {
+          "bytes": 2000,
+          "path": "/tmp/Root-Phase2-V4-existing-detached-paired-replay-candidate-private-v01-RuQwlVNT/green/result.xml",
+          "sha256": "0a480b00a0c73577e1b2fae475831d1c1e4e3eb5c8ae2731ea5f473bb66ee9be"
+        },
+        "private_same14_RED": {
+          "bytes": 19222,
+          "path": "/tmp/Root-Phase2-V4-existing-detached-paired-replay-candidate-private-v01-RuQwlVNT/red/result.xml",
+          "sha256": "12049857fecee6461dff0775e4fb9db83cdaa6ff0e0ae716060ccd03285db44e"
+        },
+        "proof_status": "pending",
+        "related_catalog_component": "legal-release-coordinator",
+        "related_tasks": [
+          "LIR-21"
+        ],
+        "release_CLI": "scripts/ops/legal_ir/validate_uscode_corpus_release.py",
+        "release_coordinator": "ipfs_datasets_py/logic/autoformal/legal_release_coordinator_v1.py",
+        "release_mask": 0,
+        "replayed_original_v552_successfully": false,
+        "schema": "Guide563-existing-paired-cache-source-only-replay/v1",
+        "separate_actual_private_collector_retention_fragment_and_CLI_closeout": {
+          "bytes": 4280,
+          "path": "/tmp/P2-paired-cache-collector-actual-private-9waaf3x_/work/actual-private-collector-AST-and-detached-CLI-closeout.json",
+          "sha256": "02def9a2b8c93e1eb3f45b990d3b208f958095ead30ef18eca9a8c009a16a84b"
+        },
+        "separate_private_collector_fragment_canonical_closure": {
+          "bytes": 63654,
+          "exact_equal": true,
+          "sha256": "95fd0ebf39b6660e89c4660616b9ac79c56d942eb15ceeb50a708881ada56369"
+        },
+        "task": "LIR-14",
+        "task_status_changed": false,
+        "training_mask": 0
+      },
+      "evidence_ordinal": 563,
+      "id": "phase2-retained-paired-cache-source-only-replay-evidence563-20261126",
+      "observed_bytes": 6765,
+      "observed_sha256": "a9c2e62f2ff223d9ee9f10879596e3eddae308175e75234539c7a43ebcfc7a21",
+      "path": "/tmp/P2-paired-cache-replay-guide563-existing-composer-INERT-f22ynxdq/one-guide563-existing-paired-cache-replay-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Software-only paired-cache byte replay after a fictional fixture workspace closes; earlier v552 replay refusal remains separate.",
+      "status": "CLOSED_ENGINEERING_EVIDENCE_SCOPE_ONLY"
     }
   ]
 }
