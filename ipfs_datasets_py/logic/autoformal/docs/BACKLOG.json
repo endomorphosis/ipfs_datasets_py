@@ -5013,6 +5013,25 @@
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
       "statutory_or_corpus_admission_or_large_model_fit_or_new_Native_qualification": false,
       "task": "LIR-14"
+    },
+    "phase2_reviewed_governing_definition_self_reference_ordinary37_20261127": {
+      "actual_live_ordinary37": {
+        "bytes": 8952,
+        "path": "/tmp/P1-proof-cache-translation-current-6btZZr/phase2-self-reference/actual-Phase2-current-V3-definition-ordinary37-closed.json",
+        "sha256": "2f8d049d7d3bf5b38fc6bfc8736d2e0c2867458dc74e707307f898af7810b74e"
+      },
+      "evidence_ordinal": 576,
+      "facts": {
+        "bytes": 4513,
+        "path": "/tmp/P1-proof-cache-translation-current-6btZZr/phase2-self-reference/guide576-composition/current-Phase2-V3-definition-self-reference-ordinary37-scoped-facts.json",
+        "sha256": "99af64665f624780883f3883705880ce74e27dd81b291e94a7cad301138ae4e1"
+      },
+      "record_id": "phase2-reviewed-governing-definition-self-reference-ordinary37-evidence576-20261127",
+      "related_catalog_component": "reviewed-mixed-sort-admission-v3",
+      "related_tasks": [],
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
+      "statutory_or_corpus_admission_or_large_model_fit_or_new_Native_qualification": false,
+      "task": "LIR-09"
     }
   },
   "programme_goal_hierarchy": {

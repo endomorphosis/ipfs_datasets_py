@@ -36433,6 +36433,110 @@
       "root": "artifact_workspace",
       "scope": "Checked Lean translation agreement at legal proof-cache construction and persisted replay.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase2_reviewed_governing_definition_self_reference_ordinary37_20261127",
+      "closed_runtime_facts": {
+        "actual_live_code_publication": {
+          "bytes": 15625,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/phase2-self-reference/actual-Phase2-V3-definition-ordinary37-three-FF-publication.json",
+          "sha256": "f8a95f45ec7dddfd707e7892972dbb7926e2c8307b56e0d41ca0c97b4d335325"
+        },
+        "actual_live_exact_two_freeze": {
+          "bytes": 6414,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/phase2-self-reference/actual-isolated-Phase2-V3-definition-exact-two-local-freeze.json",
+          "sha256": "4451d305186b343a67388d8a637e40abd21473e69c2c27ca41f6b8a7c6ffc1d6"
+        },
+        "actual_live_ordinary37": {
+          "bytes": 8952,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/phase2-self-reference/actual-Phase2-current-V3-definition-ordinary37-closed.json",
+          "sha256": "2f8d049d7d3bf5b38fc6bfc8736d2e0c2867458dc74e707307f898af7810b74e"
+        },
+        "actual_live_ordinary37_raw_JUnit": {
+          "bytes": 7894,
+          "path": "/tmp/P2-V3-ordinary37-nonclock-INERT-g3tupa9A/actual-output/reviewed-mixed-v3-definition-self-reference-ordinary37-run-result0-output1.bin",
+          "sha256": "b954f4c881b3a923d78bb284c597af2d2b1c343c46d518eaccc2c6d1d4ae44b8"
+        },
+        "actual_live_ordinary37_report": {
+          "bytes": 1044045,
+          "path": "/tmp/P2-V3-ordinary37-nonclock-INERT-g3tupa9A/actual-output/complete-frozen-local-D-reviewed-mixed-v3-definition-self-reference-ordinary37-existing-owner-report.json",
+          "sha256": "d64986fd31f5c00ba83775c0a305b863b6ca2000da29324d39ba5c340846bde2"
+        },
+        "actual_live_reconciled_Source42_READ3": {
+          "bytes": 7523,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/phase2-self-reference/actual-isolated-Phase2-V3-definition-READ3-closed.json",
+          "sha256": "2fd517b04dd4863601e510455e95ca9b3a6ea0cf150943aa0c434fa2731a9e95"
+        },
+        "actual_live_reconciled_Source42_epoch": {
+          "bytes": 6082,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/phase2-self-reference/actual-live-reconciled-Source42-content-epoch-closed.json",
+          "sha256": "fddf54e04ee967901d3b39750859addb90e7d86fe75f9d5b4bdb495c3beca0ef"
+        },
+        "actual_ordinary37_counts": {
+          "errors": 0,
+          "failures": 0,
+          "functions": 15,
+          "passed": 37,
+          "skipped": 0,
+          "tests": 37
+        },
+        "evidence_ordinal": 576,
+        "exact_candidate": {
+          "bytes": 6997,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/phase2-self-reference/SEALED-Phase2-V3-definition-self-reference-exact-two.json",
+          "sha256": "f59623dc0c5f5ca71ba2897a8a8d1b49240298b214389d49bccbbf0e50ed6082"
+        },
+        "live_qualified_A_HEAD": "219ba3da0f62f772801d71715e22c506faa21126",
+        "live_qualified_D_HEAD": "c5a72c90394d86a54cb93cc3a2187da954a2677f",
+        "ordinary_Source_resource_and_parent_closed": true,
+        "ordinary_collect_run_raw_JUnit_order_equal": true,
+        "physical_IO_accounting_complete": false,
+        "prior_verified_guide575_publication": {
+          "bytes": 2639,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/actual-Guide575-four-docs-three-FF-publication.json",
+          "sha256": "c04197de963678c357e0f2b97f0a501b343f3f468d4a6a50a7d15ba22a9d568a"
+        },
+        "private_same_thirty_seven_lineage": {
+          "green-owning": {
+            "failed": [],
+            "raw_JUnit": {
+              "bytes": 7874,
+              "path": "/tmp/Phase2-V3-recursive-definition-private-dE9srJIA/green-owning/result.xml",
+              "sha256": "0fbb8dfb53fd3db081caea079b63d98d76c2d74e0d98b699f4dc670129745f4f"
+            }
+          },
+          "red-owning": {
+            "failed": [
+              "test_reviewed_v3_refuses_governing_definition_reusing_its_predicate[direct]",
+              "test_reviewed_v3_refuses_governing_definition_reusing_its_predicate[nested]"
+            ],
+            "raw_JUnit": {
+              "bytes": 8634,
+              "path": "/tmp/Phase2-V3-recursive-definition-private-dE9srJIA/red-owning/result.xml",
+              "sha256": "be0ccdc8fec3e7632fca88bf0068876db90789b4aca0c7a41fcf8bcfa35f5a36"
+            }
+          }
+        },
+        "qualified_commit_blobs": {
+          "ipfs_datasets_py/logic/autoformal/legal_reviewed_norm_admission_v3.py": "d2959d73378a870453c48775692fa6462d154a5d",
+          "tests/unit/logic/autoformal/test_legal_reviewed_norm_admission_v3.py": "57cba9cbfe55bf91fa8377808cd853d7d39c9059"
+        },
+        "related_catalog_component": "reviewed-mixed-sort-admission-v3",
+        "reviewed_governing_definition_self_reference_guard_software_qualified": true,
+        "schema": "live-reconciled-Phase2-reviewed-definition-self-reference-engineering-evidence/v1",
+        "statutory_or_corpus_admission_or_large_model_fit_or_new_Native_qualification": false,
+        "task": "LIR-09",
+        "task_status_changed": false
+      },
+      "evidence_ordinal": 576,
+      "id": "phase2-reviewed-governing-definition-self-reference-ordinary37-evidence576-20261127",
+      "observed_bytes": 4513,
+      "observed_sha256": "99af64665f624780883f3883705880ce74e27dd81b291e94a7cad301138ae4e1",
+      "path": "/tmp/P1-proof-cache-translation-current-6btZZr/phase2-self-reference/guide576-composition/current-Phase2-V3-definition-self-reference-ordinary37-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Fictional V3 reviewed admission refuses self-referential governing definitions.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }

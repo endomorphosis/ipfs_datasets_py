@@ -3299,3 +3299,8 @@ Checked legal proof feedback now binds the selected receipt to the current sampl
 ## Evidence575 — Checked Lean translations in legal proof-cache replay
 
 Legal proof-cache replay now requires the translation recorded by the checked Lean receipt to match the canonical request. Matching translations and requests without translations round-trip from disk. The suite rejects a translation present on only one side and a different translation digest. The published implementation at 4cc1311f passed all nine ordinary software cases across five functions. Collection, execution and raw JUnit agreed, and Source and resource custody closed. The tests used fictional proof receipts. [Ordinary qualification](/tmp/P1-proof-cache-translation-current-6btZZr/actual-Phase1-current-cache-translation-ordinary9-closed.json) · [Code publication](/tmp/P1-proof-cache-translation-current-6btZZr/actual-Phase1-cache-translation-ordinary9-three-FF-publication.json)
+
+
+## Evidence576 — Reviewed governing-definition cycle validation
+
+Reviewed mixed-sort V3 admission now refuses a governing definition when its defining expression contains the predicate it defines. The published candidate passed all 37 ordinary software cases across 15 functions, including direct and nested self-reference controls and all 35 existing cases. The checks used fictional review and source fixtures. The statutory pilot still requires independent interpretation and applicability review. [Ordinary qualification](/tmp/P1-proof-cache-translation-current-6btZZr/phase2-self-reference/actual-Phase2-current-V3-definition-ordinary37-closed.json) · [Code publication](/tmp/P1-proof-cache-translation-current-6btZZr/phase2-self-reference/actual-Phase2-V3-definition-ordinary37-three-FF-publication.json)
