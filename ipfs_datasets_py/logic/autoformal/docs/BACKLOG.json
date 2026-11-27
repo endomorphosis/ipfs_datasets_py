@@ -5089,6 +5089,30 @@
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
       "statutory_or_corpus_admission_or_model_qualification": false,
       "task": "LIR-14"
+    },
+    "phase1_cache_record_persist_before_index_20261127": {
+      "actual_live_native_translated_cache": {
+        "bytes": 7608,
+        "path": "/tmp/P1-proof-cache-translation-current-6btZZr/cache-atomic-put/actual-Phase1-cache-atomic-put-native-translated-proof-cache-closed.json",
+        "sha256": "e9c514309530265844294bf24c8266af7606fdb819a406417925c321f993eee1"
+      },
+      "actual_live_ordinary10": {
+        "bytes": 3865,
+        "path": "/tmp/P1-proof-cache-translation-current-6btZZr/cache-atomic-put/actual-Phase1-current-cache-atomic-put-ordinary10-closed.json",
+        "sha256": "5bb09cf899098870073e07fa2e16258d51d2f01372315d4dba785992823a9dc2"
+      },
+      "evidence_ordinal": 580,
+      "facts": {
+        "bytes": 5664,
+        "path": "/tmp/P1-proof-cache-translation-current-6btZZr/cache-atomic-put/guide580-composition/current-Phase1-atomic-cache-persistence-scoped-facts.json",
+        "sha256": "0b47a71733d58c4328b045d7f1ecf3acb5bbd2b635deed6fd607ca3f1efe9963"
+      },
+      "record_id": "phase1-cache-record-persist-before-index-ordinary10-native-evidence580-20261127",
+      "related_catalog_component": "kernel-proof-evidence-integrity",
+      "related_tasks": [],
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
+      "statutory_or_corpus_admission_or_model_qualification": false,
+      "task": "LIR-14"
     }
   },
   "programme_goal_hierarchy": {

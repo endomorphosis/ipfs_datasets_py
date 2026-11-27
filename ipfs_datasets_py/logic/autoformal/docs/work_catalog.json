@@ -36844,6 +36844,130 @@
       "root": "artifact_workspace",
       "scope": "Native proof-cache replay for generator-emitted Lean source of one fictional True obligation.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase1_cache_record_persist_before_index_20261127",
+      "closed_runtime_facts": {
+        "Lean_version": "4.34.1",
+        "actual_latest_closed_native_Source_cap": {
+          "bytes": 1355,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/cache-atomic-put/Source-only-Native-after-cache-write-fix-full-retained.json",
+          "sha256": "8e97955ca259dadc9be8f831b8a7edcae74ef41a0443e85382fadd828081b251"
+        },
+        "actual_live_code_publication": {
+          "bytes": 16640,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/cache-atomic-put/actual-Phase1-cache-atomic-put-ordinary10-and-native-three-FF-publication.json",
+          "sha256": "dcec3f5331943dabfeaa9422b0c3a77b9c344acde6771d6f410c78f53cb6c515"
+        },
+        "actual_live_exact_three_freeze": {
+          "bytes": 8716,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/cache-atomic-put/actual-isolated-Phase1-cache-atomic-put-exact-three-local-freeze.json",
+          "sha256": "0d94fff7376374123441e0a52da3fb11b06f315125051e030660c48d571b5725"
+        },
+        "actual_live_native_translated_cache": {
+          "bytes": 7608,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/cache-atomic-put/actual-Phase1-cache-atomic-put-native-translated-proof-cache-closed.json",
+          "sha256": "e9c514309530265844294bf24c8266af7606fdb819a406417925c321f993eee1"
+        },
+        "actual_live_ordinary10": {
+          "bytes": 3865,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/cache-atomic-put/actual-Phase1-current-cache-atomic-put-ordinary10-closed.json",
+          "sha256": "5bb09cf899098870073e07fa2e16258d51d2f01372315d4dba785992823a9dc2"
+        },
+        "actual_live_reconciled_Source42_READ4": {
+          "bytes": 8248,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/cache-atomic-put/actual-isolated-Phase1-cache-atomic-put-READ4-closed.json",
+          "sha256": "759f5100682a32e5fe2a9a81dbb0a33946d8ff658df1fbfd1f3f338295b5b148"
+        },
+        "actual_live_reconciled_Source42_epoch": {
+          "bytes": 6382,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/cache-atomic-put/actual-live-reconciled-Source42-content-epoch-closed.json",
+          "sha256": "747a2492f0d6ce993c1208fb74b71c330bd53bd87a676370d3e3b570134ced37"
+        },
+        "actual_native_command_counts": {
+          "all": 3,
+          "compiler": 2,
+          "unclassified": 0,
+          "version": 1
+        },
+        "actual_native_report": {
+          "bytes": 114148,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/cache-atomic-put/actual-native-out-after-cache-write-fix/complete-native3-direct-existing-owner-report.json",
+          "sha256": "bac3ed30eaca8751e7df499157c7bca7a2d5f9038716e7708ef26da0208f8cae"
+        },
+        "actual_ordinary10_raw_JUnit": {
+          "bytes": 1835,
+          "logical_name": "junit.xml",
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/cache-atomic-put/ordinary10-retry-v02/actual-output/phase1-proof-cache-atomic-put10-run-result0-output1.bin",
+          "sha256": "894cbaa8c40219ec657cd5e90e6dd5fbda963668b06f5b790d5d7edac9ac380d"
+        },
+        "disk_reopen_and_exact_reuse_passed": true,
+        "evidence_ordinal": 580,
+        "failed_record_replace_preserves_committed_cache_indexes": true,
+        "live_qualified_A_HEAD": "219ba3da0f62f772801d71715e22c506faa21126",
+        "live_qualified_D_HEAD": "6fcdbfbb6ce6d5885ad98275cbc989a8d0e4ba8e",
+        "native_Source_resource_and_parent_closed": true,
+        "native_fictional_true_fixture_only": true,
+        "native_processes_during_replay_and_mismatch_checks": 0,
+        "native_pytest_case_credit": 0,
+        "ordinary_Source_resource_and_parent_closed": true,
+        "ordinary_collect_run_raw_JUnit_order_equal": true,
+        "ordinary_qualification_counts": {
+          "errors": 0,
+          "failures": 0,
+          "functions": 6,
+          "passed": 10,
+          "skipped": 0,
+          "tests": 10
+        },
+        "original_native_proof_cache_report": {
+          "bytes": 148375,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/cache-atomic-put/actual-native-out-after-cache-write-fix/original-test-temp/native-lean-proof-cache-v3.json",
+          "sha256": "462476389050c759bc203b63bd56f0d47c3e0e50252126b0786e9e163d6be2c3"
+        },
+        "physical_IO_accounting_complete": false,
+        "previous_record_exact_disk_and_memory_preserved": true,
+        "prior_verified_guide579_publication": {
+          "bytes": 3363,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/native-translated-cache/actual-Guide579-four-docs-three-FF-publication.json",
+          "sha256": "1e4dcdba8ad65453fbf82291927814b584ae4c7e2183509a175f4aca876d0811"
+        },
+        "private_GREEN_raw_JUnit": {
+          "bytes": 1815,
+          "path": "/tmp/P1-legal-proof-cache-atomic-record-private-tOuxSXE5/green/result.xml",
+          "sha256": "ee8411ca8e65d033d9b86f390a7ca01a44baff27ea30f533ee679949dd01f814"
+        },
+        "private_RED_raw_JUnit": {
+          "bytes": 2752,
+          "path": "/tmp/P1-legal-proof-cache-atomic-record-private-tOuxSXE5/red/result.xml",
+          "sha256": "9bd642fd8db4ca8152db53fea9f473305f4904a565aab630d68dba2f0d52a5d6"
+        },
+        "private_same_ten_reproduction_and_fix": {
+          "bytes": 10316,
+          "path": "/tmp/P1-legal-proof-cache-atomic-record-private-tOuxSXE5/SEALED-private-Phase1-proof-cache-atomic-record-exact-three.json",
+          "sha256": "1057bbcde6ed22f67da2603060f467d1a320a79bb24046b4e6ad2311b935bd20"
+        },
+        "qualified_commit_blobs": {
+          "ipfs_datasets_py/logic/legal_ir/proof_cache.py": "ac9a60101a19f1c13fdebb7925ac8b23846fb561",
+          "tests/integration/logic/backends/test_kernel_backends.py": "20f612f6c6a241804cdf71b09dc9a0a4f0c2e923",
+          "tests/unit/logic/legal_ir/test_proof_cache.py": "8d3a1e52040ea8497a74ec1f47c420141de1b9bf"
+        },
+        "related_catalog_component": "kernel-proof-evidence-integrity",
+        "schema": "live-reconciled-Phase1-proof-cache-atomic-persistence-engineering-evidence/v1",
+        "statutory_or_corpus_admission_or_model_qualification": false,
+        "successful_retry_and_cold_reopen_verified": true,
+        "task": "LIR-14",
+        "task_status_changed": false
+      },
+      "evidence_ordinal": 580,
+      "id": "phase1-cache-record-persist-before-index-ordinary10-native-evidence580-20261127",
+      "observed_bytes": 5664,
+      "observed_sha256": "0b47a71733d58c4328b045d7f1ecf3acb5bbd2b635deed6fd607ca3f1efe9963",
+      "path": "/tmp/P1-proof-cache-translation-current-6btZZr/cache-atomic-put/guide580-composition/current-Phase1-atomic-cache-persistence-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Durable publication order for proof records and a separate exact native replay of the fictional Lean fixture.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }
