@@ -37860,6 +37860,18 @@
           "selected_tests": 2,
           "skips": 0
         },
+        "ir_post_commit_recovery": {
+          "baseline_regressions": 4,
+          "checkpoint_requires_writable_path": true,
+          "hub_write_or_pointer_mutation": false,
+          "offline_tests": 33,
+          "qualification_ref": {
+            "bytes": 2373,
+            "path": "/tmp/LIR21-IR-post-commit-recovery-4r9DSY3n/actual-current-ir-post-commit-recovery-qualified-33.json",
+            "sha256": "49262a18f697e02dd1a6f909751bd42ccc9d61effc4ee8421de7dcd99bdb5b57"
+          },
+          "qualified_datasets_commit": "7d0785a5cf8b77aacdbb2c72fcfdc7ba42725617"
+        },
         "evidence_ordinal": 590,
         "independent_statutory_review": null,
         "live_hub_immutable_readback": null,
