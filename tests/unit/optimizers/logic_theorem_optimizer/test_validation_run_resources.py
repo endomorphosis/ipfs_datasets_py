@@ -6449,6 +6449,45 @@ def _ordinary_scratch_prepare(control, **kwargs):
     return control['prepare'](mutate=enable, **kwargs)
 
 
+def test_ordinary_scratch_v5_binds_existing_ledger_cap_to_the_frozen_request(private_control):
+    control = private_control
+    ledger = control["ledger"]
+    original = ledger.read_bytes()
+    already_migrated = dict(json.loads(original), limit_bytes=280_000_000_000)
+
+    def prepare(expected):
+        def enable(request):
+            request["schema"] = "owned-validation-request/v5"
+            request["ordinary_scratch_profile"] = {"schema": "owned-validation-ordinary-scratch-live/v1"}
+            request["expected_ledger_limit_bytes"] = expected
+        return control["prepare"](mutate=enable)
+
+    _, _, _, unbound = _ordinary_scratch_prepare(control)
+    _, _, _, wrong_boundary = prepare(279_000_000_000)
+    _, _, _, invalid = prepare(True)
+    _, frozen_path, request, bound = prepare(280_000_000_000)
+    try:
+        _write_json(ledger, already_migrated)
+        migrated_bytes = ledger.read_bytes()
+        for denied in (unbound, wrong_boundary):
+            owner = _owner(control, denied)
+            with owner._locked(), pytest.raises(native_disk.DaemonResourceError,
+                    match="disk ledger storage scope differs"):
+                owner._read()
+        with pytest.raises(validation.ValidationResourceError, match="invalid frozen validation ledger limit"):
+            _owner(control, invalid)
+        owner = _owner(control, bound)
+        with owner._locked():
+            assert owner._read() == already_migrated
+        assert owner.to_dict()["storage_limit_bytes"] == 280_000_000_000
+        assert ledger.read_bytes() == migrated_bytes
+        _write_json(frozen_path, dict(request, expected_ledger_limit_bytes=279_000_000_000))
+        with pytest.raises(validation.ValidationResourceError, match="frozen validation request hash differs"):
+            _owner(control, bound)
+    finally:
+        ledger.write_bytes(original)
+
+
 def _ordinary_scratch_stat_hook(monkeypatch, owned, target, *, observed=False, reappear=None):
     actual = os.stat
     parent = target.parent.stat()

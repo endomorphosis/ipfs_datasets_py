@@ -165,6 +165,10 @@ def _ordinary_scratch_no_child_request_shape(value, raw):
             return False
         projected = dict(value)
         projected.pop('ordinary_scratch_profile')
+        if 'expected_ledger_limit_bytes' in projected:
+            limit = projected.pop('expected_ledger_limit_bytes')
+            if type(limit) is not int or not 0 < limit < 2**63:
+                return False
         projected['schema'] = 'owned-validation-request/v4'
         # An extra caller V4 field is rejected, never overwritten by projection.
         if 'live_inventory_profile' in projected:
@@ -346,7 +350,7 @@ def _pre_grant_capacity_refusal_terminal(owner, value, request_raw, request_path
     if (reservation['status'] != 'not_entered' or reservation['record'] is not None
             or reservation['resource_lease'] is not None or reservation.get('cleanup_error') is not None
             or capacity['limit_bytes'] != reservation['storage_limit_bytes']
-            or capacity['limit_bytes'] != host.MAX_STORAGE_BYTES):
+            or capacity['limit_bytes'] != value.get('expected_ledger_limit_bytes', host.MAX_STORAGE_BYTES)):
         return None
     identity = host._process(os.getpid())
     if identity is None or any(identity[key] != owner._owner_identity[key] for key in ('pid', 'birth')):
@@ -1100,6 +1104,10 @@ def classify_owned_validation_source_custody(terminal, request_raw, *,
              and all(terminal[key] is False for key in ('completed', 'admitted', 'Lean_admitted'))
              and terminal['process_cleanup_error'] is None and terminal['owner_exit_error'] is None)
         failure, reservation, witness = terminal['failure'], terminal['reservation'], terminal['source_custody_lifecycle']
+        if 'expected_ledger_limit_bytes' in value:
+            need(value['schema'] == 'owned-validation-request/v5'
+                 and (reservation is None or
+                      reservation.get('storage_limit_bytes') == value['expected_ledger_limit_bytes']))
         if value['schema'] == STARTUP_CLOCK_REQUEST_SCHEMA and reservation:
             phase_owner = reservation['startup_clock_profile']['original_owner']
             need(type(phase_owner) is dict and type(phase_owner.get('pid')) is int
@@ -1193,7 +1201,8 @@ def classify_owned_validation_source_custody(terminal, request_raw, *,
                 and witness['events'] == {key: key == 'owner_open_attempted' for key in _PRE_GRANT_EVENTS})
             need(_capacity_refusal_observation(witness['capacity_observation'], value['storage_bytes'])
                 and witness['capacity_observation']['limit_bytes'] == reservation['storage_limit_bytes']
-                and witness['capacity_observation']['limit_bytes'] == host.MAX_STORAGE_BYTES)
+                and witness['capacity_observation']['limit_bytes']
+                    == value.get('expected_ledger_limit_bytes', host.MAX_STORAGE_BYTES))
             need(witness['native_grant'] == {'status': 'not_requested_capacity_refusal'}
                 and witness['storage'] == {'status': 'not_entered', 'release_authorized': False}
                 and witness['storage']['release_authorized'] is False
@@ -1509,6 +1518,8 @@ def _no_child_native_closed_profile(terminal, request_raw, *, request_version,
         'process_scope', 'scheduler_state_path', 'expected_scheduler_policy_sha256', 'roots'}
     if request_version == 'v5':
         fields.add('ordinary_scratch_profile')
+        if 'expected_ledger_limit_bytes' in value:
+            fields.add('expected_ledger_limit_bytes')
         need(_ordinary_scratch_no_child_request_shape(value, request_raw))
     if request_version == 'v6':
         fields.update(('live_inventory_profile','startup_clock_profile'))
@@ -1851,7 +1862,8 @@ def _inspect_owned_validation_no_child_native_closed(terminal, request_raw, *, p
                 need(type(ledger) is dict and set(ledger) == {'schema', 'roots', 'limit_bytes', 'reservations'}
                     and ledger['schema'] == host.SCHEMA
                     and type(ledger['limit_bytes']) is int
-                    and ledger['limit_bytes'] == reservation['storage_limit_bytes'] == host.MAX_STORAGE_BYTES
+                    and ledger['limit_bytes'] == reservation['storage_limit_bytes']
+                        == value.get('expected_ledger_limit_bytes', host.MAX_STORAGE_BYTES)
                     and json.dumps(ledger['roots'], sort_keys=True, allow_nan=False) ==
                         json.dumps(reservation['roots'], sort_keys=True, allow_nan=False)
                     and json.dumps(ledger['roots'], sort_keys=True, allow_nan=False) ==
@@ -2262,7 +2274,8 @@ def inspect_owned_validation_productive_native_closed_v1(terminal, request_raw, 
                 need(type(ledger) is dict and set(ledger) == {'schema','roots','limit_bytes','reservations'}
                     and ledger['schema'] == host.SCHEMA
                     and type(ledger['limit_bytes']) is int
-                    and ledger['limit_bytes'] == reservation['storage_limit_bytes'] == host.MAX_STORAGE_BYTES
+                    and ledger['limit_bytes'] == reservation['storage_limit_bytes']
+                        == value.get('expected_ledger_limit_bytes', host.MAX_STORAGE_BYTES)
                     and json.dumps(ledger['roots'],sort_keys=True,allow_nan=False)
                         == json.dumps(reservation['roots'],sort_keys=True,allow_nan=False)
                         == json.dumps(roots,sort_keys=True,allow_nan=False)

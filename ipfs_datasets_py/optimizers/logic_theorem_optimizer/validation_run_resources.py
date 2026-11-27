@@ -265,6 +265,13 @@ class ValidationResourceReservation(host.DaemonResourceReservation):
         _need(hashlib.sha256(raw).hexdigest() == self.request_sha256,
               "frozen validation request hash differs")
         self.request = _decode(raw)
+        storage_limit_binding = {}
+        if type(self.request) is dict and "expected_ledger_limit_bytes" in self.request:
+            expected_ledger_limit = self.request["expected_ledger_limit_bytes"]
+            _need(self.request.get("schema") == ORDINARY_SCRATCH_REQUEST_SCHEMA
+                  and type(expected_ledger_limit) is int and 0 < expected_ledger_limit < 2**63,
+                  "invalid frozen validation ledger limit")
+            storage_limit_binding["storage_limit_bytes"] = expected_ledger_limit
         self._source_identities = {}
         self._output_identities = {}
         self._physical_profile = None
@@ -306,7 +313,8 @@ class ValidationResourceReservation(host.DaemonResourceReservation):
                          ledger_lock_timeout_seconds=ledger_lock_timeout_seconds,
                          scheduler_state_path=scheduler_state_path,
                          expected_scheduler_policy_sha256=expected_scheduler_policy_sha256,
-                         require_existing_ledger=True)
+                         require_existing_ledger=True,
+                         **storage_limit_binding)
         self._validate_request()
         self._process_scope = self.request["process_scope"]
         self._guard_inputs()
@@ -336,6 +344,8 @@ class ValidationResourceReservation(host.DaemonResourceReservation):
                                     {"ordinary_scratch_profile"} if scratch else set())
         if startup:
             expected_fields |= {"startup_clock_profile"}
+        if scratch and "expected_ledger_limit_bytes" in request:
+            expected_fields.add("expected_ledger_limit_bytes")
         _need(set(request) == expected_fields
               and request.get("schema") in (REQUEST_SCHEMA, PHYSICAL_REQUEST_SCHEMA,
                                              LIVE_REQUEST_SCHEMA, ORDINARY_SCRATCH_REQUEST_SCHEMA,
