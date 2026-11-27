@@ -472,7 +472,7 @@ def _reviewed_assessment_for_version(admission_inputs, version):
     return report
 
 
-def _reviewed_bound_component(bound_component_inputs, admission_inputs):
+def _reviewed_bound_component(bound_component_inputs, admission_inputs, admission_version):
     """Replay an explicitly requested current corpus-source handoff."""
     if bound_component_inputs is None:
         return None, None
@@ -483,15 +483,18 @@ def _reviewed_bound_component(bound_component_inputs, admission_inputs):
     _sha256(detached["expected_report_sha256"], "expected bound component report SHA256")
     try:
         from ipfs_datasets_py.logic.autoformal import corpus_source_bindings
-        checked = corpus_source_bindings.validate_bound_norm_component_v1(
-            detached["report"], expected_report_sha256=detached["expected_report_sha256"],
+        validate_component = (corpus_source_bindings.validate_bound_norm_component_v1
+                              if admission_version == "v2"
+                              else corpus_source_bindings.validate_bound_norm_component_v2)
+        checked = validate_component(detached["report"],
+            expected_report_sha256=detached["expected_report_sha256"],
             **detached["preparation_inputs"])
     except (ValueError, TypeError, KeyError, IndexError, OverflowError, RecursionError) as error:
         raise SourceSpanConsumerBindingError("bound component current replay failed: " + str(error)) from error
     _require(_guard(checked["norm_preparation"]).sha256
              == _guard(admission_inputs.get("preparation")).sha256,
              "bound component norm preparation differs from admission replay")
-    preparation_sha = _reviewed_admission_owner().norm_content_adjudication_sha256(
+    preparation_sha = _reviewed_admission_for_version(admission_version).norm_content_adjudication_sha256(
         admission_inputs["preparation"])
     _require(checked["norm_preparation_sha256"] == preparation_sha
              == admission_inputs.get("expected_preparation_sha256"),
@@ -572,15 +575,16 @@ def prepare_reviewed_source_span_consumer_binding_v3(rows, *, expected_rows_sha2
         split_manifest, expected_split_manifest_sha256, admission_inputs,
         expected_admission_inputs_sha256, exposure_records, expected_exposure_sha256,
         operation, target_codec=REVIEWED_TARGET_CODEC, allow_fictional_fixture=False,
-        allow_heldout_evaluation=False, heldout_evaluation_purpose=None):
-    """Explicitly bind full mixed-sort targets using independently reviewed V3 admission."""
+        allow_heldout_evaluation=False, heldout_evaluation_purpose=None, bound_component_inputs=None):
+    """Bind reviewed V3 mixed-sort targets with optional current source-history replay."""
     return _prepare_reviewed_source_span_consumer_binding(rows,
         expected_rows_sha256=expected_rows_sha256, split_manifest=split_manifest,
         expected_split_manifest_sha256=expected_split_manifest_sha256, admission_inputs=admission_inputs,
         expected_admission_inputs_sha256=expected_admission_inputs_sha256, exposure_records=exposure_records,
         expected_exposure_sha256=expected_exposure_sha256, operation=operation, target_codec=target_codec,
         allow_fictional_fixture=allow_fictional_fixture, allow_heldout_evaluation=allow_heldout_evaluation,
-        heldout_evaluation_purpose=heldout_evaluation_purpose, _admission_version="v3")
+        heldout_evaluation_purpose=heldout_evaluation_purpose, _admission_version="v3",
+        bound_component_inputs=bound_component_inputs)
 
 
 def _prepare_reviewed_source_span_consumer_binding(rows, *, expected_rows_sha256,
@@ -597,8 +601,6 @@ def _prepare_reviewed_source_span_consumer_binding(rows, *, expected_rows_sha256
     outcome, not machine proof of legal truth or a Lean/corpus acceptance.
     """
     schema, profile, _, _ = _reviewed_contract(_admission_version)
-    _require(bound_component_inputs is None or _admission_version == "v2",
-             "bound component handoff requires the explicit V2 consumer path")
     _require(_admission_version != "v3" or heldout_evaluation_purpose != REVIEWED_HELDOUT_CONTEXT_PURPOSE,
              "V3 rich TRAIN context requires its explicit V3 heldout purpose")
     _require(type(allow_heldout_evaluation) is bool, "explicit boolean heldout opt-in required")
@@ -624,7 +626,8 @@ def _prepare_reviewed_source_span_consumer_binding(rows, *, expected_rows_sha256
     rows_copy, manifest_copy, exposure = copies
     admission_copy, admission_sha = _reviewed_snapshot(admission_inputs)
     _require(admission_sha == expected_admission_inputs_sha256, "complete admission replay input commitment differs")
-    bound_identity, bound_inputs_sha = _reviewed_bound_component(bound_component_inputs, admission_copy)
+    bound_identity, bound_inputs_sha = _reviewed_bound_component(
+        bound_component_inputs, admission_copy, _admission_version)
     report = (_reviewed_assessment(admission_copy) if _admission_version == "v2"
               else _reviewed_assessment_for_version(admission_copy, "v3"))
     _require(type(rows_copy) is list and 1 <= len(rows_copy) <= MAX_ROWS,
@@ -778,11 +781,11 @@ def validate_reviewed_source_span_consumer_binding_v2(binding, rows, *, split_ma
 
 
 def validate_reviewed_source_span_consumer_binding_v3(binding, rows, *, split_manifest,
-        admission_inputs, exposure_records):
-    """Replay the explicit V3 domain and present trust before reusing a binding."""
+        admission_inputs, exposure_records, bound_component_inputs=None):
+    """Replay current V3 admission and any selected bound-source handoff."""
     return _validate_reviewed_source_span_consumer_binding(binding, rows,
         split_manifest=split_manifest, admission_inputs=admission_inputs, exposure_records=exposure_records,
-        _admission_version="v3")
+        _admission_version="v3", bound_component_inputs=bound_component_inputs)
 
 
 def _validate_reviewed_source_span_consumer_binding(binding, rows, *, split_manifest,
@@ -852,10 +855,11 @@ def consume_reviewed_source_span_binding_v2(binding, rows, *, split_manifest, ad
 
 
 def consume_reviewed_source_span_binding_v3(binding, rows, *, split_manifest, admission_inputs,
-        exposure_records, consumer):
-    """Dispatch full V3 rows once, checking current admission on every callback exit."""
+        exposure_records, consumer, bound_component_inputs=None):
+    """Dispatch full V3 rows once and replay current admission and source on exit."""
     receipt = validate_reviewed_source_span_consumer_binding_v3(binding, rows,
-        split_manifest=split_manifest, admission_inputs=admission_inputs, exposure_records=exposure_records)
+        split_manifest=split_manifest, admission_inputs=admission_inputs, exposure_records=exposure_records,
+        bound_component_inputs=bound_component_inputs)
     if receipt["status"] != "ready":
         raise SourceSpanConsumerBindingError("reviewed source-span consumer batch is blocked", receipt=receipt)
     _require(callable(consumer), "explicit callable consumer required")
@@ -865,7 +869,8 @@ def consume_reviewed_source_span_binding_v3(binding, rows, *, split_manifest, ad
         return consumer(consumed_rows)
     finally:
         current = validate_reviewed_source_span_consumer_binding_v3(binding, rows,
-            split_manifest=split_manifest, admission_inputs=admission_inputs, exposure_records=exposure_records)
+            split_manifest=split_manifest, admission_inputs=admission_inputs, exposure_records=exposure_records,
+            bound_component_inputs=bound_component_inputs)
         if current["status"] != "ready":
             raise SourceSpanConsumerBindingError("reviewed source-span consumer batch is blocked", receipt=current)
         _check(binding._guards[0], consumed_rows, "detached complete reviewed consumer rows")

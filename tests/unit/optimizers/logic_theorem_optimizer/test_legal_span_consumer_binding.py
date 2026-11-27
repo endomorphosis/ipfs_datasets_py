@@ -1022,11 +1022,12 @@ def test_split_known_cross_partition_leakage_lists_and_blocks_heldout_evaluation
 
 
 
-def reviewed_public_mixed_consumer_case(*, operation="training"):
+def reviewed_public_mixed_consumer_case(*, operation="training", current=None):
     """Use the canonical V3 owner's complete fixture and independent reviewers."""
     from ipfs_datasets_py.logic.autoformal import legal_reviewed_norm_admission_v3 as admission
     from tests.unit.logic.autoformal import test_legal_reviewed_norm_admission_v3 as helper
-    current = helper.mixed_base.__wrapped__(admission, None)
+    if current is None:
+        current = helper.mixed_base.__wrapped__(admission, None)
     if operation == "hparam_selection":
         # Explicitly review this fictional operation before binding it; the
         # original fixture permits training/final scoring, not model selection.
@@ -1398,3 +1399,86 @@ def test_reviewed_v3_saved_current_trust_binding_refuses_omitted_trust():
     assert {"reason": "reviewed_admission_identity_changed"} in refusal["blockers"]
     assert bound.receipt() == saved
     assert owner.reviewed_admission_inputs_sha256(legacy_inputs) == legacy_pin
+
+
+
+@pytest.fixture(scope="module")
+def current_mixed_source_handoff(tmp_path_factory):
+    from ipfs_datasets_py.logic.autoformal import corpus_source_bindings, legal_norm_interpretation_review_v1
+    from tests.unit.logic.autoformal.test_corpus_source_bindings import _lir02_complete_case
+
+    case = _lir02_complete_case(tmp_path_factory.mktemp("mixed-source-consumer"),
+                               corpus_source_bindings, mixed=True)
+    arguments = case["arguments"]
+    report = corpus_source_bindings.prepare_bound_norm_component_v2(**arguments)
+    return case["case"], {
+        "report": report,
+        "expected_report_sha256": legal_norm_interpretation_review_v1.norm_review_sha256(report),
+        "preparation_inputs": arguments,
+    }
+
+
+@pytest.mark.parametrize("operation", ("training", "heldout_evaluation"))
+def test_current_signed_v3_source_and_meaning_reach_existing_consumer(current_mixed_source_handoff, operation):
+    current, handoff = current_mixed_source_handoff
+    _, _, _, rows, options = reviewed_public_mixed_consumer_case(operation=operation, current=current)
+    binding = owner.prepare_reviewed_source_span_consumer_binding_v3(rows, **options, bound_component_inputs=handoff)
+    receipt = binding.receipt()
+    assert receipt["status"] == "ready"
+    assert receipt["bound_component_identity"]["bound_component_report_sha256"] == handoff["expected_report_sha256"]
+    assert receipt["bound_component_identity"]["binding_manifest_sha256"] == handoff["report"]["binding_manifest_sha256"]
+    assert receipt["training_mask"] == receipt["evaluation_gold_mask"] == 0
+    assert all(receipt[key] is False for key in ("proof_authority", "lean_corpus_authority",
+                                               "corpus_admitted", "training_executed"))
+    observed = []
+    if operation == "heldout_evaluation":
+        from tests.unit.optimizers.logic_theorem_optimizer import test_legal_ir_evaluation_artifacts as evaluation
+
+        evaluation_options = evaluation._producer_bridge_options((binding, rows, options, None))
+        evaluation_options.update(allow_heldout_evaluation=True, bound_component_inputs=handoff)
+
+        def produce(arguments):
+            observed.append(arguments)
+            assert all(set(row) == {"id", "source_text", "context"} for row in arguments)
+            assert all(row["context"] == {"permitted": [], "retrieved": []} for row in arguments)
+            return evaluation._producer_exact_outputs(rows)
+
+        artifact = evaluation._producer_evaluate(evaluation_options, produce)
+        payload = evaluation._producer_payload(artifact)
+        assert len(observed) == 1 and payload["accepted_semantic_count"] is None
+        for key in ("admission_before", "admission_after"):
+            assert payload[key]["bound_component_identity"] == receipt["bound_component_identity"]
+            assert payload[key]["training_mask"] == payload[key]["evaluation_gold_mask"] == 0
+        metric = artifact.to_dict()["metrics"]["complete_norm_payload"]
+        assert metric["denominator"] == metric["metric_numerators"]["full_nine_payload_exact"] == len(rows)
+    else:
+        assert owner.consume_reviewed_source_span_binding_v3(
+            binding, rows, **reviewed_validation_inputs(options), bound_component_inputs=handoff,
+            consumer=lambda batch: observed.append(batch) or "fixture-output",
+        ) == "fixture-output"
+        assert observed == [rows]
+
+
+def test_current_signed_v3_source_handoff_is_required_and_replayed_on_exit(current_mixed_source_handoff):
+    current, handoff = deepcopy(current_mixed_source_handoff)
+    _, _, _, rows, options = reviewed_public_mixed_consumer_case(current=current)
+    binding = owner.prepare_reviewed_source_span_consumer_binding_v3(rows, **options, bound_component_inputs=handoff)
+    selected_inputs = reviewed_validation_inputs(options)
+    observed = []
+
+    def observe_then_withdraw_source(batch):
+        observed.append(batch)
+        handoff["preparation_inputs"]["expected_binding_manifest_sha256"] = "0" * 64
+        return "unavailable-result"
+
+    with pytest.raises(owner.SourceSpanConsumerBindingError, match="current bound component replay is required"):
+        owner.consume_reviewed_source_span_binding_v3(
+            binding, rows, **selected_inputs, consumer=observe_then_withdraw_source,
+        )
+    assert observed == []
+    with pytest.raises(owner.SourceSpanConsumerBindingError, match="bound component current replay failed"):
+        owner.consume_reviewed_source_span_binding_v3(
+            binding, rows, **selected_inputs, bound_component_inputs=handoff,
+            consumer=observe_then_withdraw_source,
+        )
+    assert observed == [rows]
