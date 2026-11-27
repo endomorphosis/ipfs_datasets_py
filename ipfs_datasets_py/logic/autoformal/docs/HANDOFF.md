@@ -4085,3 +4085,30 @@ The repository generator emitted identical Lean bytes after a serialized theory 
 ## Evidence580 — Persist proof cache records before indexing
 
 The cache now updates its in-memory indexes after the record write succeeds. An injected atomic replacement failure preserved the prior record on disk and in the content, profile, and source lookups. Reopening the cache preserved that view, and retrying committed the replacement while keeping the earlier record accessible by CID. All 10 ordinary cases passed. Separately, Lean 4.34.1 checked the same generated fictional True obligation with one version probe and two compilations. Reopening and checking cache reuse and mismatches invoked zero additional Lean processes. Statutory review remains pending. [Ordinary qualification](/tmp/P1-proof-cache-translation-current-6btZZr/cache-atomic-put/actual-Phase1-current-cache-atomic-put-ordinary10-closed.json) · [Native qualification](/tmp/P1-proof-cache-translation-current-6btZZr/cache-atomic-put/actual-Phase1-cache-atomic-put-native-translated-proof-cache-closed.json) · [Code publication](/tmp/P1-proof-cache-translation-current-6btZZr/cache-atomic-put/actual-Phase1-cache-atomic-put-ordinary10-and-native-three-FF-publication.json)
+
+## Official V2 source-review handoff
+
+The existing response, adjudication and application owners now replay exact
+official V2 review inputs. Application can activate a generation-one candidate
+answer snapshot with nine selected answer references in order. Its output
+preserves each request's context availability and the seven deferred questions.
+See the [source response guide](guides/corpus_source_review_responses.md) for the
+exact replay inputs and trust boundaries.
+
+Separate local qualification runs under the repository pytest configuration
+passed 5 official and 19 legacy response cases, 7 official and 9 legacy
+adjudication cases, and 7 official and 4 legacy application cases. The selected
+runs had zero failures, errors or skips and returned their Source read leases.
+The broader response run hit its CPU limit. The local Source closeouts are
+identified by SHA-256 23fd9dbf4cc2ed2327c5d294f92e1ec320dcfcd9bfe6ac53884c64e43249e5db,
+3e9f1b5348ccacbd5a4d969257fe7b6f37c0eaf3e842b9314b3196520fea1383 and
+fd810f1393c7887d36128162c82d25d11dce4260ed1a1899870f39cebbf95ab0.
+
+The retained Title 10 source replay preserved all four original requests from
+three documents and kept both tracked interpretation alternatives unselected.
+All four groups stayed pending, with 28 deferred questions, zero authenticated
+reviews, zero activated snapshots, and zero applied source decisions or
+governing bindings. Replay evidence SHA-256 is
+403de3e0afeae839d20f64270d04cacd6fd83a66d0f30c45ef9733b087489a37.
+The reviewed-meaning route still requires the exact complete typed declaration,
+explicit governing context, and independent substantive reviews.
