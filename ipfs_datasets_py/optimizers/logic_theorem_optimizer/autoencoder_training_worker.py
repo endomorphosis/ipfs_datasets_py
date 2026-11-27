@@ -524,6 +524,8 @@ class TrainingJobSpec:
             return ReviewedDigestCacheEpochTrainingJobSpec.from_dict(value)
         if isinstance(value, Mapping) and value.get("schema_version") == REVIEWED_DIGEST_OMITTED_JOB_SCHEMA:
             return ReviewedDigestOmittedDecoderTrainingJobSpec.from_dict(value)
+        if isinstance(value, Mapping) and value.get("schema_version") == REVIEWED_SOURCE_BOUND_MIXED_DECODER_JOB_SCHEMA:
+            return ReviewedSourceBoundMixedDecoderTrainingJobSpec.from_dict(value)
         if isinstance(value, Mapping) and value.get("schema_version") == REVIEWED_MIXED_DECODER_SCHEMA_VERSION:
             return ReviewedMixedDecoderTrainingJobSpec.from_dict(value)
         if isinstance(value, Mapping) and value.get("schema_version") == REVIEWED_DECODER_SCHEMA_VERSION:
@@ -649,6 +651,9 @@ class TrainingJobSpec:
 # selecting this schema is never resource admission or a model download.
 REVIEWED_DECODER_SCHEMA_VERSION = "autoencoder-training-job-v9-reviewed-legal-ir"
 REVIEWED_MIXED_DECODER_SCHEMA_VERSION = "autoencoder-training-job-v10-reviewed-mixed-legal-ir"
+REVIEWED_SOURCE_BOUND_MIXED_DECODER_JOB_SCHEMA = "reviewed-source-bound-mixed-decoder-job/v1"
+REVIEWED_SOURCE_BOUND_MIXED_DECODER_CHECKPOINT_SCHEMA = "reviewed-source-bound-mixed-decoder-checkpoint/v1"
+REVIEWED_SOURCE_BOUND_MIXED_DECODER_WORKER_RECEIPT_SCHEMA = "reviewed-source-bound-mixed-decoder-worker-receipt/v1"
 REVIEWED_DIGEST_OMITTED_JOB_SCHEMA = "reviewed-mixed-digest-omitted-decoder-job/v1"
 REVIEWED_DIGEST_OMITTED_CHECKPOINT_SCHEMA = "reviewed-digest-omitted-decoder-checkpoint/v1"
 REVIEWED_DIGEST_OMITTED_WORKER_RECEIPT_SCHEMA = "reviewed-digest-omitted-decoder-worker-receipt/v1"
@@ -666,6 +671,7 @@ REVIEWED_MIXED_DECODER_CONTINUATION_PROFILE = "reviewed-mixed-cycle-stage-contin
 REVIEWED_DECODER_STAGE_CONTINUATION_SCHEMA = "reviewed-decoder-stage-continuation/v1"
 REVIEWED_DECODER_RECEIPT_SCHEMA = "reviewed-legal-ir-decoder-worker-receipt/v1"
 REVIEWED_DECODER_SOURCE_NAMES = frozenset({"worker", "inputs", "consumer", "admission", "splits"})
+REVIEWED_SOURCE_BOUND_DECODER_SOURCE_NAMES = REVIEWED_DECODER_SOURCE_NAMES | {"source_bindings", "dependencies"}
 MAX_REVIEWED_DECODER_STATE_BYTES = MAX_CHECKPOINT_BYTES
 
 
@@ -710,6 +716,7 @@ class ReviewedDecoderTrainingJobSpec:
             raise TrainingJobValidationError("reviewed decoder output must be a plain absolute path")
         expected_schema = (REVIEWED_DIGEST_CACHE_EPOCH_JOB_SCHEMA if type(self) is ReviewedDigestCacheEpochTrainingJobSpec else
             REVIEWED_DIGEST_OMITTED_JOB_SCHEMA if type(self) is ReviewedDigestOmittedDecoderTrainingJobSpec else
+            REVIEWED_SOURCE_BOUND_MIXED_DECODER_JOB_SCHEMA if type(self) is ReviewedSourceBoundMixedDecoderTrainingJobSpec else
             REVIEWED_MIXED_DECODER_SCHEMA_VERSION if type(self) is ReviewedMixedDecoderTrainingJobSpec else REVIEWED_DECODER_SCHEMA_VERSION)
         if self.schema_version != expected_schema:
             raise TrainingJobValidationError("explicit complete reviewed decoder schema required")
@@ -746,7 +753,9 @@ class ReviewedDecoderTrainingJobSpec:
         if type(self.allow_fictional_fixture) is not bool or not identity["pretrained"] and not self.allow_fictional_fixture:
             raise TrainingJobValidationError("non-pretrained backend requires explicit fictional fixture scope")
         pins = dict(self.expected_source_sha256) if isinstance(self.expected_source_sha256, Mapping) else {}
-        if set(pins) != REVIEWED_DECODER_SOURCE_NAMES or any(type(value) is not str or
+        roles = (REVIEWED_SOURCE_BOUND_DECODER_SOURCE_NAMES if
+                 type(self) is ReviewedSourceBoundMixedDecoderTrainingJobSpec else REVIEWED_DECODER_SOURCE_NAMES)
+        if set(pins) != roles or any(type(value) is not str or
                 re.fullmatch(r"[0-9a-f]{64}", value) is None for value in pins.values()):
             raise TrainingJobValidationError("exact complete reviewed decoder producer pins required")
         for value, low, high, name in ((self.max_source_tokens, 2, 65536, "max_source_tokens"),
@@ -765,11 +774,16 @@ class ReviewedDecoderTrainingJobSpec:
         data = _object(value, {field.name for field in fields(cls)}, "reviewed decoder job")
         expected_schema = (REVIEWED_DIGEST_CACHE_EPOCH_JOB_SCHEMA if cls is ReviewedDigestCacheEpochTrainingJobSpec else
             REVIEWED_DIGEST_OMITTED_JOB_SCHEMA if cls is ReviewedDigestOmittedDecoderTrainingJobSpec else
+            REVIEWED_SOURCE_BOUND_MIXED_DECODER_JOB_SCHEMA if cls is ReviewedSourceBoundMixedDecoderTrainingJobSpec else
             REVIEWED_MIXED_DECODER_SCHEMA_VERSION if cls is ReviewedMixedDecoderTrainingJobSpec else REVIEWED_DECODER_SCHEMA_VERSION)
         if data.get("schema_version") != expected_schema:
             raise TrainingJobValidationError("explicit reviewed decoder schema required")
-        if cls in (ReviewedMixedDecoderTrainingJobSpec, ReviewedDigestOmittedDecoderTrainingJobSpec, ReviewedDigestCacheEpochTrainingJobSpec) and data.get("admission_profile") != REVIEWED_MIXED_ADMISSION_PROFILE:
+        if cls in (ReviewedMixedDecoderTrainingJobSpec, ReviewedDigestOmittedDecoderTrainingJobSpec,
+                   ReviewedDigestCacheEpochTrainingJobSpec, ReviewedSourceBoundMixedDecoderTrainingJobSpec) and data.get(
+                       "admission_profile") != REVIEWED_MIXED_ADMISSION_PROFILE:
             raise TrainingJobValidationError("explicit mixed-sort admission V3 profile required")
+        if cls is ReviewedSourceBoundMixedDecoderTrainingJobSpec:
+            _reviewed_source_bound_worker_digest(data.get("expected_bound_component_inputs_sha256"))
         for name in ("stage_artifact", "exposure_artifact", "source_contexts_artifact", "model_artifact",
                 "tokenizer_artifact", "license_artifact", "base_model_checkpoint", "base_optimizer_checkpoint",
                 "parent_checkpoint_artifact"):
@@ -838,6 +852,24 @@ class ReviewedDigestOmittedDecoderTrainingJobSpec(ReviewedMixedDecoderTrainingJo
         super().__post_init__()
 
 
+def _reviewed_source_bound_worker_digest(value):
+    if type(value) is not str or re.fullmatch(r"[0-9a-f]{64}", value) is None:
+        raise TrainingJobValidationError("exact current bound component inputs SHA256 required")
+
+
+@dataclass(frozen=True)
+class ReviewedSourceBoundMixedDecoderTrainingJobSpec(ReviewedMixedDecoderTrainingJobSpec):
+    """Explicit V5 source-bound inputs; a distinct exact-input checkpoint lineage."""
+    expected_bound_component_inputs_sha256: str = field(kw_only=True)
+    schema_version: str = REVIEWED_SOURCE_BOUND_MIXED_DECODER_JOB_SCHEMA
+
+    def __post_init__(self) -> None:
+        _reviewed_source_bound_worker_digest(self.expected_bound_component_inputs_sha256)
+        if self.continuation_profile is not None:
+            raise TrainingJobValidationError("source-bound jobs require exact same-input resume")
+        super().__post_init__()
+
+
 @dataclass(frozen=True)
 class ReviewedDecoderRuntime:
     """Trusted application injection, not a portable grant or serialized job.
@@ -854,8 +886,12 @@ class ReviewedDecoderRuntime:
     current_admission_provider: Callable[[], Mapping[str, Any]]
     execution_guard: Callable[[], Any]
     asset_policy_guard: Callable[[Mapping[str, Any]], Any]
+    current_bound_component_inputs_provider: Callable[[], Mapping[str, Any]] | None = field(default=None, kw_only=True)
 
     def __post_init__(self) -> None:
+        if self.current_bound_component_inputs_provider is not None and not callable(
+                self.current_bound_component_inputs_provider):
+            raise TrainingJobValidationError("caller-owned current bound component inputs provider must be callable")
         for name in ("current_admission_provider", "execution_guard", "asset_policy_guard"):
             if not callable(getattr(self, name)):
                 raise TrainingJobValidationError("caller-owned reviewed decoder " + name + " required")
@@ -867,8 +903,11 @@ class ReviewedDecoderRuntime:
                 raise TrainingJobValidationError("read-only existing artifact registry protocol required")
 
 
-def _reviewed_decoder_source_pins(*, admission_profile: str | None = None) -> dict[str, str]:
+def _reviewed_decoder_source_pins(*, admission_profile: str | None = None,
+                                  source_bound: bool = False) -> dict[str, str]:
     from ...logic.autoformal import training_cycle_inputs
+    if source_bound and admission_profile != REVIEWED_MIXED_ADMISSION_PROFILE:
+        raise TrainingJobValidationError("source-bound decoder pins require current mixed-sort admission")
     if admission_profile is None:
         from ...logic.autoformal import legal_norm_content_adjudication_v1 as admission
     elif admission_profile == REVIEWED_MIXED_ADMISSION_PROFILE:
@@ -879,6 +918,10 @@ def _reviewed_decoder_source_pins(*, admission_profile: str | None = None) -> di
     modules = {"worker": Path(__file__), "inputs": Path(training_cycle_inputs.__file__),
         "consumer": Path(legal_span_consumer_binding.__file__), "admission": Path(admission.__file__),
         "splits": Path(legal_ir_eval_splits.__file__)}
+    if source_bound:
+        from ...logic.autoformal import corpus_source_bindings, legal_graph_dependencies
+        modules.update(source_bindings=Path(corpus_source_bindings.__file__),
+                       dependencies=Path(legal_graph_dependencies.__file__))
     return {name: _digest(path.read_bytes()) for name, path in modules.items()}
 
 
@@ -1080,6 +1123,67 @@ def _reviewed_mixed_decoder_continuation_state(spec, registry, parent_reference,
         "source_epoch_migration": parent.get("source_epoch_migration")}
 
 
+def _reviewed_exact_resume_parent(spec, parent, receipt, *, checkpoint_schema, identity, assets, source_pins):
+    expected_fields = {"schema", "checkpoint_lineage_id", "base_version_id", "backend_identity", "assets",
+        "training_binding", "model_state", "optimizer_state", "progress", "batch_size", "seed",
+        "parent_checkpoint_sha256", "producer_pins", "token_budgets", "qualified", "promotion_performed"}
+    if type(parent) is not dict or set(parent) != expected_fields or parent["schema"] != checkpoint_schema:
+        raise TrainingJobValidationError("closed complete reviewed decoder parent checkpoint required")
+    if (parent["checkpoint_lineage_id"] != spec.checkpoint_lineage_id or parent["base_version_id"] != spec.base_version_id or
+            parent["backend_identity"] != identity or parent["assets"] != [asdict(item) for item in assets] or
+            parent["model_state"] != asdict(spec.base_model_checkpoint) or
+            parent["optimizer_state"] != asdict(spec.base_optimizer_checkpoint) or
+            (parent["training_binding"] != receipt and not (parent["training_binding"] is None and
+                parent["progress"] == {"epochs_completed": 0, "row_cursor": 0, "optimizer_steps": 0})) or
+            parent["token_budgets"] != {"max_source_tokens": spec.max_source_tokens, "max_target_tokens": spec.max_target_tokens,
+                "tokenizer_contract": receipt["tokenizer_contract"]} or parent["batch_size"] != spec.batch_size or
+            parent["seed"] != spec.seed or parent["producer_pins"] != source_pins or
+            parent["qualified"] is not False or parent["promotion_performed"] is not False):
+        raise TrainingJobValidationError("reviewed decoder exact-resume identities differ")
+    return dict(parent["progress"])
+
+
+def _reviewed_validate_resume_progress(progress, row_count, batch_size, optimizer_step_offset=0):
+    if (set(progress) != {"epochs_completed", "row_cursor", "optimizer_steps"} or
+            any(type(value) is not int or not 0 <= value <= 10**9 for value in progress.values()) or
+            progress["row_cursor"] >= row_count or progress["row_cursor"] % batch_size or
+            progress["optimizer_steps"] != optimizer_step_offset + progress["epochs_completed"] * math.ceil(row_count / batch_size) +
+                progress["row_cursor"] // batch_size):
+        raise TrainingJobValidationError("reviewed decoder step/cursor identity differs")
+
+
+def _prepare_reviewed_source_bound_worker_inputs(spec, registry, tokenizer, admission, bound, exposure, contexts):
+    from ...logic.autoformal import training_cycle_inputs as inputs
+    try:
+        value = inputs.prepare_reviewed_mixed_source_bound_decoder_training_inputs_v5(
+            registry, admission_profile=spec.admission_profile,
+            stage_artifact=asdict(spec.stage_artifact), expected_stage_sha256=spec.stage_artifact.sha256,
+            current_admission_inputs=admission,
+            expected_admission_inputs_sha256=spec.expected_admission_inputs_sha256,
+            current_bound_component_inputs=bound,
+            expected_bound_component_inputs_sha256=spec.expected_bound_component_inputs_sha256,
+            exposure_records=exposure, expected_exposure_sha256=spec.exposure_artifact.sha256,
+            source_contexts=contexts, expected_source_contexts_sha256=spec.source_contexts_artifact.sha256,
+            split_config=_thaw(spec.split_config), expected_split_config_sha256=spec.expected_split_config_sha256,
+            tokenizer=tokenizer, max_source_tokens=spec.max_source_tokens,
+            max_target_tokens=spec.max_target_tokens, allow_fictional_fixture=spec.allow_fictional_fixture)
+    except inputs.ReviewedDecoderInputValidationError as error:
+        raise TrainingJobValidationError("current source-bound reviewed decoder inputs changed or unsupported") from error
+    receipt = value.get("receipt", {})
+    if (value.get("schema") != inputs.REVIEWED_SOURCE_BOUND_MIXED_DECODER_INPUT_SCHEMA
+            or receipt.get("schema") != inputs.REVIEWED_SOURCE_BOUND_MIXED_DECODER_INPUT_RECEIPT_SCHEMA
+            or receipt.get("profile") != inputs.REVIEWED_SOURCE_BOUND_MIXED_DECODER_INPUT_PROFILE
+            or receipt.get("admission_profile") != spec.admission_profile
+            or receipt.get("source_context_profile") != inputs.REVIEWED_COMPONENT_DECODER_CONTEXT_PROFILE
+            or receipt.get("target_codec") != inputs.REVIEWED_DECODER_TARGET_CODEC
+            or receipt.get("source_profile") != inputs.REVIEWED_DECODER_SOURCE_PROFILE
+            or receipt.get("semantic_selection_supported") is not False
+            or receipt.get("staged_bound_component_inputs_sha256") != spec.expected_bound_component_inputs_sha256
+            or receipt.get("current_bound_component_inputs_sha256") != spec.expected_bound_component_inputs_sha256):
+        raise TrainingJobValidationError("exact source-bound reviewed decoder inputs and custody receipt required")
+    return value
+
+
 def _execute_reviewed_decoder_job(spec: ReviewedDecoderTrainingJobSpec, runtime: ReviewedDecoderRuntime,
                                   job_file_sha256: str | None) -> dict[str, Any]:
     """Consume full current-reviewed targets via one declared numerical backend.
@@ -1099,10 +1203,22 @@ def _execute_reviewed_decoder_job(spec: ReviewedDecoderTrainingJobSpec, runtime:
     continuation_replay = None
     checkpoint_limit = MAX_REVIEWED_DECODER_STATE_BYTES
     digest_omitted = type(spec) in (ReviewedDigestOmittedDecoderTrainingJobSpec, ReviewedDigestCacheEpochTrainingJobSpec)
-    mixed = type(spec) in (ReviewedMixedDecoderTrainingJobSpec, ReviewedDigestOmittedDecoderTrainingJobSpec, ReviewedDigestCacheEpochTrainingJobSpec)
-    checkpoint_schema = REVIEWED_DIGEST_OMITTED_CHECKPOINT_SCHEMA if digest_omitted else REVIEWED_DECODER_CHECKPOINT_SCHEMA
+    source_bound = type(spec) is ReviewedSourceBoundMixedDecoderTrainingJobSpec
+    bound_provider = runtime.current_bound_component_inputs_provider
+    if source_bound and not callable(bound_provider):
+        raise TrainingJobValidationError("explicit current source-bound component inputs provider required before model work")
+    mixed = source_bound or type(spec) in (ReviewedMixedDecoderTrainingJobSpec,
+                                          ReviewedDigestOmittedDecoderTrainingJobSpec,
+                                          ReviewedDigestCacheEpochTrainingJobSpec)
+    if source_bound:
+        checkpoint_schema = REVIEWED_SOURCE_BOUND_MIXED_DECODER_CHECKPOINT_SCHEMA
+        from . import legal_span_consumer_binding as consumer
+    else:
+        checkpoint_schema = REVIEWED_DIGEST_OMITTED_CHECKPOINT_SCHEMA if digest_omitted else REVIEWED_DECODER_CHECKPOINT_SCHEMA
     admission_profile = spec.admission_profile if mixed else None
     guard_calls = {"execution": 0, "asset_policy": 0, "current_admission": 0}
+    if source_bound:
+        guard_calls["current_bound_component_inputs"] = 0
     identity = _thaw(spec.backend_identity)
     assets = (spec.model_artifact, spec.tokenizer_artifact, spec.license_artifact, *spec.backend_artifacts)
     source_pins = _thaw(spec.expected_source_sha256)
@@ -1112,11 +1228,23 @@ def _execute_reviewed_decoder_job(spec: ReviewedDecoderTrainingJobSpec, runtime:
     if _json_bytes(exposure) != exposure_raw or _json_bytes(contexts) != contexts_raw:
         raise TrainingJobValidationError("exact canonical reviewed exposure/context artifacts required")
 
+    def current_pins():
+        if source_bound:
+            return _reviewed_decoder_source_pins(admission_profile=admission_profile, source_bound=True)
+        return _reviewed_decoder_source_pins(admission_profile=admission_profile)
+
+    def observe_bound():
+        supplied = bound_provider()
+        guard_calls["current_bound_component_inputs"] += 1
+        if consumer.reviewed_admission_inputs_sha256(supplied) != spec.expected_bound_component_inputs_sha256:
+            raise TrainingJobValidationError("current source-bound component inputs changed")
+        return supplied
+
     def current():
         nonlocal prepared, checkpoint_limit
         runtime.execution_guard()
         guard_calls["execution"] += 1
-        if _reviewed_decoder_source_pins(admission_profile=admission_profile) != source_pins:
+        if current_pins() != source_pins:
             raise TrainingJobValidationError("reviewed decoder producer changed")
         # Caller-owned model/license policy is required, not inferred from a
         # manifest flag, backend return value or a fictional review fixture.
@@ -1139,44 +1267,56 @@ def _execute_reviewed_decoder_job(spec: ReviewedDecoderTrainingJobSpec, runtime:
             raise TrainingJobValidationError("reviewed decoder context/exposure changed")
         admission = runtime.current_admission_provider()
         guard_calls["current_admission"] += 1
-        try:
-            prepare = (inputs.prepare_reviewed_mixed_decoder_digest_omitted_inputs_v1 if digest_omitted else
-                       inputs.prepare_reviewed_mixed_decoder_training_inputs_v4 if mixed
-                       else inputs.prepare_reviewed_decoder_training_inputs)
-            profile_options = {"admission_profile": admission_profile} if mixed else {}
-            value = prepare(runtime.registry, **profile_options,
-                stage_artifact=asdict(spec.stage_artifact), expected_stage_sha256=spec.stage_artifact.sha256,
-                current_admission_inputs=admission,
-                expected_admission_inputs_sha256=spec.expected_admission_inputs_sha256,
-                exposure_records=exposure, expected_exposure_sha256=spec.exposure_artifact.sha256,
-                source_contexts=contexts, expected_source_contexts_sha256=spec.source_contexts_artifact.sha256,
-                split_config=_thaw(spec.split_config), expected_split_config_sha256=spec.expected_split_config_sha256,
-                tokenizer=runtime.tokenizer, max_source_tokens=spec.max_source_tokens,
-                max_target_tokens=spec.max_target_tokens, allow_fictional_fixture=spec.allow_fictional_fixture)
-        except inputs.ReviewedDecoderInputValidationError as error:
-            # Only the input owner's explicit decoder validation type crosses
-            # this boundary. Foreign callback/registry errors retain identity.
-            raise TrainingJobValidationError("current reviewed decoder inputs changed or unsupported") from error
-        receipt = value.get("receipt", {})
-        profile = (value.get("schema"), receipt.get("schema"), receipt.get("profile"))
-        single_component = profile == (inputs.REVIEWED_DECODER_INPUT_SCHEMA,
-            "reviewed-decoder-training-input-receipt/v2", inputs.REVIEWED_DECODER_INPUT_PROFILE)
-        signed_components = (profile == (inputs.REVIEWED_COMPONENT_DECODER_INPUT_SCHEMA,
-            "reviewed-decoder-training-input-receipt/v3", inputs.REVIEWED_COMPONENT_DECODER_INPUT_PROFILE)
-            and receipt.get("source_context_profile") == inputs.REVIEWED_COMPONENT_DECODER_CONTEXT_PROFILE)
-        mixed_components = (profile == (inputs.REVIEWED_MIXED_DECODER_INPUT_SCHEMA,
-            "reviewed-decoder-training-input-receipt/v4", inputs.REVIEWED_MIXED_DECODER_INPUT_PROFILE)
-            and receipt.get("admission_profile") == admission_profile
-            and receipt.get("source_context_profile") == inputs.REVIEWED_COMPONENT_DECODER_CONTEXT_PROFILE) if mixed else False
-        projected_components = (profile == (inputs.REVIEWED_DIGEST_OMITTED_INPUT_SCHEMA,
-            inputs.REVIEWED_DIGEST_OMITTED_INPUT_RECEIPT_SCHEMA, inputs.REVIEWED_DIGEST_OMITTED_INPUT_PROFILE)
-            and receipt.get("admission_profile") == admission_profile
-            and receipt.get("source_context_profile") == inputs.REVIEWED_COMPONENT_DECODER_CONTEXT_PROFILE)
-        if (not (projected_components if digest_omitted else mixed_components if mixed else single_component or signed_components)
-                or receipt.get("target_codec") != (REVIEWED_DIGEST_OMITTED_TARGET_CODEC if digest_omitted else inputs.REVIEWED_DECODER_TARGET_CODEC)
-                or receipt.get("source_profile") != inputs.REVIEWED_DECODER_SOURCE_PROFILE
-                or receipt.get("semantic_selection_supported") is not False):
-            raise TrainingJobValidationError("explicit caller-known selection-context training inputs required")
+        if source_bound:
+            value = _prepare_reviewed_source_bound_worker_inputs(
+                spec, runtime.registry, runtime.tokenizer, admission, observe_bound(), exposure, contexts)
+            # Tokenizer and registry callbacks can replace a provider's
+            # subsequent answer without mutating the object already returned.
+            observe_bound()
+            fresh_admission = runtime.current_admission_provider()
+            guard_calls["current_admission"] += 1
+            if (consumer.reviewed_admission_inputs_sha256(fresh_admission) != spec.expected_admission_inputs_sha256
+                    or current_pins() != source_pins):
+                raise TrainingJobValidationError("current source-bound admission or producer changed during preparation")
+        else:
+            try:
+                prepare = (inputs.prepare_reviewed_mixed_decoder_digest_omitted_inputs_v1 if digest_omitted else
+                           inputs.prepare_reviewed_mixed_decoder_training_inputs_v4 if mixed
+                           else inputs.prepare_reviewed_decoder_training_inputs)
+                profile_options = {"admission_profile": admission_profile} if mixed else {}
+                value = prepare(runtime.registry, **profile_options,
+                    stage_artifact=asdict(spec.stage_artifact), expected_stage_sha256=spec.stage_artifact.sha256,
+                    current_admission_inputs=admission,
+                    expected_admission_inputs_sha256=spec.expected_admission_inputs_sha256,
+                    exposure_records=exposure, expected_exposure_sha256=spec.exposure_artifact.sha256,
+                    source_contexts=contexts, expected_source_contexts_sha256=spec.source_contexts_artifact.sha256,
+                    split_config=_thaw(spec.split_config), expected_split_config_sha256=spec.expected_split_config_sha256,
+                    tokenizer=runtime.tokenizer, max_source_tokens=spec.max_source_tokens,
+                    max_target_tokens=spec.max_target_tokens, allow_fictional_fixture=spec.allow_fictional_fixture)
+            except inputs.ReviewedDecoderInputValidationError as error:
+                # Only the input owner's explicit decoder validation type crosses
+                # this boundary. Foreign callback/registry errors retain identity.
+                raise TrainingJobValidationError("current reviewed decoder inputs changed or unsupported") from error
+            receipt = value.get("receipt", {})
+            profile = (value.get("schema"), receipt.get("schema"), receipt.get("profile"))
+            single_component = profile == (inputs.REVIEWED_DECODER_INPUT_SCHEMA,
+                "reviewed-decoder-training-input-receipt/v2", inputs.REVIEWED_DECODER_INPUT_PROFILE)
+            signed_components = (profile == (inputs.REVIEWED_COMPONENT_DECODER_INPUT_SCHEMA,
+                "reviewed-decoder-training-input-receipt/v3", inputs.REVIEWED_COMPONENT_DECODER_INPUT_PROFILE)
+                and receipt.get("source_context_profile") == inputs.REVIEWED_COMPONENT_DECODER_CONTEXT_PROFILE)
+            mixed_components = (profile == (inputs.REVIEWED_MIXED_DECODER_INPUT_SCHEMA,
+                "reviewed-decoder-training-input-receipt/v4", inputs.REVIEWED_MIXED_DECODER_INPUT_PROFILE)
+                and receipt.get("admission_profile") == admission_profile
+                and receipt.get("source_context_profile") == inputs.REVIEWED_COMPONENT_DECODER_CONTEXT_PROFILE) if mixed else False
+            projected_components = (profile == (inputs.REVIEWED_DIGEST_OMITTED_INPUT_SCHEMA,
+                inputs.REVIEWED_DIGEST_OMITTED_INPUT_RECEIPT_SCHEMA, inputs.REVIEWED_DIGEST_OMITTED_INPUT_PROFILE)
+                and receipt.get("admission_profile") == admission_profile
+                and receipt.get("source_context_profile") == inputs.REVIEWED_COMPONENT_DECODER_CONTEXT_PROFILE)
+            if (not (projected_components if digest_omitted else mixed_components if mixed else single_component or signed_components)
+                    or receipt.get("target_codec") != (REVIEWED_DIGEST_OMITTED_TARGET_CODEC if digest_omitted else inputs.REVIEWED_DECODER_TARGET_CODEC)
+                    or receipt.get("source_profile") != inputs.REVIEWED_DECODER_SOURCE_PROFILE
+                    or receipt.get("semantic_selection_supported") is not False):
+                raise TrainingJobValidationError("explicit caller-known selection-context training inputs required")
         if prepared is None:
             prepared = value
         elif _json_bytes(value) != _json_bytes(prepared):
@@ -1244,29 +1384,9 @@ def _execute_reviewed_decoder_job(spec: ReviewedDecoderTrainingJobSpec, runtime:
                     raise TrainingJobValidationError("continuation ancestry or offset changed before publication")
             continuation_replay = replay_continuation
         else:
-            expected_fields = {"schema", "checkpoint_lineage_id", "base_version_id", "backend_identity", "assets",
-                "training_binding", "model_state", "optimizer_state", "progress", "batch_size", "seed",
-                "parent_checkpoint_sha256", "producer_pins", "token_budgets", "qualified", "promotion_performed"}
-            if type(parent) is not dict or set(parent) != expected_fields or parent["schema"] != checkpoint_schema:
-                raise TrainingJobValidationError("closed complete reviewed decoder parent checkpoint required")
-            if (parent["checkpoint_lineage_id"] != spec.checkpoint_lineage_id or parent["base_version_id"] != spec.base_version_id or
-                    parent["backend_identity"] != identity or parent["assets"] != [asdict(item) for item in assets] or
-                    parent["model_state"] != asdict(spec.base_model_checkpoint) or
-                    parent["optimizer_state"] != asdict(spec.base_optimizer_checkpoint) or
-                    (parent["training_binding"] != data["receipt"] and not (parent["training_binding"] is None and
-                        parent["progress"] == {"epochs_completed": 0, "row_cursor": 0, "optimizer_steps": 0})) or
-                    parent["token_budgets"] != {"max_source_tokens": spec.max_source_tokens, "max_target_tokens": spec.max_target_tokens,
-                        "tokenizer_contract": data["receipt"]["tokenizer_contract"]} or parent["batch_size"] != spec.batch_size or
-                    parent["seed"] != spec.seed or parent["producer_pins"] != source_pins or
-                    parent["qualified"] is not False or parent["promotion_performed"] is not False):
-                raise TrainingJobValidationError("reviewed decoder exact-resume identities differ")
-            progress = dict(parent["progress"])
-    if (set(progress) != {"epochs_completed", "row_cursor", "optimizer_steps"} or
-            any(type(value) is not int or not 0 <= value <= 10**9 for value in progress.values()) or
-            progress["row_cursor"] >= len(records) or progress["row_cursor"] % spec.batch_size or
-            progress["optimizer_steps"] != optimizer_step_offset + progress["epochs_completed"] * math.ceil(len(records) / spec.batch_size) +
-                progress["row_cursor"] // spec.batch_size):
-        raise TrainingJobValidationError("reviewed decoder step/cursor identity differs")
+            progress = _reviewed_exact_resume_parent(spec, parent, data["receipt"],
+                checkpoint_schema=checkpoint_schema, identity=identity, assets=assets, source_pins=source_pins)
+    _reviewed_validate_resume_progress(progress, len(records), spec.batch_size, optimizer_step_offset)
     # Reserve capacity for the complete requested update window before any
     # restore or fitting. A timed early stop does not authorize an unresumable
     # successor whose counters exceed the checkpoint contract.
@@ -1375,7 +1495,9 @@ def _execute_reviewed_decoder_job(spec: ReviewedDecoderTrainingJobSpec, runtime:
         checkpoint_ref = _write_exclusive(output / "reviewed-decoder-checkpoint.json", _json_bytes(checkpoint))
         _reviewed_decoder_artifact(CheckpointArtifact.from_dict(checkpoint_ref))
         current()
-        receipt = {"schema_version": (REVIEWED_DIGEST_OMITTED_WORKER_RECEIPT_SCHEMA if digest_omitted else REVIEWED_MIXED_DECODER_RECEIPT_SCHEMA if mixed else REVIEWED_DECODER_RECEIPT_SCHEMA),
+        receipt = {"schema_version": (REVIEWED_SOURCE_BOUND_MIXED_DECODER_WORKER_RECEIPT_SCHEMA if source_bound
+            else REVIEWED_DIGEST_OMITTED_WORKER_RECEIPT_SCHEMA if digest_omitted
+            else REVIEWED_MIXED_DECODER_RECEIPT_SCHEMA if mixed else REVIEWED_DECODER_RECEIPT_SCHEMA),
             "job_id": spec.job_id, "run_id": spec.run_id,
             "job_spec_sha256": spec.canonical_sha256, "job_file_sha256": job_file_sha256,
             "code_identity": spec.code_identity, "base_version_id": spec.base_version_id,
@@ -1869,7 +1991,8 @@ def _execute(spec: TrainingJobSpec, trainer: Callable[..., Mapping[str, Any]] | 
              reduce_native_targets: bool = False,
              reviewed_runtime: ReviewedDecoderRuntime | None = None) -> dict[str, Any]:
     global _PROCESS_SOURCE_HASHES
-    if type(spec) in (ReviewedDecoderTrainingJobSpec, ReviewedMixedDecoderTrainingJobSpec, ReviewedDigestOmittedDecoderTrainingJobSpec, ReviewedDigestCacheEpochTrainingJobSpec):
+    if type(spec) in (ReviewedDecoderTrainingJobSpec, ReviewedMixedDecoderTrainingJobSpec, ReviewedDigestOmittedDecoderTrainingJobSpec,
+                      ReviewedDigestCacheEpochTrainingJobSpec, ReviewedSourceBoundMixedDecoderTrainingJobSpec):
         if trainer is not None or defer_target_hydration_gc or reduce_native_targets:
             raise TrainingJobValidationError("legacy trainer/hydration flags cannot select complete reviewed decoder execution")
         return _execute_reviewed_decoder_job(spec, reviewed_runtime, job_file_sha256)
@@ -2407,7 +2530,8 @@ def _execute_training_job(spec: TrainingJobSpec, *, trainer: Callable[..., Mappi
                           defer_target_hydration_gc: bool = False,
                           reduce_native_targets: bool = False,
                           reviewed_runtime: ReviewedDecoderRuntime | None = None) -> dict[str, Any]:
-    if type(spec) in (ReviewedDecoderTrainingJobSpec, ReviewedMixedDecoderTrainingJobSpec, ReviewedDigestOmittedDecoderTrainingJobSpec, ReviewedDigestCacheEpochTrainingJobSpec):
+    if type(spec) in (ReviewedDecoderTrainingJobSpec, ReviewedMixedDecoderTrainingJobSpec, ReviewedDigestOmittedDecoderTrainingJobSpec,
+                      ReviewedDigestCacheEpochTrainingJobSpec, ReviewedSourceBoundMixedDecoderTrainingJobSpec):
         if trainer is not None or defer_target_hydration_gc or reduce_native_targets:
             raise TrainingJobValidationError("legacy trainer/hydration flags cannot select complete reviewed decoder execution")
         if type(reviewed_runtime) is not ReviewedDecoderRuntime:
@@ -2418,7 +2542,8 @@ def _execute_training_job(spec: TrainingJobSpec, *, trainer: Callable[..., Mappi
         raise TrainingJobValidationError("reduce_native_targets must be boolean")
     if reduce_native_targets and trainer is not None:
         raise TrainingJobValidationError("target reduction requires the native spawned worker without an injected trainer")
-    if not isinstance(spec, TrainingJobSpec) and type(spec) not in (ReviewedDecoderTrainingJobSpec, ReviewedMixedDecoderTrainingJobSpec, ReviewedDigestOmittedDecoderTrainingJobSpec, ReviewedDigestCacheEpochTrainingJobSpec):
+    if not isinstance(spec, TrainingJobSpec) and type(spec) not in (ReviewedDecoderTrainingJobSpec, ReviewedMixedDecoderTrainingJobSpec, ReviewedDigestOmittedDecoderTrainingJobSpec,
+                      ReviewedDigestCacheEpochTrainingJobSpec, ReviewedSourceBoundMixedDecoderTrainingJobSpec):
         raise TrainingJobValidationError("spec must be a TrainingJobSpec or explicit reviewed decoder spec")
     if not _JOB_LOCK.acquire(blocking=False):
         raise TrainingJobValidationError("only one training job may run per worker process")
@@ -2445,6 +2570,8 @@ def execute_training_job_file(path: str | Path, expected_sha256: str, *,
 
 
 __all__ = ["ReviewedMixedDecoderTrainingJobSpec", "REVIEWED_MIXED_DECODER_SCHEMA_VERSION",
+           "ReviewedSourceBoundMixedDecoderTrainingJobSpec", "REVIEWED_SOURCE_BOUND_MIXED_DECODER_JOB_SCHEMA",
+           "REVIEWED_SOURCE_BOUND_MIXED_DECODER_CHECKPOINT_SCHEMA", "REVIEWED_SOURCE_BOUND_MIXED_DECODER_WORKER_RECEIPT_SCHEMA",
            "REVIEWED_MIXED_DECODER_CONTINUATION_PROFILE", "REVIEWED_DECODER_CONTINUATION_CHECKPOINT_SCHEMA",
            "REVIEWED_MIXED_ADMISSION_PROFILE", "ReviewedDecoderTrainingJobSpec", "ReviewedDecoderRuntime", "REVIEWED_DECODER_SCHEMA_VERSION", "BRIDGE_NAMES", "CheckpointArtifact", "ModelVariant", "SampleRecord", "TrainingConfig",
            "TrainingJobSpec", "TrainingJobValidationError", "execute_training_job", "execute_training_job_file",
