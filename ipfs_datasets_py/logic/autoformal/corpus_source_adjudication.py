@@ -85,19 +85,33 @@ def _limits(value):
     return result
 
 
-def _pins():
-    result = responses._pins()
+def _pins(*, official=False):
+    result = responses._pins(official=True) if official else responses._pins()
     result[str(Path(__file__).resolve())] = _sha(Path(__file__).read_bytes())
     return result
 
 
 def _unit(request, subject, typed_group, pending_slots, variants):
-    checked = []
-    for record, schema, fields in ((request, source.REQUEST_SCHEMA, source.REQUEST_FIELDS),
-            (subject, source.SUBJECT_SCHEMA, source.SUBJECT_FIELDS),
-            (typed_group, responses.GROUP_SCHEMA, responses.FIELDS['records'])):
-        checked.append(contracts.validate_record(json.loads(base._plain(record, contracts.MAX_RECORD_BYTES)), schema=schema, fields=fields))
-    request, subject, typed_group = checked
+    request = json.loads(base._plain(request, contracts.MAX_RECORD_BYTES))
+    official = type(request) is dict and request.get('schema') == source.OFFICIAL_REQUEST_SCHEMA
+    request_schema = source.OFFICIAL_REQUEST_SCHEMA if official else source.REQUEST_SCHEMA
+    request_fields = source.OFFICIAL_REQUEST_FIELDS if official else source.REQUEST_FIELDS
+    subject_schema = source.OFFICIAL_SUBJECT_SCHEMA if official else source.SUBJECT_SCHEMA
+    request = contracts.validate_record(request, schema=request_schema, fields=request_fields)
+    subject = contracts.validate_record(json.loads(base._plain(subject, contracts.MAX_RECORD_BYTES)),
+        schema=subject_schema, fields=source.SUBJECT_FIELDS)
+    typed_group = contracts.validate_record(json.loads(base._plain(typed_group, contracts.MAX_RECORD_BYTES)),
+        schema=responses.GROUP_SCHEMA, fields=responses.FIELDS['records'])
+    if official:
+        raw_group = contracts.validate_record(typed_group['raw_source_assessment_record'],
+            schema=source.OFFICIAL_GROUP_SCHEMA, fields=source.GROUP_FIELDS)
+        if (request['profile'] != source.OFFICIAL_PROFILE or subject['profile'] != source.OFFICIAL_PROFILE
+                or raw_group['review_request_cid'] != request['record_cid']
+                or raw_group['subject_sha256'] != _digest(subject)
+                or raw_group['queue_ordinal'] != request['queue_ordinal']
+                or raw_group['deferred_review_slot_ids'] != request['deferred_review_slot_ids']
+                or typed_group['deferred_review_slot_ids'] != request['deferred_review_slot_ids']):
+            _fail('exact official adjudication request, subject and source assessment required')
     if (subject['review_request_cid'] != request['record_cid'] or subject['graph_sha256'] != _digest(request)
             or typed_group['request_cid'] != request['record_cid']
             or typed_group['queue_ordinal'] != request['queue_ordinal']):
@@ -322,10 +336,17 @@ def assess_source_adjudications(preparation, source_registry, source_policy, sou
         expected_adjudication_registry_sha256, expected_adjudication_policy_sha256, expected_adjudication_group_pins,
         typed_response_limits=None, limits=None, **typed_response_inputs):
     """Regenerate typed sources once, then authenticate a fixed adjudication domain."""
+    manifest = preparation.get('manifest') if type(preparation) is dict else None
+    official = type(manifest) is dict and manifest.get('schema') == source.OFFICIAL_MANIFEST_SCHEMA
     required = {'response_bindings', 'expected_response_bindings_sha256', 'expected_preparation_manifest_sha256',
-        'expected_registry_sha256', 'expected_policy_sha256', 'expected_review_group_pins', 'at_time_utc',
-        'alignment_corpus_bytes', 'expected_alignment_corpus_pins', 'alignment_replay_inputs',
-        'source_report_bytes', 'expected_source_report_pins'}
+        'expected_registry_sha256', 'expected_policy_sha256', 'expected_review_group_pins', 'at_time_utc'}
+    if official:
+        required.update(('document_inputs', 'expected_document_population_sha256',
+            'occurrence_inputs', 'expected_occurrence_population_sha256',
+            'pending_interpretations', 'expected_pending_interpretations_sha256'))
+    else:
+        required.update(('alignment_corpus_bytes', 'expected_alignment_corpus_pins',
+            'alignment_replay_inputs', 'source_report_bytes', 'expected_source_report_pins'))
     if set(typed_response_inputs) not in (required, required | {'source_review_limits'}):
         _fail('closed complete typed source adjudication replay inputs required')
     bounds = _limits(limits)
@@ -335,7 +356,7 @@ def assess_source_adjudications(preparation, source_registry, source_policy, sou
     if _digest(offered['manifest']) != expected_typed_response_manifest_sha256:
         _fail('independent complete typed response root differs')
     source_bounds = source._limits(typed_response_inputs.get('source_review_limits'))
-    detached = source._detach_preparation(preparation, source_bounds)
+    detached = source._detach_preparation(preparation, source_bounds, official=official)
     if len(detached['requests']) > bounds['max_groups']:
         _fail('complete source adjudication group population exceeds bound')
     source_pins = json.loads(base._plain(typed_response_inputs['expected_review_group_pins'], contracts.MAX_RECORD_BYTES))
@@ -367,7 +388,7 @@ def assess_source_adjudications(preparation, source_registry, source_policy, sou
         expected_adjudication_policy_sha256, action=ACTION, audience=AUDIENCE)
     evaluation_time = typed_response_inputs['at_time_utc']
     evaluation = auth._time(evaluation_time)
-    producer_pins = _pins()
+    producer_pins = _pins(official=True) if official else _pins()
     checked = responses.validate_source_review_responses(offered, detached, source_registry, source_policy, original_groups,
         **typed_response_inputs, limits=typed_response_limits)
     slots_by_cid = {row['record_cid']: row for row in checked['adjudication_requests']}
@@ -378,7 +399,10 @@ def assess_source_adjudications(preparation, source_registry, source_policy, sou
     authority_keys = {key['key_id']: key for key in adjudication_registry['keys']}
     original_public_keys = {source_keys[claim['key_id']]['public_key_hex'] for group in original_groups
         for claim in group['reviews'] if claim['key_id'] in source_keys}
-    domain = auth._ReviewDomain(source.SUBJECT_SCHEMA, CLAIM_SCHEMA, ACTION, AUDIENCE, ASSESSMENT_SCHEMA, source._subject, source.ACTIVE_SLOT_COUNT)
+    subject_schema = source.OFFICIAL_SUBJECT_SCHEMA if official else source.SUBJECT_SCHEMA
+    verify_subject = source._official_subject if official else source._subject
+    domain = auth._ReviewDomain(subject_schema, CLAIM_SCHEMA, ACTION, AUDIENCE, ASSESSMENT_SCHEMA,
+        verify_subject, source.ACTIVE_SLOT_COUNT)
     records, entries, retained = [], [], 0
     eligible, body_count, authenticated_count, selected_slots, unresolved_slots = 0, 0, 0, 0, 0
     for ordinal, (request, subject, dependency_manifest, typed_group, original, group, pin) in enumerate(zip(detached['requests'],
@@ -423,7 +447,9 @@ def assess_source_adjudications(preparation, source_registry, source_policy, sou
             declaration_content_status='absent' if identity is None else 'valid_declared_content' if record is not None else 'rejected',
             content_blockers=content_blockers, authority_assessment=assessment, separation_and_chronology_blockers=extra,
             authority_prerequisites_satisfied_under_selected_trust=prerequisites,
-            deferred_review_slot_ids=request['deferred_review_slot_ids'], original_contexts_remain_required_unavailable=True)
+            deferred_review_slot_ids=request['deferred_review_slot_ids'],
+            original_contexts_remain_required_unavailable=(
+                not official or request['context_declaration']['availability'] == 'required_unavailable'))
         raw = base._plain(result, min(contracts.MAX_RECORD_BYTES, bounds['max_collection_bytes'] - retained))
         retained += len(raw) + 1
         records.append(result)
@@ -448,7 +474,8 @@ def assess_source_adjudications(preparation, source_registry, source_policy, sou
     result = {'manifest': manifest, 'pages': pages, 'records': records}
     if source._aggregate_size(result) > bounds['max_collection_bytes']:
         _fail('complete source adjudication collection exceeds bound')
-    if _pins() != producer_pins:
+    current_pins = _pins(official=True) if official else _pins()
+    if current_pins != producer_pins:
         _fail('adjudication or inherited source producers changed during operation')
     return result
 
@@ -477,7 +504,11 @@ def validate_source_adjudications(report, *args, **kwargs):
     detached = _detach(report, _limits(kwargs.get('limits')))
     expected = assess_source_adjudications(*args, **kwargs)
     source._equal_components(detached, expected)
-    if _pins() != expected['manifest']['producer_pins']:
+    official = bool(expected['records']) and (
+        expected['records'][0]['typed_response_group_record']['raw_source_assessment_record']['schema']
+        == source.OFFICIAL_GROUP_SCHEMA)
+    current_pins = _pins(official=True) if official else _pins()
+    if current_pins != expected['manifest']['producer_pins']:
         _fail('source adjudication producer pins changed during final comparison')
     return detached
 

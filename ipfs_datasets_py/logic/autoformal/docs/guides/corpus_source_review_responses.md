@@ -101,9 +101,19 @@ registry, policy and group pins and an explicit evaluation time.
 
 Optional `source_review_limits` lowers the inherited profile. `limits` lowers
 the response profile. The saved typed report keeps the exact original raw
-assessment reference. Adjudication, application, history and binding consumers
-currently require legacy preparation. An official V2 response can be
-authenticated here and carried forward as pending evidence.
+assessment reference. An official V2 response can enter the existing
+`corpus_source_adjudication` owner as pending evidence. Its declaration and
+assessment APIs keep the original request and subject references, replay the
+same official population and authenticate signatures under a separately pinned
+adjudication registry and policy. Each of the nine choices refers to a retained
+answer variant or stays unresolved. The seven deferred questions and the
+original context availability stay intact.
+
+Application, history and binding consumers still require legacy preparation.
+An adjudication assessment retains evidence and declared choices for later
+use. Its authority-prerequisite field reports the result under the caller's
+selected trust inputs. Applying source decisions and qualifying reviewed legal
+meaning remain separate operations.
 
 Response bindings are a complete ordered list, one group per original request:
 `{request_cid, responses: [{review_id, artifact_id, raw_sha256}]}`. Entries match

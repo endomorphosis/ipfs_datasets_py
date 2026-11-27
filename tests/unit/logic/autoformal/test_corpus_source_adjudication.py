@@ -1730,3 +1730,203 @@ print('inert source adjudication import verified')
     )
     assert result.returncode == 0, result.stdout + result.stderr
     assert result.stdout.strip() == "inert source adjudication import verified"
+
+
+@pytest.fixture(scope="module")
+def official_typed_adjudication_data():
+    source_responses = helper()
+    pending = source_responses.official_v2_pending_typed_data.__wrapped__()
+    data = source_responses.official_v2_signed_typed_data.__wrapped__(pending)
+    data["typed_report"] = source_responses.assess(response_owner, data)
+    assert data["typed_report"]["manifest"]["counts"]["authenticated_typed_responses"] == 2
+    return data
+
+
+def test_official_adjudication_declaration_binds_original_official_request(
+    owner, official_typed_adjudication_data
+):
+    data = official_typed_adjudication_data
+    declaration = author(owner, data)
+    request, subject, group, *_ = unit(data)
+    assert declaration["request_ref"] == ref(request)
+    assert declaration["subject_ref"] == ref(subject)
+    assert declaration["typed_group_ref"] == ref(group)
+    assert declaration["status"] == "declared_unauthenticated_source_adjudication"
+    assert all(declaration[field] is False for field in owner.FALSE_FLAGS)
+
+
+def test_official_adjudication_replays_signed_typed_population_without_adjudicators(
+    owner, official_typed_adjudication_data
+):
+    data = clone_case(official_typed_adjudication_data)
+    (data["adjudication_registry"], data["adjudication_policy"], _) = authority(owner, data)
+    data["adjudication_groups"] = [
+        {
+            "request_cid": request["record_cid"],
+            "reviews": [],
+            "declaration_artifact_id": None,
+            "evidence_artifacts": {},
+            "observed_artifact_sha256s": deepcopy(group["observed_artifact_sha256s"]),
+            "observed_pins": deepcopy(group["observed_pins"]),
+        }
+        for request, group in zip(data["preparation"]["requests"], data["groups"], strict=True)
+    ]
+    report = assess(owner, data)
+    assert len(report["records"]) == len(data["preparation"]["requests"])
+    assert all(record["request_cid"] == request["record_cid"]
+               for record, request in zip(report["records"], data["preparation"]["requests"], strict=True))
+    assert all(report["manifest"][field] is False for field in owner.FALSE_FLAGS)
+    assert validate(owner, report, data) == report
+
+
+def test_official_adjudication_authenticates_two_fresh_scoped_signers_without_application(
+    owner, official_typed_adjudication_data
+):
+    original = official_typed_adjudication_data
+    data = signed_case(owner, original, original["typed_report"])
+    report = assess(owner, data)
+    request, subject, typed_group, slots, variants = unit(data)
+    group = data["adjudication_groups"][0]
+    first = report["records"][0]
+    declaration = first["declaration_record"]
+    authority_report = first["authority_assessment"]
+    keys = data["adjudication_registry"]["keys"]
+    assert request["profile"] == subject["profile"] == source_owner.OFFICIAL_PROFILE
+    assert declaration["request_ref"] == ref(request)
+    assert declaration["subject_ref"] == ref(subject)
+    assert declaration["typed_group_ref"] == ref(typed_group)
+    assert declaration["pending_slot_refs"] == [ref(slot) for slot in slots]
+    assert declaration["considered_answer_variant_refs"] == [ref(variant) for variant in variants]
+    assert declaration["decisions"] == choices(data)
+    assert first["declaration_content_status"] == "valid_declared_content"
+    assert authority_report["subject_sha256"] == ref(subject)["sha256"]
+    assert authority_report["trust_mode"] == "synthetic_fixture"
+    assert authority_report["authenticated_evidence_count"] == 2
+    for field in ("principal_id", "key_id", "signer_did", "public_key_hex"):
+        declared_keys = {key[field] for key in keys}
+        assert len(declared_keys) == 2
+        assert declared_keys.isdisjoint(key[field] for key in original["registry"]["keys"])
+    assert {review["role"] for review in authority_report["reviews"]} == set(trust_owner.ROLES)
+    for claim, key, review in zip(group["reviews"], keys, authority_report["reviews"], strict=True):
+        assert claim["subject"] == subject
+        assert subject["scope_id"] in key["scope_ids"]
+        assert review["review_id"] == claim["review_id"]
+        assert review["principal_id"] == key["principal_id"]
+        assert review["status"] == "authenticated"
+        assert review["signature_status"] == "valid"
+        assert review["signed_context_declaration_complete"] is True
+    assert "production_trust_registry_unavailable" in authority_report["blockers"]
+    assert first["authority_prerequisites_satisfied_under_selected_trust"] is False
+    assert report["manifest"]["profile"] == declaration["profile"] == owner.PROFILE
+    assert report["manifest"]["typed_response_manifest_ref"] == ref(original["typed_report"]["manifest"])
+    assert [record["typed_response_group_record"] for record in report["records"]] == original[
+        "typed_report"
+    ]["records"]
+    assert [record["deferred_review_slot_ids"] for record in report["records"]] == [
+        request["deferred_review_slot_ids"] for request in original["preparation"]["requests"]
+    ]
+    counts = report["manifest"]["counts"]
+    assert counts["declaration_bodies"] == 1
+    assert counts["authenticated_authority_claims"] == 2
+    assert counts["declared_selected_slots"] == 9
+    assert counts["deferred_questions"] == 7 * len(original["preparation"]["requests"])
+    assert_no_application(owner, report)
+    assert validate(owner, report, data) == report
+
+
+def test_official_adjudication_retains_regenerated_context_availability(owner):
+    from ipfs_datasets_py.logic.autoformal import corpus_source
+
+    response_fixture = helper()
+    source_fixture = response_fixture.helper()
+    arguments = source_fixture.official_occurrence_case()
+    first_input = arguments["occurrence_inputs"][0]
+    occurrence = first_input["source_occurrence"]
+    first_input["context"] = corpus_source.build_context_declaration(
+        occurrence,
+        expected_occurrence_cid=occurrence["record_cid"],
+        availability="declared_context",
+        reason="Fictional source-transport context reference.",
+        context_references=deepcopy(first_input["context"]["context_references"]),
+    )
+    source_fixture.repin_official_inputs(arguments)
+    preparation, registry, policy, groups, options, _ = (
+        source_fixture.official_pending_assessment(source_owner, arguments)
+    )
+    data = {
+        "data": {"arguments": arguments},
+        "preparation": preparation,
+        "registry": registry,
+        "policy": policy,
+        "groups": groups,
+        "at_time_utc": options["at_time_utc"],
+        "response_bindings": [
+            {"request_cid": request["record_cid"], "responses": []}
+            for request in preparation["requests"]
+        ],
+    }
+    data["typed_report"] = response_fixture.assess(response_owner, data)
+    data["adjudication_registry"], data["adjudication_policy"], _ = authority(owner, data)
+    data["adjudication_groups"] = [
+        {**deepcopy(group), "declaration_artifact_id": None} for group in groups
+    ]
+    report = assess(owner, data)
+    assert [request["context_declaration"]["availability"] for request in preparation["requests"]] == [
+        "declared_context", "required_unavailable", "required_unavailable", "required_unavailable"
+    ]
+    assert [row["original_contexts_remain_required_unavailable"] for row in report["records"]] == [
+        False, True, True, True
+    ]
+    assert report["manifest"]["counts"]["adjudications_applied"] == 0
+    assert report["manifest"]["counts"]["source_decisions_applied"] == 0
+    assert all(report["manifest"][field] is False for field in owner.FALSE_FLAGS)
+    assert all(
+        row["declaration_record"] is None and all(row[field] is False for field in owner.FALSE_FLAGS)
+        for row in report["records"]
+    )
+    assert validate(owner, report, data) == report
+
+
+def test_official_adjudication_explicit_fictional_trust_keeps_meaning_unselected(
+    owner, official_typed_adjudication_data
+):
+    responses = helper()
+    original = responses.signed_typed_case(
+        response_owner, official_typed_adjudication_data, trust_mode="external_pinned_trust"
+    )
+    typed = responses.assess(response_owner, original)
+    data = signed_case(owner, original, typed, mode="external_pinned_trust")
+    report = assess(owner, data)
+    first = report["records"][0]
+    assert first["authority_prerequisites_satisfied_under_selected_trust"] is True
+    assert first["authority_assessment"]["authenticated_evidence_count"] == 2
+    assert first["authority_assessment"]["registry_identity_authenticated_by_this_api"] is False
+    assert first["authority_assessment"]["evaluation_clock_authenticated"] is False
+    assert first["typed_response_group_record"] == typed["records"][0]
+    assert report["manifest"]["counts"]["complete_declaration_authority_prerequisites_under_selected_trust"] == 1
+    assert_no_application(owner, report)
+    assert validate(owner, report, data) == report
+
+
+@pytest.mark.parametrize(
+    ("changed", "diagnostic"),
+    [
+        ("legacy_subject", "^record schema or CID scope differs$"),
+        ("detached_subject_digest", "exact official adjudication request, subject and source assessment required"),
+    ],
+)
+def test_official_adjudication_rejects_resealed_other_subject(
+    owner, official_typed_adjudication_data, changed, diagnostic
+):
+    data = clone_case(official_typed_adjudication_data)
+    if changed == "legacy_subject":
+        subject = data["preparation"]["subjects"][0]
+        data["preparation"]["subjects"][0] = reseal(
+            dict(subject, schema=source_owner.SUBJECT_SCHEMA, profile=source_owner.PROFILE)
+        )
+    else:
+        group = data["typed_report"]["records"][0]
+        raw_group = reseal(dict(group["raw_source_assessment_record"], subject_sha256="1" * 64))
+        data["typed_report"]["records"][0] = reseal(dict(group, raw_source_assessment_record=raw_group))
+    with pytest.raises(contracts.CorpusContractError, match=diagnostic):
+        author(owner, data)
