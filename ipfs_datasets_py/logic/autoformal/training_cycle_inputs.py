@@ -125,6 +125,10 @@ REVIEWED_COMPONENT_CYCLE_PROFILE = "independently-reviewed-component-transition-
 _REVIEWED_COMPONENT_RECEIPTS_SCHEMA = "reviewed-cycle-component-consumer-receipts/v1"
 REVIEWED_MIXED_CYCLE_SCHEMA = "reviewed-example-cycle-input-artifact/v4"
 REVIEWED_MIXED_CYCLE_PROFILE = "mixed-sort-admission-component-transition-staging/v4"
+REVIEWED_SOURCE_BOUND_MIXED_CYCLE_SCHEMA = "reviewed-example-cycle-input-artifact/v5"
+REVIEWED_SOURCE_BOUND_MIXED_CYCLE_PROFILE = "mixed-sort-source-bound-component-transition-staging/v5"
+_REVIEWED_ADMISSION_TRANSPORT_SCHEMA = "reviewed-cycle-admission-input-transport/v2"
+_REVIEWED_BOUND_COMPONENT_TRANSPORT_SCHEMA = "reviewed-cycle-bound-component-input-transport/v1"
 REVIEWED_MIXED_ADMISSION_PROFILE = "complete-reviewed-mixed-sort-norm-admission/v3"
 _REVIEWED_MIXED_COMPONENT_RECEIPTS_SCHEMA = "reviewed-cycle-component-consumer-receipts/v2"
 REVIEWED_MIXED_DECODER_INPUT_SCHEMA = "reviewed-decoder-training-inputs/v4"
@@ -151,8 +155,9 @@ def _reviewed_cycle_contract(version):
     raise ValueError("unsupported explicit reviewed admission contract")
 
 
-def _reviewed_cycle_fields(version):
-    return _REVIEWED_ARTIFACT_FIELDS | ({"admission_profile"} if version == "v3" else set())
+def _reviewed_cycle_fields(version, *, source_bound=False):
+    fields = _REVIEWED_ARTIFACT_FIELDS | ({"admission_profile"} if version == "v3" else set())
+    return fields | {"bound_component_transport_artifact"} if source_bound else fields
 
 
 MAX_REVIEWED_CYCLE_ROWS = 128
@@ -451,10 +456,35 @@ def _reviewed_transition(value, parent_rows, rows, records, parent_records, regi
 
 
 def _reviewed_restore_admission(registry, transport):
-    _reviewed_closed(transport, {"schema", "skeleton", "byte_leaves", "admission_inputs_sha256"},
+    return _reviewed_restore_replay_inputs(transport, lambda reference: _reviewed_read(registry, reference),
+        schema=_REVIEWED_ADMISSION_TRANSPORT_SCHEMA, digest_field="admission_inputs_sha256")
+
+
+def _reviewed_restore_bound_component_inputs(transport, read_artifact):
+    """Restore historical bound-source bytes through the existing typed leaf codec."""
+    return _reviewed_restore_replay_inputs(transport, read_artifact,
+        schema=_REVIEWED_BOUND_COMPONENT_TRANSPORT_SCHEMA, digest_field="bound_component_inputs_sha256")
+
+
+def _reviewed_restore_replay_inputs(transport, read_artifact, *, schema, digest_field):
+    _reviewed_closed(transport, {"schema", "skeleton", "byte_leaves", digest_field},
                      "byte-preserving admission transport")
-    _reviewed_need(transport["schema"] == "reviewed-cycle-admission-input-transport/v2"
+    _reviewed_need(transport["schema"] == schema
                    and type(transport["byte_leaves"]) is list, "exact admission transport required")
+    if schema == _REVIEWED_BOUND_COMPONENT_TRANSPORT_SCHEMA:
+        leaves = transport["byte_leaves"]
+        _reviewed_need(len(leaves) <= 4096, "unsupported bound component byte leaf capacity")
+        declared = 0
+        for leaf in leaves:
+            _reviewed_need(type(leaf) is dict and type(leaf.get("kind")) is str
+                           and leaf["kind"] in {"artifact_bytes", "empty_bytes"},
+                           "discriminated bound component byte leaf required")
+            if leaf["kind"] == "artifact_bytes":
+                size = _reviewed_ref(leaf.get("artifact"))["bytes"]
+                _reviewed_need(0 < size <= MAX_REVIEWED_ARTIFACT_BYTES,
+                               "unsupported bound component byte leaf capacity")
+                declared += size
+        _reviewed_need(declared <= MAX_REVIEWED_STAGE_BYTES, "unsupported bound component transport capacity")
     result, paths = _reviewed_copy(transport["skeleton"]), []
     for leaf in transport["byte_leaves"]:
         _reviewed_need(type(leaf) is dict and type(leaf.get("kind")) is str
@@ -469,7 +499,7 @@ def _reviewed_restore_admission(registry, transport):
         else:
             _reviewed_closed(leaf, {"path", "kind", "artifact"}, "nonempty admission byte leaf")
             _reviewed_need(_reviewed_ref(leaf["artifact"])["bytes"] > 0, "empty bytes require the exact typed marker")
-            raw = _reviewed_read(registry, leaf["artifact"])
+            raw = read_artifact(leaf["artifact"])
         path = leaf["path"]
         _reviewed_need(type(path) is list and all(type(part) in (str, int) for part in path),
                        "typed admission byte path required")
@@ -493,7 +523,7 @@ def _reviewed_restore_admission(registry, transport):
         _reviewed_need(node[final] is None, "admission byte placeholder differs")
         node[final] = raw
     from ...optimizers.logic_theorem_optimizer.legal_span_consumer_binding import reviewed_admission_inputs_sha256
-    _reviewed_need(reviewed_admission_inputs_sha256(result) == transport["admission_inputs_sha256"],
+    _reviewed_need(reviewed_admission_inputs_sha256(result) == transport[digest_field],
                    "restored type-separated admission commitment differs")
     return result
 
@@ -536,8 +566,24 @@ def _reviewed_na_consumer():
             "positive_consumer_called": False, "semantic_admission_replayed": False}
 
 
-def _reviewed_cycle_format(artifact, *, admission_version="v2"):
+def _reviewed_cycle_format(artifact, *, admission_version="v2", source_bound=False):
+    if source_bound:
+        return (admission_version == "v3"
+                and (artifact["schema"], artifact["profile"]) == (
+                    REVIEWED_SOURCE_BOUND_MIXED_CYCLE_SCHEMA, REVIEWED_SOURCE_BOUND_MIXED_CYCLE_PROFILE)
+                and artifact.get("admission_profile") == REVIEWED_MIXED_ADMISSION_PROFILE
+                and (artifact.get("bound_component_transport_artifact") is None)
+                    == (artifact["transition_kind"] == "withdrawal")
+                and artifact["compatibility"] == _REVIEWED_COMPATIBILITY)
     if admission_version == "v3":
+        receipt = artifact["consumer_receipt"]
+        components = receipt.get("components") if type(receipt) is dict else None
+        bound_fields = {"bound_component_identity", "bound_component_inputs_sha256"}
+        if type(components) is list:
+            for component in components:
+                nested = component.get("receipt") if type(component) is dict else None
+                if type(nested) is dict and bound_fields.intersection(nested):
+                    return False
         return ((artifact["schema"], artifact["profile"]) == (REVIEWED_MIXED_CYCLE_SCHEMA, REVIEWED_MIXED_CYCLE_PROFILE)
                 and artifact.get("admission_profile") == REVIEWED_MIXED_ADMISSION_PROFILE
                 and artifact["compatibility"] == _REVIEWED_COMPATIBILITY)
@@ -709,7 +755,17 @@ def stage_reviewed_mixed_cycle_inputs_v4(registry, *, admission_profile, **kwarg
     """Explicit homogeneous admission V3 staging; legacy lineage is refused."""
     _reviewed_need(type(admission_profile) is str and admission_profile == REVIEWED_MIXED_ADMISSION_PROFILE,
                    "explicit mixed-sort admission V3 profile required")
-    return _stage_reviewed_cycle_inputs(registry, _admission_version="v3", **kwargs)
+    return _stage_reviewed_cycle_inputs(registry, _admission_version="v3", _source_bound=False, **kwargs)
+
+
+def stage_reviewed_mixed_source_bound_cycle_inputs_v5(registry, *, admission_profile,
+        bound_component_inputs, expected_bound_component_inputs_sha256, **kwargs):
+    """Stage mixed-sort rows and their independently pinned source replay artifacts."""
+    _reviewed_need(type(admission_profile) is str and admission_profile == REVIEWED_MIXED_ADMISSION_PROFILE,
+                   "explicit mixed-sort admission V3 profile required")
+    return _stage_reviewed_cycle_inputs(registry, _admission_version="v3", _source_bound=True,
+        bound_component_inputs=bound_component_inputs,
+        expected_bound_component_inputs_sha256=expected_bound_component_inputs_sha256, **kwargs)
 
 
 def _stage_reviewed_cycle_inputs(registry, *, transition_kind, parent_artifact, expected_parent_sha256,
@@ -718,8 +774,9 @@ def _stage_reviewed_cycle_inputs(registry, *, transition_kind, parent_artifact, 
         history, expected_history_sha256, split_config, expected_split_config_sha256,
         checkpoint_lineage, expected_checkpoint_lineage_sha256, output_directory, allow_bootstrap=False,
         withdrawal_provenance=None, expected_withdrawal_provenance_sha256=None,
-        successor_components=None, expected_successor_components_sha256=None, _admission_version="v2"):
-    """Stage a reviewed typed-example transition through the real v2 consumer.
+        successor_components=None, expected_successor_components_sha256=None, _admission_version="v2",
+        _source_bound=False, bound_component_inputs=None, expected_bound_component_inputs_sha256=None):
+    """Stage a reviewed typed-example transition through the selected consumer.
 
     The returned ArtifactRef identifies provenance/library metadata, never a
     TrainingJobSpec or model-input export. Whole assessments, byte evidence and
@@ -755,6 +812,16 @@ def _stage_reviewed_cycle_inputs(registry, *, transition_kind, parent_artifact, 
                    "explicit reviewed transition kind required")
     withdrawal = transition_kind == "withdrawal"
     multiple = successor_components is not None
+    if _source_bound and not withdrawal:
+        _reviewed_sha(expected_bound_component_inputs_sha256)
+        bound_snapshot, bound_sha = consumer._reviewed_snapshot(bound_component_inputs)
+        _reviewed_need(type(bound_snapshot) is dict and bool(bound_snapshot)
+                       and bound_sha == expected_bound_component_inputs_sha256,
+                       "independent complete bound component commitment differs")
+    else:
+        _reviewed_need(bound_component_inputs is None and expected_bound_component_inputs_sha256 is None,
+                       "bound source replay requires an active source-bound stage")
+        bound_snapshot, bound_sha = None, None
     _reviewed_need(_admission_version != "v3" or withdrawal or multiple,
                    "mixed admission cycle requires explicit complete component membership")
     _reviewed_need(not withdrawal or not multiple, "withdrawal cannot carry active components")
@@ -794,6 +861,10 @@ def _stage_reviewed_cycle_inputs(registry, *, transition_kind, parent_artifact, 
     if multiple:
         memberships, groups = _reviewed_component_groups(
             components, successor_binding, admission_snapshot, rows, exposure, consumer)
+        if _source_bound:
+            _reviewed_need(set(bound_snapshot) == set(groups)
+                           and all(type(value) is dict for value in bound_snapshot.values()),
+                           "current bound source replay must cover every active component")
     _reviewed_lineage(lineage)
     parent, parent_rows, previous_history, parent_records = None, [], None, {}
     parent_components = None
@@ -810,10 +881,15 @@ def _stage_reviewed_cycle_inputs(registry, *, transition_kind, parent_artifact, 
         _reviewed_need(_reviewed_ref(parent_artifact)["sha256"] == expected_parent_sha256,
                        "independent parent artifact identity differs")
         parent = _reviewed_json(_reviewed_read(registry, parent_artifact))
-        _reviewed_closed(parent, _reviewed_cycle_fields(_admission_version), "reviewed cycle parent artifact")
-        _reviewed_need(_reviewed_cycle_format(parent, admission_version=_admission_version),
+        parent_bound = (_source_bound and type(parent) is dict
+                        and parent.get("schema") == REVIEWED_SOURCE_BOUND_MIXED_CYCLE_SCHEMA)
+        _reviewed_closed(parent, _reviewed_cycle_fields(_admission_version, source_bound=parent_bound),
+                         "reviewed cycle parent artifact")
+        _reviewed_need(_reviewed_cycle_format(parent, admission_version=_admission_version, source_bound=parent_bound),
                        "legacy or numerical snapshots cannot supply a reviewed cycle parent")
-        parent_is_v3 = parent["schema"] in {REVIEWED_COMPONENT_CYCLE_SCHEMA, REVIEWED_MIXED_CYCLE_SCHEMA}
+        if parent_bound and parent["transition_kind"] != "withdrawal":
+            _reviewed_ref(parent["bound_component_transport_artifact"])
+        parent_is_v3 = parent_bound or parent["schema"] in {REVIEWED_COMPONENT_CYCLE_SCHEMA, REVIEWED_MIXED_CYCLE_SCHEMA}
         _reviewed_need(not parent_is_v3 or withdrawal or multiple,
                        "positive descendants of a component cycle require explicit component membership")
         parent_rows = _reviewed_json(_reviewed_read(registry, parent["rows_artifact"]))
@@ -854,10 +930,14 @@ def _stage_reviewed_cycle_inputs(registry, *, transition_kind, parent_artifact, 
                 parent["parent_artifact"], parent["transition"],
                 hashlib.sha256(_reviewed_wire(previous_history)).hexdigest(), parent["checkpoint_lineage"])
             prior = _reviewed_json(_reviewed_read(registry, parent["parent_artifact"]))
-            _reviewed_closed(prior, _reviewed_cycle_fields(_admission_version), "withdrawal predecessor")
+            prior_bound = (parent_bound and type(prior) is dict
+                           and prior.get("schema") == REVIEWED_SOURCE_BOUND_MIXED_CYCLE_SCHEMA)
+            _reviewed_closed(prior, _reviewed_cycle_fields(_admission_version, source_bound=prior_bound),
+                             "withdrawal predecessor")
             prior_rows = _reviewed_json(_reviewed_read(registry, prior["rows_artifact"]))
-            _reviewed_need(_reviewed_cycle_format(prior, admission_version=_admission_version)
-                           and parent_is_v3 == (prior["schema"] in {REVIEWED_COMPONENT_CYCLE_SCHEMA, REVIEWED_MIXED_CYCLE_SCHEMA})
+            _reviewed_need(_reviewed_cycle_format(prior, admission_version=_admission_version, source_bound=prior_bound)
+                           and parent_is_v3 == (prior_bound or prior["schema"] in {
+                               REVIEWED_COMPONENT_CYCLE_SCHEMA, REVIEWED_MIXED_CYCLE_SCHEMA})
                            and prior["transition_kind"] in {"bootstrap", "successor"}
                            and type(prior_rows) is list and 0 < len(prior_rows) <= MAX_REVIEWED_CYCLE_ROWS
                            and parent["checkpoint_lineage"] == prior["checkpoint_lineage"]
@@ -943,6 +1023,10 @@ def _stage_reviewed_cycle_inputs(registry, *, transition_kind, parent_artifact, 
         return item
     admission_skeleton = skeleton(admission_snapshot, [])
     _reviewed_wire(admission_skeleton)
+    admission_leaf_count = len(byte_values)
+    bound_skeleton = skeleton(bound_snapshot, []) if bound_snapshot is not None else None
+    if bound_skeleton is not None:
+        _reviewed_wire(bound_skeleton)
     _reviewed_need(sum(len(raw) for _, raw in byte_values) <= MAX_REVIEWED_STAGE_BYTES,
                    "unsupported_reviewed_staging_capacity")
     directory = Path(output_directory)
@@ -959,9 +1043,10 @@ def _stage_reviewed_cycle_inputs(registry, *, transition_kind, parent_artifact, 
         return {str(Path(module.__file__).resolve()): hashlib.sha256(Path(module.__file__).read_bytes()).hexdigest()
                 for module in modules}
     producers = implementation()
-    def verify_binding(binding, selected, exposures, admitted):
-        receipt = admission_contract["validate"](binding, selected,
-            split_manifest=split_manifest, admission_inputs=admitted, exposure_records=exposures)
+    def verify_binding(binding, selected, exposures, admitted, bound=None):
+        replay = {} if bound is None else {"bound_component_inputs": bound}
+        receipt = admission_contract["validate"](binding, selected, split_manifest=split_manifest,
+            admission_inputs=admitted, exposure_records=exposures, **replay)
         assessment = admission_contract["assess"](**admitted)
         _reviewed_need(receipt["status"] == "ready" and receipt["operation"] == "training"
                        and receipt["row_count"] == len(selected)
@@ -974,6 +1059,10 @@ def _stage_reviewed_cycle_inputs(registry, *, transition_kind, parent_artifact, 
         _reviewed_need(tuple(_reviewed_wire(value) for value in original_json_inputs) == frozen_json_inputs
                        and (withdrawal or consumer.reviewed_admission_inputs_sha256(admission_inputs) == admission_sha)
                        and implementation() == producers, "reviewed staging inputs or named producers changed")
+        if bound_snapshot is not None:
+            _reviewed_need(consumer.reviewed_admission_inputs_sha256(bound_component_inputs)
+                           == consumer.reviewed_admission_inputs_sha256(bound_snapshot) == bound_sha,
+                           "current bound component replay changed during staging")
         if withdrawal:
             return _reviewed_na_consumer(), None
         if not multiple:
@@ -985,7 +1074,8 @@ def _stage_reviewed_cycle_inputs(registry, *, transition_kind, parent_artifact, 
                 key = component["component_id"]
                 binding, selected, exposures = groups[key]
                 admitted = admission_snapshot[key]
-                yield component, admitted, *verify_binding(binding, selected, exposures, admitted)
+                bound = bound_snapshot[key] if bound_snapshot is not None else None
+                yield component, admitted, *verify_binding(binding, selected, exposures, admitted, bound)
         return _reviewed_joint_components(observations(), len(rows), records, dependencies, admission_version=_admission_version)
     receipt, assessment = current()
 
@@ -1010,17 +1100,30 @@ def _stage_reviewed_cycle_inputs(registry, *, transition_kind, parent_artifact, 
             reference = dict(stored, path=str(registry.artifact_path(stored)))
             _reviewed_need(_reviewed_read(registry, reference) == raw, "staged exact artifact bytes differ")
             return reference
-        transport_ref = None
-        if not withdrawal:
+        def transport(skeleton_value, selected_bytes, *, schema, digest_field, digest):
             leaves = [{"path": path, "kind": "artifact_bytes", "artifact": put(raw)} if raw else
                       {"path": path, "kind": "empty_bytes", "bytes": 0, "sha256": hashlib.sha256(b"").hexdigest()}
-                      for path, raw in byte_values]
-            transport = {"schema": "reviewed-cycle-admission-input-transport/v2", "skeleton": admission_skeleton,
-                         "byte_leaves": leaves, "admission_inputs_sha256": admission_sha}
-            transport_ref = put(_reviewed_wire(transport))
-            restored = _reviewed_restore_admission(registry, _reviewed_json(_reviewed_read(registry, transport_ref)))
+                      for path, raw in selected_bytes]
+            value = {"schema": schema, "skeleton": skeleton_value, "byte_leaves": leaves, digest_field: digest}
+            reference = put(_reviewed_wire(value))
+            return reference, _reviewed_json(_reviewed_read(registry, reference))
+
+        transport_ref, bound_ref = None, None
+        if not withdrawal:
+            transport_ref, stored = transport(admission_skeleton, byte_values[:admission_leaf_count],
+                schema=_REVIEWED_ADMISSION_TRANSPORT_SCHEMA, digest_field="admission_inputs_sha256",
+                digest=admission_sha)
+            restored = _reviewed_restore_admission(registry, stored)
             _reviewed_need(consumer.reviewed_admission_inputs_sha256(restored) == admission_sha,
                            "complete raw admission transport differs")
+            if bound_skeleton is not None:
+                bound_ref, stored_bound = transport(bound_skeleton, byte_values[admission_leaf_count:],
+                    schema=_REVIEWED_BOUND_COMPONENT_TRANSPORT_SCHEMA,
+                    digest_field="bound_component_inputs_sha256", digest=bound_sha)
+                restored_bound = _reviewed_restore_bound_component_inputs(
+                    stored_bound, lambda reference: _reviewed_read(registry, reference))
+                _reviewed_need(consumer.reviewed_admission_inputs_sha256(restored_bound) == bound_sha,
+                               "complete raw bound component transport differs")
         artifact = {"schema": (REVIEWED_MIXED_CYCLE_SCHEMA if _admission_version == "v3" else
                        REVIEWED_COMPONENT_CYCLE_SCHEMA if multiple or parent_is_v3 else REVIEWED_CYCLE_SCHEMA),
             "profile": (REVIEWED_MIXED_CYCLE_PROFILE if _admission_version == "v3" else
@@ -1034,6 +1137,10 @@ def _stage_reviewed_cycle_inputs(registry, *, transition_kind, parent_artifact, 
             "history_guard": history_guard, "withdrawal_provenance": withdrawal_record}
         if _admission_version == "v3":
             artifact["admission_profile"] = REVIEWED_MIXED_ADMISSION_PROFILE
+        if _source_bound:
+            artifact.update(schema=REVIEWED_SOURCE_BOUND_MIXED_CYCLE_SCHEMA,
+                            profile=REVIEWED_SOURCE_BOUND_MIXED_CYCLE_PROFILE,
+                            bound_component_transport_artifact=bound_ref)
         _reviewed_need(current() == (receipt, assessment), "reviewed staging state changed after payload writes")
         result = put(_reviewed_wire(artifact))
         _reviewed_need(current() == (receipt, assessment), "reviewed staging state changed after metadata write")
