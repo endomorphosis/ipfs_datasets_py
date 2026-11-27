@@ -4276,3 +4276,12 @@ A signed fictional case passed through the built-in V5 loader with a tiny offlin
 A separate signed case prepared a complete target that exceeded the fixture model's sequence capacity. The loader rejected it before checkpoint inspection or restore. The exact-resume test also verified that checkpoint parent comparisons reject substitutions between JSON booleans and numbers. The existing V3 encoder-decoder and causal-language-model paired-restore cases also passed. [Paired restore and guard qualification](/tmp/P2-V5-signed-paired-restore-ttSxMhAt/actual-v5-paired-restore-software-qualification.json)
 
 Production fitting, independent statutory and formal review for Title 10 §§ 101, 7213, and 7214, and corpus admission remain pending.
+
+
+## Evidence595 — Resume the signed V5 worker by one batch
+
+A signed fictional three-record fixture exercised the public V5 training-job file entry point with the analytic backend. An uninterrupted two-batch reference supplied the exact step-one model and optimizer pair. The worker restored that pair, consumed the one remaining record, and advanced from step one to step two. The exported model and optimizer matched the uninterrupted reference byte for byte.
+
+The test checked checkpoint lineage, original pair bytes, and repeated checks of current admission and signed source bindings. The fixture retained its zero training mask. [Exact V5 worker resume qualification](/tmp/P2-V5-public-worker-signed-resume-viJC7fdB/actual-v5-exact-signed-resume-qualification.json)
+
+Production fitting, independent statutory and formal review for Title 10 §§ 101, 7213, and 7214, and corpus admission remain pending.

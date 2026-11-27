@@ -38378,6 +38378,90 @@
       "root": "artifact_workspace",
       "scope": "Signed-fictional software evidence for the built-in V5 paired restore, sequence capacity guard, and exact checkpoint typing.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/lir02_mixed_source_bound_v5_worker_resume_20261127",
+      "closed_runtime_facts": {
+        "base": "c8afbfbaeffc2d2ddcdc7276383d22c90bb7bc51",
+        "checks": {
+          "signed-v5-worker-exact-resume": {
+            "errors": 0,
+            "failures": 0,
+            "junit": {
+              "bytes": 438,
+              "path": "/tmp/P2-V5-public-worker-signed-resume-viJC7fdB/signed-v5-worker-exact-resume.xml",
+              "sha256": "0865ae107dcbe10af1b9b89baba9faa12e627d5c86b9ef30b5de882293733af5"
+            },
+            "log": {
+              "bytes": 721,
+              "path": "/tmp/P2-V5-public-worker-signed-resume-viJC7fdB/signed-v5-worker-exact-resume.log",
+              "sha256": "2aef2a5c335c089fce381bc0a5b544a2fb0ae18b3e0c0f4122b10e520afb34b9"
+            },
+            "ordered_cases": [
+              [
+                "tests.unit.optimizers.logic_theorem_optimizer.test_autoencoder_training_worker",
+                "test_reviewed_mixed_source_bound_v5_exact_signed_resume_matches_uninterrupted_pair"
+              ]
+            ],
+            "skipped": 0,
+            "terminal": {
+              "bytes": 2,
+              "path": "/tmp/P2-V5-public-worker-signed-resume-viJC7fdB/signed-v5-worker-exact-resume.terminal",
+              "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+            },
+            "tests": 1
+          }
+        },
+        "cooperative_source_read_leases_released": true,
+        "current_admission_and_bound_source_rechecked": true,
+        "decoder_schema": "reviewed-decoder-training-inputs/v5",
+        "evidence_ordinal": 595,
+        "exact_code_blobs": {
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py": {
+            "bytes": 1165664,
+            "mode": "100644",
+            "oid": "e1770acc0b2417e42c91b48f43071da86d07f807",
+            "sha256": "c988f204e5d819ce098591bb67b62f781cb9e077b629c4149bc18c67cf5954fc"
+          }
+        },
+        "independent_statutory_review_or_admission": false,
+        "initial_fixture_optimizer_step": 1,
+        "owned_pytest_subprocesses_reaped": true,
+        "production_training_or_Native_execution": false,
+        "qualification": {
+          "bytes": 5926,
+          "path": "/tmp/P2-V5-public-worker-signed-resume-viJC7fdB/actual-v5-exact-signed-resume-qualification.json",
+          "sha256": "d18a557acf33e59c84614f5e5610941d74805f9d24f199f9d719970d3fcf6ad9"
+        },
+        "qualified_software_commit": "e0975e42a43cda25e8b3c2eb708f09dc80fb1930",
+        "qualified_software_tree": "7425d70edc13c013855bfd8f23f408608423ab1f",
+        "reference_batches": 2,
+        "resume_parent_checkpoint_bytes_retained": true,
+        "resume_scope": "test-created same-stage checkpoint from a signed fictional analytic first batch",
+        "resumed_fixture_batch_count": 1,
+        "resumed_fixture_model_and_optimizer_bytes_match_reference": true,
+        "resumed_fixture_optimizer_step": 2,
+        "schema": "autoformal-selected-software-evidence/v1",
+        "scope": "offline signed-fictional analytic worker resume; no production fit, Native, statutory review or admission",
+        "signed_fixture_only": true,
+        "signed_registry_artifact_rechecks_observed": true,
+        "stage_schema": "reviewed-example-cycle-input-artifact/v5",
+        "task_id": "LIR-02",
+        "task_status": "in_progress",
+        "task_status_changed": false,
+        "worker_checkpoint_schema": "reviewed-source-bound-mixed-decoder-checkpoint/v1",
+        "worker_job_schema": "reviewed-source-bound-mixed-decoder-job/v1",
+        "worker_receipt_schema": "reviewed-source-bound-mixed-decoder-worker-receipt/v1"
+      },
+      "evidence_ordinal": 595,
+      "id": "lir02-mixed-source-bound-v5-worker-resume-evidence595-20261127",
+      "observed_bytes": 3195,
+      "observed_sha256": "e2f06c154838d99da6aece3058b96e9f5bf9660d737c34f0f20ccafd949a36df",
+      "path": "/tmp/P2-V5-public-worker-signed-resume-viJC7fdB/Guide595-docs-ready/Guide595-scoped-software-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Signed-fictional software evidence for the V5 analytic worker's exact one-batch resume.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }
