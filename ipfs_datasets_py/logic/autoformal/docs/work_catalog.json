@@ -37172,6 +37172,81 @@
       "root": "artifact_workspace",
       "scope": "Software qualification of result-cache replacement preservation under factory failure.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase1_proof_cache_reload_filename_binding_ordinary13_20261127",
+      "closed_runtime_facts": {
+        "Native_qualification": false,
+        "Source_resource_parent_closed": true,
+        "actual_READ4": {
+          "bytes": 7867,
+          "path": "/tmp/Root-P1-cache-reload-owned-existing-route-wK9s5mUF/read4-controls/actual-output/actual-D27-observed-D-root-initializer-Source-READ-v01-small-closeout.json",
+          "sha256": "285d6ec5e9ac5dac477cc07e27ef3c811e1e0abb15ad14d5afb671e31fc2b8f8"
+        },
+        "actual_Source2": {
+          "bytes": 64974,
+          "path": "/tmp/Root-P1-cache-reload-owned-existing-route-wK9s5mUF/source2-output/actual-existing-two-Python-code-CAS-receipt.json",
+          "sha256": "f00366fe1c0a148dac5527d661fd35fe976a5b03390562db74a4eedea6ac96ef"
+        },
+        "actual_ordinary_qualification": {
+          "bytes": 2571,
+          "path": "/tmp/Root-P1-cache-reload-owned-existing-route-wK9s5mUF/ordinary13-first/actual-ordinary13-qualified.json",
+          "sha256": "9fdd726486d8ca371573dcb92083765b2eeb5c424602deeec5adbb5fb0d64235"
+        },
+        "actual_ordinary_report": {
+          "bytes": 537849,
+          "path": "/tmp/Root-proof-cache-reload-ordinary13-late-INERT-TbJNvxlS/ordinary13-first/complete-frozen-local-D-phase1-proof-cache-reload-filename13-existing-owner-report.json",
+          "sha256": "7b099c6fa143d1038ea280b364c5d4c4448ebcd38573583989465abfa66e20c1"
+        },
+        "actual_raw_JUnit": {
+          "bytes": 2310,
+          "path": "/tmp/Root-proof-cache-reload-ordinary13-late-INERT-TbJNvxlS/ordinary13-first/phase1-proof-cache-reload-filename13-run-result0-output1.bin",
+          "sha256": "e0f6e95b3b26812c1b12446db81cc055ed70b7d1a19a46488a6cd78a7e85b1d0"
+        },
+        "canonical_record_reloads_without_persisted_index": true,
+        "collect_call_JUnit_order_match": true,
+        "errors": 0,
+        "evidence_ordinal": 583,
+        "exact_local_freeze": {
+          "bytes": 3756,
+          "path": "/tmp/Root-P1-cache-reload-owned-existing-route-wK9s5mUF/source2-freeze.json",
+          "sha256": "8f72dd369c0d01829ba1fd9309b756680fd4e1c6c0560be74e2b72ce19fabdb9"
+        },
+        "failed_reload_preserves_verified_indexes": true,
+        "failures": 0,
+        "new_cases": 3,
+        "ordinary_cases": 13,
+        "ordinary_test_functions": 8,
+        "prior_cases": 10,
+        "prior_verified_guide": {
+          "bytes": 5773,
+          "path": "/tmp/Root-result-cache-owned-existing-route-L4Wyme59/actual-Phase8-result-cache-Source2-READ4-ordinary11-Guide582-publication.json",
+          "sha256": "a1283734a9520e9e32a5f8ec4d8bf2b766586e162e81621de91a37caeeb83a62"
+        },
+        "qualified_A_head": "fae7981fa576817536a3c7aa62c5d28dc417f214",
+        "qualified_D_head": "812e62c305baee19489f4bbfa3f514a117b9d365",
+        "qualified_D_tree": "f2ea3868ccb8331c2cda41868e3019271aff5871",
+        "qualified_commit_blobs": {
+          "ipfs_datasets_py/logic/legal_ir/proof_cache.py": "a171ee9794439540c924a2288e4ebb9262a2c859",
+          "tests/unit/logic/legal_ir/test_proof_cache.py": "91abcac246b2f30d9554d88d74ded0b54b1f34ed"
+        },
+        "related_catalog_component": "kernel-proof-evidence-integrity",
+        "reload_requires_content_addressed_record_filename": true,
+        "renamed_record_refused_with_or_without_persisted_index": true,
+        "schema": "phase1-proof-cache-reload-filename-binding-engineering-evidence/v1",
+        "skipped": 0,
+        "task": "LIR-14",
+        "task_status_changed": false
+      },
+      "evidence_ordinal": 583,
+      "id": "phase1-proof-cache-reload-filename-binding-ordinary13-evidence583-20261127",
+      "observed_bytes": 3081,
+      "observed_sha256": "2af64b2bf151c3dff3546f62ced205276e8ed865d9a25d56f39d2b7ca1469b98",
+      "path": "/tmp/P1-existing-guide583-compose-INERT-mXQQ8I/guide583-proof-cache-reload-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Software qualification of content-addressed proof-cache filenames and reload rollback.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }

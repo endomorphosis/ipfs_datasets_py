@@ -3334,3 +3334,8 @@ The Lean adapter reports excessively nested compiler JSON as invalid. A dependen
 ## Evidence582 — Preserve a newer result-cache entry after a factory failure
 
 A failed artifact factory evicts the entry only if the cache still holds the exact object the factory read. A newer artifact for the same lineage survives the failure. The unchanged-entry case still evicts the failed entry. The guarded ordinary run passed all 11 cases, including nine retained and two new cases. Collection, execution and JUnit order matched. The Source lease, resources and parent process closed. This evidence covers the result-cache software behavior. [Ordinary qualification](/tmp/Root-result-cache-owned-existing-route-L4Wyme59/actual-ordinary11-qualified.json) · [Exact qualified code freeze](/tmp/Root-result-cache-owned-existing-route-L4Wyme59/source2-freeze.json)
+
+
+## Evidence583 — Validate proof-cache record filenames on reload
+
+Reload checks that each validated proof record uses its content-addressed filename before it publishes the rebuilt indexes. It rejects renamed records with or without a persisted index and preserves the previously verified indexes on failure. A canonical record still reloads without a persisted index. The guarded ordinary run passed all 13 cases across eight functions, with ten retained cases and three new cases. Collection, execution and JUnit order matched. Source, resources and the parent process closed. The evidence covers software qualification for reload. [Ordinary qualification](/tmp/Root-P1-cache-reload-owned-existing-route-wK9s5mUF/ordinary13-first/actual-ordinary13-qualified.json) · [Exact qualified code freeze](/tmp/Root-P1-cache-reload-owned-existing-route-wK9s5mUF/source2-freeze.json)

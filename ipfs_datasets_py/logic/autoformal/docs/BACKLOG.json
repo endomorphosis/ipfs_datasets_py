@@ -5154,6 +5154,23 @@
       "related_catalog_component": "reviewed-evaluation-and-retention",
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
       "task": "LIR-23"
+    },
+    "phase1_proof_cache_reload_filename_binding_ordinary13_20261127": {
+      "actual_ordinary_qualification": {
+        "bytes": 2571,
+        "path": "/tmp/Root-P1-cache-reload-owned-existing-route-wK9s5mUF/ordinary13-first/actual-ordinary13-qualified.json",
+        "sha256": "9fdd726486d8ca371573dcb92083765b2eeb5c424602deeec5adbb5fb0d64235"
+      },
+      "evidence_ordinal": 583,
+      "facts": {
+        "bytes": 3081,
+        "path": "/tmp/P1-existing-guide583-compose-INERT-mXQQ8I/guide583-proof-cache-reload-scoped-facts.json",
+        "sha256": "2af64b2bf151c3dff3546f62ced205276e8ed865d9a25d56f39d2b7ca1469b98"
+      },
+      "record_id": "phase1-proof-cache-reload-filename-binding-ordinary13-evidence583-20261127",
+      "related_catalog_component": "kernel-proof-evidence-integrity",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
+      "task": "LIR-14"
     }
   },
   "programme_goal_hierarchy": {
