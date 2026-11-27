@@ -1186,7 +1186,8 @@ def test_lean_v3_version_output_charge_preserves_complete_source_input_capacity(
 # before 51d2c414, then 27ede074ceb68cd91d50eada99b9c6f02216607e22610bc63db4fde69e17fb4c.
 # Current reviewed constructors explicitly bind the current verifier profile;
 # negative cache controls changed the complete owner. This pin never follows edits itself.
-_NATIVE_PROOF_CACHE_FIXTURE_SHA256 = "4e012101e4400324175c02d296b51abde97d065c76abfddef1b51d16329f639d"
+# The two fixture constructors used below retain their exact previous ASTs.
+_NATIVE_PROOF_CACHE_FIXTURE_SHA256 = "23543784354ebcc0c3b58860d14c80cc7171b0ed9e3f86a5b5ddcc70e63423ab"
 
 
 def _load_native_proof_cache_fixture_owner():
@@ -1215,12 +1216,92 @@ def _load_native_proof_cache_fixture_owner():
     return fixture_owner
 
 
+def _native_cache_generated_fixture(artifact, obligation, version):
+    """Generate Lean for one already typed fictional obligation."""
+    from ipfs_datasets_py.logic.backends.kernel import lean
+    from ipfs_datasets_py.logic.parsers.kernel_targets import (
+        EnvironmentIdentity,
+        KernelGeneratedSource,
+        KernelTargetGenerator,
+        KernelTargetKind,
+        RouteSurface,
+        TargetSourceMap,
+        TargetTheoryModel,
+        TheoremIdentity,
+    )
+
+    assert artifact.proof_obligations == (obligation,)
+    assert obligation.statement == "True"
+    source_ref, = obligation.source_refs
+    assert source_ref == artifact.source_map.sources[0].ref_id
+    theory_id = "theory:fictional-native-cache"
+    theorem_id = "theorem:fictional-native-cache"
+    name = "cache_native_fixture"
+    source_maps = tuple(
+        TargetSourceMap(owner_id=theorem_id, source_ref_id=source_ref,
+                        span_id=span.span_id, start_byte=span.start_byte, end_byte=span.end_byte)
+        for span in artifact.source_map.spans if span.source_ref_id == source_ref
+    )
+    assert source_maps
+    artifact_pins = {
+        "formal_artifact_digest": artifact.digest,
+        "proof_obligation_digest": obligation.digest,
+    }
+    theoretical_goal = TheoremIdentity.bind(
+        theorem_id=theorem_id,
+        theorem_name=name,
+        statement=obligation.statement,
+        theory_id=theory_id,
+        source_surface=RouteSurface.KERNEL_NATIVE,
+        kernel_target=KernelTargetKind.LEAN,
+        source_maps=source_maps,
+        attributes=artifact_pins,
+    )
+    theory = TargetTheoryModel(
+        theory_id=theory_id,
+        name=name,
+        source_surface=RouteSurface.KERNEL_NATIVE,
+        theorems=(theoretical_goal,),
+        imports=("Init",),
+        source_maps=source_maps,
+        environment=EnvironmentIdentity(
+            environment_id="env:fictional-native-cache-lean",
+            kernel_target=KernelTargetKind.LEAN,
+            toolchain_id="lean",
+            toolchain_version=version,
+        ),
+    )
+    generator = KernelTargetGenerator()
+    options = dict(kernel_target=KernelTargetKind.LEAN, theorem_id=theorem_id,
+                   proof_body="exact True.intro")
+    generated = generator.generate(theory, **options)
+    replayed = generator.generate(TargetTheoryModel.from_dict(theory.to_dict()), **options)
+    assert replayed.to_dict() == generated.to_dict()
+    assert KernelGeneratedSource.from_dict(generated.to_dict()).to_dict() == replayed.to_dict()
+    assert generated.theorem_identity.statement == obligation.statement
+    assert generated.theorem_identity.theorem_name == lean.extract_lean_theorem_name(generated.source) == name
+    assert generated.theory_document_id == theory.document_id and generated.imports == ("Init",)
+    assert not generated.axioms and not generated.kernel_accepted
+
+    translation = {
+        "translation_id": "translation:fictional-native-cache",
+        "translation_digest": stable_digest(replayed.to_dict()),
+        "source_family": theory.family_id,
+        "target_family": generated.encoding,
+        "fidelity": "exact",
+        "generated_source_digest": lean.content_digest(generated.source),
+        "target_theory_document_id": theory.document_id,
+        **artifact_pins,
+    }
+    return theory, generated, translation
+
 def _assert_lean_native_v3_proof_cache_round_trip(
     tmp_path, *, runner, processes, executable, version, bounds
 ):
     """Real Native3/cache checks; caller owns admission and process observation."""
     from dataclasses import replace
 
+    from ipfs_datasets_py.logic.backends.kernel import lean
     from ipfs_datasets_py.logic.backends.process import SubprocessExecutor
     from ipfs_datasets_py.logic.ir_core.claims import Assumption, IRClaim, ProofObligation
     from ipfs_datasets_py.logic.ir_core.protocols import (
@@ -1244,16 +1325,6 @@ def _assert_lean_native_v3_proof_cache_round_trip(
     assert isinstance(bounds, ExecutionBounds)
     assert 0 < bounds.timeout_ms <= 30000 and 0 < bounds.max_memory_bytes <= 4 * 1024**3
     assert 0 < bounds.max_output_bytes <= 65536 and 0 < bounds.max_steps <= 100
-    backend = LeanKernelBackend(executable=executable, backend_version=version, runner=runner)
-    source = "theorem cache_native_fixture : True := by trivial\n"
-    # Discover the actual canonical toolchain profile before binding it into
-    # the request. This is a real positive compile, not an injected identity
-    # or a hand-built copy of the backend's resource/toolchain machinery.
-    profile_outcome = backend.run(_request(family="lean4", encoding="lean4", source=source,
-        expected_declaration="cache_native_fixture", expected_proposition="True", bounds=bounds))
-    assert profile_outcome.result.status is ResultStatus.PROVED and profile_outcome.receipt.accepted
-    assert profile_outcome.receipt.native_identity.actual_version == version
-
     artifact = fixture_owner._legal_artifact(fixture_owner._reviewed_fixture(
         sample_id="fictional-native-cache-provision", citation="FICTIONAL Test Act 1", section="1",
         text="A fictional agency shall publish a fictional notice."))
@@ -1263,11 +1334,21 @@ def _assert_lean_native_v3_proof_cache_round_trip(
         assumption_ids=(assumption.assumption_id,), logic_family="lean4", source_refs=(source_ref,),
         metadata={"fixture_only": True, "statutory_meaning_claimed": False})
     artifact = replace(artifact, assumptions=(assumption,), proof_obligations=(obligation,))
+    theory, generated, translation = _native_cache_generated_fixture(artifact, obligation, version)
+    source = generated.source
+    backend = LeanKernelBackend(executable=executable, backend_version=version, runner=runner)
+    # Establish the live toolchain profile before binding it into the request.
+    profile_outcome = backend.run(_request(family="lean4", encoding=generated.encoding, source=source,
+        expected_declaration=generated.theorem_identity.theorem_name,
+        expected_proposition=obligation.statement, bounds=bounds))
+    assert profile_outcome.result.status is ResultStatus.PROVED and profile_outcome.receipt.accepted
+    assert profile_outcome.receipt.native_identity.actual_version == version
     context = dict(schema_version=LEGAL_PROOF_CONTEXT_SCHEMA_VERSION, jurisdiction="fictional",
         interpretation_digest=stable_digest({"fictional_interpretation": 1}),
-        dependency_versions={"fictional-definition": stable_digest({"definition": 1})},
+        dependency_versions={"fictional-definition": stable_digest({"definition": 1}),
+            "fictional-translation": translation["translation_digest"]},
         backend_id="lean", backend_version=version, toolchain=profile_outcome.receipt.toolchain.to_dict(),
-        expected_declaration="cache_native_fixture", expected_proposition="True",
+        expected_declaration=generated.theorem_identity.theorem_name, expected_proposition=obligation.statement,
         axiom_policy_digest=profile_outcome.receipt.axiom_policy_digest)
     claim = IRClaim(claim_id="claim:fictional-native-cache", declaration_id=artifact.declaration_id,
         statement="True", assumptions=artifact.assumptions, obligations=(obligation,), domain="legal",
@@ -1275,9 +1356,15 @@ def _assert_lean_native_v3_proof_cache_round_trip(
             "source_digest": artifact.declaration_digest, "proof_context_digest": stable_digest(context)})
     request = BackendRequest.for_claim(claim, obligation.obligation_id,
         request_id="request:fictional-native-cache", requested_backend_id="lean", bounds=bounds,
-        payload={"encoding": "lean4", "source": source, "expected_declaration": "cache_native_fixture",
-            "expected_proposition": "True", "legal_proof_context": context})
+        payload={"encoding": generated.encoding, "source": source,
+            "expected_declaration": generated.theorem_identity.theorem_name,
+            "expected_proposition": obligation.statement, "legal_proof_context": context,
+            "translation": translation})
     outcome = backend.run(request)
+    checked_source, _, checked_translation = lean._payload_source(request)
+    assert checked_source == outcome.receipt.submitted_source == generated.source
+    assert checked_translation is not None and outcome.receipt.translation == checked_translation
+    assert checked_translation.translation_digest == stable_digest(generated.to_dict())
     assert outcome.result.status is ResultStatus.PROVED and outcome.receipt.accepted
     assert outcome.receipt.toolchain.to_dict() == context["toolchain"]
     assert outcome.receipt.request_digest == request.digest
@@ -1427,6 +1514,8 @@ def _assert_lean_native_v3_proof_cache_round_trip(
     report = {"schema": "native-lean-v3-proof-cache-integration/v1", "native_Lean_executed": True,
         "compiler_output_mocked": False, "actual_process_results": processes,
         "profile_discovery_outcome": profile_outcome.to_dict(), "bound_outcome": outcome.to_dict(),
+        "controlled_translation": {"target_theory": theory.to_dict(), "generated_source": generated.to_dict(),
+            "request_translation": translation},
         "claim": claim.to_dict(), "request": request.to_dict(), "attempt": attempt.to_dict(),
         "result": result.to_dict(), "receipt": receipt.to_dict(), "proof_binding": binding,
         "cache_record_cid": record.content_cid, "disk_round_trip_and_exact_reuse_passed": True,
