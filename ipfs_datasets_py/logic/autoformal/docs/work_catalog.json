@@ -37653,6 +37653,85 @@
       "root": "artifact_workspace",
       "scope": "Software evidence for reported counterexample comparison and proof-cache export snapshot integrity.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/lir21_uscode_immutable_viewer_and_publication_20261127",
+      "closed_runtime_facts": {
+        "evidence_ordinal": 588,
+        "immutable_law_viewer_closure": {
+          "code_only_publication_ref": {
+            "bytes": 7007,
+            "path": "/tmp/LIR21-law-viewer-join-code-only-parent-pins/actual-LIR21-law-viewer-join-code-only-normal-FF-publication.json",
+            "sha256": "581ec837da7e1e5c7df95114788e5185efcca2157d89d8871926b03921b736bf"
+          },
+          "errors": 0,
+          "failures": 0,
+          "modeled_original_owner_verifier": true,
+          "new_cases": 19,
+          "published_datasets_commit": "f345754ddc0927cfb07306c744099a74de73deaa",
+          "qualification_ref": {
+            "bytes": 922,
+            "path": "/tmp/LIR21-law-viewer-join-code-only-parent-pins/actual-current-exact-law-viewer-join-26-offline-tests.json",
+            "sha256": "93b6181c6e71e9282050f51b5f848ca269a3fb4175d3d77feaafb8123f5ca804"
+          },
+          "retained_cases": 7,
+          "scope": "The optional V4 coordinator check joins the independently verified original-owner receipt to the exact reproduced law package and selected immutable revision.",
+          "skips": 0,
+          "software_tests": 26
+        },
+        "public_Hub_metadata_observation": {
+          "expected_alias_in_dataset_infos": false,
+          "expected_viewer_alias": "publicus-ir-graphrag-v2",
+          "expected_wire_profile": "hf-default-parquet-envelope/v1",
+          "metadata_audit_ref": {
+            "bytes": 1511,
+            "path": "/tmp/LIR21-existing-public-Hub-metadata-only-pdtph5bs/actual-LIR21-public-Hub-wire-input-audit.json",
+            "sha256": "bd5acaa651ee475b3bba056e67d1bda1bfdebfc36b18ed7f8438177e48a87e40"
+          },
+          "observed_default_config": "publicus-ir-graphrag/v2",
+          "observed_explicit_wire_profile": null,
+          "physical_Parquet_readback": false,
+          "qualified_viewer_receipt": null,
+          "release_pointer_write": null,
+          "release_selection": null,
+          "revision": "5700d4d428fe014148fcfd5bcd9ba3dd48a501c5",
+          "scope": "Bounded metadata reads of one observed immutable public revision."
+        },
+        "release_staging_and_viewer_canary": {
+          "code_only_publication_ref": {
+            "bytes": 8800,
+            "path": "/tmp/LIR21-Guide587-code-only-parent-pins/actual-LIR21-code-only-normal-FF-publication.json",
+            "sha256": "704ae7e0a64de5f65d73440d961b909571733745c1ffef447d0dc81fc6aae69d"
+          },
+          "coordinator_cases": 35,
+          "errors": 0,
+          "excluded_live_Hub_case": 1,
+          "failures": 0,
+          "published_datasets_commit": "be6cab89068d12ae80c744fb42dbe4d69d79a7ba",
+          "qualification_ref": {
+            "bytes": 1007,
+            "path": "/tmp/LIR21-Guide587-code-only-parent-pins/actual-current-exact-candidate-269-offline-tests.json",
+            "sha256": "ae4f4d244e1206d6aa19a438d5dde7cdf3f77ccda7a7aaafe3495f05d3e90979"
+          },
+          "release_stage_and_viewer_cases": 234,
+          "scope": "Protected legacy staging files, verified local artifact and receipt publication without replacement, and the explicit immutable Hub viewer profile.",
+          "skips": 0,
+          "software_tests": 269
+        },
+        "schema": "autoformal-selected-software-evidence/v1",
+        "task_id": "LIR-21",
+        "task_status": "proposed",
+        "task_status_changed": false
+      },
+      "evidence_ordinal": 588,
+      "id": "lir21-uscode-immutable-viewer-and-publication-evidence588-20261127",
+      "observed_bytes": 2999,
+      "observed_sha256": "9b40ef57686dfc3a0ed40cf1d9f3bcecb956dae9383668aad5842beafb95feaa",
+      "path": "/tmp/Root-Guide588-evidence-current-OaU4duAw/guide588-current-scoped-software-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Two published LIR-21 software qualifications and a separate bounded public Hub metadata observation.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }
