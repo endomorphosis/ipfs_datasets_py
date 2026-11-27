@@ -476,40 +476,13 @@ def _reviewed_bound_component(bound_component_inputs, admission_inputs, admissio
     """Replay an explicitly requested current corpus-source handoff."""
     if bound_component_inputs is None:
         return None, None
-    _require(type(admission_inputs) is dict, "complete admission replay mapping required")
-    _closed(bound_component_inputs, {"report", "expected_report_sha256", "preparation_inputs"},
-            "complete bound component replay")
-    detached, commitment = _reviewed_snapshot(bound_component_inputs)
-    _sha256(detached["expected_report_sha256"], "expected bound component report SHA256")
+    from ipfs_datasets_py.logic.autoformal import corpus_source_bindings
+
     try:
-        from ipfs_datasets_py.logic.autoformal import corpus_source_bindings
-        validate_component = (corpus_source_bindings.validate_bound_norm_component_v1
-                              if admission_version == "v2"
-                              else corpus_source_bindings.validate_bound_norm_component_v2)
-        checked = validate_component(detached["report"],
-            expected_report_sha256=detached["expected_report_sha256"],
-            **detached["preparation_inputs"])
+        return corpus_source_bindings.validate_bound_norm_component_for_admission_v1(
+            bound_component_inputs, admission_inputs, admission_version=admission_version)
     except (ValueError, TypeError, KeyError, IndexError, OverflowError, RecursionError) as error:
-        raise SourceSpanConsumerBindingError("bound component current replay failed: " + str(error)) from error
-    _require(_guard(checked["norm_preparation"]).sha256
-             == _guard(admission_inputs.get("preparation")).sha256,
-             "bound component norm preparation differs from admission replay")
-    preparation_sha = _reviewed_admission_for_version(admission_version).norm_content_adjudication_sha256(
-        admission_inputs["preparation"])
-    _require(checked["norm_preparation_sha256"] == preparation_sha
-             == admission_inputs.get("expected_preparation_sha256"),
-             "bound component norm preparation commitment differs from admission replay")
-    _require(checked["norm_preparation_inputs_sha256"]
-             == _reviewed_snapshot(admission_inputs.get("preparation_inputs"))[1],
-             "bound component original norm preparation inputs differ from admission replay")
-    identity = {key: checked[key] for key in ("schema", "profile", "binding_manifest_sha256",
-        "source_history_manifest_ref", "current_epoch_id", "unit_bindings_sha256",
-        "norm_preparation_inputs_sha256", "norm_preparation_sha256", "producer_pins")}
-    identity["bound_component_report_sha256"] = detached["expected_report_sha256"]
-    _require(_reviewed_snapshot(bound_component_inputs)[1] == commitment
-             and _reviewed_snapshot(detached)[1] == commitment,
-             "bound component replay inputs changed during validation")
-    return identity, commitment
+        raise SourceSpanConsumerBindingError(str(error)) from error
 
 
 def _reviewed_stable_identity(report, admission_inputs, bound_component_identity=None):

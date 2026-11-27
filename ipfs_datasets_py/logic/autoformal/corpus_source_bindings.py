@@ -24,6 +24,9 @@ from . import corpus_source_history as history
 from . import corpus_source_review as source
 from . import corpus_source_review_responses as responses
 
+_SELF_PATH = Path(__file__).resolve()
+_SELF_PIN = hashlib.sha256(_SELF_PATH.read_bytes()).hexdigest()
+
 PROFILE = 'signed-candidate-structured-source-binding-declarations/v1'
 DECLARATION_SCHEMA = 'legal-corpus-source-binding-declaration/v1'
 CLAIM_SCHEMA = 'legal-corpus-source-binding-signed-claim/v1'
@@ -92,8 +95,10 @@ def _seal(schema, **values):
 
 
 def _pins():
+    if _sha(_SELF_PATH.read_bytes()) != _SELF_PIN:
+        _fail('source binding producer changed since import')
     result = history._pins()
-    result[str(Path(__file__).resolve())] = _sha(Path(__file__).read_bytes())
+    result[str(_SELF_PATH)] = _SELF_PIN
     return result
 
 
@@ -808,11 +813,77 @@ def _validate_bound_norm_component(prepare, report, *args, expected_report_sha25
     return expected
 
 
-# Additive public exports; the complete original module prefix is unchanged.
+def validate_bound_norm_component_for_admission_v1(bound_component_inputs, admission_inputs, *, admission_version):
+    """Replay explicit source custody against the exact norm preparation for admission."""
+    from . import legal_norm_interpretation_review_v1 as norm
+
+    if type(admission_version) is not str or admission_version not in ('v2', 'v3'):
+        _fail('closed reviewed admission contract required')
+    if type(admission_inputs) is not dict:
+        _fail('complete admission replay mapping required')
+    if (type(bound_component_inputs) is not dict
+            or set(bound_component_inputs) != {'report', 'expected_report_sha256', 'preparation_inputs'}):
+        _fail('complete bound component replay requires exact closed fields')
+
+    def snapshot(value):
+        try:
+            return norm._snapshot(value)
+        except (ValueError, TypeError, KeyError, OverflowError, RecursionError) as error:
+            raise contracts.CorpusContractError('invalid complete admission replay inputs: ' + str(error)) from error
+
+    def preparation_subject():
+        return {key: admission_inputs.get(key)
+                for key in ('preparation', 'expected_preparation_sha256', 'preparation_inputs')}
+
+    detached, commitment = snapshot(bound_component_inputs)
+    report_sha = detached['expected_report_sha256']
+    try:
+        contracts.require_sha256(report_sha, 'expected bound component report SHA256')
+    except contracts.CorpusContractError as error:
+        raise contracts.CorpusContractError(
+            'expected bound component report SHA256 requires an exact lowercase SHA256') from error
+
+    preparation, preparation_commitment = snapshot(preparation_subject())
+    if admission_version == 'v2':
+        from . import legal_norm_content_adjudication_v1 as admission
+        validate = validate_bound_norm_component_v1
+    else:
+        from . import legal_reviewed_norm_admission_v3 as admission
+        validate = validate_bound_norm_component_v2
+    pins = _pins()
+    try:
+        checked = validate(detached['report'], expected_report_sha256=report_sha,
+                           **detached['preparation_inputs'])
+    except (ValueError, TypeError, KeyError, IndexError, OverflowError, RecursionError) as error:
+        raise contracts.CorpusContractError('bound component current replay failed: ' + str(error)) from error
+
+    if not norm._same(checked['norm_preparation'], preparation['preparation']):
+        _fail('bound component norm preparation differs from admission replay')
+    preparation_sha = admission.norm_content_adjudication_sha256(preparation['preparation'])
+    if not checked['norm_preparation_sha256'] == preparation_sha == preparation['expected_preparation_sha256']:
+        _fail('bound component norm preparation commitment differs from admission replay')
+    if checked['norm_preparation_inputs_sha256'] != snapshot(preparation['preparation_inputs'])[1]:
+        _fail('bound component original norm preparation inputs differ from admission replay')
+    if snapshot(bound_component_inputs)[1] != commitment or snapshot(detached)[1] != commitment:
+        _fail('bound component replay inputs changed during validation')
+    if (snapshot(preparation_subject())[1] != preparation_commitment
+            or snapshot(preparation)[1] != preparation_commitment):
+        _fail('admission preparation inputs changed during bound component validation')
+    if checked['producer_pins'] != pins or _pins() != pins:
+        _fail('source binding producers changed during bound component validation')
+
+    identity = {key: checked[key] for key in ('schema', 'profile', 'binding_manifest_sha256',
+        'source_history_manifest_ref', 'current_epoch_id', 'unit_bindings_sha256',
+        'norm_preparation_inputs_sha256', 'norm_preparation_sha256', 'producer_pins')}
+    identity['bound_component_report_sha256'] = report_sha
+    return identity, commitment
+
+
 __all__ += [
     'bound_norm_component_inputs_sha256',
     'prepare_bound_norm_component_v1',
     'validate_bound_norm_component_v1',
     'prepare_bound_norm_component_v2',
     'validate_bound_norm_component_v2',
+    'validate_bound_norm_component_for_admission_v1',
 ]

@@ -482,10 +482,11 @@ def test_reviewed_producer_bridge_replays_bound_component_at_all_gates(monkeypat
     identity = {"bound_component_report_sha256": "b" * 64, "current_epoch_id": "fixture:current"}
     replays = []
 
-    def replay_component(offered, admission):
+    def replay_component(offered, admission, admission_version):
         replays.append(offered)
         assert offered is bound
         assert admission == preparation["admission_inputs"]
+        assert admission_version == "v2"
         if offered["current_epoch"] == "fixture:revoked":
             raise _producer_consumer.SourceSpanConsumerBindingError("fictional current source replay differs")
         return identity, _producer_consumer.reviewed_admission_inputs_sha256(offered)
