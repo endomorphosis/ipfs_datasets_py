@@ -21,9 +21,9 @@ def catalog():
 def test_component_lookup_is_detached_and_reads_only_the_small_catalog(monkeypatch):
     owner = catalog()
     genuine, reads = owner._read_json, []
-    def observed(path):
+    def observed(path, max_bytes):
         reads.append(Path(path))
-        return genuine(path)
+        return genuine(path, max_bytes)
     monkeypatch.setattr(owner, "_read_json", observed)
     item = owner.component("definition-use-native")
     assert item["id"] == "definition-use-native"
@@ -59,7 +59,7 @@ runpy.run_path(source,run_name='__main__')
 def test_current_catalog_checks_without_reading_historical_evidence(monkeypatch):
     owner = catalog()
     genuine, reads = owner._read_json, []
-    expected = genuine(SOURCE.parent / "docs/work_catalog.json")
+    expected = genuine(SOURCE.parent / "docs/work_catalog.json", owner._MAX_CATALOG_BYTES)
     assert {"definition-use-native", "experimental-gated-conditioning",
             "experimental-journal-inference"} <= {
                 item["id"] for item in expected["components"]}
@@ -68,9 +68,9 @@ def test_current_catalog_checks_without_reading_historical_evidence(monkeypatch)
                 item["id"] for item in expected["selected_evidence"]}
     assert "ipfs_datasets_py/logic/autoformal/docs/BACKLOG.json" in expected[
         "required_documentation"]
-    def observed(path):
+    def observed(path, max_bytes):
         reads.append(Path(path))
-        return genuine(path)
+        return genuine(path, max_bytes)
     monkeypatch.setattr(owner, "_read_json", observed)
     result = owner.check_catalog(ROOT)
     assert result["valid"], result["errors"]
@@ -155,10 +155,10 @@ def test_explicit_root_supplies_its_own_catalog_and_backlog(navigation_fixture, 
         raise AssertionError("explicit-root check read adjacent catalog")
     monkeypatch.setattr(owner, "load_catalog", adjacent_metadata_is_forbidden)
     genuine, reads = owner._read_json, []
-    def observed(path):
+    def observed(path, max_bytes):
         reads.append(Path(path))
         assert Path(path).is_relative_to(root)
-        return genuine(path)
+        return genuine(path, max_bytes)
     monkeypatch.setattr(owner, "_read_json", observed)
     result = owner.check_catalog(root)
     assert result["valid"], result["errors"]

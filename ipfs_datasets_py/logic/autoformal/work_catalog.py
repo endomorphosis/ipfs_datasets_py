@@ -21,7 +21,8 @@ from pathlib import Path
 
 
 _HOME_REL = Path("ipfs_datasets_py/logic/autoformal")
-_MAX_CATALOG_BYTES = 2 * 1024 * 1024
+_MAX_CATALOG_BYTES = 3 * 1024 * 1024
+_MAX_BACKLOG_BYTES = 2 * 1024 * 1024
 _MAX_COMPONENT_BYTES = 2 * 1024 * 1024
 _SCHEMA = "legal-autoformal-work-catalog/v1"
 
@@ -35,10 +36,10 @@ def _closed_object(pairs):
     return value
 
 
-def _read_json(path):
+def _read_json(path, max_bytes):
     with path.open("rb") as stream:
-        raw = stream.read(_MAX_CATALOG_BYTES + 1)
-    if len(raw) > _MAX_CATALOG_BYTES:
+        raw = stream.read(max_bytes + 1)
+    if len(raw) > max_bytes:
         raise ValueError("catalog exceeds bounded metadata size: " + str(path))
     try:
         value = json.loads(raw, object_pairs_hook=_closed_object,
@@ -52,7 +53,7 @@ def _read_json(path):
 
 
 def _catalog_at(path):
-    value = _read_json(path)
+    value = _read_json(path, _MAX_CATALOG_BYTES)
     if value.get("schema") != _SCHEMA:
         raise ValueError("unsupported work catalog schema")
     return value
@@ -151,7 +152,7 @@ def _backlog(repo_root=None):
     path = (_canonical_path(Path(repo_root).resolve(), str(_HOME_REL / "docs/BACKLOG.json"))
             if repo_root is not None else
             Path(__file__).resolve().parent / "docs/BACKLOG.json")
-    value = _read_json(path)
+    value = _read_json(path, _MAX_BACKLOG_BYTES)
     if value.get("schema") != "legal-ir-active-work-items/v1":
         raise ValueError("unsupported active backlog schema")
     records = value.get("tasks")
