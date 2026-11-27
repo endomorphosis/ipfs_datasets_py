@@ -472,6 +472,61 @@ def test_reviewed_producer_bridge_supplies_source_only_once_and_scores_all_compl
     assert _producer_payload(artifact)["producer_outputs"] == _producer_exact_outputs(case[1])
 
 
+@pytest.mark.parametrize("source_change", ["unchanged", "revoked", "different_replay"])
+def test_reviewed_producer_bridge_replays_bound_component_at_all_gates(monkeypatch, source_change):
+    """Exercise the evaluator handoff with the canonical consumer and a fictional source receipt."""
+    case = _producer_reviewed_case(monkeypatch, count=2)
+    _, rows, preparation, _ = case
+    bound = {"current_epoch": "fixture:current", "review_only": b"fictional private source replay"}
+    replay_sha = _producer_consumer.reviewed_admission_inputs_sha256(bound)
+    identity = {"bound_component_report_sha256": "b" * 64, "current_epoch_id": "fixture:current"}
+    replays = []
+
+    def replay_component(offered, admission):
+        replays.append(offered)
+        assert offered is bound
+        assert admission == preparation["admission_inputs"]
+        if offered["current_epoch"] == "fixture:revoked":
+            raise _producer_consumer.SourceSpanConsumerBindingError("fictional current source replay differs")
+        return identity, _producer_consumer.reviewed_admission_inputs_sha256(offered)
+
+    monkeypatch.setattr(_producer_consumer, "_reviewed_bound_component", replay_component)
+    binding = _producer_consumer.prepare_reviewed_source_span_consumer_binding_v2(
+        rows, **preparation, bound_component_inputs=bound)
+    replays.clear()
+    seen = []
+    options = _producer_bridge_options((binding, rows, preparation, None))
+
+    def producer(arguments):
+        seen.append(arguments)
+        if source_change == "revoked":
+            bound["current_epoch"] = "fixture:revoked"
+        elif source_change == "different_replay":
+            bound["review_only"] = b"other fictional replay of the same source identity"
+        return _producer_exact_outputs(rows)
+
+    if source_change == "revoked":
+        with pytest.raises(_producer_consumer.SourceSpanConsumerBindingError, match="source replay differs"):
+            _producer_evaluate({**options, "bound_component_inputs": bound}, producer)
+    elif source_change == "different_replay":
+        with pytest.raises(_producer_owner.InvalidEvaluationArtifactError, match="bound component replay inputs changed"):
+            _producer_evaluate({**options, "bound_component_inputs": bound}, producer)
+    else:
+        payload = _producer_payload(_producer_evaluate({**options, "bound_component_inputs": bound}, producer))
+        for gate in ("admission_before", "admission_after"):
+            receipt = payload[gate]
+            assert receipt["bound_component_identity"] == identity
+            assert receipt["bound_component_inputs_sha256"] == replay_sha
+            assert receipt["training_mask"] == receipt["evaluation_gold_mask"] == 0
+            assert receipt["input_sha256s"]["exposure"] == preparation["expected_exposure_sha256"]
+        assert "review_only" not in repr(payload)
+        assert payload["producer_outputs"] == _producer_exact_outputs(rows)
+        assert payload["accepted_semantic_count"] is None
+    assert seen == [tuple({"id": row["id"], "source_text": row["source_text"],
+                           "context": {"permitted": [], "retrieved": []}} for row in rows)]
+    assert len(replays) == 4 and all(offered is bound for offered in replays)
+
+
 @pytest.mark.parametrize("change", ["source", "target"])
 def test_reviewed_producer_bridge_sample_key_binds_complete_rows(monkeypatch, change):
     original = _producer_reviewed_case(monkeypatch)
