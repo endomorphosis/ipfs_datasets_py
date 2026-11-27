@@ -356,7 +356,15 @@ def harvest_legal_collectors(
     max_workers: int = 8,
 ) -> dict[str, Any]:
     # Default to the user collectors root, not the installed package directory.
+    # With the default destination, the collectors shipped in the package are a
+    # read-only fallback the runtime already uses (collector_path_for), so they
+    # count as present: a default call harvests only what neither location has,
+    # as it did when the default destination was the package itself.
     dest = Path(dest_root).expanduser().resolve() if dest_root else collectors_root()
+    fallback_roots: tuple[Path, ...] = () if dest_root else (PACKAGE_HARVESTED_ROOT,)
+    package_covers_catalog = bool(fallback_roots) and not missing_catalog_collectors(
+        dest_root=dest, fallback_roots=fallback_roots
+    )
     if jurisdiction:
         source = resolve_legal_source(jurisdiction)
         if source.kind.startswith("native"):
@@ -364,13 +372,17 @@ def harvest_legal_collectors(
         if not source.dataset_id:
             raise KeyError(f"No dataset id for {jurisdiction}")
         result = harvest_dataset_collectors(source.dataset_id, dest_root=dest, skip_existing=True)
-        if include_legal_scrapers and not (dest / "legal_scrapers" / "scrapers").is_dir():
+        if (
+            include_legal_scrapers
+            and not package_covers_catalog
+            and not (dest / "legal_scrapers" / "scrapers").is_dir()
+        ):
             base = harvest_legal_scrapers_repo(dest_root=dest)
             result.files.extend(base.files)
             result.errors.extend(base.errors)
         payload = harvest_result_to_dict(result)
         payload["status"] = "ok" if result.failure_count == 0 else "partial"
-        payload["missing_collectors"] = missing_catalog_collectors(dest_root=dest)
+        payload["missing_collectors"] = missing_catalog_collectors(dest_root=dest, fallback_roots=fallback_roots)
         return payload
     entries = [
         {
@@ -382,7 +394,11 @@ def harvest_legal_collectors(
     ]
     if limit is not None:
         entries = entries[: max(0, int(limit))]
-    if include_legal_scrapers and not (dest / "legal_scrapers" / "scrapers").is_dir():
+    if (
+        include_legal_scrapers
+        and not package_covers_catalog
+        and not (dest / "legal_scrapers" / "scrapers").is_dir()
+    ):
         base = harvest_legal_scrapers_repo(dest_root=dest)
     else:
         from .harvest import HarvestResult
@@ -394,6 +410,7 @@ def harvest_legal_collectors(
         skip_existing=True,
         missing_only=missing_only,
         max_workers=max_workers,
+        fallback_roots=fallback_roots,
     )
     part.files[0:0] = list(base.files)
     part.errors[0:0] = list(base.errors)
@@ -401,7 +418,7 @@ def harvest_legal_collectors(
     payload = harvest_result_to_dict(result)
     payload["status"] = "ok" if result.failure_count == 0 else "partial"
     payload["catalog"] = snapshot_catalog_summary()
-    payload["missing_collectors"] = missing_catalog_collectors(dest_root=dest)
+    payload["missing_collectors"] = missing_catalog_collectors(dest_root=dest, fallback_roots=fallback_roots)
     return payload
 
 

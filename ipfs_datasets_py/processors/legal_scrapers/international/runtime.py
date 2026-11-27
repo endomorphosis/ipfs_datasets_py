@@ -249,6 +249,9 @@ def run_harvested_collector(
     if spec is None:
         raise RuntimeError(f"Unable to load collector {path}")
     module = importlib.util.module_from_spec(spec)
+    # Collectors locate their sibling helpers with Path(__file__); a loader-less
+    # spec leaves __file__ unset, so set it to the collector's real path.
+    module.__file__ = str(path)
     env = _prepare_env(corpora, collectors)
     old_env = dict(os.environ)
     old_argv = list(sys.argv)

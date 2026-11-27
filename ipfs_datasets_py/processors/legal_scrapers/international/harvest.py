@@ -347,8 +347,7 @@ def harvest_dataset_collectors(
     )
 
 
-def list_harvested_collector_names(dest_root: Path | None = None) -> set[str]:
-    root = collectors_root(dest_root)
+def _collector_names_under(root: Path) -> set[str]:
     names: set[str] = set()
     for folder in (
         root / "shared",
@@ -363,10 +362,27 @@ def list_harvested_collector_names(dest_root: Path | None = None) -> set[str]:
     return names
 
 
+def list_harvested_collector_names(
+    dest_root: Path | None = None,
+    *,
+    fallback_roots: Iterable[Path] = (),
+) -> set[str]:
+    """Collector file names present under ``dest_root`` (and any read-only fallbacks).
+
+    ``fallback_roots`` lets callers count collectors that the runtime can already
+    run without a harvest (the package-shipped ``harvested/`` tree) as present.
+    """
+    names = _collector_names_under(collectors_root(dest_root))
+    for extra in fallback_roots:
+        names.update(_collector_names_under(Path(extra)))
+    return names
+
+
 def missing_catalog_collectors(
     entries: Iterable[Mapping[str, Any]] | None = None,
     *,
     dest_root: Path | None = None,
+    fallback_roots: Iterable[Path] = (),
 ) -> list[dict[str, str]]:
     if entries is None:
         from .catalog import list_snapshot_corpora
@@ -381,7 +397,7 @@ def missing_catalog_collectors(
         ]
     else:
         selected = list(entries)
-    present = list_harvested_collector_names(dest_root)
+    present = list_harvested_collector_names(dest_root, fallback_roots=fallback_roots)
     missing: list[dict[str, str]] = []
     seen: set[str] = set()
     for entry in selected:
@@ -404,6 +420,7 @@ def harvest_all_dataset_collectors(
     skip_existing: bool = True,
     missing_only: bool = True,
     max_workers: int = 8,
+    fallback_roots: Iterable[Path] = (),
 ) -> HarvestResult:
     if entries is None:
         from .catalog import list_snapshot_corpora
@@ -419,7 +436,10 @@ def harvest_all_dataset_collectors(
     else:
         selected = list(entries)
     if missing_only:
-        needed = {item["source_dataset_id"] for item in missing_catalog_collectors(selected, dest_root=dest_root)}
+        needed = {
+            item["source_dataset_id"]
+            for item in missing_catalog_collectors(selected, dest_root=dest_root, fallback_roots=fallback_roots)
+        }
         selected = [item for item in selected if item.get("source_dataset_id") in needed]
     files: list[HarvestedFile] = []
     errors: list[dict[str, Any]] = []

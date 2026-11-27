@@ -584,6 +584,18 @@ def _http_cc_index(url: str) -> str:
     return url
 
 
+# Offline fallback when collinfo is unreachable or empty: newest first, and the
+# union of the lists the former helper forks used (the harvested copy fell back
+# to CC-MAIN-2025-18 when collinfo answered with no collections).
+CC_OFFLINE_INDEXES = (
+    "http://index.commoncrawl.org/CC-MAIN-2026-34-index",
+    "http://index.commoncrawl.org/CC-MAIN-2026-30-index",
+    "http://index.commoncrawl.org/CC-MAIN-2026-25-index",
+    "http://index.commoncrawl.org/CC-MAIN-2025-18-index",
+    "http://index.commoncrawl.org/CC-MAIN-2024-33-index",
+)
+
+
 def cc_indexes(n: int = 6) -> list[str]:
     global _cc_indexes
     if _cc_indexes is None:
@@ -606,12 +618,7 @@ def cc_indexes(n: int = 6) -> list[str]:
                 ids.append(_http_cc_index(cdx or f"http://index.commoncrawl.org/{cid}-index"))
         # collinfo is newest-first. Do not drop crawls that 404 a
         # specific URL (that means "no captures", not a dead index).
-        _cc_indexes = ids or [
-            "http://index.commoncrawl.org/CC-MAIN-2026-34-index",
-            "http://index.commoncrawl.org/CC-MAIN-2026-30-index",
-            "http://index.commoncrawl.org/CC-MAIN-2026-25-index",
-            "http://index.commoncrawl.org/CC-MAIN-2024-33-index",
-        ]
+        _cc_indexes = ids or list(CC_OFFLINE_INDEXES)
         if last_exc and not ids:
             log.warning("cc collinfo fallback indexes after %s", last_exc)
     return _cc_indexes[:n]
