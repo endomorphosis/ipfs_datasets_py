@@ -2122,9 +2122,21 @@ def test_bound_mixed_norm_component_replays_complete_current_v4_graph(
         assert actual["use_unit_record_cid"] == records[expected["use_unit_id"]]["record_cid"]
         assert actual["use_occurrence_cid"] == records[expected["use_unit_id"]]["source_occurrence_cid"]
         assert actual["admission_record_cid"] == admission_record["record_cid"]
-    assert len([edge for edge in graph["graph"]["edges"] if edge["relation"] == "USES_DEFINITION"]) == 2
+    assertion_cids = {
+        node["stable_id"]: node["record_cid"] for node in graph["graph"]["nodes"]
+        if node["node_type"] in {"definition_assertion", "norm_assertion"}
+    }
+    assert set(assertion_cids) == set(records)
+    assert [
+        (edge["src_cid"], edge["dst_cid"], edge["ordinal"])
+        for edge in graph["graph"]["edges"] if edge["relation"] == "USES_DEFINITION"
+    ] == [
+        (assertion_cids[use["use_unit_id"]], assertion_cids[use["definition_unit_id"]], ordinal)
+        for ordinal, use in enumerate(declaration["definition_uses"])
+    ]
     assert graph["view"] == "candidate" and graph["external_complete_inputs_required"] is True
     assert graph["semantic_use_eligible"] is graph["graph"]["admitted"] is graph["graph"]["formalized"] is False
+    assert set(graph["authority"]) == set(graphs.FALSE_FLAGS)
     assert all(value is False for value in graph["authority"].values())
     assert all(type(graph[key]) is int and graph[key] == 0 for key in ("training_mask", "evaluation_gold_mask"))
 
@@ -2142,9 +2154,8 @@ def test_bound_mixed_norm_component_replays_complete_current_v4_graph(
     wrong_source_sha = _lir02_commit(wrong_source)
     assert wrong_source_sha != bound_sha
     with pytest.raises(ValueError):
-        graphs.validate_reviewed_source_bound_norm_graph_v4(
-            graph, reviewed, *args,
-            expected_graph_sha256=graph_sha,
+        graphs.build_reviewed_source_bound_norm_graph_v4(
+            reviewed, *args,
             expected_admission_sha256=admission_sha,
             bound_component_inputs=wrong_source,
             expected_bound_component_inputs_sha256=wrong_source_sha,
