@@ -959,8 +959,8 @@ class LegalProofCache:
                     proof_bindings=proof_bindings,
                 )
 
-            self._index_record(record)
             self._persist_record(record)
+            self._index_record(record)
             # DQK-067: skip mutable index.json when export-only/promoted;
             # in-memory + DuckDB authority remain sufficient.
             try:

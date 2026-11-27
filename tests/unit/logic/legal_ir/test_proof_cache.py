@@ -2008,3 +2008,61 @@ def test_bound_cache_requires_checked_lean_translation_agreement(
     assert loaded.theorem_receipt_results(
         expected_context=context, obligation_id=receipt.obligation_id
     ) == (receipt,)
+
+
+def test_failed_record_replace_preserves_committed_cache_indexes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import os
+
+    root = tmp_path / "cache"
+    cache = LegalProofCache(root=root)
+    artifact = _legal_artifact()
+    previous = cache.put(artifact, profile="legal-strict", jurisdiction="fictional")
+    replacement = LegalProofRecord.build(artifact, profile=previous.profile, jurisdiction="fictional-revision")
+    assert replacement.source_digest == previous.source_digest
+    assert replacement.content_cid != previous.content_cid
+    destination = root / "records" / f"{replacement.content_cid}.json"
+    replace_file = os.replace
+    failed_writes = 0
+
+    def disk_snapshot():
+        return {path.relative_to(root): path.read_bytes() for path in root.rglob("*") if path.is_file()}
+
+    def fail_record_replace(source, target, **kwargs):
+        nonlocal failed_writes
+        if target == destination:
+            assert Path(source).is_file() and Path(source).parent == destination.parent
+            failed_writes += 1
+            raise OSError("could not replace the proof record")
+        return replace_file(source, target, **kwargs)
+
+    def selected_cids(store):
+        return (
+            store.get_by_profile(previous.profile).content_cid,
+            store.get_by_source_digest(previous.source_digest).content_cid,
+            store.get_by_source_digest(previous.source_digest, profile=previous.profile).content_cid,
+        )
+
+    before = disk_snapshot()
+    with monkeypatch.context() as patch:
+        patch.setattr(os, "replace", fail_record_replace)
+        with pytest.raises(OSError, match="could not replace the proof record"):
+            cache.put(replacement)
+    assert failed_writes == 1
+    assert disk_snapshot() == before
+    assert (cache.cids(), selected_cids(cache), cache.contains(replacement.content_cid)) == (
+        (previous.content_cid,), (previous.content_cid,) * 3, False,
+    )
+    with pytest.raises(LegalProofCacheError, match="not found"):
+        cache.get(replacement.content_cid)
+    assert cache.get(previous.content_cid).to_dict() == previous.to_dict()
+    reopened = LegalProofCache(root=root)
+    assert reopened.cids() == cache.cids()
+    assert selected_cids(reopened) == selected_cids(cache)
+
+    assert cache.put(replacement).to_dict() == replacement.to_dict()
+    assert selected_cids(cache) == (replacement.content_cid,) * 3
+    reopened = LegalProofCache(root=root)
+    assert set(reopened.cids()) == {previous.content_cid, replacement.content_cid}
+    assert selected_cids(reopened) == (replacement.content_cid,) * 3
+    assert reopened.get(previous.content_cid).to_dict() == previous.to_dict()
+    assert reopened.get(replacement.content_cid).to_dict() == replacement.to_dict()
