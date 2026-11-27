@@ -4112,3 +4112,25 @@ governing bindings. Replay evidence SHA-256 is
 403de3e0afeae839d20f64270d04cacd6fd83a66d0f30c45ef9733b087489a37.
 The reviewed-meaning route still requires the exact complete typed declaration,
 explicit governing context, and independent substantive reviews.
+
+## Official V2 reviewer packets
+
+The existing packet owner now accepts exact official V2 replay inputs. It
+provides each complete extracted view, an occurrence quotation with its
+original context, and a blank response guide bound to the original request,
+subject, and dependency manifest. Use the [packet guide](guides/corpus_source_review_packets.md)
+for the complete input contract. Packet presentation excludes the per-alternative
+identities and expression hashes. Actual reviewer exposure remains unknown.
+
+The selected repository pytest runs passed ten official and five legacy cases
+with zero failures, errors, or skips. All three cooperative Source read leases
+returned after the fixture runs and retained-pilot replay. Qualification
+SHA-256 is df436ca39fe4b258e5aaf6556886603eea01c7ed9df3488f01f3174efa4869c7.
+
+The retained Title 10 inputs produced three full extracted views and four
+occurrence packets with 36 blank active answer slots and 28 deferred questions.
+Independent validation regenerated every record. Packet SHA-256 is
+da8c0ab1306f5b0617ff968b5963705b8d7d3e1553b796762de8742935f3a5f2, and the
+replay receipt SHA-256 is c927e1ff88fc0bea7c9dc101dbfa203b34b27d41751a7be9ac5e4afec7552be7.
+Reviewer selection, signed source answers and substantive meaning review remain
+pending. The output adds no paired parent or comparison evidence.
