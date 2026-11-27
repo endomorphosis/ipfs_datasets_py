@@ -2,7 +2,7 @@
 
 ## Agent continuation recovery
 
-The existing supervisor now has goal-aware recovery metadata for stale saved pauses, independent authorized work, exact owner polling and durable attempt/reconciliation history. Explicit pauses and execution holds remain effective; it does not issue execution or goal-resume authority. See [operations](docs/OPERATIONS.md#agent-owner-pauses-and-independent-continuations).
+The existing supervisor now has goal-aware recovery metadata for stale saved pauses, independent authorized work, exact owner polling and durable attempt/reconciliation history. Explicit pauses and execution holds remain effective; it does not issue execution or goal-resume authority. See [operations](docs/OPERATIONS.md#agent-owner-pauses-and-independent-continuations). Exact provider-turn observations can now be ingested into a durable continuation checkpoint, retaining refusal evidence, spent attempts and both histories. The local owning suite passed 95 tests and 171 subtests; rejected operations remain held.
 
 ## AArch64 Native policy fixtures — 2026-11-16
 

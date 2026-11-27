@@ -51,6 +51,54 @@ selected work. No request authorizes an explicit user pause override, quota
 bypass, legal approval or corpus admission. Input and output files must differ;
 output creation is exclusive and existing evidence is never overwritten.
 
+### Ingest an observed provider turn
+
+Use the same owner and existing V2 frontier:
+
+```sh
+python scripts/ops/legal_ir/run_autoformal_supervisor.py agent-turn-recovery \
+  --inputs frontier.json --observation owner-turn.json --output checkpoint.json
+```
+
+`owner-turn.json` has exactly these fields, using actual original IDs/error and
+saved evidence references:
+
+```json
+{
+  "schema": "legal-ir-agent-turn-observation/v1",
+  "task_id": "existing-task",
+  "thread_id": "existing-thread",
+  "turn": {"id": "existing-turn", "status": "failed", "error": {"code": "policy_refusal", "message": "Original refusal"}},
+  "cleanup_confirmed": false,
+  "accepted": false,
+  "evidence_refs": []
+}
+```
+
+The task must already have a charged attempt and a matching current or retained
+owner observation. Supported provider states are `inProgress`, `completed`,
+`failed` and `interrupted`; absent/ambiguous state is not terminal. Cleanup and
+acceptance are never inferred. Keep them false without the existing owner's
+independent evidence. Live owners remain exact polling targets. A refusal and its
+original evidence stay held across aliases, resume directives and duplicate
+delivery; explicit pauses and run-wide usage/resource holds remain effective.
+
+Retain the whole output and pass its `next_frontier` into the next existing
+scheduling call. It includes the updated observation, policy holds and both
+histories; exact duplicate events preserve spent counters and the next frontier.
+Verify `observation_checkpoint.input_frontier_sha256` against the current immutable
+frontier before existing atomic claim/admission. Event and next-frontier digests
+are also included. This adapter does not authenticate its own provider metadata
+or mutate the task/goal store.
+
+Observation mode requires `--output`; the three paths must differ. Output creation
+is exclusive, with file and directory fsync and post-sync identity checks before
+success. Failure returns code 2, starts no work and may leave a partial output.
+Preserve it: existence alone is not a successful commit, and failed output must
+not drive a claim or automatic repeat. Existing planning-only stdout mode remains
+unchanged when `--observation` is absent. Local software qualification passed 95
+tests and 171 subtests; no live provider recovery was performed.
+
 ## CLI4 separate original custody and retained failures — 2026-11-15
 
 The audited corrected Source5 operation installed two changed bodies and recaptured three same-byte bodies with fresh identities; its separate readback closed. Separate original A144v02 and H34 cohorts passed independent audits: 144 selected cases in 3.934s and 34 new health cases in 1.413s, each with zero failures/errors/skips. Their original Source R+A, Native-resource, sampled-process and genuine-wait custody closed separately in 168.173s and 168.301s before each initial 420s cutoff.

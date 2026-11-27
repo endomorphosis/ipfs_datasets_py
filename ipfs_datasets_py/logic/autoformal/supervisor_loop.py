@@ -4631,3 +4631,88 @@ def plan_agent_turn_recovery_v2(snapshot: Mapping[str, Any]) -> dict[str, Any]:
         "goal_mutation_authorized": False, "owner_resume_authorized": False,
     })
     return report
+
+
+def prepare_agent_turn_recovery_checkpoint_v1(
+    snapshot: Mapping[str, Any], event: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Bind an existing provider turn to a durable continuation checkpoint.
+
+    The caller authenticates the provider observation and supplies independent
+    cleanup/acceptance evidence. A terminal turn is not evidence of cleanup.
+    This adapter performs no I/O, claims, retries, dispatch or goal mutation.
+    Persist the returned checkpoint before using selections with the existing
+    atomic claim/admission owner, comparing the original frontier digest.
+    """
+    input_raw = _handoff_reconciliation_bytes_v2(snapshot)
+    frame = json.loads(input_raw)
+    incoming = json.loads(_handoff_reconciliation_bytes_v2(event))
+    prior = plan_agent_turn_recovery_v2(frame)
+
+    def need(value: bool, reason: str) -> None:
+        if not value:
+            raise ValueError(reason)
+
+    need(type(incoming) is dict and set(incoming) == {
+        "schema", "task_id", "thread_id", "turn", "cleanup_confirmed",
+        "accepted", "evidence_refs",
+    } and incoming["schema"] == "legal-ir-agent-turn-observation/v1",
+         "closed provider turn observation schema required")
+    turn = incoming["turn"]
+    need(type(turn) is dict and set(turn) == {"id", "status", "error"},
+         "exact provider turn identity, status and original error required")
+    need(turn["status"] in ("inProgress", "completed", "failed", "interrupted"),
+         "an observed provider turn is required; unavailable is not terminal")
+    need(type(incoming["cleanup_confirmed"]) is bool
+         and type(incoming["accepted"]) is bool,
+         "independent explicit cleanup and acceptance observations required")
+    need(turn["status"] != "inProgress" or
+         (not incoming["cleanup_confirmed"] and not incoming["accepted"]),
+         "a live provider turn cannot establish cleanup or acceptance")
+    originals = {entry["task"]["task_id"]: entry for entry in prior["operation_history"]}
+    need(type(incoming["task_id"]) is str and incoming["task_id"] in originals,
+         "an already observed original task is required")
+    entry = originals[incoming["task_id"]]
+    task, previous = entry["task"], entry["observation"]
+    need(task["attempts_used"] > 0, "existing claimed attempt must remain charged")
+    need(incoming["thread_id"] == previous["thread_id"]
+         and turn["id"] == previous["turn_id"],
+         "provider event must match the original thread and turn")
+    for hold in prior["policy_holds"]:
+        if (hold["operation_key"] == task["operation_key"]
+                and hold["thread_id"] == incoming["thread_id"]
+                and hold["turn_id"] == turn["id"] and turn["error"] is not None):
+            need(turn["error"] == hold["error"]
+                 and incoming["evidence_refs"] == hold["evidence_refs"],
+                 "original refusal error and evidence cannot be rewritten")
+    observation = {
+        "task_id": task["task_id"], "thread_id": incoming["thread_id"],
+        "turn_id": turn["id"], "status": turn["status"], "error": turn["error"],
+        "cleanup_confirmed": incoming["cleanup_confirmed"],
+        "accepted": incoming["accepted"], "evidence_refs": incoming["evidence_refs"],
+    }
+    # Retain the pre-event history, including any earlier refusal, before
+    # validating a transition. Replaying a terminal event cannot rewrite it.
+    frame["operation_history"] = prior["operation_history"]
+    frame["policy_holds"] = prior["policy_holds"]
+    if not any(item["task_id"] == task["task_id"] for item in frame["tasks"]):
+        frame["tasks"].append(task)
+    frame["observations"] = [item for item in frame["observations"]
+                             if item["task_id"] != task["task_id"]] + [observation]
+    report = plan_agent_turn_recovery_v2(frame)
+    following = json.loads(_handoff_reconciliation_bytes_v2(frame))
+    for key in ("operation_history", "policy_holds", "reconciliation_history"):
+        following[key] = report[key]
+    report["next_frontier"] = following
+    report["observation_checkpoint"] = {
+        "schema": "legal-ir-agent-turn-observation-checkpoint/v1",
+        "operation_key": task["operation_key"], "event": incoming,
+        "input_frontier_sha256": hashlib.sha256(input_raw).hexdigest(),
+        "event_sha256": hashlib.sha256(
+            _handoff_reconciliation_bytes_v2(incoming)).hexdigest(),
+        "next_frontier_sha256": hashlib.sha256(
+            _handoff_reconciliation_bytes_v2(following)).hexdigest(),
+    }
+    report["requires_durable_checkpoint_before_claim"] = True
+    _handoff_reconciliation_bytes_v2(report)
+    return report

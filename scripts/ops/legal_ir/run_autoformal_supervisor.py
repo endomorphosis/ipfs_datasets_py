@@ -4239,29 +4239,78 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
+def _write_agent_turn_checkpoint_v1(path: Path, raw: bytes) -> None:
+    """Exclusively retain a recovery checkpoint before acknowledging it."""
+    import stat
+
+    directory = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    try:
+        parent = os.fstat(directory)
+        fd = os.open(path.name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
+                     0o600, dir_fd=directory)
+        try:
+            view = memoryview(raw)
+            while view:
+                count = os.write(fd, view)
+                if count <= 0:
+                    raise OSError("short recovery checkpoint write")
+                view = view[count:]
+            os.fsync(fd)
+            written = os.fstat(fd)
+            installed = os.stat(path.name, dir_fd=directory, follow_symlinks=False)
+            stamp = lambda st: (st.st_dev, st.st_ino, st.st_mode, st.st_nlink,
+                                st.st_size, st.st_mtime_ns, st.st_ctime_ns)
+            if (not stat.S_ISREG(written.st_mode) or written.st_nlink != 1
+                    or written.st_size != len(raw) or stamp(written) != stamp(installed)):
+                raise ValueError("recovery checkpoint identity changed")
+        finally:
+            os.close(fd)
+        selected = path.parent.lstat()
+        if (parent.st_dev, parent.st_ino) != (selected.st_dev, selected.st_ino):
+            raise ValueError("recovery checkpoint directory changed")
+        os.fsync(directory)
+        selected = path.parent.lstat()
+        installed = os.stat(path.name, dir_fd=directory, follow_symlinks=False)
+        if ((parent.st_dev, parent.st_ino) != (selected.st_dev, selected.st_ino)
+                or stamp(written) != stamp(installed)):
+            raise ValueError("recovery checkpoint changed during directory sync")
+    finally:
+        os.close(directory)
+
 def agent_turn_recovery_main_v1(argv: list[str]) -> int:
     """Plan independent continuations from saved agent metadata; start no work."""
     parser = argparse.ArgumentParser(description=agent_turn_recovery_main_v1.__doc__)
     parser.add_argument("--inputs", type=Path, required=True)
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--observation", type=Path)
     args = parser.parse_args(argv)
-    if args.output is not None and args.inputs.resolve() == args.output.resolve():
-        parser.error("agent frontier input and output must be distinct")
+    if args.observation is not None and args.output is None:
+        parser.error("provider observation ingestion requires a durable --output checkpoint")
+    paths = [p.resolve() for p in (args.inputs, args.observation, args.output) if p is not None]
+    if len(paths) != len(set(paths)):
+        parser.error("agent frontier, observation and output must be distinct")
     if str(ROOT) not in sys.path:
         sys.path.insert(0, str(ROOT))
     from ipfs_datasets_py.logic.autoformal.supervisor_loop import (
         _handoff_reconciliation_bytes_v2,
+        prepare_agent_turn_recovery_checkpoint_v1,
         plan_agent_turn_recovery_v1,
         plan_agent_turn_recovery_v2,
     )
     try:
         snapshot = _read_handoff_metadata_v2(args.inputs)
-        planner = (plan_agent_turn_recovery_v2 if snapshot.get("schema") == "legal-ir-agent-turn-frontier/v2"
-                   else plan_agent_turn_recovery_v1)
-        result = planner(snapshot)
+        if args.observation is not None:
+            result = prepare_agent_turn_recovery_checkpoint_v1(
+                snapshot, _read_handoff_metadata_v2(args.observation))
+        else:
+            planner = (plan_agent_turn_recovery_v2 if snapshot.get("schema") == "legal-ir-agent-turn-frontier/v2"
+                       else plan_agent_turn_recovery_v1)
+            result = planner(snapshot)
         raw = _handoff_reconciliation_bytes_v2(result)
         if args.output is None:
             sys.stdout.write(raw.decode("utf-8"))
+        elif args.observation is not None:
+            _write_agent_turn_checkpoint_v1(args.output, raw)
         else:
             _write_handoff_metadata_v2(args.output, raw)
     except (OSError, ValueError) as exc:
