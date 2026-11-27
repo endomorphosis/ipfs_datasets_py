@@ -2,9 +2,13 @@
 import hashlib
 import json
 import os
+import stat
 import subprocess
 import sys
+from contextlib import contextmanager
+from functools import partial
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from ipfs_datasets_py.logic.autoformal.corpus_contracts import seal_record
@@ -1278,6 +1282,94 @@ def test_native_packet_v3_publishes_and_reassembles_all_four_chunks(authored_pac
     assert observation["complete_wire_sha256"] == hashlib.sha256(raw).hexdigest()
     assert observation["complete_packet_file_count"] == 83 and observation["parent_or_release_authority"] is False
     assert {row["artifact_id"] for row in rows} <= required
+
+
+def _local_coordinator_publication(tmp_path, operation):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+
+    if operation == "artifact":
+        path = tmp_path / "packet" / "payload"
+        publish = partial(release.publish_referenced_artifact, tmp_path, "packet/payload", b"payload", "candidate")
+    else:
+        reference = release.publish_referenced_artifact(tmp_path, "payload", b"payload", "candidate")
+        path = tmp_path / release.RECEIPT_NAME
+        publish = partial(release.seal_coordinator_receipt, tmp_path, [reference])
+    return release, path, publish
+
+
+@pytest.mark.parametrize("operation", ("artifact", "receipt"))
+def test_local_coordinator_partial_write_leaves_final_path_retryable(tmp_path, monkeypatch, operation):
+    release, path, publish = _local_coordinator_publication(tmp_path, operation)
+    original_open = Path.open
+
+    @contextmanager
+    def interrupted_open(open_path, mode="r", *args, **kwargs):
+        with original_open(open_path, mode, *args, **kwargs) as stream:
+            if "w" not in mode and "x" not in mode:
+                yield stream
+                return
+
+            def write(payload):
+                stream.write(payload[:3])
+                raise OSError("interrupted publication")
+
+            yield SimpleNamespace(write=write)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(Path, "open", interrupted_open)
+        with pytest.raises(OSError, match="interrupted publication"):
+            publish()
+    assert not path.exists()
+    assert not list(path.parent.glob(".release-*"))
+    result = publish()
+    permission_probe = path.with_name("mode-probe")
+    permission_probe.write_bytes(b"")
+    assert stat.S_IMODE(path.stat().st_mode) == stat.S_IMODE(permission_probe.stat().st_mode)
+    if operation == "artifact":
+        assert path.read_bytes() == b"payload"
+        assert result["sha256"] == hashlib.sha256(b"payload").hexdigest()
+    else:
+        assert json.loads(path.read_bytes()) == result
+        assert path.read_bytes().endswith(b"\n")
+    with pytest.raises(release.ReleaseCoordinatorError, match="already"):
+        publish()
+
+
+@pytest.mark.parametrize("operation", ("artifact", "receipt"))
+def test_local_coordinator_concurrent_publication_does_not_replace_winner(tmp_path, monkeypatch, operation):
+    release, path, publish = _local_coordinator_publication(tmp_path, operation)
+    original_link = os.link
+
+    def conflicting_link(source, destination, *args, **kwargs):
+        path.write_bytes(b"another publisher finished first")
+        original_link(source, destination, *args, **kwargs)
+
+    monkeypatch.setattr(os, "link", conflicting_link)
+    with pytest.raises(release.ReleaseCoordinatorError, match="already"):
+        publish()
+    assert path.read_bytes() == b"another publisher finished first"
+    assert not list(path.parent.glob(".release-*"))
+
+
+@pytest.mark.parametrize("operation", ("artifact", "receipt"))
+def test_local_coordinator_directory_sync_failure_removes_only_owned_publication(tmp_path, monkeypatch, operation):
+    _, path, publish = _local_coordinator_publication(tmp_path, operation)
+    original_fsync = os.fsync
+
+    def interrupted_directory_sync(descriptor):
+        if stat.S_ISDIR(os.fstat(descriptor).st_mode):
+            assert path.is_file()
+            raise OSError("directory sync failed")
+        return original_fsync(descriptor)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(os, "fsync", interrupted_directory_sync)
+        with pytest.raises(OSError, match="directory sync failed"):
+            publish()
+    assert not path.exists()
+    assert not list(path.parent.glob(".release-*"))
+    publish()
+    assert path.is_file()
 
 
 @pytest.mark.parametrize("damage", ["index_schema", "index_profile", "codec", "wire_sha", "wire_length", "wire_bool",
