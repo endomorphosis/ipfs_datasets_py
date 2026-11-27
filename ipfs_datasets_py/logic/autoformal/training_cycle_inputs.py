@@ -668,6 +668,50 @@ def _reviewed_component_parent_memberships(receipts, rows, consumer, *, admissio
     return memberships
 
 
+def _reviewed_staged_bound_components(stage, read_artifact, consumer, *, require=_reviewed_need):
+    """Check historical bound bytes and commitments without replaying old policy."""
+    from . import legal_norm_interpretation_review_v1 as norm
+
+    remaining_bytes = MAX_REVIEWED_STAGE_BYTES
+
+    def read_transport_artifact(reference):
+        nonlocal remaining_bytes
+        size = _reviewed_ref(reference)["bytes"]
+        require(size <= remaining_bytes, "staged bound component transport exceeds aggregate capacity")
+        remaining_bytes -= size
+        return read_artifact(reference)
+
+    transport = _reviewed_json(read_transport_artifact(stage["bound_component_transport_artifact"]))
+    inputs = _reviewed_restore_bound_component_inputs(transport, read_transport_artifact)
+    components = stage["consumer_receipt"]["components"]
+    require(type(inputs) is dict and set(inputs) == {item["component_id"] for item in components},
+                           "staged bound component inputs must cover the exact component population")
+    identity_fields = {"schema", "profile", "binding_manifest_sha256", "source_history_manifest_ref",
+                       "current_epoch_id", "unit_bindings_sha256", "norm_preparation_inputs_sha256",
+                       "norm_preparation_sha256", "producer_pins"}
+    observations = {}
+    for component in components:
+        key = component["component_id"]
+        envelope = inputs[key]
+        _reviewed_closed(envelope, {"report", "expected_report_sha256", "preparation_inputs"},
+                         "staged bound component envelope")
+        report = envelope["report"]
+        require(type(report) is dict and identity_fields <= set(report)
+                               and report["schema"] == "legal-bound-norm-component-preparation/v2"
+                               and report["profile"] == "declared-source-binding-to-complete-mixed-sort-norm-preparation/v2"
+                               and norm.norm_review_sha256(report) == envelope["expected_report_sha256"],
+                               "staged bound component report commitment or profile differs")
+        identity = {name: report[name] for name in identity_fields}
+        identity["bound_component_report_sha256"] = envelope["expected_report_sha256"]
+        commitment = consumer.reviewed_admission_inputs_sha256(envelope)
+        receipt = component["receipt"]
+        require(receipt.get("bound_component_identity") == identity
+                               and receipt.get("bound_component_inputs_sha256") == commitment,
+                               "staged bound component receipt differs from its transport")
+        observations[key] = (identity, commitment)
+    return consumer.reviewed_admission_inputs_sha256(inputs), observations
+
+
 def _reviewed_joint_components(observations, row_count, records, dependencies, *, require=_reviewed_need, admission_version="v2"):
     """Close aggregate source, dependency and frozen-split checks after signed replay."""
     component_receipts, assessments, unit_ids, occurrences = [], {}, set(), set()
@@ -887,8 +931,6 @@ def _stage_reviewed_cycle_inputs(registry, *, transition_kind, parent_artifact, 
                          "reviewed cycle parent artifact")
         _reviewed_need(_reviewed_cycle_format(parent, admission_version=_admission_version, source_bound=parent_bound),
                        "legacy or numerical snapshots cannot supply a reviewed cycle parent")
-        if parent_bound and parent["transition_kind"] != "withdrawal":
-            _reviewed_ref(parent["bound_component_transport_artifact"])
         parent_is_v3 = parent_bound or parent["schema"] in {REVIEWED_COMPONENT_CYCLE_SCHEMA, REVIEWED_MIXED_CYCLE_SCHEMA}
         _reviewed_need(not parent_is_v3 or withdrawal or multiple,
                        "positive descendants of a component cycle require explicit component membership")
@@ -941,8 +983,16 @@ def _stage_reviewed_cycle_inputs(registry, *, transition_kind, parent_artifact, 
                            and prior["transition_kind"] in {"bootstrap", "successor"}
                            and type(prior_rows) is list and 0 < len(prior_rows) <= MAX_REVIEWED_CYCLE_ROWS
                            and parent["checkpoint_lineage"] == prior["checkpoint_lineage"]
+                           and (not _source_bound or (
+                               prior["withdrawal_provenance"] is None
+                               and previous_history["parent_history_artifact"] == prior["history_artifact"]))
                            and parent_manifest == _reviewed_json(_reviewed_read(registry, prior["split_manifest_artifact"])),
                            "withdrawal predecessor content or lineage differs")
+            if prior_bound:
+                _reviewed_component_parent_memberships(prior["consumer_receipt"], prior_rows, consumer,
+                                                       admission_version=_admission_version)
+                _reviewed_staged_bound_components(
+                    prior, lambda reference: _reviewed_read(registry, reference), consumer)
             _reviewed_need(not any(parent["transition"][key] for key in ("retained", "added", "corrected")),
                            "historical withdrawal cannot contain positive transitions")
             _reviewed_transition(parent["transition"], prior_rows, [], {}, {}, registry)
@@ -954,7 +1004,11 @@ def _stage_reviewed_cycle_inputs(registry, *, transition_kind, parent_artifact, 
                            "historical positive parent must retain its actual ready profile")
             prior_receipt = parent["consumer_receipt"]
             if parent_is_v3:
-                parent_components = _reviewed_component_parent_memberships(prior_receipt, parent_rows, consumer, admission_version=_admission_version)
+                parent_components = _reviewed_component_parent_memberships(
+                    prior_receipt, parent_rows, consumer, admission_version=_admission_version)
+                if parent_bound:
+                    _reviewed_staged_bound_components(
+                        parent, lambda reference: _reviewed_read(registry, reference), consumer)
             else:
                 _reviewed_need(prior_receipt.get("schema") == consumer.REVIEWED_SCHEMA
                                and prior_receipt.get("status") == "ready"
@@ -1686,50 +1740,6 @@ def prepare_reviewed_mixed_source_bound_decoder_training_inputs_v5(registry, *, 
         expected_bound_component_inputs_sha256=expected_bound_component_inputs_sha256, **kwargs)
 
 
-def _reviewed_decoder_staged_bound_components(stage, read_artifact, consumer):
-    """Observe a historical source packet and its per-component commitments."""
-    from . import legal_norm_interpretation_review_v1 as norm
-
-    remaining_bytes = MAX_REVIEWED_STAGE_BYTES
-
-    def read_transport_artifact(reference):
-        nonlocal remaining_bytes
-        size = _reviewed_ref(reference)["bytes"]
-        _reviewed_decoder_need(size <= remaining_bytes, "staged bound component transport exceeds aggregate capacity")
-        remaining_bytes -= size
-        return read_artifact(reference)
-
-    transport = _reviewed_json(read_transport_artifact(stage["bound_component_transport_artifact"]))
-    inputs = _reviewed_restore_bound_component_inputs(transport, read_transport_artifact)
-    components = stage["consumer_receipt"]["components"]
-    _reviewed_decoder_need(type(inputs) is dict and set(inputs) == {item["component_id"] for item in components},
-                           "staged bound component inputs must cover the exact component population")
-    identity_fields = {"schema", "profile", "binding_manifest_sha256", "source_history_manifest_ref",
-                       "current_epoch_id", "unit_bindings_sha256", "norm_preparation_inputs_sha256",
-                       "norm_preparation_sha256", "producer_pins"}
-    observations = {}
-    for component in components:
-        key = component["component_id"]
-        envelope = inputs[key]
-        _reviewed_closed(envelope, {"report", "expected_report_sha256", "preparation_inputs"},
-                         "staged bound component envelope")
-        report = envelope["report"]
-        _reviewed_decoder_need(type(report) is dict and identity_fields <= set(report)
-                               and report["schema"] == "legal-bound-norm-component-preparation/v2"
-                               and report["profile"] == "declared-source-binding-to-complete-mixed-sort-norm-preparation/v2"
-                               and norm.norm_review_sha256(report) == envelope["expected_report_sha256"],
-                               "staged bound component report commitment or profile differs")
-        identity = {name: report[name] for name in identity_fields}
-        identity["bound_component_report_sha256"] = envelope["expected_report_sha256"]
-        commitment = consumer.reviewed_admission_inputs_sha256(envelope)
-        receipt = component["receipt"]
-        _reviewed_decoder_need(receipt.get("bound_component_identity") == identity
-                               and receipt.get("bound_component_inputs_sha256") == commitment,
-                               "staged bound component receipt differs from its transport")
-        observations[key] = (identity, commitment)
-    return consumer.reviewed_admission_inputs_sha256(inputs), observations
-
-
 def _prepare_reviewed_decoder_training_inputs(registry, *, stage_artifact, expected_stage_sha256,
         current_admission_inputs, expected_admission_inputs_sha256,
         exposure_records, expected_exposure_sha256, source_contexts,
@@ -1831,8 +1841,8 @@ def _prepare_reviewed_decoder_training_inputs(registry, *, stage_artifact, expec
         _reviewed_decoder_need(type(bound_copy) is dict and set(bound_copy) == set(memberships.values())
                                and bound_sha == expected_bound_component_inputs_sha256,
                                "independently pinned current bound inputs must cover the exact staged components")
-        staged_bound_sha, staged_bound_components = _reviewed_decoder_staged_bound_components(
-            stage, read_current_artifact, consumer)
+        staged_bound_sha, staged_bound_components = _reviewed_staged_bound_components(
+            stage, read_current_artifact, consumer, require=_reviewed_decoder_need)
         _reviewed_decoder_need(bound_sha == staged_bound_sha,
                                "current bound component inputs differ from the staged source snapshot")
     json_inputs = (stage_artifact, exposure_records, source_contexts, split_config)
@@ -1906,7 +1916,8 @@ def _prepare_reviewed_decoder_training_inputs(registry, *, stage_artifact, expec
             if prior_source_bound:
                 _reviewed_component_parent_memberships(prior["consumer_receipt"], prior_rows, consumer,
                                                        admission_version=_admission_version)
-                _reviewed_decoder_staged_bound_components(prior, read_current_artifact, consumer)
+                _reviewed_staged_bound_components(
+                    prior, read_current_artifact, consumer, require=_reviewed_decoder_need)
             _reviewed_decoder_need(not any(parent["transition"][key] for key in ("retained", "added", "corrected")),
                                    "historical withdrawal must contain retirement-only transitions")
             _reviewed_transition(parent["transition"], prior_rows, [], {}, {}, registry)
@@ -1921,7 +1932,8 @@ def _prepare_reviewed_decoder_training_inputs(registry, *, stage_artifact, expec
         if parent_source_bound and parent_rows:
             parent_bound_memberships = _reviewed_component_parent_memberships(
                 parent["consumer_receipt"], parent_rows, consumer, admission_version=_admission_version)
-            _reviewed_decoder_staged_bound_components(parent, read_current_artifact, consumer)
+            _reviewed_staged_bound_components(
+                    parent, read_current_artifact, consumer, require=_reviewed_decoder_need)
     guarded_history, records, guard = _reviewed_history(
         replay_history, manifest, rows, config, previous_history, splits)
     _reviewed_decoder_need(guarded_history == history and guard == stage["history_guard"],

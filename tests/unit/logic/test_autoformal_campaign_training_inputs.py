@@ -2841,6 +2841,23 @@ def test_reviewed_mixed_source_bound_cycle_v5_replays_signed_source_through_deco
     assert inputs._reviewed_restore_bound_component_inputs(
         transport, lambda artifact: inputs._reviewed_read(data.registry, artifact)) == bound
 
+    bad_transport = _reviewed_decoder_put_json(
+        data.registry, tmp_path / "bad-historical-bound-transport.json",
+        dict(transport, bound_component_inputs_sha256="0" * 64))
+    bad_parent = _reviewed_decoder_put_json(
+        data.registry, tmp_path / "bad-historical-parent.json",
+        dict(stage, bound_component_transport_artifact=bad_transport))
+    successor = _reviewed_successor_options(
+        data, dict(data.options, transition=data.deepcopy(data.options["transition"])),
+        data.registry, bad_parent, tmp_path / "refused-successor")
+    before = data.registry.stage_calls
+    with pytest.raises(ValueError, match="restored type-separated admission commitment differs"):
+        inputs.stage_reviewed_mixed_source_bound_cycle_inputs_v5(
+            data.registry, **successor, bound_component_inputs=bound,
+            expected_bound_component_inputs_sha256=bound_sha)
+    assert data.registry.stage_calls == before
+    assert not successor["output_directory"].exists()
+
     class NoTokenizer:
         def __getattribute__(self, name):
             pytest.fail("invalid reviewed source handoff reached tokenizer: " + name)
