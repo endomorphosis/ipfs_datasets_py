@@ -292,3 +292,101 @@ def test_runner_metric_roles_reuse_the_typed_sample_artifact(tmp_path, monkeypat
     assert train["cross_entropy_loss"] == validation["cross_entropy_loss"]
     assert validation["evaluation_artifact_cache"]["avoided_recompilations"] >= 1
     assert validation["evaluation_artifact_cache"]["role_hits"] == {"baseline_validation": 1}
+
+
+def test_result_cache_factory_failure_preserves_same_lineage_replacement() -> None:
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_evaluation_cache import (
+        EvaluationResultLineage,
+        LegalIREvaluationResultCache,
+    )
+
+    # Equal-valued replacements also have a distinct identity and must survive.
+    for replacement_cycle, replacement_score in ((1, 0.1), (2, 0.9)):
+        lineage = EvaluationResultLineage("state-a", "samples-a", "evaluator-a", "metric-a")
+        cache = LegalIREvaluationResultCache()
+        original = cache.put_after(
+            lineage, {"score": 0.1}, role="after_train", cycle=1
+        )
+        replacements = []
+        failed_payloads = []
+
+        def replace_then_fail(**payload):
+            failed_payloads.append(payload)
+            replacements.append(
+                cache.put_after(
+                    lineage,
+                    {"score": replacement_score},
+                    role="after_train",
+                    cycle=replacement_cycle,
+                    computation_seconds=0.0,
+                )
+            )
+            raise ValueError("older result could not be materialized")
+
+        assert cache.get_before(
+            lineage, replace_then_fail, role="before_train", current_cycle=2
+        ) is None
+        assert failed_payloads == [{"score": 0.1}]
+        assert len(replacements) == 1
+        assert replacements[0] is not original
+        assert (replacements[0] == original) is (replacement_cycle == 1)
+
+        # A newer replacement cannot be reused in its own cycle.
+        if replacement_cycle == 2:
+            assert cache.get_before(
+                lineage, lambda **payload: payload, role="before_train", current_cycle=2
+            ) is None
+        reused = cache.get_before(
+            lineage,
+            lambda **payload: payload,
+            role="before_validation",
+            current_cycle=3,
+        )
+        assert reused == {"score": replacement_score}
+        assert failed_payloads == [{"score": 0.1}]
+        summary = cache.summary()
+        assert summary["entry_count"] == 1
+        assert summary["writes"] == 2
+        assert summary["evictions"] == 0
+        assert summary["integrity_rejections"] == 1
+        assert summary["lineage_rejections"] == int(replacement_cycle == 2)
+        assert summary["misses"] == 1 + int(replacement_cycle == 2)
+        assert summary["lookups"] == 2 + int(replacement_cycle == 2)
+        assert summary["hits"] == 1
+        assert summary["role_hits"] == {"before_validation": 1}
+
+
+def test_result_cache_factory_failure_still_evicts_unchanged_current_entry() -> None:
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_evaluation_cache import (
+        EvaluationResultLineage,
+        InvalidEvaluationArtifactError,
+        LegalIREvaluationResultCache,
+    )
+
+    for error_type in (TypeError, ValueError, InvalidEvaluationArtifactError):
+        lineage = EvaluationResultLineage("state-a", "samples-a", "evaluator-a", "metric-a")
+        cache = LegalIREvaluationResultCache()
+        cache.put_after(lineage, {"score": 0.1}, role="after_train", cycle=1)
+        failed_payloads = []
+
+        def fail_without_replacement(**payload):
+            failed_payloads.append(payload)
+            raise error_type("current result could not be materialized")
+
+        assert cache.get_before(
+            lineage, fail_without_replacement, role="before_train", current_cycle=2
+        ) is None
+        assert cache.get_before(
+            lineage, lambda **payload: payload, role="before_validation", current_cycle=3
+        ) is None
+        assert failed_payloads == [{"score": 0.1}]
+        summary = cache.summary()
+        assert summary["entry_count"] == 0
+        assert summary["writes"] == 1
+        assert summary["evictions"] == 0
+        assert summary["integrity_rejections"] == 1
+        assert summary["lineage_rejections"] == 0
+        assert summary["misses"] == 2
+        assert summary["lookups"] == 2
+        assert summary["hits"] == 0
+        assert summary["role_hits"] == {}

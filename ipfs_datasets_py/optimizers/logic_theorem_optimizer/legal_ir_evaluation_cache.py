@@ -529,7 +529,8 @@ class LegalIREvaluationResultCache:
             with self._lock:
                 self._stats["integrity_rejections"] += 1
                 self._stats["misses"] += 1
-                self._entries.pop(lineage.digest, None)
+                if self._entries.get(lineage.digest) is artifact:
+                    self._entries.pop(lineage.digest, None)
             return None
         with self._lock:
             self._stats["hits"] += 1
