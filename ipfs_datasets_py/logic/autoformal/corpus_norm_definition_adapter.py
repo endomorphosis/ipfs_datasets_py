@@ -706,6 +706,8 @@ REVIEWED_GRAPH_SCHEMA = "legal-corpus-reviewed-norm-candidate-graph/v2"
 REVIEWED_GRAPH_PROFILE = "complete-reviewed-relational-candidate-graph/v2"
 REVIEWED_GRAPH_SCHEMA_V3 = "legal-corpus-reviewed-norm-candidate-graph/v3"
 REVIEWED_GRAPH_PROFILE_V3 = "complete-reviewed-mixed-sort-relational-candidate-graph/v3"
+REVIEWED_GRAPH_SCHEMA_V4 = "legal-corpus-reviewed-norm-candidate-graph/v4"
+REVIEWED_GRAPH_PROFILE_V4 = "complete-reviewed-source-bound-mixed-sort-relational-candidate-graph/v4"
 REVIEWED_GRAPH_FIELDS = {"profile", "admission_record", "scope_record", "interpretation_record",
     "source_versions", "source_occurrences", "unit_records", "ast_records", "definition_use_records",
     "term_records", "cross_reference_records", "graph", "counts", "producer_pins", "view", "authority",
@@ -729,12 +731,17 @@ def _reviewed_graph_pins(owner):
     return pins
 
 
-def _reviewed_graph_project(admission, assessment_inputs, admission_sha256, pins, *, graph_version=2):
+def _reviewed_graph_project(admission, assessment_inputs, admission_sha256, pins, *,
+                           graph_version=2, source_custody=None):
     """Lossless bounded candidate projection; complete replay precedes this seam."""
     owner = _reviewed_graph_owner(graph_version)
     record_version = "v2" if graph_version == 2 else "v3"
-    graph_schema = REVIEWED_GRAPH_SCHEMA if graph_version == 2 else REVIEWED_GRAPH_SCHEMA_V3
-    graph_profile = REVIEWED_GRAPH_PROFILE if graph_version == 2 else REVIEWED_GRAPH_PROFILE_V3
+    if source_custody is not None:
+        graph_schema, graph_profile = REVIEWED_GRAPH_SCHEMA_V4, REVIEWED_GRAPH_PROFILE_V4
+    elif graph_version == 3:
+        graph_schema, graph_profile = REVIEWED_GRAPH_SCHEMA_V3, REVIEWED_GRAPH_PROFILE_V3
+    else:
+        graph_schema, graph_profile = REVIEWED_GRAPH_SCHEMA, REVIEWED_GRAPH_PROFILE
     declaration = assessment_inputs["preparation_inputs"]["declaration"]
     _need(admission["semantic_use_eligible"] is True
           and "formalization" in admission["permitted_uses"],
@@ -742,13 +749,15 @@ def _reviewed_graph_project(admission, assessment_inputs, admission_sha256, pins
     _need(admission["declaration_sha256"] == owner.norm_content_adjudication_sha256(declaration),
           "reviewed graph declaration differs from exact admission")
     seal = contracts.seal_record
-    admission_record = seal({"schema": "legal-corpus-reviewed-norm-admission-reference/" + record_version,
+    admission_record = seal({"schema": "legal-corpus-reviewed-norm-admission-reference/"
+        + ("v4" if source_custody is not None else record_version),
         "assessment_sha256": admission_sha256, "declaration_sha256": admission["declaration_sha256"],
         "preparation_sha256": admission["preparation_sha256"], "provenance_kind": admission["provenance_kind"],
         "upstream_semantic_use_eligible": True, "permitted_uses": admission["permitted_uses"],
         "review_authority_sha256": owner.norm_content_adjudication_sha256(admission["review_authority"]),
         "external_complete_inputs_required": True,
-        **({"admission_profile": owner.REVIEWED_PROFILE} if graph_version == 3 else {})})
+        **({"admission_profile": owner.REVIEWED_PROFILE} if graph_version == 3 else {}),
+        **(source_custody if source_custody is not None else {})})
     scope = seal({"schema": "legal-corpus-reviewed-norm-scope/" + record_version, **declaration["governing_context"],
         "interpretation_id": declaration["interpretation_id"],
         "admission_record_cid": admission_record["record_cid"]})
@@ -854,12 +863,19 @@ def _reviewed_graph_project(admission, assessment_inputs, admission_sha256, pins
         "external_complete_inputs_required": True})
 
 
-def _reviewed_graph_operation(admission, args, kwargs, expected_admission_sha256, offered=None, *, version=2):
+def _reviewed_graph_operation(admission, args, kwargs, expected_admission_sha256, offered=None, *,
+                              version=2, bound_component_inputs=None, expected_bound_component_inputs_sha256=None):
     owner = _reviewed_graph_owner(version)
     contracts.require_sha256(expected_admission_sha256, "expected_admission_sha256")
     original = {"admission": admission, "args": list(args), "kwargs": kwargs, "offered": offered}
+    source_bound = expected_bound_component_inputs_sha256 is not None
+    if source_bound:
+        _need(version == 3 and type(bound_component_inputs) is dict,
+              "complete current source-bound V3 admission required")
+        original["bound_component_inputs"] = bound_component_inputs
     detached, commitment = owner.norm._snapshot(original)
     pins = _reviewed_graph_pins(owner)
+    source_custody, source_pins = None, {}
     _need(owner.norm_content_adjudication_sha256(detached["admission"]) == expected_admission_sha256,
           "independent complete reviewed admission pin differs")
     assessor = (owner.assess_reviewed_norm_admission_v2 if version == 2
@@ -869,17 +885,34 @@ def _reviewed_graph_operation(admission, args, kwargs, expected_admission_sha256
     signature = inspect.signature(assessor)
     bound = signature.bind(*detached["args"], **detached["kwargs"])
     _need(set(bound.arguments) == set(signature.parameters), "complete reviewed admission replay inputs required")
+    if source_bound:
+        from . import corpus_source_bindings
+
+        source = detached["bound_component_inputs"]
+        _need(owner.norm._snapshot(source)[1] == expected_bound_component_inputs_sha256,
+              "independent complete bound component inputs pin differs")
+        identity, source_sha256 = corpus_source_bindings.validate_bound_norm_component_for_admission_v1(
+            source, bound.arguments, admission_version="v3")
+        _need(source_sha256 == expected_bound_component_inputs_sha256,
+              "independent complete bound component inputs pin differs")
+        source_pins = dict(identity["producer_pins"])
+        _need(all(path not in pins or pins[path] == digest for path, digest in source_pins.items()),
+              "source and reviewed graph producer observations disagree")
+        source_custody = {"bound_component_identity": identity, "bound_component_inputs_sha256": source_sha256}
     checked = validator(detached["admission"], *detached["args"],
         expected_report_sha256=expected_admission_sha256, **detached["kwargs"])
     _need(owner.norm._snapshot(original)[1] == commitment and owner.norm._snapshot(detached)[1] == commitment,
           "reviewed graph inputs changed during admission replay")
-    result = _reviewed_graph_project(checked, bound.arguments, expected_admission_sha256, pins, graph_version=version)
+    result = _reviewed_graph_project(checked, bound.arguments, expected_admission_sha256, pins | source_pins,
+        graph_version=version, source_custody=source_custody)
     if offered is not None:
         _need(cid_utils.canonical_dag_json_bytes(detached["offered"]) == cid_utils.canonical_dag_json_bytes(result),
               "reviewed graph differs from complete source, IR, review and dependency regeneration")
     _need(owner.norm._snapshot(original)[1] == commitment and owner.norm._snapshot(detached)[1] == commitment,
           "reviewed graph inputs changed during projection")
     _need(_reviewed_graph_pins(owner) == pins, "reviewed graph producers changed during operation")
+    _need(all(hashlib.sha256(Path(path).read_bytes()).hexdigest() == digest
+              for path, digest in source_pins.items()), "bound graph source producers changed during operation")
     return result
 
 
@@ -932,3 +965,33 @@ def validate_reviewed_norm_graph_v3(record, admission, *args, expected_graph_sha
 
 __all__ += ["REVIEWED_GRAPH_SCHEMA_V3", "REVIEWED_GRAPH_PROFILE_V3", "build_reviewed_norm_graph_v3",
     "validate_reviewed_norm_graph_v3"]
+
+
+def build_reviewed_source_bound_norm_graph_v4(admission, *args, expected_admission_sha256,
+        bound_component_inputs, expected_bound_component_inputs_sha256, **kwargs):
+    """Reconcile a complete V3 review with independently pinned current source history."""
+    contracts.require_sha256(expected_bound_component_inputs_sha256, "expected_bound_component_inputs_sha256")
+    return _reviewed_graph_operation(admission, args, kwargs, expected_admission_sha256, version=3,
+        bound_component_inputs=bound_component_inputs,
+        expected_bound_component_inputs_sha256=expected_bound_component_inputs_sha256)
+
+
+def validate_reviewed_source_bound_norm_graph_v4(record, admission, *args, expected_graph_sha256,
+        expected_admission_sha256, bound_component_inputs, expected_bound_component_inputs_sha256, **kwargs):
+    """Regenerate the complete candidate and its source-history custody from live inputs."""
+    _check_pure()
+    contracts.require_sha256(expected_graph_sha256, "expected_graph_sha256")
+    contracts.require_sha256(expected_bound_component_inputs_sha256, "expected_bound_component_inputs_sha256")
+    checked = contracts.validate_record(record, schema=REVIEWED_GRAPH_SCHEMA_V4, fields=REVIEWED_GRAPH_FIELDS)
+    _need(norm_definition_graph_sha256(checked) == expected_graph_sha256,
+          "independent complete reviewed source-bound candidate graph pin differs")
+    result = _reviewed_graph_operation(admission, args, kwargs, expected_admission_sha256, checked, version=3,
+        bound_component_inputs=bound_component_inputs,
+        expected_bound_component_inputs_sha256=expected_bound_component_inputs_sha256)
+    _need(norm_definition_graph_sha256(record) == expected_graph_sha256,
+          "offered reviewed source-bound candidate graph changed during validation")
+    return result
+
+
+__all__ += ["REVIEWED_GRAPH_SCHEMA_V4", "REVIEWED_GRAPH_PROFILE_V4",
+    "build_reviewed_source_bound_norm_graph_v4", "validate_reviewed_source_bound_norm_graph_v4"]
