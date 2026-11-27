@@ -37941,7 +37941,28 @@
             "evaluation_gold": 0,
             "training": 0
           },
-          "integration_status": "pending_joint_qualification",
+          "integration_status": "qualified_signed_fictional_software_only",
+          "joint_offline_qualification": {
+            "composed_signed_fictional_tests": 3,
+            "consumer_composition": {
+              "bytes": 4025,
+              "path": "/tmp/P2-current-V3-bound-source-consumer-UaMcnurb/actual-current-mixed-source-consumer-evaluator-composed-qualified-v02.json",
+              "sha256": "af55925926c83e15df4ca026f831cab84d64f5f7cb7fd6996ae5c3828fe3c458"
+            },
+            "evaluator_owner_tests": 44,
+            "evaluator_qualification": {
+              "bytes": 2225,
+              "path": "/tmp/Phase2-evaluator-bound-component-dQrRYuZZ/actual-current-phase2-evaluator-bound-component-qualified-44.json",
+              "sha256": "cbdf9e5b50f11fdf0f8ee0d83daf2e51999debbb06cb100ff481e68b0d927675"
+            },
+            "retained_consumer_tests": 180,
+            "source_owner_tests": 30,
+            "source_qualification": {
+              "bytes": 6866,
+              "path": "/tmp/P2-bound-current-mixed-V3-source-owner-1vKv8Jv2/actual-current-bound-V3-source-owner-qualified-six.json",
+              "sha256": "7b3abadd50eeecaf3d0ccbe1fbb3c523e817690d5e20b7a8f908e1e4129d2ea8"
+            }
+          },
           "reviewed_producer_argument_scope": [
             "id",
             "source_text",
@@ -37977,8 +37998,8 @@
       "path": "/tmp/Root-Guide591-evidence-current-5Fu5AZaZ/guide591-scoped-held-receipts.json",
       "required_for_catalog_check": false,
       "root": "artifact_workspace",
-      "scope": "Prepared bound-source integration and one observed hosted Native run.",
-      "status": "SCOPED_PREPARATION_PENDING_INTEGRATION"
+      "scope": "Qualified signed-fictional bound-source integration and one observed hosted Native run.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }

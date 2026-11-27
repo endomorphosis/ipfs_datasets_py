@@ -5262,7 +5262,7 @@
         "sha256": "cf293cd19a0d03de37953e26a001f922c83fee79b7241f0cc2a5199bc0b8876e"
       },
       "record_id": "lir02-bound-component-reviewed-evaluator-evidence591-20261127",
-      "status": "scoped_preparation_pending_integration_no_task_status_change"
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
     }
   },
   "programme_goal_hierarchy": {
