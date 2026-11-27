@@ -4258,3 +4258,12 @@ The Phase 2 V5 stage preserves signed source-history replay in a separate regist
 The signed stage-to-decoder cohort passed 1 offline cases. The tests cover exact transported bytes and complete target round trips, and they check that the V4 reader, missing current bindings, and a changed report commitment refuse before tokenization. The successor stage also rejected a resealed historical transport with a corrupt commitment before writing artifacts. The separate legacy mixed V4 cohort passed 25 offline cases. [Software qualification](/tmp/P2-V5-historical-source-custody-mbnF3nY4/actual-stage-decoder-software-qualification.json)
 
 The signed fictional fixture carries a training mask of zero. The qualification covers training-input preparation and tokenizer transport. Independent statutory and formal review for Title 10 §§ 101, 7213, and 7214 remains pending.
+
+
+## Evidence593 — Bind source history at the reviewed decoder worker
+
+An explicit V5 job binds the stage and an independently pinned current source-history provider. The worker checks both commitments before checkpoint inspection, restoration, and updates. Its distinct checkpoint schema resumes an exact training binding for the same stage. The built-in local loader checks the V5 job, source binding, and paired checkpoint before restoration.
+
+The signed fictional worker cohort passed 1 offline case. The job-file route reached backend record validation with complete source and target records. A provider change then stopped the job before checkpoint inspection or restoration. The separate 17-case cohort covered exact-resume envelope checks, loader refusals before model import, and retained V10 compatibility. [Software qualification](/tmp/P2-source-bound-reviewed-worker-v5-8CFcjNNd/actual-v5-worker-software-qualification.json)
+
+The signed fictional fixture retains a zero training mask. Production fitting, independent statutory and formal review for Title 10 §§ 101, 7213, and 7214, and corpus admission remain pending.

@@ -38095,6 +38095,113 @@
       "root": "artifact_workspace",
       "scope": "Signed-fictional software evidence for mixed V5 staging and decoder training-data replay.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/lir02_mixed_source_bound_decoder_worker_20261127",
+      "closed_runtime_facts": {
+        "base": "dcb7233a12275d7d3d59177825da8bc23b69f982",
+        "checkpoint_resume_scope": "exact same-stage training binding and paired state",
+        "checks": {
+          "signed-v5-worker": {
+            "errors": 0,
+            "failures": 0,
+            "junit": {
+              "bytes": 434,
+              "path": "/tmp/P2-source-bound-reviewed-worker-v5-8CFcjNNd/signed-v5-worker.xml",
+              "sha256": "ad951b00220819e9ca399757d4cf618337f63605480aedb0e7a8fbfb1d3ecbf0"
+            },
+            "log": {
+              "bytes": 711,
+              "path": "/tmp/P2-source-bound-reviewed-worker-v5-8CFcjNNd/signed-v5-worker.log",
+              "sha256": "1f4aa87164081d109e450c033762e02c5fa94511946613df29a861c7af235b60"
+            },
+            "skipped": 0,
+            "terminal": {
+              "bytes": 2,
+              "path": "/tmp/P2-source-bound-reviewed-worker-v5-8CFcjNNd/signed-v5-worker.terminal",
+              "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+            },
+            "tests": 1
+          },
+          "v5-and-compatibility": {
+            "errors": 0,
+            "failures": 0,
+            "junit": {
+              "bytes": 3972,
+              "path": "/tmp/P2-source-bound-reviewed-worker-v5-8CFcjNNd/v5-and-compatibility.xml",
+              "sha256": "0e7b0d9dfb2038d1cd0121076e13f13fffffe4f6fed8b3e73b08123fdb256085"
+            },
+            "log": {
+              "bytes": 796,
+              "path": "/tmp/P2-source-bound-reviewed-worker-v5-8CFcjNNd/v5-and-compatibility.log",
+              "sha256": "1352f05837199a28c8763e285700b89e219420695cafaa76fef6060156336e0e"
+            },
+            "skipped": 0,
+            "terminal": {
+              "bytes": 2,
+              "path": "/tmp/P2-source-bound-reviewed-worker-v5-8CFcjNNd/v5-and-compatibility.terminal",
+              "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+            },
+            "tests": 17
+          }
+        },
+        "cooperative_source_read_leases_released": true,
+        "decoder_schema": "reviewed-decoder-training-inputs/v5",
+        "evidence_ordinal": 593,
+        "exact_code_blobs": {
+          "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": {
+            "bytes": 615587,
+            "mode": "100644",
+            "oid": "6aef03505673507fe524a8a7de4745daa7133526",
+            "sha256": "4762c4eca52abd9080db16cf43c8175b0865470e584e29d1ad4f9a0d9a08afa7"
+          },
+          "tests/unit/logic/test_autoformal_campaign_training_inputs.py": {
+            "bytes": 221384,
+            "mode": "100644",
+            "oid": "1b4f161c99fcf08d80bdd2683d6a2a3bdef5ea9e",
+            "sha256": "3566804f14d25d1d01c9a80ca5a73180446244dec3b3dd4bed8202eb7afa1d61"
+          },
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py": {
+            "bytes": 1145721,
+            "mode": "100644",
+            "oid": "e7dab45eca5214bdffe09d9c28029a042346f90f",
+            "sha256": "0e510cb2f1bc349ef80be02719f05077690fe4b267c5493190948665ceab1660"
+          }
+        },
+        "independent_statutory_review_or_admission": false,
+        "loader_policy_schema": "reviewed-local-source-bound-decoder-load-policy/v1",
+        "loader_refusal_tests_reached_model_import": false,
+        "owned_pytest_subprocesses_reaped": true,
+        "production_training_or_Native_execution": false,
+        "qualification": {
+          "bytes": 6982,
+          "path": "/tmp/P2-source-bound-reviewed-worker-v5-8CFcjNNd/actual-v5-worker-software-qualification.json",
+          "sha256": "0250be19644f2dae7d555ac9790781c089be75d00964b4c05b08c1f11e78ec83"
+        },
+        "qualified_software_commit": "6e922d2263f94e16cb5cdb8168f08571c43e530b",
+        "qualified_software_tree": "42fe0d0004e87e4bcb1ea0152888f982ebb5d6d8",
+        "schema": "autoformal-selected-software-evidence/v1",
+        "scope": "offline signed-fictional worker boundary and compatibility; no production fit, Native, statutory review or admission",
+        "signed_fixture_only": true,
+        "signed_fixture_training_mask": 0,
+        "signed_worker_fixture_checkpoint_restore_or_fit_reached": false,
+        "stage_schema": "reviewed-example-cycle-input-artifact/v5",
+        "task_id": "LIR-02",
+        "task_status": "in_progress",
+        "task_status_changed": false,
+        "worker_checkpoint_schema": "reviewed-source-bound-mixed-decoder-checkpoint/v1",
+        "worker_job_schema": "reviewed-source-bound-mixed-decoder-job/v1",
+        "worker_receipt_schema": "reviewed-source-bound-mixed-decoder-worker-receipt/v1"
+      },
+      "evidence_ordinal": 593,
+      "id": "lir02-mixed-source-bound-decoder-worker-evidence593-20261127",
+      "observed_bytes": 4112,
+      "observed_sha256": "389af579b26d6a5d45f35b8428738501e4689ded6bfb5c0f48aef80d3bbaf4f1",
+      "path": "/tmp/P2-source-bound-reviewed-worker-v5-8CFcjNNd/Guide593-docs-ready/Guide593-scoped-software-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Signed-fictional software evidence for the V5 worker boundary and retained V10 compatibility.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }
