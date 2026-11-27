@@ -1478,7 +1478,7 @@ def _lir02_repin(arguments):
     return arguments
 
 
-def _lir02_complete_case(tmp_path, owner):
+def _lir02_complete_case(tmp_path, owner, *, mixed=False):
     from ipfs_datasets_py.logic.autoformal import corpus_source
     from ipfs_datasets_py.logic.autoformal import legal_norm_content_adjudication_v1 as admission
     application_fixture = helper().helper()
@@ -1489,7 +1489,9 @@ def _lir02_complete_case(tmp_path, owner):
     texts = [
         "For this fictional Act, a covered officer means an officer appointed by the Café Board.",
         "Every covered officer must file a report unless the Board expressly excuses that officer.",
-        "A covered officer may inspect the register.",
+        ("For every officer, supervisor, event, and time, if both people are covered officers, "
+         "that officer may inspect the register under that supervisor at that event and time."
+         if mixed else "A covered officer may inspect the register."),
     ]
     document = alignment_fixture.redocument(alignment_fixture.document(1), (
         '<html><head><meta charset="utf-8"><title>Fictional component</title></head><body>'
@@ -1591,7 +1593,19 @@ def _lir02_complete_case(tmp_path, owner):
     # Rebuild all existing preparation/dependency/review subjects after the edit.
     case["declaration"]["governing_context"]["governing_edition"] = (
         source_bindings["fixture:lir02-handoff/unit-1"]["source_version"]["edition"])
-    norm_fixture.reviewed_refresh_signed_preparation_v2(admission, case)
+    if mixed:
+        from ipfs_datasets_py.logic.autoformal import legal_relational_norm_v1 as relational
+        from ipfs_datasets_py.logic.autoformal import legal_reviewed_norm_admission_v3 as mixed_admission
+        from tests.unit.logic.autoformal import test_legal_reviewed_norm_admission_v3 as mixed_fixture
+
+        case["declaration"]["schema"] = mixed_admission.REVIEWED_DECLARATION_SCHEMA
+        for unit in case["declaration"]["units"]:
+            unit["relational_profile"] = relational.PROFILE
+        mixed_fixture.set_mixed_ir(case)
+        case["preparation"] = mixed_fixture.prepare(mixed_admission, case)
+        mixed_fixture.refresh_signed_reviews(case, mixed_admission)
+    else:
+        norm_fixture.reviewed_refresh_signed_preparation_v2(admission, case)
     unit_bindings = []
     for ordinal, unit in enumerate(case["declaration"]["units"]):
         selected = choices[ordinal]
@@ -1948,3 +1962,81 @@ def test_bound_norm_component_consumer_revalidates_every_callback_exit(
             assert "detached complete reviewed consumer rows" in str(caught.value)
         else:
             assert caught.value is callback_failure
+
+
+
+@pytest.fixture(scope="module")
+def lir02_complete_mixed_handoff_case(tmp_path_factory):
+    from ipfs_datasets_py.logic.autoformal import corpus_source_bindings
+
+    return _lir02_complete_case(
+        tmp_path_factory.mktemp("lir02-complete-mixed-handoff"), corpus_source_bindings, mixed=True
+    )
+
+
+def _lir02_prepare_mixed(owner, arguments):
+    api = getattr(owner, "prepare_bound_norm_component_v2", None)
+    assert callable(api), "mixed norm preparation needs its versioned current source binding"
+    return api(**arguments)
+
+
+def test_bound_mixed_norm_component_replays_current_source_and_exact_v3_preparation(
+        owner, lir02_complete_mixed_handoff_case):
+    from ipfs_datasets_py.logic.autoformal import legal_relational_norm_v1 as relational
+    from ipfs_datasets_py.logic.autoformal import legal_norm_interpretation_review_v1 as norm
+    from ipfs_datasets_py.logic.autoformal import legal_reviewed_norm_admission_v3 as admission
+    from tests.unit.logic.autoformal import test_legal_reviewed_norm_admission_v3 as mixed_fixture
+
+    case = lir02_complete_mixed_handoff_case
+    arguments = _lir02_arguments(case)
+    report = _lir02_prepare_mixed(owner, arguments)
+    assert report["schema"] == "legal-bound-norm-component-preparation/v2"
+    assert report["profile"] == "declared-source-binding-to-complete-mixed-sort-norm-preparation/v2"
+    assert report["norm_preparation"] == case["case"]["preparation"]
+    assert report["norm_preparation"]["units"][2]["relational_profile"] == relational.MIXED_PROFILE
+    assert len({row["occurrence_cid"] for row in report["norm_preparation"]["units"]}) == 3
+    assert all(row["original_context_availability"] == "required_unavailable"
+               for row in report["context_bindings"])
+    assert report["norm_preparation_inputs_sha256"] == arguments["expected_norm_preparation_inputs_sha256"]
+    assert all(report[key] is False for key in (
+        "semantic_use_eligible", "semantic_admission_performed", "governing_source_adoption_applied",
+        "Lean_admitted", "semantic_graph_admitted", "corpus_admitted", "training_executed",
+    ))
+    assert report["training_mask"] == report["evaluation_gold_mask"] == 0
+    assert owner.validate_bound_norm_component_v2(
+        report, expected_report_sha256=norm.norm_review_sha256(report), **arguments
+    ) == report
+    # The independently signed fictional review still replays independently.
+    reviewed = mixed_fixture.assess(admission, case["case"])
+    assert reviewed["semantic_use_eligible"] is True and reviewed["fixture_only"] is True
+    assert reviewed["training_mask"] == reviewed["evaluation_gold_mask"] == 0
+
+
+@pytest.mark.parametrize("damage", ("source_root", "trust", "norm_profile", "report"))
+def test_bound_mixed_norm_component_refuses_stale_or_mismatched_sources_and_proposals(
+        owner, lir02_complete_mixed_handoff_case, damage):
+    from ipfs_datasets_py.logic.autoformal import legal_norm_interpretation_review_v1 as norm
+
+    arguments = _lir02_arguments(lir02_complete_mixed_handoff_case)
+    report = _lir02_prepare_mixed(owner, arguments)
+    if damage == "source_root":
+        arguments["expected_binding_manifest_sha256"] = "0" * 64
+    elif damage == "trust":
+        replay = arguments["binding_replay_inputs"]
+        registry = replay["binding_registry"]
+        registry["keys"][0]["revoked_at_utc"] = replay["history_replay_inputs"]["at_time_utc"]
+        registry["revocation_generation"] += 1
+        registry_digest = sha(canonical(registry))
+        replay["binding_policy"]["registry_sha256"] = registry_digest
+        replay["expected_binding_registry_sha256"] = registry_digest
+        replay["expected_binding_policy_sha256"] = sha(canonical(replay["binding_policy"]))
+    elif damage == "norm_profile":
+        from ipfs_datasets_py.logic.autoformal import legal_norm_content_adjudication_v1 as legacy
+        arguments["norm_preparation_inputs"]["declaration"]["schema"] = legacy.REVIEWED_DECLARATION_SCHEMA
+        _lir02_repin(arguments)
+    else:
+        report["norm_preparation"]["units"][2]["canonical_ir"]["argument_roles"][0]["roles"] = ["edited"]
+    with pytest.raises(ValueError):
+        owner.validate_bound_norm_component_v2(
+            report, expected_report_sha256=norm.norm_review_sha256(report), **arguments
+        )

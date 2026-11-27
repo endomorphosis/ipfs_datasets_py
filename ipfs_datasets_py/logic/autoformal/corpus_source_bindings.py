@@ -610,8 +610,45 @@ def prepare_bound_norm_component_v1(binding_report, *, binding_replay_inputs,
     within the same complete component. Reference availability is not evidence
     that a legal question has been answered.
     """
+    return _prepare_bound_norm_component(binding_report, binding_replay_inputs=binding_replay_inputs,
+        expected_binding_manifest_sha256=expected_binding_manifest_sha256, unit_bindings=unit_bindings,
+        expected_unit_bindings_sha256=expected_unit_bindings_sha256, norm_preparation_inputs=norm_preparation_inputs,
+        expected_norm_preparation_inputs_sha256=expected_norm_preparation_inputs_sha256, mixed_sort=False)
+
+
+def prepare_bound_norm_component_v2(binding_report, *, binding_replay_inputs,
+        expected_binding_manifest_sha256, unit_bindings, expected_unit_bindings_sha256,
+        norm_preparation_inputs, expected_norm_preparation_inputs_sha256):
+    """Replay current declared source tuples against exact mixed-sort V3 preparation.
+
+    This profile retains the original unresolved source contexts and requires the
+    same complete explicit replacement context as V1. It yields preparation
+    evidence without granting review, proof or application authority.
+    """
+    return _prepare_bound_norm_component(binding_report, binding_replay_inputs=binding_replay_inputs,
+        expected_binding_manifest_sha256=expected_binding_manifest_sha256, unit_bindings=unit_bindings,
+        expected_unit_bindings_sha256=expected_unit_bindings_sha256, norm_preparation_inputs=norm_preparation_inputs,
+        expected_norm_preparation_inputs_sha256=expected_norm_preparation_inputs_sha256, mixed_sort=True)
+
+
+def _prepare_bound_norm_component(binding_report, *, binding_replay_inputs,
+        expected_binding_manifest_sha256, unit_bindings, expected_unit_bindings_sha256,
+        norm_preparation_inputs, expected_norm_preparation_inputs_sha256, mixed_sort):
     from . import legal_norm_content_adjudication_v1 as admission
     from . import legal_norm_interpretation_review_v1 as norm
+
+    if mixed_sort:
+        from . import legal_reviewed_norm_admission_v3 as mixed_admission
+
+        prepare_norm = mixed_admission.prepare_reviewed_norm_admission_v3
+        norm_pins = mixed_admission._reviewed_pins
+        schema = 'legal-bound-norm-component-preparation/v2'
+        profile = 'declared-source-binding-to-complete-mixed-sort-norm-preparation/v2'
+    else:
+        prepare_norm = admission.prepare_reviewed_norm_admission_v2
+        norm_pins = admission._reviewed_pins
+        schema = 'legal-bound-norm-component-preparation/v1'
+        profile = 'declared-source-binding-to-complete-norm-preparation/v1'
 
     replay_fields = {'history_report', 'history_replay_inputs', 'binding_registry',
         'binding_policy', 'binding_groups', 'expected_history_manifest_sha256',
@@ -637,7 +674,7 @@ def prepare_bound_norm_component_v1(binding_report, *, binding_replay_inputs,
     contracts.require_keys(inputs, {'declaration', 'expected_declaration_sha256',
         'source_inputs', 'relational_inputs', 'dependency_manifest', 'expected_manifest_sha256'},
         'complete existing reviewed norm preparation inputs')
-    prepared = admission.prepare_reviewed_norm_admission_v2(**inputs)
+    prepared = prepare_norm(**inputs)
     units = inputs['declaration']['units']
     links = detached['unit_bindings']
     if (type(links) is not list or len(links) != len(units)
@@ -724,10 +761,9 @@ def prepare_bound_norm_component_v1(binding_report, *, binding_replay_inputs,
     if (_digest(closing['manifest']) != expected_binding_manifest_sha256
             or norm._snapshot(original)[1] != commitment
             or norm._snapshot(detached)[1] != commitment
-            or _pins() != pins or admission._reviewed_pins() != prepared['producer_pins']):
+            or _pins() != pins or norm_pins() != prepared['producer_pins']):
         _fail('bound component source, current trust, explicit inputs or preparation owners changed')
-    result = {'schema': 'legal-bound-norm-component-preparation/v1',
-        'profile': 'declared-source-binding-to-complete-norm-preparation/v1',
+    result = {'schema': schema, 'profile': profile,
         'binding_manifest_sha256': expected_binding_manifest_sha256,
         'source_history_manifest_ref': checked['manifest']['history_manifest_ref'],
         'current_epoch_id': checked['manifest']['current_epoch_id'],
@@ -751,11 +787,22 @@ def prepare_bound_norm_component_v1(binding_report, *, binding_replay_inputs,
 
 def validate_bound_norm_component_v1(report, *args, expected_report_sha256, **kwargs):
     """Regenerate complete preparation; a stored ready/report digest is insufficient."""
+    return _validate_bound_norm_component(prepare_bound_norm_component_v1, report, *args,
+        expected_report_sha256=expected_report_sha256, **kwargs)
+
+
+def validate_bound_norm_component_v2(report, *args, expected_report_sha256, **kwargs):
+    """Regenerate complete V3 preparation and its current source binding."""
+    return _validate_bound_norm_component(prepare_bound_norm_component_v2, report, *args,
+        expected_report_sha256=expected_report_sha256, **kwargs)
+
+
+def _validate_bound_norm_component(prepare, report, *args, expected_report_sha256, **kwargs):
     from . import legal_norm_interpretation_review_v1 as norm
     contracts.require_sha256(expected_report_sha256, 'independent bound component report FULL SHA256')
     if norm.norm_review_sha256(report) != expected_report_sha256:
         _fail('bound component report commitment differs')
-    expected = prepare_bound_norm_component_v1(*args, **kwargs)
+    expected = prepare(*args, **kwargs)
     if not norm._same(report, expected):
         _fail('bound component preparation differs from complete current regeneration')
     return expected
@@ -766,4 +813,6 @@ __all__ += [
     'bound_norm_component_inputs_sha256',
     'prepare_bound_norm_component_v1',
     'validate_bound_norm_component_v1',
+    'prepare_bound_norm_component_v2',
+    'validate_bound_norm_component_v2',
 ]
