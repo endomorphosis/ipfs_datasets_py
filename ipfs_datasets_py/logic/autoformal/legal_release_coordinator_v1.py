@@ -10,9 +10,11 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import sys as _sys
 import types as _types
 from pathlib import Path
+from uuid import uuid4
 
 
 SCHEMA = "legal-release-coordinator/v1"
@@ -58,6 +60,41 @@ def _artifact_path(root: Path, relative_path: object) -> Path:
     return root.joinpath(*parts)
 
 
+def _publish_immutable_bytes(path: Path, payload: bytes, *, exists_message: str) -> None:
+    """Verify staged bytes and publish them under a new name without replacement."""
+    staged = path.with_name(f".release-{uuid4().hex}.tmp")
+    with staged.open("x+b") as stream:
+        try:
+            if stream.write(payload) != len(payload):
+                raise OSError("incomplete release file write")
+            stream.flush()
+            os.fsync(stream.fileno())
+            stream.seek(0)
+            if stream.read(len(payload) + 1) != payload:
+                raise OSError("staged release file bytes differ")
+
+            directory = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
+            try:
+                try:
+                    os.link(staged, path)
+                except FileExistsError as error:
+                    raise ReleaseCoordinatorError(exists_message) from error
+                try:
+                    staged.unlink()
+                    os.fsync(directory)
+                except BaseException:
+                    try:
+                        if os.path.samestat(path.lstat(), os.fstat(stream.fileno())):
+                            path.unlink()
+                    except FileNotFoundError:
+                        pass
+                    raise
+            finally:
+                os.close(directory)
+        finally:
+            staged.unlink(missing_ok=True)
+
+
 def publish_referenced_artifact(
     root: Path, relative_path: str, payload: bytes, status: str
 ) -> dict[str, object]:
@@ -71,7 +108,7 @@ def publish_referenced_artifact(
     _need(path.name != RECEIPT_NAME, "coordinator receipt cannot be published as a referenced artifact")
     _need(not path.exists(), "referenced artifact path already exists")
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_bytes(payload)
+    _publish_immutable_bytes(path, payload, exists_message="referenced artifact path already exists")
     return {
         "relative_path": relative_path,
         "sha256": hashlib.sha256(payload).hexdigest(),
@@ -126,7 +163,7 @@ def seal_coordinator_receipt(root: Path, artifacts: list[dict[str, object]]) -> 
         "federal_corpus_acceptance_claimed": False,
     }
     _need(_COMMIT_KEYS.isdisjoint(receipt), "coordinator receipt includes its own commit hash")
-    receipt_path.write_bytes(_canonical(receipt) + b"\n")
+    _publish_immutable_bytes(receipt_path, _canonical(receipt) + b"\n", exists_message="coordinator receipt already sealed")
     return receipt
 
 
