@@ -37916,6 +37916,69 @@
       "root": "artifact_workspace",
       "scope": "Recovered offline Abby compatibility evidence and retained LIR-2102 local candidate integrity.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/lir02_bound_component_reviewed_evaluator_20261127",
+      "closed_runtime_facts": {
+        "evidence_ordinal": 591,
+        "github_hosted_native_observation": {
+          "conclusion": "failure",
+          "dataset_commit": "487e0c27a4574cf14b1e3d4624893b4ce9245c1b",
+          "github_annotation": "account locked due to billing",
+          "job_id": 140735356040,
+          "native_qualification": null,
+          "native_steps_observed": 0,
+          "observed_jobs_with_zero_steps": 18,
+          "observed_terminal_job_count": 18,
+          "official_job_url": "https://github.com/endomorphosis/ipfs_datasets_py/actions/runs/46067186611/job/140735356040",
+          "run_id": 46067186611,
+          "scope": "observed_run_only"
+        },
+        "phase2_prepared_integration": {
+          "existing_bound_component_consumer": true,
+          "existing_heldout_evaluator": true,
+          "fictional_fixture_masks": {
+            "evaluation_gold": 0,
+            "training": 0
+          },
+          "integration_status": "pending_joint_qualification",
+          "reviewed_producer_argument_scope": [
+            "id",
+            "source_text",
+            "context"
+          ],
+          "signed_source_history_to_mixed_sort_v3": true,
+          "source_replay_inputs_exposed_to_producer": false,
+          "title10": {
+            "current_admission": null,
+            "current_independent_formal_review": null,
+            "current_independent_legal_review": null,
+            "missing_review_requirements_ref": {
+              "bytes": 16237,
+              "path": "/tmp/P2-current-reviewed-pilot-existing-API-input-requirements-v05.json",
+              "sha256": "38ae21f62ff7e98bb0b12c47363ed0704d89e556b653c8f0fc52ec03785cf5ec"
+            },
+            "sections": [
+              "101",
+              "7213",
+              "7214"
+            ]
+          }
+        },
+        "schema": "autoformal-selected-software-evidence/v1",
+        "task_id": "LIR-02",
+        "task_status": "in_progress",
+        "task_status_changed": false
+      },
+      "evidence_ordinal": 591,
+      "id": "lir02-bound-component-reviewed-evaluator-evidence591-20261127",
+      "observed_bytes": 1719,
+      "observed_sha256": "cf293cd19a0d03de37953e26a001f922c83fee79b7241f0cc2a5199bc0b8876e",
+      "path": "/tmp/Root-Guide591-evidence-current-5Fu5AZaZ/guide591-scoped-held-receipts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Prepared bound-source integration and one observed hosted Native run.",
+      "status": "SCOPED_PREPARATION_PENDING_INTEGRATION"
     }
   ]
 }

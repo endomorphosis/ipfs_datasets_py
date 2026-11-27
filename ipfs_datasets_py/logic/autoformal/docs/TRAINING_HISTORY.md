@@ -3398,3 +3398,12 @@ The retained LIR-2102 local54 acceptance and independent post-installation revie
 After an immutable Hub commit returns, the IR publisher records the revision before beginning readback when a writable receipt path is supplied. Readback failure retains the commit and a blocked receipt without another upload. A process interruption during readback leaves the initial checkpoint in place. The software suite passed 33 offline cases, including four previously failing recovery controls. [IR recovery qualification](/tmp/LIR21-IR-post-commit-recovery-4r9DSY3n/actual-current-ir-post-commit-recovery-qualified-33.json)
 
 Live Hub release selection, immutable remote readback, and independent statutory review remain pending. LIR-21 remains proposed.
+
+
+## Evidence591 — Carry signed source replay into reviewed evaluation
+
+The prepared Phase 2 path carries the signed source-history replay into mixed-sort V3 preparation and the existing opt-in reviewed consumer and heldout evaluator. Fictional review prepares zero training and evaluation-gold masks. Producer arguments contain the selected source text and permitted context, while source-history replay inputs remain at the admission gates. Joint integration qualification is pending.
+
+The Title 10 pilot for §§ 101, 7213, and 7214 still awaits independent legal and formal review for the exact selected subject and current trust. [Review input requirements](/tmp/P2-current-reviewed-pilot-existing-API-input-requirements-v05.json)
+
+GitHub Actions run 46067186611 at Datasets commit `487e0c27a4574cf14b1e3d4624893b4ce9245c1b` ended with all 18 jobs failing before any step ran. GitHub reported an account billing lock for the observed hosted Native job 140735356040. The run provides zero native execution evidence. [GitHub Actions job](https://github.com/endomorphosis/ipfs_datasets_py/actions/runs/46067186611/job/140735356040)
