@@ -5002,3 +5002,147 @@ def test_current_review_cli_rejects_invalid_observation_before_physical_replay(t
     ], capsys)
     assert rc == 1 and error in result["error"], result
     assert "closure" not in result and "retained_type_eligibility" not in result
+
+
+def _immutable_law_viewer_receipt_wire(receipt):
+    from ipfs_datasets_py.retrieval.hf_graphrag.schema import digest_mapping
+
+    body = {key: value for key, value in receipt.items() if key != "receipt_sha256"}
+    sealed = {**body, "receipt_sha256": digest_mapping(body)}
+    raw = (json.dumps(sealed, indent=2, sort_keys=True) + "\n").encode("utf-8")
+    return {"receipt_raw": raw, "expected_receipt_sha256": hashlib.sha256(raw).hexdigest()}
+
+
+@pytest.fixture(scope="module")
+def immutable_law_viewer_v4_case(physical_source_use_whole_norm_control_v2):
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_definition_use_lake_v2 as wire
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+    from ipfs_datasets_py.retrieval.hf_graphrag.resolver import MappingTransport
+    from scripts.ops.legal_data import canary_uscode_hf_release as canary
+
+    control = physical_source_use_whole_norm_control_v2
+    request = control["physical_request"]
+    artifacts = {row["artifact_id"]: row for row in request["artifacts"]}
+    package = artifacts[request["component"]["hf_package"]]
+    decoded = wire.decode_parent_replay_value_v1(
+        package["payload"], expected_payload_sha256=package["sha256"])
+    files = {row["relative_path"]: row["content"] for row in decoded["artifacts"]}
+    join = json.loads(artifacts[request["component"]["source_span_entity_join"]]["payload"])
+    intake = join["source_metadata_intake"]
+    assert control["admission"]["fixture_only"] is True
+    observed = canary.run_remote_viewer_canary(
+        repo_id=request["datasets"][0]["repository_id"], revision=request["datasets"][0]["revision"],
+        request_raw=intake["request_raw_utf8"].encode("utf-8"), expected_request_sha256=intake["request_sha256"],
+        recipe={"budgets": {"max_shards": 64}}, transport=MappingTransport(files))
+    assert observed["transport_scope"] == "injected" and observed["network_invoked"] is False
+    # Model an independently verified live receipt only within these fictional controls.
+    modeled = {**observed, "transport_scope": "live_hub", "network_invoked": True}
+    legacy = release.validate_uscode_release_closure_v4(
+        control["physical_request_raw"], expected_request_sha256=control["physical_request_sha256"])
+    return control, observed, modeled, legacy
+
+
+def test_physical_v4_binds_exact_original_law_viewer_without_release_promotion(immutable_law_viewer_v4_case):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+
+    control, _, modeled, legacy = immutable_law_viewer_v4_case
+    options = {"expected_request_sha256": control["physical_request_sha256"]}
+    raw = control["physical_request_raw"]
+    seen = []
+    selected = _immutable_law_viewer_receipt_wire(modeled)
+
+    def verify_original(receipt_raw, sha256):
+        seen.append((receipt_raw, sha256))
+        return (receipt_raw, sha256) == (selected["receipt_raw"], selected["expected_receipt_sha256"])
+
+    result = release.validate_uscode_release_closure_v4(raw, **options,
+        law_viewer_readback=selected, verify_original_law_viewer_readback=verify_original)
+    assert seen == [(selected["receipt_raw"], selected["expected_receipt_sha256"])]
+    assert result.pop("immutable_law_viewer_readback_verified") is True
+    observation = result.pop("immutable_law_viewer_readback")
+    assert observation["repository_id"] == modeled["repo_id"]
+    assert observation["revision"] == modeled["revision"]
+    assert observation["closure_request_sha256"] == options["expected_request_sha256"]
+    assert observation["receipt_bytes_sha256"] == selected["expected_receipt_sha256"]
+    assert observation["manifest_sha256"] == modeled["manifest_sha256"]
+    assert observation["metadata_request_sha256"] == modeled["metadata_request_sha256"]
+    assert observation["metadata_file_count"] == len(modeled["metadata_files"]) == 5
+    assert observation["parquet_member_count"] == len(modeled["parquet_members"]) > 0
+    assert observation["physical_rows"] == modeled["physical_rows"]
+    assert observation["decoded_arrow_bytes"] == modeled["decoded_arrow_bytes"]
+    assert observation["span_or_entity_Hub_readback_verified"] is observation["release_authority"] is False
+    assert result == legacy
+    assert result["fixture_only"] is True
+    assert "immutable_remote_Hub_readback_not_established" in result["blockers"]
+    assert result["remote_readback_verified"] is result["release_ready"] is result["proof_verified"] is False
+    assert result["release_mask"] == result["training_mask"] == result["evaluation_gold_mask"] == 0
+
+
+@pytest.mark.parametrize("field", [
+    "repo_id", "revision", "metadata_request_sha256", "manifest_sha256", "producer_manifest_digest",
+    "viewer_config", "metadata_files", "parquet_members", "physical_rows", "decoded_arrow_bytes",
+    "metadata_order", "member_order", "extra",
+])
+def test_physical_v4_law_viewer_refuses_resealed_release_drift(immutable_law_viewer_v4_case, field):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+
+    control, _, modeled, legacy = immutable_law_viewer_v4_case
+    changed = dict(modeled)
+    if field == "extra":
+        changed[field] = True
+    elif field == "metadata_order":
+        changed["metadata_files"] = list(reversed(modeled["metadata_files"]))
+    elif field == "member_order":
+        changed["parquet_members"] = list(reversed(modeled["parquet_members"]))
+    elif type(modeled[field]) is list:
+        changed[field] = modeled[field][:-1]
+    elif type(modeled[field]) is int:
+        changed[field] = modeled[field] + 1
+    else:
+        changed[field] = "changed"
+
+    def forbidden(*args):
+        pytest.fail("original owner verifier reached for an unrelated receipt")
+
+    selected = _immutable_law_viewer_receipt_wire(changed)
+    raw = selected["receipt_raw"]
+    with pytest.raises(ValueError, match="differs from the exact replayed release"):
+        release._bind_physical_v4_law_viewer(
+            control["physical_request_raw"], legacy, raw,
+            selected["expected_receipt_sha256"], forbidden)
+
+
+@pytest.mark.parametrize("damage, message", [
+    ("missing_verifier", "separate original-owner verifier"),
+    ("injected_transport", "original live Hub transport"),
+    ("wrong_pin", "differ from expected SHA256"),
+    ("relabelled", "readback was not verified"),
+    ("truthy", "readback was not verified"),
+])
+def test_physical_v4_law_viewer_needs_independent_original_owner(
+        immutable_law_viewer_v4_case, damage, message):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+
+    control, injected, modeled, legacy = immutable_law_viewer_v4_case
+    selected = _immutable_law_viewer_receipt_wire(injected if damage == "injected_transport" else modeled)
+    if damage == "wrong_pin":
+        selected["expected_receipt_sha256"] = "0" * 64
+    called = []
+
+    def verify_original(receipt_raw, sha256):
+        called.append((receipt_raw, sha256))
+        return 1 if damage == "truthy" else False
+
+    with pytest.raises(ValueError, match=message):
+        if damage == "truthy":
+            raw = selected["receipt_raw"]
+            release._bind_physical_v4_law_viewer(
+                control["physical_request_raw"], legacy, raw,
+                selected["expected_receipt_sha256"], verify_original)
+        else:
+            release.validate_uscode_release_closure_v4(
+                control["physical_request_raw"], expected_request_sha256=control["physical_request_sha256"],
+                law_viewer_readback=selected,
+                verify_original_law_viewer_readback=None if damage == "missing_verifier" else verify_original)
+    assert called == ([(selected["receipt_raw"], selected["expected_receipt_sha256"])]
+                      if damage in ("relabelled", "truthy") else [])

@@ -2378,10 +2378,92 @@ def _observe_physical_v4_checked_native(context, request_raw, selection, review,
     return checked, whole_project
 
 
+def _bind_physical_v4_law_viewer(request_raw, report, receipt_raw, receipt_sha256,
+        verify_original_readback):
+    from . import corpus_contracts as contracts, legal_corpus_definition_use_lake_v2 as wire
+    from ...processors.legal_data import uscode_hf_release as hf
+    from ...retrieval.hf_graphrag.resolver import ArtifactDescriptor
+
+    receipt = contracts.load_record_bytes(receipt_raw, expected_sha256=receipt_sha256)
+    request = wire.decode_parent_replay_value_v1(request_raw,
+        expected_payload_sha256=report["request_sha256"], max_bytes=MAX_CLOSURE_REQUEST_BYTES_V3)
+    artifacts = {row["artifact_id"]: row for row in request["artifacts"]}
+    join_row = artifacts[request["component"]["source_span_entity_join"]]
+    join = contracts.load_record_bytes(join_row["payload"], expected_sha256=join_row["sha256"])
+    intake = join["source_metadata_intake"]
+    _need(report["hf_package"].get("metadata_profile") == hf.WIRE_METADATA_PROFILE
+          and intake.get("metadata_profile") == hf.WIRE_METADATA_PROFILE,
+          "law viewer readback requires the exact locally replayed wire profile")
+    package_row = artifacts[request["component"]["hf_package"]]
+    package = wire.decode_parent_replay_value_v1(package_row["payload"],
+        expected_payload_sha256=package_row["sha256"], max_bytes=MAX_CLOSURE_REQUEST_BYTES)
+    manifest_raw = next(row["content"] for row in package["artifacts"]
+                        if row["relative_path"] == hf.MANIFEST_FILENAME)
+    manifest_sha256 = hashlib.sha256(manifest_raw).hexdigest()
+    manifest = contracts.load_record_bytes(manifest_raw, expected_sha256=manifest_sha256)
+    declaration = manifest["wire_metadata"]
+    controls = [ArtifactDescriptor(row["path_in_repo"], row["bytes"], row["sha256"]).to_dict()
+                for row in intake["request"]["files"]]
+    by_path = {row["relative_path"]: row for row in manifest["artifacts"]}
+    members = [ArtifactDescriptor.from_mapping(by_path[path]).to_dict()
+               for path in declaration["data_files"][0]["path"]]
+    law = report["datasets"][0]
+    expected = {
+        "schema": "ipfs_datasets_py/uscode-immutable-viewer-readback@1",
+        "mode": "remote_viewer",
+        "ok": True,
+        "repo_id": law["repository_id"],
+        "revision": law["revision"],
+        "network_invoked": True,
+        "transport_scope": "live_hub",
+        "metadata_request_sha256": intake["request_sha256"],
+        "manifest_sha256": manifest_sha256,
+        "producer_manifest_digest": manifest["manifest_digest"],
+        "immutable_viewer_readback_verified": True,
+        "viewer_config": declaration["default_config"],
+        "logical_config": declaration["logical_default_config"],
+        "metadata_files": controls,
+        "parquet_members": members,
+        "physical_rows": declaration["num_examples"],
+        "decoded_arrow_bytes": declaration["num_bytes"],
+        "total_redownload_bytes": sum(row["size_bytes"] for row in controls + members),
+        "read_only": True,
+    }
+    expected["receipt_sha256"] = hashlib.sha256(_canonical(expected)).hexdigest()
+    _need(_canonical(receipt) == _canonical(expected),
+          "immutable law viewer receipt differs from the exact replayed release")
+    callbacks = (verify_original_readback,)
+    states = _release_callback_states_v3(callbacks)
+    verified = verify_original_readback(receipt_raw, receipt_sha256)
+    _release_callback_fence_v3(callbacks, states)
+    _release_v4_policy()
+    _need(verified is True, "original immutable law viewer readback was not verified")
+    return contracts.seal_record({
+        "schema": "legal-uscode-immutable-law-viewer-observation/v1",
+        "scope": "law_viewer_controls_and_default_Parquet_members",
+        "closure_request_sha256": report["request_sha256"],
+        "repository_id": law["repository_id"],
+        "revision": law["revision"],
+        "receipt_bytes_sha256": receipt_sha256,
+        "receipt_sha256": receipt["receipt_sha256"],
+        "metadata_request_sha256": receipt["metadata_request_sha256"],
+        "manifest_sha256": manifest_sha256,
+        "producer_manifest_digest": manifest["manifest_digest"],
+        "viewer_config": receipt["viewer_config"],
+        "physical_rows": receipt["physical_rows"],
+        "decoded_arrow_bytes": receipt["decoded_arrow_bytes"],
+        "metadata_file_count": len(controls),
+        "parquet_member_count": len(members),
+        "span_or_entity_Hub_readback_verified": False,
+        "release_authority": False,
+    })
+
+
 def validate_uscode_release_closure_v4(request_raw, *, expected_request_sha256,
         include_declared_eligibility=False, current_review=None, checked_native=None,
         replay_retained_artifacts=False, retained_paired_cache_files=None,
-        whole_project_artifact_sha256s=None):
+        whole_project_artifact_sha256s=None, law_viewer_readback=None,
+        verify_original_law_viewer_readback=None):
     """Replay source-only V4 bytes, optionally joining two live observations.
 
     A caller may independently select current trust digests, evaluation time
@@ -2406,10 +2488,30 @@ def validate_uscode_release_closure_v4(request_raw, *, expected_request_sha256,
     exact three manifest-bound table byte bodies as retained_paired_cache_files.
     The already-embedded manifest is replayed with them under fresh custody.
     This local replay cannot consume an original Native handle.
+
+    An independently pinned law viewer receipt and its original-owner
+    verifier opt into evidence for the law repository's viewer files and
+    default Parquet members. The law viewer scope leaves all broader
+    release-readiness decisions with their existing owners.
     """
     _release_v4_policy()
     _need(type(include_declared_eligibility) is bool, "explicit boolean eligibility selection required")
     _need(type(replay_retained_artifacts) is bool, "explicit boolean retained physical artifact replay required")
+    _need((law_viewer_readback is None) == (verify_original_law_viewer_readback is None),
+          "law viewer readback requires its separate original-owner verifier")
+    if law_viewer_readback is not None:
+        from . import corpus_contracts as contracts
+
+        _need(type(law_viewer_readback) is dict
+              and set(law_viewer_readback) == {"receipt_raw", "expected_receipt_sha256"}
+              and callable(verify_original_law_viewer_readback),
+              "closed law viewer receipt and original-owner verification required")
+        viewer_raw = law_viewer_readback["receipt_raw"]
+        viewer_sha256 = law_viewer_readback["expected_receipt_sha256"]
+        viewer_receipt = contracts.load_record_bytes(viewer_raw, expected_sha256=viewer_sha256)
+        _need(viewer_receipt.get("transport_scope") == "live_hub"
+              and viewer_receipt.get("network_invoked") is True,
+              "law viewer readback requires an original live Hub transport")
     _need(not replay_retained_artifacts or checked_native is None,
           "retained physical artifact replay cannot acquire Native authority")
     if retained_paired_cache_files is not None:
@@ -2461,6 +2563,11 @@ def validate_uscode_release_closure_v4(request_raw, *, expected_request_sha256,
             report["checked_native_observation"] = checked
         if whole_project is not None:
             report["checked_whole_project_observation"] = whole_project
+    if law_viewer_readback is not None:
+        report["immutable_law_viewer_readback"] = _bind_physical_v4_law_viewer(
+            request_raw, report, viewer_raw, viewer_sha256,
+            verify_original_law_viewer_readback)
+        report["immutable_law_viewer_readback_verified"] = True
     if include_declared_eligibility:
         report.update(_declared_physical_release_eligibility(request_raw, report))
         if whole_project is not None:
