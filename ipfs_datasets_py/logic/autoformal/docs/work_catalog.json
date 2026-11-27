@@ -38202,6 +38202,182 @@
       "root": "artifact_workspace",
       "scope": "Signed-fictional software evidence for the V5 worker boundary and retained V10 compatibility.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/lir02_mixed_source_bound_local_paired_restore_20261127",
+      "closed_runtime_facts": {
+        "base": "139ada32245d03194e10e465ddf16403259b62b5",
+        "checks": {
+          "exact-v5-parent-types": {
+            "errors": 0,
+            "failures": 0,
+            "junit": {
+              "bytes": 427,
+              "path": "/tmp/P2-V5-signed-paired-restore-ttSxMhAt/exact-v5-parent-types-assets.xml",
+              "sha256": "4c5f3123ef38fbb6aa6d8e6100398710cfa6fcaaf57f4738c9b782e81e3cd548"
+            },
+            "log": {
+              "bytes": 702,
+              "path": "/tmp/P2-V5-signed-paired-restore-ttSxMhAt/exact-v5-parent-types-assets.log",
+              "sha256": "3d2b978415ac955ae4884eafd3f130f4c4ae1d027385ff2175fdbcedd810118c"
+            },
+            "ordered_cases": [
+              [
+                "tests.unit.optimizers.logic_theorem_optimizer.test_autoencoder_training_worker",
+                "test_reviewed_mixed_source_bound_v5_checkpoint_requires_exact_resume_envelope"
+              ]
+            ],
+            "skipped": 0,
+            "terminal": {
+              "bytes": 2,
+              "path": "/tmp/P2-V5-signed-paired-restore-ttSxMhAt/exact-v5-parent-types-assets.terminal",
+              "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+            },
+            "tests": 1
+          },
+          "signed-v5-local-pair": {
+            "errors": 0,
+            "failures": 0,
+            "junit": {
+              "bytes": 443,
+              "path": "/tmp/P2-V5-signed-paired-restore-ttSxMhAt/signed-v5-local-pair-assets.xml",
+              "sha256": "fe083cfb2a77117874cc49d8655c21d9e2ad4a30280a8971f312322b90dbfdb2"
+            },
+            "log": {
+              "bytes": 701,
+              "path": "/tmp/P2-V5-signed-paired-restore-ttSxMhAt/signed-v5-local-pair-assets.log",
+              "sha256": "830c831d319bc9933ec5a57fb0c712b9e997423c9b554893f6aaec391605171c"
+            },
+            "ordered_cases": [
+              [
+                "tests.unit.optimizers.logic_theorem_optimizer.test_autoencoder_training_worker",
+                "test_reviewed_local_loader_v5_restores_exact_builtin_pair_with_signed_source_bound_inputs"
+              ]
+            ],
+            "skipped": 0,
+            "terminal": {
+              "bytes": 2,
+              "path": "/tmp/P2-V5-signed-paired-restore-ttSxMhAt/signed-v5-local-pair-assets.terminal",
+              "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+            },
+            "tests": 1
+          },
+          "signed-v5-model-capacity": {
+            "errors": 0,
+            "failures": 0,
+            "junit": {
+              "bytes": 441,
+              "path": "/tmp/P2-V5-signed-paired-restore-ttSxMhAt/signed-v5-model-capacity-assets.xml",
+              "sha256": "6502bc3398f2f128dc4263d62bfd0c9e4442f9042618465d5f5468683b1761be"
+            },
+            "log": {
+              "bytes": 705,
+              "path": "/tmp/P2-V5-signed-paired-restore-ttSxMhAt/signed-v5-model-capacity-assets.log",
+              "sha256": "8807a6c57164526856443aad93a36aef83a692f12bf675e354d0506cce833135"
+            },
+            "ordered_cases": [
+              [
+                "tests.unit.optimizers.logic_theorem_optimizer.test_autoencoder_training_worker",
+                "test_reviewed_local_loader_v5_refuses_signed_records_over_model_capacity_before_restore"
+              ]
+            ],
+            "skipped": 0,
+            "terminal": {
+              "bytes": 2,
+              "path": "/tmp/P2-V5-signed-paired-restore-ttSxMhAt/signed-v5-model-capacity-assets.terminal",
+              "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+            },
+            "tests": 1
+          },
+          "v3-local-pair-control": {
+            "errors": 0,
+            "failures": 0,
+            "junit": {
+              "bytes": 654,
+              "path": "/tmp/P2-V5-signed-paired-restore-ttSxMhAt/v3-local-pair-control-assets.xml",
+              "sha256": "1f21ce31ca7cd1751e627c99014350eb11c56cb6e1b25265912114ee109653e6"
+            },
+            "log": {
+              "bytes": 782,
+              "path": "/tmp/P2-V5-signed-paired-restore-ttSxMhAt/v3-local-pair-control-assets.log",
+              "sha256": "d5c9b40630d85b938828bbbea39190cd98861a4e1d16560a1f45c325ded9352a"
+            },
+            "ordered_cases": [
+              [
+                "tests.unit.optimizers.logic_theorem_optimizer.test_autoencoder_training_worker",
+                "test_reviewed_local_loader_v3_restores_exact_builtin_pair_in_explicit_domain[encoder_decoder]"
+              ],
+              [
+                "tests.unit.optimizers.logic_theorem_optimizer.test_autoencoder_training_worker",
+                "test_reviewed_local_loader_v3_restores_exact_builtin_pair_in_explicit_domain[causal_lm]"
+              ]
+            ],
+            "skipped": 0,
+            "terminal": {
+              "bytes": 2,
+              "path": "/tmp/P2-V5-signed-paired-restore-ttSxMhAt/v3-local-pair-control-assets.terminal",
+              "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+            },
+            "tests": 2
+          }
+        },
+        "cooperative_source_read_leases_released": true,
+        "decoder_schema": "reviewed-decoder-training-inputs/v5",
+        "evidence_ordinal": 594,
+        "exact_code_blobs": {
+          "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": {
+            "bytes": 616611,
+            "mode": "100644",
+            "oid": "559508186532896f4065b82e85d0053e699a111e",
+            "sha256": "99d53fceb6c9df745b59d15eace132cc338dc9e5f5f334a085996859b042b9e6"
+          },
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py": {
+            "bytes": 1157163,
+            "mode": "100644",
+            "oid": "118c0160b28d8080c3bf0eca0019d6011057a07d",
+            "sha256": "0a61c08b83e1f1ab4f8269b1eb5f54eb1a5a4765469831f0b429c314bc000e4c"
+          }
+        },
+        "exact_parent_json_type_swaps_rejected": true,
+        "fixture_artifact_bytes_retained": true,
+        "fixture_model_optimizer_pair_matched": true,
+        "fixture_optimizer_step_restored": 0,
+        "fixture_rng_state_restored": true,
+        "independent_statutory_review_or_admission": false,
+        "loader_fit_or_download_performed": false,
+        "loader_policy_schema": "reviewed-local-source-bound-decoder-load-policy/v1",
+        "loader_receipt_schema": "reviewed-local-source-bound-decoder-runtime-load/v1",
+        "owned_pytest_subprocesses_reaped": true,
+        "production_training_or_Native_execution": false,
+        "qualification": {
+          "bytes": 11180,
+          "path": "/tmp/P2-V5-signed-paired-restore-ttSxMhAt/actual-v5-paired-restore-software-qualification.json",
+          "sha256": "c5e39a85b766f6cc6db205b413ee2183411a8f6a17662d91918917f788f9d1ee"
+        },
+        "qualified_software_commit": "88643a5cd9d43dcbb8fc72437e4e04f15149cc70",
+        "qualified_software_tree": "d8348e4a73a3c18876967427ae1e339a69f59dd0",
+        "restored_pair_scope": "pristine tiny offline CPU T5 fixture in a test-created same-stage envelope",
+        "schema": "autoformal-selected-software-evidence/v1",
+        "scope": "offline signed-fictional built-in paired restore; no production fit, Native, statutory review or admission",
+        "signed_capacity_refusal_reached_checkpoint_inspection_or_restore": false,
+        "signed_capacity_refusal_scope": "prepared signed target exceeds the fixture model's sequence capacity",
+        "signed_fixture_only": true,
+        "stage_schema": "reviewed-example-cycle-input-artifact/v5",
+        "task_id": "LIR-02",
+        "task_status": "in_progress",
+        "task_status_changed": false,
+        "worker_checkpoint_schema": "reviewed-source-bound-mixed-decoder-checkpoint/v1",
+        "worker_job_schema": "reviewed-source-bound-mixed-decoder-job/v1"
+      },
+      "evidence_ordinal": 594,
+      "id": "lir02-mixed-source-bound-local-paired-restore-evidence594-20261127",
+      "observed_bytes": 6971,
+      "observed_sha256": "64a9d4ec8ef45a8dc33dd955f005b364bf7d3303d2f4799732b525e874ccf3dd",
+      "path": "/tmp/P2-V5-signed-paired-restore-ttSxMhAt/Guide594-docs-ready/Guide594-scoped-software-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Signed-fictional software evidence for the built-in V5 paired restore, sequence capacity guard, and exact checkpoint typing.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }

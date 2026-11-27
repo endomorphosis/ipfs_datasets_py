@@ -4267,3 +4267,12 @@ An explicit V5 job binds the stage and an independently pinned current source-hi
 The signed fictional worker cohort passed 1 offline case. The job-file route reached backend record validation with complete source and target records. A provider change then stopped the job before checkpoint inspection or restoration. The separate 17-case cohort covered exact-resume envelope checks, loader refusals before model import, and retained V10 compatibility. [Software qualification](/tmp/P2-source-bound-reviewed-worker-v5-8CFcjNNd/actual-v5-worker-software-qualification.json)
 
 The signed fictional fixture retains a zero training mask. Production fitting, independent statutory and formal review for Title 10 §§ 101, 7213, and 7214, and corpus admission remain pending.
+
+
+## Evidence594 — Restore the V5 local decoder checkpoint pair
+
+A signed fictional case passed through the built-in V5 loader with a tiny offline CPU T5 decoder. The test prepared a V5 job for the selected stage and constructed its exact-resume envelope around a pristine fixture pair. The loader restored the matching model and optimizer pair at step zero, restored CPU RNG state, and retained the original artifacts byte for byte. The staged and current source commitments matched, with zero fitting or downloads.
+
+A separate signed case prepared a complete target that exceeded the fixture model's sequence capacity. The loader rejected it before checkpoint inspection or restore. The exact-resume test also verified that checkpoint parent comparisons reject substitutions between JSON booleans and numbers. The existing V3 encoder-decoder and causal-language-model paired-restore cases also passed. [Paired restore and guard qualification](/tmp/P2-V5-signed-paired-restore-ttSxMhAt/actual-v5-paired-restore-software-qualification.json)
+
+Production fitting, independent statutory and formal review for Title 10 §§ 101, 7213, and 7214, and corpus admission remain pending.
