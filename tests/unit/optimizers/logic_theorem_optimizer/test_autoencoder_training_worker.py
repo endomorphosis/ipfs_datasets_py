@@ -5147,6 +5147,92 @@ def test_reviewed_local_loader_v3_domain_swap_refuses_before_asset_or_model_impo
     assert calls == ["execution"]
 
 
+@pytest.mark.parametrize(("damage", "diagnostic"), [
+    ("legacy-spec", "explicit source-bound reviewed decoder job required"),
+    ("missing-provider", "live source input provider required"),
+    ("changed-provider", "current local decoder bound component inputs changed"),
+    ("mutated-spec", "source-bound local decoder job changed"),
+])
+def test_reviewed_local_loader_v5_refuses_crossed_job_or_changed_source_before_model(
+        tmp_path, monkeypatch, damage, diagnostic):
+    import builtins
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_span_consumer_binding as consumer
+
+    legacy_root = tmp_path / "worker"
+    legacy_root.mkdir()
+    legacy = _complete_reviewed_worker_fixture(legacy_root)
+    options = _reviewed_local_loader_denial_inputs(tmp_path)
+    admission = {"fixture:component": {"request": "pre-model-boundary"}}
+    bound = {"fixture:component": {"raw_source": b"independently pinned source"}}
+    changed = {"fixture:component": {"raw_source": b"changed current source"}}
+    bound_sha = consumer.reviewed_admission_inputs_sha256(bound)
+    mixed = worker.REVIEWED_MIXED_ADMISSION_PROFILE
+    legacy_domain = damage == "legacy-spec"
+    payload = dict(legacy.payload, schema_version=(worker.REVIEWED_MIXED_DECODER_SCHEMA_VERSION
+        if legacy_domain else worker.REVIEWED_SOURCE_BOUND_MIXED_DECODER_JOB_SCHEMA),
+        admission_profile=mixed,
+        expected_source_sha256=worker._reviewed_decoder_source_pins(admission_profile=mixed,
+            source_bound=not legacy_domain),
+        expected_admission_inputs_sha256=consumer.reviewed_admission_inputs_sha256(admission),
+        backend_identity=options["expected_backend_identity"],
+        model_artifact=asdict(options["model_checkpoint"]), base_model_checkpoint=asdict(options["model_checkpoint"]),
+        base_optimizer_checkpoint=asdict(options["optimizer_checkpoint"]),
+        tokenizer_artifact=asdict(options["tokenizer_artifact"]), license_artifact=asdict(options["license_artifact"]),
+        backend_artifacts=[asdict(options[name]) for name in ("recipe_artifact", "model_config_artifact")])
+    if not legacy_domain:
+        payload["expected_bound_component_inputs_sha256"] = bound_sha
+    spec = worker.TrainingJobSpec.from_dict(payload)
+    spec_sha = spec.canonical_sha256
+    calls = []
+
+    def provide_bound():
+        calls.append("bound")
+        if damage == "mutated-spec":
+            object.__setattr__(spec, "expected_bound_component_inputs_sha256",
+                consumer.reviewed_admission_inputs_sha256(changed))
+            return bound
+        return changed
+
+    def check_policy(policy):
+        calls.append("asset policy")
+        assert policy["schema"] == "reviewed-local-source-bound-decoder-load-policy/v1"
+        assert policy["job_spec_sha256"] == spec_sha
+        assert policy["stage_artifact"] == payload["stage_artifact"]
+        assert policy["bound_component_inputs_sha256"] == bound_sha
+        assert policy["training_requested"] is policy["resource_grant_requested"] is False
+
+    def provide_admission():
+        calls.append("admission")
+        return admission
+
+    original_import = builtins.__import__
+    original_open = os.open
+    artifact_paths = {str(path) for path in tmp_path.rglob("*") if path.is_file()}
+
+    def no_model_import(name, *args, **kwargs):
+        if name.partition(".")[0] in {"torch", "transformers", "tokenizers"}:
+            pytest.fail("refused V5 pre-model load imported " + name)
+        return original_import(name, *args, **kwargs)
+
+    def no_artifact_open(path, *args, **kwargs):
+        if not isinstance(path, int) and os.fsdecode(path) in artifact_paths:
+            pytest.fail("refused V5 pre-model load opened job bytes")
+        return original_open(path, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", no_model_import)
+    monkeypatch.setattr(os, "open", no_artifact_open)
+    with pytest.raises(worker.TrainingJobValidationError, match=diagnostic):
+        worker.load_local_reviewed_source_bound_decoder_runtime_v5(spec=spec, registry=options["registry"],
+            current_admission_provider=provide_admission,
+            current_bound_component_inputs_provider=None if damage == "missing-provider" else provide_bound,
+            execution_guard=lambda: calls.append("execution"), asset_policy_guard=check_policy,
+            recipe_artifact=options["recipe_artifact"], model_config_artifact=options["model_config_artifact"],
+            max_model_bytes=options["max_model_bytes"])
+    assert calls == (["execution", "asset policy", "admission", "bound"]
+                     if damage in {"changed-provider", "mutated-spec"} else [])
+    assert not Path(spec.output_directory).exists()
+
+
 def test_reviewed_local_loader_v3_original_asset_denial_preserves_error_before_model_import(tmp_path, monkeypatch):
     import builtins
     options = _reviewed_local_loader_denial_inputs(tmp_path)
