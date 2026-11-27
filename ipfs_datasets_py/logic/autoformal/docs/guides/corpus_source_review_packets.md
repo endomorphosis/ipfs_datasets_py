@@ -8,9 +8,10 @@ It creates no reviewer, signed claim, completed response or applied decision.
 
 ## Inputs and fixed replay
 
-Call `prepare_source_review_packets` with the same five source-input arguments
-as `prepare_source_review_requests`, plus independently selected
-`expected_preparation_manifest_sha256`. That SHA256 is the FULL canonical hash
+Call `prepare_source_review_packets` with one complete replay profile and an
+independently selected `expected_preparation_manifest_sha256`. The legacy paired
+profile uses the same five source-input arguments as
+`prepare_source_review_requests`. That SHA256 is the FULL canonical hash
 of the existing complete source-preparation manifest, including its record CID.
 It is distinct from its payload CID and any pretty JSON transport hash.
 
@@ -29,7 +30,33 @@ input is checked before operation-owner imports. The public packet import itself
 performs no source decoding, crypto verification, model, network or clock work.
 Producer file pins are checked before preparation and after final comparison.
 
-## Complete evidence and request identities
+## Official V2 review packets
+
+Use the same `document_inputs`, `occurrence_inputs` and
+`pending_interpretations` as `prepare_official_source_review_requests_v2`, with
+their independently selected `expected_document_population_sha256`,
+`expected_occurrence_population_sha256` and
+`expected_pending_interpretations_sha256` pins. The packet call requires the
+independent full official preparation-manifest hash. This argument set excludes
+paired replay arguments. Both profiles support the existing lower-only limits.
+
+Official packets retain the full extracted view of each supplied document and
+the original version, raw-input and extracted-view pins. Each unit retains the
+exact character and UTF-8 quotation, original context declaration, original
+request and subject references, and dependency-manifest hash. Resolve the
+request and subject in the independently pinned preparation when completing a
+response. The packet omits per-alternative identities and expression hashes.
+The source-input bindings retain their aggregate pin, and the guide leaves
+actual reviewer exposure unknown.
+
+The official manifest, document and unit records use official V2 schemas.
+Pages preserve queue order, including when several occurrences share one
+document. Paired parent, comparison, selector projection and document-part
+lists are empty. Guides retain nine blank answer slots and seven deferred
+questions per request. `validate_source_review_packets` takes the same official
+inputs and checks every offered record against complete regeneration.
+
+## Complete legacy evidence and request identities
 
 The output has exactly eleven components: `manifest`, `pages`, `source_views`,
 `official_documents`, `document_parts`, `parent_packets`, `unit_packets`, `response_guides`,

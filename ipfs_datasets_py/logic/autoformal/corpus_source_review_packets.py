@@ -20,6 +20,14 @@ from . import corpus_parent_occurrence_adapter as base
 from . import corpus_source_review as reviews
 
 PROFILE = "complete-source-first-parent-grouped-review-packets/v1"
+OFFICIAL_PROFILE = "complete-source-first-official-occurrence-review-packets/v2"
+OFFICIAL_MANIFEST_SCHEMA = "legal-corpus-official-source-review-packets-manifest/v2"
+OFFICIAL_UNIT_SCHEMA = "legal-corpus-official-source-review-unit-packet/v2"
+OFFICIAL_DOCUMENT_SCHEMA = "legal-corpus-official-source-review-packet-document/v2"
+_LEGACY_REPLAY_FIELDS = {"alignment_corpus_bytes", "expected_alignment_corpus_pins", "alignment_replay_inputs",
+    "source_report_bytes", "expected_source_report_pins"}
+_OFFICIAL_REPLAY_FIELDS = {"document_inputs", "expected_document_population_sha256", "occurrence_inputs",
+    "expected_occurrence_population_sha256", "pending_interpretations", "expected_pending_interpretations_sha256"}
 MANIFEST_SCHEMA = "legal-corpus-source-review-packets-manifest/v1"
 PAGE_SCHEMA = "legal-corpus-source-review-packets-page/v1"
 VIEW_SCHEMA = "legal-corpus-source-review-packet-view/v1"
@@ -69,6 +77,15 @@ FIELDS = {
 }
 SCHEMAS = dict(zip(COMPONENTS, (MANIFEST_SCHEMA, PAGE_SCHEMA, VIEW_SCHEMA, DOCUMENT_SCHEMA, DOCUMENT_PART_SCHEMA, PARENT_SCHEMA,
                               UNIT_SCHEMA, GUIDE_SCHEMA, CATALOG_SCHEMA, PROJECTION_SCHEMA, COMPARISON_SCHEMA), strict=True))
+_OFFICIAL_SCHEMAS = {**SCHEMAS, "manifest": OFFICIAL_MANIFEST_SCHEMA,
+    "unit_packets": OFFICIAL_UNIT_SCHEMA, "official_documents": OFFICIAL_DOCUMENT_SCHEMA}
+_OFFICIAL_FIELDS = {**FIELDS,
+    "official_documents": {"document_index", "source_version_ref", "source_view_ref", "raw_sha256",
+        "extracted_sha256", *COMMON_FIELDS},
+    "unit_packets": {"queue_ordinal", "source_review_request_ref", "source_review_subject_ref",
+        "dependency_manifest_sha256", "quoted_source_occurrence", "question_catalog_ref",
+        "candidate_interpretations_included", *COMMON_FIELDS},
+}
 PROMPTS = {
     "definition": "Identify evidence for necessary definitions and their source/applicability, or record what is unavailable; do not assert definition closure.",
     "authority": "Record the supplied authority/publication evidence and its limits; content hashes or a URL alone do not authenticate publisher or governing law.",
@@ -131,8 +148,9 @@ def _ref(record):
     return {"record_cid": record["record_cid"], "sha256": _digest(record), "schema": record["schema"]}
 
 
-def _pins():
-    result = reviews._pins(reviews._owners())
+def _pins(*, official=False):
+    owners = reviews._owners()
+    result = reviews._official_pins(owners) if official else reviews._pins(owners)
     result[str(Path(__file__).resolve())] = _sha(Path(__file__).read_bytes())
     return result
 
@@ -234,13 +252,13 @@ def _reconstruct_document_transport(transport, parts_by_cid):
     return value
 
 
-def _catalog():
+def _catalog(*, profile=PROFILE):
     topics = [*(('context', kind) for kind in reviews.CONTEXT_KINDS), *(('handoff', kind) for kind in reviews.HANDOFF_KINDS)]
     questions = [{"category": category, "kind": kind, "prompt": PROMPTS[kind],
         "assessment_scope": "source_context_evidence_declaration" if index < 9 else "deferred_semantic_or_proof_review",
         "status": "pending_independent_review", "verified": False, "closed": False}
         for index, (category, kind) in enumerate(topics)]
-    return _candidate(CATALOG_SCHEMA, profile=PROFILE, questions=questions,
+    return _candidate(CATALOG_SCHEMA, profile=profile, questions=questions,
         answer_disposition_choices=["unresolved", "evidence_declared", "not_applicable"],
         instructions=list(COMPLETION_INSTRUCTIONS))
 
@@ -355,7 +373,7 @@ def _response_guide(unit, request, subject, manifest, catalog):
         completion_instructions=list(COMPLETION_INSTRUCTIONS), status='blank_not_a_review')
 
 
-def prepare_source_review_packets(*, expected_preparation_manifest_sha256, alignment_corpus_bytes,
+def _prepare_legacy_packets(*, expected_preparation_manifest_sha256, alignment_corpus_bytes,
         expected_alignment_corpus_pins, alignment_replay_inputs, source_report_bytes,
         expected_source_report_pins, source_review_limits=None, limits=None):
     """Replay original sources once and retain every exact review request."""
@@ -497,7 +515,109 @@ def prepare_source_review_packets(*, expected_preparation_manifest_sha256, align
     return result
 
 
-def _detach(bundle, bounds):
+def _prepare_official_packets(expected_preparation_manifest_sha256, inputs, *, source_review_limits, limits):
+    bounds, source_bounds = _limits(limits), reviews._limits(source_review_limits)
+    contracts.require_sha256(expected_preparation_manifest_sha256, "independent complete source preparation hash")
+    producer_pins = _pins(official=True)
+    documents, occurrences, alternatives, _ = reviews._official_inputs(bounds=source_bounds, **inputs)
+    if len(documents) > bounds['max_source_views'] or len(occurrences) > bounds['max_units']:
+        _fail("complete official source view or review request population exceeds packet bound")
+    preparation = reviews.prepare_official_source_review_requests_v2(
+        **{**inputs, "document_inputs": documents, "occurrence_inputs": occurrences,
+            "pending_interpretations": alternatives}, limits=source_review_limits)
+    if _digest(preparation['manifest']) != expected_preparation_manifest_sha256:
+        _fail("independent complete source preparation root differs")
+
+    result = {component: [] for component in COMPONENTS}
+    retained = 0
+
+    def retain(component, row):
+        nonlocal retained
+        retained += len(base._plain(row, min(contracts.MAX_RECORD_BYTES,
+            bounds['max_collection_bytes'] - retained))) + 1
+        result[component].append(row)
+
+    input_bindings = preparation['manifest']['input_bindings']
+    views = {}
+    for index, document in enumerate(documents):
+        version, text = document['source_version'], document['extracted_text']
+        version_ref = _ref(version)
+        raw_text = text.encode('utf-8')
+        view = _candidate(VIEW_SCHEMA, origin_kind='official_extracted_view',
+            source_version_cid=version['record_cid'], source_version_record=version,
+            text=text, text_sha256=_sha(raw_text), text_cid=cid_for_bytes(raw_text),
+            char_count=len(text), utf8_bytes=len(raw_text), coordinate_system=version['extracted_view']['coordinate_system'],
+            original_field_bindings=[{"document_input_index": index,
+                "document_input_sha256": input_bindings['official_documents'][str(index)]['raw_sha256']}],
+            source_observation_memberships=[{"document_index": index, "source_version_ref": version_ref}])
+        views[version['record_cid']] = view
+        retain('source_views', view)
+        retain('official_documents', _candidate(OFFICIAL_DOCUMENT_SCHEMA, document_index=index,
+            source_version_ref=version_ref, source_view_ref=_ref(view), raw_sha256=document['expected_raw_sha256'],
+            extracted_sha256=document['expected_extracted_sha256']))
+
+    catalog = _catalog(profile=OFFICIAL_PROFILE)
+    retain('question_catalog', catalog)
+    catalog_ref = _ref(catalog)
+    entries = []
+    for request, subject, manifest in zip(preparation['requests'], preparation['subjects'],
+            preparation['dependency_manifests'], strict=True):
+        ordinal = request['queue_ordinal']
+        source_records = {request['source_occurrence_cid']: request['source_occurrence'],
+            request['context_cid']: request['context_declaration']}
+        unit = _candidate(OFFICIAL_UNIT_SCHEMA, queue_ordinal=ordinal,
+            source_review_request_ref=_ref(request), source_review_subject_ref=_ref(subject),
+            dependency_manifest_sha256=manifest['manifest_sha256'],
+            quoted_source_occurrence=_quote(request, source_records, views),
+            question_catalog_ref=catalog_ref, candidate_interpretations_included=False)
+        guide = _response_guide(unit, request, subject, manifest, catalog)
+        retain('unit_packets', unit)
+        retain('response_guides', guide)
+        entries.append({"ordinal": ordinal, "request_cid": request['record_cid'],
+            "unit_packet_ref": _ref(unit), "response_guide_ref": _ref(guide)})
+
+    result['pages'], page_refs = _pages(entries, bounds)
+    result['manifest'] = _candidate(OFFICIAL_MANIFEST_SCHEMA, profile=OFFICIAL_PROFILE,
+        limits=bounds, source_review_limits=source_bounds, source_preparation_ref=_ref(preparation['manifest']),
+        source_input_bindings=input_bindings, producer_pins=producer_pins, page_refs=page_refs,
+        source_view_refs=[_ref(row) for row in result['source_views']],
+        official_document_refs=[_ref(row) for row in result['official_documents']], parent_packet_refs=[],
+        question_catalog_ref=catalog_ref, selector_projection_refs=[], document_part_refs=[],
+        comparison_evidence_refs=[], original_context_authority=None, population_complete=True,
+        presentation_scope='all_original_official_occurrences_full_extracted_views_and_blank_evidence_guides',
+        counts={"parents": 0, "source_views": len(views), "source_view_kinds": {"official_extracted_view": len(views)},
+            "official_documents": len(documents), "units": len(entries), "response_guides": len(entries),
+            "pages": len(result['pages']), "selector_projections": 0, "comparison_evidence": 0, "document_parts": 0,
+            "parent_unit_counts": [], "retained_questions": len(entries) * 16, "blank_active_answers": len(entries) * 9,
+            "deferred_questions": len(entries) * 7, "recorded_reviews": 0})
+    if reviews._aggregate_size(result) > bounds['max_collection_bytes']:
+        _fail("complete source review packet collection exceeds byte bound")
+    if _pins(official=True) != producer_pins:
+        _fail("source packet or inherited producers changed during preparation")
+    return result
+
+
+def _packet_uses_official_replay(fields):
+    if fields == _OFFICIAL_REPLAY_FIELDS:
+        return True
+    if fields == _LEGACY_REPLAY_FIELDS:
+        return False
+    _fail("one complete source-review packet replay profile required")
+
+
+def prepare_source_review_packets(*, expected_preparation_manifest_sha256, source_review_limits=None,
+        limits=None, **inputs):
+    """Generate blank review packets from exact legacy or official source replay inputs."""
+    if _packet_uses_official_replay(inputs.keys()):
+        return _prepare_official_packets(expected_preparation_manifest_sha256, inputs,
+            source_review_limits=source_review_limits, limits=limits)
+    return _prepare_legacy_packets(expected_preparation_manifest_sha256=expected_preparation_manifest_sha256,
+        source_review_limits=source_review_limits, limits=limits, **inputs)
+
+
+def _detach(bundle, bounds, *, official=False):
+    schemas = _OFFICIAL_SCHEMAS if official else SCHEMAS
+    fields = _OFFICIAL_FIELDS if official else FIELDS
     contracts.require_keys(bundle, COMPONENTS, "complete source review packet collection")
     result, retained = {}, 0
     caps = {"manifest": 1, "pages": bounds['max_pages'], "source_views": bounds['max_source_views'],
@@ -505,6 +625,8 @@ def _detach(bundle, bounds):
         "document_parts": bounds['max_document_parts'],
         "response_guides": bounds['max_units'], "question_catalog": 1,
         "selector_projections": bounds['max_selector_projections'], "comparison_evidence": bounds['max_parents'] * 10}
+    if official:
+        caps.update(dict.fromkeys(('parent_packets', 'document_parts', 'comparison_evidence', 'selector_projections'), 0))
     for group in COMPONENTS:
         values = [bundle[group]] if group == 'manifest' else bundle[group]
         if type(values) is not list or len(values) > caps[group]:
@@ -517,7 +639,7 @@ def _detach(bundle, bounds):
             maximum = bounds['max_page_bytes'] if group == 'pages' else contracts.MAX_RECORD_BYTES
             raw = base._plain(row, min(maximum, bounds['max_collection_bytes'] - retained))
             retained += len(raw) + 1
-            detached.append(contracts.validate_record(json.loads(raw), schema=SCHEMAS[group], fields=FIELDS[group]))
+            detached.append(contracts.validate_record(json.loads(raw), schema=schemas[group], fields=fields[group]))
         result[group] = detached[0] if group == 'manifest' else detached
     if reviews._aggregate_size(result) > bounds['max_collection_bytes']:
         _fail("complete packet collection byte bound exceeded")
@@ -526,10 +648,13 @@ def _detach(bundle, bounds):
 
 def validate_source_review_packets(bundle, **inputs):
     """Bound offered output first, then repeat complete original-source replay."""
-    detached = _detach(bundle, _limits(inputs.get('limits')))
+    official = _packet_uses_official_replay(inputs.keys() -
+        {'expected_preparation_manifest_sha256', 'source_review_limits', 'limits'})
+    detached = _detach(bundle, _limits(inputs.get('limits')), official=official)
     expected = prepare_source_review_packets(**inputs)
     reviews._equal_components(detached, expected)
-    if _pins() != expected['manifest']['producer_pins']:
+    current_pins = _pins(official=True) if official else _pins()
+    if current_pins != expected['manifest']['producer_pins']:
         _fail("packet or inherited producers changed during final comparison")
     return detached
 

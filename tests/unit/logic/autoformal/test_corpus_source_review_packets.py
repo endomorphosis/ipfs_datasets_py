@@ -968,3 +968,193 @@ assert callable(corpus_source_review_packets.validate_source_review_packets)
         env=environment, capture_output=True, text=True, timeout=20, check=False,
     )
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+@pytest.fixture(scope="module")
+def official_packet_case():
+    arguments = fixture_helper().official_occurrence_case()
+    preparation = source_review.prepare_official_source_review_requests_v2(**arguments)
+    return {
+        "preparation": preparation,
+        "arguments": {
+            **arguments,
+            "expected_preparation_manifest_sha256": ref(preparation["manifest"])["sha256"],
+        },
+    }
+
+
+def test_official_packet_preserves_complete_source_and_blank_guides(owner, official_packet_case):
+    data = official_packet_case
+    preparation = data["preparation"]
+    bundle = build(owner, data)
+    manifest = bundle["manifest"]
+    assert set(bundle) == set(owner.COMPONENTS)
+    assert manifest["profile"] == "complete-source-first-official-occurrence-review-packets/v2"
+    assert manifest["schema"] == owner.OFFICIAL_MANIFEST_SCHEMA
+    assert manifest["source_preparation_ref"] == ref(preparation["manifest"])
+    assert manifest["source_input_bindings"] == preparation["manifest"]["input_bindings"]
+    assert manifest["population_complete"] is True
+    for component in (
+        "parent_packets", "selector_projections", "comparison_evidence", "document_parts"
+    ):
+        assert bundle[component] == []
+
+    documents = data["arguments"]["document_inputs"]
+    assert len(bundle["source_views"]) == len(bundle["official_documents"]) == len(documents) == 3
+    views = {view["source_version_cid"]: view for view in bundle["source_views"]}
+    assert manifest["source_view_refs"] == [ref(view) for view in bundle["source_views"]]
+    assert manifest["official_document_refs"] == [ref(row) for row in bundle["official_documents"]]
+    for index, (document, descriptor) in enumerate(
+        zip(documents, bundle["official_documents"], strict=True)
+    ):
+        version = document["source_version"]
+        view = views[version["record_cid"]]
+        assert descriptor["schema"] == owner.OFFICIAL_DOCUMENT_SCHEMA
+        assert descriptor["document_index"] == index
+        assert descriptor["source_version_ref"] == ref(version)
+        assert descriptor["source_view_ref"] == ref(view)
+        assert descriptor["raw_sha256"] == sha(document["raw_bytes"])
+        assert descriptor["extracted_sha256"] == sha(document["extracted_text"].encode())
+        assert view["text"] == document["extracted_text"]
+        assert view["text_sha256"] == descriptor["extracted_sha256"]
+
+    assert len(bundle["unit_packets"]) == len(bundle["response_guides"]) == 4
+    catalog_ref = ref(bundle["question_catalog"][0])
+    for unit, guide, request, subject, dependency in zip(
+        bundle["unit_packets"], bundle["response_guides"], preparation["requests"],
+        preparation["subjects"], preparation["dependency_manifests"], strict=True,
+    ):
+        assert unit["schema"] == owner.OFFICIAL_UNIT_SCHEMA
+        assert unit["queue_ordinal"] == guide["queue_ordinal"] == request["queue_ordinal"]
+        assert unit["source_review_request_ref"] == ref(request)
+        assert unit["source_review_subject_ref"] == guide["subject_ref"] == ref(subject)
+        assert unit["dependency_manifest_sha256"] == guide["dependency_manifest_sha256"] == (
+            dependency["manifest_sha256"]
+        )
+        assert unit["question_catalog_ref"] == guide["question_catalog_ref"] == catalog_ref
+        assert unit["candidate_interpretations_included"] is False
+
+        quote = unit["quoted_source_occurrence"]
+        occurrence = request["source_occurrence"]
+        assert quote["source_occurrence_record"] == occurrence
+        assert quote["source_context_record"] == request["context_declaration"]
+        assert quote["coordinate_system"] == occurrence["coordinate_system"]
+        assert quote["raw_HTML_coordinate_mapping_verified"] is False
+        view = views[occurrence["source_version_cid"]]
+        assert quote["full_source_view_ref"] == ref(view)
+        text = view["text"]
+        start, end = occurrence["start_char"], occurrence["end_char"]
+        start_utf8, end_utf8 = occurrence["start_utf8"], occurrence["end_utf8"]
+        assert text[start:end] == occurrence["span_text"]
+        assert text.encode()[start_utf8:end_utf8] == occurrence["span_text"].encode()
+        assert (len(text[:start].encode()), len(text[:end].encode())) == (start_utf8, end_utf8)
+
+        assert guide["schema"] == owner.GUIDE_SCHEMA
+        assert guide["status"] == "blank_not_a_review"
+        assert guide["request_cid"] == request["record_cid"]
+        assert guide["request_sha256"] == ref(request)["sha256"]
+        assert guide["unit_packet_ref"] == ref(unit)
+        assert len(guide["answers"]) == 9
+        assert [answer["slot_id"] for answer in guide["answers"]] == request["context_slot_ids"]
+        assert all(
+            answer["disposition"] is answer["finding"] is answer["rationale"] is None
+            and answer["evidence_refs"] == []
+            for answer in guide["answers"]
+        )
+        assert len(guide["deferred_questions"]) == 7
+        assert [question["slot_id"] for question in guide["deferred_questions"]] == (
+            request["deferred_review_slot_ids"]
+        )
+        assert all(question["answer"] is None for question in guide["deferred_questions"])
+        assert guide["reviewer_declaration"] == {
+            "principal_id": None, "role": None, "issued_at_utc": None,
+            "identity_evidence_refs": [], "independence_evidence_refs": [],
+            "process_evidence_refs": [],
+        }
+        assert all(value is None for value in guide["exposure_declaration"].values())
+
+    entries = [entry for page in bundle["pages"] for entry in page["entries"]]
+    assert entries == [
+        {
+            "ordinal": request["queue_ordinal"],
+            "request_cid": request["record_cid"],
+            "unit_packet_ref": ref(unit),
+            "response_guide_ref": ref(guide),
+        }
+        for request, unit, guide in zip(
+            preparation["requests"], bundle["unit_packets"], bundle["response_guides"], strict=True
+        )
+    ]
+    counts = manifest["counts"]
+    assert counts["blank_active_answers"] == 36
+    assert counts["deferred_questions"] == 28
+    assert counts["recorded_reviews"] == 0
+    for record in records(bundle):
+        assert reseal(record) == record
+        assert record["selected_occurrence"] is record["governing_source_binding"] is None
+        assert all(record[flag] is False for flag in owner.FALSE_FLAGS)
+    output = canonical_dag_json_bytes(bundle)
+    for alternative in data["arguments"]["pending_interpretations"]:
+        assert alternative["alternative_id"].encode() not in output
+        assert alternative["typed_expression_sha256"].encode() not in output
+    assert validate(owner, bundle, data) == bundle
+
+
+def test_official_packet_requires_independent_preparation_root_before_guides(
+    owner, official_packet_case, monkeypatch
+):
+    data = deepcopy(official_packet_case)
+    data["arguments"]["expected_preparation_manifest_sha256"] = "0" * 64
+    monkeypatch.setattr(owner, "_response_guide", producer_refusal)
+    with pytest.raises(contracts.CorpusContractError, match="independent.*preparation.*differs"):
+        build(owner, data)
+
+
+def test_official_packet_refuses_changed_raw_transport_under_original_pin(
+    owner, official_packet_case
+):
+    data = deepcopy(official_packet_case)
+    document = data["arguments"]["document_inputs"][0]
+    original = document["raw_bytes"]
+    document["raw_bytes"] = b"[" + original[1:]
+    assert len(document["raw_bytes"]) == len(original)
+    assert sha(document["raw_bytes"]) != document["expected_raw_sha256"]
+    with pytest.raises(contracts.CorpusContractError, match="raw artifact bytes.*expected binding"):
+        build(owner, data)
+
+
+def test_official_packet_refuses_resealed_quote_bound_to_another_document(
+    owner, official_packet_case
+):
+    bundle = build(owner, official_packet_case)
+    quote = bundle["unit_packets"][0]["quoted_source_occurrence"]
+    sibling_view = bundle["source_views"][1]
+    assert quote["full_source_view_ref"] != ref(sibling_view)
+    quote["full_source_view_ref"] = ref(sibling_view)
+    repaired = rebind_bundle(bundle)
+    with pytest.raises(contracts.CorpusContractError, match="complete independent regeneration"):
+        validate(owner, repaired, official_packet_case)
+
+
+def test_official_packet_paginates_all_requests_without_parent_inference(owner, official_packet_case):
+    data = official_packet_case
+    limits = {"max_units_per_page": 1}
+    bundle = build(owner, data, limits=limits)
+    assert len(bundle["pages"]) == len(data["preparation"]["requests"])
+    for ordinal, (page, request) in enumerate(zip(bundle["pages"], data["preparation"]["requests"], strict=True)):
+        assert page["first_unit_ordinal"] == page["page_ordinal"] == ordinal
+        assert page["entries"][0]["ordinal"] == ordinal
+        assert page["entries"][0]["request_cid"] == request["record_cid"]
+    assert bundle["parent_packets"] == []
+    assert validate(owner, bundle, data, limits=limits) == bundle
+
+
+@pytest.mark.parametrize("limit", ["max_units", "max_source_views", "max_collection_bytes", "max_page_bytes"])
+def test_official_packet_refuses_instead_of_returning_a_prefix(owner, official_packet_case, limit):
+    with pytest.raises(contracts.CorpusContractError):
+        build(owner, official_packet_case, limits={limit: 1})
+
+
+def test_official_packet_rejects_mixed_public_replay_profiles(owner, official_packet_case):
+    with pytest.raises(contracts.CorpusContractError, match="one complete source-review packet replay profile"):
+        build(owner, official_packet_case, alignment_corpus_bytes={})
