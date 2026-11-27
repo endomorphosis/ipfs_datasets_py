@@ -2042,3 +2042,146 @@ def test_bound_mixed_norm_component_refuses_stale_or_mismatched_sources_and_prop
         owner.validate_bound_norm_component_v2(
             report, expected_report_sha256=norm.norm_review_sha256(report), **arguments
         )
+
+
+
+def test_bound_mixed_norm_component_replays_complete_current_v4_graph(
+        owner, lir02_complete_mixed_handoff_case):
+    from ipfs_datasets_py.logic.autoformal import corpus_norm_definition_adapter as graphs
+    from ipfs_datasets_py.logic.autoformal import legal_norm_interpretation_review_v1 as norm
+    from ipfs_datasets_py.logic.autoformal import legal_reviewed_norm_admission_v3 as admission
+    from ipfs_datasets_py.utils.cid_utils import cid_for_dag_json
+    from tests.unit.logic.autoformal import test_legal_reviewed_norm_admission_v3 as mixed_fixture
+
+    case = lir02_complete_mixed_handoff_case
+    arguments = _lir02_arguments(case)
+    report = _lir02_prepare_mixed(owner, arguments)
+    bound = {
+        "report": report,
+        "expected_report_sha256": norm.norm_review_sha256(report),
+        "preparation_inputs": arguments,
+    }
+    bound_sha = _lir02_commit(bound)
+    reviewed_case = case["case"]
+    args, options = mixed_fixture.fixture.reviewed_assessment_arguments_v2(admission, reviewed_case)
+    reviewed = admission.assess_reviewed_norm_admission_v3(*args, **options)
+    assert reviewed["fixture_only"] is reviewed["semantic_use_eligible"] is True
+    assert "formalization" in reviewed["permitted_uses"] and reviewed["blockers"] == []
+    admission_sha = admission.norm_content_adjudication_sha256(reviewed)
+    graph = graphs.build_reviewed_source_bound_norm_graph_v4(
+        reviewed, *args,
+        expected_admission_sha256=admission_sha,
+        bound_component_inputs=bound,
+        expected_bound_component_inputs_sha256=bound_sha,
+        **options,
+    )
+    graph_sha = graphs.norm_definition_graph_sha256(graph)
+    assert graphs.validate_reviewed_source_bound_norm_graph_v4(
+        graph, reviewed, *args,
+        expected_graph_sha256=graph_sha,
+        expected_admission_sha256=admission_sha,
+        bound_component_inputs=bound,
+        expected_bound_component_inputs_sha256=bound_sha,
+        **options,
+    ) == graph
+    assert set(graph) == graphs.REVIEWED_GRAPH_FIELDS | {"schema", "cid_scope", "record_cid"}
+    assert graph["schema"] == "legal-corpus-reviewed-norm-candidate-graph/v4"
+    expected_source_identity = {key: report[key] for key in (
+        "schema", "profile", "binding_manifest_sha256", "source_history_manifest_ref",
+        "current_epoch_id", "unit_bindings_sha256", "norm_preparation_inputs_sha256",
+        "norm_preparation_sha256", "producer_pins",
+    )}
+    expected_source_identity["bound_component_report_sha256"] = bound["expected_report_sha256"]
+    admission_record = graph["admission_record"]
+    assert admission_record["bound_component_identity"] == expected_source_identity
+    assert admission_record["bound_component_inputs_sha256"] == bound_sha
+    assert admission_record["assessment_sha256"] == admission_sha
+    assert admission_record["preparation_sha256"] == report["norm_preparation_sha256"]
+    assert admission_record["admission_profile"] == admission.REVIEWED_PROFILE
+
+    declaration = reviewed_case["declaration"]
+    units = declaration["units"]
+    assert graph["counts"]["units"] == 3 and graph["counts"]["norms"] == 2
+    assert graph["counts"]["definitions"] == 1 and graph["counts"]["definition_uses"] == 2
+    assert graph["source_versions"] == [unit["source_version"] for unit in units]
+    assert graph["source_occurrences"] == [unit["occurrence"] for unit in units]
+    assert len({record["record_cid"] for record in graph["source_occurrences"]}) == 3
+    records = {record["unit_id"]: record for record in graph["unit_records"]}
+    for record, ast_record, unit, accepted in zip(
+            graph["unit_records"], graph["ast_records"], units, reviewed["units"], strict=True):
+        assert record["unit_id"] == ast_record["unit_id"] == unit["unit_id"]
+        assert record["source_version_cid"] == unit["source_version"]["record_cid"]
+        assert record["source_occurrence_cid"] == ast_record["source_occurrence_cid"] == unit["occurrence"]["record_cid"]
+        assert record["ast_record_cid"] == ast_record["record_cid"]
+        assert record["admission_record_cid"] == ast_record["admission_record_cid"] == admission_record["record_cid"]
+        assert json.loads(ast_record["ast_json"]) == accepted["canonical_ir"]
+        assert ast_record["ast_cid"] == cid_for_dag_json(accepted["canonical_ir"])
+    for actual, expected in zip(graph["definition_use_records"], declaration["definition_uses"], strict=True):
+        assert {field: actual[field] for field in expected} == expected
+        assert actual["definition_unit_record_cid"] == records[expected["definition_unit_id"]]["record_cid"]
+        assert actual["use_unit_record_cid"] == records[expected["use_unit_id"]]["record_cid"]
+        assert actual["use_occurrence_cid"] == records[expected["use_unit_id"]]["source_occurrence_cid"]
+        assert actual["admission_record_cid"] == admission_record["record_cid"]
+    assertion_cids = {
+        node["stable_id"]: node["record_cid"] for node in graph["graph"]["nodes"]
+        if node["node_type"] in {"definition_assertion", "norm_assertion"}
+    }
+    assert set(assertion_cids) == set(records)
+    assert {
+        (edge["src_cid"], edge["dst_cid"], edge["ordinal"])
+        for edge in graph["graph"]["edges"] if edge["relation"] == "USES_DEFINITION"
+    } == {
+        (assertion_cids[use["use_unit_id"]], assertion_cids[use["definition_unit_id"]], ordinal)
+        for ordinal, use in enumerate(declaration["definition_uses"])
+    }
+    assert graph["view"] == "candidate" and graph["external_complete_inputs_required"] is True
+    assert graph["semantic_use_eligible"] is graph["graph"]["admitted"] is graph["graph"]["formalized"] is False
+    assert set(graph["authority"]) == set(graphs.FALSE_FLAGS)
+    assert all(value is False for value in graph["authority"].values())
+    assert all(type(graph[key]) is int and graph[key] == 0 for key in ("training_mask", "evaluation_gold_mask"))
+
+    with pytest.raises(ValueError):
+        graphs.validate_reviewed_norm_graph_v3(
+            graph, reviewed, *args, expected_graph_sha256=graph_sha,
+            expected_admission_sha256=admission_sha, **options,
+        )
+
+    # Refresh the externally selected digest, leaving the actual history and
+    # previously validated report unchanged. A fresh transport pin cannot make
+    # a different source-history manifest current.
+    wrong_source = deepcopy(bound)
+    wrong_source["preparation_inputs"]["binding_replay_inputs"]["expected_history_manifest_sha256"] = "0" * 64
+    wrong_source_sha = _lir02_commit(wrong_source)
+    assert wrong_source_sha != bound_sha
+    with pytest.raises(ValueError):
+        graphs.build_reviewed_source_bound_norm_graph_v4(
+            reviewed, *args,
+            expected_admission_sha256=admission_sha,
+            bound_component_inputs=wrong_source,
+            expected_bound_component_inputs_sha256=wrong_source_sha,
+            **options,
+        )
+
+    # These are genuine new fictional reviews of a freshly prepared use
+    # declaration. Both inputs replay independently, while the new admission
+    # preparation differs from the declaration selected by the source report.
+    different_case = mixed_fixture.cloned(reviewed_case)
+    different_case["declaration"]["permitted_uses"] = ["formalization"]
+    different_case["preparation"] = mixed_fixture.prepare(admission, different_case)
+    mixed_fixture.refresh_signed_reviews(different_case, admission)
+    mixed_fixture.assert_signatures_valid(different_case)
+    different_args, different_options = mixed_fixture.fixture.reviewed_assessment_arguments_v2(admission, different_case)
+    different = admission.assess_reviewed_norm_admission_v3(*different_args, **different_options)
+    assert different["semantic_use_eligible"] is different["fixture_only"] is True
+    assert different["permitted_uses"] == ["formalization"] and different["blockers"] == []
+    assert different["preparation_sha256"] != report["norm_preparation_sha256"]
+    different_admission_sha = admission.norm_content_adjudication_sha256(different)
+    assert different_admission_sha != admission_sha
+    with pytest.raises(ValueError):
+        graphs.build_reviewed_source_bound_norm_graph_v4(
+            different, *different_args,
+            expected_admission_sha256=different_admission_sha,
+            bound_component_inputs=bound,
+            expected_bound_component_inputs_sha256=bound_sha,
+            **different_options,
+        )
