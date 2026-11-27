@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 
 import pytest
 
@@ -10,7 +11,14 @@ from ipfs_datasets_py.logic.integration.reasoning.legal_ir_proof_feedback import
     KernelReconstructionFeedback,
     LegalIRProofFeedbackRecord,
     ProofFeedbackPartitionPolicy,
+    ProofFeedbackTrainingTarget,
     ProofFeedbackVersions,
+    build_legal_ir_proof_feedback_record,
+    proof_feedback_content_digest,
+    proof_feedback_sample_digest,
+)
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import (
+    build_us_code_sample,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder import (
     MODAL_AUTOENCODER_ARCHITECTURE_VERSION,
@@ -73,6 +81,93 @@ def _record(
     return LegalIRProofFeedbackRecord.create(**values)
 
 
+@pytest.fixture(scope="module")
+def current_proof_sample():
+    return build_us_code_sample(
+        title="5",
+        section="fictional-proof-auxiliary-heads",
+        text="A fictional agency shall publish notice unless the board grants an exception.",
+    )
+
+
+def _bound_record(sample, suffix, *, obligation_type="exception_scope", **options):
+    if options.get("deterministic_trusted", True):
+        from ipfs_datasets_py.logic.ir_core.claims import stable_digest
+        from tests.unit.logic.legal_ir.test_proof_cache import _bound_feedback_fixture
+
+        sample, proof, obligation, context = _bound_feedback_fixture(
+            sample, f"proof-head-obligation-{suffix}"
+        )
+        receipt, = proof.theorem_receipt_results(
+            expected_context=context, obligation_id=obligation.obligation_id
+        )
+        target = ProofFeedbackTrainingTarget(
+            sample_id=sample.sample_id,
+            sample_sha256=proof_feedback_sample_digest(sample),
+            obligation_id=obligation.obligation_id,
+            obligation_type=obligation_type,
+            legal_ir_view="deontic.ir",
+            formal_obligation_sha256=obligation.digest,
+            reviewed_target_sha256=context["interpretation_digest"],
+            dependency_manifest_sha256=stable_digest(context["dependency_versions"]),
+            legal_proof_record=proof,
+            current_sample=sample,
+            expected_artifact_digest=proof.artifact_digest,
+            expected_legal_proof_digest=proof.content_digest,
+            expected_proof_receipt_digest=receipt.digest,
+            expected_proof_context=context,
+        )
+        selected = build_legal_ir_proof_feedback_record(
+            obligation,
+            training_target=target,
+            semantic_slots={"actor": "present", "condition": "single", "exception": "present"},
+            selected_premises=(
+                {"metadata": {"premise_family": "sample_local_assumption"}},
+                {"metadata": {"premise_family": "theorem_template"}},
+            ),
+            repair_label="exception_scope_projection",
+            evidence_ids=(f"evidence-{suffix}",),
+            partition_policy=ProofFeedbackPartitionPolicy(holdout_fraction=0.0),
+            versions=options.get("versions") or _versions(),
+        )
+        offered = LegalIRProofFeedbackRecord.from_dict(selected.to_dict())
+        return offered, replace(target, expected_feedback_record_id=selected.record_id)
+
+    sample_sha256 = proof_feedback_sample_digest(sample)
+    obligation = {
+        "obligation_id": f"proof-head-obligation-{suffix}",
+        "obligation_type": obligation_type,
+        "legal_ir_view": "deontic.ir",
+        "statement": "The fictional notice exception has the selected scope.",
+    }
+    target = ProofFeedbackTrainingTarget(
+        sample_id=sample.sample_id,
+        sample_sha256=sample_sha256,
+        obligation_id=obligation["obligation_id"],
+        obligation_type=obligation["obligation_type"],
+        legal_ir_view=obligation["legal_ir_view"],
+        formal_obligation_sha256=proof_feedback_content_digest(obligation),
+        reviewed_target_sha256=proof_feedback_content_digest({
+            "interpretation_id": "fictional-selected-proof-head-interpretation",
+            "sample_sha256": sample_sha256,
+        }),
+        dependency_manifest_sha256=proof_feedback_content_digest({
+            "fictional-proof-head-exception-definition": "revision-1",
+        }),
+    )
+    fixture_record = _record(
+        suffix,
+        obligation_id=target.obligation_id,
+        obligation_type=target.obligation_type,
+        legal_ir_view=target.legal_ir_view,
+        obligation_digest=target.obligation_digest,
+        **options,
+    )
+    target = replace(target, expected_feedback_record_id=fixture_record.record_id)
+    offered_record = LegalIRProofFeedbackRecord.from_dict(fixture_record.to_dict())
+    return offered_record, target
+
+
 def test_architecture_declares_all_bounded_isolated_heads() -> None:
     autoencoder = AdaptiveModalAutoencoder()
 
@@ -93,10 +188,11 @@ def test_architecture_declares_all_bounded_isolated_heads() -> None:
     }
 
 
-def test_trusted_version_matched_feedback_trains_every_head_and_reports_family_metrics() -> None:
+def test_trusted_version_matched_feedback_trains_every_head_and_reports_family_metrics(current_proof_sample) -> None:
     versions = _versions()
-    positive = _record("positive", versions=versions)
-    contract_failure = _record(
+    positive, positive_target = _bound_record(current_proof_sample, "positive", versions=versions)
+    contract_failure, contract_target = _bound_record(
+        current_proof_sample,
         "contract",
         versions=versions,
         deterministic_trusted=False,
@@ -110,7 +206,8 @@ def test_trusted_version_matched_feedback_trains_every_head_and_reports_family_m
             "evidence_id": "contract-evidence",
         },
     )
-    reconstruction_failure = _record(
+    reconstruction_failure, reconstruction_target = _bound_record(
+        current_proof_sample,
         "reconstruction",
         versions=versions,
         deterministic_trusted=False,
@@ -128,6 +225,10 @@ def test_trusted_version_matched_feedback_trains_every_head_and_reports_family_m
 
     report = autoencoder.train_proof_auxiliary_heads(
         [positive, contract_failure, reconstruction_failure],
+        current_proof_targets={
+            target.obligation_id: target
+            for target in (positive_target, contract_target, reconstruction_target)
+        },
         expected_versions=versions,
         learning_rate=0.5,
     )
@@ -160,14 +261,16 @@ def test_trusted_version_matched_feedback_trains_every_head_and_reports_family_m
         in prediction["heads"]["minimal_failing_contract"]["probabilities"]
     )
     assert set(prediction["heads"]["reconstruction_success"]["probabilities"]) == {
+        "success",
         "failure",
         "not_attempted",
     }
 
 
-def test_untrusted_stale_holdout_invalid_and_duplicate_feedback_never_train() -> None:
+def test_untrusted_stale_holdout_invalid_and_duplicate_feedback_never_train(current_proof_sample) -> None:
     versions = _versions()
-    trusted = _record("trusted", versions=versions)
+    trusted, target = _bound_record(current_proof_sample, "trusted", versions=versions)
+    targets = {target.obligation_id: target}
     untrusted = _record(
         "untrusted",
         versions=versions,
@@ -187,10 +290,12 @@ def test_untrusted_stale_holdout_invalid_and_duplicate_feedback_never_train() ->
 
     report = autoencoder.train_proof_auxiliary_heads(
         [trusted, untrusted, stale, holdout, tampered],
+        current_proof_targets=targets,
         expected_versions=versions,
     )
     duplicate = autoencoder.apply_proof_feedback(
         [trusted],
+        current_proof_targets=targets,
         expected_versions=versions,
     )
 
@@ -204,7 +309,7 @@ def test_untrusted_stale_holdout_invalid_and_duplicate_feedback_never_train() ->
     assert autoencoder.state.applied_proof_feedback_ids == [trusted.record_id]
 
 
-def test_proof_updates_cannot_override_primary_objective_parameters() -> None:
+def test_proof_updates_cannot_override_primary_objective_parameters(current_proof_sample) -> None:
     state = ModalAutoencoderTrainingState(
         decoded_embeddings={"sample": [0.1, 0.2]},
         family_logits={"sample": {"deontic": 0.4}},
@@ -218,11 +323,14 @@ def test_proof_updates_cannot_override_primary_objective_parameters() -> None:
     autoencoder = AdaptiveModalAutoencoder(state=state)
     before = state.to_dict()
 
+    record, target = _bound_record(current_proof_sample, "isolation")
     report = autoencoder.train_proof_feedback_heads(
-        [_record("isolation")],
+        [record],
+        current_proof_targets={target.obligation_id: target},
         expected_versions=_versions(),
         learning_rate=1.0,
     )
+    assert report["applied_count"] == 1
     after = state.to_dict()
 
     for key in (
@@ -238,10 +346,11 @@ def test_proof_updates_cannot_override_primary_objective_parameters() -> None:
     assert report["objective_isolation"]["proof_loss_weight_in_primary_objective"] == 0.0
 
 
-def test_head_vocabulary_is_bounded_under_many_trusted_labels() -> None:
+def test_head_vocabulary_is_bounded_under_many_trusted_labels(current_proof_sample) -> None:
     versions = _versions()
-    records = [
-        _record(
+    bound_records = [
+        _bound_record(
+            current_proof_sample,
             str(index),
             versions=versions,
             obligation_type=f"obligation_family_{index:03d}",
@@ -251,7 +360,8 @@ def test_head_vocabulary_is_bounded_under_many_trusted_labels() -> None:
     autoencoder = AdaptiveModalAutoencoder(proof_head_max_labels=3)
 
     report = autoencoder.train_proof_auxiliary_heads(
-        records,
+        [record for record, _ in bound_records],
+        current_proof_targets={target.obligation_id: target for _, target in bound_records},
         expected_versions=versions,
         learning_rate=0.2,
     )
@@ -267,11 +377,13 @@ def test_head_vocabulary_is_bounded_under_many_trusted_labels() -> None:
     )
 
 
-def test_architecture_and_proof_heads_serialize_with_legacy_compatibility(tmp_path) -> None:
+def test_architecture_and_proof_heads_serialize_with_legacy_compatibility(tmp_path, current_proof_sample) -> None:
     versions = _versions()
     autoencoder = AdaptiveModalAutoencoder()
+    record, target = _bound_record(current_proof_sample, "serialize", versions=versions)
     autoencoder.train_proof_auxiliary_heads(
-        [_record("serialize", versions=versions)],
+        [record],
+        current_proof_targets={target.obligation_id: target},
         expected_versions=versions,
     )
     path = tmp_path / "proof-aware-state.json"

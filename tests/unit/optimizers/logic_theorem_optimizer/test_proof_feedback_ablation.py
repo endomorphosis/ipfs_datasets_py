@@ -238,3 +238,27 @@ def test_ablation_blocks_when_correct_labels_do_not_beat_shuffled_control() -> N
 
     assert report.production_weight_writes_allowed is False
     assert "verified_feedback_not_better_than_shuffled_control" in report.block_reasons
+
+
+def test_ablation_refuses_unmatched_typed_feedback_before_cloning(monkeypatch):
+    import pytest
+    from ipfs_datasets_py.logic.integration.reasoning.legal_ir_proof_feedback import (
+        LegalIRProofFeedbackRecord,
+    )
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import proof_feedback_ablation
+
+    versions = _versions()
+    feedback = LegalIRProofFeedbackRecord.create(
+        obligation_id="fictional-ablation-obligation", obligation_type="exception_scope",
+        legal_ir_view="deontic.ir", semantic_family="conditional_normative",
+        deterministic_trusted=True, versions=versions,
+    )
+
+    def fail_before_clone(autoencoder):
+        pytest.fail("typed ablation reached cloning without a matched typed control")
+
+    monkeypatch.setattr(proof_feedback_ablation, "_clone_autoencoder", fail_before_clone)
+    for offered in (feedback, feedback.to_dict(), {"proof_feedback_record": feedback}):
+        with pytest.raises(ValueError, match="requires a matched typed control"):
+            run_proof_feedback_ablation(None, (), (), proof_feedback=[offered],
+                expected_versions=versions)

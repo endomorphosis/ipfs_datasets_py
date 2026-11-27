@@ -554,16 +554,21 @@ def _bound_fixture(*, extra_obligation: bool = False,
                    native_resource_profile: dict[str, Any] | None = None,
                    request_native_resource_profile: dict[str, Any] | None = None,
                    kernel_native_resource_profile: dict[str, Any] | None = None,
-                   source_aliases: dict[str, Any] | None = None):
+                   source_aliases: dict[str, Any] | None = None,
+                   sample: LegalSample | None = None,
+                   obligation_id: str = "obligation:fictional-cache",
+                   artifact: FormalizationArtifact | None = None):
     from ipfs_datasets_py.logic.backends.kernel import lean
     from ipfs_datasets_py.logic.backends.kernel.wasm import CapabilityPlane, KernelToolchainBinding
     from ipfs_datasets_py.logic.ir_core.claims import FrozenMap
 
-    sample = _reviewed_fixture(sample_id="fictional-cache-provision", citation="FICTIONAL Test Act 1", section="1")
-    artifact = _legal_artifact(sample)
+    if sample is None:
+        sample = _reviewed_fixture(sample_id="fictional-cache-provision", citation="FICTIONAL Test Act 1", section="1")
+    if artifact is None:
+        artifact = _legal_artifact(sample)
     source_ref = artifact.source_map.sources[0].ref_id
     assumption = Assumption("assumption:fictional-premise", "An explicitly fictional premise.", source_refs=(source_ref,))
-    obligation = ProofObligation("obligation:fictional-cache", "True", assumption_ids=(assumption.assumption_id,),
+    obligation = ProofObligation(obligation_id, "True", assumption_ids=(assumption.assumption_id,),
                                  logic_family="lean4", source_refs=(source_ref,), metadata={"fixture_only": True})
     obligations = (obligation,)
     if extra_obligation:
@@ -660,6 +665,22 @@ def _bound_record(*, extra_obligation: bool = False, native_resource_profile: di
     record = LegalProofRecord.build(artifact, profile="fictional-bound", jurisdiction="fictional",
                                     theorem_receipts=(receipt,), proof_bindings=(binding,))
     return record, artifact, receipt, binding, context
+
+
+def _bound_feedback_fixture(
+    sample: LegalSample, obligation_id: str, *, artifact: FormalizationArtifact | None = None,
+) -> tuple[LegalSample, LegalProofRecord, ProofObligation, dict[str, Any]]:
+    """Build current canonical proof evidence with the existing fictional verifier."""
+    assert type(sample) is LegalSample
+    artifact, receipt, binding, context = _bound_fixture(
+        sample=sample, obligation_id=obligation_id, artifact=artifact,
+    )
+    obligation, = artifact.proof_obligations
+    record = LegalProofRecord.build(
+        artifact, profile="fictional-bound", jurisdiction="fictional",
+        theorem_receipts=(receipt,), proof_bindings=(binding,),
+    )
+    return sample, record, obligation, context
 
 
 class _ShadowObservation:

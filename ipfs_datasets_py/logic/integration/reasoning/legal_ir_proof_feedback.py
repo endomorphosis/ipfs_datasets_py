@@ -22,10 +22,10 @@ import math
 import os
 import re
 import tempfile
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Final, Iterable, Iterator, Mapping, Optional, Sequence
+from typing import TYPE_CHECKING, Any, Final, Iterable, Iterator, Mapping, Optional, Sequence
 
 from .hammer import _strict_proof_bool
 from .legal_ir_hammer_translation import (
@@ -42,6 +42,10 @@ from .legal_ir_proof_router import (
     ProofTrustLevel,
 )
 from .legal_ir_view_contracts import LEGAL_IR_VIEW_CONTRACT_REGISTRY_VERSION
+
+if TYPE_CHECKING:
+    from ...legal_ir.proof_cache import LegalProofRecord
+    from ....optimizers.logic_theorem_optimizer.legal_samples import LegalSample
 
 
 LEGAL_IR_PROOF_FEEDBACK_SCHEMA_VERSION: Final = "legal-ir-proof-feedback-v1"
@@ -356,7 +360,7 @@ def deterministic_proof_feedback_partition(
 
 @dataclass(frozen=True)
 class KernelReconstructionFeedback:
-    """Source-free projection of a kernel reconstruction receipt."""
+    """Source-free projection of a kernel check."""
 
     status: str = "not_attempted"
     attempted: bool = False
@@ -1038,6 +1042,224 @@ def _route_features(
     return availability, statuses, deterministic_trusted
 
 
+@dataclass(frozen=True, slots=True)
+class ProofFeedbackTrainingTarget:
+    """Commit to a caller-selected current target, separately from feedback.
+
+    The caller supplies the exact proof obligation from its current checked
+    evidence and the independently selected reviewed interpretation and
+    dependency commitments. For writes it also pins the exact canonical feedback
+    record selected by the evidence owner. A target without that independent
+    record identity may commit an obligation before projection, but cannot
+    select an update. For a positive label the caller also selects the bound
+    legal proof, artifact, protocol receipt digest and full reuse context.
+    The feedback record ID is excluded from the obligation digest.
+    """
+
+    sample_id: str
+    sample_sha256: str
+    obligation_id: str
+    obligation_type: str
+    legal_ir_view: str
+    formal_obligation_sha256: str
+    reviewed_target_sha256: str
+    dependency_manifest_sha256: str
+    expected_feedback_record_id: str = ""
+    legal_proof_record: LegalProofRecord | None = field(default=None, kw_only=True, repr=False)
+    current_sample: LegalSample | None = field(default=None, kw_only=True, repr=False)
+    expected_artifact_digest: str = field(default="", kw_only=True)
+    expected_legal_proof_digest: str = field(default="", kw_only=True)
+    expected_proof_receipt_digest: str = field(default="", kw_only=True)
+    expected_proof_context: Mapping[str, Any] | None = field(default=None, kw_only=True, repr=False)
+
+    def __post_init__(self) -> None:
+        for name in ("sample_id", "obligation_id", "obligation_type", "legal_ir_view"):
+            value = getattr(self, name)
+            if type(value) is not str:
+                raise ProofFeedbackError(f"{name} must be a source-free identifier")
+            _require_safe_identifier(value, name)
+        for name in ("sample_sha256", "formal_obligation_sha256", "reviewed_target_sha256",
+                     "dependency_manifest_sha256"):
+            value = getattr(self, name)
+            if type(value) is not str or not _SHA256_RE.fullmatch(value):
+                raise ProofFeedbackError(f"{name} must be a SHA-256 digest")
+        feedback_id = self.expected_feedback_record_id
+        prefix = "legal-ir-proof-feedback-"
+        if type(feedback_id) is not str or (
+            feedback_id and (not feedback_id.startswith(prefix)
+                             or not _SHA256_RE.fullmatch(feedback_id[len(prefix):]))
+        ):
+            raise ProofFeedbackError("expected feedback record must be a canonical record ID")
+        if self.legal_proof_record is None:
+            if (self.expected_artifact_digest or self.expected_legal_proof_digest
+                    or self.expected_proof_receipt_digest or self.expected_proof_context is not None
+                    or self.current_sample is not None):
+                raise ProofFeedbackError("complete legal proof selection is required")
+            return
+        from ...ir_core.claims import ClaimValidationError, FrozenMap
+
+        for value in (self.expected_artifact_digest, self.expected_legal_proof_digest):
+            if type(value) is not str or not re.fullmatch(r"sha256:[0-9a-f]{64}", value):
+                raise ProofFeedbackError("expected legal artifact and record must be SHA-256 digests")
+        if (type(self.expected_proof_receipt_digest) is not str
+                or not _SHA256_RE.fullmatch(self.expected_proof_receipt_digest)
+                or not isinstance(self.expected_proof_context, Mapping)
+                or not self.expected_proof_context
+                or self.current_sample is None):
+            raise ProofFeedbackError("exact protocol receipt digest, current proof context and sample are required")
+        try:
+            context = FrozenMap(self.expected_proof_context)
+        except ClaimValidationError as exc:
+            raise ProofFeedbackError("current proof context must be canonical JSON") from exc
+        object.__setattr__(self, "expected_proof_context", context)
+
+    @property
+    def obligation_digest(self) -> str:
+        identity = {
+            "schema": "legal-ir-proof-feedback-training-target/v1",
+            "sample_id": self.sample_id,
+            "sample_sha256": self.sample_sha256,
+            "obligation_id": self.obligation_id,
+            "obligation_type": self.obligation_type,
+            "legal_ir_view": self.legal_ir_view,
+            "formal_obligation_sha256": self.formal_obligation_sha256,
+            "reviewed_target_sha256": self.reviewed_target_sha256,
+            "dependency_manifest_sha256": self.dependency_manifest_sha256,
+        }
+        if self.legal_proof_record is not None:
+            identity.update(
+                artifact_digest=self.expected_artifact_digest,
+                legal_proof_digest=self.expected_legal_proof_digest,
+                protocol_receipt_digest=self.expected_proof_receipt_digest,
+                proof_context=self.expected_proof_context,
+            )
+        return proof_feedback_content_digest(identity)
+
+    def _checked_kernel_feedback(self) -> KernelReconstructionFeedback:
+        """Replay the current legal proof and project only its checked identity."""
+        proof = self.legal_proof_record
+        context = self.expected_proof_context
+        if proof is None or context is None:
+            raise ProofFeedbackTrustError("positive feedback requires a selected checked legal proof")
+
+        from ...ir_core.claims import stable_digest
+        from ...ir_core.provenance import SourceReviewStatus
+        from ...legal_ir.proof_cache import LegalProofCacheError, LegalProofRecord
+
+        if type(proof) is not LegalProofRecord:
+            raise ProofFeedbackTrustError("positive feedback requires a selected checked legal proof")
+        if (proof.content_digest != self.expected_legal_proof_digest
+                or proof.artifact_digest != self.expected_artifact_digest):
+            raise ProofFeedbackTrustError("selected legal proof record or artifact differs")
+        dependencies = context.get("dependency_versions")
+        if (context.get("interpretation_digest") != self.reviewed_target_sha256
+                or not isinstance(dependencies, Mapping)
+                or any(type(version) is not str for version in dependencies.values())
+                or stable_digest(dict(dependencies)) != self.dependency_manifest_sha256):
+            raise ProofFeedbackTrustError("selected interpretation or dependencies differ")
+        try:
+            artifact = proof.formalization_artifact()
+            receipts = proof.theorem_receipt_results(
+                expected_context=context, obligation_id=self.obligation_id
+            )
+        except LegalProofCacheError as exc:
+            raise ProofFeedbackTrustError("selected legal proof failed current receipt replay") from exc
+        if artifact.sample_id != self.sample_id:
+            raise ProofFeedbackTrustError("checked artifact sample differs from the selected sample")
+        selected = [
+            receipt for receipt in receipts
+            if receipt.digest == self.expected_proof_receipt_digest
+            and receipt.obligation_digest == self.formal_obligation_sha256
+        ]
+        if len(selected) != 1:
+            raise ProofFeedbackTrustError("exact checked receipt and formal obligation are required")
+        receipt = selected[0]
+        obligation = next(item for item in artifact.proof_obligations
+                          if item.obligation_id == receipt.obligation_id)
+        sample = self.current_sample
+        if type(getattr(sample, "text", None)) is not str:
+            raise ProofFeedbackTrustError("an exact current legal sample is required")
+        try:
+            sample_digest = proof_feedback_sample_digest(sample)
+        except ValueError as exc:
+            raise ProofFeedbackTrustError("an exact current legal sample is required") from exc
+        if sample.sample_id != self.sample_id or sample_digest != self.sample_sha256:
+            raise ProofFeedbackTrustError("current legal sample differs from the selected sample")
+        source_digest = hashlib.sha256(sample.text.encode("utf-8")).hexdigest()
+        selected_sources = [
+            source for source in artifact.source_map.sources
+            if source.ref_id in obligation.source_refs and source.content_sha256 == source_digest
+        ]
+        if not selected_sources:
+            raise ProofFeedbackTrustError("checked obligation does not bind the current sample source")
+        reviewed_statuses = {SourceReviewStatus.HUMAN_REVIEWED, SourceReviewStatus.TRUSTED_FIXTURE}
+        if any(source.review_status not in reviewed_statuses for source in selected_sources):
+            raise ProofFeedbackTrustError("checked obligation requires a reviewed sample source")
+        legacy_identity = artifact.metadata.get("legacy_modal_ir_canonical_hash")
+        if (legacy_identity != sample.modal_ir.canonical_hash()
+                or artifact.declaration_digest != f"sha256:{legacy_identity}"):
+            raise ProofFeedbackTrustError("checked artifact does not bind the current modal interpretation")
+        return KernelReconstructionFeedback(
+            status="proved",
+            attempted=True,
+            verified=True,
+            checker=receipt.backend_id,
+            receipt_id=f"protocol-proof-sha256:{receipt.digest}",
+        )
+
+    def matches(self, record: LegalIRProofFeedbackRecord) -> bool:
+        if not (
+            self.expected_feedback_record_id != ""
+            and self.expected_feedback_record_id == record.record_id
+            and self.obligation_id == record.obligation_id
+            and self.obligation_type == record.obligation_type
+            and self.legal_ir_view == record.legal_ir_view
+            and self.obligation_digest == record.obligation_digest
+        ):
+            return False
+        if not record.positive:
+            return self.legal_proof_record is None
+        try:
+            kernel = self._checked_kernel_feedback()
+        except ProofFeedbackTrustError:
+            return False
+        return (not record.deterministic_trusted
+                and record.kernel_reconstruction == kernel
+                and record.receipt_ids == (kernel.receipt_id,))
+
+
+def proof_feedback_sample_digest(sample: Any) -> str:
+    """Hash the current sample's source and parsed representation, without embeddings."""
+    from ....optimizers.logic_theorem_optimizer.legal_samples import LegalSample
+
+    if type(sample) is not LegalSample:
+        raise ProofFeedbackError("typed LegalSample required for current proof feedback")
+    sample.validate()
+    return proof_feedback_content_digest({
+        "schema": "legal-ir-proof-feedback-sample/v2",
+        "sample_id": sample.sample_id,
+        "source": sample.source,
+        "title": sample.title,
+        "section": sample.section,
+        "citation": sample.citation,
+        "text": sample.text,
+        "selected_frame": sample.selected_frame,
+        "modal_ir": sample.modal_ir.to_dict(),
+    })
+
+
+def carries_typed_proof_feedback(value: Any) -> bool:
+    """Recognize typed records and atomic envelopes before guidance projection."""
+    if isinstance(value, LegalIRProofFeedbackRecord):
+        return True
+    if not isinstance(value, Mapping):
+        return False
+    return (
+        value.get("schema_version") == LEGAL_IR_PROOF_FEEDBACK_SCHEMA_VERSION
+        or value.get("proof_feedback_record") is not None
+    )
+
+
 def build_legal_ir_proof_feedback_record(
     obligation: Any,
     *,
@@ -1055,15 +1277,44 @@ def build_legal_ir_proof_feedback_record(
     partition_key: Any = "",
     deterministic_trusted: Optional[bool] = None,
     unverified_leanstral_assertions: Any = None,
+    training_target: ProofFeedbackTrainingTarget | None = None,
 ) -> LegalIRProofFeedbackRecord:
     """Project proof artifacts into one safe training record.
 
     ``unverified_leanstral_assertions`` is accepted only so callers can pass a
     complete audit envelope without pre-filtering it.  Its value is
     intentionally ignored and cannot affect either content or record identity.
+    A checked positive training target requires the exact protocol obligation.
     """
 
     del unverified_leanstral_assertions
+    if training_target is not None:
+        from ...ir_core.claims import ProofObligation
+
+        if type(training_target) is not ProofFeedbackTrainingTarget or type(obligation) is not ProofObligation:
+            raise ProofFeedbackTrustError("a checked target requires a typed formal proof obligation")
+        if (obligation.obligation_id != training_target.obligation_id
+                or obligation.digest != training_target.formal_obligation_sha256):
+            raise ProofFeedbackTrustError("formal proof obligation differs from the selected target")
+        if (route_result is not None or reconstruction_receipt is not None
+                or deterministic_trusted is not None or counterexample is not None
+                or minimal_failing_contract is not None or receipt_ids or partition_key):
+            raise ProofFeedbackTrustError("checked legal proof feedback requires one evidence route")
+        return LegalIRProofFeedbackRecord.create(
+            obligation_id=training_target.obligation_id,
+            obligation_type=training_target.obligation_type,
+            legal_ir_view=training_target.legal_ir_view,
+            semantic_family=obligation.logic_family,
+            semantic_slots=semantic_slots,
+            selected_premise_families=tuple(_premise_family(item) for item in selected_premises),
+            kernel_reconstruction=training_target._checked_kernel_feedback(),
+            repair_label=repair_label or "none",
+            evidence_ids=evidence_ids,
+            obligation_digest=training_target.obligation_digest,
+            partition_key=training_target.sample_id,
+            partition_policy=partition_policy,
+            versions=versions,
+        )
     obligation_map = _mapping(obligation)
     metadata = _mapping(_get(obligation, "metadata", obligation_map.get("metadata", {})))
     obligation_id = _get(obligation, "obligation_id", obligation_map.get("obligation_id"))
@@ -1431,15 +1682,18 @@ __all__ = [
     "ProofFeedbackRecord",
     "ProofFeedbackReplay",
     "ProofFeedbackStore",
+    "ProofFeedbackTrainingTarget",
     "ProofFeedbackTrustError",
     "ProofFeedbackTrustStatus",
     "ProofFeedbackVersions",
     "VerifiedCounterexampleFeedback",
     "build_legal_ir_proof_feedback_record",
     "canonical_proof_feedback_json",
+    "carries_typed_proof_feedback",
     "deterministic_proof_feedback_partition",
     "legal_ir_proof_feedback_record_from_result",
     "load_proof_feedback_jsonl",
     "proof_feedback_content_digest",
+    "proof_feedback_sample_digest",
     "write_proof_feedback_jsonl",
 ]

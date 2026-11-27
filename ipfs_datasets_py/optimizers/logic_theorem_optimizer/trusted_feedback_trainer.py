@@ -19,6 +19,7 @@ import json
 import math
 import threading
 from collections.abc import Iterable, Iterator, Mapping, Sequence
+from copy import deepcopy
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Final, Optional
@@ -31,9 +32,12 @@ from ...logic.integration.reasoning.legal_ir_proof_feedback import (
     LEGAL_IR_PROOF_FEEDBACK_SCHEMA_VERSION,
     LegalIRProofFeedbackRecord,
     ProofFeedbackPartition,
+    ProofFeedbackTrainingTarget,
     ProofFeedbackTrustStatus,
     ProofFeedbackVersions,
+    carries_typed_proof_feedback,
     proof_feedback_content_digest,
+    proof_feedback_sample_digest,
 )
 from .modal_autoencoder import (
     AdaptiveModalAutoencoder,
@@ -223,11 +227,13 @@ class TrustedFeedbackTrainer:
         samples_by_id: Mapping[str, Any],
         *,
         ablation_evidence: TrustedFeedbackAblationEvidence | Mapping[str, Any] | None = None,
+        current_proof_targets: Mapping[str, ProofFeedbackTrainingTarget] | None = None,
         production_weight_writes_enabled: Optional[bool] = None,
         learning_rate: Optional[float] = None,
     ) -> TrustedFeedbackUpdateReport:
-        """Validate and apply one bounded batch, returning exhaustive counters."""
+        """Apply a batch using independently selected current targets for typed feedback."""
 
+        targets = dict(current_proof_targets or {})
         items = _feedback_items(feedback)
         enabled = (
             self.config.production_weight_writes_enabled
@@ -295,7 +301,9 @@ class TrustedFeedbackTrainer:
                 if not _feedback_is_trusted(item, proof_record, guard_layers=guard_layers):
                     block("untrusted_count", "untrusted_or_unverified_feedback")
                     continue
-                sample_id = _sample_id(item, proof_record)
+                target = targets.get(proof_record.obligation_id) if proof_record is not None else None
+                sample_id = (target.sample_id if type(target) is ProofFeedbackTrainingTarget
+                             else _sample_id(item, proof_record))
                 if not sample_id or sample_id not in samples_by_id:
                     block("missing_sample_count", "referenced_sample_missing")
                     continue
@@ -344,11 +352,21 @@ class TrustedFeedbackTrainer:
                 snapshot = self.autoencoder.state.copy()
                 try:
                     sample = samples_by_id[sample_id]
-                    if proof_record is not None and not _proof_feedback_sample_matches(
-                        proof_record, sample_id, sample, (item, *guard_layers)
-                    ):
-                        block("guardrail_blocked_count", "proof_feedback_sample_mismatch")
-                        continue
+                    if proof_record is not None:
+                        bound_sample_id = (target.sample_id if type(target) is ProofFeedbackTrainingTarget
+                                           else proof_record.obligation_id)
+                        if (sample_id != bound_sample_id
+                                or not _proof_feedback_sample_matches(sample_id, sample, (item, *guard_layers))):
+                            block("guardrail_blocked_count", "proof_feedback_sample_mismatch")
+                            continue
+                        if type(target) is not ProofFeedbackTrainingTarget or not target.matches(proof_record):
+                            block("guardrail_blocked_count", "proof_feedback_current_target_mismatch")
+                            continue
+                        sample = deepcopy(sample)
+                        if proof_feedback_sample_digest(sample) != target.sample_sha256:
+                            block("guardrail_blocked_count", "proof_feedback_current_sample_mismatch")
+                            continue
+                        item = _proof_feedback_learning_payload(proof_record)
                     updated = _apply_bounded_sample_update(
                         self.autoencoder,
                         item,
@@ -365,6 +383,8 @@ class TrustedFeedbackTrainer:
                     ):
                         proof_update = self.autoencoder.train_proof_auxiliary_heads(
                             [proof_record],
+                            current_proof_targets={proof_record.obligation_id: target},
+                            expected_version_fingerprint=self.expected_version_fingerprint,
                             expected_versions=self.expected_versions,
                             learning_rate=step,
                         )
@@ -419,6 +439,7 @@ def apply_trusted_feedback_weight_updates(
     *,
     expected_versions: ProofFeedbackVersions | Mapping[str, Any] | str,
     ablation_evidence: TrustedFeedbackAblationEvidence | Mapping[str, Any],
+    current_proof_targets: Mapping[str, ProofFeedbackTrainingTarget] | None = None,
     config: Optional[TrustedFeedbackTrainerConfig] = None,
     learning_rate: Optional[float] = None,
 ) -> TrustedFeedbackUpdateReport:
@@ -434,6 +455,7 @@ def apply_trusted_feedback_weight_updates(
         feedback,
         samples_by_id,
         ablation_evidence=ablation_evidence,
+        current_proof_targets=current_proof_targets,
         production_weight_writes_enabled=True,
         learning_rate=learning_rate,
     )
@@ -592,9 +614,7 @@ def _feedback_items(value: Any) -> list[Any]:
         return [value]
     if isinstance(value, Mapping):
         # An envelope binding guidance to a proof record is one atomic item.
-        if "proof_feedback_record" in value and any(
-            key in value for key in ("guidance", "feedback", "sample_id")
-        ):
+        if carries_typed_proof_feedback(value):
             return [value]
         nested: list[Any] = []
         for key in (
@@ -619,24 +639,24 @@ def _normalize_feedback(
     dict[str, Any], Optional[LegalIRProofFeedbackRecord], tuple[dict[str, Any], ...]
 ]:
     record: Optional[LegalIRProofFeedbackRecord] = None
+    raw_record: Any = None
     guard_layers: tuple[dict[str, Any], ...] = ()
     if isinstance(value, LegalIRProofFeedbackRecord):
-        record = value
+        raw_record = value
         item: dict[str, Any] = {}
     elif isinstance(value, Mapping):
-        item = {str(key): child for key, child in value.items()}
-        raw_record = item.get("proof_feedback_record")
-        if isinstance(raw_record, LegalIRProofFeedbackRecord):
-            record = raw_record
-        elif isinstance(raw_record, Mapping):
-            try:
-                record = LegalIRProofFeedbackRecord.from_dict(raw_record)
-            except (TypeError, ValueError):
-                return {}, None, ()
+        if value.get("schema_version") == LEGAL_IR_PROOF_FEEDBACK_SCHEMA_VERSION:
+            raw_record = value
+            item = {}
+        else:
+            item = {str(key): child for key, child in value.items()}
+            raw_record = item.pop("proof_feedback_record", None)
         nested = item.get("guidance") or item.get("feedback")
         if isinstance(nested, Mapping):
             envelope = item
             item = {str(key): child for key, child in nested.items()}
+            if carries_typed_proof_feedback(item):
+                return {}, None, ()
             # Keep outer restrictions separate from the learning payload. In
             # particular, an outer approval cannot promote an unverified child.
             guard_layers = (
@@ -658,23 +678,38 @@ def _normalize_feedback(
         except (TypeError, ValueError):
             return {}, None, ()
         return _normalize_feedback(converted)
+    if raw_record is not None:
+        try:
+            if isinstance(raw_record, LegalIRProofFeedbackRecord):
+                raw_record = raw_record.to_dict()
+            if not isinstance(raw_record, Mapping):
+                return {}, None, ()
+            record = LegalIRProofFeedbackRecord.from_dict(raw_record)
+        except (AttributeError, KeyError, TypeError, ValueError):
+            return {}, None, ()
     if record is not None:
         for layer in (item, *guard_layers):
             for key in ("legal_ir_view", "target_component", "target_view"):
                 claimed_view = str(layer.get(key) or "").strip()
                 if claimed_view and claimed_view != record.legal_ir_view:
                     return {}, None, ()
-        item.setdefault("guidance_id", record.record_id)
-        item.setdefault("sample_id", record.obligation_id)
-        item.setdefault("legal_ir_view", record.legal_ir_view)
-        item.setdefault("target_component", record.legal_ir_view)
-        item.setdefault("partition", record.partition.value)
-        item.setdefault("proof_feedback_version_fingerprint", record.version_fingerprint)
-        item.setdefault("proof_checked", record.positive)
-        item.setdefault("trusted", record.eligible_for_training)
-        item.setdefault("source", "legal_ir_proof_feedback")
-        item.setdefault("schema_version", LEGAL_IR_PROOF_FEEDBACK_SCHEMA_VERSION)
+        item = _proof_feedback_learning_payload(record) | item
     return item, record, guard_layers
+
+
+def _proof_feedback_learning_payload(record: LegalIRProofFeedbackRecord) -> dict[str, Any]:
+    """Project only the selected record into typed primary learning."""
+    return {
+        "guidance_id": record.record_id,
+        "legal_ir_view": record.legal_ir_view,
+        "target_component": record.legal_ir_view,
+        "partition": record.partition.value,
+        "proof_feedback_version_fingerprint": record.version_fingerprint,
+        "proof_checked": record.positive,
+        "trusted": record.eligible_for_training,
+        "source": "legal_ir_proof_feedback",
+        "schema_version": LEGAL_IR_PROOF_FEEDBACK_SCHEMA_VERSION,
+    }
 
 
 def _feedback_id(
@@ -701,21 +736,18 @@ _FEEDBACK_SAMPLE_ID_FIELDS = ("sample_id", "training_sample_id", "legal_sample_i
 
 
 def _proof_feedback_sample_matches(
-    record: LegalIRProofFeedbackRecord,
     selected_id: str,
     sample: Any,
     layers: Sequence[Mapping[str, Any]],
 ) -> bool:
-    # The typed route already defaults to this record identity. Envelope
-    # selectors and a caller's index cannot reassign its proof to other data.
-    expected_id = record.obligation_id
+    # Envelope selectors cannot reassign independently selected current data.
     actual_id = (
         sample.get("sample_id") or sample.get("id")
         if isinstance(sample, Mapping)
         else getattr(sample, "sample_id", None)
     )
-    return selected_id == actual_id == expected_id and all(
-        str(layer.get(key) or "").strip() in ("", expected_id)
+    return selected_id == actual_id and all(
+        str(layer.get(key) or "").strip() in ("", selected_id)
         for layer in layers
         for key in _FEEDBACK_SAMPLE_ID_FIELDS
     )

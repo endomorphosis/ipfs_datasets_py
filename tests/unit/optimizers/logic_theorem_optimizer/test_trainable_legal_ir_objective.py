@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from types import SimpleNamespace
 
 import pytest
@@ -9,7 +10,10 @@ import pytest
 from ipfs_datasets_py.logic.integration.reasoning.legal_ir_proof_feedback import (
     LegalIRProofFeedbackRecord,
     ProofFeedbackPartitionPolicy,
+    ProofFeedbackTrainingTarget,
     ProofFeedbackVersions,
+    build_legal_ir_proof_feedback_record,
+    proof_feedback_sample_digest,
 )
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_samples import (
     build_us_code_sample,
@@ -185,27 +189,50 @@ def test_proof_head_training_reports_finite_nonzero_proof_norms() -> None:
         lean_toolchain_version="lean-proof-norms-v1",
         theorem_registry_version="proof-norms-theorems-v1",
     )
-    record = LegalIRProofFeedbackRecord.create(
-        obligation_id="proof-norms-obligation",
+    sample = build_us_code_sample(
+        title="5",
+        section="fictional-proof-objective-norms",
+        text="A fictional agency shall publish notice unless the board grants an exception.",
+    )
+    from ipfs_datasets_py.logic.ir_core.claims import stable_digest
+    from tests.unit.logic.legal_ir.test_proof_cache import _bound_feedback_fixture
+
+    sample, proof, obligation, context = _bound_feedback_fixture(sample, "proof-norms-obligation")
+    receipt, = proof.theorem_receipt_results(
+        expected_context=context, obligation_id=obligation.obligation_id
+    )
+    target = ProofFeedbackTrainingTarget(
+        sample_id=sample.sample_id,
+        sample_sha256=proof_feedback_sample_digest(sample),
+        obligation_id=obligation.obligation_id,
         obligation_type="exception_scope",
         legal_ir_view="deontic.ir",
-        semantic_family="conditional_normative",
+        formal_obligation_sha256=obligation.digest,
+        reviewed_target_sha256=context["interpretation_digest"],
+        dependency_manifest_sha256=stable_digest(context["dependency_versions"]),
+        legal_proof_record=proof,
+        current_sample=sample,
+        expected_artifact_digest=proof.artifact_digest,
+        expected_legal_proof_digest=proof.content_digest,
+        expected_proof_receipt_digest=receipt.digest,
+        expected_proof_context=context,
+    )
+    fixture_record = build_legal_ir_proof_feedback_record(
+        obligation,
+        training_target=target,
         semantic_slots={"exception": "present", "condition": "single"},
-        selected_premise_families=("theorem_template",),
-        route_availability={"deterministic_contract": True},
-        route_statuses={"deterministic_contract": "passed"},
-        backend_outcomes={"z3": "proved"},
-        deterministic_trusted=True,
+        selected_premises=({"metadata": {"premise_family": "theorem_template"}},),
         evidence_ids=("proof-norms-evidence",),
-        receipt_ids=("proof-norms-receipt",),
-        partition_key="proof-norms-obligation",
         partition_policy=ProofFeedbackPartitionPolicy(holdout_fraction=0.0),
         versions=versions,
     )
+    target = replace(target, expected_feedback_record_id=fixture_record.record_id)
+    offered_record = LegalIRProofFeedbackRecord.from_dict(fixture_record.to_dict())
     autoencoder = AdaptiveModalAutoencoder()
 
     report = autoencoder.train_proof_auxiliary_heads(
-        [record],
+        [offered_record],
+        current_proof_targets={target.obligation_id: target},
         expected_versions=versions,
         learning_rate=0.2,
     )

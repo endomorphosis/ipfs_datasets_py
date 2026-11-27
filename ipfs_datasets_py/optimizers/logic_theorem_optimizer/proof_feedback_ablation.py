@@ -23,6 +23,7 @@ from ...logic.integration.reasoning.legal_ir_learned_guidance import (
 from ...logic.integration.reasoning.legal_ir_proof_feedback import (
     LegalIRProofFeedbackRecord,
     ProofFeedbackVersions,
+    carries_typed_proof_feedback,
 )
 from .modal_autoencoder import (
     AdaptiveModalAutoencoder,
@@ -297,6 +298,11 @@ def run_proof_feedback_ablation(
     sample memory disabled by the default evaluator.
     """
 
+    cohorts = tuple(_feedback_items(value) for value in (
+        hammer_feedback, leanstral_feedback, proof_feedback, trusted_feedback,
+    ))
+    if any(carries_typed_proof_feedback(item) for cohort in cohorts for item in cohort):
+        raise ValueError("typed proof-feedback ablation requires a matched typed control")
     cfg = config or ProofFeedbackAblationConfig()
     train = tuple(train_samples)
     holdout = tuple(holdout_samples)
@@ -861,6 +867,8 @@ def _feedback_items(value: Any) -> list[Any]:
     if isinstance(value, LegalIRProofFeedbackRecord):
         return [value]
     if isinstance(value, Mapping):
+        if carries_typed_proof_feedback(value):
+            return [value]
         nested: list[Any] = []
         for key in (
             "feedback_records",
