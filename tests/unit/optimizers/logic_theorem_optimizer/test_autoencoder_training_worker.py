@@ -3283,13 +3283,14 @@ def _reviewed_local_loader_fixed_typed_schema_bpe(vocabulary):
 
 def _reviewed_local_loader_hf_fixture(tmp_path, architecture="encoder_decoder", *, admission_provider=None,
         max_sequence_tokens=2048, fixed_json_schema_subwords=False, fixed_typed_schema_subwords=False,
-        local_model_profile=None):
+        local_model_profile=None, pristine_pair=False):
     """Independent actual built-in HF checkpoint, never loaded or trained by the loader.
 
     A genuine fixture AdamW update creates nontrivial moments. Afterwards the
     real model parameters are zeroed, retaining that Adam history: actual raw
     head logits tie at zero and EOS token zero wins argmax without a scripted
     forward or reference answer. This is an abstention fixture, not model gain.
+    A pristine pair retains its initialized parameters and empty optimizer.
     """
     from copy import deepcopy
     from types import SimpleNamespace
@@ -3361,21 +3362,23 @@ def _reviewed_local_loader_hf_fixture(tmp_path, architecture="encoder_decoder", 
     optimizer = torch.optim.AdamW(model.parameters(), lr=.001, betas=(.9, .999), eps=1e-8,
         weight_decay=.01, amsgrad=False, maximize=False, foreach=False, capturable=False,
         differentiable=False, fused=False)
-    input_ids = torch.tensor([[257, 65, 66, 0]], dtype=torch.long)
-    labels = torch.tensor([[67, 0]], dtype=torch.long) if architecture == "encoder_decoder" else input_ids.clone()
-    loss = model(input_ids=input_ids, attention_mask=torch.ones_like(input_ids), labels=labels).loss
-    assert bool(torch.isfinite(loss))
-    loss.backward()
-    optimizer.step()
-    optimizer.zero_grad(set_to_none=True)
-    assert optimizer.state and any(bool(value["exp_avg"].ne(0).any()) for value in optimizer.state.values())
-    with torch.no_grad():
-        for parameter in model.parameters():
-            parameter.zero_()
+    if not pristine_pair:
+        input_ids = torch.tensor([[257, 65, 66, 0]], dtype=torch.long)
+        labels = torch.tensor([[67, 0]], dtype=torch.long) if architecture == "encoder_decoder" else input_ids.clone()
+        loss = model(input_ids=input_ids, attention_mask=torch.ones_like(input_ids), labels=labels).loss
+        assert bool(torch.isfinite(loss))
+        loss.backward()
+        optimizer.step()
+        optimizer.zero_grad(set_to_none=True)
+        assert optimizer.state and any(bool(value["exp_avg"].ne(0).any()) for value in optimizer.state.values())
+        with torch.no_grad():
+            for parameter in model.parameters():
+                parameter.zero_()
     backend = worker.TorchReviewedDecoderBackend(model, optimizer, tokenizer, architecture=architecture,
         max_sequence_tokens=max_sequence_tokens, pretrained=False, gradient_clip=1.0,
         **({"model_profile": local_model_profile} if qwen2 else {}))
-    backend._optimizer_steps = 1  # The independent fixture performed the real update above.
+    if not pristine_pair:
+        backend._optimizer_steps = 1  # The independent fixture performed the update above.
     torch.manual_seed(271828)
     checkpoint = backend.snapshot_checkpoint()
     pair_rng = torch.get_rng_state().clone()
@@ -5238,6 +5241,166 @@ def test_reviewed_local_loader_v5_refuses_crossed_job_or_changed_source_before_m
     assert calls == (["execution", "asset policy", "admission", "bound"]
                      if damage in {"changed-provider", "mutated-spec"} else [])
     assert not Path(spec.output_directory).exists()
+
+
+def _reviewed_local_v5_signed_fixture(tmp_path, monkeypatch, *, model_limit, job_limit, compact_tokenizer=False):
+    from types import SimpleNamespace
+    from tests.unit.logic import test_autoformal_campaign_training_inputs as fixtures
+
+    data = fixtures._reviewed_mixed_source_bound_cycle_fixture(tmp_path)
+    local = _reviewed_local_loader_hf_fixture(tmp_path, max_sequence_tokens=model_limit,
+        fixed_json_schema_subwords=compact_tokenizer, fixed_typed_schema_subwords=compact_tokenizer, pristine_pair=True)
+    _reviewed_local_loader_no_remote_or_training(monkeypatch, local)
+    assert local.backend._optimizer_steps == 0 and not local.backend.optimizer.state
+
+    def provide_admission():
+        return data.deepcopy(data.kwargs["current_admission_inputs"])
+
+    def provide_source():
+        return data.deepcopy(data.bound_component_inputs)
+
+    # Observe actual prepares from inside the public loader without changing
+    # how it validates the signed inputs or which object it receives.
+    original_prepare = fixtures.inputs.prepare_reviewed_mixed_source_bound_decoder_training_inputs_v5
+    replays = []
+
+    @wraps(original_prepare)
+    def capture_prepare(*args, **kwargs):
+        prepared = original_prepare(*args, **kwargs)
+        replays.append(prepared)
+        return prepared
+
+    monkeypatch.setattr(fixtures.inputs, "prepare_reviewed_mixed_source_bound_decoder_training_inputs_v5",
+        capture_prepare)
+    staged_writes = data.registry.stage_calls
+    bound_sha = data.bound_component_inputs_sha256
+    options = local.options
+    model = asdict(options["model_checkpoint"])
+    optimizer = asdict(options["optimizer_checkpoint"])
+    tokenizer = asdict(options["tokenizer_artifact"])
+    license_asset = asdict(options["license_artifact"])
+    backend_assets = [asdict(options[name]) for name in ("recipe_artifact", "model_config_artifact")]
+    profile = data.options["admission_profile"]
+    pins = worker._reviewed_decoder_source_pins(admission_profile=profile, source_bound=True)
+    lineage = "fixture:v5-signed-exact-local-restore"
+    base = "fixture:v5-signed-local-t5"
+    seed = 1729
+    parent = {"schema": worker.REVIEWED_SOURCE_BOUND_MIXED_DECODER_CHECKPOINT_SCHEMA,
+        "checkpoint_lineage_id": lineage, "base_version_id": base,
+        "backend_identity": options["expected_backend_identity"], "assets": [model, tokenizer, license_asset, *backend_assets],
+        "training_binding": None, "model_state": model, "optimizer_state": optimizer,
+        "progress": {"epochs_completed": 0, "row_cursor": 0, "optimizer_steps": 0}, "batch_size": 1, "seed": seed,
+        "parent_checkpoint_sha256": None, "producer_pins": pins, "qualified": False, "promotion_performed": False,
+        "token_budgets": {"max_source_tokens": job_limit, "max_target_tokens": job_limit,
+            "tokenizer_contract": fixtures.inputs._reviewed_decoder_tokenizer_contract(local.backend.tokenizer)}}
+    parent_ref = _complete_reviewed_artifact(tmp_path / "v5-exact-pair.json", worker._json_bytes(parent))
+    exposure_ref = _complete_reviewed_artifact(tmp_path / "v5-exposure.json", worker._json_bytes(data.kwargs["exposure_records"]))
+    contexts_ref = _complete_reviewed_artifact(tmp_path / "v5-contexts.json", worker._json_bytes(data.kwargs["source_contexts"]))
+    stage = data.kwargs["stage_artifact"]
+    spec = worker.TrainingJobSpec.from_dict({
+        "schema_version": worker.REVIEWED_SOURCE_BOUND_MIXED_DECODER_JOB_SCHEMA,
+        "job_id": "fixture:v5-signed-local-restore-job", "run_id": "fixture:v5-signed-local-restore-run",
+        "base_version_id": base, "checkpoint_lineage_id": lineage, "output_directory": str(tmp_path / "unused-worker-output"),
+        "code_identity": "fixture:independent-v5-current-source-pins", "stage_artifact": stage,
+        "exposure_artifact": exposure_ref, "source_contexts_artifact": contexts_ref,
+        "model_artifact": model, "tokenizer_artifact": tokenizer, "license_artifact": license_asset,
+        "base_model_checkpoint": model, "base_optimizer_checkpoint": optimizer, "parent_checkpoint_artifact": parent_ref,
+        "expected_admission_inputs_sha256": data.kwargs["expected_admission_inputs_sha256"],
+        "admission_profile": profile, "expected_bound_component_inputs_sha256": bound_sha,
+        "split_config": data.kwargs["split_config"], "expected_split_config_sha256": data.kwargs["expected_split_config_sha256"],
+        "backend_identity": options["expected_backend_identity"], "expected_source_sha256": pins,
+        "max_source_tokens": job_limit, "max_target_tokens": job_limit, "batch_size": 1, "seed": seed,
+        "allow_fictional_fixture": True,
+    })
+    original_artifacts = (stage, exposure_ref, contexts_ref, parent_ref, model, optimizer, tokenizer, license_asset,
+                          *backend_assets)
+    policies = []
+
+    def asset_policy(policy):
+        options["asset_policy_guard"](policy)
+        assert policy["schema"] == "reviewed-local-source-bound-decoder-load-policy/v1"
+        assert policy["job_spec_sha256"] == spec.canonical_sha256 and policy["stage_artifact"] == stage
+        assert policy["bound_component_inputs_sha256"] == bound_sha
+        policies.append(policy)
+
+    load_options = dict(spec=spec, registry=data.registry, current_admission_provider=provide_admission,
+        current_bound_component_inputs_provider=provide_source, execution_guard=options["execution_guard"],
+        asset_policy_guard=asset_policy, recipe_artifact=options["recipe_artifact"],
+        model_config_artifact=options["model_config_artifact"], max_model_bytes=options["max_model_bytes"])
+    return SimpleNamespace(data=data, local=local, spec=spec, bound_sha=bound_sha, stage=stage, parent_ref=parent_ref,
+        load_options=load_options, replays=replays, policies=policies, staged_writes=staged_writes,
+        original_artifacts=original_artifacts)
+
+
+def _assert_reviewed_local_v5_artifacts_unchanged(fixture):
+    assert fixture.data.registry.stage_calls == fixture.staged_writes
+    assert not Path(fixture.spec.output_directory).exists()
+    for artifact in fixture.original_artifacts:
+        raw = Path(artifact["path"]).read_bytes()
+        assert len(raw) == artifact["bytes"] and hashlib.sha256(raw).hexdigest() == artifact["sha256"]
+
+
+def test_reviewed_local_loader_v5_restores_exact_builtin_pair_with_signed_source_bound_inputs(tmp_path, monkeypatch):
+    maximum = 4096
+    fixture = _reviewed_local_v5_signed_fixture(tmp_path, monkeypatch,
+        model_limit=maximum, job_limit=maximum, compact_tokenizer=True)
+    data, local = fixture.data, fixture.local
+    local.torch.manual_seed(90210)
+    assert not local.torch.equal(local.torch.get_rng_state(), local.pair_rng)
+    runtime, receipt = worker.load_local_reviewed_source_bound_decoder_runtime_v5(**fixture.load_options)
+    assert type(runtime.backend) is worker.TorchReviewedDecoderBackend and runtime.backend is not local.backend
+    assert runtime.backend.restored_checkpoint_matches(local.checkpoint["model_state"], local.checkpoint["optimizer_state"])
+    assert local.torch.equal(local.torch.get_rng_state(), local.pair_rng)
+    assert not runtime.backend.optimizer.state
+    first, before_restore, after_restore = fixture.replays
+    assert first == before_restore == after_restore
+    binding = after_restore["receipt"]
+    assert binding["record_count"] == len(data.rows) == 3 and binding["training_mask"] == 0
+    assert [row["id"] for row in after_restore["records"]] == [row["id"] for row in data.rows]
+    runtime.backend.validate_training_records(after_restore["records"], max_source_tokens=maximum, max_target_tokens=maximum)
+    assert [json.loads(row["target_json"]) for row in after_restore["records"]] == [row["canonical_ir"] for row in data.rows]
+    assert receipt["schema"] == "reviewed-local-source-bound-decoder-runtime-load/v1"
+    assert receipt["checkpoint_restored"] is receipt["matched_pair"] is True and receipt["optimizer_steps"] == 0
+    assert receipt["job_spec_sha256"] == fixture.spec.canonical_sha256
+    assert receipt["stage_artifact_sha256"] == fixture.stage["sha256"]
+    assert receipt["parent_checkpoint_sha256"] == fixture.parent_ref["sha256"]
+    assert receipt["training_input_receipt_sha256"] == hashlib.sha256(worker._json_bytes(binding)).hexdigest()
+    assert receipt["staged_bound_component_inputs_sha256"] == receipt["current_bound_component_inputs_sha256"] == fixture.bound_sha
+    assert binding["current_bound_component_inputs_sha256"] == binding["staged_bound_component_inputs_sha256"] == fixture.bound_sha
+    assert len(fixture.policies) == receipt["guard_calls"]["asset_policy"] > 0
+    assert all(receipt[key] is False for key in ("training_performed", "downloads_performed", "resource_granted",
+        "pretrained_quality_verified", "legal_meaning_verified", "proof_authority", "corpus_admitted"))
+    _assert_reviewed_local_v5_artifacts_unchanged(fixture)
+
+
+def test_reviewed_local_loader_v5_refuses_signed_records_over_model_capacity_before_restore(tmp_path, monkeypatch):
+    model_limit, job_limit = 2048, 12288
+    fixture = _reviewed_local_v5_signed_fixture(tmp_path, monkeypatch, model_limit=model_limit, job_limit=job_limit)
+    local = fixture.local
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("over-capacity signed V5 input reached checkpoint inspection or restore")
+
+    monkeypatch.setattr(worker.TorchReviewedDecoderBackend, "inspect_checkpoint", forbidden)
+    monkeypatch.setattr(worker.TorchReviewedDecoderBackend, "restore_checkpoint", forbidden)
+    local.torch.manual_seed(90210)
+    entry_rng = local.torch.get_rng_state().clone()
+    assert not local.torch.equal(entry_rng, local.pair_rng)
+    with pytest.raises(worker.TrainingJobValidationError,
+            match="full source and target exceed actual decoder context; truncation forbidden"):
+        worker.load_local_reviewed_source_bound_decoder_runtime_v5(**fixture.load_options)
+    assert local.torch.equal(local.torch.get_rng_state(), entry_rng)
+
+    assert fixture.replays
+    prepared = fixture.replays[0]
+    assert prepared["receipt"]["staged_bound_component_inputs_sha256"] == fixture.bound_sha
+    assert prepared["receipt"]["current_bound_component_inputs_sha256"] == fixture.bound_sha
+    assert prepared["receipt"]["record_count"] == len(fixture.data.rows) == 3
+    rows = prepared["records"]
+    assert [json.loads(row["target_json"]) for row in rows] == [row["canonical_ir"] for row in fixture.data.rows]
+    assert all(2 < len(row[key]) <= job_limit for row in rows for key in ("source_token_ids", "target_token_ids"))
+    assert any(len(row["target_token_ids"]) > model_limit for row in rows)
+    _assert_reviewed_local_v5_artifacts_unchanged(fixture)
 
 
 def test_reviewed_local_loader_v3_original_asset_denial_preserves_error_before_model_import(tmp_path, monkeypatch):
