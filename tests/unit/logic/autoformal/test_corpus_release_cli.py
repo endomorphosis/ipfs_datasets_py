@@ -1300,7 +1300,7 @@ def _local_coordinator_publication(tmp_path, operation):
 @pytest.mark.parametrize("operation", ("artifact", "receipt"))
 def test_local_coordinator_partial_write_leaves_final_path_retryable(tmp_path, monkeypatch, operation):
     release, path, publish = _local_coordinator_publication(tmp_path, operation)
-    original_open = Path.open
+    original_open = open
 
     @contextmanager
     def interrupted_open(open_path, mode="r", *args, **kwargs):
@@ -1316,7 +1316,7 @@ def test_local_coordinator_partial_write_leaves_final_path_retryable(tmp_path, m
             yield SimpleNamespace(write=write)
 
     with monkeypatch.context() as patch:
-        patch.setattr(Path, "open", interrupted_open)
+        patch.setattr(release, "open", interrupted_open, raising=False)
         with pytest.raises(OSError, match="interrupted publication"):
             publish()
     assert not path.exists()
@@ -1370,6 +1370,46 @@ def test_local_coordinator_directory_sync_failure_removes_only_owned_publication
     assert not list(path.parent.glob(".release-*"))
     publish()
     assert path.is_file()
+
+
+def test_local_coordinator_rejects_oversized_replacement_without_unbounded_read(tmp_path, monkeypatch):
+    release, path, publish = _local_coordinator_publication(tmp_path, "receipt")
+    artifact = tmp_path / "payload"
+    with artifact.open("ab") as stream:
+        stream.truncate(2 * release._MAX_ARTIFACT_BYTES)
+    original = Path.read_bytes
+
+    def guarded_read(candidate):
+        assert candidate != artifact, "attempted unbounded read of a replaced release artifact"
+        return original(candidate)
+
+    monkeypatch.setattr(Path, "read_bytes", guarded_read)
+    with pytest.raises(release.ReleaseCoordinatorError, match="artifact bytes differ"):
+        publish()
+    assert not path.exists()
+
+
+@pytest.mark.parametrize("operation", ("artifact", "receipt"))
+def test_local_coordinator_rejects_linked_artifact_parent(tmp_path, operation):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+
+    root = tmp_path / "release"
+    root.mkdir()
+    external = tmp_path / "external"
+    external.mkdir()
+    parent = root / "packet"
+    if operation == "receipt":
+        reference = release.publish_referenced_artifact(root, "packet/payload", b"payload", "candidate")
+        (parent / "payload").rename(external / "payload")
+        parent.rmdir()
+        publish = partial(release.seal_coordinator_receipt, root, [reference])
+    else:
+        publish = partial(release.publish_referenced_artifact, root, "packet/payload", b"payload", "candidate")
+    parent.symlink_to(external, target_is_directory=True)
+    with pytest.raises(release.ReleaseCoordinatorError, match="real artifact directory"):
+        publish()
+    assert not (root / release.RECEIPT_NAME).exists()
+    assert list(external.iterdir()) == ([external / "payload"] if operation == "receipt" else [])
 
 
 @pytest.mark.parametrize("damage", ["index_schema", "index_profile", "codec", "wire_sha", "wire_length", "wire_bool",

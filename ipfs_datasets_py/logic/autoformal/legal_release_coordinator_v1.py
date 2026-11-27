@@ -11,8 +11,10 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import stat
 import sys as _sys
 import types as _types
+from contextlib import contextmanager, suppress
 from pathlib import Path
 from uuid import uuid4
 
@@ -49,21 +51,57 @@ def _root(root: Path) -> Path:
     return root
 
 
-def _artifact_path(root: Path, relative_path: object) -> Path:
+def _artifact_parts(relative_path: object) -> list[str]:
     _need(
         type(relative_path) is str and bool(relative_path) and not relative_path.startswith("/")
-        and "\\" not in relative_path,
+        and "\\" not in relative_path and "\x00" not in relative_path,
         "relative artifact path required",
     )
     parts = relative_path.split("/")
     _need(all(part not in ("", ".", "..") for part in parts), "artifact path escapes the release root")
-    return root.joinpath(*parts)
+    return parts
 
 
-def _publish_immutable_bytes(path: Path, payload: bytes, *, exists_message: str) -> None:
+@contextmanager
+def _artifact_directory(root: Path | int, parts=(), *, create=False):
+    """Hold a real directory and traverse nested names relative to it."""
+    flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+    try:
+        fd = os.dup(root) if isinstance(root, int) else os.open(root, flags)
+    except OSError as error:
+        raise ReleaseCoordinatorError("real release directory required") from error
+    try:
+        for part in parts:
+            if create:
+                with suppress(FileExistsError):
+                    os.mkdir(part, dir_fd=fd)
+            try:
+                child = os.open(part, flags, dir_fd=fd)
+            except OSError as error:
+                raise ReleaseCoordinatorError("real artifact directory required") from error
+            os.close(fd)
+            fd = child
+        yield fd
+    finally:
+        os.close(fd)
+
+
+def _entry_exists(directory: int, name: str) -> bool:
+    try:
+        os.stat(name, dir_fd=directory, follow_symlinks=False)
+    except FileNotFoundError:
+        return False
+    return True
+
+
+def _publish_immutable_bytes(directory: int, name: str, payload: bytes, *, exists_message: str) -> None:
     """Verify staged bytes and publish them under a new name without replacement."""
-    staged = path.with_name(f".release-{uuid4().hex}.tmp")
-    with staged.open("x+b") as stream:
+    staged = f".release-{uuid4().hex}.tmp"
+
+    def open_stage(path, flags):
+        return os.open(path, flags | os.O_NOFOLLOW, 0o666, dir_fd=directory)
+
+    with open(staged, "x+b", opener=open_stage) as stream:
         try:
             if stream.write(payload) != len(payload):
                 raise OSError("incomplete release file write")
@@ -73,26 +111,42 @@ def _publish_immutable_bytes(path: Path, payload: bytes, *, exists_message: str)
             if stream.read(len(payload) + 1) != payload:
                 raise OSError("staged release file bytes differ")
 
-            directory = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
             try:
-                try:
-                    os.link(staged, path)
-                except FileExistsError as error:
-                    raise ReleaseCoordinatorError(exists_message) from error
-                try:
-                    staged.unlink()
-                    os.fsync(directory)
-                except BaseException:
-                    try:
-                        if os.path.samestat(path.lstat(), os.fstat(stream.fileno())):
-                            path.unlink()
-                    except FileNotFoundError:
-                        pass
-                    raise
-            finally:
-                os.close(directory)
+                os.link(staged, name, src_dir_fd=directory, dst_dir_fd=directory,
+                        follow_symlinks=False)
+            except FileExistsError as error:
+                raise ReleaseCoordinatorError(exists_message) from error
+            try:
+                os.unlink(staged, dir_fd=directory)
+                os.fsync(directory)
+            except BaseException:
+                with suppress(FileNotFoundError):
+                    current = os.stat(name, dir_fd=directory, follow_symlinks=False)
+                    if os.path.samestat(current, os.fstat(stream.fileno())):
+                        os.unlink(name, dir_fd=directory)
+                raise
         finally:
-            staged.unlink(missing_ok=True)
+            with suppress(FileNotFoundError):
+                os.unlink(staged, dir_fd=directory)
+
+
+def _verify_published_artifact(directory: int, name: str, length: int, digest: str) -> None:
+    try:
+        fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=directory)
+        with os.fdopen(fd, "rb") as stream:
+            before = os.fstat(fd)
+            _need(stat.S_ISREG(before.st_mode), "referenced artifact is not published")
+            _need(before.st_size == length, "published artifact bytes differ")
+            payload = stream.read(length + 1)
+            _need(len(payload) == length and hashlib.sha256(payload).hexdigest() == digest,
+                  "published artifact bytes differ")
+            fields = ("st_dev", "st_ino", "st_mode", "st_size", "st_mtime_ns", "st_ctime_ns")
+            after = os.fstat(fd)
+            linked = os.stat(name, dir_fd=directory, follow_symlinks=False)
+            _need(all(getattr(before, field) == getattr(after, field) == getattr(linked, field)
+                      for field in fields), "published artifact changed during verification")
+    except OSError as error:
+        raise ReleaseCoordinatorError("referenced artifact is not published") from error
 
 
 def publish_referenced_artifact(
@@ -101,14 +155,15 @@ def publish_referenced_artifact(
     """Write one referenced artifact before any coordinator receipt exists."""
 
     directory = _root(root)
-    _need(not (directory / RECEIPT_NAME).exists(), "artifact published after the coordinator receipt")
     _need(type(payload) is bytes and 0 < len(payload) <= _MAX_ARTIFACT_BYTES, "bounded artifact bytes required")
     _need(status in STATUSES, "artifact status is not a separate release selector")
-    path = _artifact_path(directory, relative_path)
-    _need(path.name != RECEIPT_NAME, "coordinator receipt cannot be published as a referenced artifact")
-    _need(not path.exists(), "referenced artifact path already exists")
-    path.parent.mkdir(parents=True, exist_ok=True)
-    _publish_immutable_bytes(path, payload, exists_message="referenced artifact path already exists")
+    *parents, name = _artifact_parts(relative_path)
+    _need(name != RECEIPT_NAME, "coordinator receipt cannot be published as a referenced artifact")
+    with _artifact_directory(directory) as root_fd:
+        _need(not _entry_exists(root_fd, RECEIPT_NAME), "artifact published after the coordinator receipt")
+        with _artifact_directory(root_fd, parents, create=True) as parent_fd:
+            _need(not _entry_exists(parent_fd, name), "referenced artifact path already exists")
+            _publish_immutable_bytes(parent_fd, name, payload, exists_message="referenced artifact path already exists")
     return {
         "relative_path": relative_path,
         "sha256": hashlib.sha256(payload).hexdigest(),
@@ -122,50 +177,48 @@ def seal_coordinator_receipt(root: Path, artifacts: list[dict[str, object]]) -> 
     """Write the coordinator receipt only after every referenced artifact matches."""
 
     directory = _root(root)
-    receipt_path = directory / RECEIPT_NAME
-    _need(not receipt_path.exists(), "coordinator receipt already sealed")
-    _need(type(artifacts) is list and 1 <= len(artifacts) <= 64, "bounded referenced artifact list required")
-    seen: set[str] = set()
-    sealed: list[dict[str, object]] = []
-    for artifact in artifacts:
-        _need(type(artifact) is dict, "closed artifact record required")
-        _need(set(artifact) == {"relative_path", "sha256", "byte_length", "status", "published"},
-              "closed artifact record required")
-        _need(artifact["published"] is True, "referenced artifact is not published")
-        relative = artifact["relative_path"]
-        _need(type(relative) is str and relative not in seen, "duplicate referenced artifact")
-        seen.add(relative)
-        _need(relative != RECEIPT_NAME, "coordinator receipt cannot list itself")
-        _need(artifact["status"] in STATUSES, "artifact status is not a separate release selector")
-        digest = artifact["sha256"]
-        _need(type(digest) is str and len(digest) == 64 and all(character in "0123456789abcdef" for character in digest),
-              "artifact sha256 required")
-        length = artifact["byte_length"]
-        _need(type(length) is int and 0 < length <= _MAX_ARTIFACT_BYTES, "artifact byte length required")
-        path = _artifact_path(directory, relative)
-        _need(path.is_file() and not path.is_symlink(), "referenced artifact is not published")
-        payload = path.read_bytes()
-        _need(len(payload) == length and hashlib.sha256(payload).hexdigest() == digest,
-              "published artifact bytes differ")
-        sealed.append({
-            "relative_path": relative,
-            "sha256": digest,
-            "byte_length": length,
-            "status": artifact["status"],
-        })
-    receipt = {
-        "schema": SCHEMA,
-        "artifacts": sorted(sealed, key=lambda item: str(item["relative_path"])),
-        "remote_upload_executed": False,
-        "hub_readback_executed": False,
-        "model_manager_catalog_mutated": False,
-        "legal_acceptance_claimed": False,
-        "federal_corpus_acceptance_claimed": False,
-    }
-    _need(_COMMIT_KEYS.isdisjoint(receipt), "coordinator receipt includes its own commit hash")
-    _publish_immutable_bytes(receipt_path, _canonical(receipt) + b"\n", exists_message="coordinator receipt already sealed")
+    with _artifact_directory(directory) as root_fd:
+        _need(not _entry_exists(root_fd, RECEIPT_NAME), "coordinator receipt already sealed")
+        _need(type(artifacts) is list and 1 <= len(artifacts) <= 64, "bounded referenced artifact list required")
+        seen: set[str] = set()
+        sealed: list[dict[str, object]] = []
+        for artifact in artifacts:
+            _need(type(artifact) is dict, "closed artifact record required")
+            _need(set(artifact) == {"relative_path", "sha256", "byte_length", "status", "published"},
+                  "closed artifact record required")
+            _need(artifact["published"] is True, "referenced artifact is not published")
+            relative = artifact["relative_path"]
+            _need(type(relative) is str and relative not in seen, "duplicate referenced artifact")
+            seen.add(relative)
+            _need(relative != RECEIPT_NAME, "coordinator receipt cannot list itself")
+            _need(artifact["status"] in STATUSES, "artifact status is not a separate release selector")
+            digest = artifact["sha256"]
+            _need(type(digest) is str and len(digest) == 64 and all(character in "0123456789abcdef" for character in digest),
+                  "artifact sha256 required")
+            length = artifact["byte_length"]
+            _need(type(length) is int and 0 < length <= _MAX_ARTIFACT_BYTES, "artifact byte length required")
+            *parents, name = _artifact_parts(relative)
+            with _artifact_directory(root_fd, parents) as parent_fd:
+                _verify_published_artifact(parent_fd, name, length, digest)
+            sealed.append({
+                "relative_path": relative,
+                "sha256": digest,
+                "byte_length": length,
+                "status": artifact["status"],
+            })
+        receipt = {
+            "schema": SCHEMA,
+            "artifacts": sorted(sealed, key=lambda item: str(item["relative_path"])),
+            "remote_upload_executed": False,
+            "hub_readback_executed": False,
+            "model_manager_catalog_mutated": False,
+            "legal_acceptance_claimed": False,
+            "federal_corpus_acceptance_claimed": False,
+        }
+        _need(_COMMIT_KEYS.isdisjoint(receipt), "coordinator receipt includes its own commit hash")
+        _publish_immutable_bytes(root_fd, RECEIPT_NAME, _canonical(receipt) + b"\n",
+                                 exists_message="coordinator receipt already sealed")
     return receipt
-
 
 def coordinator_commit_sha256(receipt: dict[str, object]) -> str:
     """Hash the receipt body. A body that already carries its commit hash is refused."""
