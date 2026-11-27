@@ -560,6 +560,7 @@ def run_fake_live_verification(
         canary_percent=canary_percent,
         approval=approval,
         pinned_redownload=pinned,
+        rehearsal=True,
     )
     if pointer.commit_sha != commit.commit_sha:
         raise PatentHFReleaseVerifyError("canary pointer commit mismatch")
@@ -567,8 +568,11 @@ def run_fake_live_verification(
         raise PatentHFReleaseVerifyError("canary_percent not applied")
     if pointer.pointer_path != profile.pointer_path:
         raise PatentHFReleaseVerifyError("unexpected pointer path")
+    if not pointer.rehearsal_only:
+        raise PatentHFReleaseVerifyError("fake live canary must remain rehearsal-only")
     gates["canary_promotion"] = {
         "ok": True,
+        "rehearsal_only": pointer.rehearsal_only,
         "canary_percent": pointer.canary_percent,
         "commit_sha": pointer.commit_sha,
         "pointer_path": pointer.pointer_path,

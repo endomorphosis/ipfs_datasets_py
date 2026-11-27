@@ -1159,6 +1159,17 @@ class PinnedRedownloadValidation:
 
 
 @dataclass(frozen=True, slots=True)
+class _PointerReadback:
+    """Original readback and the approved plan scope used to produce it."""
+
+    validation: PinnedRedownloadValidation
+    release_id: str
+    target_revision: str
+    parent_commit: str
+    hub_client: Any | None
+
+
+@dataclass(frozen=True, slots=True)
 class RuntimeReleasePointer:
     """Consumer-facing runtime release pointer (pinned commit + release id)."""
 
@@ -1170,8 +1181,11 @@ class RuntimeReleasePointer:
     previous_commit_sha: str = ""
     previous_release_id: str = ""
     canary_percent: int = 0
+    rehearsal_only: bool = False
 
     def __post_init__(self) -> None:
+        if type(self.rehearsal_only) is not bool:
+            raise HuggingFacePublicationError("rehearsal_only must be an exact boolean")
         object.__setattr__(
             self, "repository_id", _text(self.repository_id, label="repository_id")
         )
@@ -1213,8 +1227,10 @@ class RuntimeReleasePointer:
             "release_id": self.release_id,
             "release_prefix": self.release_prefix,
             "repository_id": self.repository_id,
-            "runtime_release_pointer": True,
+            "runtime_release_pointer": not self.rehearsal_only,
         }
+        if self.rehearsal_only:
+            payload["rehearsal_only"] = True
         if self.previous_commit_sha:
             payload["previous_commit_sha"] = self.previous_commit_sha
         if self.previous_release_id:
@@ -3017,7 +3033,7 @@ class HuggingFaceReleasePublisher:
         self.api = api
         self.fetch_bytes = fetch_bytes
         self.fetch_to_path = fetch_to_path
-        self._pinned_verified_commits: set[str] = set()
+        self._pointer_readbacks: dict[tuple[str, str, bool], _PointerReadback] = {}
         if (
             not isinstance(remote_info_batch_size, int)
             or isinstance(remote_info_batch_size, bool)
@@ -3972,6 +3988,7 @@ class HuggingFaceReleasePublisher:
         commit_sha: str,
         remote_path: str,
         local_dir: Path,
+        hub_download: Callable[..., str | Path | None] | None = None,
     ) -> Path:
         """Download one pinned object to disk without retaining its payload."""
 
@@ -3984,7 +4001,7 @@ class HuggingFaceReleasePublisher:
         _require_path_within(root, target, label="verified cache target")
 
         fetched: str | Path | None
-        if self.fetch_to_path is not None:
+        if self.fetch_to_path is not None and hub_download is None:
             try:
                 fetched = self.fetch_to_path(
                     self.repository_id,
@@ -3997,7 +4014,8 @@ class HuggingFaceReleasePublisher:
                     f"pinned redownload failed for {remote}: {exc}"
                 ) from exc
         else:
-            download = getattr(self.api, "hf_hub_download", None)
+            download = (hub_download if hub_download is not None
+                        else getattr(self.api, "hf_hub_download", None))
             if callable(download):
                 try:
                     fetched = download(
@@ -4146,12 +4164,19 @@ class HuggingFaceReleasePublisher:
         revalidated: list[str] = []
         revalidated_bytes = 0
         network_fetch = False
+        hub_client = self.api
+        hub_download = None
+        if remote_payloads is None and self.fetch_to_path is None:
+            download = getattr(hub_client, "hf_hub_download", None)
+            if callable(download):
+                hub_download = download
 
         def validate_disk_item(item: PublicationFilePlan) -> tuple[str, int]:
             target = self._download_pinned_file(
                 commit_sha=pinned,
                 remote_path=item.remote_path,
                 local_dir=cache,
+                hub_download=hub_download,
             )
             size_bytes, digest_bytes = _file_digest(target)
             if size_bytes != item.size_bytes or digest_bytes.hex() != item.sha256:
@@ -4263,7 +4288,20 @@ class HuggingFaceReleasePublisher:
             ok=True,
             canonical_release_validation=canonical_release_validation,
         )
-        self._pinned_verified_commits.add(pinned)
+        # Shape or copied receipts cannot confer selection authority. Keep
+        # only original outcomes tied to this publisher and the complete plan.
+        if (plan.repository_id == self.repository_id
+                and plan.repository_type == self.repository_type
+                and plan.release_prefix == self.release_prefix_for(plan.release_id)
+                and not plan.skipped_exact_matches):
+            from_hub = hub_download is not None
+            self._pointer_readbacks[pinned, plan.plan_digest, from_hub] = _PointerReadback(
+                validation=validation,
+                release_id=plan.release_id,
+                target_revision=plan.target_revision,
+                parent_commit=plan.audited_parent_commit,
+                hub_client=hub_client if from_hub else None,
+            )
         return validation
 
     def canary_promote_pointer(
@@ -4274,17 +4312,32 @@ class HuggingFaceReleasePublisher:
         canary_percent: int,
         approval: PublicationApproval,
         pinned_redownload: PinnedRedownloadValidation | None = None,
+        rehearsal: bool = False,
     ) -> RuntimeReleasePointer:
-        """Promote the runtime release pointer under a bounded canary.
+        """Prepare a pointer after original client readback of the exact release.
 
-        This is a separate reviewed step from the append-only commit.  It never
-        deletes the failed or previous release.  Pointer promotion waits for
-        successful pinned redownload validation of the same commit SHA.
+        This step returns a selection record and does not write it. Explicit
+        rehearsal exercises the same pointer math with offline payloads and
+        produces a record unavailable for runtime selection.
         """
 
-        if approval.plan_digest != commit_receipt.plan_digest:
+        if type(rehearsal) is not bool:
             raise HuggingFacePublicationError(
-                "pointer promotion requires approval of the same plan_digest"
+                "pointer rehearsal must be an exact boolean"
+            )
+        if (commit_receipt.repository_id != self.repository_id
+                or commit_receipt.release_prefix != self.release_prefix_for(
+                    commit_receipt.release_id)):
+            raise HuggingFacePublicationError(
+                "pointer promotion requires a publish receipt for this repository and release"
+            )
+        if (approval.plan_digest != commit_receipt.plan_digest
+                or approval.approval_id != commit_receipt.approval_id
+                or approval.credentials_scope != f"{self.repository_type}:write:{self.repository_id}"
+                or approval.max_upload_bytes < commit_receipt.upload_bytes):
+            raise HuggingFacePublicationError(
+                "pointer promotion requires the same plan_digest and scoped approval "
+                "as the publish receipt"
             )
         if (
             not isinstance(canary_percent, int)
@@ -4295,42 +4348,60 @@ class HuggingFaceReleasePublisher:
             raise HuggingFacePublicationError(
                 "canary_percent must be an integer in 1..100"
             )
-        # Pointer promotion waits for pinned redownload validation of the same
-        # commit (explicit receipt or a prior redownload_and_validate_pinned on
-        # this publisher instance).
-        #
-        # Legacy Abby call sites omit the receipt argument and only exercise
-        # pointer math/rollback; keep that wire path when no explicit receipt is
-        # supplied.  Every non-Abby profile, and any caller that supplies a
-        # receipt, is held to the pin gate.  Profiles cannot set
-        # require_pinned_verification_before_promotion=False.
-        verified = False
         if pinned_redownload is not None:
-            if not pinned_redownload.ok:
+            if pinned_redownload.ok is not True:
                 raise HuggingFacePublicationError(
-                    "pointer promotion requires successful pinned "
-                    "redownload validation"
+                    "pointer promotion requires successful pinned redownload validation"
                 )
             if pinned_redownload.commit_sha != commit_receipt.commit_sha:
                 raise HuggingFacePublicationError(
-                    "pointer promotion pinned redownload commit_sha does "
-                    "not match the publish commit"
+                    "pointer promotion pinned redownload commit_sha does not match the publish commit"
                 )
-            verified = True
-        elif commit_receipt.commit_sha in self._pinned_verified_commits:
-            verified = True
-        legacy_abby_omitted_receipt = (
-            pinned_redownload is None
-            and self.profile.profile_id == ABBY_VOICE_PROFILE_ID
-        )
-        if (
-            self.profile.require_pinned_verification_before_promotion
-            and not verified
-            and not legacy_abby_omitted_receipt
-        ):
+            if pinned_redownload.repository_id != commit_receipt.repository_id:
+                raise HuggingFacePublicationError(
+                    "pointer promotion pinned redownload repository differs from the publish receipt"
+                )
+
+        key = (commit_receipt.commit_sha, commit_receipt.plan_digest)
+        readback = self._pointer_readbacks.get((*key, True))
+        if readback is not None and readback.hub_client is not self.api:
+            readback = None
+        if rehearsal and (
+                readback is None or (pinned_redownload is not None
+                                     and pinned_redownload is not readback.validation)):
+            readback = self._pointer_readbacks.get((*key, False))
+        # Preserve Abby's original non-writing pointer arithmetic when called
+        # without any receipt. It no longer produces a selectable pointer.
+        if (readback is None and pinned_redownload is None
+                and self.profile.profile_id == ABBY_VOICE_PROFILE_ID):
+            rehearsal = True
+        elif (readback is None or (pinned_redownload is not None
+                                  and pinned_redownload is not readback.validation)):
             raise HuggingFacePublicationError(
-                "pointer promotion waits for pinned redownload validation "
-                "of the published commit"
+                "pointer promotion waits for original pinned redownload validation "
+                "of the published plan and commit"
+            )
+        if readback is not None and (
+                readback.validation.revalidated_paths != commit_receipt.uploaded_paths
+                or readback.validation.revalidated_bytes != commit_receipt.upload_bytes
+                or readback.release_id != commit_receipt.release_id
+                or readback.target_revision != commit_receipt.target_revision
+                or readback.parent_commit != commit_receipt.parent_commit):
+            raise HuggingFacePublicationError(
+                "pointer promotion readback does not cover the exact published release"
+            )
+        if not rehearsal and len(commit_receipt.commit_sha) not in (40, 64):
+            raise HuggingFacePublicationError(
+                "pointer promotion requires a full immutable commit SHA"
+            )
+        if previous is not None and (
+                previous.repository_id != self.repository_id
+                or previous.release_prefix != self.release_prefix_for(previous.release_id)
+                or (not rehearsal and (previous.rehearsal_only
+                                       or previous.pointer_path != self.pointer_path
+                                       or len(previous.commit_sha) not in (40, 64)))):
+            raise HuggingFacePublicationError(
+                "pointer promotion requires the previous pointer for this release channel"
             )
         return RuntimeReleasePointer(
             repository_id=commit_receipt.repository_id,
@@ -4341,6 +4412,7 @@ class HuggingFaceReleasePublisher:
             previous_commit_sha=previous.commit_sha if previous else "",
             previous_release_id=previous.release_id if previous else "",
             canary_percent=canary_percent,
+            rehearsal_only=rehearsal,
         )
 
     def rollback_pointer(
@@ -4369,6 +4441,7 @@ class HuggingFaceReleasePublisher:
             previous_commit_sha=current.commit_sha,
             previous_release_id=current.release_id,
             canary_percent=0,
+            rehearsal_only=current.rehearsal_only,
         )
 
     def build_publication_receipt(
