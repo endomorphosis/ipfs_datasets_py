@@ -4276,3 +4276,21 @@ A signed fictional case passed through the built-in V5 loader with a tiny offlin
 A separate signed case prepared a complete target that exceeded the fixture model's sequence capacity. The loader rejected it before checkpoint inspection or restore. The exact-resume test also verified that checkpoint parent comparisons reject substitutions between JSON booleans and numbers. The existing V3 encoder-decoder and causal-language-model paired-restore cases also passed. [Paired restore and guard qualification](/tmp/P2-V5-signed-paired-restore-ttSxMhAt/actual-v5-paired-restore-software-qualification.json)
 
 Production fitting, independent statutory and formal review for Title 10 §§ 101, 7213, and 7214, and corpus admission remain pending.
+
+
+## Evidence595 — Resume the signed V5 worker by one batch
+
+A signed fictional three-record fixture exercised the public V5 training-job file entry point with the analytic backend. An uninterrupted two-batch reference supplied the exact step-one model and optimizer pair. The worker restored that pair, consumed the one remaining record, and advanced from step one to step two. The exported model and optimizer matched the uninterrupted reference byte for byte.
+
+The test checked checkpoint lineage, original pair bytes, and repeated checks of current admission and signed source bindings. The fixture retained its zero training mask. [Exact V5 worker resume qualification](/tmp/P2-V5-public-worker-signed-resume-viJC7fdB/actual-v5-exact-signed-resume-qualification.json)
+
+Production fitting, independent statutory and formal review for Title 10 §§ 101, 7213, and 7214, and corpus admission remain pending.
+
+
+## Evidence596 — Carry signed source bindings into graph preservation
+
+The V4 candidate graph replays the current signed source binding alongside complete V3 meaning admission. The V4 mixed-preservation preparation validates the graph again and carries the binding identity and input digest into its manifest and project bindings. The signed fictional case retained all three units across both child families, their child files, and 15 proposed preservation obligations. Its controls checked refusal by the legacy entry point and refusal after an independent pin change.
+
+Nine selected offline cases passed. The retained cases cover both V3 consumer entry points, the V2 source attachment, V3 preservation, and the evaluator's three source-replay gates. [Graph and preservation software qualification](/tmp/P2-bound-mixed-preservation-qual-flat-pehFm7lN/actual-source-bound-graph-preservation-qualification.json)
+
+Native build, independent statutory and formal review for Title 10 §§ 101, 7213, and 7214, corpus admission, and release remain pending.

@@ -38378,6 +38378,353 @@
       "root": "artifact_workspace",
       "scope": "Signed-fictional software evidence for the built-in V5 paired restore, sequence capacity guard, and exact checkpoint typing.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/lir02_mixed_source_bound_v5_worker_resume_20261127",
+      "closed_runtime_facts": {
+        "base": "c8afbfbaeffc2d2ddcdc7276383d22c90bb7bc51",
+        "checks": {
+          "signed-v5-worker-exact-resume": {
+            "errors": 0,
+            "failures": 0,
+            "junit": {
+              "bytes": 438,
+              "path": "/tmp/P2-V5-public-worker-signed-resume-viJC7fdB/signed-v5-worker-exact-resume.xml",
+              "sha256": "0865ae107dcbe10af1b9b89baba9faa12e627d5c86b9ef30b5de882293733af5"
+            },
+            "log": {
+              "bytes": 721,
+              "path": "/tmp/P2-V5-public-worker-signed-resume-viJC7fdB/signed-v5-worker-exact-resume.log",
+              "sha256": "2aef2a5c335c089fce381bc0a5b544a2fb0ae18b3e0c0f4122b10e520afb34b9"
+            },
+            "ordered_cases": [
+              [
+                "tests.unit.optimizers.logic_theorem_optimizer.test_autoencoder_training_worker",
+                "test_reviewed_mixed_source_bound_v5_exact_signed_resume_matches_uninterrupted_pair"
+              ]
+            ],
+            "skipped": 0,
+            "terminal": {
+              "bytes": 2,
+              "path": "/tmp/P2-V5-public-worker-signed-resume-viJC7fdB/signed-v5-worker-exact-resume.terminal",
+              "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+            },
+            "tests": 1
+          }
+        },
+        "cooperative_source_read_leases_released": true,
+        "current_admission_and_bound_source_rechecked": true,
+        "decoder_schema": "reviewed-decoder-training-inputs/v5",
+        "evidence_ordinal": 595,
+        "exact_code_blobs": {
+          "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_training_worker.py": {
+            "bytes": 1165664,
+            "mode": "100644",
+            "oid": "e1770acc0b2417e42c91b48f43071da86d07f807",
+            "sha256": "c988f204e5d819ce098591bb67b62f781cb9e077b629c4149bc18c67cf5954fc"
+          }
+        },
+        "independent_statutory_review_or_admission": false,
+        "initial_fixture_optimizer_step": 1,
+        "owned_pytest_subprocesses_reaped": true,
+        "production_training_or_Native_execution": false,
+        "qualification": {
+          "bytes": 5926,
+          "path": "/tmp/P2-V5-public-worker-signed-resume-viJC7fdB/actual-v5-exact-signed-resume-qualification.json",
+          "sha256": "d18a557acf33e59c84614f5e5610941d74805f9d24f199f9d719970d3fcf6ad9"
+        },
+        "qualified_software_commit": "e0975e42a43cda25e8b3c2eb708f09dc80fb1930",
+        "qualified_software_tree": "7425d70edc13c013855bfd8f23f408608423ab1f",
+        "reference_batches": 2,
+        "resume_parent_checkpoint_bytes_retained": true,
+        "resume_scope": "test-created same-stage checkpoint from a signed fictional analytic first batch",
+        "resumed_fixture_batch_count": 1,
+        "resumed_fixture_model_and_optimizer_bytes_match_reference": true,
+        "resumed_fixture_optimizer_step": 2,
+        "schema": "autoformal-selected-software-evidence/v1",
+        "scope": "offline signed-fictional analytic worker resume; no production fit, Native, statutory review or admission",
+        "signed_fixture_only": true,
+        "signed_registry_artifact_rechecks_observed": true,
+        "stage_schema": "reviewed-example-cycle-input-artifact/v5",
+        "task_id": "LIR-02",
+        "task_status": "in_progress",
+        "task_status_changed": false,
+        "worker_checkpoint_schema": "reviewed-source-bound-mixed-decoder-checkpoint/v1",
+        "worker_job_schema": "reviewed-source-bound-mixed-decoder-job/v1",
+        "worker_receipt_schema": "reviewed-source-bound-mixed-decoder-worker-receipt/v1"
+      },
+      "evidence_ordinal": 595,
+      "id": "lir02-mixed-source-bound-v5-worker-resume-evidence595-20261127",
+      "observed_bytes": 3195,
+      "observed_sha256": "e2f06c154838d99da6aece3058b96e9f5bf9660d737c34f0f20ccafd949a36df",
+      "path": "/tmp/P2-V5-public-worker-signed-resume-viJC7fdB/Guide595-docs-ready/Guide595-scoped-software-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Signed-fictional software evidence for the V5 analytic worker's exact one-batch resume.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/lir02_source_bound_v4_graph_and_preservation_20261127",
+      "closed_runtime_facts": {
+        "Native_build_performed": false,
+        "base": "c8afbfbaeffc2d2ddcdc7276383d22c90bb7bc51",
+        "bound_component_identity_and_input_digest_retained": true,
+        "checks": {
+          "final-evaluator-bound-gates": {
+            "errors": 0,
+            "failures": 0,
+            "junit": {
+              "bytes": 840,
+              "path": "/tmp/P2-bound-mixed-preservation-qual-flat-pehFm7lN/final-evaluator-bound-gates.xml",
+              "sha256": "46f8b1d8537ff53a3ce9c941ad68c85cbdd210a1883cd0748fbcceba85ac3b9c"
+            },
+            "log": {
+              "bytes": 811,
+              "path": "/tmp/P2-bound-mixed-preservation-qual-flat-pehFm7lN/final-evaluator-bound-gates.log",
+              "sha256": "e3eb6e26e1a21a4e46009253f7a87469d77a34edd3681593ad14ddd616a092dc"
+            },
+            "ordered_cases": [
+              [
+                "tests.unit.optimizers.logic_theorem_optimizer.test_legal_ir_evaluation_artifacts",
+                "test_reviewed_producer_bridge_replays_bound_component_at_all_gates[unchanged]"
+              ],
+              [
+                "tests.unit.optimizers.logic_theorem_optimizer.test_legal_ir_evaluation_artifacts",
+                "test_reviewed_producer_bridge_replays_bound_component_at_all_gates[revoked]"
+              ],
+              [
+                "tests.unit.optimizers.logic_theorem_optimizer.test_legal_ir_evaluation_artifacts",
+                "test_reviewed_producer_bridge_replays_bound_component_at_all_gates[different_replay]"
+              ]
+            ],
+            "skipped": 0,
+            "terminal": {
+              "bytes": 2,
+              "path": "/tmp/P2-bound-mixed-preservation-qual-flat-pehFm7lN/final-evaluator-bound-gates.terminal",
+              "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+            },
+            "tests": 3
+          },
+          "final-v4-graph": {
+            "errors": 0,
+            "failures": 0,
+            "junit": {
+              "bytes": 396,
+              "path": "/tmp/P2-bound-mixed-preservation-qual-flat-pehFm7lN/final-v4-graph.xml",
+              "sha256": "4a136aa780af72060c8592978e42a6ca63f94a65619633a144664f3baee2610a"
+            },
+            "log": {
+              "bytes": 705,
+              "path": "/tmp/P2-bound-mixed-preservation-qual-flat-pehFm7lN/final-v4-graph.log",
+              "sha256": "17e3335e6bc0e0149cc7d2d65ec9753a599510034c615ae27a0b887207619255"
+            },
+            "ordered_cases": [
+              [
+                "tests.unit.logic.autoformal.test_corpus_source_bindings",
+                "test_bound_mixed_norm_component_replays_complete_current_v4_graph"
+              ]
+            ],
+            "skipped": 0,
+            "terminal": {
+              "bytes": 2,
+              "path": "/tmp/P2-bound-mixed-preservation-qual-flat-pehFm7lN/final-v4-graph.terminal",
+              "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+            },
+            "tests": 1
+          },
+          "held-current-signed-v3-consumer": {
+            "errors": 0,
+            "failures": 0,
+            "junit": {
+              "bytes": 640,
+              "path": "/tmp/P2-bound-mixed-preservation-qual-flat-pehFm7lN/held-current-signed-v3-consumer.xml",
+              "sha256": "26ac57722c051788b5cd24f387ebc57f68414089b9718f6be557519596afb313"
+            },
+            "log": {
+              "bytes": 813,
+              "path": "/tmp/P2-bound-mixed-preservation-qual-flat-pehFm7lN/held-current-signed-v3-consumer.log",
+              "sha256": "c44f6690fa7413089348223085b98fde929c8735b282e319624302541908edc0"
+            },
+            "ordered_cases": [
+              [
+                "tests.unit.optimizers.logic_theorem_optimizer.test_legal_span_consumer_binding",
+                "test_current_signed_v3_source_and_meaning_reach_existing_consumer[training]"
+              ],
+              [
+                "tests.unit.optimizers.logic_theorem_optimizer.test_legal_span_consumer_binding",
+                "test_current_signed_v3_source_and_meaning_reach_existing_consumer[heldout_evaluation]"
+              ]
+            ],
+            "skipped": 0,
+            "terminal": {
+              "bytes": 2,
+              "path": "/tmp/P2-bound-mixed-preservation-qual-flat-pehFm7lN/held-current-signed-v3-consumer.terminal",
+              "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+            },
+            "tests": 2
+          },
+          "held-v2-source-attachment": {
+            "errors": 0,
+            "failures": 0,
+            "junit": {
+              "bytes": 397,
+              "path": "/tmp/P2-bound-mixed-preservation-qual-flat-pehFm7lN/held-v2-source-attachment.xml",
+              "sha256": "11512e25b8212cec43d1c37794a8eccf7780267709803c8ff9019c63660e707b"
+            },
+            "log": {
+              "bytes": 716,
+              "path": "/tmp/P2-bound-mixed-preservation-qual-flat-pehFm7lN/held-v2-source-attachment.log",
+              "sha256": "cb6456862e6d0aafbf8d81deffb1b90dc63066a9bebbc2d6ca38616fd9d1edb4"
+            },
+            "ordered_cases": [
+              [
+                "tests.unit.logic.autoformal.test_corpus_source_bindings",
+                "test_bound_norm_component_consumer_cannot_drop_current_source_replay"
+              ]
+            ],
+            "skipped": 0,
+            "terminal": {
+              "bytes": 2,
+              "path": "/tmp/P2-bound-mixed-preservation-qual-flat-pehFm7lN/held-v2-source-attachment.terminal",
+              "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+            },
+            "tests": 1
+          },
+          "retained-v3-preservation": {
+            "errors": 0,
+            "failures": 0,
+            "junit": {
+              "bytes": 413,
+              "path": "/tmp/P2-bound-mixed-preservation-qual-flat-pehFm7lN/retained-v3-preservation.xml",
+              "sha256": "b4ab9c52ae3b19355d81c76ad4fea9d9a717efa248685420b5ec0684a9cd2bfd"
+            },
+            "log": {
+              "bytes": 715,
+              "path": "/tmp/P2-bound-mixed-preservation-qual-flat-pehFm7lN/retained-v3-preservation.log",
+              "sha256": "eed94cdd6996327dafad07b7f3299a6186a04342a82933eb538b7735d7f966ba"
+            },
+            "ordered_cases": [
+              [
+                "tests.unit.logic.autoformal.test_legal_corpus_shared_lake",
+                "test_reviewed_preservation_v3_retains_all_mixed_and_object_children_without_coercion"
+              ]
+            ],
+            "skipped": 0,
+            "terminal": {
+              "bytes": 2,
+              "path": "/tmp/P2-bound-mixed-preservation-qual-flat-pehFm7lN/retained-v3-preservation.terminal",
+              "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+            },
+            "tests": 1
+          },
+          "source-bound-v4-preservation": {
+            "errors": 0,
+            "failures": 0,
+            "junit": {
+              "bytes": 415,
+              "path": "/tmp/P2-bound-mixed-preservation-qual-flat-pehFm7lN/source-bound-v4-preservation.xml",
+              "sha256": "48a1abc7808f0a999069e5524162413fd96e4dfbf2f2bc1c2ce169331b0c089c"
+            },
+            "log": {
+              "bytes": 719,
+              "path": "/tmp/P2-bound-mixed-preservation-qual-flat-pehFm7lN/source-bound-v4-preservation.log",
+              "sha256": "b8e1c74e318dfd83d146a5c156b5707ea8ccac6db21e3adfda2c6ba58232edab"
+            },
+            "ordered_cases": [
+              [
+                "tests.unit.logic.autoformal.test_legal_corpus_shared_lake",
+                "test_reviewed_source_bound_preservation_v4_retains_signed_mixed_graph_and_children"
+              ]
+            ],
+            "skipped": 0,
+            "terminal": {
+              "bytes": 2,
+              "path": "/tmp/P2-bound-mixed-preservation-qual-flat-pehFm7lN/source-bound-v4-preservation.terminal",
+              "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+            },
+            "tests": 1
+          }
+        },
+        "cooperative_source_read_leases_released": true,
+        "evidence_ordinal": 596,
+        "exact_code_blobs": {
+          "ipfs_datasets_py/logic/autoformal/corpus_norm_definition_adapter.py": {
+            "bytes": 60239,
+            "mode": "100644",
+            "oid": "f4d99f77107c767de119d163e6e862d79190ddd9",
+            "sha256": "c96e9601bf61af991d35d8a9f606a965b963032c4fc2954db23831f9f80a54c5"
+          },
+          "ipfs_datasets_py/logic/autoformal/corpus_source_bindings.py": {
+            "bytes": 58068,
+            "mode": "100644",
+            "oid": "9ac84a3be170abc01e51fb08eb57d13a35ea9331",
+            "sha256": "69191ba2b80677e688b920c5ed951bd34e92b103c8a6e74388ee5b7a4df61ed8"
+          },
+          "ipfs_datasets_py/logic/autoformal/legal_corpus_shared_lake.py": {
+            "bytes": 207237,
+            "mode": "100644",
+            "oid": "941f551e3ed005637fe4ee70151c00291aff3cfe",
+            "sha256": "0d70e57a8657f8e4fe9d1424fce116239b55f7c3b30a206fa843489f0d959f5d"
+          },
+          "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_consumer_binding.py": {
+            "bytes": 58287,
+            "mode": "100644",
+            "oid": "701f50dfbec97cb01d58d17b1953fe9ec873462c",
+            "sha256": "a0633a52161dbf5ca68fa57de4c639e25d123705624ea54fc4eea7588289b484"
+          },
+          "tests/unit/logic/autoformal/test_corpus_source_bindings.py": {
+            "bytes": 96564,
+            "mode": "100644",
+            "oid": "49e534884dc90a2a039270e8d893b648033bf730",
+            "sha256": "0bd0cf8258b6efa19714e8b0bc5876a714ac397168cca45d11dcbea2e3d8ba58"
+          },
+          "tests/unit/logic/autoformal/test_legal_corpus_shared_lake.py": {
+            "bytes": 210312,
+            "mode": "100644",
+            "oid": "1856cd546a4b0d58be0fea3cc732a8bdca0183de",
+            "sha256": "2d1cb0fe32e41acd1561973ae62702e0e2c7c8520c8dcf892b99fff5028d26a8"
+          },
+          "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_evaluation_artifacts.py": {
+            "bytes": 297733,
+            "mode": "100644",
+            "oid": "8a3bd196317b9493c532ca947ad269bd198948a9",
+            "sha256": "bb43112da9f1eb59be7f9a2a716202f1f1715ca3a6c27f123d129f8003727e31"
+          }
+        },
+        "graph_schema": "legal-corpus-reviewed-norm-candidate-graph/v4",
+        "independent_statutory_review_corpus_admission_or_release": false,
+        "integration_commit": "cb8c5ea2d217a94590eb063d8227e214c6a206ca",
+        "integration_tree": "3e51f9d6dcf4bf41a00ce4a4a6ceed8266f1d7b8",
+        "legacy_preservation_refusal_and_changed_pin_refusal": true,
+        "owned_pytest_subprocesses_reaped": true,
+        "prepared_preservation_obligations": 15,
+        "prepared_signed_mixed_units": 3,
+        "preservation_binding_schema": "legal-corpus-reviewed-preservation-bindings/v4",
+        "preservation_manifest_schema": "legal-corpus-reviewed-preservation-preparation/v4",
+        "prior_guide_commit": "9abb9c2b15a3b8cfb42856184ac8178705d67089",
+        "qualification": {
+          "bytes": 11944,
+          "path": "/tmp/P2-bound-mixed-preservation-qual-flat-pehFm7lN/actual-source-bound-graph-preservation-qualification.json",
+          "sha256": "04ffc4cb6d240c21201f8cd4d13e0952a71c64e4a43ea8347652f01feb312d0e"
+        },
+        "qualified_software_commit": "54a91c98911f64aa5e2ab623fc3ce3ef1a99021f",
+        "qualified_software_tree": "7c4a55ecd33fd47cb474f23613f2c76eea1c3e8f",
+        "schema": "autoformal-selected-software-evidence/v1",
+        "scope": "offline signed-fictional graph and preservation preparation; no Native build, statutory review, corpus admission or release",
+        "signed_fixture_only": true,
+        "task_id": "LIR-02",
+        "task_status": "in_progress",
+        "task_status_changed": false
+      },
+      "evidence_ordinal": 596,
+      "id": "lir02-source-bound-v4-graph-preservation-evidence596-20261127",
+      "observed_bytes": 10469,
+      "observed_sha256": "89db36957b8e8cbcb71d37fdb9539cd577837e74615a2ca4b3945e1b3a4c66d1",
+      "path": "/tmp/P2-bound-mixed-preservation-qual-flat-pehFm7lN/Guide596-docs-ready/Guide596-scoped-software-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Signed-fictional software evidence for the source-bound V4 graph and preservation preparation.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }

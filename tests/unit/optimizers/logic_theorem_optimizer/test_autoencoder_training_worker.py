@@ -13177,3 +13177,123 @@ def test_closed_terminal_source_inverse_refuses_unrelated_prior_source_mutation(
     assert changed != current
     with pytest.raises(worker.TrainingJobValidationError):
         worker._reviewed_digest_cache_terminal_source_inverse(changed)
+
+
+def test_reviewed_mixed_source_bound_v5_exact_signed_resume_matches_uninterrupted_pair(tmp_path):
+    from random import Random
+    from types import SimpleNamespace
+
+    from tests.unit.logic import test_autoformal_campaign_training_inputs as fixtures
+
+    signed = fixtures._reviewed_mixed_source_bound_cycle_fixture(tmp_path)
+    worker_directory = tmp_path / "worker-fixture"
+    worker_directory.mkdir()
+    batch_size = 2
+    fixture = _complete_reviewed_worker_fixture(worker_directory, batch_size=batch_size)
+    bound_sha = signed.bound_component_inputs_sha256
+    options = dict(signed.kwargs, tokenizer=fixture.runtime.tokenizer)
+    prepared = fixture.inputs.prepare_reviewed_mixed_source_bound_decoder_training_inputs_v5(
+        signed.registry, **options, current_bound_component_inputs=signed.bound_component_inputs,
+        expected_bound_component_inputs_sha256=bound_sha)
+    binding = prepared["receipt"]
+    assert binding["staged_bound_component_inputs_sha256"] == bound_sha
+    assert binding["current_bound_component_inputs_sha256"] == bound_sha
+    assert binding["fixture_only"] is True and binding["training_mask"] == 0
+    assert [row["id"] for row in prepared["records"]] == [row["id"] for row in signed.rows]
+
+    # Generate the actual first pair and uninterrupted reference from the
+    # signed records. The public worker is invoked once, from step one.
+    ordered = list(prepared["records"])
+    Random(fixture.payload["seed"]).shuffle(ordered)
+    first_batch, last_batch = ordered[:batch_size], ordered[batch_size:]
+    assert len(first_batch) == 2 and len(last_batch) == 1
+    reference = fixture.backend
+    first_metrics = reference.train_batch(first_batch)
+    assert first_metrics["optimizer_steps"] == 1
+    first_pair = reference.snapshot_checkpoint()
+    model = _complete_reviewed_artifact(tmp_path / "signed-first-model.json", first_pair["model_state"])
+    optimizer = _complete_reviewed_artifact(tmp_path / "signed-first-optimizer.json", first_pair["optimizer_state"])
+    last_metrics = reference.train_batch(last_batch)
+    assert last_metrics["optimizer_steps"] == 2
+    uninterrupted_pair = reference.snapshot_checkpoint()
+
+    pins = worker._reviewed_decoder_source_pins(admission_profile=options["admission_profile"], source_bound=True)
+    parent = json.loads(Path(fixture.payload["parent_checkpoint_artifact"]["path"]).read_bytes())
+    parent.update(schema=worker.REVIEWED_SOURCE_BOUND_MIXED_DECODER_CHECKPOINT_SCHEMA, producer_pins=pins,
+        token_budgets={"max_source_tokens": options["max_source_tokens"],
+            "max_target_tokens": options["max_target_tokens"], "tokenizer_contract": binding["tokenizer_contract"]})
+    pristine = _complete_reviewed_artifact(tmp_path / "signed-pristine-pair.json", worker._json_bytes(parent))
+    progress_after_first = {"epochs_completed": 0, "row_cursor": 2, "optimizer_steps": 1}
+    parent.update(training_binding=binding, model_state=model, optimizer_state=optimizer, progress=progress_after_first,
+        parent_checkpoint_sha256=pristine["sha256"])
+    parent_ref = _complete_reviewed_artifact(tmp_path / "signed-first-pair.json", worker._json_bytes(parent))
+
+    exposure = _complete_reviewed_artifact(tmp_path / "signed-exposure.json", worker._json_bytes(options["exposure_records"]))
+    contexts = _complete_reviewed_artifact(tmp_path / "signed-contexts.json", worker._json_bytes(options["source_contexts"]))
+    payload = dict(fixture.payload, schema_version=worker.REVIEWED_SOURCE_BOUND_MIXED_DECODER_JOB_SCHEMA,
+        admission_profile=options["admission_profile"], stage_artifact=options["stage_artifact"],
+        exposure_artifact=exposure, source_contexts_artifact=contexts,
+        expected_source_sha256=pins, expected_bound_component_inputs_sha256=bound_sha,
+        expected_admission_inputs_sha256=options["expected_admission_inputs_sha256"],
+        split_config=options["split_config"], expected_split_config_sha256=options["expected_split_config_sha256"],
+        max_source_tokens=options["max_source_tokens"], max_target_tokens=options["max_target_tokens"],
+        base_model_checkpoint=model, base_optimizer_checkpoint=optimizer, parent_checkpoint_artifact=parent_ref,
+        max_steps=1, max_seconds=1200, output_directory=str(tmp_path / "signed-resumed"))
+    spec = worker.TrainingJobSpec.from_dict(payload)
+    assert type(spec) is worker.ReviewedSourceBoundMixedDecoderTrainingJobSpec
+    job = tmp_path / "signed-resume-job.json"
+    job_raw = worker._json_bytes(spec.to_dict())
+    job.write_bytes(job_raw)
+    job_sha = hashlib.sha256(job_raw).hexdigest()
+
+    stage = fixtures._reviewed_doc(signed.registry, options["stage_artifact"])
+    stage_sha = options["expected_stage_sha256"]
+    transport_sha = stage["bound_component_transport_artifact"]["sha256"]
+    registry_reads = {stage_sha: 0, transport_sha: 0}
+    stage_calls = signed.registry.stage_calls
+
+    def read_artifact(descriptor, *, max_bytes):
+        raw = signed.registry.read_artifact(descriptor, max_bytes=max_bytes)
+        if descriptor["sha256"] in registry_reads:
+            registry_reads[descriptor["sha256"]] += 1
+        return raw
+
+    resumed_backend = _CompleteReviewedSGDBackend()
+    registry = SimpleNamespace(artifact_path=signed.registry.artifact_path, read_artifact=read_artifact)
+    runtime = replace(fixture.runtime, backend=resumed_backend, registry=registry,
+        current_admission_provider=lambda: signed.deepcopy(options["current_admission_inputs"]),
+        current_bound_component_inputs_provider=lambda: signed.deepcopy(signed.bound_component_inputs))
+    result = worker.execute_training_job_file(job, job_sha, reviewed_runtime=runtime)
+
+    progress_after_second = {"epochs_completed": 1, "row_cursor": 0, "optimizer_steps": 2}
+    assert result["schema_version"] == worker.REVIEWED_SOURCE_BOUND_MIXED_DECODER_WORKER_RECEIPT_SCHEMA
+    assert result["job_spec_sha256"] == spec.canonical_sha256 and result["job_file_sha256"] == job_sha
+    assert result["initial_progress"] == progress_after_first and result["worker_progress"] == progress_after_second
+    assert result["backend_restore_attempts"] == result["backend_restore_calls"] == result["backend_train_batch_calls"] == 1
+    assert resumed_backend.validations == resumed_backend.restores == resumed_backend.calls == 1
+    assert resumed_backend.seen == [last_batch]
+    assert result["backend_reported_metrics"] == [last_metrics]
+    assert result["backend_reported_optimizer_steps"] == reference.steps == resumed_backend.steps == 2
+    assert result["model_bytes_changed"] is result["optimizer_bytes_changed"] is True
+    assert result["complete_training_binding"] == binding and result["prepared_inputs_sha256"] == prepared["prepared_sha256"]
+    assert Path(result["model_checkpoint"]["path"]).read_bytes() == uninterrupted_pair["model_state"]
+    assert Path(result["optimizer_checkpoint"]["path"]).read_bytes() == uninterrupted_pair["optimizer_state"]
+    assert Path(model["path"]).read_bytes() == first_pair["model_state"]
+    assert Path(optimizer["path"]).read_bytes() == first_pair["optimizer_state"]
+    assert Path(parent_ref["path"]).read_bytes() == worker._json_bytes(parent)
+
+    checkpoint = json.loads(Path(result["candidate"]["path"]).read_bytes())
+    assert checkpoint["schema"] == worker.REVIEWED_SOURCE_BOUND_MIXED_DECODER_CHECKPOINT_SCHEMA
+    assert checkpoint["training_binding"] == binding and checkpoint["progress"] == progress_after_second
+    assert checkpoint["parent_checkpoint_sha256"] == parent_ref["sha256"]
+    assert checkpoint["model_state"] == result["model_checkpoint"] and checkpoint["optimizer_state"] == result["optimizer_checkpoint"]
+    assert json.loads((Path(spec.output_directory) / "receipt.json").read_bytes()) == result
+    checks = result["guard_call_counts"]
+    assert checks["execution"] == checks["asset_policy"] == 11
+    assert checks["current_admission"] == checks["current_bound_component_inputs"] == 22
+    assert registry_reads == {stage_sha: 22, transport_sha: 22}
+    assert signed.registry.stage_calls == stage_calls
+    assert binding["production_training_eligible"] is False
+    assert all(result[key] is False for key in ("qualified", "admitted", "corpus_admitted", "promotion_performed",
+        "physical_model_assets_verified", "pretrained_quality_verified", "numerical_update_independently_verified",
+        "optimizer_resume_independently_verified", "legal_meaning_verified", "registry_modified", "downloads_performed"))
