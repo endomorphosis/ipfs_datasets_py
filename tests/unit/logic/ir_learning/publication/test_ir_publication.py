@@ -47,16 +47,28 @@ def _inputs() -> dict:
 
 
 class _FakeHfApi:
+    parent_commit = "1" * 40
+
     def __init__(self, commit_sha: str = "a" * 40, fail_once: bool = False) -> None:
         self.commit_sha = commit_sha
         self.fail_once = fail_once
         self.calls: list[dict] = []
+
+    def repo_info(self, *, repo_id, repo_type, revision):
+        assert repo_type == "dataset"
+        assert revision == "main"
+        return {"sha": self.parent_commit}
+
+    def get_paths_info(self, *, repo_id, repo_type, revision, paths):
+        assert revision == self.parent_commit
+        return []
 
     def create_commit(self, **kwargs):
         if self.fail_once:
             self.fail_once = False
             raise RuntimeError("simulated transport failure")
         self.calls.append(kwargs)
+        assert kwargs["parent_commit"] == self.parent_commit
         operations = kwargs.get("operations") or []
         assert operations, "create_commit must receive operations"
         for op in operations:
@@ -122,7 +134,10 @@ def test_publish_requires_lease_and_approval(tmp_path: Path) -> None:
 def test_approved_append_only_upload_captures_remote_revision(tmp_path: Path) -> None:
     package = package_ir_release(output_dir=tmp_path / "pkg", inputs=_inputs())
     policy = IRPublicationPolicy(repository_id=package.repository_id)
-    plan, _ = plan_ir_dry_run(package, policy=policy)
+    api = _FakeHfApi(commit_sha="b" * 40)
+    plan, _ = plan_ir_dry_run(
+        package, policy=policy, audited_parent_commit=api.parent_commit
+    )
     approval = PublicationApproval(
         approver="release-operator@example.com",
         plan_digest=plan.plan_digest,
@@ -131,7 +146,6 @@ def test_approved_append_only_upload_captures_remote_revision(tmp_path: Path) ->
         credentials_scope="dataset:write:Publicus/proof-grounded-ir-learning",
         approval_id="approval-fixture-002",
     )
-    api = _FakeHfApi(commit_sha="b" * 40)
     receipt = publish_ir_release(
         package,
         policy=policy,
@@ -139,17 +153,163 @@ def test_approved_append_only_upload_captures_remote_revision(tmp_path: Path) ->
         approval=approval,
         lease=_lease(policy),
         api=api,
+        audited_parent_commit=api.parent_commit,
         receipt_path=tmp_path / "receipt.json",
     )
     assert receipt["remote_revision"] == "b" * 40
     assert receipt["evidence"]["remote_revision_captured"] is True
+    assert receipt["post_publication_verification"] is None
+    assert receipt["pinned_redownload_validation"] is None
+    assert receipt["evidence"]["immutable_remote_readback_verified"] is False
     assert receipt["status"] == "published_pending_promotion"
     assert receipt["append_only"] is True
     assert len(api.calls) == 1
     assert (tmp_path / "receipt.json").is_file()
 
 
-def test_partial_upload_retry_skips_exact_matches_only(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    "readback",
+    [
+        "cache_only",
+        "offline_payloads",
+        "without_inventory",
+        "callback_with_inventory",
+        "client_transport",
+        "client_with_inventory",
+        "corrupt_client_payload",
+        "empty_inventory",
+        "unbound_inventory",
+    ],
+)
+def test_ir_readback_requires_independent_immutable_inputs(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, readback: str
+) -> None:
+    package = package_ir_release(output_dir=tmp_path / "pkg", inputs=_inputs())
+    policy = IRPublicationPolicy(repository_id=package.repository_id)
+    api = _FakeHfApi(commit_sha="d" * 40)
+    plan, _ = plan_ir_dry_run(
+        package, policy=policy, audited_parent_commit=api.parent_commit
+    )
+    approval = PublicationApproval(
+        approver="release-operator@example.com",
+        plan_digest=plan.plan_digest,
+        max_cost_usd=10.0,
+        max_upload_bytes=plan.cost_receipt["upload_bytes"],
+        credentials_scope="dataset:write:Publicus/proof-grounded-ir-learning",
+        approval_id="approval-fixture-readback",
+    )
+    payloads = {
+        item.remote_path: (Path(package.output_dir) / item.relative_path).read_bytes()
+        for item in plan.operations
+    }
+    observations = {
+        item.remote_path: {
+            "commit_sha": api.commit_sha,
+            "sha256": item.sha256,
+            "size_bytes": item.size_bytes,
+        }
+        for item in plan.operations
+    }
+    fetched: list[str] = []
+
+    def fetch(repo_id: str, revision: str, path: str) -> bytes:
+        assert repo_id == policy.repository_id
+        assert revision == api.commit_sha
+        fetched.append(path)
+        return payloads[path]
+
+    use_client = readback in {
+        "client_transport", "client_with_inventory", "corrupt_client_payload"
+    }
+    if use_client:
+        get_parent_paths = api.get_paths_info
+
+        def get_paths_info(*, repo_id, repo_type, revision, paths):
+            if revision == api.parent_commit:
+                return get_parent_paths(
+                    repo_id=repo_id, repo_type=repo_type, revision=revision, paths=paths
+                )
+            assert revision == api.commit_sha
+            assert len(api.calls) == 1
+            return [
+                {"path": path, "size": len(payloads[path]), "lfs": observations[path]}
+                for path in paths
+            ]
+
+        def hf_hub_download(
+            *, repo_id, repo_type, revision, filename, local_dir, force_download
+        ):
+            assert repo_type == "dataset"
+            assert force_download is True
+            target = local_dir / filename
+            payload = fetch(repo_id, revision, filename)
+            if readback == "corrupt_client_payload":
+                payload += b"!"
+            target.write_bytes(payload)
+            return target
+
+        monkeypatch.setattr(api, "get_paths_info", get_paths_info)
+        monkeypatch.setattr(api, "hf_hub_download", hf_hub_download, raising=False)
+
+    use_fetch = readback in {"without_inventory", "callback_with_inventory"}
+    has_inventory = readback in {
+        "offline_payloads", "callback_with_inventory", "client_transport",
+        "client_with_inventory",
+    }
+    supplied_objects = (
+        observations
+        if readback in {"offline_payloads", "callback_with_inventory", "client_with_inventory"}
+        else None
+    )
+    if readback == "empty_inventory":
+        supplied_objects = {}
+    if readback == "unbound_inventory":
+        supplied_objects = {
+            path: {"sha256": row["sha256"], "size_bytes": row["size_bytes"]}
+            for path, row in observations.items()
+        }
+
+    cache = tmp_path / "verified-cache"
+    publish_args = dict(
+        policy=policy,
+        dry_run=False,
+        approval=approval,
+        lease=_lease(policy),
+        api=api,
+        audited_parent_commit=api.parent_commit,
+        remote_objects=supplied_objects,
+        remote_payloads=payloads if readback == "offline_payloads" else None,
+        verified_cache_root=cache,
+        fetch_bytes=fetch if use_fetch else None,
+    )
+    if readback in {"empty_inventory", "unbound_inventory"}:
+        with pytest.raises(HuggingFacePublicationError, match="remote path|commit"):
+            publish_ir_release(package, **publish_args)
+        assert not cache.exists()
+        return
+    if readback == "corrupt_client_payload":
+        with pytest.raises(HuggingFacePublicationError, match="redownload validation mismatch"):
+            publish_ir_release(package, **publish_args)
+        assert fetched
+        return
+
+    receipt = publish_ir_release(package, **publish_args)
+    assert receipt["status"] == "published_pending_promotion"
+    assert len(api.calls) == 1
+    assert (receipt["post_publication_verification"] is not None) is has_inventory
+    assert receipt["evidence"]["immutable_remote_readback_verified"] is use_client
+    validation = receipt["pinned_redownload_validation"]
+    if readback == "cache_only":
+        assert validation is None
+        assert not cache.exists()
+    else:
+        assert validation["ok"] is True
+        assert validation["network_fetch_performed"] is (use_fetch or use_client)
+        assert validation["revalidated_paths"] == list(payloads)
+    assert set(fetched) == (set(payloads) if use_fetch or use_client else set())
+
+
+def test_partial_upload_retry_plans_exact_skips_but_refuses_live_resume(tmp_path: Path) -> None:
     package = package_ir_release(output_dir=tmp_path / "pkg", inputs=_inputs())
     policy = IRPublicationPolicy(repository_id=package.repository_id)
     full_plan, _ = plan_ir_dry_run(package, policy=policy)
@@ -177,19 +337,19 @@ def test_partial_upload_retry_skips_exact_matches_only(tmp_path: Path) -> None:
         approval_id="approval-fixture-003",
     )
     api = _FakeHfApi(commit_sha="c" * 40)
-    receipt = retry_partial_upload(
-        package,
-        previous_attempt=attempt,
-        approval=approval,
-        lease=_lease(policy),
-        policy=policy,
-        api=api,
-        remote_digests=attempt["uploaded_digests"],
-    )
-    uploaded = receipt["commit_receipt"]["uploaded_paths"]
-    assert first.remote_path not in uploaded
-    assert all(path in {item.remote_path for item in rest} for path in uploaded)
-    assert receipt["remote_revision"] == "c" * 40
+    assert residual_plan.skipped_exact_matches == (first.remote_path,)
+    assert residual_plan.operations == rest
+    with pytest.raises(IRPublicationError, match="skipped exact matches"):
+        retry_partial_upload(
+            package,
+            previous_attempt=attempt,
+            approval=approval,
+            lease=_lease(policy),
+            policy=policy,
+            api=api,
+            remote_digests=attempt["uploaded_digests"],
+        )
+    assert api.calls == []
 
 
 def test_retry_refuses_digest_mismatch_overwrite(tmp_path: Path) -> None:
