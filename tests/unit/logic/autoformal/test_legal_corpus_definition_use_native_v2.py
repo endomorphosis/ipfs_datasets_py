@@ -6225,6 +6225,47 @@ def test_reviewed_physical_native_binds_planned_request_to_original_live_handle(
             checked_native=checked_native,
         )
 
+    # Reopen the same live capability without another compiler invocation.
+    packet_members = dict(packet)
+    compiled_pins = {path: sha(packet_members[path]) for path in receipt["artifact_files"].values()}
+    joined = release.validate_uscode_release_closure_v4(
+        c["physical_request_raw"], expected_request_sha256=c["physical_request_sha256"],
+        current_review=current_review, checked_native=checked_native,
+        include_declared_eligibility=True, whole_project_artifact_sha256s=compiled_pins,
+    )
+    whole = joined.pop("checked_whole_project_observation")
+    whole_qualification = joined.pop("declared_whole_project_qualification")
+    whole_eligibility = joined.pop("declared_whole_project_eligibility")
+    assert joined == closed
+    assert whole["selected_native_observation_cid"] == checked["record_cid"]
+    assert whole["current_review_observation_cid"] == review["record_cid"]
+    assert whole["live_result_cid"] == opened["record_cid"]
+    assert whole["ordered_unit_ids"] == [row["unit_id"] for row in manifest["units"]]
+    assert whole["definition_application_obligations"] == manifest["definition_application_obligations"]
+    assert [row["declaration"] for row in whole["obligations"]] == manifest["preservation_obligations"]
+    assert {row["path"]: row["sha256"] for row in whole["compiled_artifacts"]} == compiled_pins
+    assert whole["source_definition_premise_required"] and whole["checked_under_explicit_hypotheses"]
+    assert whole["native_execution_authenticated"] is True
+    assert whole["formal_assumptions"] == []
+    assert whole["qualified_request_execution"] is whole["proof_receipt_issued"] is whole["proof_authority"] is False
+    for dimension in ("native_translation", "lean_compilation"):
+        assert whole_qualification["dimensions"][dimension] == {
+            "status": "passed", "evidence_cids": [whole["record_cid"]],
+        }
+    assert whole_qualification["dimensions"]["proof"]["status"] == "pending"
+    assert whole_eligibility["views"]["checked_lean"]["declared_eligible"] is False
+
+    wrong_pins = compiled_pins.copy()
+    path = next(iter(wrong_pins))
+    wrong_pins[path] = sha(b"fictional different compiled artifact DATA")
+    assert wrong_pins[path] != compiled_pins[path]
+    with pytest.raises(ValueError, match="whole-project compiled artifact differs from the independent pin"):
+        release.validate_uscode_release_closure_v4(
+            c["physical_request_raw"], expected_request_sha256=c["physical_request_sha256"],
+            current_review=current_review, checked_native=checked_native,
+            include_declared_eligibility=True, whole_project_artifact_sha256s=wrong_pins,
+        )
+
 
 def test_physical_whole_project_output_accounting_seals_exact_utf8_and_packet_bytes():
     from ipfs_datasets_py.logic.autoformal import (
@@ -6358,3 +6399,850 @@ def test_physical_whole_project_request_only_widens_explicit_output_annotation(
     forged = replace(request, payload=wrong_profile)
     with pytest.raises(ValueError, match="planned physical whole-norm request profile"):
         native._physical_whole_norm_request_wire(forged, forged.digest)
+
+
+@pytest.mark.parametrize("damage", (
+    None, "missing-sibling", "foreign-sibling", "reordered", "missing-axiom",
+    "sibling-axiom", "foreign-binary", "foreign-source",
+))
+def test_physical_v4_whole_project_coverage_requires_complete_sibling_evidence(damage):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+
+    # Exact matcher fields projected from the saved fictional v563 opening,
+    # reopened result and build receipt. The snapshot carries no live capability.
+    raw = r"""{
+  "manifest": {
+    "expected_modules": [
+      "LegalMixedRelationalAstPreservation.Prelude",
+      "LegalMixedRelationalAstPreservation.Semantics",
+      "LegalRelationalAstPreservation.Prelude",
+      "LegalRelationalAstPreservation.Semantics",
+      "LegalRelationalAstPreservation.Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb",
+      "LegalRelationalAstPreservation.Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6",
+      "LegalMixedRelationalAstPreservation.Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b",
+      "LegalReviewedMixedNormPreservation",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08",
+      "LegalReviewedDefinitionRealization"
+    ],
+    "file_sha256": {
+      "LegalMixedRelationalAstPreservation/Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b.lean": "5a6358f19ba8c267cd4037364e9adfa4184acaa8ed2e7e9b9fc7751ec8c340eb",
+      "LegalMixedRelationalAstPreservation/Prelude.lean": "e0fd298e58039c4b07462b7fcaccf6e9d053b973b4d181f4b53e073a2008f721",
+      "LegalMixedRelationalAstPreservation/Semantics.lean": "6ba110571cd8f1c4260c17ec4043564843c3f45ed3feb9de2d0c20ef7a9db72d",
+      "LegalRelationalAstPreservation/Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb.lean": "9f2406ccb7987fe41c4edde21a0dc57cc7ef6b9a3be8981c0668d1ed988c41f4",
+      "LegalRelationalAstPreservation/Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6.lean": "e11d4f53fe7993b4bf21ea3dda280133d8b7d4826357a392b768db5d27a84b28",
+      "LegalRelationalAstPreservation/Prelude.lean": "71c81c61fd79de2edda1fec57c4d06255c0cacd4bbe7cf6deef158bd0c2f478f",
+      "LegalRelationalAstPreservation/Semantics.lean": "b4f195abb28f385361f374eacf8b9812f038361b672794af45ba5459dc6705bc",
+      "LegalReviewedDefinitionRealization.lean": "77fa8502108e71a5b668890a2ec9834bd6034aad7dbd2215f7b965deee7390cb",
+      "LegalReviewedDefinitionRealization/Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.lean": "3931db306753228ef9073e8edac81b0389f13b428621a85a2c5f2dd7df78a51d",
+      "LegalReviewedMixedNormPreservation.lean": "82d597b5e8154718ffd3fff44f79982b107f29387e53473890679122fd8dc5de",
+      "definition-realization-input-bindings.json": "e048929d8c2cbc059162f12e2651be909130d5b939a6ea0ba74e10974abac2e2",
+      "definition-realization-original-lakefile.txt": "df95ae52967f4fdf80ea2018be9c34168a2859115bddcdc0e631b57d308d47ba",
+      "lakefile.toml": "e4bdab4362800172e50466b42a6b1ace90dc39b299cc1eb29caeef6209661faf",
+      "lean-toolchain": "d5edba4e4b8faad9c1baeadb265716d20d03be4d1a2647dc5e35b0c0325bea7b",
+      "reviewed-input-bindings.json": "a65447cc4cad7165f96ad41817d545ee7562fbf383507abde4c8fb2c33b46118",
+      "unit-companions/00-file-00.txt": "56ac8f0f0147acb9669ef7864f771ff1714218e5aa09130ec6e7d8d163280070",
+      "unit-companions/00-file-01.txt": "9f2406ccb7987fe41c4edde21a0dc57cc7ef6b9a3be8981c0668d1ed988c41f4",
+      "unit-companions/00-file-02.txt": "71c81c61fd79de2edda1fec57c4d06255c0cacd4bbe7cf6deef158bd0c2f478f",
+      "unit-companions/00-file-03.txt": "b4f195abb28f385361f374eacf8b9812f038361b672794af45ba5459dc6705bc",
+      "unit-companions/00-file-04.txt": "770ccc68e4b03292de3ff805ce0b06ed98b1213eb747220e2f9f7a7f571b303e",
+      "unit-companions/00-file-05.txt": "d5edba4e4b8faad9c1baeadb265716d20d03be4d1a2647dc5e35b0c0325bea7b",
+      "unit-companions/00-file-06.txt": "02dc888bf57b51fc96c18ef397049337f7c0a130abdae5044df446e88c813ae8",
+      "unit-companions/00-manifest.json": "ee185d88414218fe83d17ca7a07ff0a7e516094ecf52994e17b0d0b65b809984",
+      "unit-companions/01-file-00.txt": "0ef48f989403aecd8242d20ca7a5bd04aa0c3dd5d1ad1de77f62dcae2e05cf8d",
+      "unit-companions/01-file-01.txt": "e11d4f53fe7993b4bf21ea3dda280133d8b7d4826357a392b768db5d27a84b28",
+      "unit-companions/01-file-02.txt": "71c81c61fd79de2edda1fec57c4d06255c0cacd4bbe7cf6deef158bd0c2f478f",
+      "unit-companions/01-file-03.txt": "b4f195abb28f385361f374eacf8b9812f038361b672794af45ba5459dc6705bc",
+      "unit-companions/01-file-04.txt": "770ccc68e4b03292de3ff805ce0b06ed98b1213eb747220e2f9f7a7f571b303e",
+      "unit-companions/01-file-05.txt": "d5edba4e4b8faad9c1baeadb265716d20d03be4d1a2647dc5e35b0c0325bea7b",
+      "unit-companions/01-file-06.txt": "457bb3d1ee5745daf4d6bf314f1eb5c407c9cd2a377de3aedd9ac1d00ebfadbe",
+      "unit-companions/01-manifest.json": "027b9084eee259e5de74be91e5940948cd35ae8ca29642d32569e879c806c6be",
+      "unit-companions/02-file-00.txt": "6f293cccc37e56cf3a2963936e0a2edc196a82b215403641fb027df574cfa1bc",
+      "unit-companions/02-file-01.txt": "5a6358f19ba8c267cd4037364e9adfa4184acaa8ed2e7e9b9fc7751ec8c340eb",
+      "unit-companions/02-file-02.txt": "e0fd298e58039c4b07462b7fcaccf6e9d053b973b4d181f4b53e073a2008f721",
+      "unit-companions/02-file-03.txt": "6ba110571cd8f1c4260c17ec4043564843c3f45ed3feb9de2d0c20ef7a9db72d",
+      "unit-companions/02-file-04.txt": "c117d67ed2b23ff18a0f7ad2e2d37d9d5409bbbede7a56c34ba140c5fbc8be37",
+      "unit-companions/02-file-05.txt": "d5edba4e4b8faad9c1baeadb265716d20d03be4d1a2647dc5e35b0c0325bea7b",
+      "unit-companions/02-file-06.txt": "dd3b98437a45eaf0bb9d39f6da4b4d99b50c0593c8d9d7986e18d1b560dee933",
+      "unit-companions/02-manifest.json": "1357395b305a9e94415766be269e14ace0142a2274ca449a0c40d9d316e84118"
+    },
+    "preservation_obligations": [
+      "LegalRelationalAstPreservation.Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb.native_value_exact",
+      "LegalRelationalAstPreservation.Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb.native_ast_closed",
+      "LegalRelationalAstPreservation.Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb.denotation_matches_native",
+      "LegalRelationalAstPreservation.Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb.typed_source_lowering_exact",
+      "LegalRelationalAstPreservation.Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb.role_denotation_matches_native",
+      "LegalRelationalAstPreservation.Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6.native_value_exact",
+      "LegalRelationalAstPreservation.Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6.native_ast_closed",
+      "LegalRelationalAstPreservation.Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6.denotation_matches_native",
+      "LegalRelationalAstPreservation.Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6.typed_source_lowering_exact",
+      "LegalRelationalAstPreservation.Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6.role_denotation_matches_native",
+      "LegalMixedRelationalAstPreservation.Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b.mixed_typed_value_exact",
+      "LegalMixedRelationalAstPreservation.Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b.mixed_renderer_value_exact",
+      "LegalMixedRelationalAstPreservation.Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b.mixed_ast_closed",
+      "LegalMixedRelationalAstPreservation.Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b.mixed_denotation_matches_lowering",
+      "LegalMixedRelationalAstPreservation.Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b.mixed_role_denotation_matches_lowering",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.definition_body_source_exact",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.definition_realized",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.occurrence_0_source_exact",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.occurrence_0_matches_body",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.occurrence_1_source_exact",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.occurrence_1_matches_body",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.occurrence_2_source_exact",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.occurrence_2_matches_body",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_0_preservation_under_realization",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_1_preservation_under_realization",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_2_preservation_under_realization",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_1_expansion_source_exact",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_1_whole_norm_definition_expansion",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_2_expansion_source_exact",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_2_whole_norm_definition_expansion"
+    ],
+    "theorem_bindings": [
+      {
+        "binding": {
+          "kind": "whole_norm_definition_expansion",
+          "unit_id": "fixture:physical-crosswalk/unit-2"
+        },
+        "theorem": "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_1_whole_norm_definition_expansion"
+      },
+      {
+        "binding": {
+          "kind": "whole_norm_definition_expansion",
+          "unit_id": "fixture:physical-crosswalk/unit-3"
+        },
+        "theorem": "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_2_whole_norm_definition_expansion"
+      }
+    ]
+  },
+  "opened": {
+    "file_sha256": {
+      "LegalMixedRelationalAstPreservation/Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b.lean": "5a6358f19ba8c267cd4037364e9adfa4184acaa8ed2e7e9b9fc7751ec8c340eb",
+      "LegalMixedRelationalAstPreservation/Prelude.lean": "e0fd298e58039c4b07462b7fcaccf6e9d053b973b4d181f4b53e073a2008f721",
+      "LegalMixedRelationalAstPreservation/Semantics.lean": "6ba110571cd8f1c4260c17ec4043564843c3f45ed3feb9de2d0c20ef7a9db72d",
+      "LegalRelationalAstPreservation/Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb.lean": "9f2406ccb7987fe41c4edde21a0dc57cc7ef6b9a3be8981c0668d1ed988c41f4",
+      "LegalRelationalAstPreservation/Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6.lean": "e11d4f53fe7993b4bf21ea3dda280133d8b7d4826357a392b768db5d27a84b28",
+      "LegalRelationalAstPreservation/Prelude.lean": "71c81c61fd79de2edda1fec57c4d06255c0cacd4bbe7cf6deef158bd0c2f478f",
+      "LegalRelationalAstPreservation/Semantics.lean": "b4f195abb28f385361f374eacf8b9812f038361b672794af45ba5459dc6705bc",
+      "LegalReviewedDefinitionRealization.lean": "77fa8502108e71a5b668890a2ec9834bd6034aad7dbd2215f7b965deee7390cb",
+      "LegalReviewedDefinitionRealization/Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.lean": "3931db306753228ef9073e8edac81b0389f13b428621a85a2c5f2dd7df78a51d",
+      "LegalReviewedMixedNormPreservation.lean": "82d597b5e8154718ffd3fff44f79982b107f29387e53473890679122fd8dc5de",
+      "definition-realization-input-bindings.json": "e048929d8c2cbc059162f12e2651be909130d5b939a6ea0ba74e10974abac2e2",
+      "definition-realization-original-lakefile.txt": "df95ae52967f4fdf80ea2018be9c34168a2859115bddcdc0e631b57d308d47ba",
+      "lakefile.toml": "e4bdab4362800172e50466b42a6b1ace90dc39b299cc1eb29caeef6209661faf",
+      "lean-toolchain": "d5edba4e4b8faad9c1baeadb265716d20d03be4d1a2647dc5e35b0c0325bea7b",
+      "reviewed-input-bindings.json": "a65447cc4cad7165f96ad41817d545ee7562fbf383507abde4c8fb2c33b46118",
+      "unit-companions/00-file-00.txt": "56ac8f0f0147acb9669ef7864f771ff1714218e5aa09130ec6e7d8d163280070",
+      "unit-companions/00-file-01.txt": "9f2406ccb7987fe41c4edde21a0dc57cc7ef6b9a3be8981c0668d1ed988c41f4",
+      "unit-companions/00-file-02.txt": "71c81c61fd79de2edda1fec57c4d06255c0cacd4bbe7cf6deef158bd0c2f478f",
+      "unit-companions/00-file-03.txt": "b4f195abb28f385361f374eacf8b9812f038361b672794af45ba5459dc6705bc",
+      "unit-companions/00-file-04.txt": "770ccc68e4b03292de3ff805ce0b06ed98b1213eb747220e2f9f7a7f571b303e",
+      "unit-companions/00-file-05.txt": "d5edba4e4b8faad9c1baeadb265716d20d03be4d1a2647dc5e35b0c0325bea7b",
+      "unit-companions/00-file-06.txt": "02dc888bf57b51fc96c18ef397049337f7c0a130abdae5044df446e88c813ae8",
+      "unit-companions/00-manifest.json": "ee185d88414218fe83d17ca7a07ff0a7e516094ecf52994e17b0d0b65b809984",
+      "unit-companions/01-file-00.txt": "0ef48f989403aecd8242d20ca7a5bd04aa0c3dd5d1ad1de77f62dcae2e05cf8d",
+      "unit-companions/01-file-01.txt": "e11d4f53fe7993b4bf21ea3dda280133d8b7d4826357a392b768db5d27a84b28",
+      "unit-companions/01-file-02.txt": "71c81c61fd79de2edda1fec57c4d06255c0cacd4bbe7cf6deef158bd0c2f478f",
+      "unit-companions/01-file-03.txt": "b4f195abb28f385361f374eacf8b9812f038361b672794af45ba5459dc6705bc",
+      "unit-companions/01-file-04.txt": "770ccc68e4b03292de3ff805ce0b06ed98b1213eb747220e2f9f7a7f571b303e",
+      "unit-companions/01-file-05.txt": "d5edba4e4b8faad9c1baeadb265716d20d03be4d1a2647dc5e35b0c0325bea7b",
+      "unit-companions/01-file-06.txt": "457bb3d1ee5745daf4d6bf314f1eb5c407c9cd2a377de3aedd9ac1d00ebfadbe",
+      "unit-companions/01-manifest.json": "027b9084eee259e5de74be91e5940948cd35ae8ca29642d32569e879c806c6be",
+      "unit-companions/02-file-00.txt": "6f293cccc37e56cf3a2963936e0a2edc196a82b215403641fb027df574cfa1bc",
+      "unit-companions/02-file-01.txt": "5a6358f19ba8c267cd4037364e9adfa4184acaa8ed2e7e9b9fc7751ec8c340eb",
+      "unit-companions/02-file-02.txt": "e0fd298e58039c4b07462b7fcaccf6e9d053b973b4d181f4b53e073a2008f721",
+      "unit-companions/02-file-03.txt": "6ba110571cd8f1c4260c17ec4043564843c3f45ed3feb9de2d0c20ef7a9db72d",
+      "unit-companions/02-file-04.txt": "c117d67ed2b23ff18a0f7ad2e2d37d9d5409bbbede7a56c34ba140c5fbc8be37",
+      "unit-companions/02-file-05.txt": "d5edba4e4b8faad9c1baeadb265716d20d03be4d1a2647dc5e35b0c0325bea7b",
+      "unit-companions/02-file-06.txt": "dd3b98437a45eaf0bb9d39f6da4b4d99b50c0593c8d9d7986e18d1b560dee933",
+      "unit-companions/02-manifest.json": "1357395b305a9e94415766be269e14ace0142a2274ca449a0c40d9d316e84118"
+    },
+    "formal_assumptions": [],
+    "module_imports": {
+      "LegalMixedRelationalAstPreservation.Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b": [
+        "LegalMixedRelationalAstPreservation.Semantics"
+      ],
+      "LegalMixedRelationalAstPreservation.Prelude": [],
+      "LegalMixedRelationalAstPreservation.Semantics": [
+        "LegalMixedRelationalAstPreservation.Prelude"
+      ],
+      "LegalRelationalAstPreservation.Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb": [
+        "LegalRelationalAstPreservation.Semantics"
+      ],
+      "LegalRelationalAstPreservation.Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6": [
+        "LegalRelationalAstPreservation.Semantics"
+      ],
+      "LegalRelationalAstPreservation.Prelude": [],
+      "LegalRelationalAstPreservation.Semantics": [
+        "LegalRelationalAstPreservation.Prelude"
+      ],
+      "LegalReviewedDefinitionRealization": [
+        "LegalReviewedMixedNormPreservation",
+        "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08"
+      ],
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08": [
+        "LegalRelationalAstPreservation.Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb",
+        "LegalRelationalAstPreservation.Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6",
+        "LegalMixedRelationalAstPreservation.Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b"
+      ],
+      "LegalReviewedMixedNormPreservation": [
+        "LegalRelationalAstPreservation.Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb",
+        "LegalRelationalAstPreservation.Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6",
+        "LegalMixedRelationalAstPreservation.Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b"
+      ]
+    },
+    "obligations": [
+      "LegalRelationalAstPreservation.Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb.native_value_exact",
+      "LegalRelationalAstPreservation.Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb.native_ast_closed",
+      "LegalRelationalAstPreservation.Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb.denotation_matches_native",
+      "LegalRelationalAstPreservation.Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb.typed_source_lowering_exact",
+      "LegalRelationalAstPreservation.Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb.role_denotation_matches_native",
+      "LegalRelationalAstPreservation.Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6.native_value_exact",
+      "LegalRelationalAstPreservation.Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6.native_ast_closed",
+      "LegalRelationalAstPreservation.Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6.denotation_matches_native",
+      "LegalRelationalAstPreservation.Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6.typed_source_lowering_exact",
+      "LegalRelationalAstPreservation.Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6.role_denotation_matches_native",
+      "LegalMixedRelationalAstPreservation.Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b.mixed_typed_value_exact",
+      "LegalMixedRelationalAstPreservation.Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b.mixed_renderer_value_exact",
+      "LegalMixedRelationalAstPreservation.Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b.mixed_ast_closed",
+      "LegalMixedRelationalAstPreservation.Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b.mixed_denotation_matches_lowering",
+      "LegalMixedRelationalAstPreservation.Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b.mixed_role_denotation_matches_lowering",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.definition_body_source_exact",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.definition_realized",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.occurrence_0_source_exact",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.occurrence_0_matches_body",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.occurrence_1_source_exact",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.occurrence_1_matches_body",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.occurrence_2_source_exact",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.occurrence_2_matches_body",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_0_preservation_under_realization",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_1_preservation_under_realization",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_2_preservation_under_realization",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_1_expansion_source_exact",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_1_whole_norm_definition_expansion",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_2_expansion_source_exact",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_2_whole_norm_definition_expansion"
+    ],
+    "packet_inventory": [
+      {
+        "bytes": 69896,
+        "path": "compiled/LegalMixedRelationalAstPreservation/Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b.olean",
+        "sha256": "68eafb6f462e13919837f2b8d370e5648dd72a64089c6020b499875abcbf819a"
+      },
+      {
+        "bytes": 106360,
+        "path": "compiled/LegalMixedRelationalAstPreservation/Prelude.olean",
+        "sha256": "b8cc1b7ddd3de6c85733f809649ec202630a390f7d540f058c42f9b718ae54d4"
+      },
+      {
+        "bytes": 1497296,
+        "path": "compiled/LegalMixedRelationalAstPreservation/Semantics.olean",
+        "sha256": "c1eb2924af8b03d59d6640db407172ce6228cf6c8139c441e23091189ce2658d"
+      },
+      {
+        "bytes": 140184,
+        "path": "compiled/LegalRelationalAstPreservation/Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb.olean",
+        "sha256": "7039066da2349b0a7849dcf1c8b3c9fe03b9d8f870f182d5dc2839139f9ac2d4"
+      },
+      {
+        "bytes": 216944,
+        "path": "compiled/LegalRelationalAstPreservation/Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6.olean",
+        "sha256": "fb97cc86768722b7d1af92dbfc6bc1f4a7a364c41b172b1cd0112a457887bdda"
+      },
+      {
+        "bytes": 106352,
+        "path": "compiled/LegalRelationalAstPreservation/Prelude.olean",
+        "sha256": "04e319103aa6c8b92ece977ab7a6a05b8258fe96e3ea8637ec561a8fed4763e1"
+      },
+      {
+        "bytes": 941792,
+        "path": "compiled/LegalRelationalAstPreservation/Semantics.olean",
+        "sha256": "ab0ae6ba276f7a4997d6d6b41a219cd51ccdbb8039a88a3b70a87467e8e670e1"
+      },
+      {
+        "bytes": 1824,
+        "path": "compiled/LegalReviewedDefinitionRealization.olean",
+        "sha256": "6a635960f6f6ecb12ff3c7dfb20e4ce967f670cf57b835fd593acb56f5df36b5"
+      },
+      {
+        "bytes": 626336,
+        "path": "compiled/LegalReviewedDefinitionRealization/Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.olean",
+        "sha256": "58fa1919da56e9c01dddaee937c00f507da3c8089442c5818dae572f9a29029d"
+      },
+      {
+        "bytes": 2136,
+        "path": "compiled/LegalReviewedMixedNormPreservation.olean",
+        "sha256": "b3da44a06f9b02f59aef2d7c51bc0d052e3d709e0a36bb77d576c1d5eccdf4f1"
+      }
+    ],
+    "preservation_obligations": [
+      "LegalRelationalAstPreservation.Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb.native_value_exact",
+      "LegalRelationalAstPreservation.Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb.native_ast_closed",
+      "LegalRelationalAstPreservation.Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb.denotation_matches_native",
+      "LegalRelationalAstPreservation.Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb.typed_source_lowering_exact",
+      "LegalRelationalAstPreservation.Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb.role_denotation_matches_native",
+      "LegalRelationalAstPreservation.Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6.native_value_exact",
+      "LegalRelationalAstPreservation.Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6.native_ast_closed",
+      "LegalRelationalAstPreservation.Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6.denotation_matches_native",
+      "LegalRelationalAstPreservation.Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6.typed_source_lowering_exact",
+      "LegalRelationalAstPreservation.Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6.role_denotation_matches_native",
+      "LegalMixedRelationalAstPreservation.Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b.mixed_typed_value_exact",
+      "LegalMixedRelationalAstPreservation.Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b.mixed_renderer_value_exact",
+      "LegalMixedRelationalAstPreservation.Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b.mixed_ast_closed",
+      "LegalMixedRelationalAstPreservation.Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b.mixed_denotation_matches_lowering",
+      "LegalMixedRelationalAstPreservation.Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b.mixed_role_denotation_matches_lowering",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.definition_body_source_exact",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.definition_realized",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.occurrence_0_source_exact",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.occurrence_0_matches_body",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.occurrence_1_source_exact",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.occurrence_1_matches_body",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.occurrence_2_source_exact",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.occurrence_2_matches_body",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_0_preservation_under_realization",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_1_preservation_under_realization",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_2_preservation_under_realization",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_1_expansion_source_exact",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_1_whole_norm_definition_expansion",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_2_expansion_source_exact",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_2_whole_norm_definition_expansion"
+    ]
+  },
+  "project": {
+    "expected_modules": [
+      "LegalMixedRelationalAstPreservation.Prelude",
+      "LegalMixedRelationalAstPreservation.Semantics",
+      "LegalRelationalAstPreservation.Prelude",
+      "LegalRelationalAstPreservation.Semantics",
+      "LegalRelationalAstPreservation.Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb",
+      "LegalRelationalAstPreservation.Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6",
+      "LegalMixedRelationalAstPreservation.Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b",
+      "LegalReviewedMixedNormPreservation",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08",
+      "LegalReviewedDefinitionRealization"
+    ],
+    "files": [
+      {
+        "bytes": 19447,
+        "path": "LegalMixedRelationalAstPreservation/Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b.lean",
+        "sha256": "5a6358f19ba8c267cd4037364e9adfa4184acaa8ed2e7e9b9fc7751ec8c340eb"
+      },
+      {
+        "bytes": 1306,
+        "path": "LegalMixedRelationalAstPreservation/Prelude.lean",
+        "sha256": "e0fd298e58039c4b07462b7fcaccf6e9d053b973b4d181f4b53e073a2008f721"
+      },
+      {
+        "bytes": 26560,
+        "path": "LegalMixedRelationalAstPreservation/Semantics.lean",
+        "sha256": "6ba110571cd8f1c4260c17ec4043564843c3f45ed3feb9de2d0c20ef7a9db72d"
+      },
+      {
+        "bytes": 2937,
+        "path": "LegalRelationalAstPreservation/Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb.lean",
+        "sha256": "9f2406ccb7987fe41c4edde21a0dc57cc7ef6b9a3be8981c0668d1ed988c41f4"
+      },
+      {
+        "bytes": 3947,
+        "path": "LegalRelationalAstPreservation/Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6.lean",
+        "sha256": "e11d4f53fe7993b4bf21ea3dda280133d8b7d4826357a392b768db5d27a84b28"
+      },
+      {
+        "bytes": 1296,
+        "path": "LegalRelationalAstPreservation/Prelude.lean",
+        "sha256": "71c81c61fd79de2edda1fec57c4d06255c0cacd4bbe7cf6deef158bd0c2f478f"
+      },
+      {
+        "bytes": 11379,
+        "path": "LegalRelationalAstPreservation/Semantics.lean",
+        "sha256": "b4f195abb28f385361f374eacf8b9812f038361b672794af45ba5459dc6705bc"
+      },
+      {
+        "bytes": 157,
+        "path": "LegalReviewedDefinitionRealization.lean",
+        "sha256": "77fa8502108e71a5b668890a2ec9834bd6034aad7dbd2215f7b965deee7390cb"
+      },
+      {
+        "bytes": 41356,
+        "path": "LegalReviewedDefinitionRealization/Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.lean",
+        "sha256": "3931db306753228ef9073e8edac81b0389f13b428621a85a2c5f2dd7df78a51d"
+      },
+      {
+        "bytes": 338,
+        "path": "LegalReviewedMixedNormPreservation.lean",
+        "sha256": "82d597b5e8154718ffd3fff44f79982b107f29387e53473890679122fd8dc5de"
+      },
+      {
+        "bytes": 170728,
+        "path": "definition-realization-input-bindings.json",
+        "sha256": "e048929d8c2cbc059162f12e2651be909130d5b939a6ea0ba74e10974abac2e2"
+      },
+      {
+        "bytes": 643,
+        "path": "definition-realization-original-lakefile.txt",
+        "sha256": "df95ae52967f4fdf80ea2018be9c34168a2859115bddcdc0e631b57d308d47ba"
+      },
+      {
+        "bytes": 789,
+        "path": "lakefile.toml",
+        "sha256": "e4bdab4362800172e50466b42a6b1ace90dc39b299cc1eb29caeef6209661faf"
+      },
+      {
+        "bytes": 25,
+        "path": "lean-toolchain",
+        "sha256": "d5edba4e4b8faad9c1baeadb265716d20d03be4d1a2647dc5e35b0c0325bea7b"
+      },
+      {
+        "bytes": 16675,
+        "path": "reviewed-input-bindings.json",
+        "sha256": "a65447cc4cad7165f96ad41817d545ee7562fbf383507abde4c8fb2c33b46118"
+      },
+      {
+        "bytes": 111,
+        "path": "unit-companions/00-file-00.txt",
+        "sha256": "56ac8f0f0147acb9669ef7864f771ff1714218e5aa09130ec6e7d8d163280070"
+      },
+      {
+        "bytes": 2937,
+        "path": "unit-companions/00-file-01.txt",
+        "sha256": "9f2406ccb7987fe41c4edde21a0dc57cc7ef6b9a3be8981c0668d1ed988c41f4"
+      },
+      {
+        "bytes": 1296,
+        "path": "unit-companions/00-file-02.txt",
+        "sha256": "71c81c61fd79de2edda1fec57c4d06255c0cacd4bbe7cf6deef158bd0c2f478f"
+      },
+      {
+        "bytes": 11379,
+        "path": "unit-companions/00-file-03.txt",
+        "sha256": "b4f195abb28f385361f374eacf8b9812f038361b672794af45ba5459dc6705bc"
+      },
+      {
+        "bytes": 129,
+        "path": "unit-companions/00-file-04.txt",
+        "sha256": "770ccc68e4b03292de3ff805ce0b06ed98b1213eb747220e2f9f7a7f571b303e"
+      },
+      {
+        "bytes": 25,
+        "path": "unit-companions/00-file-05.txt",
+        "sha256": "d5edba4e4b8faad9c1baeadb265716d20d03be4d1a2647dc5e35b0c0325bea7b"
+      },
+      {
+        "bytes": 46488,
+        "path": "unit-companions/00-file-06.txt",
+        "sha256": "02dc888bf57b51fc96c18ef397049337f7c0a130abdae5044df446e88c813ae8"
+      },
+      {
+        "bytes": 16602,
+        "path": "unit-companions/00-manifest.json",
+        "sha256": "ee185d88414218fe83d17ca7a07ff0a7e516094ecf52994e17b0d0b65b809984"
+      },
+      {
+        "bytes": 111,
+        "path": "unit-companions/01-file-00.txt",
+        "sha256": "0ef48f989403aecd8242d20ca7a5bd04aa0c3dd5d1ad1de77f62dcae2e05cf8d"
+      },
+      {
+        "bytes": 3947,
+        "path": "unit-companions/01-file-01.txt",
+        "sha256": "e11d4f53fe7993b4bf21ea3dda280133d8b7d4826357a392b768db5d27a84b28"
+      },
+      {
+        "bytes": 1296,
+        "path": "unit-companions/01-file-02.txt",
+        "sha256": "71c81c61fd79de2edda1fec57c4d06255c0cacd4bbe7cf6deef158bd0c2f478f"
+      },
+      {
+        "bytes": 11379,
+        "path": "unit-companions/01-file-03.txt",
+        "sha256": "b4f195abb28f385361f374eacf8b9812f038361b672794af45ba5459dc6705bc"
+      },
+      {
+        "bytes": 129,
+        "path": "unit-companions/01-file-04.txt",
+        "sha256": "770ccc68e4b03292de3ff805ce0b06ed98b1213eb747220e2f9f7a7f571b303e"
+      },
+      {
+        "bytes": 25,
+        "path": "unit-companions/01-file-05.txt",
+        "sha256": "d5edba4e4b8faad9c1baeadb265716d20d03be4d1a2647dc5e35b0c0325bea7b"
+      },
+      {
+        "bytes": 59924,
+        "path": "unit-companions/01-file-06.txt",
+        "sha256": "457bb3d1ee5745daf4d6bf314f1eb5c407c9cd2a377de3aedd9ac1d00ebfadbe"
+      },
+      {
+        "bytes": 16608,
+        "path": "unit-companions/01-manifest.json",
+        "sha256": "027b9084eee259e5de74be91e5940948cd35ae8ca29642d32569e879c806c6be"
+      },
+      {
+        "bytes": 116,
+        "path": "unit-companions/02-file-00.txt",
+        "sha256": "6f293cccc37e56cf3a2963936e0a2edc196a82b215403641fb027df574cfa1bc"
+      },
+      {
+        "bytes": 19447,
+        "path": "unit-companions/02-file-01.txt",
+        "sha256": "5a6358f19ba8c267cd4037364e9adfa4184acaa8ed2e7e9b9fc7751ec8c340eb"
+      },
+      {
+        "bytes": 1306,
+        "path": "unit-companions/02-file-02.txt",
+        "sha256": "e0fd298e58039c4b07462b7fcaccf6e9d053b973b4d181f4b53e073a2008f721"
+      },
+      {
+        "bytes": 26560,
+        "path": "unit-companions/02-file-03.txt",
+        "sha256": "6ba110571cd8f1c4260c17ec4043564843c3f45ed3feb9de2d0c20ef7a9db72d"
+      },
+      {
+        "bytes": 134,
+        "path": "unit-companions/02-file-04.txt",
+        "sha256": "c117d67ed2b23ff18a0f7ad2e2d37d9d5409bbbede7a56c34ba140c5fbc8be37"
+      },
+      {
+        "bytes": 25,
+        "path": "unit-companions/02-file-05.txt",
+        "sha256": "d5edba4e4b8faad9c1baeadb265716d20d03be4d1a2647dc5e35b0c0325bea7b"
+      },
+      {
+        "bytes": 46352,
+        "path": "unit-companions/02-file-06.txt",
+        "sha256": "dd3b98437a45eaf0bb9d39f6da4b4d99b50c0593c8d9d7986e18d1b560dee933"
+      },
+      {
+        "bytes": 15326,
+        "path": "unit-companions/02-manifest.json",
+        "sha256": "1357395b305a9e94415766be269e14ace0142a2274ca449a0c40d9d316e84118"
+      }
+    ],
+    "module_imports": {
+      "LegalMixedRelationalAstPreservation.Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b": [
+        "LegalMixedRelationalAstPreservation.Semantics"
+      ],
+      "LegalMixedRelationalAstPreservation.Prelude": [],
+      "LegalMixedRelationalAstPreservation.Semantics": [
+        "LegalMixedRelationalAstPreservation.Prelude"
+      ],
+      "LegalRelationalAstPreservation.Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb": [
+        "LegalRelationalAstPreservation.Semantics"
+      ],
+      "LegalRelationalAstPreservation.Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6": [
+        "LegalRelationalAstPreservation.Semantics"
+      ],
+      "LegalRelationalAstPreservation.Prelude": [],
+      "LegalRelationalAstPreservation.Semantics": [
+        "LegalRelationalAstPreservation.Prelude"
+      ],
+      "LegalReviewedDefinitionRealization": [
+        "LegalReviewedMixedNormPreservation",
+        "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08"
+      ],
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08": [
+        "LegalRelationalAstPreservation.Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb",
+        "LegalRelationalAstPreservation.Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6",
+        "LegalMixedRelationalAstPreservation.Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b"
+      ],
+      "LegalReviewedMixedNormPreservation": [
+        "LegalRelationalAstPreservation.Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb",
+        "LegalRelationalAstPreservation.Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6",
+        "LegalMixedRelationalAstPreservation.Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b"
+      ]
+    },
+    "target": "legal",
+    "toolchain": "leanprover/lean4:v4.34.1"
+  },
+  "receipt": {
+    "artifact_bytes": {
+      ".lake/build/lib/lean/LegalMixedRelationalAstPreservation/Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b.olean": 69896,
+      ".lake/build/lib/lean/LegalMixedRelationalAstPreservation/Prelude.olean": 106360,
+      ".lake/build/lib/lean/LegalMixedRelationalAstPreservation/Semantics.olean": 1497296,
+      ".lake/build/lib/lean/LegalRelationalAstPreservation/Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb.olean": 140184,
+      ".lake/build/lib/lean/LegalRelationalAstPreservation/Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6.olean": 216944,
+      ".lake/build/lib/lean/LegalRelationalAstPreservation/Prelude.olean": 106352,
+      ".lake/build/lib/lean/LegalRelationalAstPreservation/Semantics.olean": 941792,
+      ".lake/build/lib/lean/LegalReviewedDefinitionRealization.olean": 1824,
+      ".lake/build/lib/lean/LegalReviewedDefinitionRealization/Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.olean": 626336,
+      ".lake/build/lib/lean/LegalReviewedMixedNormPreservation.olean": 2136
+    },
+    "artifact_files": {
+      ".lake/build/lib/lean/LegalMixedRelationalAstPreservation/Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b.olean": "compiled/LegalMixedRelationalAstPreservation/Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b.olean",
+      ".lake/build/lib/lean/LegalMixedRelationalAstPreservation/Prelude.olean": "compiled/LegalMixedRelationalAstPreservation/Prelude.olean",
+      ".lake/build/lib/lean/LegalMixedRelationalAstPreservation/Semantics.olean": "compiled/LegalMixedRelationalAstPreservation/Semantics.olean",
+      ".lake/build/lib/lean/LegalRelationalAstPreservation/Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb.olean": "compiled/LegalRelationalAstPreservation/Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb.olean",
+      ".lake/build/lib/lean/LegalRelationalAstPreservation/Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6.olean": "compiled/LegalRelationalAstPreservation/Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6.olean",
+      ".lake/build/lib/lean/LegalRelationalAstPreservation/Prelude.olean": "compiled/LegalRelationalAstPreservation/Prelude.olean",
+      ".lake/build/lib/lean/LegalRelationalAstPreservation/Semantics.olean": "compiled/LegalRelationalAstPreservation/Semantics.olean",
+      ".lake/build/lib/lean/LegalReviewedDefinitionRealization.olean": "compiled/LegalReviewedDefinitionRealization.olean",
+      ".lake/build/lib/lean/LegalReviewedDefinitionRealization/Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.olean": "compiled/LegalReviewedDefinitionRealization/Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.olean",
+      ".lake/build/lib/lean/LegalReviewedMixedNormPreservation.olean": "compiled/LegalReviewedMixedNormPreservation.olean"
+    },
+    "artifact_sha256": {
+      ".lake/build/lib/lean/LegalMixedRelationalAstPreservation/Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b.olean": "68eafb6f462e13919837f2b8d370e5648dd72a64089c6020b499875abcbf819a",
+      ".lake/build/lib/lean/LegalMixedRelationalAstPreservation/Prelude.olean": "b8cc1b7ddd3de6c85733f809649ec202630a390f7d540f058c42f9b718ae54d4",
+      ".lake/build/lib/lean/LegalMixedRelationalAstPreservation/Semantics.olean": "c1eb2924af8b03d59d6640db407172ce6228cf6c8139c441e23091189ce2658d",
+      ".lake/build/lib/lean/LegalRelationalAstPreservation/Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb.olean": "7039066da2349b0a7849dcf1c8b3c9fe03b9d8f870f182d5dc2839139f9ac2d4",
+      ".lake/build/lib/lean/LegalRelationalAstPreservation/Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6.olean": "fb97cc86768722b7d1af92dbfc6bc1f4a7a364c41b172b1cd0112a457887bdda",
+      ".lake/build/lib/lean/LegalRelationalAstPreservation/Prelude.olean": "04e319103aa6c8b92ece977ab7a6a05b8258fe96e3ea8637ec561a8fed4763e1",
+      ".lake/build/lib/lean/LegalRelationalAstPreservation/Semantics.olean": "ab0ae6ba276f7a4997d6d6b41a219cd51ccdbb8039a88a3b70a87467e8e670e1",
+      ".lake/build/lib/lean/LegalReviewedDefinitionRealization.olean": "6a635960f6f6ecb12ff3c7dfb20e4ce967f670cf57b835fd593acb56f5df36b5",
+      ".lake/build/lib/lean/LegalReviewedDefinitionRealization/Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.olean": "58fa1919da56e9c01dddaee937c00f507da3c8089442c5818dae572f9a29029d",
+      ".lake/build/lib/lean/LegalReviewedMixedNormPreservation.olean": "b3da44a06f9b02f59aef2d7c51bc0d052e3d709e0a36bb77d576c1d5eccdf4f1"
+    },
+    "axiom_observation_errors": [],
+    "axiom_observations_passed": true,
+    "build_passed": true,
+    "compiled_modules": [
+      "LegalMixedRelationalAstPreservation.Prelude",
+      "LegalMixedRelationalAstPreservation.Semantics",
+      "LegalRelationalAstPreservation.Prelude",
+      "LegalRelationalAstPreservation.Semantics",
+      "LegalRelationalAstPreservation.Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb",
+      "LegalRelationalAstPreservation.Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6",
+      "LegalMixedRelationalAstPreservation.Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b",
+      "LegalReviewedMixedNormPreservation",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08",
+      "LegalReviewedDefinitionRealization"
+    ],
+    "conditional_kernel_status": "checked_under_explicit_hypotheses",
+    "conditional_theorems": [
+      "LegalRelationalAstPreservation.Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb.native_value_exact",
+      "LegalRelationalAstPreservation.Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb.native_ast_closed",
+      "LegalRelationalAstPreservation.Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb.denotation_matches_native",
+      "LegalRelationalAstPreservation.Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb.typed_source_lowering_exact",
+      "LegalRelationalAstPreservation.Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb.role_denotation_matches_native",
+      "LegalRelationalAstPreservation.Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6.native_value_exact",
+      "LegalRelationalAstPreservation.Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6.native_ast_closed",
+      "LegalRelationalAstPreservation.Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6.denotation_matches_native",
+      "LegalRelationalAstPreservation.Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6.typed_source_lowering_exact",
+      "LegalRelationalAstPreservation.Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6.role_denotation_matches_native",
+      "LegalMixedRelationalAstPreservation.Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b.mixed_typed_value_exact",
+      "LegalMixedRelationalAstPreservation.Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b.mixed_renderer_value_exact",
+      "LegalMixedRelationalAstPreservation.Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b.mixed_ast_closed",
+      "LegalMixedRelationalAstPreservation.Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b.mixed_denotation_matches_lowering",
+      "LegalMixedRelationalAstPreservation.Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b.mixed_role_denotation_matches_lowering",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.definition_body_source_exact",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.definition_realized",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.occurrence_0_source_exact",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.occurrence_0_matches_body",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.occurrence_1_source_exact",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.occurrence_1_matches_body",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.occurrence_2_source_exact",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.occurrence_2_matches_body",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_0_preservation_under_realization",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_1_preservation_under_realization",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_2_preservation_under_realization",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_1_expansion_source_exact",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_1_whole_norm_definition_expansion",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_2_expansion_source_exact",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_2_whole_norm_definition_expansion"
+    ],
+    "executed_project_readback_passed": true,
+    "executed_project_sha256": {
+      "LegalMixedRelationalAstPreservation/Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b.lean": "5a6358f19ba8c267cd4037364e9adfa4184acaa8ed2e7e9b9fc7751ec8c340eb",
+      "LegalMixedRelationalAstPreservation/Prelude.lean": "e0fd298e58039c4b07462b7fcaccf6e9d053b973b4d181f4b53e073a2008f721",
+      "LegalMixedRelationalAstPreservation/Semantics.lean": "6ba110571cd8f1c4260c17ec4043564843c3f45ed3feb9de2d0c20ef7a9db72d",
+      "LegalRelationalAstPreservation/Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb.lean": "9f2406ccb7987fe41c4edde21a0dc57cc7ef6b9a3be8981c0668d1ed988c41f4",
+      "LegalRelationalAstPreservation/Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6.lean": "e11d4f53fe7993b4bf21ea3dda280133d8b7d4826357a392b768db5d27a84b28",
+      "LegalRelationalAstPreservation/Prelude.lean": "71c81c61fd79de2edda1fec57c4d06255c0cacd4bbe7cf6deef158bd0c2f478f",
+      "LegalRelationalAstPreservation/Semantics.lean": "b4f195abb28f385361f374eacf8b9812f038361b672794af45ba5459dc6705bc",
+      "LegalReviewedDefinitionRealization.lean": "77fa8502108e71a5b668890a2ec9834bd6034aad7dbd2215f7b965deee7390cb",
+      "LegalReviewedDefinitionRealization/Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.lean": "3931db306753228ef9073e8edac81b0389f13b428621a85a2c5f2dd7df78a51d",
+      "LegalReviewedMixedNormPreservation.lean": "82d597b5e8154718ffd3fff44f79982b107f29387e53473890679122fd8dc5de",
+      "definition-realization-input-bindings.json": "e048929d8c2cbc059162f12e2651be909130d5b939a6ea0ba74e10974abac2e2",
+      "definition-realization-original-lakefile.txt": "df95ae52967f4fdf80ea2018be9c34168a2859115bddcdc0e631b57d308d47ba",
+      "lakefile.toml": "e4bdab4362800172e50466b42a6b1ace90dc39b299cc1eb29caeef6209661faf",
+      "lean-toolchain": "d5edba4e4b8faad9c1baeadb265716d20d03be4d1a2647dc5e35b0c0325bea7b",
+      "reviewed-input-bindings.json": "a65447cc4cad7165f96ad41817d545ee7562fbf383507abde4c8fb2c33b46118",
+      "unit-companions/00-file-00.txt": "56ac8f0f0147acb9669ef7864f771ff1714218e5aa09130ec6e7d8d163280070",
+      "unit-companions/00-file-01.txt": "9f2406ccb7987fe41c4edde21a0dc57cc7ef6b9a3be8981c0668d1ed988c41f4",
+      "unit-companions/00-file-02.txt": "71c81c61fd79de2edda1fec57c4d06255c0cacd4bbe7cf6deef158bd0c2f478f",
+      "unit-companions/00-file-03.txt": "b4f195abb28f385361f374eacf8b9812f038361b672794af45ba5459dc6705bc",
+      "unit-companions/00-file-04.txt": "770ccc68e4b03292de3ff805ce0b06ed98b1213eb747220e2f9f7a7f571b303e",
+      "unit-companions/00-file-05.txt": "d5edba4e4b8faad9c1baeadb265716d20d03be4d1a2647dc5e35b0c0325bea7b",
+      "unit-companions/00-file-06.txt": "02dc888bf57b51fc96c18ef397049337f7c0a130abdae5044df446e88c813ae8",
+      "unit-companions/00-manifest.json": "ee185d88414218fe83d17ca7a07ff0a7e516094ecf52994e17b0d0b65b809984",
+      "unit-companions/01-file-00.txt": "0ef48f989403aecd8242d20ca7a5bd04aa0c3dd5d1ad1de77f62dcae2e05cf8d",
+      "unit-companions/01-file-01.txt": "e11d4f53fe7993b4bf21ea3dda280133d8b7d4826357a392b768db5d27a84b28",
+      "unit-companions/01-file-02.txt": "71c81c61fd79de2edda1fec57c4d06255c0cacd4bbe7cf6deef158bd0c2f478f",
+      "unit-companions/01-file-03.txt": "b4f195abb28f385361f374eacf8b9812f038361b672794af45ba5459dc6705bc",
+      "unit-companions/01-file-04.txt": "770ccc68e4b03292de3ff805ce0b06ed98b1213eb747220e2f9f7a7f571b303e",
+      "unit-companions/01-file-05.txt": "d5edba4e4b8faad9c1baeadb265716d20d03be4d1a2647dc5e35b0c0325bea7b",
+      "unit-companions/01-file-06.txt": "457bb3d1ee5745daf4d6bf314f1eb5c407c9cd2a377de3aedd9ac1d00ebfadbe",
+      "unit-companions/01-manifest.json": "027b9084eee259e5de74be91e5940948cd35ae8ca29642d32569e879c806c6be",
+      "unit-companions/02-file-00.txt": "6f293cccc37e56cf3a2963936e0a2edc196a82b215403641fb027df574cfa1bc",
+      "unit-companions/02-file-01.txt": "5a6358f19ba8c267cd4037364e9adfa4184acaa8ed2e7e9b9fc7751ec8c340eb",
+      "unit-companions/02-file-02.txt": "e0fd298e58039c4b07462b7fcaccf6e9d053b973b4d181f4b53e073a2008f721",
+      "unit-companions/02-file-03.txt": "6ba110571cd8f1c4260c17ec4043564843c3f45ed3feb9de2d0c20ef7a9db72d",
+      "unit-companions/02-file-04.txt": "c117d67ed2b23ff18a0f7ad2e2d37d9d5409bbbede7a56c34ba140c5fbc8be37",
+      "unit-companions/02-file-05.txt": "d5edba4e4b8faad9c1baeadb265716d20d03be4d1a2647dc5e35b0c0325bea7b",
+      "unit-companions/02-file-06.txt": "dd3b98437a45eaf0bb9d39f6da4b4d99b50c0593c8d9d7986e18d1b560dee933",
+      "unit-companions/02-manifest.json": "1357395b305a9e94415766be269e14ace0142a2274ca449a0c40d9d316e84118"
+    },
+    "expected_modules": [
+      "LegalMixedRelationalAstPreservation.Prelude",
+      "LegalMixedRelationalAstPreservation.Semantics",
+      "LegalRelationalAstPreservation.Prelude",
+      "LegalRelationalAstPreservation.Semantics",
+      "LegalRelationalAstPreservation.Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb",
+      "LegalRelationalAstPreservation.Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6",
+      "LegalMixedRelationalAstPreservation.Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b",
+      "LegalReviewedMixedNormPreservation",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08",
+      "LegalReviewedDefinitionRealization"
+    ],
+    "formal_assumptions": [],
+    "formal_assumptions_proved": false,
+    "manifest_coverage_passed": true,
+    "module_imports": {
+      "LegalMixedRelationalAstPreservation.Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b": [
+        "LegalMixedRelationalAstPreservation.Semantics"
+      ],
+      "LegalMixedRelationalAstPreservation.Prelude": [],
+      "LegalMixedRelationalAstPreservation.Semantics": [
+        "LegalMixedRelationalAstPreservation.Prelude"
+      ],
+      "LegalRelationalAstPreservation.Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb": [
+        "LegalRelationalAstPreservation.Semantics"
+      ],
+      "LegalRelationalAstPreservation.Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6": [
+        "LegalRelationalAstPreservation.Semantics"
+      ],
+      "LegalRelationalAstPreservation.Prelude": [],
+      "LegalRelationalAstPreservation.Semantics": [
+        "LegalRelationalAstPreservation.Prelude"
+      ],
+      "LegalReviewedDefinitionRealization": [
+        "LegalReviewedMixedNormPreservation",
+        "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08"
+      ],
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08": [
+        "LegalRelationalAstPreservation.Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb",
+        "LegalRelationalAstPreservation.Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6",
+        "LegalMixedRelationalAstPreservation.Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b"
+      ],
+      "LegalReviewedMixedNormPreservation": [
+        "LegalRelationalAstPreservation.Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb",
+        "LegalRelationalAstPreservation.Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6",
+        "LegalMixedRelationalAstPreservation.Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b"
+      ]
+    },
+    "preservation_obligations": [
+      "LegalRelationalAstPreservation.Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb.native_value_exact",
+      "LegalRelationalAstPreservation.Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb.native_ast_closed",
+      "LegalRelationalAstPreservation.Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb.denotation_matches_native",
+      "LegalRelationalAstPreservation.Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb.typed_source_lowering_exact",
+      "LegalRelationalAstPreservation.Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb.role_denotation_matches_native",
+      "LegalRelationalAstPreservation.Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6.native_value_exact",
+      "LegalRelationalAstPreservation.Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6.native_ast_closed",
+      "LegalRelationalAstPreservation.Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6.denotation_matches_native",
+      "LegalRelationalAstPreservation.Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6.typed_source_lowering_exact",
+      "LegalRelationalAstPreservation.Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6.role_denotation_matches_native",
+      "LegalMixedRelationalAstPreservation.Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b.mixed_typed_value_exact",
+      "LegalMixedRelationalAstPreservation.Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b.mixed_renderer_value_exact",
+      "LegalMixedRelationalAstPreservation.Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b.mixed_ast_closed",
+      "LegalMixedRelationalAstPreservation.Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b.mixed_denotation_matches_lowering",
+      "LegalMixedRelationalAstPreservation.Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b.mixed_role_denotation_matches_lowering",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.definition_body_source_exact",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.definition_realized",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.occurrence_0_source_exact",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.occurrence_0_matches_body",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.occurrence_1_source_exact",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.occurrence_1_matches_body",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.occurrence_2_source_exact",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.occurrence_2_matches_body",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_0_preservation_under_realization",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_1_preservation_under_realization",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_2_preservation_under_realization",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_1_expansion_source_exact",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_1_whole_norm_definition_expansion",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_2_expansion_source_exact",
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_2_whole_norm_definition_expansion"
+    ],
+    "theorem_axiom_dependencies": {
+      "LegalMixedRelationalAstPreservation.Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b.mixed_ast_closed": [],
+      "LegalMixedRelationalAstPreservation.Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b.mixed_denotation_matches_lowering": [],
+      "LegalMixedRelationalAstPreservation.Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b.mixed_renderer_value_exact": [],
+      "LegalMixedRelationalAstPreservation.Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b.mixed_role_denotation_matches_lowering": [],
+      "LegalMixedRelationalAstPreservation.Instanceb465cef0195da1b20df092bf7e99494f037e8decdd7f9dd088e6af2e4e64229b.mixed_typed_value_exact": [],
+      "LegalRelationalAstPreservation.Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb.denotation_matches_native": [],
+      "LegalRelationalAstPreservation.Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb.native_ast_closed": [],
+      "LegalRelationalAstPreservation.Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb.native_value_exact": [],
+      "LegalRelationalAstPreservation.Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb.role_denotation_matches_native": [],
+      "LegalRelationalAstPreservation.Instanceb9173c29f882e644f1bc9ec677389af3fadf9623d35961b9bd230fdb3b877fdb.typed_source_lowering_exact": [],
+      "LegalRelationalAstPreservation.Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6.denotation_matches_native": [],
+      "LegalRelationalAstPreservation.Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6.native_ast_closed": [],
+      "LegalRelationalAstPreservation.Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6.native_value_exact": [],
+      "LegalRelationalAstPreservation.Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6.role_denotation_matches_native": [],
+      "LegalRelationalAstPreservation.Instancec816ab71a4084aeab26ff2ebae2a05c6fd759d0df0f1b77ddf9b621f698b5fd6.typed_source_lowering_exact": [],
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.definition_body_source_exact": [],
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.definition_realized": [],
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.occurrence_0_matches_body": [],
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.occurrence_0_source_exact": [],
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.occurrence_1_matches_body": [],
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.occurrence_1_source_exact": [],
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.occurrence_2_matches_body": [],
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.occurrence_2_source_exact": [],
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_0_preservation_under_realization": [],
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_1_expansion_source_exact": [],
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_1_preservation_under_realization": [],
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_1_whole_norm_definition_expansion": [],
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_2_expansion_source_exact": [],
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_2_preservation_under_realization": [],
+      "LegalReviewedDefinitionRealization.Instancec7894c2cb2210f2f596c64656a7ce1988fda9f25f2a4d47ec37d5a515a05eb08.unit_2_whole_norm_definition_expansion": []
+    },
+    "toolchain": "leanprover/lean4:v4.34.1"
+  }
+}"""
+    assert sha(raw.encode()) == "bdcf0e6793ec0de0b750ab83326f6ee76f5309e2b4548e052f2ec2eb0777235c"
+    snapshot = json.loads(raw)
+    manifest = snapshot["manifest"]
+    declarations = manifest["preservation_obligations"]
+    whole_norms = [row for row in manifest["theorem_bindings"]
+                   if row["binding"]["kind"] == "whole_norm_definition_expansion"]
+    assert len({row["binding"]["unit_id"] for row in whole_norms}) == 2
+    first, sibling = [row["theorem"] for row in whole_norms]
+    project = snapshot["project"]
+    opened = snapshot["opened"]
+    receipt = snapshot["receipt"]
+    artifact_pins = {path: receipt["artifact_sha256"][output]
+                     for output, path in receipt["artifact_files"].items()}
+    if damage == "missing-sibling":
+        receipt["conditional_theorems"].remove(sibling)
+    elif damage == "foreign-sibling":
+        receipt["conditional_theorems"][declarations.index(sibling)] = sibling + "_foreign"
+    elif damage == "reordered":
+        receipt["conditional_theorems"].reverse()
+    elif damage == "missing-axiom":
+        receipt["theorem_axiom_dependencies"].pop(sibling)
+    elif damage == "sibling-axiom":
+        receipt["theorem_axiom_dependencies"][sibling] = ["Fictional.foreignAxiom"]
+    elif damage == "foreign-binary":
+        artifact_pins[next(iter(artifact_pins))] = sha(b"foreign compiled artifact DATA")
+    elif damage == "foreign-source":
+        receipt["executed_project_sha256"][next(iter(manifest["file_sha256"]))] = sha(b"foreign source DATA")
+
+    assert receipt["conditional_theorems"].count(first) == 1
+    assert receipt["theorem_axiom_dependencies"][first] == []
+    if damage is None:
+        coverage = release._physical_v4_whole_project_coverage(project, opened, receipt, artifact_pins)
+        assert [row["declaration"] for row in coverage["obligations"]] == declarations
+        assert all(row["axiom_dependencies"] == [] for row in coverage["obligations"])
+        assert coverage["compiled_modules"] == manifest["expected_modules"]
+        assert {row["path"]: row["sha256"] for row in coverage["compiled_artifacts"]} == artifact_pins
+        assert not {"proof_authority", "proof_receipt_issued", "native_execution_authenticated"} & set(coverage)
+    else:
+        with pytest.raises(ValueError, match="whole-project"):
+            release._physical_v4_whole_project_coverage(project, opened, receipt, artifact_pins)
+
+
+def test_physical_v4_whole_project_requires_live_selection_before_wire_replay():
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+
+    raw = b"must not be decoded"
+    with pytest.raises(ValueError, match="whole-project requires checked Native"):
+        release.validate_uscode_release_closure_v4(
+            raw, expected_request_sha256=sha(raw),
+            whole_project_artifact_sha256s={"compiled/Fictional.olean": sha(b"fictional binary DATA")},
+        )
