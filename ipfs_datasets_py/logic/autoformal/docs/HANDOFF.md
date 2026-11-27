@@ -4198,3 +4198,12 @@ The published merge passed 234 managed software cases in the 62-case V4 release,
 On Guide 585 source, Lean 4.34.1 accepted the root declaration `wanted` and rejected `Law.wanted` for the expected type mismatch. The run used one version probe and two compilations. The detached verifier checked both cases, unchanged Source metadata and complete cleanup. The run earned zero pytest cases. [Namespaced Native2 qualification](/tmp/Root-P1-Guide585-namespaced-Native2-Source4-vydep2ma/actual-current-Guide585-namespaced-Native2-qualification-closed.json)
 
 The published supervisor merge saves exact provider-turn observations in a durable continuation checkpoint, retaining refusal evidence and spent attempts. Its current-base cooperative Source read closed after 95 owning tests and 171 subtests passed. The tests exercised saved observations without a live provider or worker operation. [Current-base checkpoint tests](/tmp/git-renewed-all-work-20261127-17pd2xkd/current-base-test-result.json) · [Published recovery merge](/tmp/git-renewed-all-work-20261127-17pd2xkd/actual-datasets-publication.json)
+
+
+## Evidence587 — Qualify counterexample scoring and proof-cache exports
+
+The benchmark scorer keeps each reported typed assignment paired with its recorded obligation outcome. Incomplete observations cannot earn counterexample credit. The software suite passed 37 cases across 13 functions. [Scorer qualification](/tmp/Root-Guide586-P8-scenario-pairs-wcYkZiTQ/ordinary37-actual-v02/actual-Guide586-P8-scenario-pairs-ordinary37-qualified-closed.json)
+
+The proof-cache exporter snapshots the indexes under the cache lock and derives the returned record count from the payload written to disk. The software suite passed 18 cases across 13 functions, including the concurrent-clear regression and four fixture-loader checks. The fixture digest matches the revised cache test file. [Cache qualification](/tmp/Root-Guide586-P1-proof-cache-export-candidate-pg7y4gul/ordinary18-actual/actual-current-P1-proof-cache-export-and-fixture-loader-ordinary18-qualified-closed.json)
+
+Both runs closed their Source leases and released their resources. The evidence covers software fixtures and reported observations. Both changes were published through normal fast-forwards with their parent submodule pins. [Publication receipts](/tmp/Root-Guide586-P1-proof-cache-export-candidate-pg7y4gul/publication-code-only-v01/actual-P8-then-P1-code-only-publications-closed-small-v01.json)

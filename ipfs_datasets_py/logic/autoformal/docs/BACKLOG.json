@@ -5213,6 +5213,16 @@
       },
       "record_id": "phase1-namespaced-lean-and-agent-turn-checkpoint-evidence586-20261127",
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
+    },
+    "phase8_reported_counterexample_pairs_and_phase1_proof_cache_export_20261127": {
+      "evidence_ordinal": 587,
+      "facts": {
+        "bytes": 2102,
+        "path": "/tmp/Root-Guide587-evidence-current-cv04/guide587-current-scoped-software-facts.json",
+        "sha256": "ac9a632b6a22fee6a683fcbcef02f16627adf6fd2a6a93bd98aa97ea70c1a4a4"
+      },
+      "record_id": "phase8-reported-counterexample-pairs-and-phase1-proof-cache-export-evidence587-20261127",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
     }
   },
   "programme_goal_hierarchy": {

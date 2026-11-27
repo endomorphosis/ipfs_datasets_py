@@ -37593,6 +37593,66 @@
       "root": "artifact_workspace",
       "scope": "Exact Lean declaration selection and separate local agent-turn checkpoint tests.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase8_reported_counterexample_pairs_and_phase1_proof_cache_export_20261127",
+      "closed_runtime_facts": {
+        "evidence_ordinal": 587,
+        "full_eight_phase_goal_complete": false,
+        "hosted_CI_observed": false,
+        "model_or_corpus_quality": false,
+        "phase1_proof_cache_export": {
+          "Lean_processes": 0,
+          "Source_and_resource_cleanup": true,
+          "errors": 0,
+          "export_consistency": "One detached snapshot determines both the written index and the returned CID count.",
+          "failures": 0,
+          "fixture_loader_cases": 4,
+          "functions": 13,
+          "published_datasets_commit": "b0848bff76bf26f79d6f98b0f9bef9b189bd9139",
+          "qualification_ref": {
+            "bytes": 10945,
+            "path": "/tmp/Root-Guide586-P1-proof-cache-export-candidate-pg7y4gul/ordinary18-actual/actual-current-P1-proof-cache-export-and-fixture-loader-ordinary18-qualified-closed.json",
+            "sha256": "c781bdd8772cc5c578ff50d797e402177f8cc645da1c1fc1420aa1eaed1cc174"
+          },
+          "skips": 0,
+          "software_tests": 18,
+          "unit_cache_cases": 14
+        },
+        "phase8_reported_counterexamples": {
+          "Source_and_resource_cleanup": true,
+          "comparison": "Reported typed assignments stay paired with their recorded obligation outcomes. Incomplete observations cannot contribute counterexample credit.",
+          "errors": 0,
+          "failures": 0,
+          "functions": 13,
+          "independent_scenario_execution": false,
+          "published_datasets_commit": "8c61cf7056d2e1ef0b426a33c9fdd17a32cde5df",
+          "qualification_ref": {
+            "bytes": 13859,
+            "path": "/tmp/Root-Guide586-P8-scenario-pairs-wcYkZiTQ/ordinary37-actual-v02/actual-Guide586-P8-scenario-pairs-ordinary37-qualified-closed.json",
+            "sha256": "87f12869451c16588723f7d859422a5081d01adc60a29c02a860c3591501c843"
+          },
+          "skips": 0,
+          "software_tests": 37
+        },
+        "published_sequence": {
+          "bytes": 7197,
+          "path": "/tmp/Root-Guide586-P1-proof-cache-export-candidate-pg7y4gul/publication-code-only-v01/actual-P8-then-P1-code-only-publications-closed-small-v01.json",
+          "sha256": "0618f90949c0f81713e80d7001650b212c7e90f58f43f74d7c4d2aaa105a7475"
+        },
+        "real_legal_review_or_admission": false,
+        "schema": "autoformal-selected-software-evidence/v1",
+        "task_status_changed": false
+      },
+      "evidence_ordinal": 587,
+      "id": "phase8-reported-counterexample-pairs-and-phase1-proof-cache-export-evidence587-20261127",
+      "observed_bytes": 2102,
+      "observed_sha256": "ac9a632b6a22fee6a683fcbcef02f16627adf6fd2a6a93bd98aa97ea70c1a4a4",
+      "path": "/tmp/Root-Guide587-evidence-current-cv04/guide587-current-scoped-software-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Software evidence for reported counterexample comparison and proof-cache export snapshot integrity.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }
