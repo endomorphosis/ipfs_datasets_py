@@ -5303,6 +5303,16 @@
       },
       "record_id": "lir02-mixed-source-bound-v5-worker-resume-evidence595-20261127",
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
+    },
+    "lir02_source_bound_v4_graph_and_preservation_20261127": {
+      "evidence_ordinal": 596,
+      "facts": {
+        "bytes": 10469,
+        "path": "/tmp/P2-bound-mixed-preservation-qual-flat-pehFm7lN/Guide596-docs-ready/Guide596-scoped-software-facts.json",
+        "sha256": "89db36957b8e8cbcb71d37fdb9539cd577837e74615a2ca4b3945e1b3a4c66d1"
+      },
+      "record_id": "lir02-source-bound-v4-graph-preservation-evidence596-20261127",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
     }
   },
   "programme_goal_hierarchy": {
