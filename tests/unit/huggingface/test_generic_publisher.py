@@ -456,16 +456,18 @@ def test_pointer_promotion_waits_for_pinned_verification(tmp_path: Path) -> None
         canary_percent=10,
         approval=approval,
         pinned_redownload=pinned,
+        rehearsal=True,
     )
+    assert pointer.to_dict()["runtime_release_pointer"] is False
+    assert pointer.to_dict()["rehearsal_only"] is True
+    assert publisher.rollback_pointer(current=pointer).to_dict()["runtime_release_pointer"] is False
     assert pointer.canary_percent == 10
     assert pointer.commit_sha == commit.commit_sha
     assert pointer.pointer_path == profile.pointer_path
 
 
-def test_pointer_promotion_accepts_prior_pinned_verification_on_same_publisher(
-    tmp_path: Path,
-) -> None:
-    """Instance-local pinned verification also unlocks canary promotion."""
+def test_legacy_abby_implicit_pointer_math_is_rehearsal_only(tmp_path: Path) -> None:
+    """The historical Abby omission path still supports pointer arithmetic."""
 
     manifest = _manifest(release_id="promote-instance-v1")
     root = tmp_path / "release"
@@ -505,6 +507,8 @@ def test_pointer_promotion_accepts_prior_pinned_verification_on_same_publisher(
         approval=approval,
     )
     assert pointer.commit_sha == commit.commit_sha
+    assert pointer.to_dict()["runtime_release_pointer"] is False
+    assert pointer.to_dict()["rehearsal_only"] is True
 
 
 def test_mismatched_pinned_commit_blocks_promotion(tmp_path: Path) -> None:
@@ -533,21 +537,6 @@ def test_mismatched_pinned_commit_blocks_promotion(tmp_path: Path) -> None:
     }
     cache = tmp_path / "cache"
     cache.mkdir()
-    # Validate a different commit SHA than the publish receipt.
-    other = PublicationCommitReceipt(
-        repository_id=commit.repository_id,
-        commit_sha="f" * 40,
-        release_id=commit.release_id,
-        release_prefix=commit.release_prefix,
-        plan_digest=commit.plan_digest,
-        parent_commit=commit.parent_commit,
-        target_revision=commit.target_revision,
-        uploaded_paths=commit.uploaded_paths,
-        upload_bytes=commit.upload_bytes,
-        approval_id=commit.approval_id,
-    )
-    # Force a validation receipt for the published commit, then try to promote
-    # while claiming a mismatched commit via a forged pinned object.
     good = publisher.redownload_and_validate_pinned(
         commit_sha=commit.commit_sha,
         plan=plan,
@@ -573,10 +562,117 @@ def test_mismatched_pinned_commit_blocks_promotion(tmp_path: Path) -> None:
             approval=approval,
             pinned_redownload=forged,
         )
-    # Using the matching commit still works via the instance cache even if
-    # someone supplies a bad forged receipt when the commit is already verified.
-    # Explicit forged receipt is checked first and must fail (above).
-    del other  # silence unused when gate raises as expected
+
+
+
+class _PinnedDownloadApi(_WriteTrackingApi):
+    """In-memory Hub client that enforces pinned readback arguments."""
+
+    def hf_hub_download(self, *, repo_id, filename, repo_type, revision,
+                        local_dir, force_download):
+        assert repo_id == patent_legal_publication_profile().repository_id
+        assert repo_type == "dataset"
+        assert revision == self.commit_sha
+        assert force_download is True
+        self.calls.append("hf_hub_download")
+        target = Path(local_dir) / filename
+        target.write_bytes(self.remote_files[filename])
+        return target
+
+
+def _pointer_publication(root, api):
+    manifest = _manifest(release_id="pointer-readback-v1")
+    root.mkdir()
+    _materialize(root, manifest)
+    publisher = HuggingFaceReleasePublisher(
+        profile=patent_legal_publication_profile(), api=api,
+    )
+    plan = publisher.plan_dry_run(manifest, local_root=root,
+                                  audited_parent_commit=AUDITED_PARENT)
+    approval = _approval(plan, repository_id=publisher.repository_id)
+    commit = publisher.publish_append_only(plan, approval=approval, local_root=root)
+    return publisher, plan, approval, commit
+
+
+@pytest.mark.parametrize("explicit", [False, True])
+def test_offline_readback_cannot_select_runtime_pointer(tmp_path: Path, explicit: bool):
+    api = _WriteTrackingApi()
+    publisher, plan, approval, commit = _pointer_publication(tmp_path / "release", api)
+    pinned = publisher.redownload_and_validate_pinned(
+        commit_sha=commit.commit_sha, plan=plan, cache_root=tmp_path / "pinned",
+        remote_payloads=api.remote_files,
+    )
+    assert pinned.ok is True
+    assert pinned.network_fetch_performed is False
+    with pytest.raises(HuggingFacePublicationError, match="pinned redownload"):
+        publisher.canary_promote_pointer(
+            commit_receipt=commit, previous=None, canary_percent=5, approval=approval,
+            pinned_redownload=pinned if explicit else None,
+        )
+
+
+def test_standalone_download_callback_cannot_select_runtime_pointer(tmp_path: Path):
+    api = _WriteTrackingApi()
+    publisher, plan, approval, commit = _pointer_publication(tmp_path / "release", api)
+    publisher.fetch_bytes = lambda _repo, _revision, path: api.remote_files[path]
+    pinned = publisher.redownload_and_validate_pinned(
+        commit_sha=commit.commit_sha, plan=plan, cache_root=tmp_path / "pinned",
+    )
+    assert pinned.ok is True
+    with pytest.raises(HuggingFacePublicationError, match="pinned redownload"):
+        publisher.canary_promote_pointer(
+            commit_receipt=commit, previous=None, canary_percent=5,
+            approval=approval, pinned_redownload=pinned,
+        )
+
+
+@pytest.mark.parametrize("mutation", [
+    "foreign_inventory", "copied_inventory", "other_plan", "incomplete_commit",
+    "different_approval", "different_client",
+])
+def test_pointer_selection_requires_the_original_complete_readback(
+    tmp_path: Path, mutation: str
+):
+    api = _PinnedDownloadApi()
+    publisher, plan, approval, commit = _pointer_publication(tmp_path / "release", api)
+    readback_plan = (replace(plan, metadata={**plan.metadata, "alternate_plan": True})
+                     if mutation == "other_plan" else plan)
+    pinned = publisher.redownload_and_validate_pinned(
+        commit_sha=commit.commit_sha, plan=readback_plan, cache_root=tmp_path / "pinned",
+    )
+    assert api.calls.count("hf_hub_download") == len(plan.operations)
+    if mutation == "foreign_inventory":
+        pinned = replace(pinned, repository_id="example/other-repo")
+    elif mutation == "copied_inventory":
+        pinned = replace(pinned)
+    elif mutation == "incomplete_commit":
+        commit = replace(commit, uploaded_paths=commit.uploaded_paths[:-1])
+    elif mutation == "different_approval":
+        approval = replace(approval, approval_id="different-approval")
+    elif mutation == "different_client":
+        publisher.api = _PinnedDownloadApi()
+
+    with pytest.raises(HuggingFacePublicationError, match="pointer promotion"):
+        publisher.canary_promote_pointer(
+            commit_receipt=commit, previous=None, canary_percent=5,
+            approval=approval, pinned_redownload=pinned,
+        )
+
+
+@pytest.mark.parametrize("explicit", [False, True])
+def test_pointer_selection_after_exact_hub_client_readback(tmp_path: Path, explicit: bool):
+    api = _PinnedDownloadApi()
+    publisher, plan, approval, commit = _pointer_publication(tmp_path / "release", api)
+    pinned = publisher.redownload_and_validate_pinned(
+        commit_sha=commit.commit_sha, plan=plan, cache_root=tmp_path / "pinned",
+    )
+    assert api.calls.count("hf_hub_download") == len(plan.operations)
+    pointer = publisher.canary_promote_pointer(
+        commit_receipt=commit, previous=None, canary_percent=5, approval=approval,
+        pinned_redownload=pinned if explicit else None,
+    )
+    assert pointer.commit_sha == commit.commit_sha
+    assert pointer.to_dict()["runtime_release_pointer"] is True
 
 
 def test_live_publish_generic_profile_stops_before_promotion(tmp_path: Path) -> None:
