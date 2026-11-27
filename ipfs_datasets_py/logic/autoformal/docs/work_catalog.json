@@ -5821,6 +5821,19 @@
         "scope": "Local metadata scheduling and owner-reconciliation requests only; no live goal mutation, dispatch, retry, Native Lean, legal or corpus admission.",
         "publication_status": "local_uncommitted",
         "task_and_component_population_unchanged": true
+      },
+      "agent_turn_observation_checkpoint_v1": {
+        "api": "prepare_agent_turn_recovery_checkpoint_v1",
+        "cli": "scripts/ops/legal_ir/run_autoformal_supervisor.py agent-turn-recovery --inputs frontier.json --observation owner-turn.json --output checkpoint.json",
+        "evidence": {
+          "bytes": 2438,
+          "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-agent-turn-observation-checkpoint-local95-v01.json",
+          "sha256": "7287b4e19cebb8d8fea57f6fc23246d3e2f9a0d54586f8a901fdc76906c7089d"
+        },
+        "publication_status": "included_in_normal_main_merge",
+        "qualification": "95 local owning tests and 171 subtests passed; Source READ closed.",
+        "scope": "Existing-turn metadata ingestion and durable checkpoint only; no provider authentication, retry, dispatch, goal mutation, runtime or legal admission.",
+        "task_component_selected_evidence_populations_unchanged": true
       }
     },
     {

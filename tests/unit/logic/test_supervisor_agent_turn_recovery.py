@@ -1108,3 +1108,312 @@ class GoalAwareRecoveryCliTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class AgentTurnObservationCheckpointTests(unittest.TestCase):
+    def snapshot(self):
+        result = paused_owner_frontier(observations=[
+            observation('owner', status='inProgress', cleanup=False)])
+        result['goal_control']['observed'] = deepcopy(result['goal_control']['intent'])
+        return result
+
+    def event(self, *, cleanup=True):
+        return {
+            'schema': 'legal-ir-agent-turn-observation/v1', 'task_id': 'owner',
+            'thread_id': 'original-thread:owner',
+            'turn': {'id': 'original-turn:owner', 'status': 'failed',
+                     'error': {'message': 'This content was flagged for possible cybersecurity risk.',
+                               'details': {'original': ['preserved']}}},
+            'cleanup_confirmed': cleanup, 'accepted': False,
+            'evidence_refs': [{'path': 'saved/owner-turn.json', 'sha256': 'b' * 64}],
+        }
+
+    def prepare(self, snapshot=None, event=None):
+        result = supervisor_loop.prepare_agent_turn_recovery_checkpoint_v1(
+            self.snapshot() if snapshot is None else snapshot,
+            self.event() if event is None else event)
+        for key in ('dispatch_authorized', 'retries_authorized', 'attempt_budgets_reset',
+                    'workers_started', 'owner_resume_authorized', 'goal_mutation_authorized',
+                    'goal_complete', 'admitted'):
+            self.assertIs(result[key], False, key)
+        self.assertIs(result['requires_durable_checkpoint_before_claim'], True)
+        return result
+
+    def test_actual_refusal_holds_aliases_and_dependents_but_not_independent_work(self):
+        snapshot = self.snapshot()
+        snapshot['tasks'] += [task('alias', operation='operation:owner'),
+                              task('dependent', dependencies=['owner']),
+                              task('unauthorized', authorized=False)]
+        result = self.prepare(snapshot)
+        self.assertEqual(result['selected_task_ids'], ['independent'])
+        self.assertEqual(result['policy_holds'][0]['error'], self.event()['turn']['error'])
+        self.assertEqual(result['policy_holds'][0]['evidence_refs'], self.event()['evidence_refs'])
+        self.assertIn('policy_refusal_requires_review', decision(result, 'alias')['reasons'])
+        self.assertEqual(decision(result, 'dependent')['unaccepted_dependencies'], ['owner'])
+
+    def test_checkpoint_preserves_inputs_and_binds_exact_json(self):
+        snapshot, event = self.snapshot(), self.event()
+        originals = deepcopy((snapshot, event))
+        result = self.prepare(snapshot, event)
+        self.assertEqual((snapshot, event), originals)
+        checkpoint = result['observation_checkpoint']
+        self.assertEqual(checkpoint['event'], event)
+        for key, value in [('input_frontier_sha256', snapshot), ('event_sha256', event),
+                           ('next_frontier_sha256', result['next_frontier'])]:
+            self.assertEqual(checkpoint[key], hashlib.sha256(
+                supervisor_loop._handoff_reconciliation_bytes_v2(value)).hexdigest())
+
+    def test_duplicate_delivery_preserves_counters_holds_and_next_frontier(self):
+        first = self.prepare()
+        second = self.prepare(first['next_frontier'])
+        self.assertEqual(first['next_frontier'], second['next_frontier'])
+        self.assertEqual(len(second['policy_holds']), 1)
+        self.assertEqual(second['owner_reconciliation_requests'], [])
+        self.assertEqual(second['next_frontier']['tasks'][0]['attempts_used'], 1)
+
+    def test_digest_binds_consumed_snapshot_despite_later_caller_mutation(self):
+        snapshot = self.snapshot()
+        serializer = supervisor_loop._handoff_reconciliation_bytes_v2
+        original = serializer(snapshot)
+        def mutate_after_serialization(value):
+            raw = serializer(value)
+            if value is snapshot: snapshot['frontier_id'] = 'caller-mutated-after-read'
+            return raw
+        with patch.object(supervisor_loop, '_handoff_reconciliation_bytes_v2',
+                          side_effect=mutate_after_serialization):
+            result = self.prepare(snapshot)
+        self.assertEqual(result['observation_checkpoint']['input_frontier_sha256'],
+                         hashlib.sha256(original).hexdigest())
+        self.assertEqual(result['next_frontier']['frontier_id'], 'frontier:original')
+
+    def test_refusal_evidence_cannot_be_rewritten_into_unreplayable_checkpoint(self):
+        first = self.prepare(); event = self.event()
+        event['evidence_refs'] = [{'path': 'replacement.json', 'sha256': 'c' * 64}]
+        with self.assertRaisesRegex(ValueError, 'evidence cannot be rewritten'):
+            self.prepare(first['next_frontier'], event)
+
+    def test_wrong_task_thread_or_turn_refused(self):
+        for field in ('task_id', 'thread_id', 'turn'):
+            event = self.event()
+            if field == 'turn': event['turn']['id'] = 'replacement-turn'
+            else: event[field] = 'replacement-owner'
+            with self.subTest(field=field), self.assertRaises(ValueError):
+                self.prepare(event=event)
+
+    def test_missing_or_unavailable_provider_turn_refused(self):
+        for value in (None, {}, {'id': 'original-turn:owner',
+                                 'status': 'observation_unavailable', 'error': None}):
+            event = self.event(); event['turn'] = value
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                self.prepare(event=event)
+
+    def test_existing_attempt_must_remain_charged(self):
+        snapshot = self.snapshot(); snapshot['tasks'][0]['attempts_used'] = 0
+        with self.assertRaisesRegex(ValueError, 'charged'):
+            self.prepare(snapshot)
+
+    def test_terminal_status_does_not_infer_cleanup(self):
+        snapshot = self.snapshot()
+        snapshot['tasks'].append(task('overlap', keys=['scope:owner']))
+        result = self.prepare(snapshot, self.event(cleanup=False))
+        self.assertEqual(result['cleanup_required'], ['owner'])
+        self.assertEqual(result['occupied_slots'], 1)
+        self.assertEqual(result['selected_task_ids'], ['independent'])
+        self.assertIn('exclusive_scope_held', decision(result, 'overlap')['reasons'])
+
+    def test_live_owner_keeps_original_poll_target(self):
+        event = self.event(cleanup=False)
+        event['turn'].update(status='inProgress', error=None)
+        result = self.prepare(event=event)
+        self.assertEqual(result['poll_targets'], [{
+            'task_id': 'owner', 'thread_id': event['thread_id'],
+            'turn_id': event['turn']['id'], 'status': 'inProgress'}])
+
+    def test_live_owner_cannot_claim_cleanup_or_acceptance(self):
+        for field in ('cleanup_confirmed', 'accepted'):
+            event = self.event(cleanup=False)
+            event['turn'].update(status='inProgress', error=None); event[field] = True
+            with self.subTest(field=field), self.assertRaises(ValueError):
+                self.prepare(event=event)
+
+    def test_refusal_cannot_be_accepted(self):
+        event = self.event(); event['accepted'] = True
+        with self.assertRaises(ValueError): self.prepare(event=event)
+
+    def test_terminal_error_or_status_cannot_be_rewritten(self):
+        first = self.prepare()
+        for change in ('error', 'status'):
+            event = self.event()
+            if change == 'error': event['turn']['error'] = None
+            else: event['turn']['status'] = 'completed'
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                self.prepare(first['next_frontier'], event)
+
+    def test_later_cleanup_evidence_preserves_refusal_and_spent_attempt(self):
+        first = self.prepare(event=self.event(cleanup=False))
+        second = self.prepare(first['next_frontier'])
+        self.assertEqual(second['cleanup_required'], [])
+        self.assertEqual(second['policy_holds'], first['policy_holds'])
+        self.assertEqual(second['next_frontier']['tasks'][0]['attempts_used'], 1)
+
+    def test_explicit_pause_and_runwide_hold_block_independent_selection(self):
+        for mode in ('pause', 'hold'):
+            snapshot = self.snapshot()
+            if mode == 'pause': snapshot['goal_control']['intent']['state'] = 'paused'
+            else: snapshot['execution_hold'] = {
+                'kind': 'usage_limit', 'reason': 'original restriction', 'evidence_refs': []}
+            result = self.prepare(snapshot)
+            with self.subTest(mode=mode):
+                self.assertEqual(result['selected_task_ids'], [])
+                self.assertEqual(len(result['policy_holds']), 1)
+
+    def test_original_omitted_from_frontier_is_recovered_only_from_retained_history(self):
+        first = self.prepare()
+        snapshot = deepcopy(first['next_frontier'])
+        snapshot['tasks'] = [row for row in snapshot['tasks'] if row['task_id'] != 'owner']
+        snapshot['observations'] = []
+        snapshot['tasks'].append(task('renamed', operation='operation:owner'))
+        result = self.prepare(snapshot)
+        self.assertEqual(result['policy_holds'], first['policy_holds'])
+        self.assertIn('policy_refusal_requires_review', decision(result, 'renamed')['reasons'])
+
+    def test_completed_provider_turn_alone_is_not_task_acceptance(self):
+        event = self.event(); event['turn'].update(status='completed', error=None)
+        snapshot = self.snapshot(); snapshot['tasks'].append(task('dependent', dependencies=['owner']))
+        result = self.prepare(snapshot, event)
+        self.assertEqual(decision(result, 'dependent')['unaccepted_dependencies'], ['owner'])
+
+    def test_malformed_event_is_rejected(self):
+        for change in ('extra', 'schema', 'cleanup_confirmed', 'evidence_refs'):
+            event = self.event()
+            event[change] = {'extra': True} if change == 'extra' else 'invalid'
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                self.prepare(event=event)
+
+    def test_observation_ingestion_is_metadata_only(self):
+        snapshot, event = self.snapshot(), self.event()
+        with ExitStack() as stack:
+            guards = [stack.enter_context(patch.object(Path, name,
+                      side_effect=AssertionError('filesystem access'))) for name in ('open', 'read_bytes')]
+            guards += [stack.enter_context(patch.object(subprocess, name,
+                       side_effect=AssertionError('process call'))) for name in ('Popen', 'run')]
+            guards.append(stack.enter_context(patch.object(socket, 'create_connection',
+                          side_effect=AssertionError('network call'))))
+            self.prepare(snapshot, event)
+            for guard in guards: guard.assert_not_called()
+
+
+class AgentTurnObservationCheckpointCliTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        AgentTurnRecoveryCliTests.setUpClass()
+        cls.cli = AgentTurnRecoveryCliTests.cli
+
+    invoke = AgentTurnRecoveryCliTests.invoke
+
+    def inputs(self, root):
+        fixture = AgentTurnObservationCheckpointTests()
+        source, event = root/'frontier.json', root/'turn.json'
+        source.write_text(json.dumps(fixture.snapshot()))
+        event.write_text(json.dumps(fixture.event()))
+        return source, event, root/'checkpoint.json'
+
+    def argv(self, source, event, output):
+        return ['agent-turn-recovery', '--inputs', str(source), '--observation', str(event),
+                '--output', str(output)]
+
+    def test_cli_ingests_refusal_and_syncs_checkpoint_and_directory(self):
+        import os
+        with tempfile.TemporaryDirectory() as directory:
+            source, event, output = self.inputs(Path(directory))
+            original = (source.read_bytes(), event.read_bytes())
+            with patch.object(self.cli.os, 'fsync', wraps=os.fsync) as synced:
+                code, stdout, stderr = self.invoke(self.argv(source, event, output))
+            self.assertEqual((code, stdout, stderr), (0, '', ''))
+            self.assertEqual(synced.call_count, 2)
+            result = json.loads(output.read_bytes())
+            self.assertEqual(result['selected_task_ids'], ['independent'])
+            self.assertEqual(len(result['next_frontier']['policy_holds']), 1)
+            self.assertEqual((source.read_bytes(), event.read_bytes()), original)
+            self.assertEqual(output.stat().st_mode & 0o777, 0o600)
+
+    def test_observation_mode_requires_output_before_any_input_read(self):
+        with patch.object(self.cli, '_read_handoff_metadata_v2') as read:
+            with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as stopped:
+                self.cli.main(['agent-turn-recovery', '--inputs', 'frontier.json',
+                               '--observation', 'turn.json'])
+        self.assertEqual(stopped.exception.code, 2); read.assert_not_called()
+
+    def test_existing_checkpoint_is_not_overwritten(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source, event, output = self.inputs(Path(directory)); output.write_bytes(b'original evidence')
+            code, stdout, stderr = self.invoke(self.argv(source, event, output))
+            self.assertEqual((code, stdout), (2, ''))
+            self.assertEqual(output.read_bytes(), b'original evidence')
+            self.assertIs(json.loads(stderr)['workers_started'], False)
+
+    def test_output_cannot_alias_event_input(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source, event, output = self.inputs(Path(directory)); original = event.read_bytes()
+            with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+                self.cli.main(self.argv(source, event, event))
+            self.assertEqual(event.read_bytes(), original)
+
+    def test_bad_owner_event_creates_no_checkpoint(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source, event, output = self.inputs(Path(directory))
+            data = json.loads(event.read_bytes()); data['turn']['id'] = 'wrong-turn'
+            event.write_text(json.dumps(data))
+            code, stdout, stderr = self.invoke(self.argv(source, event, output))
+            self.assertEqual((code, stdout), (2, '')); self.assertFalse(output.exists())
+
+    def test_file_or_directory_sync_failure_preserves_partial_and_refuses_success(self):
+        for failure in (1, 2):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as directory:
+                source, event, output = self.inputs(Path(directory))
+                calls = 0
+                def fail_at(fd):
+                    nonlocal calls
+                    calls += 1
+                    if calls == failure: raise OSError('injected checkpoint sync failure')
+                with patch.object(self.cli.os, 'fsync', side_effect=fail_at):
+                    code, stdout, stderr = self.invoke(self.argv(source, event, output))
+                self.assertEqual((code, stdout), (2, '')); self.assertTrue(output.exists())
+                self.assertIn('injected checkpoint sync failure', json.loads(stderr)['error'])
+                self.assertEqual(len(json.loads(output.read_bytes())['policy_holds']), 1)
+
+    def test_symlink_observation_is_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source, event, output = self.inputs(Path(directory)); link = event.with_name('turn-link.json')
+            link.symlink_to(event)
+            code, stdout, stderr = self.invoke(self.argv(source, link, output))
+            self.assertEqual((code, stdout), (2, '')); self.assertFalse(output.exists())
+
+    def test_symlink_output_directory_is_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory); source, event, output = self.inputs(root)
+            target = root/'real'; target.mkdir(); link = root/'link'; link.symlink_to(target, target_is_directory=True)
+            code, stdout, stderr = self.invoke(self.argv(source, event, link/'checkpoint.json'))
+            self.assertEqual((code, stdout), (2, '')); self.assertEqual(list(target.iterdir()), [])
+
+    def test_replacement_during_directory_sync_cannot_acknowledge_checkpoint(self):
+        import os
+        for replace_parent in (False, True):
+            with self.subTest(replace_parent=replace_parent), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory); parent = root/'output'; parent.mkdir()
+                source, event, unused = self.inputs(root); output = parent/'checkpoint.json'
+                original_sync = os.fsync; calls = 0
+                def replace_at_sync(fd):
+                    nonlocal calls
+                    calls += 1
+                    original_sync(fd)
+                    if calls == 2:
+                        if replace_parent:
+                            parent.rename(root/'retained-output'); parent.mkdir()
+                        else:
+                            output.rename(parent/'retained-checkpoint.json')
+                        output.write_bytes(b'replacement must not be acknowledged')
+                with patch.object(self.cli.os, 'fsync', side_effect=replace_at_sync):
+                    code, stdout, stderr = self.invoke(self.argv(source, event, output))
+                self.assertEqual((code, stdout), (2, ''))
+                self.assertIn('changed during directory sync', json.loads(stderr)['error'])

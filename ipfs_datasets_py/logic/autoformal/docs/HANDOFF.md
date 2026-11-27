@@ -1,5 +1,17 @@
 # Current handoff
 
+
+## Provider-turn continuation checkpoint — local software change
+
+The existing `agent-turn-recovery` command now accepts `--observation` for an already charged task and its exact original thread/turn. It preserves provider errors/evidence and emits `next_frontier` with policy holds and both histories. Cleanup and acceptance require explicit independent evidence; terminal provider status does not release an unknown Source/process/resource scope. Rejected operations, aliases and unaccepted dependents remain held, while independent already-authorized tasks retain existing scope, capacity and pause/usage checks. Dispatch, retry, resume, goal mutation and admission flags remain false.
+
+Observation mode requires an exclusive checkpoint output. Success follows file and directory fsync plus identity rechecks. Failed writes preserve partial artifacts and return failure; filename existence alone is not commit. The caller retains the whole checkpoint and compares its consumed-frontier digest before existing atomic claim/admission.
+
+All 95 local owning unit/CLI tests and 171 subtests passed, zero failures/errors/skips: 67 retained tests plus 28 new controls. Source hashes remained unchanged and the Source READ closed. Limits were one CPU, 60 CPU/wall seconds and 512MiB address space. Independent static review found three issues fixed before qualification: digesting mutable input twice, allowing refusal-evidence rewrites, and missing post-directory-sync identity checks. The tests cover those findings, duplicate events, wrong owners, unknown cleanup, failed syncs and retained budget/policy barriers. The exact runtime/test source was requalified against current main `25bbaf0ed1ff45b4dee97b77b58c2349b5351990` during normal-main integration: 95 tests and 171 subtests passed again under the same bounded local profile, with the Source READ closed. This software change does not execute a live provider request, replay a rejected operation, change a host goal, or qualify Native Lean, statutory meaning, model training or corpus admission. The earlier 67-test record and broader failed runs remain historical.
+
+Local evidence: `/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-agent-turn-observation-checkpoint-local95-v01.json` (2438 bytes / SHA256 `7287b4e19cebb8d8fea57f6fc23246d3e2f9a0d54586f8a901fdc76906c7089d`).
+
+
 ## Agent-owner continuation recovery — local software change
 
 The current supervisor owner adds versioned goal-control reconciliation and independent scheduling through `agent-turn-recovery`. The original private turn-only draft ignored supplied pause metadata; this was reproduced before modification. V1 now rejects goal-aware fields, and V2 requires the same-goal authority/order domain, retained operation and reconciliation histories, an exact observed owner and explicit run-wide execution-hold data. Older paused state under a newer active directive can yield one owner reconciliation request without suppressing independent authorized work. Explicit pause, blocked/unknown/completed state, policy holds and usage restrictions remain barriers. No owner restart, runtime, legal, model or corpus authority is granted.
