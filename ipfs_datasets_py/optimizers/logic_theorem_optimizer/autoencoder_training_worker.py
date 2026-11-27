@@ -1219,6 +1219,7 @@ def _execute_reviewed_decoder_job(spec: ReviewedDecoderTrainingJobSpec, runtime:
     guard_calls = {"execution": 0, "asset_policy": 0, "current_admission": 0}
     if source_bound:
         guard_calls["current_bound_component_inputs"] = 0
+        job_spec_sha256 = spec.canonical_sha256
     identity = _thaw(spec.backend_identity)
     assets = (spec.model_artifact, spec.tokenizer_artifact, spec.license_artifact, *spec.backend_artifacts)
     source_pins = _thaw(spec.expected_source_sha256)
@@ -1236,7 +1237,8 @@ def _execute_reviewed_decoder_job(spec: ReviewedDecoderTrainingJobSpec, runtime:
     def observe_bound():
         supplied = bound_provider()
         guard_calls["current_bound_component_inputs"] += 1
-        if consumer.reviewed_admission_inputs_sha256(supplied) != spec.expected_bound_component_inputs_sha256:
+        if (type(supplied) is not dict or not supplied
+                or consumer.reviewed_admission_inputs_sha256(supplied) != spec.expected_bound_component_inputs_sha256):
             raise TrainingJobValidationError("current source-bound component inputs changed")
         return supplied
 
@@ -1272,12 +1274,15 @@ def _execute_reviewed_decoder_job(spec: ReviewedDecoderTrainingJobSpec, runtime:
                 spec, runtime.registry, runtime.tokenizer, admission, observe_bound(), exposure, contexts)
             # Tokenizer and registry callbacks can replace a provider's
             # subsequent answer without mutating the object already returned.
-            observe_bound()
             fresh_admission = runtime.current_admission_provider()
             guard_calls["current_admission"] += 1
+            observe_bound()
             if (consumer.reviewed_admission_inputs_sha256(fresh_admission) != spec.expected_admission_inputs_sha256
-                    or current_pins() != source_pins):
-                raise TrainingJobValidationError("current source-bound admission or producer changed during preparation")
+                    or spec.canonical_sha256 != job_spec_sha256
+                    or current_pins() != source_pins
+                    or _reviewed_decoder_artifact(spec.exposure_artifact) != exposure_raw
+                    or _reviewed_decoder_artifact(spec.source_contexts_artifact) != contexts_raw):
+                raise TrainingJobValidationError("current source-bound job, admission or artifacts changed during preparation")
         else:
             try:
                 prepare = (inputs.prepare_reviewed_mixed_decoder_digest_omitted_inputs_v1 if digest_omitted else

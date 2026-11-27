@@ -4498,7 +4498,7 @@ def test_reviewed_mixed_source_bound_v5_worker_rechecks_signed_inputs_before_res
             reviewed_runtime=runtime)
 
     current_bound = stale
-    with pytest.raises(worker.TrainingJobValidationError, match="reviewed decoder inputs changed"):
+    with pytest.raises(worker.TrainingJobValidationError, match="current source-bound component inputs changed"):
         worker.execute_training_job(spec, reviewed_runtime=runtime)
     assert accepted == []
 
@@ -4509,9 +4509,10 @@ def test_reviewed_mixed_source_bound_v5_worker_rechecks_signed_inputs_before_res
     job = tmp_path / "v5-worker-job.json"
     job_raw = worker._json_bytes(spec.to_dict())
     job.write_bytes(job_raw)
-    with pytest.raises(worker.TrainingJobValidationError, match="reviewed decoder inputs changed"):
+    with pytest.raises(worker.TrainingJobValidationError, match="current source-bound component inputs changed"):
         worker.execute_training_job_file(job, hashlib.sha256(job_raw).hexdigest(), reviewed_runtime=runtime)
-    assert supplied == [bound[data.key]["expected_report_sha256"], stale[data.key]["expected_report_sha256"]]
+    current_report_sha = bound[data.key]["expected_report_sha256"]
+    assert supplied == [current_report_sha, current_report_sha, stale[data.key]["expected_report_sha256"]]
     assert [row[0] for row in accepted] == [row["id"] for row in data.rows]
     for (_, source, target), row in zip(accepted, data.rows, strict=True):
         assert set(source) == {"profile", "source_text", "governing_context", "source_binding", "selection_context"}
