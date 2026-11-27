@@ -1313,7 +1313,7 @@ def test_local_coordinator_partial_write_leaves_final_path_retryable(tmp_path, m
                 stream.write(payload[:3])
                 raise OSError("interrupted publication")
 
-            yield SimpleNamespace(write=write)
+            yield SimpleNamespace(write=write, fileno=stream.fileno)
 
     with monkeypatch.context() as patch:
         patch.setattr(release, "open", interrupted_open, raising=False)
@@ -1370,6 +1370,23 @@ def test_local_coordinator_directory_sync_failure_removes_only_owned_publication
     assert not list(path.parent.glob(".release-*"))
     publish()
     assert path.is_file()
+
+
+@pytest.mark.parametrize("operation", ("artifact", "receipt"))
+def test_local_coordinator_does_not_confirm_a_replaced_publication(tmp_path, monkeypatch, operation):
+    release, path, publish = _local_coordinator_publication(tmp_path, operation)
+    original_link = os.link
+
+    def replace_after_link(source, destination, *args, **kwargs):
+        original_link(source, destination, *args, **kwargs)
+        path.unlink()
+        path.write_bytes(b"different publication")
+
+    monkeypatch.setattr(os, "link", replace_after_link)
+    with pytest.raises(release.ReleaseCoordinatorError, match="publication entry changed"):
+        publish()
+    assert path.read_bytes() == b"different publication"
+    assert not list(path.parent.glob(".release-*"))
 
 
 def test_local_coordinator_rejects_oversized_replacement_without_unbounded_read(tmp_path, monkeypatch):

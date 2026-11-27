@@ -94,6 +94,13 @@ def _entry_exists(directory: int, name: str) -> bool:
     return True
 
 
+def _entry_matches(directory: int, name: str, identity: os.stat_result) -> bool:
+    try:
+        return os.path.samestat(os.stat(name, dir_fd=directory, follow_symlinks=False), identity)
+    except FileNotFoundError:
+        return False
+
+
 def _publish_immutable_bytes(directory: int, name: str, payload: bytes, *, exists_message: str) -> None:
     """Verify staged bytes and publish them under a new name without replacement."""
     staged = f".release-{uuid4().hex}.tmp"
@@ -102,6 +109,7 @@ def _publish_immutable_bytes(directory: int, name: str, payload: bytes, *, exist
         return os.open(path, flags | os.O_NOFOLLOW, 0o666, dir_fd=directory)
 
     with open(staged, "x+b", opener=open_stage) as stream:
+        identity = os.fstat(stream.fileno())
         try:
             if stream.write(payload) != len(payload):
                 raise OSError("incomplete release file write")
@@ -111,22 +119,23 @@ def _publish_immutable_bytes(directory: int, name: str, payload: bytes, *, exist
             if stream.read(len(payload) + 1) != payload:
                 raise OSError("staged release file bytes differ")
 
+            _need(_entry_matches(directory, staged, identity), "staged release entry changed")
             try:
                 os.link(staged, name, src_dir_fd=directory, dst_dir_fd=directory,
                         follow_symlinks=False)
             except FileExistsError as error:
                 raise ReleaseCoordinatorError(exists_message) from error
             try:
-                os.unlink(staged, dir_fd=directory)
+                if _entry_matches(directory, staged, identity):
+                    os.unlink(staged, dir_fd=directory)
                 os.fsync(directory)
+                _need(_entry_matches(directory, name, identity), "publication entry changed")
             except BaseException:
-                with suppress(FileNotFoundError):
-                    current = os.stat(name, dir_fd=directory, follow_symlinks=False)
-                    if os.path.samestat(current, os.fstat(stream.fileno())):
-                        os.unlink(name, dir_fd=directory)
+                if _entry_matches(directory, name, identity):
+                    os.unlink(name, dir_fd=directory)
                 raise
         finally:
-            with suppress(FileNotFoundError):
+            if _entry_matches(directory, staged, identity):
                 os.unlink(staged, dir_fd=directory)
 
 
