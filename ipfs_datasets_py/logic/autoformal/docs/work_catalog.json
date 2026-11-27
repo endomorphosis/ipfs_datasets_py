@@ -37497,6 +37497,102 @@
       "root": "artifact_workspace",
       "scope": "Managed software qualification and separate generic Lean proposition and dependency-policy checks.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase1_namespaced_lean_and_agent_turn_checkpoint_20261127",
+      "closed_runtime_facts": {
+        "evidence_ordinal": 586,
+        "full_eight_phase_goal_complete": false,
+        "local_agent_turn_checkpoint": {
+          "cooperative_source_read_closed": true,
+          "current_base_source_qualification": {
+            "bytes": 1436,
+            "path": "/tmp/git-renewed-all-work-20261127-17pd2xkd/current-base-test-result.json",
+            "sha256": "3a3a1d015e5df27eed577f7851c7495b904ad6fb7ae3517d3b493e377a5b692c"
+          },
+          "errors": 0,
+          "failures": 0,
+          "live_provider_or_worker_execution": false,
+          "managed_pytest_qualification": false,
+          "original_code_snapshot": "68718850a6a29dcac368d7587d9bef95adb22420",
+          "original_local_test_run_retained": true,
+          "published_Datasets_commit": "344d3282d2d268505211f8dcf60e98b5306fcd4f",
+          "published_merge": {
+            "bytes": 1133,
+            "path": "/tmp/git-renewed-all-work-20261127-17pd2xkd/actual-datasets-publication.json",
+            "sha256": "540870f28af17a20dfb4808de1406dbdf4045f7fbd9d74bf04532ede81b4b880"
+          },
+          "saved_local_evidence": {
+            "bytes": 2438,
+            "path": "/tmp/codex-all-work-github-main-reconciliation-20261123-etm066qn/Phase8-existing-native-CI-trigger-repair-private-v01/coordination-full-goal-v02/actual-agent-turn-observation-checkpoint-local95-v01.json",
+            "sha256": "7287b4e19cebb8d8fea57f6fc23246d3e2f9a0d54586f8a901fdc76906c7089d"
+          },
+          "skips": 0,
+          "subtests": 171,
+          "tests": 95
+        },
+        "namespaced_Native2": {
+          "Source_resource_parent_closed": true,
+          "cases": [
+            {
+              "accepted": true,
+              "case": "root_positive",
+              "compiler_event_index": 1,
+              "compiler_input_sha256": "538c97296bb45738bf2d0fae75d642eba33ebad91f5991935daf760f9d79b11c",
+              "compiler_returncode": 0,
+              "declaration": "wanted",
+              "expected_obligation_declaration": "_ipfs_expected_obligation_38fe5fbf5354b782717b02a98bed9cf74490f8a4e397bc3a08d214b1610de01d",
+              "version_event_index": 0
+            },
+            {
+              "accepted": false,
+              "case": "namespaced_wrong_type",
+              "compiler_event_index": 2,
+              "compiler_input_sha256": "abe0a6e85ed8447957cea6d85261c0750bbddd7baf8c621b4182e8a00cb4b6e5",
+              "compiler_returncode": 1,
+              "declaration": "Law.wanted",
+              "expected_obligation_declaration": "_ipfs_expected_obligation_b6a407a8075451a3040b103c5da2c04dd1e1ef4fce0bdc45db5ccbe17777a304",
+              "version_event_index": 0
+            }
+          ],
+          "closeout": {
+            "bytes": 5520,
+            "path": "/tmp/Root-P1-Guide585-namespaced-Native2-Source4-vydep2ma/actual-current-Guide585-namespaced-Native2-qualification-closed.json",
+            "sha256": "a263d3bf50afc2b8541f939c3eb3aace36a3034492b76e7d10f2ecf2c630fb18"
+          },
+          "commands": {
+            "all": 3,
+            "compiler": 2,
+            "unclassified": 0,
+            "version": 1
+          },
+          "datasets_head": "25bbaf0ed1ff45b4dee97b77b58c2349b5351990",
+          "detached_verification": {
+            "bytes": 520,
+            "path": "/tmp/Root-P1-Guide585-namespaced-Native2-Source4-vydep2ma/actual-namespaced-Native2-detached-verification.json",
+            "sha256": "a45f6f81e2408c5c11df7c3fa6032961023de68713d5628f7188955397c1fa04"
+          },
+          "pytest_case_credit": 0,
+          "scope": "Fictional proposition and declaration-selection qualification",
+          "source4": {
+            "bytes": 10478,
+            "path": "/tmp/Root-P1-Guide585-namespaced-Native2-Source4-vydep2ma/current-Native2-Source4-terminal.json",
+            "sha256": "00023c9d4da47059dc45f5db9185688491fe5534b7b6d2c14ed6a0375903813f"
+          }
+        },
+        "real_review_corpus_or_model_authority": false,
+        "schema": "namespaced-lean-and-saved-agent-turn-checkpoint-evidence/v1",
+        "task_status_changed": false
+      },
+      "evidence_ordinal": 586,
+      "id": "phase1-namespaced-lean-and-agent-turn-checkpoint-evidence586-20261127",
+      "observed_bytes": 3594,
+      "observed_sha256": "69b8dd3b0b34cdfbf313403949c767a164da45d0d437388045af6d9d98213324",
+      "path": "/tmp/Root-Guide586-Native2-and-recovery-zKAh44W0/reconciled-current-main-mzcWsJTx/guide586-current-base-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Exact Lean declaration selection and separate local agent-turn checkpoint tests.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }

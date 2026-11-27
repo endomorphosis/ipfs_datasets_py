@@ -5203,6 +5203,16 @@
       },
       "record_id": "phase2-whole-project-managed234-and-current-generic-lean-policy-evidence585-20261127",
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
+    },
+    "phase1_namespaced_lean_and_agent_turn_checkpoint_20261127": {
+      "evidence_ordinal": 586,
+      "facts": {
+        "bytes": 3594,
+        "path": "/tmp/Root-Guide586-Native2-and-recovery-zKAh44W0/reconciled-current-main-mzcWsJTx/guide586-current-base-scoped-facts.json",
+        "sha256": "69b8dd3b0b34cdfbf313403949c767a164da45d0d437388045af6d9d98213324"
+      },
+      "record_id": "phase1-namespaced-lean-and-agent-turn-checkpoint-evidence586-20261127",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
     }
   },
   "programme_goal_hierarchy": {
