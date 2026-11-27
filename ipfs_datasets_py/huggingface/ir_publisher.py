@@ -33,7 +33,6 @@ from .publisher import (
     HuggingFacePublicationError,
     HuggingFaceReleasePublisher,
     PublicationApproval,
-    PublicationCommitReceipt,
     PublicationPlan,
     _reject_secrets,
     _write_receipt,
@@ -49,7 +48,9 @@ IR_UPLOAD_ATTEMPT_SCHEMA: Final = "IRPublicationUploadAttempt@1"
 
 
 class IRPublicationError(HuggingFacePublicationError):
-    """Raised when IR publication planning or upload fails closed."""
+    """An IR publication failure, with a recovery receipt if a commit is known."""
+
+    receipt: dict[str, Any] | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -213,6 +214,11 @@ def publish_ir_release(
     Explicit `remote_payloads` and a standalone `fetch_bytes` callback retain
     byte-validation evidence. The immutable remote readback flag requires the
     Hub client's pinned download path and verified inventory.
+
+    Once the commit is known, a requested receipt records it before readback.
+    An ordinary readback failure raises IRPublicationError with a blocked
+    receipt, even without a receipt path. An interruption leaves a checkpoint
+    when a writable receipt path was supplied.
     """
 
     pub_policy = policy or IRPublicationPolicy(repository_id=package.repository_id)
@@ -276,7 +282,6 @@ def publish_ir_release(
         receipt = _build_ir_receipt(
             package=package,
             policy=pub_policy,
-            plan=plan,
             wrapped_plan=wrapped_plan,
             status="dry_run_only",
         )
@@ -291,7 +296,6 @@ def publish_ir_release(
         receipt = _build_ir_receipt(
             package=package,
             policy=pub_policy,
-            plan=plan,
             wrapped_plan=wrapped_plan,
             approval=approval,
             lease=lease,
@@ -302,6 +306,10 @@ def publish_ir_release(
         return receipt
 
     assert approval is not None  # gated by _require_authority
+    checkpoint = _build_ir_receipt(
+        package=package, policy=pub_policy, wrapped_plan=wrapped_plan,
+        approval=approval, lease=lease, status="published_pending_readback",
+    )
     try:
         commit = publisher.publish_append_only(
             plan,
@@ -312,65 +320,98 @@ def publish_ir_release(
     except HuggingFacePublicationError as exc:
         raise IRPublicationError(str(exc)) from exc
 
-    use_hub_downloader = (
-        remote_payloads is None
-        and (verified_cache_root is not None or fetch_bytes is not None)
-        and callable(getattr(api, "hf_hub_download", None))
+    checkpoint.update(
+        commit_receipt=commit.to_dict(),
+        remote_revision=commit.commit_sha,
+        remote_write_performed=True,
     )
-    if remote_objects is None and use_hub_downloader:
-        remote_objects = publisher.inventory_remote_objects_at_commit(
-            commit_receipt=commit, plan=plan
-        )
+    checkpoint["evidence"]["remote_revision_captured"] = True
     post = None
-    if remote_objects is not None:
-        for item in plan.operations:
-            observation = remote_objects.get(item.remote_path)
-            if isinstance(observation, Mapping) and not observation.get("commit_sha"):
-                raise IRPublicationError(
-                    f"post-publication verification requires an observed commit: {item.remote_path}"
-                )
-        post = publisher.verify_post_publication(
-            commit_receipt=commit, plan=plan, remote_objects=remote_objects
-        )
     pinned = None
-    if remote_payloads is not None or fetch_bytes is not None or use_hub_downloader:
-        cache = Path(verified_cache_root) if verified_cache_root is not None else Path(
-            package.output_dir
-        ).with_name(Path(package.output_dir).name + ".pinned-cache")
-        if cache.exists() and any(cache.iterdir()):
-            # Retry path: reuse an empty sibling rather than fail a second call.
-            cache = cache.with_name(cache.name + f".{commit.commit_sha[:8]}")
-        pinned = publisher.redownload_and_validate_pinned(
-            commit_sha=commit.commit_sha,
-            plan=plan,
-            cache_root=cache,
-            remote_payloads=remote_payloads,
-        )
+    stage = "receipt_checkpoint"
+    try:
+        if receipt_path is not None:
+            _write_receipt(receipt_path, checkpoint)
 
-    receipt = _build_ir_receipt(
-        package=package,
-        policy=pub_policy,
-        plan=plan,
-        wrapped_plan=wrapped_plan,
-        commit=commit,
-        approval=approval,
-        lease=lease,
-        post_publication=post.to_dict() if post is not None else None,
-        pinned_redownload=pinned.to_dict() if pinned is not None else None,
-        immutable_remote_readback_verified=(
+        stage = "remote_inventory"
+        use_hub_downloader = (
+            remote_payloads is None
+            and (verified_cache_root is not None or fetch_bytes is not None)
+            and callable(getattr(api, "hf_hub_download", None))
+        )
+        if remote_objects is None and use_hub_downloader:
+            remote_objects = publisher.inventory_remote_objects_at_commit(
+                commit_receipt=commit, plan=plan
+            )
+
+        stage = "post_publication_verification"
+        if remote_objects is not None:
+            for item in plan.operations:
+                observation = remote_objects.get(item.remote_path)
+                if isinstance(observation, Mapping) and not observation.get("commit_sha"):
+                    raise IRPublicationError(
+                        f"post-publication verification requires an observed commit: {item.remote_path}"
+                    )
+            post = publisher.verify_post_publication(
+                commit_receipt=commit, plan=plan, remote_objects=remote_objects
+            ).to_dict()
+            _reject_secrets(post, label="ir_post_publication_verification")
+            checkpoint["post_publication_verification"] = post
+
+        stage = "pinned_redownload_validation"
+        if remote_payloads is not None or fetch_bytes is not None or use_hub_downloader:
+            cache = Path(verified_cache_root) if verified_cache_root is not None else Path(
+                package.output_dir
+            ).with_name(Path(package.output_dir).name + ".pinned-cache")
+            if cache.exists() and any(cache.iterdir()):
+                # Retry path: reuse an empty sibling rather than fail a second call.
+                cache = cache.with_name(cache.name + f".{commit.commit_sha[:8]}")
+            pinned = publisher.redownload_and_validate_pinned(
+                commit_sha=commit.commit_sha,
+                plan=plan,
+                cache_root=cache,
+                remote_payloads=remote_payloads,
+            ).to_dict()
+            _reject_secrets(pinned, label="ir_pinned_redownload_validation")
+            checkpoint["pinned_redownload_validation"] = pinned
+
+        stage = "receipt_finalization"
+        verified = (
             use_hub_downloader
             and post is not None
-            and post.ok
+            and post["ok"]
             and pinned is not None
-            and pinned.ok
-            and pinned.network_fetch_performed
+            and pinned["ok"]
+            and pinned["network_fetch_performed"]
             and not plan.skipped_exact_matches
-        ),
-        status="published_pending_promotion",
-    )
-    if receipt_path is not None:
-        _write_receipt(receipt_path, receipt)
-    return receipt
+        )
+        receipt = {
+            **checkpoint,
+            "status": "published_pending_promotion",
+            "evidence": {
+                **checkpoint["evidence"],
+                "immutable_remote_readback_verified": verified,
+            },
+        }
+        if receipt_path is not None:
+            _write_receipt(receipt_path, receipt)
+        return receipt
+    except Exception as exc:
+        blocked = {
+            **checkpoint,
+            "status": "blocked_remote_write_gate",
+            "blocked_stage": stage,
+        }
+        error = IRPublicationError(str(exc))
+        error.receipt = blocked
+        if stage == "receipt_checkpoint":
+            error.add_note("The captured commit checkpoint could not be saved.")
+        elif receipt_path is not None:
+            try:
+                _write_receipt(receipt_path, blocked)
+            except OSError:
+                error.add_note("The blocked receipt could not be saved. Use the recovery receipt attached to this error.")
+        raise error from exc
 
 
 def retry_partial_upload(
@@ -484,31 +525,25 @@ def _build_ir_receipt(
     *,
     package: IRReleasePackage,
     policy: IRPublicationPolicy,
-    plan: PublicationPlan,
     wrapped_plan: Mapping[str, Any],
     status: str,
-    commit: PublicationCommitReceipt | None = None,
     approval: PublicationApproval | None = None,
     lease: PublicationLease | None = None,
-    post_publication: Mapping[str, Any] | None = None,
-    pinned_redownload: Mapping[str, Any] | None = None,
-    immutable_remote_readback_verified: bool = False,
 ) -> dict[str, Any]:
-    remote_revision = commit.commit_sha if commit is not None else ""
     receipt = {
         "append_only": True,
         "approval_record": approval.to_dict() if approval else None,
-        "commit_receipt": commit.to_dict() if commit else None,
+        "commit_receipt": None,
         "derived_count": package.derived_count,
         "dry_run": status == "dry_run_only",
         "dry_run_diff_and_cost_receipt": dict(wrapped_plan),
         "evidence": {
             "cards_complete": True,
-            "immutable_remote_readback_verified": immutable_remote_readback_verified,
+            "immutable_remote_readback_verified": False,
             "p1_configs_complete": True,
             "p4_evidence": True,
             "publication_lease": lease is not None,
-            "remote_revision_captured": bool(remote_revision),
+            "remote_revision_captured": False,
             "source_derived_counts_distinct": True,
         },
         "lease": lease.to_dict() if lease else None,
@@ -518,10 +553,10 @@ def _build_ir_receipt(
             "release_id": package.release_id,
             "release_sha256": package.release_sha256,
         },
-        "pinned_redownload_validation": dict(pinned_redownload) if pinned_redownload else None,
-        "post_publication_verification": dict(post_publication) if post_publication else None,
-        "remote_revision": remote_revision,
-        "remote_write_performed": commit is not None,
+        "pinned_redownload_validation": None,
+        "post_publication_verification": None,
+        "remote_revision": "",
+        "remote_write_performed": False,
         "repository_id": policy.repository_id,
         "schema": IR_PUBLICATION_RECEIPT_SCHEMA,
         "source_count": package.source_count,

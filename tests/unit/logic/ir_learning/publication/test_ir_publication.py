@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -177,6 +178,11 @@ def test_approved_append_only_upload_captures_remote_revision(tmp_path: Path) ->
         "client_transport",
         "client_with_inventory",
         "corrupt_client_payload",
+        "corrupt_without_receipt_path",
+        "client_interrupted",
+        "receipt_checkpoint_error",
+        "private_cache_label",
+        "invalid_lease_receipt",
         "empty_inventory",
         "unbound_inventory",
     ],
@@ -211,6 +217,16 @@ def test_ir_readback_requires_independent_immutable_inputs(
         for item in plan.operations
     }
     fetched: list[str] = []
+    receipt_path = tmp_path / "receipt.json"
+    if readback == "receipt_checkpoint_error":
+        receipt_path.mkdir()
+
+    def check_checkpoint():
+        saved = json.loads(receipt_path.read_bytes())
+        assert saved["status"] == "published_pending_readback"
+        assert saved["remote_revision"] == api.commit_sha
+        assert saved["commit_receipt"]["plan_digest"] == plan.plan_digest
+        assert saved["evidence"]["immutable_remote_readback_verified"] is False
 
     def fetch(repo_id: str, revision: str, path: str) -> bytes:
         assert repo_id == policy.repository_id
@@ -219,7 +235,9 @@ def test_ir_readback_requires_independent_immutable_inputs(
         return payloads[path]
 
     use_client = readback in {
-        "client_transport", "client_with_inventory", "corrupt_client_payload"
+        "client_transport", "client_with_inventory", "corrupt_client_payload",
+        "corrupt_without_receipt_path", "client_interrupted", "receipt_checkpoint_error",
+        "private_cache_label",
     }
     if use_client:
         get_parent_paths = api.get_paths_info
@@ -243,7 +261,11 @@ def test_ir_readback_requires_independent_immutable_inputs(
             assert force_download is True
             target = local_dir / filename
             payload = fetch(repo_id, revision, filename)
-            if readback == "corrupt_client_payload":
+            if readback != "corrupt_without_receipt_path":
+                check_checkpoint()
+            if readback == "client_interrupted":
+                raise KeyboardInterrupt
+            if readback in {"corrupt_client_payload", "corrupt_without_receipt_path"}:
                 payload += b"!"
             target.write_bytes(payload)
             return target
@@ -269,7 +291,7 @@ def test_ir_readback_requires_independent_immutable_inputs(
             for path, row in observations.items()
         }
 
-    cache = tmp_path / "verified-cache"
+    cache = tmp_path / ("bearer marker" if readback == "private_cache_label" else "verified-cache")
     publish_args = dict(
         policy=policy,
         dry_run=False,
@@ -281,19 +303,61 @@ def test_ir_readback_requires_independent_immutable_inputs(
         remote_payloads=payloads if readback == "offline_payloads" else None,
         verified_cache_root=cache,
         fetch_bytes=fetch if use_fetch else None,
+        receipt_path=None if readback == "corrupt_without_receipt_path" else receipt_path,
     )
-    if readback in {"empty_inventory", "unbound_inventory"}:
-        with pytest.raises(HuggingFacePublicationError, match="remote path|commit"):
+    if readback == "invalid_lease_receipt":
+        publish_args["lease"] = PublicationLease(
+            fence=policy.lease_fence,
+            lease_id="hf_" + "x" * 32,
+            holder="offline fixture",
+            repository_id=policy.repository_id,
+        )
+        with pytest.raises(HuggingFacePublicationError, match="credentials must never appear"):
             publish_ir_release(package, **publish_args)
-        assert not cache.exists()
+        assert not api.calls and not receipt_path.exists()
         return
-    if readback == "corrupt_client_payload":
-        with pytest.raises(HuggingFacePublicationError, match="redownload validation mismatch"):
+
+    if readback == "client_interrupted":
+        with pytest.raises(KeyboardInterrupt):
             publish_ir_release(package, **publish_args)
-        assert fetched
+        check_checkpoint()
+        assert len(api.calls) == 1
+        return
+
+    blocked_stage = {
+        "empty_inventory": "post_publication_verification",
+        "unbound_inventory": "post_publication_verification",
+        "corrupt_client_payload": "pinned_redownload_validation",
+        "corrupt_without_receipt_path": "pinned_redownload_validation",
+        "receipt_checkpoint_error": "receipt_checkpoint",
+        "private_cache_label": "pinned_redownload_validation",
+    }.get(readback)
+    if blocked_stage:
+        with pytest.raises(IRPublicationError) as error:
+            publish_ir_release(package, **publish_args)
+        assert len(api.calls) == 1
+        blocked = error.value.receipt
+        assert blocked["status"] == "blocked_remote_write_gate"
+        assert blocked["blocked_stage"] == blocked_stage
+        assert blocked["remote_revision"] == api.commit_sha
+        assert blocked["commit_receipt"]["plan_digest"] == plan.plan_digest
+        assert blocked["remote_write_performed"] is True
+        assert blocked["evidence"]["immutable_remote_readback_verified"] is False
+        assert blocked["pinned_redownload_validation"] is None
+        assert (blocked["post_publication_verification"] is not None) is (
+            blocked_stage == "pinned_redownload_validation"
+        )
+        if readback == "corrupt_without_receipt_path":
+            assert not receipt_path.exists()
+        elif readback == "receipt_checkpoint_error":
+            assert error.value.__notes__
+            assert not fetched and not cache.exists()
+        else:
+            assert json.loads(receipt_path.read_bytes()) == blocked
         return
 
     receipt = publish_ir_release(package, **publish_args)
+    assert json.loads(receipt_path.read_bytes()) == receipt
     assert receipt["status"] == "published_pending_promotion"
     assert len(api.calls) == 1
     assert (receipt["post_publication_verification"] is not None) is has_inventory
