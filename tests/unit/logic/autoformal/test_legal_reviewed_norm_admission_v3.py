@@ -558,3 +558,51 @@ def test_reviewed_v3_cross_reference_version_consistency(sibling, mixed_case, ve
     assert report["fixture_only"] and report["training_mask"] == report["evaluation_gold_mask"] == 0
     assert [unit["canonical_ir"]["cross_references"][0] for unit in report["units"][1:]] == references
     assert not conflict, "contradictory dependency version labels became eligible in a freshly signed V3 review"
+
+
+@pytest.mark.parametrize("nested", [False, True], ids=["direct", "nested"])
+def test_reviewed_v3_refuses_governing_definition_reusing_its_predicate(sibling, mixed_case, nested):
+    unit = mixed_case["declaration"]["units"][0]
+    assert unit["kind"] == "definition" and unit["relational_profile"] == relational.PROFILE
+    request = json.loads(mixed_case["relational_inputs"][unit["unit_id"]]["request_raw"])
+    equivalence = request["expression"]["root"]
+    while equivalence["kind"] == "forall":
+        equivalence = equivalence["arguments"][0]
+    predicate, original_rhs = equivalence["arguments"]
+    assert equivalence["kind"] == "iff" and predicate["symbol"] == "CoveredOfficer"
+    repeated_predicate = deepcopy(predicate)
+    repeated_predicate["node_id"] += ":recursive-fixture"
+    for argument in repeated_predicate["arguments"]:
+        argument["node_id"] += ":recursive-fixture"
+    revised_rhs = ast.LogicNode.from_dict(repeated_predicate)
+    if nested:
+        revised_rhs = ast.mk_and("fixture:recursive-definition-and",
+                                 ast.LogicNode.from_dict(original_rhs), revised_rhs)
+    else:
+        # The direct tautology has no use for the former RHS declaration.
+        request["expression"]["signature"]["symbols"] = [
+            declaration for declaration in request["expression"]["signature"]["symbols"]
+            if declaration["name"] != original_rhs["symbol"]
+        ]
+        request["argument_roles"] = [
+            row for row in request["argument_roles"] if row["symbol"] != original_rhs["symbol"]
+        ]
+    equivalence["arguments"][1] = revised_rhs.to_dict()
+    request["expression"] = ast.TypedExpression.from_dict(
+        dict(request["expression"], content_digest="")).to_dict()
+    raw = fixture.wire(request)
+    pin = fixture.sha(raw)
+    report = relational.prepare_relational_norm_v1(raw, expected_request_sha256=pin)
+    unit["relational_request_sha256"] = pin
+    occurrence = unit["occurrence"]
+    unit["coverage"] = [{"typed_path": row["typed_path"], **{key: occurrence[key] for key in
+        ("start_char", "end_char", "start_utf8", "end_utf8")}} for row in report["structural_mapping"]]
+    mixed_case["relational_inputs"][unit["unit_id"]] = {
+        "request_raw": raw, "report": report,
+        "expected_report_sha256": relational.relational_norm_report_sha256(report),
+    }
+    fixture.reviewed_refresh_manifest_v2(mixed_case)
+    kwargs = prepare_args(mixed_case)
+    assert kwargs["dependency_manifest"]["cycles"] == []
+    with pytest.raises(ValueError, match="cyclic or unresolved reviewed governing dependency"):
+        sibling.prepare_reviewed_norm_admission_v3(mixed_case["declaration"], **kwargs)

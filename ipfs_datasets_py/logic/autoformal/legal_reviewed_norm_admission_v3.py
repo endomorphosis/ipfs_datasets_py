@@ -204,6 +204,8 @@ def _reviewed_body(body, source_inputs, relational_inputs):
         _need(type(actor["signer_did"]) is str and auth._DID.fullmatch(actor["signer_did"]), "source signer DID required")
         _sha(actor["public_key_hex"], "source Ed25519 public key")
     units, artifacts = _reviewed_units(body, source_inputs, relational_inputs)
+    from ..syntax_core import ast
+
     mixed_profile = _reviewed_owners()[2].MIXED_PROFILE
     _need(any(unit["kind"] == "norm" and unit["relational_profile"] == mixed_profile for unit in units),
           "mixed admission requires at least one mixed-sort normative use")
@@ -233,6 +235,10 @@ def _reviewed_body(body, source_inputs, relational_inputs):
         left = node["arguments"][0]
         _need(left["symbol"] == symbol and [argument["symbol"] for argument in left["arguments"]] == binders,
               "defined predicate must apply to the complete ordered definition binders")
+        right = ast.LogicNode.from_dict(node["arguments"][1])
+        _need(not any(term.kind is ast.NodeKind.PREDICATE and term.symbol == symbol
+                      for term in right.walk()),
+              "cyclic or unresolved reviewed governing dependency: predicate occurs in its own definition")
         definition_roles = next(row["roles"] for row in definition_ir["argument_roles"] if row["symbol"] == symbol)
         norm_ir = by_id[target]["canonical_ir"]
         norm_roles = [row["roles"] for row in norm_ir["argument_roles"] if row["symbol"] == symbol]
