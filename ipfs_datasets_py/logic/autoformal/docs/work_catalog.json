@@ -36743,6 +36743,107 @@
       "root": "artifact_workspace",
       "scope": "New proof receipt issuance preserves typed execution bounds when metadata omits them.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase1_native_translated_proof_cache_20261127",
+      "closed_runtime_facts": {
+        "Lean_version": "4.34.1",
+        "actual_live_exact_test_freeze": {
+          "bytes": 5486,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/native-translated-cache/actual-isolated-Phase1-native-translation-test-only-local-freeze.json",
+          "sha256": "8d66a2bd7bb7cd76bf90d9c333922fe61ec8832e885c498479adcb5feff4d930"
+        },
+        "actual_live_native_translated_cache": {
+          "bytes": 7503,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/native-translated-cache/actual-Phase1-native-translated-proof-cache-closed.json",
+          "sha256": "7c612a24bf24486fad3245ccb5ac319412a8dea07b1649a83dec697c913bd0f2"
+        },
+        "actual_live_reconciled_Source42_READ3": {
+          "bytes": 7505,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/native-translated-cache/actual-isolated-Phase1-native-translated-cache-READ3-closed.json",
+          "sha256": "330a7c8ae65428dfe88998c913f7596fcb3a19e681232d8325b85825d776ce5c"
+        },
+        "actual_live_reconciled_Source42_epoch": {
+          "bytes": 5799,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/native-translated-cache/actual-live-reconciled-Source42-content-epoch-closed.json",
+          "sha256": "5c4346eeffea1e994da1243156f7e795db499124433897f6dcb696bfc3861688"
+        },
+        "actual_live_test_only_publication": {
+          "bytes": 14833,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/native-translated-cache/actual-Phase1-native-translated-cache-test-only-three-FF-publication.json",
+          "sha256": "6f35d57062044bf9689d11a2d8f53dd837c3016e629cd5d5ea7f2e5938d9b3f1"
+        },
+        "actual_native_command_counts": {
+          "all": 3,
+          "compiler": 2,
+          "unclassified": 0,
+          "version": 1
+        },
+        "actual_native_report": {
+          "bytes": 113626,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/native-translated-cache/actual-native-output-v02/complete-native3-direct-existing-owner-report.json",
+          "sha256": "b7882ec191a18f136cf53f288b5220c09465ebfe7c67768875d3bf2c48296268"
+        },
+        "controlled_translation": {
+          "cache_record_cid": "bafkreienwrw5shilwcmvuvrrb3gvyzkuz5a5cutsoskkvnlxtcmtqztkam",
+          "expected_proposition": "True",
+          "submitted_source_digest": "33fb5ff79680c9190185e0adb3e62f350c0caa6639c9c83f4578dae6c83c9842",
+          "theorem_name": "cache_native_fixture",
+          "theory_document_id": "bafkreifgf4s4cicvlb3vhgrkznhfmof32m76uzkexljyxhvpkkfutftlsq",
+          "translation_digest": "838f1cb93835ac65523b38aae28490fb28f0919edbef20a5bea2063bff40ff4f"
+        },
+        "disk_reopen_and_exact_reuse_passed": true,
+        "evidence_ordinal": 579,
+        "exact_candidate": {
+          "bytes": 2161,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/native-translated-cache/SEALED-native-translated-cache-one-test-owner.json",
+          "sha256": "39f57f4ae76767c50b57d049aebb8aa39b1c23cf62bd16cfdc1dbb07fd836406"
+        },
+        "fictional_true_fixture_only": true,
+        "first_refusal_native_commands": 0,
+        "independent_software_generation": {
+          "bytes": 44719,
+          "path": "/tmp/P1-native-translated-cache-input-private-yI6YGH/actual-generation.stdout.json",
+          "sha256": "cd35151537fdef8e6fcf621cf66382e806dd11eac93704965a2acff9c4e29f5c"
+        },
+        "live_qualified_A_HEAD": "219ba3da0f62f772801d71715e22c506faa21126",
+        "live_qualified_D_HEAD": "948bd49e5e182abf1c8f8398b70d45095c1923a9",
+        "native_Source_resource_and_parent_closed": true,
+        "native_processes_during_replay_and_mismatch_checks": 0,
+        "original_native_proof_cache_report": {
+          "bytes": 148373,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/native-translated-cache/actual-native-output-v02/original-test-temp/native-lean-proof-cache-v3.json",
+          "sha256": "ff78e45e54e3ce009dbf11f19a6d585334d92fad7329d5ef8f9e0be89ce907fb"
+        },
+        "physical_IO_accounting_complete": false,
+        "prior_verified_guide578_publication": {
+          "bytes": 2679,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/receipt-bounds/actual-Guide578-four-docs-three-FF-publication.json",
+          "sha256": "fc679d7f200f51992e1b86fa7158c6e57f87ac1255b86ffbec298fc4a5bbff4b"
+        },
+        "pytest_case_credit": 0,
+        "qualified_test_blob": "a05d6360be0fcf61a75861c5f0ac8cd63a9d3533",
+        "related_catalog_component": "kernel-proof-evidence-integrity",
+        "retained_first_pre_native_metadata_refusal": {
+          "bytes": 34395,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/native-translated-cache/actual-native-output/complete-native3-direct-existing-owner-report.json",
+          "sha256": "b413e852c0ec43179c5103a23716da84cff6f55cea2bb925d5e514ee9eb5faf3"
+        },
+        "schema": "live-reconciled-Phase1-native-translated-cache-engineering-evidence/v1",
+        "source_profile_and_obligation_mismatches_refused": true,
+        "statutory_or_corpus_admission_or_model_qualification": false,
+        "task": "LIR-14",
+        "task_status_changed": false
+      },
+      "evidence_ordinal": 579,
+      "id": "phase1-native-translated-proof-cache-evidence579-20261127",
+      "observed_bytes": 4697,
+      "observed_sha256": "57565eb9a2f71935613ced0f5325af7a8b7091917729e603256735f278f76dc9",
+      "path": "/tmp/P1-proof-cache-translation-current-6btZZr/native-translated-cache/guide579-composition/current-Phase1-native-translated-cache-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Native proof-cache replay for generator-emitted Lean source of one fictional True obligation.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }

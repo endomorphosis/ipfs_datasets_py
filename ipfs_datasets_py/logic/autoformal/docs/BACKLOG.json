@@ -5070,6 +5070,25 @@
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
       "statutory_or_corpus_admission_or_large_model_fit_or_new_Native_qualification": false,
       "task": "LIR-03"
+    },
+    "phase1_native_translated_proof_cache_20261127": {
+      "actual_live_native_translated_cache": {
+        "bytes": 7503,
+        "path": "/tmp/P1-proof-cache-translation-current-6btZZr/native-translated-cache/actual-Phase1-native-translated-proof-cache-closed.json",
+        "sha256": "7c612a24bf24486fad3245ccb5ac319412a8dea07b1649a83dec697c913bd0f2"
+      },
+      "evidence_ordinal": 579,
+      "facts": {
+        "bytes": 4697,
+        "path": "/tmp/P1-proof-cache-translation-current-6btZZr/native-translated-cache/guide579-composition/current-Phase1-native-translated-cache-scoped-facts.json",
+        "sha256": "57565eb9a2f71935613ced0f5325af7a8b7091917729e603256735f278f76dc9"
+      },
+      "record_id": "phase1-native-translated-proof-cache-evidence579-20261127",
+      "related_catalog_component": "kernel-proof-evidence-integrity",
+      "related_tasks": [],
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
+      "statutory_or_corpus_admission_or_model_qualification": false,
+      "task": "LIR-14"
     }
   },
   "programme_goal_hierarchy": {
