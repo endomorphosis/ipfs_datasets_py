@@ -2723,12 +2723,13 @@ def test_reviewed_component_decoder_rechecks_all_admissions_after_last_tokenizer
     assert tokenizer.observation_state["serializations"] == 3
 
 
-def _reviewed_mixed_cycle_fixture(tmp_path, *, stage=True):
+def _reviewed_mixed_cycle_fixture(tmp_path, *, stage=True, current=None, bound_component_inputs=None,
+                                  interpretation_id="fixture:mixed-act-v1/selected-interpretation"):
     from copy import deepcopy
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_span_consumer_binding as consumer
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_eval_splits as splits
     from tests.unit.optimizers.logic_theorem_optimizer import test_legal_span_consumer_binding as fixtures
-    helper, admission, case, rows, consumer_options = fixtures.reviewed_public_mixed_consumer_case()
+    helper, admission, case, rows, consumer_options = fixtures.reviewed_public_mixed_consumer_case(current=current)
     config = splits.LegalIREvalSplitConfig().to_dict()
     manifest = splits.LegalIRSplitManifest(
         examples=tuple(splits.LegalIRSplitExample.from_sample(row) for row in rows),
@@ -2752,7 +2753,8 @@ def _reviewed_mixed_cycle_fixture(tmp_path, *, stage=True):
     options = dict(admission_profile=admission.REVIEWED_PROFILE, transition_kind="bootstrap",
         parent_artifact=None, expected_parent_sha256=None, successor_rows=rows,
         expected_successor_rows_sha256=fixtures.digest(rows),
-        successor_binding={key: consumer.prepare_reviewed_source_span_consumer_binding_v3(rows, **consumer_options)},
+        successor_binding={key: consumer.prepare_reviewed_source_span_consumer_binding_v3(
+            rows, **consumer_options, bound_component_inputs=bound_component_inputs)},
         split_manifest=manifest, admission_inputs={key: admitted}, exposure_records=consumer_options["exposure_records"],
         transition=change, expected_transition_sha256=fixtures.digest(change), history=history,
         expected_history_sha256=fixtures.digest(history), split_config=config,
@@ -2761,7 +2763,7 @@ def _reviewed_mixed_cycle_fixture(tmp_path, *, stage=True):
         successor_components=components, expected_successor_components_sha256=fixtures.digest(components), allow_bootstrap=True)
     contexts = {"profile": inputs.REVIEWED_COMPONENT_DECODER_CONTEXT_PROFILE,
         "component_selection_contexts": {key: {"schema": "caller-known-interpretation-selection/v1",
-            "interpretation_id": "fixture:mixed-act-v1/selected-interpretation", "selection_mode": "identifier_only"}},
+            "interpretation_id": interpretation_id, "selection_mode": "identifier_only"}},
         "rows": [{"id": row["id"], "unit_id": row["unit_id"],
             "governing_context": deepcopy(row["canonical_ir"]["governing_context"]),
             "source_binding": deepcopy(row["canonical_ir"]["source_binding"])} for row in rows]}
@@ -2808,6 +2810,91 @@ def test_reviewed_mixed_cycle_v4_preserves_complete_mixed_targets_bytes_and_expl
     assert any(row["canonical_ir"]["profile"] == "authored-many-sorted-relational-deontic/v1" for row in data.rows)
     assert receipt["training_mask"] == 0 and receipt["production_training_eligible"] is False
     assert all(receipt[key] is False for key in ("backend_execution_authorized", "training_executed", "weights_updated", "proof_authority", "Lean_admitted", "corpus_admitted"))
+
+
+def test_reviewed_mixed_source_bound_cycle_v5_replays_signed_source_through_decoder(tmp_path):
+    from ipfs_datasets_py.logic.autoformal import corpus_source_bindings, legal_norm_interpretation_review_v1
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_span_consumer_binding as consumer
+    from tests.unit.logic.autoformal.test_corpus_source_bindings import _lir02_complete_case
+
+    source_dir = tmp_path / "signed-source"
+    source_dir.mkdir()
+    source_case = _lir02_complete_case(source_dir, corpus_source_bindings, mixed=True)
+    arguments = source_case["arguments"]
+    report = corpus_source_bindings.prepare_bound_norm_component_v2(**arguments)
+    report_sha = legal_norm_interpretation_review_v1.norm_review_sha256(report)
+    handoff = {"report": report, "expected_report_sha256": report_sha, "preparation_inputs": arguments}
+    interpretation_id = "fixture:lir02-handoff/selected-interpretation"
+    data = _reviewed_mixed_cycle_fixture(tmp_path, stage=False, current=source_case["case"],
+                                         bound_component_inputs=handoff, interpretation_id=interpretation_id)
+    bound = {data.key: handoff}
+    bound_sha = consumer.reviewed_admission_inputs_sha256(bound)
+    reference = inputs.stage_reviewed_mixed_source_bound_cycle_inputs_v5(
+        data.registry, **data.options, bound_component_inputs=bound,
+        expected_bound_component_inputs_sha256=bound_sha)
+    data.kwargs.update(stage_artifact=reference, expected_stage_sha256=reference["sha256"])
+    stage = _reviewed_doc(data.registry, reference)
+    assert stage["schema"] == "reviewed-example-cycle-input-artifact/v5"
+    transport = _reviewed_doc(data.registry, stage["bound_component_transport_artifact"])
+    assert transport["schema"] == "reviewed-cycle-bound-component-input-transport/v1"
+    assert transport["byte_leaves"]
+    assert inputs._reviewed_restore_bound_component_inputs(
+        transport, lambda artifact: inputs._reviewed_read(data.registry, artifact)) == bound
+
+    class NoTokenizer:
+        def __getattribute__(self, name):
+            pytest.fail("invalid reviewed source handoff reached tokenizer: " + name)
+
+    before = data.registry.stage_calls
+    blocked = dict(data.kwargs, tokenizer=NoTokenizer())
+    with pytest.raises(ValueError):
+        inputs.prepare_reviewed_mixed_decoder_training_inputs_v4(data.registry, **blocked)
+    changed_report_sha = ("0" if report_sha[0] != "0" else "1") + report_sha[1:]
+    for current in ({}, {data.key: dict(handoff, expected_report_sha256=changed_report_sha)}):
+        with pytest.raises(ValueError):
+            inputs.prepare_reviewed_mixed_source_bound_decoder_training_inputs_v5(
+                data.registry, **blocked, current_bound_component_inputs=current,
+                expected_bound_component_inputs_sha256=consumer.reviewed_admission_inputs_sha256(current))
+    assert data.registry.stage_calls == before
+
+    prepared = inputs.prepare_reviewed_mixed_source_bound_decoder_training_inputs_v5(
+        data.registry, **data.kwargs, current_bound_component_inputs=dict(bound),
+        expected_bound_component_inputs_sha256=bound_sha)
+    assert data.registry.stage_calls == before
+    assert prepared["schema"] == "reviewed-decoder-training-inputs/v5"
+    receipt = prepared["receipt"]
+    assert receipt["schema"] == "reviewed-decoder-training-input-receipt/v5"
+    assert (receipt["staged_bound_component_inputs_sha256"]
+            == receipt["current_bound_component_inputs_sha256"] == bound_sha)
+    [staged_entry] = stage["consumer_receipt"]["components"]
+    [current_entry] = receipt["current_consumer_receipt"]["components"]
+    assert staged_entry["component_id"] == current_entry["component_id"] == data.key
+    assert staged_entry["row_ids"] == current_entry["row_ids"] == [row["id"] for row in data.rows]
+    staged_component = staged_entry["receipt"]
+    current_component = current_entry["receipt"]
+    assert current_component["bound_component_identity"] == staged_component["bound_component_identity"]
+    assert current_component["bound_component_identity"]["bound_component_report_sha256"] == report_sha
+    assert current_component["bound_component_identity"]["binding_manifest_sha256"] == report["binding_manifest_sha256"]
+    assert (current_component["bound_component_inputs_sha256"] == staged_component["bound_component_inputs_sha256"]
+            == consumer.reviewed_admission_inputs_sha256(handoff))
+    assert receipt["training_mask"] == current_component["training_mask"] == current_component["evaluation_gold_mask"] == 0
+    assert all(receipt[key] is False for key in ("production_training_eligible", "backend_execution_authorized",
+        "training_executed", "weights_updated", "proof_authority", "Lean_admitted", "corpus_admitted"))
+
+    assert len(data.rows) == len(prepared["records"]) == 3
+    assert any("Café Board" in row["source_text"] for row in data.rows)
+    assert any(row["canonical_ir"]["profile"] == data.helper.relational.MIXED_PROFILE for row in data.rows)
+    tokenizer = data.kwargs["tokenizer"]
+    for row, record in zip(data.rows, prepared["records"], strict=True):
+        source = json.loads(record["source_wire"])
+        assert set(source) == {"profile", "source_text", "governing_context", "source_binding", "selection_context"}
+        assert source["source_text"] == row["source_text"]
+        assert source["selection_context"]["interpretation_id"] == interpretation_id
+        assert json.loads(record["target_json"]) == row["canonical_ir"]
+        for wire, tokens in ((record["source_wire"], record["source_token_ids"]),
+                             (record["target_json"], record["target_token_ids"])):
+            assert tokens[0] == tokenizer.bos_token_id and tokens[-1] == tokenizer.eos_token_id
+            assert tokenizer.decode(tokens[1:-1]) == wire
 
 
 @pytest.mark.parametrize("profile", [None, "complete-reviewed-norm-admission/v2", "v3", True])
