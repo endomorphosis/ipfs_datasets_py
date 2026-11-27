@@ -613,6 +613,10 @@ def _build_validated_native(preparation, validated, *, replay,
              "reviewed-unary-object-definition-realization/v1"):
                 ("legal-reviewed-definition-realization-native-build/v1",
                  "replayed-reviewed-definition-realization-native-build/v1"),
+            ("legal-reviewed-source-bound-definition-realization-preparation/v2",
+             "reviewed-source-bound-unary-object-definition-realization/v2"):
+                ("legal-reviewed-source-bound-definition-realization-native-build/v2",
+                 "replayed-reviewed-source-bound-definition-realization-native-build/v2"),
         }
         physical_realization = manifest.get("schema") == "legal-reviewed-physical-definition-realization-preparation/v2"
         if physical_realization:
@@ -636,13 +640,22 @@ def _build_validated_native(preparation, validated, *, replay,
                 _reviewed_source_use_manifest(manifest, instance_identity_profile)
                 _need(receipt_binding.get("instance_identity_profile") == instance_identity_profile,
                       "explicit source-use receipt identity selection required")
+            realization_schemas = ("legal-reviewed-definition-realization-preparation/v1",
+                "legal-reviewed-source-bound-definition-realization-preparation/v2")
+            source_bound = manifest.get("schema") == realization_schemas[1]
+            if source_bound:
+                _reviewed_source_bound_definition_realization_native_policy(owners[4],
+                    **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
+                source_binding = _reviewed_realization_source_binding(manifest, source_bound=True)
+                _need(_reviewed_realization_source_binding(receipt_binding, source_bound=True) == source_binding,
+                      "source-bound native receipt must preserve the selected source history")
             if selected_application:
-                _need(manifest.get("schema") == "legal-reviewed-definition-realization-preparation/v1",
+                _need(manifest.get("schema") in realization_schemas,
                       "definition application requires its explicit realization project")
                 reviewed_domains = {(schema, source_profile + "+whole-norm-definition-expansion/v1"):
                     (schema_out, native_profile + "+whole-norm-definition-expansion/v1")
                     for (schema, source_profile), (schema_out, native_profile) in reviewed_domains.items()
-                    if schema == "legal-reviewed-definition-realization-preparation/v1"}
+                    if schema in realization_schemas}
                 _reviewed_definition_application_manifest(manifest, definition_application_profile)
                 _need(receipt_binding.get("definition_application_profile") == definition_application_profile,
                       "explicit whole-norm receipt application selection required")
@@ -2193,14 +2206,25 @@ def _reviewed_preservation_native_manifest(manifest, shared, *, instance_identit
 def _reviewed_preservation_native_operation(preparation, graph, admission, args, kwargs, *,
         expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256,
         toolchain, operation=None, reviewed_version=2, instance_identity_profile=None, definition_application_profile=None, realization_preservation=None,
-        expected_upstream_preservation_sha256=None, physical_request_raw=None, expected_physical_request_sha256=None):
-    _need(type(reviewed_version) is int and reviewed_version in (2, 3, 4, 5),
+        expected_upstream_preservation_sha256=None, physical_request_raw=None, expected_physical_request_sha256=None,
+        bound_component_inputs=None, expected_bound_component_inputs_sha256=None):
+    _need(type(reviewed_version) is int and reviewed_version in (2, 3, 4, 5, 6),
           "explicit closed reviewed native version required")
     _reviewed_definition_application_kwargs(definition_application_profile)
-    _need(definition_application_profile is None or reviewed_version in (4, 5),
+    _need(definition_application_profile is None or reviewed_version in (4, 5, 6),
           "whole-norm application requires the explicit realization native domain")
     _need(reviewed_version == 5 or physical_request_raw is expected_physical_request_sha256 is None,
           "physical request requires the explicit physical realization native domain")
+    _need(reviewed_version == 6 or bound_component_inputs is expected_bound_component_inputs_sha256 is None,
+          "bound component inputs require the explicit source-bound realization native domain")
+    if reviewed_version == 6:
+        return _reviewed_source_bound_definition_realization_native_operation(preparation, realization_preservation,
+            graph, admission, args, kwargs, expected_realization_sha256=expected_preservation_sha256,
+            expected_preservation_sha256=expected_upstream_preservation_sha256,
+            expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
+            toolchain=toolchain, operation=operation, bound_component_inputs=bound_component_inputs,
+            expected_bound_component_inputs_sha256=expected_bound_component_inputs_sha256,
+            **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
     if reviewed_version == 5:
         return _reviewed_physical_definition_realization_native_operation(preparation, realization_preservation,
             graph, admission, args, kwargs, expected_realization_sha256=expected_preservation_sha256,
@@ -3976,12 +4000,17 @@ def _reviewed_mixed_preservation_native_pins(owners, manifest, *, instance_ident
     return pins
 
 
-def _reviewed_mixed_preservation_native_manifest(manifest, shared, *, instance_identity_profile=None):
+def _reviewed_mixed_preservation_native_manifest(manifest, shared, *, instance_identity_profile=None, source_bound=False):
     _reviewed_mixed_native_policy(shared, **_reviewed_source_use_kwargs(instance_identity_profile))
     _reviewed_source_use_manifest(manifest, instance_identity_profile)
-    _need(manifest.get("schema") == "legal-corpus-reviewed-preservation-preparation/v3"
-          and manifest.get("profile") == _reviewed_source_use_domain(
-              "reviewed-multi-unit-mixed-relational-preservation/v3", instance_identity_profile),
+    schema, profile = (shared.REVIEWED_SOURCE_BOUND_PRESERVATION_SCHEMA,
+        shared.REVIEWED_SOURCE_BOUND_PRESERVATION_PROFILE) if source_bound else (
+        "legal-corpus-reviewed-preservation-preparation/v3", "reviewed-multi-unit-mixed-relational-preservation/v3")
+    if source_bound:
+        shared._reviewed_source_bound_preservation_policy()
+    _reviewed_realization_source_binding(manifest, source_bound=source_bound)
+    _need(manifest.get("schema") == schema
+          and manifest.get("profile") == _reviewed_source_use_domain(profile, instance_identity_profile),
           "exact current mixed reviewed preservation preparation required")
     units = manifest["units"]
     _need(type(units) is list and 3 <= len(units) <= 8,
@@ -4423,6 +4452,12 @@ REVIEWED_DEFINITION_REALIZATION_RECEIPT_REPLAY_SCHEMA = "legal-reviewed-definiti
 REVIEWED_DEFINITION_REALIZATION_RECEIPT_REPLAY_PROFILE = "current-reviewed-definition-realization-retained-observation/v1"
 REVIEWED_DEFINITION_REALIZATION_LIVE_SUCCESS_SCHEMA = "legal-reviewed-definition-realization-live-success/v1"
 REVIEWED_DEFINITION_REALIZATION_LIVE_SUCCESS_PROFILE = "current-reviewed-definition-realization-live-native-owner-success/v1"
+REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_BUILD_SCHEMA = "legal-reviewed-source-bound-definition-realization-native-build/v2"
+REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_NATIVE_PROFILE = "replayed-reviewed-source-bound-definition-realization-native-build/v2"
+REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_RECEIPT_REPLAY_SCHEMA = "legal-reviewed-source-bound-definition-realization-receipt-replay/v2"
+REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_RECEIPT_REPLAY_PROFILE = "current-reviewed-source-bound-definition-realization-retained-observation/v2"
+_REVIEWED_SOURCE_BOUND_REALIZATION_BINDINGS = frozenset({"bound_component_identity", "bound_component_inputs_sha256"})
+_REVIEWED_SOURCE_BOUND_REALIZATION_OPERATION_PINS = {}
 _REVIEWED_DEFINITION_REALIZATION_OPERATION_PINS = None
 _REVIEWED_DEFINITION_APPLICATION_OPERATION_PINS = None
 _REVIEWED_DEFINITION_REALIZATION_SCOPE = (
@@ -4509,6 +4544,56 @@ def _reviewed_definition_realization_native_policy(shared=None, *, instance_iden
         shared._reviewed_definition_realization_policy(**_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
 
 
+def _reviewed_source_bound_definition_realization_native_policy(shared=None, *, instance_identity_profile=None,
+        definition_application_profile=None):
+    selected = _reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)
+    _reviewed_definition_realization_native_policy(shared, **selected)
+    _need((REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_BUILD_SCHEMA,
+           REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_NATIVE_PROFILE,
+           REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_RECEIPT_REPLAY_SCHEMA,
+           REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_RECEIPT_REPLAY_PROFILE,
+           REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_NATIVE_LIVE_SUCCESS_SCHEMA,
+           REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_NATIVE_LIVE_SUCCESS_PROFILE) == (
+        "legal-reviewed-source-bound-definition-realization-native-build/v2",
+        "replayed-reviewed-source-bound-definition-realization-native-build/v2",
+        "legal-reviewed-source-bound-definition-realization-receipt-replay/v2",
+        "current-reviewed-source-bound-definition-realization-retained-observation/v2",
+        "legal-reviewed-source-bound-definition-realization-live-success/v2",
+        "current-reviewed-source-bound-definition-realization-live-native-owner-success/v2"),
+        "closed source-bound native, retained and live profiles required")
+    if shared is not None:
+        shared._reviewed_definition_realization_policy(source_bound=True, **selected)
+
+
+def _reviewed_realization_source_binding(manifest, *, source_bound):
+    if not source_bound:
+        _need(not _REVIEWED_SOURCE_BOUND_REALIZATION_BINDINGS.intersection(manifest),
+              "source history requires the explicit source-bound native domain")
+        return {}
+    _need(_REVIEWED_SOURCE_BOUND_REALIZATION_BINDINGS <= set(manifest),
+          "complete source-bound component identity and input commitment required")
+    identity = manifest["bound_component_identity"]
+    _need(type(identity) is dict and identity.get("schema") == "legal-bound-norm-component-preparation/v2"
+          and identity.get("profile") == "declared-source-binding-to-complete-mixed-sort-norm-preparation/v2",
+          "exact mixed source-bound component identity required")
+    _pin(manifest["bound_component_inputs_sha256"], "bound component inputs")
+    _pin(identity.get("bound_component_report_sha256"), "bound component report")
+    return {key: manifest[key] for key in _REVIEWED_SOURCE_BOUND_REALIZATION_BINDINGS}
+
+
+def _reviewed_source_bound_definition_realization_native_pins(owners, manifest, *, instance_identity_profile=None,
+        definition_application_profile=None):
+    selected = _reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)
+    _reviewed_definition_realization_native_manifest(manifest, owners[4], source_bound=True, **selected)
+    pins = _observed_producer_pins(owners, manifest)
+    for path, digest in manifest["bound_component_identity"]["producer_pins"].items():
+        _need(pins.get(path) == digest, "source-bound native producer pin differs: " + path)
+    key = (instance_identity_profile, definition_application_profile)
+    expected = _REVIEWED_SOURCE_BOUND_REALIZATION_OPERATION_PINS.setdefault(key, dict(pins))
+    _need(pins == expected, "source-bound native realization producers changed since first use")
+    return pins
+
+
 def _reviewed_definition_realization_native_pins(owners, manifest, *, instance_identity_profile=None, definition_application_profile=None):
     global _REVIEWED_DEFINITION_REALIZATION_OPERATION_PINS, _REVIEWED_DEFINITION_APPLICATION_OPERATION_PINS
     shared = owners[4]
@@ -4535,17 +4620,26 @@ def _reviewed_definition_realization_native_pins(owners, manifest, *, instance_i
     return pins
 
 
-def _reviewed_definition_realization_native_manifest(manifest, shared, *, instance_identity_profile=None, definition_application_profile=None):
-    _reviewed_definition_realization_native_policy(shared, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
+def _reviewed_definition_realization_native_manifest(manifest, shared, *, instance_identity_profile=None,
+        definition_application_profile=None, source_bound=False):
+    policy = (_reviewed_source_bound_definition_realization_native_policy if source_bound
+              else _reviewed_definition_realization_native_policy)
+    policy(shared, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
     _reviewed_source_use_manifest(manifest, instance_identity_profile)
     _need(instance_identity_profile is not None or "instance_identity_profile" not in manifest,
           "legacy realization cannot acquire source-use identity")
-    _need(manifest.get("schema") == shared.REVIEWED_DEFINITION_REALIZATION_SCHEMA
-          and manifest.get("profile") == _reviewed_realization_domain(shared.REVIEWED_DEFINITION_REALIZATION_PROFILE, instance_identity_profile, definition_application_profile),
+    schema, base_profile = (shared.REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_SCHEMA,
+        shared.REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_PROFILE) if source_bound else (
+        shared.REVIEWED_DEFINITION_REALIZATION_SCHEMA, shared.REVIEWED_DEFINITION_REALIZATION_PROFILE)
+    profile = _reviewed_realization_domain(base_profile, instance_identity_profile, definition_application_profile)
+    _need(manifest.get("schema") == schema and manifest.get("profile") == profile,
           "exact reviewed definition realization preparation required")
+    source_binding = _reviewed_realization_source_binding(manifest, source_bound=source_bound)
     application = _reviewed_definition_application_manifest(manifest, definition_application_profile)
     upstream = _reviewed_mixed_preservation_native_manifest(manifest["upstream_manifest"], shared,
-        **_reviewed_source_use_kwargs(instance_identity_profile))
+        source_bound=source_bound, **_reviewed_source_use_kwargs(instance_identity_profile))
+    _need(source_binding == _reviewed_realization_source_binding(upstream, source_bound=source_bound),
+          "source-bound realization and original preservation history differ")
     for key in ("units", "reviewed_graph_sha256", "reviewed_admission_sha256", "declaration_sha256"):
         _need(manifest[key] == upstream[key], "complete original reviewed realization binding differs: " + key)
     selection = manifest["selection"]
@@ -4568,8 +4662,9 @@ def _reviewed_definition_realization_native_manifest(manifest, shared, *, instan
           and re.fullmatch(r"LegalReviewedDefinitionRealization\.Instance[0-9a-f]{64}", extra[0]),
           "one exact realization instance and distinct realization root required")
     instance, root = extra
-    identity_payload = {"profile": _reviewed_realization_domain(shared.REVIEWED_DEFINITION_REALIZATION_PROFILE, instance_identity_profile, definition_application_profile),
-        "upstream_preservation_sha256": manifest["reviewed_preservation_sha256"], "selection": selection}
+    identity_payload = {"profile": profile,
+        "upstream_preservation_sha256": manifest["reviewed_preservation_sha256"], "selection": selection,
+        **source_binding}
     if application:
         shared._reviewed_definition_application_rows(application["definition_applications"], selection, units,
             definition_application_profile=definition_application_profile)
@@ -4627,8 +4722,10 @@ def _reviewed_definition_realization_native_manifest(manifest, shared, *, instan
     return manifest
 
 
-def _reviewed_definition_realization_receipt_binding(manifest, admission, *, instance_identity_profile=None, definition_application_profile=None):
+def _reviewed_definition_realization_receipt_binding(manifest, admission, *, instance_identity_profile=None,
+        definition_application_profile=None, source_bound=False):
     _reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)
+    source_binding = _reviewed_realization_source_binding(manifest, source_bound=source_bound)
     _reviewed_source_use_manifest(manifest, instance_identity_profile)
     _need(instance_identity_profile is not None or "instance_identity_profile" not in manifest,
           "legacy realization receipt cannot acquire source-use identity")
@@ -4638,21 +4735,40 @@ def _reviewed_definition_realization_receipt_binding(manifest, admission, *, ins
                if key in manifest}
     binding.update({key: upstream[key] for key in ("provenance_kind", "scope_record_cid",
         "interpretation_record_cid", "definition_use_record_cids")})
-    return binding | application | _reviewed_realization_kwargs(instance_identity_profile, definition_application_profile) | {"preservation_only": False, "constructed_model_only": definition_application_profile is None,
+    return binding | application | source_binding | _reviewed_realization_kwargs(instance_identity_profile, definition_application_profile) | {"preservation_only": False, "constructed_model_only": definition_application_profile is None,
         "cross_unit_definition_application_proved": False, "statutory_meaning_proved": False,
         "release_ready": False, "full_formal_corpus_consistency_verified": False,
         "generic_lean_v3_receipt_substituted": False,
         "formal_assumptions": admission["formal_assumptions"], "formal_assumptions_proved": False}
 
 
+def _reviewed_source_bound_definition_realization_receipt_binding(manifest, admission, *, instance_identity_profile=None,
+        definition_application_profile=None):
+    return _reviewed_definition_realization_receipt_binding(manifest, admission, source_bound=True,
+        **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
+
+
 def _reviewed_definition_realization_native_operation(preparation, preservation, graph, admission, args, kwargs, *,
         expected_realization_sha256, expected_preservation_sha256, expected_graph_sha256,
-        expected_admission_sha256, toolchain, operation=None, instance_identity_profile=None, definition_application_profile=None):
-    _reviewed_definition_realization_native_policy(**_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
+        expected_admission_sha256, toolchain, operation=None, instance_identity_profile=None,
+        definition_application_profile=None, source_options=None):
+    selected = _reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)
+    source_bound = source_options is not None
+    policy = (_reviewed_source_bound_definition_realization_native_policy if source_bound
+              else _reviewed_definition_realization_native_policy)
+    pin_reader = (_reviewed_source_bound_definition_realization_native_pins if source_bound
+                  else _reviewed_definition_realization_native_pins)
+    validator_name = ("validate_reviewed_source_bound_definition_realization_corpus_v2" if source_bound
+                      else "validate_reviewed_definition_realization_corpus_v1")
+    policy(**selected)
+    if source_bound:
+        _pin(source_options["expected_bound_component_inputs_sha256"], "bound component inputs")
+        _need(type(source_options["bound_component_inputs"]) is dict,
+              "complete bound component inputs required")
     document = _reviewed_preservation_native_document(preparation)
     upstream_document = _reviewed_preservation_native_document(preservation)
     for value, label in ((expected_realization_sha256, "complete realization preparation"),
-            (expected_preservation_sha256, "complete original V3 preservation"),
+            (expected_preservation_sha256, "complete original preservation"),
             (expected_graph_sha256, "complete reviewed graph"), (expected_admission_sha256, "complete reviewed admission")):
         _pin(value, label)
     _need(_sha(_wire(document, MAX_PREPARATION_BYTES)) == expected_realization_sha256
@@ -4667,15 +4783,21 @@ def _reviewed_definition_realization_native_operation(preparation, preservation,
         original["instance_identity_profile"] = instance_identity_profile
     if definition_application_profile is not None:
         original["definition_application_profile"] = definition_application_profile
+    if source_bound:
+        original.update(source_options)
     _bound_tree({"preparation": document, "preservation": upstream_document, **original}, MAX_INPUT_BYTES, allow_bytes=True)
     owners = _owners(); shared = owners[4]
-    _reviewed_definition_realization_native_policy(shared, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
+    policy(shared, **selected)
     _need(type(preparation) is type(preservation) is shared.ReviewedPreservationCorpusPreparation,
           "exact canonical realization and upstream preparation types required")
     reviewer = shared._reviewed_mixed_preservation_owners()[1]
     detached, commitment = reviewer.norm._snapshot(original)
     _, project_pin = reviewer.norm._snapshot(document)
     _, upstream_pin = reviewer.norm._snapshot(upstream_document)
+    source_callbacks = (("_reviewed_source_bound_definition_realization_native_policy",
+        "_reviewed_source_bound_definition_realization_native_pins",
+        "_reviewed_source_bound_definition_realization_native_operation",
+        "_reviewed_source_bound_definition_realization_receipt_binding") if source_bound else ())
     callbacks = tuple((name, _live_callable_state(globals()[name])) for name in (
         "_reviewed_definition_realization_native_policy", "_reviewed_mixed_native_policy",
         "_reviewed_definition_realization_native_manifest", "_reviewed_definition_realization_native_operation",
@@ -4684,16 +4806,17 @@ def _reviewed_definition_realization_native_operation(preparation, preservation,
         "_reviewed_source_use_domain", "_reviewed_source_use_manifest",
         "_reviewed_definition_application_kwargs", "_reviewed_realization_kwargs",
         "_reviewed_realization_domain", "_reviewed_definition_application_manifest",
-        "_reviewed_definition_realization_scope"))
+        "_reviewed_mixed_preservation_native_manifest", "_reviewed_realization_source_binding",
+        "_reviewed_definition_realization_scope", *source_callbacks))
     shared_callbacks = tuple((name, _live_callable_state(getattr(shared, name))) for name in (
-        "validate_reviewed_definition_realization_corpus_v1", "_reviewed_definition_realization_policy",
+        validator_name, "_reviewed_definition_realization_policy",
         "_reviewed_mixed_preservation_policy", "_reviewed_preservation_pins",
         *(("_reviewed_definition_application_rows", "_reviewed_definition_application_expression") if definition_application_profile is not None else ())))
     application_contract_callbacks = (tuple((name, _live_callable_state(getattr(shared.contracts, name)))
         for name in ("require_text", "require_int")) if definition_application_profile is not None else ())
 
     def fence():
-        _reviewed_definition_realization_native_policy(shared, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
+        policy(shared, **selected)
         _need(all(_live_callable_matches(globals().get(name), state) for name, state in callbacks)
               and all(_live_callable_matches(getattr(shared, name), state) for name, state in shared_callbacks)
               and all(_live_callable_matches(getattr(shared.contracts, name), state)
@@ -4706,16 +4829,17 @@ def _reviewed_definition_realization_native_operation(preparation, preservation,
 
     def replay():
         fence()
-        checked = shared.validate_reviewed_definition_realization_corpus_v1(preparation, preservation,
+        detached_source = {key: detached[key] for key in source_options} if source_bound else {}
+        checked = getattr(shared, validator_name)(preparation, preservation,
             detached["graph"], detached["admission"], *detached["args"],
             expected_realization_sha256=expected_realization_sha256,
             expected_preservation_sha256=expected_preservation_sha256,
             expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
-            toolchain=toolchain, **detached["kwargs"], **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
+            toolchain=toolchain, **detached["kwargs"], **selected, **detached_source)
         _need(_reviewed_preservation_native_document(checked) == document,
               "current complete realization regeneration differs")
-        _reviewed_definition_realization_native_manifest(checked.to_dict(), shared, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
-        _reviewed_definition_realization_native_pins(owners, checked.to_dict(), **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
+        _reviewed_definition_realization_native_manifest(checked.to_dict(), shared, source_bound=source_bound, **selected)
+        pin_reader(owners, checked.to_dict(), **selected)
         fence()
         return checked
     checked = replay()
@@ -4727,7 +4851,7 @@ def _reviewed_definition_realization_native_operation(preparation, preservation,
         nonlocal error
         try:
             fence()
-            _reviewed_definition_realization_native_pins(owners, checked.to_dict(), **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
+            pin_reader(owners, checked.to_dict(), **selected)
         except (ValueError, TypeError, KeyError, OSError, UnicodeError, RecursionError) as failure:
             if stage in ("snapshot", "toolchain", "after_persistence"):
                 raise
@@ -4736,6 +4860,27 @@ def _reviewed_definition_realization_native_operation(preparation, preservation,
     result = operation(checked, replay, custody)
     fence()
     return result
+
+
+def _reviewed_source_bound_definition_realization_native_operation(preparation, preservation, graph, admission,
+        args, kwargs, *, bound_component_inputs, expected_bound_component_inputs_sha256, **selected):
+    return _reviewed_definition_realization_native_operation(preparation, preservation, graph, admission,
+        args, kwargs, source_options={"bound_component_inputs": bound_component_inputs,
+            "expected_bound_component_inputs_sha256": expected_bound_component_inputs_sha256}, **selected)
+
+
+def validate_reviewed_source_bound_definition_realization_native_v2(preparation, preservation, graph, admission, *args,
+        expected_realization_sha256, expected_preservation_sha256, expected_graph_sha256,
+        expected_admission_sha256, toolchain, bound_component_inputs, expected_bound_component_inputs_sha256,
+        instance_identity_profile=None, definition_application_profile=None, **kwargs):
+    """Replay the exact source history, review and source-bound Lean project."""
+    return _reviewed_source_bound_definition_realization_native_operation(preparation, preservation, graph, admission,
+        args, kwargs, expected_realization_sha256=expected_realization_sha256,
+        expected_preservation_sha256=expected_preservation_sha256, expected_graph_sha256=expected_graph_sha256,
+        expected_admission_sha256=expected_admission_sha256, toolchain=toolchain,
+        bound_component_inputs=bound_component_inputs,
+        expected_bound_component_inputs_sha256=expected_bound_component_inputs_sha256,
+        **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
 
 
 def validate_reviewed_definition_realization_native_v1(preparation, preservation, graph, admission, *args,
@@ -4753,7 +4898,45 @@ def build_reviewed_definition_realization_native_v1(preparation, preservation, g
         expected_admission_sha256, toolchain, lake_executable, output_directory,
         timeout_seconds=60, cancellation=None, instance_identity_profile=None, definition_application_profile=None, **kwargs):
     """Check all constructed-model obligations through the existing native runner."""
-    _reviewed_definition_realization_native_policy(**_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
+    return _build_reviewed_definition_realization_native(preparation, preservation, graph, admission, args, kwargs,
+        expected_realization_sha256=expected_realization_sha256, expected_preservation_sha256=expected_preservation_sha256,
+        expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
+        toolchain=toolchain, lake_executable=lake_executable, output_directory=output_directory,
+        timeout_seconds=timeout_seconds, cancellation=cancellation,
+        **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
+
+
+def build_reviewed_source_bound_definition_realization_native_v2(preparation, preservation, graph, admission, *args,
+        expected_realization_sha256, expected_preservation_sha256, expected_graph_sha256,
+        expected_admission_sha256, toolchain, lake_executable, output_directory,
+        bound_component_inputs, expected_bound_component_inputs_sha256, timeout_seconds=60, cancellation=None,
+        instance_identity_profile=None, definition_application_profile=None, **kwargs):
+    """Check source-bound conditional obligations through the existing native runner."""
+    return _build_reviewed_definition_realization_native(preparation, preservation, graph, admission, args, kwargs,
+        expected_realization_sha256=expected_realization_sha256, expected_preservation_sha256=expected_preservation_sha256,
+        expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
+        toolchain=toolchain, lake_executable=lake_executable, output_directory=output_directory,
+        timeout_seconds=timeout_seconds, cancellation=cancellation,
+        source_options={"bound_component_inputs": bound_component_inputs,
+            "expected_bound_component_inputs_sha256": expected_bound_component_inputs_sha256},
+        **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
+
+
+def _build_reviewed_definition_realization_native(preparation, preservation, graph, admission, args, kwargs, *,
+        expected_realization_sha256, expected_preservation_sha256, expected_graph_sha256,
+        expected_admission_sha256, toolchain, lake_executable, output_directory, timeout_seconds, cancellation,
+        instance_identity_profile=None, definition_application_profile=None, source_options=None):
+    selected = _reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)
+    if source_options is not None:
+        schema = REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_BUILD_SCHEMA
+        profile = REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_NATIVE_PROFILE
+        binding = _reviewed_source_bound_definition_realization_receipt_binding
+        pin_reader = _reviewed_source_bound_definition_realization_native_pins
+    else:
+        schema = REVIEWED_DEFINITION_REALIZATION_BUILD_SCHEMA
+        profile = REVIEWED_DEFINITION_REALIZATION_NATIVE_PROFILE
+        binding = _reviewed_definition_realization_receipt_binding
+        pin_reader = _reviewed_definition_realization_native_pins
     _need(type(timeout_seconds) in (int, float) and math.isfinite(timeout_seconds)
           and 0 < timeout_seconds <= 60, "finite compiler timeout in (0,60] required")
     def execute(checked, replay, custody):
@@ -4761,38 +4944,72 @@ def build_reviewed_definition_realization_native_v1(preparation, preservation, g
             expected_preparation_sha256=expected_realization_sha256, toolchain=toolchain,
             lake_executable=lake_executable, output_directory=output_directory,
             timeout_seconds=timeout_seconds, cancellation=cancellation,
-            build_schema=REVIEWED_DEFINITION_REALIZATION_BUILD_SCHEMA,
-            profile=_reviewed_realization_domain(REVIEWED_DEFINITION_REALIZATION_NATIVE_PROFILE, instance_identity_profile, definition_application_profile),
+            build_schema=schema,
+            profile=_reviewed_realization_domain(profile, instance_identity_profile, definition_application_profile),
             flags=dict(PARENT_FALSE_FLAGS),
-            receipt_binding=lambda manifest: _reviewed_definition_realization_receipt_binding(manifest, admission, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)),
+            receipt_binding=lambda manifest: binding(manifest, admission, **selected),
             maximum_files=MAX_REVIEWED_PRESERVATION_FILES, maximum_modules=MAX_REVIEWED_PRESERVATION_MODULES,
             maximum_theorems=MAX_REVIEWED_PRESERVATION_THEOREMS,
-            producer_pin_reader=(_reviewed_definition_realization_native_pins if not _reviewed_realization_kwargs(instance_identity_profile, definition_application_profile) else
-                lambda owners, manifest: _reviewed_definition_realization_native_pins(owners, manifest, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))),
+            producer_pin_reader=(pin_reader if not selected else
+                lambda owners, manifest: pin_reader(owners, manifest, **selected)),
             preparation_document_reader=_reviewed_preservation_native_document,
             closing_custody_guard=custody, receipt_scope=_reviewed_definition_realization_scope(definition_application_profile),
-            frozen_authority=dict(AUTHORITY), **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
+            frozen_authority=dict(AUTHORITY), **selected)
     return _reviewed_definition_realization_native_operation(preparation, preservation, graph, admission, args, kwargs,
         expected_realization_sha256=expected_realization_sha256, expected_preservation_sha256=expected_preservation_sha256,
         expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
-        toolchain=toolchain, operation=execute, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
+        toolchain=toolchain, operation=execute, source_options=source_options, **selected)
 
 
 def reviewed_definition_realization_receipt_bytes_v1(receipt, *, instance_identity_profile=None, definition_application_profile=None):
-    _reviewed_definition_realization_native_policy(**_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
+    return _reviewed_definition_realization_receipt_bytes(receipt,
+        instance_identity_profile=instance_identity_profile, definition_application_profile=definition_application_profile)
+
+
+def reviewed_source_bound_definition_realization_receipt_bytes_v2(receipt, *, instance_identity_profile=None,
+        definition_application_profile=None):
+    """Format the closed source-bound receipt without authenticating it."""
+    return _reviewed_definition_realization_receipt_bytes(receipt, source_bound=True,
+        instance_identity_profile=instance_identity_profile, definition_application_profile=definition_application_profile)
+
+
+def _reviewed_definition_realization_receipt_bytes(receipt, *, instance_identity_profile,
+        definition_application_profile, source_bound=False):
+    policy = (_reviewed_source_bound_definition_realization_native_policy if source_bound
+              else _reviewed_definition_realization_native_policy)
+    policy(**_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
     fields = _REVIEWED_DEFINITION_REALIZATION_CORE_FIELDS | (frozenset({"instance_identity_profile"}) if instance_identity_profile is not None else frozenset())
     fields |= (frozenset({"definition_application_profile", "definition_applications", "definition_application_obligations"})
                if definition_application_profile is not None else frozenset())
+    if source_bound:
+        fields |= _REVIEWED_SOURCE_BOUND_REALIZATION_BINDINGS
+        schema = REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_BUILD_SCHEMA
+        profile = REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_NATIVE_PROFILE
+    else:
+        schema = REVIEWED_DEFINITION_REALIZATION_BUILD_SCHEMA
+        profile = REVIEWED_DEFINITION_REALIZATION_NATIVE_PROFILE
     _need(type(receipt) is dict and set(receipt) == fields
-          and receipt.get("schema") == REVIEWED_DEFINITION_REALIZATION_BUILD_SCHEMA
-          and receipt.get("profile") == _reviewed_realization_domain(REVIEWED_DEFINITION_REALIZATION_NATIVE_PROFILE, instance_identity_profile, definition_application_profile)
+          and receipt.get("schema") == schema
+          and receipt.get("profile") == _reviewed_realization_domain(profile, instance_identity_profile, definition_application_profile)
           and (instance_identity_profile is None or receipt.get("instance_identity_profile") == instance_identity_profile),
           "exact complete realization native receipt required")
+    _reviewed_realization_source_binding(receipt, source_bound=source_bound)
     _reviewed_source_use_manifest(receipt, instance_identity_profile)
     _reviewed_definition_application_manifest(receipt, definition_application_profile)
     _need(receipt["constructed_model_only"] is (definition_application_profile is None),
           "exact conditional versus constructed-model receipt scope required")
     return _wire(receipt, MAX_RECEIPT_BYTES)
+
+
+__all__ += [
+    "REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_BUILD_SCHEMA",
+    "REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_NATIVE_PROFILE",
+    "REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_RECEIPT_REPLAY_SCHEMA",
+    "REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_RECEIPT_REPLAY_PROFILE",
+    "validate_reviewed_source_bound_definition_realization_native_v2",
+    "build_reviewed_source_bound_definition_realization_native_v2",
+    "reviewed_source_bound_definition_realization_receipt_bytes_v2",
+]
 
 
 def reviewed_definition_realization_packet_sha256_v1(packet_files, *, instance_identity_profile=None, definition_application_profile=None):
