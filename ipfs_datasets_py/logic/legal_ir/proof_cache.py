@@ -1279,30 +1279,31 @@ class LegalProofCache:
             raise LegalProofCacheError(
                 "export_index_json_compat requires a path or cache root"
             )
-        payload = {
-            "interface": LEGAL_PROOF_CACHE_INTERFACE,
-            "profiles": {
-                profile: cid
-                for profile, cid in sorted(self._profile_index.items())
-            },
-            "record_cids": sorted(self._records),
-            "schema_version": LEGAL_PROOF_INDEX_SCHEMA_VERSION,
-            "source_digests": {
-                digest: {
+        with self._lock:
+            payload = {
+                "interface": LEGAL_PROOF_CACHE_INTERFACE,
+                "profiles": {
                     profile: cid
-                    for profile, cid in sorted(profiles.items())
-                }
-                for digest, profiles in sorted(self._source_index.items())
-            },
-            "export_only": True,
-            "legacy_file_authoritative": False,
-            "owner_task_id": "DQK-067",
-        }
+                    for profile, cid in sorted(self._profile_index.items())
+                },
+                "record_cids": sorted(self._records),
+                "schema_version": LEGAL_PROOF_INDEX_SCHEMA_VERSION,
+                "source_digests": {
+                    digest: {
+                        profile: cid
+                        for profile, cid in sorted(profiles.items())
+                    }
+                    for digest, profiles in sorted(self._source_index.items())
+                },
+                "export_only": True,
+                "legacy_file_authoritative": False,
+                "owner_task_id": "DQK-067",
+            }
         _atomic_write_json(Path(target), payload)
         return {
             "path": str(target),
             "operation": "export_index_json_compat",
-            "record_count": len(self._records),
+            "record_count": len(payload["record_cids"]),
             "legacy_file_authoritative": False,
         }
 

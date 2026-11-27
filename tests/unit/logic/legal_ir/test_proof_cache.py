@@ -2137,3 +2137,94 @@ def test_reload_canonical_record_without_persisted_index(tmp_path: Path) -> None
     ).to_dict() == before_wire
     assert canonical_path.read_bytes() == before_bytes
     assert not index_path.exists()
+
+
+def test_export_index_receipt_retains_serialized_snapshot_while_concurrent_clear_finishes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import os
+    import threading
+
+    cache = LegalProofCache(root=tmp_path / "cache")
+    records = [
+        cache.put(_legal_artifact(_reviewed_fixture()), profile="legal-strict", jurisdiction="fictional"),
+        cache.put(
+            _legal_artifact(_reviewed_fixture(
+                sample_id="export-second",
+                text="Agency shall publish records unless an emergency applies.",
+                citation="5 U.S.C. 553",
+                section="553",
+            )),
+            profile="legal-default",
+            jurisdiction="fictional",
+        ),
+    ]
+    expected_cids = sorted(record.content_cid for record in records)
+    assert len(set(expected_cids)) == 2
+    expected_profiles = {record.profile: record.content_cid for record in records}
+    expected_sources = {}
+    for record in records:
+        expected_sources.setdefault(record.source_digest, {})[record.profile] = record.content_cid
+
+    destination = tmp_path / "exported-index.json"
+    replace_file = os.replace
+    replace_reached = threading.Event()
+    release_replace = threading.Event()
+    clear_finished = threading.Event()
+    serialized = []
+    receipts = []
+    errors = []
+
+    def pause_selected_export_replace(source, target, **kwargs):
+        if Path(target) == destination:
+            serialized.append(Path(source).read_bytes())
+            replace_reached.set()
+            assert release_replace.wait(10), "selected export replace was not released"
+        return replace_file(source, target, **kwargs)
+
+    def export():
+        try:
+            receipts.append(cache.export_index_json_compat(destination))
+        except BaseException as error:
+            errors.append(("export", error))
+
+    def clear():
+        try:
+            cache.clear()
+        except BaseException as error:
+            errors.append(("clear", error))
+        finally:
+            clear_finished.set()
+
+    monkeypatch.setattr(os, "replace", pause_selected_export_replace)
+    exporter = threading.Thread(target=export, name="proof-cache-export")
+    clearer = threading.Thread(target=clear, name="proof-cache-clear")
+    try:
+        exporter.start()
+        assert replace_reached.wait(10), "real atomic export did not reach replacement"
+        assert len(serialized) == 1
+        clearer.start()
+        assert clear_finished.wait(10), "cache.clear blocked while export I/O was paused"
+        assert not errors
+        assert cache.cids() == cache.profiles() == cache.source_digests() == ()
+    finally:
+        release_replace.set()
+        if exporter.ident is not None:
+            exporter.join(timeout=10)
+        if clearer.ident is not None:
+            clearer.join(timeout=10)
+
+    assert not exporter.is_alive() and not clearer.is_alive()
+    assert not errors
+    assert len(receipts) == 1
+    assert len(serialized) == 1
+    exported_bytes = destination.read_bytes()
+    assert exported_bytes == serialized[0]
+    payload = json.loads(exported_bytes)
+    assert payload["schema_version"] == LEGAL_PROOF_INDEX_SCHEMA_VERSION
+    assert payload["record_cids"] == expected_cids
+    assert payload["profiles"] == expected_profiles
+    assert payload["source_digests"] == expected_sources
+    assert receipts[0]["record_count"] == len(payload["record_cids"]) == 2
+    assert receipts[0]["legacy_file_authoritative"] is payload["legacy_file_authoritative"] is False
+    assert cache.cids() == cache.profiles() == cache.source_digests() == ()
