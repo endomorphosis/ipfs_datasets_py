@@ -36211,6 +36211,113 @@
       "root": "artifact_workspace",
       "scope": "Lean theorem request binding in reconstructed outcomes, ordinary92 software qualification and two separate direct namespace cases.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase7_checked_legal_proof_feedback_ordinary26_20261127",
+      "closed_runtime_facts": {
+        "actual_live_code_publication": {
+          "bytes": 21352,
+          "path": "/tmp/P7-checked-feedback-revalidated-final-LadvXFyf/actual-Phase7-ordinary26-check-feedback-three-FF-publication.json",
+          "sha256": "dbb00c0b498d16c52246142aaefa2ed8dbdc58782ad03112e4d8ab97ff66afa6"
+        },
+        "actual_live_exact_nine_freeze": {
+          "bytes": 17143,
+          "path": "/tmp/P7-checked-feedback-revalidated-final-LadvXFyf/actual-isolated-Phase7-exact-nine-local-freeze.json",
+          "sha256": "825edad923817a395ca1040b5f0633d053f3ea24faf777372294ae3bd322f9c6"
+        },
+        "actual_live_ordinary26": {
+          "bytes": 6769,
+          "path": "/tmp/P7-checked-feedback-revalidated-final-LadvXFyf/actual-Phase7-current-checked-proof-ordinary26-closed.json",
+          "sha256": "d7869ec2129071491a627ed7313aae19851ff39a5b18afa8478f13e714619ca9"
+        },
+        "actual_live_ordinary26_raw_JUnit": {
+          "bytes": 5448,
+          "path": "/tmp/P7-checked-feedback-terminal-final-bind-INERT-D0xVtGlC/actual-output/phase7-checked-feedback26-run-result0-output1.bin",
+          "sha256": "323a58b724cc565571c35cb709f3afbe609a65ae5d3caaf857341df6b205ffaf"
+        },
+        "actual_live_ordinary26_report": {
+          "bytes": 1266518,
+          "path": "/tmp/P7-checked-feedback-terminal-final-bind-INERT-D0xVtGlC/actual-output/complete-frozen-local-D-phase7-checked-feedback26-existing-owner-report.json",
+          "sha256": "3722cc430567e1e735b30eac626515cbc977f509e424cfb8af673c4d5b0b1aa7"
+        },
+        "actual_live_reconciled_Source42_READ10": {
+          "bytes": 19732,
+          "path": "/tmp/P7-Guide573-successor-live-READ10-controls-JedG5GQ0/actual-isolated-Phase7-READ10-closed.json",
+          "sha256": "0acb3ae07ff8631e511cdc08fac91f7ffc7deafa1ba4481100763bf004eb4c7c"
+        },
+        "actual_live_reconciled_Source42_epoch": {
+          "bytes": 8878,
+          "path": "/tmp/P7-checked-feedback-revalidated-final-LadvXFyf/actual-Phase7-current-Source42-content-epoch-closed.json",
+          "sha256": "3bd61ef0c79698fc9e3c5cf7bafce9e857b954048b17fd4f28c3063d432e72c0"
+        },
+        "actual_ordinary26_counts": {
+          "errors": 0,
+          "failures": 0,
+          "functions": 13,
+          "passed": 26,
+          "skipped": 0,
+          "tests": 26
+        },
+        "current_checked_proof_producer_to_learning_handoff_software_qualified": true,
+        "evidence_ordinal": 574,
+        "exact_candidate": {
+          "bytes": 9930,
+          "path": "/tmp/P7-checked-feedback-revalidated-final-LadvXFyf/SEALED-Phase7-checked-legal-proof-current-exact-nine-private-v02.json",
+          "sha256": "2dbbfdd8888a86b26e4ff54a5918d5617e7182793b3e5ebea2a270f2ee3e9d67"
+        },
+        "live_qualified_A_HEAD": "219ba3da0f62f772801d71715e22c506faa21126",
+        "live_qualified_D_HEAD": "4449d6a62a607cded94db3822b39033ed4850c26",
+        "ordinary_Source_resource_and_parent_closed": true,
+        "ordinary_collect_run_raw_JUnit_order_equal": true,
+        "physical_IO_accounting_complete": false,
+        "prior_verified_guide573_publication": {
+          "bytes": 3117,
+          "path": "/tmp/Root-P1-Lean-live-ordinary92-reconcile-v596/actual-Guide573-four-docs-three-FF-publication.json",
+          "sha256": "1a83a7c66b2e726b4f6605039fbd5bad4296f6cb3f008e965436c68a9e89e8c7"
+        },
+        "qualified_commit_blobs": {
+          "ipfs_datasets_py/logic/integration/reasoning/legal_ir_proof_feedback.py": "3c2cc1443e9f96a611a81052c0e13f7b6634248e",
+          "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py": "6c03d227e6a43439395ec37a5d280aebf30b7460",
+          "ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_feedback_ablation.py": "ec28c41fffdb7013d8b73ccc2ba70f1231316019",
+          "ipfs_datasets_py/optimizers/logic_theorem_optimizer/trusted_feedback_trainer.py": "f185deec8ddbfc25db15352cc15def76bb5ab351",
+          "tests/unit/logic/integration/test_trusted_feedback_weight_updates.py": "b3440e026ac79e9f96fce9b852f2bdbbfd5763a9",
+          "tests/unit/logic/legal_ir/test_proof_cache.py": "03ea849ebdb3c818af1e56d8ee44add38af030ee",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_modal_autoencoder_proof_heads.py": "b91b53344561d723bb28d9d0f6b71d3aaa7e3d7c",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_proof_feedback_ablation.py": "57ef63daf94a901365822cddb3ea1054fca2646c",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_trainable_legal_ir_objective.py": "cf976daddf3adc045c604c5a58c12ae9cc4f0543"
+        },
+        "related_catalog_component": "trusted-feedback-weight-updates",
+        "schema": "live-reconciled-Phase7-checked-legal-proof-feedback-engineering-evidence/v1",
+        "separate_private_no_fit_lineage": {
+          "maintained_selection": {
+            "bytes": 36484,
+            "path": "/tmp/Phase7-verified-legal-proof-training-private-Qbzuh2mo/actual-final-maintained-checked-branches.json",
+            "sha256": "7533e6804838f2efb9ad4d60a48f28b528129d292bed25e68fbc306704d5621b"
+          },
+          "nested_same16": {
+            "bytes": 7444,
+            "path": "/tmp/Phase7-checked-nested-learning-payload-no-fit-private-uLn9Ls6L/SEALED-same16-typed-nested-guidance-no-fit-red-green.json",
+            "sha256": "2e5d92e0ce9730630b621bf2419ef19120c5b9a4d99907025877166ba17b411e"
+          },
+          "retained_real_checked_fixture": {
+            "bytes": 32675,
+            "path": "/tmp/Phase7-verified-legal-proof-training-private-Qbzuh2mo/actual-final-retained-checked-proof.json",
+            "sha256": "de48a008dc3a2506f6ff9ed486dbfa3d63c9388150e667ab0131b50ed0f19352"
+          }
+        },
+        "statutory_or_corpus_admission_or_large_model_fit_or_new_Native_qualification": false,
+        "task": "LIR-22",
+        "task_status_changed": false
+      },
+      "evidence_ordinal": 574,
+      "id": "phase7-checked-legal-proof-feedback-ordinary26-evidence574-20261127",
+      "observed_bytes": 5320,
+      "observed_sha256": "50ab753428cca67fc2c23df7ac0313dbeaa374cef69f6098950681cb255aff6e",
+      "path": "/tmp/P7-checked-feedback-revalidated-final-LadvXFyf/guide574-composition/current-Phase7-checked-legal-proof-feedback-ordinary26-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Checked legal proof feedback producer-to-learning handoff and ordinary software qualification with controlled fixtures.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }
