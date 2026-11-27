@@ -263,10 +263,13 @@ def test_approved_seal_requires_human_identity_and_signature(
     seal_mod.assert_seal_structure(approved)
     seal_mod.assert_approved_seal(approved)
     result = seal_mod.check_seal(
-        approved, allow_pending=False, require_fixture_match=False
+        approved, allow_pending=False, require_fixture_match=False,
+        pending_request=pending_seal,
+        expected_pending_request_sha256=pending_seal["seal_sha256"],
     )
     assert result["ok"] is True
     assert result["status"] == "approved"
+    assert result["approval_request_matched"] is True
     assert result["publication_authorized"] is True
     assert result["main_published"] is False
 
@@ -435,3 +438,77 @@ def test_independent_pending_builds_match(seal_mod: ModuleType) -> None:
     b = seal_mod.build_pending_seal()
     assert a["seal_sha256"] == b["seal_sha256"]
     assert seal_mod.compare_seals(a, b) == []
+
+
+def test_requested_mutations_must_match_declared_cutover(pending_seal, seal_mod):
+    pending = copy.deepcopy(pending_seal)
+    pending["requested_mutations"][0]["to_default_config"] = "other"
+    pending["seal_sha256"] = seal_mod.digest_mapping(
+        {k: v for k, v in pending.items() if k != "seal_sha256"}
+    )
+    with pytest.raises(seal_mod.MismatchError, match="requested_mutations.*cutover"):
+        seal_mod.assert_seal_structure(pending)
+
+
+def test_approved_shape_without_original_request_has_no_checked_authorization(pending_seal, seal_mod):
+    approved = _approve_seal(seal_mod, pending_seal)
+    result = seal_mod.check_seal(approved, require_fixture_match=False)
+    assert result["status"] == "approved"
+    assert result["record_declares_publication_authorized"] is True
+    assert result["approval_request_matched"] is False
+    assert result["publication_authorized"] is False
+
+
+def test_historical_approval_matches_its_original_request(seal_mod):
+    approved = seal_mod.REPOSITORY_ROOT / "docs/reports/uscode_publication_seal_approved.json"
+    result = seal_mod.check_seal(seal_path=approved)
+    assert result["approval_request_matched"] is True
+    assert result["publication_authorized"] is True
+    assert result["main_published"] is False
+
+
+def test_approved_request_rejects_different_rollback_and_wrong_pin(pending_seal, seal_mod):
+    approved = _approve_seal(seal_mod, pending_seal)
+    with pytest.raises(seal_mod.ApprovalError, match="selected pending request"):
+        seal_mod.check_seal(
+            approved, require_fixture_match=False, pending_request=pending_seal,
+            expected_pending_request_sha256="0" * 64,
+        )
+
+    approved["rollback"]["default_config"] = "other"
+    approved["requested_mutations"] = seal_mod._requested_mutations(
+        production_repo=approved["production"]["dataset_id"],
+        production_branch=approved["production"]["branch"],
+        candidate=approved["candidate"],
+        rollback=approved["rollback"],
+    )
+    approved["seal_sha256"] = seal_mod.digest_mapping(
+        {k: v for k, v in approved.items() if k != "seal_sha256"}
+    )
+    seal_mod.assert_seal_structure(approved)
+    with pytest.raises(seal_mod.ApprovalError, match="selected pending request"):
+        seal_mod.check_seal(
+            approved, require_fixture_match=False, pending_request=pending_seal,
+            expected_pending_request_sha256=pending_seal["seal_sha256"],
+        )
+
+
+def test_cli_checks_custom_approved_seal_against_its_original_request(
+    tmp_path, pending_seal, seal_mod, monkeypatch
+):
+    monkeypatch.setattr(seal_mod, "REPOSITORY_ROOT", tmp_path)
+    approved = _approve_seal(seal_mod, pending_seal)
+    request_path = tmp_path / "pending.json"
+    seal_path = tmp_path / "approved.json"
+    receipt_path = tmp_path / "checked.json"
+    request_path.write_text(json.dumps(pending_seal), encoding="utf-8")
+    seal_path.write_text(json.dumps(approved), encoding="utf-8")
+
+    assert seal_mod.main([
+        "--seal", str(seal_path), "--pending-request", str(request_path),
+        "--pending-request-sha256", pending_seal["seal_sha256"],
+        "--output", str(receipt_path),
+    ]) == 0
+    receipt = json.loads(receipt_path.read_bytes())
+    assert receipt["approval_request_matched"] is True
+    assert receipt["main_published"] is False

@@ -45,6 +45,7 @@ from ipfs_datasets_py.processors.legal_data.uscode_hf_release import (  # noqa: 
     DEFAULT_SOURCE_REVISION,
 )
 from ipfs_datasets_py.processors.legal_data.uscode_release_schema import (  # noqa: E402
+    canonical_json_dumps,
     digest_mapping,
     normalize_sha256,
     require_immutable_revision,
@@ -70,6 +71,7 @@ SCHEMA_VERSION: Final = "uscode-publication-seal/v1"
 FIXTURE_ID: Final = "uscode-publication-seal-v1"
 
 DEFAULT_SEAL_RELPATH: Final = Path("docs/reports/uscode_publication_seal.json")
+APPROVED_REQUEST_RELPATH: Final = Path("docs/reports/uscode_publication_seal_pending_request.json")
 RELEASE_CANDIDATE_RELPATH: Final = Path("docs/reports/uscode_release_candidate.json")
 STAGING_CANARY_RELPATH: Final = Path("docs/reports/uscode_staging_canary.json")
 
@@ -468,9 +470,9 @@ def compute_approval_signature(
 ) -> str:
     """Deterministic content-bound signature digest (not a live crypto key).
 
-    Humans (or offline tooling they control) bind identity to exact digests by
-    producing this digest. Agents cannot self-authorize because agent identities
-    are rejected before signature verification.
+    Offline approval tooling can bind the recorded identity to exact digests.
+    This public digest checks consistency. Authentication depends on the
+    independently retained human decision.
     """
 
     human = assert_human_identity(identity)
@@ -851,6 +853,15 @@ def assert_seal_structure(seal: Mapping[str, Any]) -> None:
                 f"requested_mutations[{index}] unknown operation {op!r}"
             )
 
+    expected_mutations = _requested_mutations(
+        production_repo=production["dataset_id"],
+        production_branch=production["branch"],
+        candidate=candidate,
+        rollback=rollback,
+    )
+    if mutations != expected_mutations:
+        raise MismatchError("requested_mutations differ from the declared cutover and rollback")
+
     approver = dict(seal.get("approver") or {})
     if "identity" not in approver or "signature" not in approver:
         raise MissingInputError("approver.identity and approver.signature required")
@@ -966,6 +977,13 @@ def assert_approved_seal(seal: Mapping[str, Any]) -> None:
         raise ApprovalError("approver.approved_at is required for an approved seal")
 
 
+def _approval_request_body(seal: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        key: value for key, value in seal.items()
+        if key not in {"approver", "status", "publication_authorized", "seal_sha256"}
+    }
+
+
 def check_seal(
     seal: Mapping[str, Any] | None = None,
     *,
@@ -973,8 +991,10 @@ def check_seal(
     repo_root: Path | str | None = None,
     allow_pending: bool = False,
     require_fixture_match: bool = True,
+    pending_request: Mapping[str, Any] | None = None,
+    expected_pending_request_sha256: str | None = None,
 ) -> dict[str, Any]:
-    """Validate a publication seal request (pending or approved)."""
+    """Validate a seal against the separately retained request when approved."""
 
     root = Path(repo_root) if repo_root is not None else REPOSITORY_ROOT
     path = (
@@ -986,9 +1006,14 @@ def check_seal(
         seal = load_json_mapping(path)
 
     assert_seal_structure(seal)
+    if (pending_request is None) != (expected_pending_request_sha256 is None):
+        raise ApprovalError("a custom pending request requires its independent seal SHA-256")
 
+    approval_request_matched = False
     status = str(seal.get("status") or "").casefold()
     if status == STATUS_PENDING:
+        if pending_request is not None:
+            raise ApprovalError("an approval request can only be matched to an approved seal")
         if not allow_pending:
             raise SealStateError(
                 "seal is pending human approval; pass --allow-pending to "
@@ -998,6 +1023,21 @@ def check_seal(
         assert_pending_seal(seal)
     elif status == STATUS_APPROVED:
         assert_approved_seal(seal)
+        if pending_request is not None:
+            expected_request = normalize_sha256(
+                expected_pending_request_sha256, name="expected_pending_request_sha256"
+            )
+        elif require_fixture_match:
+            pending_request = load_json_mapping(root / APPROVED_REQUEST_RELPATH)
+            expected_request = pending_request.get("seal_sha256")
+        if pending_request is not None:
+            assert_seal_structure(pending_request)
+            assert_pending_seal(pending_request)
+            if (pending_request.get("seal_sha256") != expected_request
+                    or canonical_json_dumps(_approval_request_body(seal))
+                    != canonical_json_dumps(_approval_request_body(pending_request))):
+                raise ApprovalError("approved seal differs from the selected pending request")
+            approval_request_matched = True
     else:
         raise SealStateError(f"unsupported seal status: {status!r}")
 
@@ -1021,7 +1061,9 @@ def check_seal(
         else DEFAULT_SEAL_RELPATH.as_posix(),
         "seal_sha256": seal.get("seal_sha256"),
         "status": status,
-        "publication_authorized": bool(seal.get("publication_authorized")),
+        "publication_authorized": approval_request_matched and bool(seal.get("publication_authorized")),
+        "approval_request_matched": approval_request_matched,
+        "record_declares_publication_authorized": bool(seal.get("publication_authorized")),
         "main_published": False,
         "production_repo": (seal.get("production") or {}).get("dataset_id"),
         "production_branch": (seal.get("production") or {}).get("branch"),
@@ -1135,6 +1177,15 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--pending-request",
+        type=Path,
+        help="Original pending request for a custom approved seal",
+    )
+    parser.add_argument(
+        "--pending-request-sha256",
+        help="Independently held seal SHA-256 of the custom pending request",
+    )
+    parser.add_argument(
         "--allow-pending",
         action="store_true",
         help=(
@@ -1221,6 +1272,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             seal_path=seal_path,
             allow_pending=bool(args.allow_pending),
             require_fixture_match=True,
+            pending_request=(load_json_mapping(args.pending_request) if args.pending_request else None),
+            expected_pending_request_sha256=args.pending_request_sha256,
         )
 
         if args.print_json or args.output is not None:
