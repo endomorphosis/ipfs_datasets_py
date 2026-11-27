@@ -2165,12 +2165,68 @@ def _physical_v4_checked_native_selection(checked_native):
     return selection
 
 
-def _observe_physical_v4_checked_native(context, request_raw, selection, review):
+def _physical_v4_whole_project_coverage(project, opened, receipt, artifact_sha256s):
+    """Join component coverage after the original live Native loader succeeds."""
+    obligations = opened["preservation_obligations"]
+    _need(bool(obligations) and len(set(obligations)) == len(obligations)
+          and obligations == opened["obligations"] == receipt["preservation_obligations"]
+          == receipt["conditional_theorems"],
+          "whole-project requires exact ordered preservation obligations")
+    axioms = receipt["theorem_axiom_dependencies"]
+    _need(set(axioms) == set(obligations) and all(axioms[name] == [] for name in obligations)
+          and receipt["axiom_observations_passed"] is True and receipt["axiom_observation_errors"] == []
+          and receipt["conditional_kernel_status"] == "checked_under_explicit_hypotheses"
+          and receipt["formal_assumptions"] == opened["formal_assumptions"] == []
+          and receipt["formal_assumptions_proved"] is False,
+          "whole-project requires exact empty axiom reports under explicit hypotheses")
+
+    modules = project["expected_modules"]
+    sources = {row["path"]: row["sha256"] for row in project["files"]}
+    _need(bool(modules) and receipt["compiled_modules"] == receipt["expected_modules"] == modules
+          and receipt["module_imports"] == opened["module_imports"] == project["module_imports"]
+          and receipt["toolchain"] == project["toolchain"]
+          and receipt["executed_project_sha256"] == opened["file_sha256"] == sources
+          and all(receipt[key] is True for key in (
+              "build_passed", "manifest_coverage_passed", "executed_project_readback_passed")),
+          "whole-project requires the exact compiled module and executed source closure")
+
+    compiled = {row["path"]: row for row in opened["packet_inventory"] if row["path"].startswith("compiled/")}
+    expected_outputs = {}
+    for module in modules:
+        relative = module.replace(".", "/") + ".olean"
+        expected_outputs[".lake/build/lib/lean/" + relative] = "compiled/" + relative
+    _need(receipt["artifact_files"] == expected_outputs
+          and set(receipt["artifact_bytes"]) == set(receipt["artifact_sha256"]) == set(expected_outputs)
+          and set(compiled) == set(artifact_sha256s) == set(expected_outputs.values()),
+          "whole-project requires exact compiled artifact paths")
+    artifacts = []
+    for output, path in expected_outputs.items():
+        row = compiled[path]
+        _need(row["sha256"] == artifact_sha256s[path] == receipt["artifact_sha256"][output]
+              and type(row["bytes"]) is int and row["bytes"] > 0
+              and row["bytes"] == receipt["artifact_bytes"][output],
+              "whole-project compiled artifact differs from the independent pin")
+        artifacts.append({"path": path, "bytes": row["bytes"], "sha256": row["sha256"]})
+    return {
+        "toolchain": project["toolchain"],
+        "compiled_modules": modules,
+        "compiled_artifacts": artifacts,
+        "executed_source_sha256": sources,
+        "obligations": [{"declaration": name, "axiom_dependencies": []} for name in obligations],
+    }
+
+
+def _observe_physical_v4_checked_native(context, request_raw, selection, review, *,
+        whole_project_artifact_sha256s=None):
     from . import corpus_contracts as contracts, legal_corpus_definition_use_native_v2 as native
 
     pins = context["pins"]
+    packet_files = selection["packet_files"]
+    if whole_project_artifact_sha256s is not None:
+        contents, _ = native._reviewed_physical_retained_packet_v2(packet_files)
+        packet_files = tuple(contents.items())
     opened = native.load_verified_reviewed_physical_definition_realization_native_v2(
-        selection["handle"], selection["packet_files"], selection["realization"],
+        selection["handle"], packet_files, selection["realization"],
         context["preparation"], context["graph"], context["admission"], *context["args"],
         expected_receipt_sha256=selection["expected_receipt_sha256"],
         expected_packet_sha256=selection["expected_packet_sha256"],
@@ -2224,7 +2280,7 @@ def _observe_physical_v4_checked_native(context, request_raw, selection, review)
           and all(opened["authority"][key] is False for key in native.AUTHORITY)
           and all(type(opened[key]) is int and opened[key] == 0 for key in ("training_mask", "evaluation_gold_mask")),
           "checked Native observation cannot widen proof or admission scope")
-    return contracts.seal_record({
+    checked = contracts.seal_record({
         "schema": "legal-corpus-physical-v4-checked-native-observation/v1",
         **commitments,
         "unit": unit,
@@ -2246,10 +2302,49 @@ def _observe_physical_v4_checked_native(context, request_raw, selection, review)
         "proof_receipt_issued": False,
     })
 
+    if whole_project_artifact_sha256s is None:
+        return checked, None
+    receipt_raw = contents["build-receipt.json"]
+    _need(hashlib.sha256(receipt_raw).hexdigest() == opened["retained_receipt_sha256"]
+          == selection["expected_receipt_sha256"]
+          and opened["retained_packet_sha256"] == selection["expected_packet_sha256"]
+          and opened["support_profile"]["source_definition_premise_required"] is True,
+          "whole-project requires the exact original conditional receipt and packet")
+    receipt = native._parse(receipt_raw, native.MAX_RECEIPT_BYTES)
+    coverage = _physical_v4_whole_project_coverage(
+        plan["payload"]["project"], opened, receipt, whole_project_artifact_sha256s)
+    _need(coverage["toolchain"] == context["toolchain"]
+          and receipt["binary_sha256"] == selection["expected_binary_sha256"],
+          "whole-project toolchain differs from the original independent pins")
+    whole_project = contracts.seal_record({
+        "schema": "legal-corpus-physical-v4-checked-whole-project-observation/v1",
+        **commitments,
+        **coverage,
+        "ordered_unit_ids": [row["unit_id"] for row in opened["units"]],
+        "definition_application_obligations": opened["definition_application_obligations"],
+        "planned_request_sha256": observation["request_sha256"],
+        "current_review_observation_cid": review["record_cid"],
+        "selected_native_observation_cid": checked["record_cid"],
+        "live_result_cid": opened["record_cid"],
+        "retained_receipt_sha256": selection["expected_receipt_sha256"],
+        "retained_packet_sha256": selection["expected_packet_sha256"],
+        "compiler_binary_sha256": selection["expected_binary_sha256"],
+        "native_execution_authenticated": True,
+        "checked_under_explicit_hypotheses": True,
+        "formal_assumptions": [],
+        "source_definition_premise_required": True,
+        "qualified_request_execution": False,
+        "proof_receipt_issued": False,
+        "proof_authority": False,
+        "original_admitted_parent_custody_authenticated": False,
+    })
+    return checked, whole_project
+
 
 def validate_uscode_release_closure_v4(request_raw, *, expected_request_sha256,
         include_declared_eligibility=False, current_review=None, checked_native=None,
-        replay_retained_artifacts=False, retained_paired_cache_files=None):
+        replay_retained_artifacts=False, retained_paired_cache_files=None,
+        whole_project_artifact_sha256s=None):
     """Replay source-only V4 bytes, optionally joining two live observations.
 
     A caller may independently select current trust digests, evaluation time
@@ -2262,6 +2357,10 @@ def validate_uscode_release_closure_v4(request_raw, *, expected_request_sha256,
     its exact planned whole-norm request, realization, packet and independent
     pins. The loader joins a single checked conditional theorem to the replay.
     Graph-wide proof status and admission still require their own evidence.
+
+    An independent path-to-digest mapping of every compiled packet member
+    opts into a separate whole-project observation from that same live
+    handle, without changing the selected theorem or its eligibility.
 
     With replay_retained_artifacts, use the exact reviewed Parquet bodies in
     the pinned request after the original local files are unavailable. The
@@ -2284,6 +2383,18 @@ def validate_uscode_release_closure_v4(request_raw, *, expected_request_sha256,
         retained_paired_cache_files = dict(retained_paired_cache_files)
     _need(checked_native is None or current_review is not None,
           "checked Native requires independently selected current review")
+    if whole_project_artifact_sha256s is not None:
+        _need(checked_native is not None, "whole-project requires checked Native")
+        from . import corpus_contracts as contracts, legal_corpus_definition_use_native_v2 as native
+
+        _need(type(whole_project_artifact_sha256s) is dict
+              and 0 < len(whole_project_artifact_sha256s) <= native.MAX_REVIEWED_PRESERVATION_MODULES,
+              "whole-project requires bounded independent compiled artifact pins")
+        whole_project_artifact_sha256s = dict(whole_project_artifact_sha256s)
+        for path, sha256 in whole_project_artifact_sha256s.items():
+            _need(type(path) is str and len(path) <= 512 and path.startswith("compiled/")
+                  and path.endswith(".olean"), "whole-project requires compiled packet paths")
+            contracts.require_sha256(sha256, "independent compiled artifact")
     observer = None
     observations = []
     if current_review is not None:
@@ -2292,23 +2403,43 @@ def validate_uscode_release_closure_v4(request_raw, *, expected_request_sha256,
 
         def observer(context):
             review = _observe_physical_v4_current_review(context, selection)
-            checked = None if native_selection is None else _observe_physical_v4_checked_native(
-                context, request_raw, native_selection, review)
-            observations.append((review, checked))
+            checked = whole_project = None
+            if native_selection is not None:
+                checked, whole_project = _observe_physical_v4_checked_native(
+                    context, request_raw, native_selection, review,
+                    whole_project_artifact_sha256s=whole_project_artifact_sha256s)
+            observations.append((review, checked, whole_project))
 
     report = _validate_uscode_release_physical_closure(request_raw,
         expected_request_sha256=expected_request_sha256, reviewed_version=4,
         _native_transport="direct-packet/v1", _observe_checked_context=observer,
         replay_retained_artifacts=replay_retained_artifacts,
         _retained_paired_cache_files=retained_paired_cache_files)
+    whole_project = None
     if observer is not None:
         _need(len(observations) == 1, "exactly one closed current review observation required")
-        review, checked = observations[0]
+        review, checked, whole_project = observations[0]
         report["current_review_observation"] = review
         if checked is not None:
             report["checked_native_observation"] = checked
+        if whole_project is not None:
+            report["checked_whole_project_observation"] = whole_project
     if include_declared_eligibility:
         report.update(_declared_physical_release_eligibility(request_raw, report))
+        if whole_project is not None:
+            from . import corpus_qualification as qualification
+
+            previous = report["declared_qualification"]
+            dimensions = previous["dimensions"].copy()
+            _need(dimensions["proof"]["status"] == "pending",
+                  "whole-project compiler observation leaves proof pending")
+            for name in ("native_translation", "lean_compilation"):
+                dimensions[name] = {"status": "passed", "evidence_cids": [whole_project["record_cid"]]}
+            scope = {"artifact_cid": previous["artifact_cid"], "profile": previous["profile"]}
+            record = qualification.prepare_qualification(
+                **scope, dimensions=dimensions, theorem_requested=previous["theorem_requested"])
+            report["declared_whole_project_qualification"] = record
+            report["declared_whole_project_eligibility"] = qualification.derive_eligibility(record, **scope)
     return report
 
 
