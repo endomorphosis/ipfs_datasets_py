@@ -270,7 +270,8 @@ def test_approved_seal_requires_human_identity_and_signature(
     assert result["ok"] is True
     assert result["status"] == "approved"
     assert result["approval_request_matched"] is True
-    assert result["publication_authorized"] is True
+    assert result["approved_decision_matched"] is False
+    assert result["publication_authorized"] is False
     assert result["main_published"] is False
 
 
@@ -463,7 +464,8 @@ def test_historical_approval_matches_its_original_request(seal_mod):
     approved = seal_mod.REPOSITORY_ROOT / "docs/reports/uscode_publication_seal_approved.json"
     result = seal_mod.check_seal(seal_path=approved)
     assert result["approval_request_matched"] is True
-    assert result["publication_authorized"] is True
+    assert result["approved_decision_matched"] is False
+    assert result["publication_authorized"] is False
     assert result["main_published"] is False
 
 
@@ -507,8 +509,26 @@ def test_cli_checks_custom_approved_seal_against_its_original_request(
     assert seal_mod.main([
         "--seal", str(seal_path), "--pending-request", str(request_path),
         "--pending-request-sha256", pending_seal["seal_sha256"],
+        "--approved-seal-sha256", approved["seal_sha256"],
         "--output", str(receipt_path),
     ]) == 0
     receipt = json.loads(receipt_path.read_bytes())
     assert receipt["approval_request_matched"] is True
+    assert receipt["approved_decision_matched"] is True
+    assert receipt["publication_authorized"] is True
     assert receipt["main_published"] is False
+
+
+def test_approved_decision_pin_requires_the_exact_seal_and_original_request(pending_seal, seal_mod):
+    approved = _approve_seal(seal_mod, pending_seal)
+    with pytest.raises(seal_mod.ApprovalError, match="matched pending request"):
+        seal_mod.check_seal(
+            approved, require_fixture_match=False,
+            expected_approved_seal_sha256=approved["seal_sha256"],
+        )
+    with pytest.raises(seal_mod.ApprovalError, match="independently held approved decision"):
+        seal_mod.check_seal(
+            approved, require_fixture_match=False, pending_request=pending_seal,
+            expected_pending_request_sha256=pending_seal["seal_sha256"],
+            expected_approved_seal_sha256="0" * 64,
+        )

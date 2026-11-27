@@ -932,7 +932,7 @@ def assert_pending_seal(seal: Mapping[str, Any]) -> None:
 
 
 def assert_approved_seal(seal: Mapping[str, Any]) -> None:
-    """Approved seals require external human identity + exact digest signature."""
+    """Check the claimed identity and the approval content digest."""
 
     if str(seal.get("status") or "").casefold() != STATUS_APPROVED:
         raise SealStateError("expected approved seal")
@@ -993,8 +993,13 @@ def check_seal(
     require_fixture_match: bool = True,
     pending_request: Mapping[str, Any] | None = None,
     expected_pending_request_sha256: str | None = None,
+    expected_approved_seal_sha256: str | None = None,
 ) -> dict[str, Any]:
-    """Validate a seal against the separately retained request when approved."""
+    """Check seal consistency and optionally match an independently held approval.
+
+    The caller must obtain the approved seal pin from its trusted approval
+    record. A matching pending request establishes scope only.
+    """
 
     root = Path(repo_root) if repo_root is not None else REPOSITORY_ROOT
     path = (
@@ -1041,6 +1046,17 @@ def check_seal(
     else:
         raise SealStateError(f"unsupported seal status: {status!r}")
 
+    approved_decision_matched = False
+    if expected_approved_seal_sha256 is not None:
+        expected_approval = normalize_sha256(
+            expected_approved_seal_sha256, name="expected_approved_seal_sha256"
+        )
+        if not approval_request_matched:
+            raise ApprovalError("an approved decision requires a matched pending request")
+        if seal["seal_sha256"] != expected_approval:
+            raise ApprovalError("seal differs from the independently held approved decision")
+        approved_decision_matched = True
+
     mismatches: list[str] = []
     if require_fixture_match and status == STATUS_PENDING:
         fresh = build_pending_seal(repo_root=root)
@@ -1061,8 +1077,9 @@ def check_seal(
         else DEFAULT_SEAL_RELPATH.as_posix(),
         "seal_sha256": seal.get("seal_sha256"),
         "status": status,
-        "publication_authorized": approval_request_matched and bool(seal.get("publication_authorized")),
+        "publication_authorized": approved_decision_matched,
         "approval_request_matched": approval_request_matched,
+        "approved_decision_matched": approved_decision_matched,
         "record_declares_publication_authorized": bool(seal.get("publication_authorized")),
         "main_published": False,
         "production_repo": (seal.get("production") or {}).get("dataset_id"),
@@ -1186,6 +1203,10 @@ def build_parser() -> argparse.ArgumentParser:
         help="Independently held seal SHA-256 of the custom pending request",
     )
     parser.add_argument(
+        "--approved-seal-sha256",
+        help="Exact seal SHA-256 from an independently authenticated approval record",
+    )
+    parser.add_argument(
         "--allow-pending",
         action="store_true",
         help=(
@@ -1274,6 +1295,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             require_fixture_match=True,
             pending_request=(load_json_mapping(args.pending_request) if args.pending_request else None),
             expected_pending_request_sha256=args.pending_request_sha256,
+            expected_approved_seal_sha256=args.approved_seal_sha256,
         )
 
         if args.print_json or args.output is not None:
