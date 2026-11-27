@@ -533,7 +533,22 @@ def discover():
     return items
 
 
+def _run_commonwealth_split():
+    """NA_COMMONWEALTH_SPLIT=1: run the merged harvested variant (na_commonwealth_split.py):
+    its official hosts plus Commonwealth section splitting, enacting-body
+    preference and REPROCESS/HARVEST_ONLY/REPROCESS_ONLY handling."""
+    import importlib.util
+
+    path = Path(__file__).resolve().with_name("na_commonwealth_split.py")
+    spec = importlib.util.spec_from_file_location("na_commonwealth_split", path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod.main()
+
+
 def main():
+    if os.environ.get("NA_COMMONWEALTH_SPLIT", "0") in ("1", "true", "yes"):
+        return _run_commonwealth_split()
     setup_log(CC)
     t0 = utcnow()
     max_new = env_int("MAX_NEW", 80)

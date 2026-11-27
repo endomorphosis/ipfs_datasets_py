@@ -90,6 +90,26 @@ def discover():
             if "NivoIzdavanja_FK=1" in orig or "nivoizdavanja_fk=1" in orig.lower():
                 add(orig, h.get("timestamp"))
 
+    # Static gazette PDFs anywhere on the official hosts (merged from the
+    # harvested collector; identifiers keep its file-stem naming). Bookshop,
+    # catalogue and exam PDFs stay excluded.
+    def add_static(url, ts=None):
+        url = (url or "").split("?")[0]
+        low = url.lower()
+        if not url or ".pdf" not in low or "pdfdownload" in low:
+            return
+        if any(x in low for x in ("book", "katalog", "privredno", "ispit")):
+            return
+        if url in seen:
+            return
+        seen.add(url)
+        items.append((Path(url).stem[:160], url, ts))
+
+    for prefix in ("sluzbenilist.ba/", "sllist.ba/", "www.sluzbenilist.ba/", "www.sllist.ba/"):
+        for h in cdx_urls(prefix, limit=env_int("CDX_LIMIT", 300), match_type="prefix",
+                          extra_filters=["mimetype:application/pdf"]):
+            add_static(h.get("original") or "", h.get("timestamp"))
+
     log.info("catalog %s", len(items))
     return items
 

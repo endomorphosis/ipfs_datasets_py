@@ -240,8 +240,21 @@ def main():
         "https://www.mof.gov.cy/mof/gpo/gazette.nsf/dmlgaz_app_gr/dmlgaz_app_gr?OpenDocument",
         "https://www.mof.gov.cy/mof/gpo/gazette.nsf/dmlgazette_archive_gr/dmlgazette_archive_gr?OpenForm",
         "https://www.mof.gov.cy/mof/gpo/gazette.nsf/officialgazette-el/officialgazette-el?OpenDocument",
+        # extra seeds from the harvested collector (merged); only gazette PDF
+        # hrefs found on them are queued
+        "https://www.mof.gov.cy/mof/gpo/gpo.nsf/index_gr/index_gr?OpenDocument",
+        "https://www.gov.cy/en/service/episimi-efimerida-tis-dimokratias/",
     ]
     seen = {unquote(u).lower() for u, _ in cands}
+    # The harvested collector's wider CDX sweep of GPO PDFs outside gazette.nsf (merged).
+    try:
+        for h in af.search_wayback_machine("https://www.mof.gov.cy/mof/gpo/", limit=200, match_type="prefix") or []:
+            u = (h.get("original") or "").strip()
+            if u and is_gazette_pdf_url(u) and unquote(u).lower() not in seen:
+                seen.add(unquote(u).lower())
+                cands.append((u, h.get("timestamp") or ""))
+    except Exception as exc:
+        notes.append(f"cdx gpo/ ERROR {exc}")
     for url in seeds:
         r, verify = try_get(url, verify_first=False)
         if not hasattr(r, "status_code"):

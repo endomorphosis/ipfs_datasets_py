@@ -64,8 +64,26 @@ def discover() -> list[tuple[str, str]]:
                 m = re.search(r"/leyes-paraguayas/(\d+)/", href)
                 if m:
                     add(m.group(1), href)
+            # Relative links (merged from the harvested collector).
+            for href in re.findall(r'href="(/leyes-paraguayas/\d+/[^"]+)"', r.text or ""):
+                m = re.search(r"/leyes-paraguayas/(\d+)/", href)
+                if m:
+                    add(m.group(1), "https://www.bacn.gov.py" + href)
         except Exception as exc:
             log.info("list err %s %s", url, exc)
+
+    # Paged listing (merged from the harvested collector): LIST_PAGES pages of 20.
+    for start in range(20, env_int("LIST_PAGES", 8) * 20, 20):
+        try:
+            r = http_get(f"{LIST}?start={start}", ua=UA, sleep=0.3)
+            if r.status_code != 200:
+                continue
+            for href in re.findall(r'href="((?:https://www\.bacn\.gov\.py)?/leyes-paraguayas/\d+/[^"]+)"', r.text or ""):
+                m = re.search(r"/leyes-paraguayas/(\d+)/", href)
+                if m:
+                    add(m.group(1), href if href.startswith("http") else "https://www.bacn.gov.py" + href)
+        except Exception as exc:
+            log.info("list page err %s %s", start, exc)
 
     for h in cdx_urls("bacn.gov.py/leyes-paraguayas/", limit=env_int("CDX_LIMIT", 300), match_type="prefix"):
         orig = (h.get("original") or "").split("#")[0]

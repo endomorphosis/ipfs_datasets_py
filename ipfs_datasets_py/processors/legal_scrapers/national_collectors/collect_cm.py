@@ -98,7 +98,7 @@ def discover_prc_actes(items, seen, *, max_pages_per: int = 12):
         pages = env_int(f"PRC_{kind.upper()}_PAGES", max_pages_per)
         # Prefer lois / ordonnances more pages
         if kind == "lois":
-            pages = env_int("PRC_LOIS_PAGES", max(pages, 20))
+            pages = env_int("PRC_LOIS_PAGES", max(pages, 30))
         elif kind == "ordonnances":
             pages = env_int("PRC_ORD_PAGES", max(pages, 8))
         elif kind in ("decrets", "arretes"):
@@ -283,20 +283,72 @@ def discover_cdx(items, seen):
             )
 
 
+def _catalog_priority(item) -> tuple:
+    """Prefer substantive codes/lois over ratification stubs and nominations."""
+    ident, url, meta = item
+    title = ((meta or {}).get("title") or ident or "").lower()
+    portal = (meta or {}).get("portal") or ""
+    kind = ((meta or {}).get("kind") or "").lower()
+    # Highest: codes, organising statutes, finance / public-finance laws, constitution
+    if any(
+        k in title
+        for k in (
+            "code de",
+            "code pénal",
+            "code penal",
+            "code de procédure",
+            "code de procedure",
+            "portant code",
+            "de la constitution",
+            "constitutionnel",
+            "loi de finances",
+            "régime financier",
+            "regime financier",
+            "transparence",
+            "procédure pénale",
+            "procedure penale",
+        )
+    ):
+        rank = 0
+    elif (
+        kind == "lois" or title.startswith("loi") or "code" in title
+    ) and "autorisant le président" not in title and "autorisant le president" not in title:
+        rank = 1
+    elif "autorisant le président" in title or "autorisant le president" in title or "ratifier" in title:
+        rank = 6  # short ratification lois — deprioritize
+    elif kind == "ordonnances" or "ordonnance" in title:
+        rank = 2
+    elif "nomination" in title or "portant nomination" in title:
+        rank = 9
+    elif kind in ("decrets", "arretes") or "décret" in title or "decret" in title or "arrêté" in title or "arrete" in title:
+        rank = 5
+    else:
+        rank = 4
+    # Prefer HTML SPM codes (full text) slightly over scanned PRC for same rank
+    if "spm" in portal and rank == 0:
+        portal_bias = 0
+    elif "prc" in portal:
+        portal_bias = 1
+    else:
+        portal_bias = 2
+    return (rank, portal_bias, ident)
+
+
 def discover():
     items, seen = [], set()
-    # 1) SPM Lois et Règlements first (under-fetched vs PRC)
-    discover_spm(items, seen, max_pages=env_int("SPM_PAGES", 40))
-    spm_n = len(items)
-    # 2) PRC actes (lois first via seed order)
+    # 1) PRC actes first (lois seed order) — pack historically SPM-only
     discover_prc_actes(items, seen)
-    live_n = len(items) - spm_n
-    # 3) Multimedia docs if still thin
-    if len(items) < env_int("CATALOG_MIN", 200):
+    prc_n = len(items)
+    # 2) SPM Lois et Règlements (pages 40+ hold older lois / codes)
+    discover_spm(items, seen, max_pages=env_int("SPM_PAGES", 50))
+    spm_n = len(items) - prc_n
+    # 3) Multimedia docs if still thin on lois
+    if sum(1 for _, _, m in items if (m or {}).get("kind") == "lois") < env_int("LOIS_MIN", 80):
         discover_prc_multimedia(items, seen)
     # 4) CDX of same official PDF host
     discover_cdx(items, seen)
-    log.info("catalog total=%s (spm~%s prc_actes~%s)", len(items), spm_n, live_n)
+    items.sort(key=_catalog_priority)
+    log.info("catalog total=%s (prc_actes~%s spm~%s) prioritized", len(items), prc_n, spm_n)
     return items
 
 
@@ -308,7 +360,13 @@ def ocr_pdf_bytes(body: bytes, *, max_pages: int = 4, dpi: int = 150) -> str:
 
     if not body or body[:4] != b"%PDF":
         return ""
-    max_pages = env_int("SPM_OCR_MAX_PAGES", max_pages)
+    # Prefer explicit PRC/SPM OCR page caps when set; else keep caller max_pages
+    if env_int("PRC_OCR_MAX_PAGES", 0):
+        max_pages = env_int("PRC_OCR_MAX_PAGES", max_pages)
+    elif env_int("SPM_OCR_MAX_PAGES", 0):
+        max_pages = env_int("SPM_OCR_MAX_PAGES", max_pages)
+    else:
+        max_pages = max_pages
     chunks: list[str] = []
     with tempfile.TemporaryDirectory(prefix="cm_ocr_") as td:
         pdf_path = Path(td) / "doc.pdf"
@@ -468,7 +526,44 @@ def main():
                 fail += 1
                 log_failure(CC, {"identifier": ident, "source_url": fetch_url, "reason": "pdf_too_large", "portal": portal})
                 continue
-            got = fetch_official(fetch_url, ua=UA, verify=False, min_text=120, wayback=True)
+            got = fetch_official(fetch_url, ua=UA, verify=False, min_text=350, wayback=True)
+            # Scanned PRC actes often lack a text layer — OCR official PDF bytes
+            if got.get("status") != "success" and env_int("PRC_OCR", 1):
+                body = got.get("content") or b""
+                if not body or body[:4] != b"%PDF":
+                    try:
+                        import requests
+                        from requests.packages.urllib3.exceptions import InsecureRequestWarning
+
+                        requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+                        rr = requests.get(
+                            fetch_url, headers={"User-Agent": UA}, verify=False, timeout=(15, 90)
+                        )
+                        if rr.status_code == 200 and rr.content[:4] == b"%PDF":
+                            body = rr.content
+                            if len(body) > MAX_PDF_BYTES:
+                                body = b""
+                    except Exception:
+                        body = b""
+                if body:
+                    # Prefer more pages for lois/codes; keep lean for short actes
+                    low_t = (title or "").lower()
+                    if any(k in low_t for k in ("code", "finances", "constitution", "transparence", "régime financier", "regime financier")):
+                        ocr_pages = 20
+                    elif meta.get("kind") == "lois" or "loi" in low_t:
+                        ocr_pages = 10
+                    else:
+                        ocr_pages = 4
+                    ocr = ocr_pdf_bytes(body, max_pages=env_int("PRC_OCR_MAX_PAGES", ocr_pages))
+                    if len(ocr) >= 350:
+                        got = {
+                            "status": "success",
+                            "text": ocr,
+                            "method": "prc_pdf_ocr",
+                            "source_url": fetch_url,
+                            "error": "",
+                            "content": body,
+                        }
         elif meta.get("html_source"):
             got = fetch_spm_html(url)
             if got.get("source_url") and got.get("source_url") != url:

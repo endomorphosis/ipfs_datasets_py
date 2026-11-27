@@ -21,44 +21,7 @@ SHIM_MARKER = "_ipfs_shim_canonical_path"
 # Harvested files that still carry their own implementation.  Keep this list
 # empty or shrinking: a file leaves it once its behavior is merged into the
 # national_collectors module of the same name.
-STILL_DIVERGENT: set[str] = {
-    "collect_al.py",
-    "collect_am.py",
-    "collect_ba.py",
-    "collect_bg.py",
-    "collect_bn.py",
-    "collect_bo.py",
-    "collect_bw.py",
-    "collect_cf.py",
-    "collect_cl.py",
-    "collect_cm.py",
-    "collect_co.py",
-    "collect_cy.py",
-    "collect_do.py",
-    "collect_dz.py",
-    "collect_ec.py",
-    "collect_et.py",
-    "collect_fj.py",
-    "collect_ge.py",
-    "collect_gh.py",
-    "collect_is.py",
-    "collect_it.py",
-    "collect_jm.py",
-    "collect_kuwaitalyawm.py",
-    "collect_md.py",
-    "collect_mm.py",
-    "collect_na.py",
-    "collect_pa.py",
-    "collect_pg.py",
-    "collect_py.py",
-    "collect_si.py",
-    "collect_sn.py",
-    "collect_tn.py",
-    "collect_tz.py",
-    "collect_vg.py",
-    "collect_xk.py",
-    "collect_zw.py",
-}
+STILL_DIVERGENT: set[str] = set()
 
 HARVESTED_ONLY = {path.name for path in SHARED.glob("*.py") if not (NATIONAL / path.name).is_file()}
 
@@ -114,3 +77,34 @@ def test_shim_exposes_canonical_module(name: str, monkeypatch, tmp_path) -> None
     public = lambda m: {k for k in vars(m) if not k.startswith("_")}
     assert public(shim) == public(canonical)
     assert callable(getattr(shim, "main", None))
+
+
+OPT_INS = [
+    # (canonical collector, env var, dispatcher, variant module, names the variant keeps)
+    ("collect_na.py", "NA_COMMONWEALTH_SPLIT", "_run_commonwealth_split", "na_commonwealth_split.py",
+     ("split_na_articles", "prefer_enacting_body", "reprocess_existing", "rebuild_index", "discover", "main")),
+    ("collect_zw.py", "ZW_COMMONWEALTH_SPLIT", "_run_commonwealth_split", "zw_commonwealth_split.py",
+     ("prefer_enacting_body", "reprocess_existing", "rebuild_index", "discover", "main")),
+    ("collect_bg.py", "BG_LIVE_RSS", "_run_live_rss", "bg_live_rss.py", ("discover", "main")),
+]
+
+
+@pytest.mark.parametrize("name, env, dispatcher, variant, names", OPT_INS)
+def test_opt_in_variants_dispatch_only_when_enabled(name, env, dispatcher, variant, names, monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("IPFS_DATASETS_LEGAL_CORPORA_ROOT", str(tmp_path / "corpora"))
+    module = _load(NATIONAL / name, monkeypatch)
+    sentinel = object()
+    module.__dict__[dispatcher] = lambda: sentinel
+    monkeypatch.setenv(env, "1")
+    assert module.main() is sentinel
+    source = (NATIONAL / name).read_text(encoding="utf-8")
+    assert f'os.environ.get("{env}", "0")' in source  # off unless set
+    loaded = _load(NATIONAL / variant, monkeypatch)
+    for attr in names:
+        assert callable(getattr(loaded, attr, None)), (variant, attr)
+
+
+def test_opt_in_variants_are_not_listed_as_collectors() -> None:
+    for _name, _env, _dispatcher, variant, _names in OPT_INS:
+        assert not variant.startswith("collect_")
+        assert not (SHARED / variant).exists()

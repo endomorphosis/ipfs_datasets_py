@@ -30,6 +30,7 @@ UA = "legal-corpora-collector/1.0 (research; source=https://matsne.gov.ge/)"
 ART = re.compile(r"(?m)^\s*((?:მუხლი|Article)\s+[0-9]+[A-Za-zა-ჰ]?)\b")
 log = logging.getLogger("ge")
 
+HARVESTED_SEED_IDS = [31702, 31752, 32764, 30346, 11598, 19300, 90034, 205044, 5827307, 6087464]
 SEED_PDF = [
     "https://matsne.gov.ge/ka/document/download/31702/0/ge/pdf",
     "https://matsne.gov.ge/ka/document/download/11598/0/ge/pdf",
@@ -138,6 +139,16 @@ def discover():
             orig = h.get("original") or ""
             if "/pdf" in orig.lower():
                 add_matsne(orig, h.get("timestamp"))
+
+    # Matsne document ids from the harvested collector (merged): its seed ids and
+    # CDX of /document/view/{id} pages, fetched as the official PDF download it
+    # fell back to. add_matsne dedupes by id.
+    for i in HARVESTED_SEED_IDS:
+        add_matsne(f"https://matsne.gov.ge/ka/document/download/{i}/published/ka/pdf")
+    for h in cdx_urls("matsne.gov.ge/ka/document/view/", limit=env_int("CDX_LIMIT", 350), match_type="prefix"):
+        m = re.search(r"/document/view/(\d+)", h.get("original") or "")
+        if m:
+            add_matsne(f"https://matsne.gov.ge/ka/document/download/{m.group(1)}/published/ka/pdf")
 
     log.info("catalog %s", len(items))
     return items

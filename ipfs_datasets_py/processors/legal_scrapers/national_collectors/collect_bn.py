@@ -19,6 +19,44 @@ ART = re.compile(r"(?im)^\s*((?:Section|Article|Art\.?)\s+[0-9]+)\b")
 log = logging.getLogger("bn")
 
 
+def load_prior_catalog(seen: set) -> list:
+    """Resume from raw/catalog.jsonl, index.jsonl, or instrument source_urls when CDX fails."""
+    import json
+    from common import ROOT
+    items = []
+    def add_pair(ident, url):
+        if not url or url in seen:
+            return
+        seen.add(url)
+        items.append((ident or Path(url.split("?")[0]).stem[:160], url))
+    cat = ROOT / "bn" / "raw" / "catalog.jsonl"
+    if cat.exists():
+        for line in cat.open(encoding="utf-8"):
+            try:
+                row = json.loads(line)
+            except Exception:
+                continue
+            add_pair(row.get("ident") or row.get("identifier"), row.get("url") or row.get("source_url"))
+    idx = ROOT / "bn" / "index.jsonl"
+    if idx.exists():
+        for line in idx.open(encoding="utf-8"):
+            try:
+                row = json.loads(line)
+            except Exception:
+                continue
+            add_pair(row.get("identifier") or row.get("id"), row.get("source_url") or row.get("url"))
+    inst = ROOT / "bn" / "instruments"
+    if inst.exists():
+        for jp in inst.glob("*.json"):
+            try:
+                row = json.loads(jp.read_text(encoding="utf-8"))
+            except Exception:
+                continue
+            add_pair(row.get("official_identifier") or row.get("identifier") or jp.stem,
+                     row.get("source_url") or (row.get("metadata") or {}).get("source_url"))
+    return items
+
+
 def discover():
     items, seen = [], set()
     def add(url):
@@ -45,11 +83,22 @@ def discover():
         "www.agc.gov.bn/agc%20images/laws/",
         "www.agc.gov.bn/AGC Images/LAWS/",
     ):
-        for h in cdx_urls(prefix, limit=env_int("CDX_LIMIT", 250), match_type="prefix",
+        for h in cdx_urls(prefix, limit=env_int("CDX_LIMIT", 1200), match_type="prefix",
                           extra_filters=["mimetype:application/pdf"]):
             orig = h.get("original") or ""
             if orig:
                 add(orig)
+    if not items:
+        items = load_prior_catalog(seen)
+        log.info("cdx empty — reused prior catalog %s", len(items))
+    else:
+        # persist for idempotent resume when CDX is flaky
+        from common import ROOT as _corpora_root
+        cat = Path(_corpora_root) / "bn" / "raw" / "catalog.jsonl"  # corpora root, not beside the source
+        cat.parent.mkdir(parents=True, exist_ok=True)
+        with cat.open("w", encoding="utf-8") as f:
+            for ident, url in items:
+                f.write(__import__("json").dumps({"ident": ident, "url": url}, ensure_ascii=False) + "\n")
     log.info("catalog %s", len(items))
     return items
 
@@ -57,8 +106,8 @@ def discover():
 def main():
     setup_log(CC)
     t0 = utcnow()
-    max_new = env_int("MAX_NEW", 40)
-    max_seconds = env_int("MAX_SECONDS", 2400)
+    max_new = env_int("MAX_NEW", 400)
+    max_seconds = env_int("MAX_SECONDS", 7200)
     t_start = time.time()
     done = existing_ids(CC)
     ok = skip = fail = 0

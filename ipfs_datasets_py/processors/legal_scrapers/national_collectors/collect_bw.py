@@ -8,13 +8,20 @@ NBFIRA / HRDC statutory Acts & Regulations, justice.gov.bw-linked material.
 AGC e-Laws (elaws.gov.bw) is preferred by gov.bw but live TLS fails from this
 collector host; Wayback/CDX of official elaws.gov.bw statute PDFs is used.
 
+Densify: Botswana Acts use Commonwealth ``1. Short title.`` section numbering
+(not only ``Section N`` / ``Article N`` / ``Regulation N``). Prefer enacting body
+after ``ENACTED by the Parliament of Botswana`` / ``BE IT ENACTED`` / TOC to avoid
+double-counting (ug/mu/tz pattern). Reprocess-first; PDFs >8MB skipped.
+
 Skips: botswanalaws.com, SAFLII, AfricanLII, laws.co.bw (private), drafts,
 order/notice papers, press releases. Live official URL first; Wayback of the
 same official URL on failure. No WAF bypass.
 """
 from __future__ import annotations
 
+import json
 import logging
+import os
 import re
 import sys
 import time
@@ -22,8 +29,27 @@ from pathlib import Path
 from urllib.parse import unquote, urljoin, urlparse
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import existing_ids, log_failure, utcnow, write_summary
-from world_lib import cdx_urls, env_int, fetch_official, live_get, save_instrument, setup_log, slug_id
+from common import (
+    INDEX_FIELDS,
+    ROOT,
+    atomic_write,
+    base_record,
+    existing_ids,
+    log_failure,
+    utcnow,
+    write_instrument,
+    write_summary,
+)
+from world_lib import (
+    cdx_urls,
+    env_int,
+    fetch_official,
+    first_title,
+    live_get,
+    setup_log,
+    slug_id,
+    split_custom,
+)
 
 CC, COUNTRY, LANG = "bw", "Botswana", "en"
 SOURCE_TYPE = "botswana_official_gazettes_acts"
@@ -35,9 +61,25 @@ LICENSE = (
     "prevails. Not legal advice."
 )
 UA = "legal-corpora-collector/1.0 (research; source=https://www.gov.bw/)"
+
+# Commonwealth body: "1. Short title." / "12A. Interpretation." PLUS classic Section/Article/Reg
 ART = re.compile(
-    r"(?im)^\s*((?:Section|Sec\.|Article|Art\.|Regulation|Reg\.)\s+\d+[A-Za-z]?\.?)\b"
+    r"(?im)^\s*((?:Article|Art\.?|Section|Sec\.?|Regulation|Reg\.)\s+[0-9]+[A-Za-z]?|"
+    r"\d+[A-Za-z]?\.)(?=\s+[A-Z\"'(])"
 )
+ART_ONLY = re.compile(r"(?im)^\s*((?:Article|Art\.?)\s+[0-9]+[A-Za-z]?)\b")
+ACT_TEXT_RE = re.compile(
+    r"(?i)(?:ENACTED by the Parliament of Botswana|BE IT ENACTED|AN ACT\b|A BILL\b|"
+    r"ARRANGEMENT OF SECTIONS|Short title|This Act may be cited|"
+    r"GOVERNMENT GAZETTE|Statutory Instrument|Date of Assent|"
+    r"No\.\s*\d+\s+of\s+20\d{2}|Proclamation|"
+    r"THE\s+[A-Z][A-Z0-9 \-',()]{6,100}\s+ACT\b)"
+)
+ACT_URL_RE = re.compile(
+    r"(?i)(?:elaws\.gov\.bw|/docs/statutes/|/bills/|_act\.|act\.pdf|"
+    r"regulation|statutory|gazette|cap[-_ ]?\d|chapter[-_ ]?\d)"
+)
+MAX_PDF_BYTES = 8 * 1024 * 1024
 log = logging.getLogger("bw")
 
 BLOCK_HOST = re.compile(
@@ -366,6 +408,184 @@ def _burs_downloads() -> list[tuple[int, str, str]]:
     return items
 
 
+def prefer_enacting_body(text: str) -> str:
+    """Skip arrangement/TOC so article split targets operative sections."""
+    if not text:
+        return text
+
+    m = re.search(
+        r"(?is)(?:ENACTED by the Parliament of Botswana|BE IT ENACTED)[^\n]*\n",
+        text,
+    )
+    if m and m.end() < len(text) - 200:
+        rest = text[m.end() :]
+        arr = re.search(r"(?i)ARRANGEMENT OF (?:SECTIONS|RULES|ORDERS)", rest[:2500])
+        if not arr:
+            return rest
+        text = rest
+
+    body_ones = list(
+        re.finditer(
+            r"(?im)^\s*1\.\s*(?:This Act|In this Act|These Regulations|These regulations|"
+            r"Unless the context|For the purposes)\b",
+            text,
+        )
+    )
+    if body_ones:
+        return text[body_ones[-1].start() :] if len(body_ones) >= 2 else text[body_ones[0].start() :]
+
+    ones = list(
+        re.finditer(
+            r"(?im)^\s*1\.\s+(?:Short title|Citation|Interpretation|Definitions)\b",
+            text,
+        )
+    )
+    if len(ones) >= 2:
+        return text[ones[1].start() :]
+    if len(ones) == 1:
+        arr = re.search(r"(?i)ARRANGEMENT OF", text)
+        if arr and ones[0].start() > arr.start():
+            return text[ones[0].start() :]
+
+    m = re.search(r"(?i)ARRANGEMENT OF (?:SECTIONS|RULES|ORDERS)|Arrangement of Sections", text)
+    if m:
+        after = text[m.end() :]
+        body = list(
+            re.finditer(
+                r"(?im)^\s*1\.\s+(?:Short title|Citation|Interpretation|Definitions|"
+                r"This Act|In this Act)\b",
+                after,
+            )
+        )
+        if len(body) >= 2:
+            return after[body[-1].start() :]
+        parts = list(re.finditer(r"(?im)^\s*PART\s+I\b", after))
+        if len(parts) >= 2:
+            return after[parts[1].start() :]
+        if body:
+            return after[body[0].start() :]
+    return text
+
+
+def split_bw_articles(text: str, rid: str, source_url: str, date=None) -> list:
+    """Commonwealth ``1. Title.`` body split by default; constitutions prefer Article N."""
+    body = prefer_enacting_body(text)
+    docs_sec = split_custom(body, rid, source_url, date, ART)
+    docs_art = split_custom(body, rid, source_url, date, ART_ONLY)
+    blob = f"{rid}|{source_url}"
+    is_const = bool(re.search(r"(?i)constitution", blob)) and not bool(
+        re.search(r"(?i)amm?endment", blob)
+    )
+    if is_const:
+        if len(docs_art) >= 20:
+            return docs_art
+        if len(docs_art) >= 2 and len(docs_sec) > max(20, len(docs_art) * 3):
+            return docs_art
+        if len(docs_art) < 2:
+            return docs_sec if docs_sec else docs_art
+    if len(docs_art) >= 50 and len(docs_art) > len(docs_sec) * 1.2:
+        return docs_art
+    return docs_sec
+
+
+def save_bw_instrument(
+    *,
+    ident: str,
+    title: str,
+    text: str,
+    source_url: str,
+    date: str | None = None,
+    extra_meta: dict | None = None,
+) -> bool:
+    if not text or len(text) < 80:
+        return False
+    rid = slug_id(CC, ident)
+    docs = split_bw_articles(text, rid, source_url, date)
+    meta = {
+        "fetch_method": (extra_meta or {}).get("fetch_method"),
+        "article_split": "commonwealth-body",
+    }
+    if extra_meta:
+        meta.update(extra_meta)
+    rec = base_record(
+        cc=CC,
+        country=COUNTRY,
+        language=LANG,
+        ident=ident,
+        title=title or first_title(text, ident),
+        text=text,
+        source_url=source_url,
+        source_type=SOURCE_TYPE,
+        license_text=LICENSE,
+        collector="collect_bw.py",
+        date=date,
+        documents=docs,
+        extra_meta=meta,
+    )
+    write_instrument(CC, rec)
+    return True
+
+
+def reprocess_existing() -> int:
+    """Re-split articles on Act-like instruments with Commonwealth section regex."""
+    inst = ROOT / CC / "instruments"
+    improved = 0
+    for p in sorted(inst.glob("*.json")):
+        try:
+            rec = json.loads(p.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        text = rec.get("text") or ""
+        if len(text) < 200:
+            continue
+        name = p.name
+        blob = f"{name}|{rec.get('title') or ''}|{rec.get('source_url') or ''}|{text[:3000]}"
+        if not (ACT_TEXT_RE.search(blob) or ACT_URL_RE.search(blob)):
+            continue
+        rid = rec.get("id") or p.stem
+        url = rec.get("source_url") or ""
+        date = rec.get("date")
+        docs = split_bw_articles(text, rid, url, date)
+        old = int(rec.get("article_count") or len(rec.get("documents") or []) or 0)
+        new = len(docs)
+        if new <= old and old > 0:
+            continue
+        if new < 2 and old >= new:
+            continue
+        rec["documents"] = docs
+        rec["article_count"] = new
+        rec["article_extraction_status"] = "ok" if docs else "missing"
+        meta = rec.get("metadata") or {}
+        meta["article_reprocess"] = "collect_bw.py-commonwealth-sections"
+        meta["article_split"] = "commonwealth-body"
+        rec["metadata"] = meta
+        atomic_write(p, json.dumps(rec, ensure_ascii=False, indent=2) + "\n")
+        improved += 1
+        log.info("reprocess %s %s->%s", rid[:70], old, new)
+    return improved
+
+
+def rebuild_index() -> int:
+    inst = ROOT / CC / "instruments"
+    rows = []
+    for p in sorted(inst.glob("*.json")):
+        try:
+            rec = json.loads(p.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        line = {k: rec.get(k) for k in INDEX_FIELDS if k not in ("path", "bytes", "article_count")}
+        line["path"] = f"instruments/{p.name}"
+        line["article_count"] = rec.get("article_count") or len(rec.get("documents") or [])
+        line["bytes"] = p.stat().st_size
+        line["id"] = rec.get("id") or p.stem
+        rows.append(line)
+    out = ROOT / CC / "index.jsonl"
+    atomic_write(out, "".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows))
+    log.info("rebuilt index lines=%s", len(rows))
+    return len(rows)
+
+
+
 def discover():
     items, seen = [], set()
 
@@ -415,50 +635,88 @@ def discover():
 def main():
     setup_log(CC)
     t0 = utcnow()
-    max_new = env_int("MAX_NEW", 80)
-    max_seconds = env_int("MAX_SECONDS", 3600)
-    t_start = time.time()
-    done = existing_ids(CC)
+    max_new = env_int("MAX_NEW", 30)
+    max_seconds = env_int("MAX_SECONDS", 2400)
+    do_reprocess = os.environ.get("REPROCESS", "1") not in ("0", "false", "no")
+    harvest_only = os.environ.get("HARVEST_ONLY", "0") in ("1", "true", "yes")
+    reprocess_only = os.environ.get("REPROCESS_ONLY", "0") in ("1", "true", "yes")
+
+    reproc_n = 0
+    if do_reprocess and not harvest_only:
+        reproc_n = reprocess_existing()
+        log.info("reprocess improved=%s", reproc_n)
+
     ok = skip = fail = 0
-    for ident, url in discover():
-        if max_new and ok >= max_new:
-            break
-        if time.time() - t_start > max_seconds:
-            break
-        rid = slug_id(CC, ident)
-        if rid in done:
-            skip += 1
+    if not reprocess_only and max_new > 0:
+        t_start = time.time()
+        done = existing_ids(CC)
+        have_urls = set()
+        for p in (ROOT / CC / "instruments").glob("*.json"):
+            try:
+                u = _norm(json.loads(p.read_text(encoding="utf-8")).get("source_url") or "")
+                if u:
+                    have_urls.add(u.lower())
+            except Exception:
+                pass
+        for ident, url in discover():
+            if max_new and ok >= max_new:
+                break
+            if time.time() - t_start > max_seconds:
+                break
+            rid = slug_id(CC, ident)
+            nu = _norm(url).lower()
+            if rid in done or nu in have_urls:
+                skip += 1
+                continue
+            got = fetch_official(url, ua=UA, verify=False, min_text=180)
+            text = got.get("text") or ""
+            raw_bytes = got.get("raw_bytes") or got.get("content_length") or len(got.get("content") or b"")
+            try:
+                raw_bytes = int(raw_bytes)
+            except Exception:
+                raw_bytes = 0
+            if raw_bytes and raw_bytes > MAX_PDF_BYTES:
+                log.info("skip >8MB sz=%s %s", raw_bytes, ident[:60])
+                skip += 1
+                continue
+            if got.get("status") != "success":
+                fail += 1
+                log_failure(CC, {"identifier": ident, "source_url": url, "reason": got.get("error")})
+                continue
+            if len(text) > 2_000_000:
+                log.info("skip huge text chars=%s %s", len(text), ident[:60])
+                skip += 1
+                continue
+            if not _looks_like_law(text):
+                fail += 1
+                log_failure(CC, {"identifier": ident, "source_url": url, "reason": "not_law_like"})
+                continue
+            title = _title_from_text(text, ident)
+            if save_bw_instrument(
+                ident=ident,
+                title=title,
+                text=text,
+                source_url=url,
+                extra_meta={"fetch_method": got.get("method")},
+            ):
+                ok += 1
+                done.add(rid)
+                have_urls.add(nu)
+                log.info("ok %s chars=%s method=%s", ident[:70], len(text), got.get("method"))
+            else:
+                fail += 1
+
+    rebuild_index()
+    arts = 0
+    n_inst = 0
+    for p in (ROOT / CC / "instruments").glob("*.json"):
+        try:
+            rec = json.loads(p.read_text(encoding="utf-8"))
+        except Exception:
             continue
-        got = fetch_official(url, ua=UA, verify=False, min_text=180)
-        text = got.get("text") or ""
-        if got.get("status") != "success":
-            fail += 1
-            log_failure(CC, {"identifier": ident, "source_url": url, "reason": got.get("error")})
-            continue
-        if not _looks_like_law(text):
-            fail += 1
-            log_failure(CC, {"identifier": ident, "source_url": url, "reason": "not_law_like"})
-            continue
-        title = _title_from_text(text, ident)
-        if save_instrument(
-            cc=CC,
-            country=COUNTRY,
-            language=LANG,
-            ident=ident,
-            title=title,
-            text=text,
-            source_url=url,
-            source_type=SOURCE_TYPE,
-            license_text=LICENSE,
-            collector="collect_bw.py",
-            article_re=ART,
-            extra_meta={"fetch_method": got.get("method")},
-        ):
-            ok += 1
-            done.add(rid)
-            log.info("ok %s chars=%s method=%s", ident[:70], len(text), got.get("method"))
-        else:
-            fail += 1
+        n_inst += 1
+        arts += int(rec.get("article_count") or len(rec.get("documents") or []) or 0)
+
     write_summary(
         CC,
         country=COUNTRY,
@@ -479,16 +737,31 @@ def main():
         fetched=ok,
         skipped=skip,
         failed=fail,
-        coverage="catalog-backed incomplete; elaws.gov.bw live TLS unreachable — Wayback of official elaws URLs used",
+        coverage=(
+            "catalog-backed incomplete; elaws.gov.bw live TLS unreachable — Wayback of official "
+            "elaws URLs used; commonwealth section densify"
+        ),
         notes=(
-            "Official Acts/Bills/Gazette/SI PDFs from gov.bw, Parliament Speaks, "
-            "BURS, Bank of Botswana, BOCRA, CAAB, CCA, and CDX/Wayback of official "
-            "elaws.gov.bw statute PDFs. Skipped botswanalaws.com / SAFLII / "
-            "AfricanLII / laws.co.bw. No WAF bypass. Not legal advice."
+            f"Official Acts/Bills/Gazette/SI PDFs from gov.bw, Parliament Speaks, "
+            f"BURS, Bank of Botswana, BOCRA, CAAB, CCA, and CDX/Wayback of official "
+            f"elaws.gov.bw statute PDFs. Commonwealth 1. Short title. split + "
+            f"prefer_enacting_body (ug/mu/tz). reprocess_improved={reproc_n}. "
+            f"instruments={n_inst} articles={arts}. PDFs >8MB skipped. "
+            f"Skipped botswanalaws.com / SAFLII / AfricanLII / laws.co.bw. "
+            f"No WAF bypass. Not legal advice."
         ),
         last_run=t0,
     )
-    log.info("done ok=%s skip=%s fail=%s", ok, skip, fail)
+    log.info(
+        "done ok=%s skip=%s fail=%s reprocess=%s instruments=%s articles=%s",
+        ok,
+        skip,
+        fail,
+        reproc_n,
+        n_inst,
+        arts,
+    )
+
 
 
 if __name__ == "__main__":

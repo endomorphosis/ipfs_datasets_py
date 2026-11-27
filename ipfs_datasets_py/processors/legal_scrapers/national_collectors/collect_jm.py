@@ -88,6 +88,10 @@ CDX_PREFIXES = (
     "japarliament.gov.jm/attachments/",
     "www.japarliament.gov.jm/attachments/",
     "laws.moj.gov.jm/legislation/",
+    # Wider MOJ files sweep from the harvested collector (merged); SKIP_RE and
+    # _is_law_pdf still drop careers/brochure PDFs.
+    "moj.gov.jm/sites/default/files/",
+    "www.moj.gov.jm/sites/default/files/",
 )
 SEED_PAGES = (
     "https://moj.gov.jm/laws",

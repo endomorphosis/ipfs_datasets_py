@@ -131,3 +131,32 @@ the canonical `national_collectors/collect_be.py`.
 Files whose harvested implementation still differs from the national one are
 listed in `tests/unit/legal_scrapers/test_harvested_collector_shims.py`
 (`STILL_DIVERGENT`) until their behavior is merged.
+
+### Divergent collectors merged (all shims now)
+
+`STILL_DIVERGENT` is empty. The 36 collectors whose harvested copy differed were
+merged into `national_collectors/` (union of discovery sources; less restrictive
+caps; identifiers of merged-in sources keep the harvested naming used by the
+published corpus; catalogs are written under `common.ROOT`, never `__file__`):
+
+- National already a superset, shimmed as-is: am, bo, cf, cl, co, dz, ec, gh,
+  is, it, kuwaitalyawm, pa, si, sn (Journal Officiel article pages stay on by
+  default; archives.sn official_journal is already in `discover()`), vg, xk.
+- Harvested sources ported into the national module: al (qbz.gov.al ELI CDX),
+  ba (static sluzbenilist PDFs), cy (gpo seeds + mof.gov.cy gpo CDX), do (wider
+  consultoria CDX), et (justice/hopr/fsc homes + CDX), ge (Matsne seed ids and
+  /document/view/ CDX as PDF downloads), jm (moj.gov.jm files), md (legis.md
+  /cautare/ sweep), py (relative links + paged LIST), tn (iort/legislation.tn
+  CDX), tz (parliament polis uploads); gt and iq earlier.
+- Harvested copy was the fuller base (national-only bits re-added): bn, bw, cm,
+  fj, mm (ARCHIVE stays on by default), pg.
+- Opt-in variants (default unchanged; separate helper modules that are not
+  named `collect_*` so catalogs do not list them):
+  - `NA_COMMONWEALTH_SPLIT=1` runs `national_collectors/na_commonwealth_split.py`
+    (the harvested Namibia gazette-acts collector with Commonwealth section
+    splitting and REPROCESS handling).
+  - `ZW_COMMONWEALTH_SPLIT=1` runs `national_collectors/zw_commonwealth_split.py`
+    (the harvested Zimbabwe multi-host collector with the same splitter).
+  - `BG_LIVE_RSS=1` runs `national_collectors/bg_live_rss.py` (live
+    dv.parliament.bg RSS + materiali.faces, from the hub `data_bg` collector);
+    the default stays Wayback-only.

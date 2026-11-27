@@ -18,40 +18,124 @@ ART = re.compile(r"(?im)^\s*((?:Section|Article|Art\.?)\s+[0-9]+)\b")
 log = logging.getLogger("fj")
 
 
+def load_prior_catalog(seen: set) -> list:
+    """Resume from raw/catalog.jsonl, index.jsonl, or instrument source_urls when CDX fails."""
+    import json
+    from common import ROOT
+    items = []
+    def add_pair(ident, url):
+        if not url or url in seen:
+            return
+        seen.add(url)
+        items.append((ident or Path(url.split("?")[0]).stem[:160], url))
+    cat = ROOT / "fj" / "raw" / "catalog.jsonl"
+    if cat.exists():
+        for line in cat.open(encoding="utf-8"):
+            try:
+                row = json.loads(line)
+            except Exception:
+                continue
+            add_pair(row.get("ident") or row.get("identifier"), row.get("url") or row.get("source_url"))
+    idx = ROOT / "fj" / "index.jsonl"
+    if idx.exists():
+        for line in idx.open(encoding="utf-8"):
+            try:
+                row = json.loads(line)
+            except Exception:
+                continue
+            add_pair(row.get("identifier") or row.get("id"), row.get("source_url") or row.get("url"))
+    inst = ROOT / "fj" / "instruments"
+    if inst.exists():
+        for jp in inst.glob("*.json"):
+            try:
+                row = json.loads(jp.read_text(encoding="utf-8"))
+            except Exception:
+                continue
+            add_pair(row.get("official_identifier") or row.get("identifier") or jp.stem,
+                     row.get("source_url") or (row.get("metadata") or {}).get("source_url"))
+    return items
+
+
 def discover():
     items, seen = [], set()
     def add(url):
-        url = url.split("#")[0].replace("http://", "https://")
-        if "laws.gov.fj" not in url.lower():
+        from urllib.parse import unquote, urlparse, parse_qs
+        url = url.split("#")[0].replace("http://", "https://").replace(":80/", "/")
+        low = url.lower()
+        if "laws.gov.fj" not in low:
             return
         if url in seen:
             return
-        if "downloadfile" not in url.lower() and ".pdf" not in url.lower():
+        # Accept LawsAsMade downloadfile, Acts PDFs, ConsolidatedActs, SubsidiaryLegislation PDFs
+        ok = (
+            "downloadfile" in low
+            or low.endswith(".pdf")
+            or "/acts/" in low
+            or "lawsasmade" in low
+            or "consolidated" in low
+            or "subsidiary" in low
+            or "actasmade" in low
+        )
+        if not ok:
             return
-        ident = url.rstrip("/").rsplit("/", 1)[-1][:160]
+        # Prefer PDF / downloadfile endpoints over HTML act pages
+        if ("/acts/" in low or "displayact" in low) and "download" not in low and ".pdf" not in low:
+            return
+        qs = parse_qs(urlparse(url).query)
+        fname = (qs.get("fileName") or qs.get("filename") or qs.get("file") or [None])[0]
+        if fname:
+            ident = Path(unquote(fname)).stem[:160]
+        else:
+            ident = Path(unquote(url.split("?")[0])).stem[:160] or url.rstrip("/").rsplit("/", 1)[-1][:160]
+        ident = re.sub(r"[^\w.\-]+", "-", ident).strip("-")[:160] or "act"
+        key = ident.lower()
+        if key in seen:
+            return
         seen.add(url)
+        seen.add(key)
         items.append((f"fj-{ident}", url))
     for prefix in (
         "www.laws.gov.fj/LawsAsMade/downloadfile/",
         "laws.gov.fj/LawsAsMade/downloadfile/",
+        "www.laws.gov.fj/LawsAsMade/DownloadFile/",
+        "laws.gov.fj/LawsAsMade/DownloadFile/",
         "www.laws.gov.fj/LawsAsMade/",
-        "laws.gov.fj/Acts/",
+        "laws.gov.fj/LawsAsMade/",
         "www.laws.gov.fj/Acts/",
+        "laws.gov.fj/Acts/",
+        "www.laws.gov.fj/ConsolidatedActs/",
+        "laws.gov.fj/ConsolidatedActs/",
+        "www.laws.gov.fj/SubsidiaryLegislation/",
+        "laws.gov.fj/SubsidiaryLegislation/",
+        "www.laws.gov.fj/ActsAsMade/",
+        "laws.gov.fj/ActsAsMade/",
+        # host-root sweeps the national collector also ran (kept by the merge)
         "www.laws.gov.fj/",
         "laws.gov.fj/",
     ):
-        for h in cdx_urls(prefix, limit=env_int("CDX_LIMIT", 300), match_type="prefix"):
+        for h in cdx_urls(prefix, limit=env_int("CDX_LIMIT", 1500), match_type="prefix"):
             orig = h.get("original") or ""
             if not orig:
                 continue
             low = orig.lower()
-            if "downloadfile" in low or low.endswith(".pdf") or "/acts/" in low or "lawsasmade" in low:
+            if "downloadfile" in low or low.endswith(".pdf") or "lawsasmade" in low or "consolidated" in low or "subsidiary" in low or "actasmade" in low:
                 add(orig)
-        for h in cdx_urls(prefix, limit=env_int("CDX_LIMIT", 200), match_type="prefix",
+        for h in cdx_urls(prefix, limit=env_int("CDX_LIMIT", 1200), match_type="prefix",
                           extra_filters=["mimetype:application/pdf"]):
             orig = h.get("original") or ""
             if orig:
                 add(orig)
+    if not items:
+        items = load_prior_catalog(seen)
+        log.info("cdx empty — reused prior catalog %s", len(items))
+    else:
+        # persist for idempotent resume when CDX is flaky
+        from common import ROOT as _corpora_root
+        cat = Path(_corpora_root) / "fj" / "raw" / "catalog.jsonl"  # corpora root, not beside the source
+        cat.parent.mkdir(parents=True, exist_ok=True)
+        with cat.open("w", encoding="utf-8") as f:
+            for ident, url in items:
+                f.write(__import__("json").dumps({"ident": ident, "url": url}, ensure_ascii=False) + "\n")
     log.info("catalog %s", len(items))
     return items
 
@@ -59,8 +143,8 @@ def discover():
 def main():
     setup_log(CC)
     t0 = utcnow()
-    max_new = env_int("MAX_NEW", 40)
-    max_seconds = env_int("MAX_SECONDS", 2400)
+    max_new = env_int("MAX_NEW", 500)
+    max_seconds = env_int("MAX_SECONDS", 7200)
     t_start = time.time()
     done = existing_ids(CC)
     ok = skip = fail = 0

@@ -12,11 +12,13 @@ used when MOI listing works. No WAF bypass. Not commercial LIIs.
 """
 from __future__ import annotations
 
+import json
 import logging
 import re
 import sys
 from html import unescape
 from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib.parse import urljoin
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -34,7 +36,7 @@ BASE = "https://www.moi.gov.mm"
 INDEX = f"{BASE}/laws"
 SLEEP = 0.4
 # Starter: first N Drupal pages (page=80 observed as last)
-MAX_PAGE = 20
+MAX_PAGE = int(__import__("os").environ.get("MAX_PAGE", "90"))
 log = logging.getLogger("mm")
 PAIR_RE = re.compile(
     r'href="(/laws/(\d+))"[^>]*>([^<]+)</a>.*?href="(/file-download/download/public/\d+)"',
@@ -122,21 +124,55 @@ def fetch_one(item: dict, done: set[str]) -> str:
     body = b""
     retrieval = "live"
     try:
-        r = http_get(url, ua=UA, sleep=SLEEP, retries=3, timeout=(20, 120),
+        r = http_get(url, ua=UA, sleep=SLEEP, retries=2, timeout=(20, 90),
                      headers={"Accept": "application/pdf,*/*"})
         if r.status_code == 200 and r.content:
             body = r.content
+            if body[:4] != b"%PDF":
+                idx = body.find(b"%PDF", 0, 8192)
+                if idx >= 0:
+                    body = body[idx:]
     except Exception as exc:
-        log.info("live fail %s: %s — archive", url, exc)
-    if body[:4] != b"%PDF":
-        fb = af.fetch_with_fallbacks(url, try_http=False, try_cc=True)
-        if fb.get("status") == "success" and (fb.get("content") or b"")[:4] == b"%PDF":
-            body = fb["content"]
-            retrieval = "archive"
-    if body[:4] != b"%PDF":
+        log.info("live fail %s: %s", url, exc)
+    if (not body or body[:4] != b"%PDF") and __import__("os").environ.get("ARCHIVE", "1") == "1":
+        # Wayback / Common Crawl of the same official MOI URL only (no WAF bypass).
+        # On by default as in the national collector; ARCHIVE=0 turns it off (the
+        # harvested collector's default, used when archive attempts hang a run).
+        try:
+            fb = af.fetch_with_fallbacks(url, try_http=False, try_cc=True)
+            content = fb.get("content") or b""
+            if fb.get("status") == "success" and content:
+                if content[:4] != b"%PDF":
+                    idx = content.find(b"%PDF", 0, 8192)
+                    content = content[idx:] if idx >= 0 else b""
+                if content[:4] == b"%PDF":
+                    body = content
+                    retrieval = "archive"
+        except Exception as exc:
+            log.info("archive fail %s: %s", url, exc)
+    if not body or body[:4] != b"%PDF":
         log_failure(CC, {"identifier": ident, "source_url": url, "reason": "no_pdf"})
         return "fail"
+    import os
+    os.environ.setdefault("TESSDATA_PREFIX", os.environ.get("IPFS_DATASETS_TESSDATA", str(Path.home() / ".ipfs_datasets" / "tessdata")))
     text = pdf_bytes_to_text(body)
+    extract_method = "pdftotext"
+    my_chars = sum(1 for c in (text or "") if "က" <= c <= "႟")
+    # Image-only MOI PDFs (Acrobat Image Conversion) need Myanmar OCR.
+    # Keep non-empty text-layer even if custom-encoded; OCR only when empty/short.
+    if not text or len(text) < 80:
+        try:
+            from pdf_extract_lib import extract_pdf_text
+            ocr_pages = int(os.environ.get("OCR_PAGES", "3"))
+            text2, method2, pages = extract_pdf_text(
+                body, enable_ocr=True, ocr_lang="mya", ocr_max_pages=ocr_pages,
+            )
+            if text2 and len(text2) >= 80:
+                text, extract_method = text2, method2
+                my_chars = sum(1 for c in text if "က" <= c <= "႟")
+                log.info("ocr ok %s method=%s pages=%s chars=%s my=%s", ident, method2, pages, len(text), my_chars)
+        except Exception as exc:
+            log.info("ocr fail %s: %s", ident, exc)
     if not text or len(text) < 80:
         log_failure(CC, {"identifier": ident, "source_url": url, "reason": "empty_pdf_text"})
         return "fail"
@@ -147,35 +183,74 @@ def fetch_one(item: dict, done: set[str]) -> str:
         extra_meta={
             "discovery": {"method": "moi_laws_pager", "law_path": item.get("law_path")},
             "retrieval": retrieval,
+            "extract_method": extract_method,
+            "myanmar_chars": my_chars,
         },
     )
     write_instrument(CC, rec)
+    done.add(rid)
     return "ok"
+
+
+def load_catalog_items() -> list[dict]:
+    p = ROOT / CC / "raw" / "catalog.jsonl"
+    if not p.exists() or p.stat().st_size < 40:
+        return []
+    items, seen = [], set()
+    with p.open(encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                row = json.loads(line)
+            except Exception:
+                continue
+            url = row.get("url") or ""
+            if not url or url in seen:
+                continue
+            seen.add(url)
+            items.append(row)
+    return items
 
 
 def main():
     setup()
     t0 = utcnow()
-    items = discover()
+    items = load_catalog_items()
+    if len(items) < 50:
+        items = discover()
+    else:
+        log.info("reusing catalog %s", len(items))
     done = existing_ids(CC)
     ok = skip = fail = 0
-    for i, item in enumerate(items, 1):
+    import os, threading
+    workers = int(os.environ.get("WORKERS", "4"))
+    lock = threading.Lock()
+
+    def _one(item):
         try:
-            st = fetch_one(item, done)
+            return fetch_one(item, done)
         except Exception as exc:
-            st = "fail"
             log_failure(CC, {"source_url": item.get("url"), "reason": repr(exc)})
-        ok += st == "ok"
-        skip += st == "skip"
-        fail += st == "fail"
-        if i % 20 == 0:
-            log.info("progress %s/%s ok=%s fail=%s", i, len(items), ok, fail)
+            return "fail"
+
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        futs = {pool.submit(_one, it): it for it in items}
+        for i, fut in enumerate(as_completed(futs), 1):
+            st = fut.result()
+            with lock:
+                ok += st == "ok"
+                skip += st == "skip"
+                fail += st == "fail"
+                if i % 20 == 0 or i == len(futs):
+                    log.info("progress %s/%s ok=%s skip=%s fail=%s", i, len(futs), ok, skip, fail)
     write_summary(
         CC, country=COUNTRY,
         source="Myanmar Ministry of Information laws (moi.gov.mm/laws)",
         source_urls=[INDEX], license_text=LICENSE, discovered=len(items),
         fetched=ok, skipped=skip, failed=fail,
-        coverage=f"MOI laws Drupal pages 0..{MAX_PAGE} (starter; site last page ~80)",
+        coverage=f"MOI laws Drupal pages 0..{MAX_PAGE} (full pager target; site last page ~80)",
         notes=(
             "Official MOI promulgated law PDFs. MLIS TLS EOF from this host — MOI used. "
             "Incomplete vs full gazette run. Not legal advice."

@@ -71,6 +71,28 @@ def discover():
             if "/content" in orig.lower():
                 add(orig, h.get("timestamp"))
 
+    # QBZ ELI law pages via CDX (merged from the harvested collector, which built
+    # the published corpus from them; identifiers keep its eli-path naming).
+    # ELI pages are a live Angular shell, so main()'s gazette-marker check still
+    # rejects snapshots without law text.
+    def add_eli(url, ts=None):
+        url = (url or "").replace("http://", "https://").split("?")[0].rstrip("/")
+        if not url or url in seen:
+            return
+        if any(x in url.lower() for x in (".css", ".js", "/faq", "/search")):
+            return
+        m = re.search(r"/eli/(.+)$", url)
+        ident = (m.group(1) if m else url).replace("/", "-")
+        if ident in seen:
+            return
+        seen.add(url)
+        seen.add(ident)
+        items.append((ident, url if url.startswith("http") else "https://www.qbz.gov.al/" + url.lstrip("/"), ts))
+
+    for prefix, default_limit in (("qbz.gov.al/eli/ligj/", 350), ("www.qbz.gov.al/eli/ligj/", 200)):
+        for h in cdx_urls(prefix, limit=env_int("CDX_LIMIT", default_limit), match_type="prefix"):
+            add_eli(h.get("original") or "", h.get("timestamp"))
+
     log.info("catalog %s", len(items))
     return items
 

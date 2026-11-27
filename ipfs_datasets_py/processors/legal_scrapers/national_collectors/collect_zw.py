@@ -8,7 +8,7 @@ timestamped replay — /web/2id_/ alone often 404s for historic acts-list).
 Skips ZimLII / Veritas / commercial consolidators. Acts-only (SI out of scope).
 """
 from __future__ import annotations
-import logging, re, sys, time
+import logging, os, re, sys, time
 from pathlib import Path
 from urllib.parse import unquote, urljoin
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -340,7 +340,22 @@ def discover():
     return out
 
 
+def _run_commonwealth_split():
+    """ZW_COMMONWEALTH_SPLIT=1: run the merged harvested variant (zw_commonwealth_split.py):
+    its official hosts plus Commonwealth section splitting, enacting-body
+    preference and REPROCESS/HARVEST_ONLY/REPROCESS_ONLY handling."""
+    import importlib.util
+
+    path = Path(__file__).resolve().with_name("zw_commonwealth_split.py")
+    spec = importlib.util.spec_from_file_location("zw_commonwealth_split", path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod.main()
+
+
 def main():
+    if os.environ.get("ZW_COMMONWEALTH_SPLIT", "0") in ("1", "true", "yes"):
+        return _run_commonwealth_split()
     setup_log(CC)
     t0 = utcnow()
     max_new = env_int("MAX_NEW", 250)

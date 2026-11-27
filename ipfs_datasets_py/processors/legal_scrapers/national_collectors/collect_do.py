@@ -234,8 +234,9 @@ def discover(url_norms: set[str]):
                 title = f"Gaceta Oficial {Path(unquote(href)).stem.replace('_', ' ')}"
             add(full, ident=_ident_from_url(full, kind), title=title, tier=tier, date=str(year) or None)
 
-    # Limited CDX for consultoria uploads missing from live API
-    for prefix in ("www.consultoria.gov.do/uploads/",):
+    # Limited CDX for consultoria uploads missing from live API; the host-root
+    # prefixes are the harvested collector's wider CDX sweep (merged).
+    for prefix in ("www.consultoria.gov.do/uploads/", "www.consultoria.gov.do/", "consultoria.gov.do/"):
         for h in cdx_urls(
             prefix,
             limit=env_int("CDX_LIMIT", 80),

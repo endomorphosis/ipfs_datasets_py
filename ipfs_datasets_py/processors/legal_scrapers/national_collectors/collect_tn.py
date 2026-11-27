@@ -212,10 +212,30 @@ def discover_legislation_cdx():
     return items
 
 
+def discover_harvested_cdx():
+    """The harvested collector's sweep (merged): legislation.tn content pages and
+    iort.gov.tn JO/law URLs, any type, fetched with fetch_official like other
+    non-lake items. Identifiers keep its path-based naming."""
+    items = []
+    for prefix in (
+        "www.iort.gov.tn/",
+        "iort.gov.tn/",
+        "www.legislation.tn/sites/default/files/",
+        "legislation.tn/fr/content/",
+    ):
+        for h in cdx_urls(prefix, limit=env_int("CDX_LIMIT", 200), match_type="prefix"):
+            orig = (h.get("original") or "").split("#")[0]
+            if orig and any(k in orig.lower() for k in (".pdf", "jort", "loi", "constitution", "code")):
+                ident = re.sub(r"^https?://[^/]+/", "", orig).replace("/", "-")[:160]
+                items.append((ident, orig, "harvested_cdx"))
+    log.info("harvested cdx %s", len(items))
+    return items
+
+
 def discover():
     # Prefer lake OCR/PDF first, then CDX
     lake = discover_jort_lake()
-    cdx = discover_legislation_cdx()
+    cdx = discover_legislation_cdx() + discover_harvested_cdx()
     seen = set()
     out = []
     official = [(ident, url, "official_cdx", ts) for ident, url, ts in discover_official_cdx()]

@@ -341,12 +341,37 @@ def discover_legis_wayback(items, seen):
     log.info("legis wayback candidates new=%s", len(items) - n0)
 
 
+def discover_legis_harvested(items, seen):
+    """The harvested collector's legis.md sweep (merged): CDX of the official
+    search result pages and all /cautare/ URLs, fetched via fetch_official with
+    Wayback like other legis.md items (fetch_md still requires law-like text).
+    Identifiers keep its path-based naming."""
+    if os.environ.get("FORCE_CDX", "1") != "1":
+        return
+    n0 = len(items)
+    for prefix in ("www.legis.md/cautare/getResults", "legis.md/cautare/", "www.legis.md/UserFiles/"):
+        try:
+            hits = cdx_urls(prefix, limit=env_int("CDX_LIMIT", 250), match_type="prefix")
+        except Exception as exc:
+            log.info("cdx fail %s: %s", prefix, exc)
+            continue
+        for h in hits:
+            orig = (h.get("original") or "").split("#")[0]
+            if not orig or any(x in orig.lower() for x in (".css", ".js", "/login", "captcha")):
+                continue
+            ident = re.sub(r"^https?://[^/]+/", "", orig).replace("/", "-")[:160]
+            _add(items, seen, ident, orig.replace("http://", "https://"),
+                 {"portal": "legis.md", "kind": "wayback_legis_harvested"})
+    log.info("legis harvested-sweep candidates new=%s", len(items) - n0)
+
+
 def discover():
     items, seen = [], set()
     discover_html_foundation(items, seen)
     discover_old1_docs(items, seen)
     discover_justice_pdfs(items, seen)
     discover_legis_wayback(items, seen)
+    discover_legis_harvested(items, seen)
 
     def rank(it):
         kind = (it[2] or {}).get("kind") or ""

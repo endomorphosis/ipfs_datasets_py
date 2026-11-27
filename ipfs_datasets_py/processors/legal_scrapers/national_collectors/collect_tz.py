@@ -212,6 +212,7 @@ def discover() -> list[dict]:
         "www.parliament.go.tz/assets/uploads/files/",
         "parliament.go.tz/assets/uploads/files/",
         "oagmis.oag.go.tz/portal/acts/",
+        "www.parliament.go.tz/polis/uploads",  # harvested collector's prefix (merged)
     ):
         for h in cdx_urls(prefix, limit=env_int("CDX_LIMIT", 150), match_type="prefix"):
             orig = h.get("original") or ""

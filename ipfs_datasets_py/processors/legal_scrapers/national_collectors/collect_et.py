@@ -18,7 +18,7 @@ import json, logging, re, shutil, sys, time
 from pathlib import Path
 from urllib.parse import urljoin, unquote
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import ROOT, existing_ids, log_failure, utcnow, write_summary
+from common import ROOT, existing_ids, http_get, log_failure, utcnow, write_summary
 from world_lib import cdx_urls, env_int, fetch_official, live_get, save_instrument, setup_log, slug_id, split_custom
 
 CC, COUNTRY, LANG = "et", "Ethiopia", "am"
@@ -40,6 +40,13 @@ LIST_PAGES = [
     "https://justice.gov.et/am/laws/proclamations/",
     "https://justice.gov.et/en/laws/regulations/",
     "https://justice.gov.et/am/laws/regulations/",
+]
+
+
+HARVESTED_HOMES = [
+    "https://justice.gov.et/en/",
+    "https://www.hopr.gov.et/",
+    "https://www.fsc.gov.et/Digital-Law-Library/Federal-Laws",
 ]
 
 
@@ -162,6 +169,26 @@ def discover():
             orig = h.get("original") or ""
             if orig and orig.lower().endswith(".pdf") and not any(x in orig.lower() for x in (".jpg", ".png", ".gif")):
                 add_url(items, seen, orig, prefer=True)
+
+    # Harvested-collector sources (merged): HoPR and the Federal Supreme Court
+    # digital law library home pages, plus its wider CDX sweep. Same link
+    # keywords it used; add_url keeps the image/listing-page filters above.
+    for home in HARVESTED_HOMES:
+        try:
+            r = http_get(home, ua=UA, sleep=0.4)
+            if getattr(r, "status_code", 0) != 200:
+                continue
+            for href in re.findall(r'href="([^"]+)"', r.text or ""):
+                full = urljoin(home, href)
+                if any(k in full.lower() for k in ("pdf", "negarit", "proclamation", "jet_download", "gazette")):
+                    add_url(items, seen, full, prefer=full.lower().endswith(".pdf"))
+        except Exception as exc:
+            log.info("home %s %s", home, exc)
+    for prefix in ("justice.gov.et/", "www.hopr.gov.et/", "www.fsc.gov.et/Digital-Law-Library/"):
+        for h in cdx_urls(prefix, limit=env_int("CDX_LIMIT", 200), match_type="prefix"):
+            orig = h.get("original") or ""
+            if orig and any(k in orig.lower() for k in ("pdf", "negarit", "proclamation", "jet_download")):
+                add_url(items, seen, orig, prefer=orig.lower().endswith(".pdf"))
 
     # Prefer real PDFs; deprioritize jet_download (often HTML bounce)
     def rank(x):

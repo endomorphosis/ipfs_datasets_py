@@ -141,7 +141,21 @@ def window_candidates(anchors: list[int], radius: int) -> list[tuple[int, str, s
     return out
 
 
+def _run_live_rss():
+    """BG_LIVE_RSS=1: run the live State Gazette RSS + materiali.faces variant
+    (bg_live_rss.py) instead of the default Wayback-only path."""
+    import importlib.util
+
+    path = Path(__file__).resolve().with_name("bg_live_rss.py")
+    spec = importlib.util.spec_from_file_location("bg_live_rss", path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod.main()
+
+
 def main():
+    if os.environ.get("BG_LIVE_RSS", "0") in ("1", "true", "yes"):
+        return _run_live_rss()
     setup()
     t0 = utcnow()
     max_new = int(os.environ.get("MAX_NEW", "80") or 80)
