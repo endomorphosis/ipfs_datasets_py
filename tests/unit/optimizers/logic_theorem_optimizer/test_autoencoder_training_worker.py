@@ -4542,6 +4542,7 @@ def test_reviewed_mixed_source_bound_v5_checkpoint_requires_exact_resume_envelop
         "staged_bound_component_inputs_sha256": bound_sha,
         "current_bound_component_inputs_sha256": bound_sha,
         "tokenizer_contract": pristine["token_budgets"]["tokenizer_contract"],
+        "training_mask": 0, "proof_authority": False,
     }
     assets = (spec.model_artifact, spec.tokenizer_artifact, spec.license_artifact, *spec.backend_artifacts)
 
@@ -4558,6 +4559,12 @@ def test_reviewed_mixed_source_bound_v5_checkpoint_requires_exact_resume_envelop
         dict(advanced, schema=worker.REVIEWED_DECODER_CHECKPOINT_SCHEMA),
         dict(advanced, training_binding=None),
         dict(advanced, training_binding=dict(receipt, current_bound_component_inputs_sha256="8" * 64)),
+        dict(advanced, training_binding=dict(receipt, training_mask=False)),
+        dict(advanced, training_binding=dict(receipt, proof_authority=0)),
+        dict(advanced, batch_size=True),
+        dict(advanced, seed=float(spec.seed)),
+        dict(advanced, token_budgets=dict(pristine["token_budgets"], max_source_tokens=float(spec.max_source_tokens))),
+        dict(advanced, progress=list(progress.items())),
     ):
         with pytest.raises(worker.TrainingJobValidationError):
             read_progress(variant)
