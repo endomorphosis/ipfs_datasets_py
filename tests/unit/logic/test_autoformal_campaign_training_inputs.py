@@ -2812,7 +2812,7 @@ def test_reviewed_mixed_cycle_v4_preserves_complete_mixed_targets_bytes_and_expl
     assert all(receipt[key] is False for key in ("backend_execution_authorized", "training_executed", "weights_updated", "proof_authority", "Lean_admitted", "corpus_admitted"))
 
 
-def test_reviewed_mixed_source_bound_cycle_v5_replays_signed_source_through_decoder(tmp_path):
+def _reviewed_mixed_source_bound_cycle_fixture(tmp_path):
     from ipfs_datasets_py.logic.autoformal import corpus_source_bindings, legal_norm_interpretation_review_v1
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_span_consumer_binding as consumer
     from tests.unit.logic.autoformal.test_corpus_source_bindings import _lir02_complete_case
@@ -2833,6 +2833,20 @@ def test_reviewed_mixed_source_bound_cycle_v5_replays_signed_source_through_deco
         data.registry, **data.options, bound_component_inputs=bound,
         expected_bound_component_inputs_sha256=bound_sha)
     data.kwargs.update(stage_artifact=reference, expected_stage_sha256=reference["sha256"])
+    data.bound_component_inputs = bound
+    data.bound_component_inputs_sha256 = bound_sha
+    data.interpretation_id = interpretation_id
+    return data
+
+
+def test_reviewed_mixed_source_bound_cycle_v5_replays_signed_source_through_decoder(tmp_path):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_span_consumer_binding as consumer
+
+    data = _reviewed_mixed_source_bound_cycle_fixture(tmp_path)
+    bound, bound_sha = data.bound_component_inputs, data.bound_component_inputs_sha256
+    handoff = bound[data.key]
+    report, report_sha = handoff["report"], handoff["expected_report_sha256"]
+    reference = data.kwargs["stage_artifact"]
     stage = _reviewed_doc(data.registry, reference)
     assert stage["schema"] == "reviewed-example-cycle-input-artifact/v5"
     transport = _reviewed_doc(data.registry, stage["bound_component_transport_artifact"])
@@ -2906,7 +2920,7 @@ def test_reviewed_mixed_source_bound_cycle_v5_replays_signed_source_through_deco
         source = json.loads(record["source_wire"])
         assert set(source) == {"profile", "source_text", "governing_context", "source_binding", "selection_context"}
         assert source["source_text"] == row["source_text"]
-        assert source["selection_context"]["interpretation_id"] == interpretation_id
+        assert source["selection_context"]["interpretation_id"] == data.interpretation_id
         assert json.loads(record["target_json"]) == row["canonical_ir"]
         for wire, tokens in ((record["source_wire"], record["source_token_ids"]),
                              (record["target_json"], record["target_token_ids"])):

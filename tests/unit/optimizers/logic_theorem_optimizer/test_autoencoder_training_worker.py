@@ -4411,6 +4411,157 @@ def _reviewed_mixed_worker_fixture(tmp_path, *, batch_size=1, backend=None, toke
     return SimpleNamespace(old=old, data=data, payload=payload, runtime=runtime, inputs=inputs)
 
 
+def test_reviewed_mixed_source_bound_v5_worker_rechecks_signed_inputs_before_restore(tmp_path, monkeypatch):
+    from tests.unit.logic import test_autoformal_campaign_training_inputs as fixtures
+
+    data = fixtures._reviewed_mixed_source_bound_cycle_fixture(tmp_path)
+    legacy_directory = tmp_path / "worker-fixture"
+    legacy_directory.mkdir()
+    legacy = _complete_reviewed_worker_fixture(legacy_directory)
+    bound = data.bound_component_inputs
+    bound_sha = data.bound_component_inputs_sha256
+    stale = data.deepcopy(bound)
+    stale[data.key]["expected_report_sha256"] = "0" * 64
+    current_bound = bound
+    supplied = []
+
+    def provide_bound():
+        supplied.append(current_bound[data.key]["expected_report_sha256"])
+        return data.deepcopy(current_bound)
+
+    payload = dict(legacy.payload, schema_version=worker.REVIEWED_SOURCE_BOUND_MIXED_DECODER_JOB_SCHEMA,
+        admission_profile=data.options["admission_profile"], stage_artifact=data.kwargs["stage_artifact"],
+        exposure_artifact=_complete_reviewed_artifact(tmp_path / "v5-exposure.json",
+            worker._json_bytes(data.options["exposure_records"])),
+        source_contexts_artifact=_complete_reviewed_artifact(tmp_path / "v5-source-contexts.json",
+            worker._json_bytes(data.kwargs["source_contexts"])),
+        split_config=data.options["split_config"],
+        expected_split_config_sha256=data.kwargs["expected_split_config_sha256"],
+        expected_admission_inputs_sha256=data.kwargs["expected_admission_inputs_sha256"],
+        expected_bound_component_inputs_sha256=bound_sha,
+        expected_source_sha256=worker._reviewed_decoder_source_pins(
+            admission_profile=data.options["admission_profile"], source_bound=True),
+        max_source_tokens=data.kwargs["max_source_tokens"], max_target_tokens=data.kwargs["max_target_tokens"],
+        output_directory=str(tmp_path / "v5-worker-output"))
+    runtime = replace(legacy.runtime, registry=data.registry,
+        current_admission_provider=lambda: data.deepcopy(data.kwargs["current_admission_inputs"]),
+        current_bound_component_inputs_provider=provide_bound)
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("source-bound preflight reached checkpoint or training work")
+
+    for method in ("inspect_checkpoint", "restore_checkpoint", "restored_checkpoint_matches",
+                   "train_batch", "snapshot_checkpoint"):
+        monkeypatch.setattr(runtime.backend, method, forbidden)
+    validate = runtime.backend.validate_training_records
+    accepted = []
+
+    def validate_records(records, *, max_source_tokens, max_target_tokens):
+        nonlocal current_bound
+        assert current_bound is bound
+        validate(records, max_source_tokens=max_source_tokens, max_target_tokens=max_target_tokens)
+        accepted.extend((row["id"], json.loads(row["source_wire"]), json.loads(row["target_json"]))
+                        for row in records)
+        current_bound = stale
+
+    monkeypatch.setattr(runtime.backend, "validate_training_records", validate_records)
+    spec = worker.TrainingJobSpec.from_dict(payload)
+    assert type(spec) is worker.ReviewedSourceBoundMixedDecoderTrainingJobSpec
+    assert spec.expected_bound_component_inputs_sha256 == bound_sha
+    assert worker.TrainingJobSpec.from_dict(spec.to_dict()).canonical_sha256 == spec.canonical_sha256
+    missing_pin = dict(payload)
+    del missing_pin["expected_bound_component_inputs_sha256"]
+    for incomplete in (missing_pin, dict(payload, expected_bound_component_inputs_sha256=None),
+                       dict(payload, expected_bound_component_inputs_sha256="not-a-sha")):
+        with pytest.raises(worker.TrainingJobValidationError):
+            worker.TrainingJobSpec.from_dict(incomplete)
+
+    # A legacy wire still has its own closed schema and cannot read a V5 stage.
+    legacy_payload = dict(payload, schema_version=worker.REVIEWED_MIXED_DECODER_SCHEMA_VERSION,
+        expected_source_sha256=worker._reviewed_decoder_source_pins(admission_profile=spec.admission_profile))
+    legacy_payload.pop("expected_bound_component_inputs_sha256")
+    with pytest.raises(ValueError, match="closed reviewed decoder stage artifact"):
+        worker.execute_training_job(worker.TrainingJobSpec.from_dict(legacy_payload),
+            reviewed_runtime=replace(runtime, current_bound_component_inputs_provider=None))
+    with pytest.raises(worker.TrainingJobValidationError, match="bound.component"):
+        worker.execute_training_job(spec, reviewed_runtime=replace(runtime, current_bound_component_inputs_provider=None))
+
+    stage = fixtures._reviewed_doc(data.registry, payload["stage_artifact"])
+    transport = fixtures._reviewed_doc(data.registry, stage["bound_component_transport_artifact"])
+    corrupt = fixtures._reviewed_decoder_put_json(data.registry, tmp_path / "corrupt-v5-source-history.json",
+        dict(transport, bound_component_inputs_sha256="0" * 64))
+    corrupt_stage = fixtures._reviewed_decoder_put_json(data.registry, tmp_path / "corrupt-v5-stage.json",
+        dict(stage, bound_component_transport_artifact=corrupt))
+    staged_count = data.registry.stage_calls
+    with pytest.raises(ValueError, match="restored type-separated admission commitment differs"):
+        worker.execute_training_job(worker.TrainingJobSpec.from_dict(dict(payload, stage_artifact=corrupt_stage)),
+            reviewed_runtime=runtime)
+
+    current_bound = stale
+    with pytest.raises(worker.TrainingJobValidationError, match="reviewed decoder inputs changed"):
+        worker.execute_training_job(spec, reviewed_runtime=runtime)
+    assert accepted == []
+
+    # The real signed replay reaches backend record validation. Switching the
+    # caller's evidence inside that callback must stop the next preflight.
+    current_bound = bound
+    supplied.clear()
+    job = tmp_path / "v5-worker-job.json"
+    job_raw = worker._json_bytes(spec.to_dict())
+    job.write_bytes(job_raw)
+    with pytest.raises(worker.TrainingJobValidationError, match="reviewed decoder inputs changed"):
+        worker.execute_training_job_file(job, hashlib.sha256(job_raw).hexdigest(), reviewed_runtime=runtime)
+    assert supplied == [bound[data.key]["expected_report_sha256"], stale[data.key]["expected_report_sha256"]]
+    assert [row[0] for row in accepted] == [row["id"] for row in data.rows]
+    for (_, source, target), row in zip(accepted, data.rows, strict=True):
+        assert set(source) == {"profile", "source_text", "governing_context", "source_binding", "selection_context"}
+        assert source["source_text"] == row["source_text"]
+        assert source["selection_context"]["interpretation_id"] == data.interpretation_id
+        assert target == row["canonical_ir"]
+    assert runtime.backend.validations == 1
+    assert runtime.backend.restores == runtime.backend.calls == 0
+    assert data.registry.stage_calls == staged_count
+    assert not Path(payload["output_directory"]).exists()
+
+
+def test_reviewed_mixed_source_bound_v5_checkpoint_requires_exact_resume_envelope(tmp_path):
+    fixture = _complete_reviewed_worker_fixture(tmp_path)
+    pins = worker._reviewed_decoder_source_pins(
+        admission_profile=worker.REVIEWED_MIXED_ADMISSION_PROFILE, source_bound=True)
+    bound_sha = "7" * 64
+    payload = dict(fixture.payload, schema_version=worker.REVIEWED_SOURCE_BOUND_MIXED_DECODER_JOB_SCHEMA,
+        admission_profile=worker.REVIEWED_MIXED_ADMISSION_PROFILE,
+        expected_source_sha256=pins, expected_bound_component_inputs_sha256=bound_sha)
+    spec = worker.TrainingJobSpec.from_dict(payload)
+    schema = worker.REVIEWED_SOURCE_BOUND_MIXED_DECODER_CHECKPOINT_SCHEMA
+    pristine = json.loads(Path(spec.parent_checkpoint_artifact.path).read_bytes())
+    pristine.update(schema=schema, producer_pins=pins)
+    receipt = {
+        "schema": fixture.inputs.REVIEWED_SOURCE_BOUND_MIXED_DECODER_INPUT_RECEIPT_SCHEMA,
+        "staged_bound_component_inputs_sha256": bound_sha,
+        "current_bound_component_inputs_sha256": bound_sha,
+        "tokenizer_contract": pristine["token_budgets"]["tokenizer_contract"],
+    }
+    assets = (spec.model_artifact, spec.tokenizer_artifact, spec.license_artifact, *spec.backend_artifacts)
+
+    def read_progress(parent):
+        return worker._reviewed_exact_resume_parent(spec, parent, receipt, checkpoint_schema=schema,
+            identity=fixture.payload["backend_identity"], assets=assets, source_pins=pins)
+
+    assert read_progress(pristine) == {"epochs_completed": 0, "row_cursor": 0, "optimizer_steps": 0}
+    progress = {"epochs_completed": 0, "row_cursor": 1, "optimizer_steps": 1}
+    advanced = dict(pristine, progress=progress, training_binding=receipt,
+        parent_checkpoint_sha256=spec.parent_checkpoint_artifact.sha256)
+    assert read_progress(advanced) == progress
+    for variant in (
+        dict(advanced, schema=worker.REVIEWED_DECODER_CHECKPOINT_SCHEMA),
+        dict(advanced, training_binding=None),
+        dict(advanced, training_binding=dict(receipt, current_bound_component_inputs_sha256="8" * 64)),
+    ):
+        with pytest.raises(worker.TrainingJobValidationError):
+            read_progress(variant)
+
+
 def test_reviewed_mixed_v10_dispatch_preserves_complete_targets_and_component_custody(tmp_path, monkeypatch):
     fixture = _reviewed_mixed_worker_fixture(tmp_path, batch_size=6)
     spec = worker.TrainingJobSpec.from_dict(fixture.payload)
