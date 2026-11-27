@@ -4139,3 +4139,14 @@ pending. The output adds no paired parent or comparison evidence.
 ## Evidence581 — Reject malformed Lean JSON diagnostics
 
 The Lean adapter reports excessively nested compiler JSON as invalid. A dependency report with a list or object in the severity field now yields a structured rejection. All 99 ordinary cases passed across 24 test functions. An earlier collection attempt stopped during setup, reached no tests, and released its resources. In a separate check on fictional Lean source, Lean 4.34.1 ran one version probe and two compilations. It accepted the expected root declaration `wanted` and rejected the wrong expected type for `Law.wanted`. Signed statutory review remains pending. [Ordinary qualification](/tmp/P1-proof-cache-translation-current-6btZZr/lean-json-diagnostics/actual-live-reconciled-P1-Lean-ordinary99-closed.json) · [Native qualification](/tmp/P1-proof-cache-translation-current-6btZZr/lean-json-diagnostics/actual-Lean-JSON-diagnostics-namespaced-Native2-closed.json) · [Code publication](/tmp/P1-proof-cache-translation-current-6btZZr/lean-json-diagnostics/actual-Phase1-lean-json-diagnostics-ordinary99-and-native-three-FF-publication.json)
+
+
+## Explicit local governing-definition bindings
+
+V2 and V3 reviewed admission now require a definition RHS predicate that matches a local definition to select exactly one matching declared parent. Matching uses the predicate name, ordered argument sorts, and ordered roles. Missing or ambiguous selections refuse. The existing declared dependency graph supplies cycle detection and graph edges.
+
+Fresh independently signed fictional assessments reproduced missing-parent acceptance in both domains. The final nine-case baseline had four passes and five failures, and all nine passed with the shared validator. Controls preserve an explicitly selected later alternative and predicates that share spelling while differing in roles or sorts.
+
+At exact code commit e9586bf615b5b6525afd2cde163e70703b9909e2, two separate pytest runs with the original pytest.ini and three repository conftests passed 15 retained V2 cases and all 46 V3 owning-file cases, including its original 37 cases. All 137 selected Git source files matched before and after, both cooperative Source read leases returned, and compiled-source observations bound the selected owners and test module. V3 loaded during fixture execution after the saved V2 report. The local qualification receipt SHA-256 is a131e976e98bb528fdf38a2849bad184f835774c0458541093c3a28779017d47.
+
+These runs used fictional legal sources and fixture signers. The profile was one CPU, 512 MiB address space, and at most 60 wall seconds per pytest process. Source42/SDK-managed execution, physical Lean realization, model training and substantive statutory review were outside the qualification. Earlier private cohorts and failure records remain separate in the sealed proposal 89c6365977e5922518fba085ddeeb27430a8dd38593b245e973da3e1fb082632.
