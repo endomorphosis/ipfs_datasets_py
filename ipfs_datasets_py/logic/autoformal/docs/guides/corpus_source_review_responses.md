@@ -19,9 +19,12 @@ expected_preparation_manifest_sha256, limits=None)` returns a sealed candidate
 record. Request and subject pins are their FULL canonical SHA256 values,
 including their record CIDs. The preparation root also uses its FULL canonical
 hash. These differ from payload-CID hashes and pretty/raw transport hashes.
-Authoring checks the supplied identities and declarations; it does not replay
-the source or authenticate the author. Qualification requires the assessment
-step below.
+The recorder accepts exact request and subject pairs from legacy paired source
+review and official source review V2. Official records keep their original
+schema, profile and identities in the typed record's references.
+
+Authoring checks the supplied identities and declarations. Complete source
+replay and reviewer authentication are part of the assessment below.
 
 The response input has exactly these fields:
 
@@ -86,11 +89,21 @@ and definition review domains do not substitute for this source domain.
 
 `assess_source_review_responses(preparation, registry, policy, review_groups, *,
 response_bindings, expected_response_bindings_sha256, source_review_limits=None,
-limits=None, **source_inputs)` takes the unchanged complete source assessment
-inputs. `source_inputs` contains exactly the existing preparation, registry,
-policy, group pins, explicit evaluation time and five source-replay arguments.
-There are no callbacks or packet-loader defaults. Optional `source_review_limits`
-lowers the inherited profile; `limits` lowers this response profile.
+limits=None, **source_inputs)` takes the complete assessment inputs for the
+original source preparation. Both profiles require independent preparation,
+registry, policy and group pins and an explicit evaluation time.
+
+- Legacy paired review requires the existing alignment corpus, alignment
+  replay inputs, source reports and their independent pins.
+- Official V2 requires `document_inputs`, `occurrence_inputs` and
+  `pending_interpretations`, with their independently selected document,
+  occurrence and pending-interpretation population SHA-256 digests.
+
+Optional `source_review_limits` lowers the inherited profile. `limits` lowers
+the response profile. The saved typed report keeps the exact original raw
+assessment reference. Adjudication, application, history and binding consumers
+currently require legacy preparation. An official V2 response can be
+authenticated here and carried forward as pending evidence.
 
 Response bindings are a complete ordered list, one group per original request:
 `{request_cid, responses: [{review_id, artifact_id, raw_sha256}]}`. Entries match

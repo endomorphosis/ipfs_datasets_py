@@ -91,8 +91,9 @@ def _limits(value):
     return bounds
 
 
-def _pins():
-    pins = source._pins(source._owners())
+def _pins(*, official=False):
+    owners = source._owners()
+    pins = source._official_pins(owners) if official else source._pins(owners)
     pins[str(Path(__file__).resolve())] = _sha(Path(__file__).read_bytes())
     return pins
 
@@ -119,10 +120,16 @@ def _inputs(request, subject, response, expected_request_sha256, expected_subjec
     contracts.require_sha256(expected_request_sha256, "independent request FULL SHA256")
     contracts.require_sha256(expected_subject_sha256, "independent subject FULL SHA256")
     contracts.require_sha256(expected_preparation_manifest_sha256, "independent preparation FULL SHA256")
-    request = contracts.validate_record(json.loads(base._plain(request, contracts.MAX_RECORD_BYTES)),
-        schema=source.REQUEST_SCHEMA, fields=source.REQUEST_FIELDS)
-    subject = contracts.validate_record(json.loads(base._plain(subject, contracts.MAX_RECORD_BYTES)),
-        schema=source.SUBJECT_SCHEMA, fields=source.SUBJECT_FIELDS)
+    request = json.loads(base._plain(request, contracts.MAX_RECORD_BYTES))
+    subject = json.loads(base._plain(subject, contracts.MAX_RECORD_BYTES))
+    official = type(request) is dict and request.get('schema') == source.OFFICIAL_REQUEST_SCHEMA
+    request_schema = source.OFFICIAL_REQUEST_SCHEMA if official else source.REQUEST_SCHEMA
+    request_fields = source.OFFICIAL_REQUEST_FIELDS if official else source.REQUEST_FIELDS
+    subject_schema = source.OFFICIAL_SUBJECT_SCHEMA if official else source.SUBJECT_SCHEMA
+    request = contracts.validate_record(request, schema=request_schema, fields=request_fields)
+    subject = contracts.validate_record(subject, schema=subject_schema, fields=source.SUBJECT_FIELDS)
+    if official and (request['profile'] != source.OFFICIAL_PROFILE or subject['profile'] != source.OFFICIAL_PROFILE):
+        _fail("official typed response requires the exact official request and subject profile")
     if _digest(request) != expected_request_sha256 or _digest(subject) != expected_subject_sha256:
         _fail("independently pinned typed response source differs")
     if (subject['review_request_cid'] != request['record_cid'] or subject['graph_id'] != request['record_cid']
@@ -136,6 +143,10 @@ def _inputs(request, subject, response, expected_request_sha256, expected_subjec
     if (request['review_questions'] != questions or _digest(questions) != request['questions_sha256']
             or request['context_slot_ids'] != [row['slot_id'] for row in active]):
         _fail("exact original sixteen questions and nine active slots required")
+    if official and request['deferred_review_slot_ids'] != [
+            row['slot_id'] for row in questions
+            if row['assessment_scope'] != 'source_context_evidence_declaration']:
+        _fail("exact original seven deferred questions required")
     response = json.loads(base._plain(response, bounds['max_response_bytes']))
     contracts.require_keys(response, INPUT_FIELDS, "typed source response input")
     from . import legal_graph_review as auth
@@ -321,12 +332,22 @@ def _pages(entries, bounds):
 def assess_source_review_responses(preparation, registry, policy, review_groups, *, response_bindings,
         expected_response_bindings_sha256, source_review_limits=None, limits=None, **source_inputs):
     """Replay/authenticate once with the unchanged source owner; inspect all answers."""
-    required = {'expected_preparation_manifest_sha256', 'expected_registry_sha256', 'expected_policy_sha256',
-        'expected_review_group_pins', 'at_time_utc', 'alignment_corpus_bytes', 'expected_alignment_corpus_pins',
-        'alignment_replay_inputs', 'source_report_bytes', 'expected_source_report_pins'}
+    manifest = preparation.get('manifest') if type(preparation) is dict else None
+    official = type(manifest) is dict and manifest.get('schema') == source.OFFICIAL_MANIFEST_SCHEMA
+    required = {'expected_preparation_manifest_sha256', 'expected_registry_sha256',
+        'expected_policy_sha256', 'expected_review_group_pins', 'at_time_utc'}
+    if official:
+        required.update(('document_inputs', 'expected_document_population_sha256',
+            'occurrence_inputs', 'expected_occurrence_population_sha256',
+            'pending_interpretations', 'expected_pending_interpretations_sha256'))
+    else:
+        required.update(('alignment_corpus_bytes', 'expected_alignment_corpus_pins',
+            'alignment_replay_inputs', 'source_report_bytes', 'expected_source_report_pins'))
     contracts.require_keys(source_inputs, required, "fixed complete source assessment inputs")
     bounds, source_bounds = _limits(limits), source._limits(source_review_limits)
-    detached = source._detach_preparation(preparation, source_bounds)
+    detached = source._detach_preparation(preparation, source_bounds, official=official)
+    if official and detached['manifest']['profile'] != source.OFFICIAL_PROFILE:
+        _fail("official typed response assessment requires the exact official preparation profile")
     if len(detached['requests']) > bounds['max_groups']:
         _fail("complete typed source request population exceeds bound")
     if len(detached['requests']) * source.ACTIVE_SLOT_COUNT > bounds['max_adjudication_requests']:
@@ -344,8 +365,9 @@ def assess_source_review_responses(preparation, registry, policy, review_groups,
     # The detached group must still equal both independent binding populations.
     _bindings(bindings, expected_response_bindings_sha256, detached, groups,
         bounds, source_bounds, verify_hashes=True)
-    producer_pins = _pins()
-    raw_assessment = source.assess_source_review_groups(detached, registry, policy, groups,
+    producer_pins = _pins(official=True) if official else _pins()
+    assess_source = source.assess_official_source_review_groups_v2 if official else source.assess_source_review_groups
+    raw_assessment = assess_source(detached, registry, policy, groups,
         **source_inputs, limits=source_review_limits)
     result = {key: None if key == 'manifest' else [] for key in COMPONENTS}
     retained, inventory, counters = 0, [], Counter()
@@ -440,7 +462,8 @@ def assess_source_review_responses(preparation, registry, policy, review_groups,
         population_complete=True)
     if source._aggregate_size(result) > bounds['max_collection_bytes']:
         _fail("complete typed source response assessment exceeds collection byte bound")
-    if _pins() != producer_pins:
+    current_pins = _pins(official=True) if official else _pins()
+    if current_pins != producer_pins:
         _fail("typed or inherited source review producers changed during assessment")
     return result
 
@@ -472,7 +495,10 @@ def validate_source_review_responses(report, *args, **kwargs):
     detached = _detach(report, _limits(kwargs.get('limits')))
     expected = assess_source_review_responses(*args, **kwargs)
     source._equal_components(detached, expected)
-    if _pins() != expected['manifest']['producer_pins']:
+    raw_manifest_ref = expected['manifest']['raw_source_assessment_ref']
+    official = raw_manifest_ref['schema'] == source.OFFICIAL_GROUP_MANIFEST_SCHEMA
+    current_pins = _pins(official=True) if official else _pins()
+    if current_pins != expected['manifest']['producer_pins']:
         _fail("typed response producer pins changed during final comparison")
     return detached
 

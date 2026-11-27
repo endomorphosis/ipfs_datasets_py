@@ -1599,3 +1599,191 @@ def test_unreferenced_evidence_is_retained_as_custody_without_inventing_answer_o
         for row in report["answer_variants"]
     )
     assert_no_authority(owner, report)
+
+
+
+@pytest.fixture(scope="module")
+def official_v2_pending_typed_data():
+    source_fixture = helper()
+    arguments = source_fixture.official_occurrence_case()
+    preparation, registry, policy, groups, options, raw = (
+        source_fixture.official_pending_assessment(source_owner, arguments)
+    )
+    return {
+        "data": {"arguments": arguments},
+        "preparation": preparation,
+        "registry": registry,
+        "policy": policy,
+        "groups": groups,
+        "at_time_utc": options["at_time_utc"],
+        "response_bindings": [
+            {"request_cid": request["record_cid"], "responses": []}
+            for request in preparation["requests"]
+        ],
+        "raw": raw,
+    }
+
+
+@pytest.fixture(scope="module")
+def official_v2_signed_typed_data(official_v2_pending_typed_data):
+    from ipfs_datasets_py.logic.autoformal import corpus_source_review_responses
+
+    source_fixture = helper()
+    data = clone_case(official_v2_pending_typed_data)
+    roles = list(trust_owner.ROLES)
+    data["signers"] = [
+        source_fixture.Ed25519Signer.generate(f"did:example:official-typed-source-{index}")
+        for index in range(len(roles))
+    ]
+    subjects = data["preparation"]["subjects"]
+    scopes = list(dict.fromkeys(subject["scope_id"] for subject in subjects))
+    data["registry"]["mode"] = data["policy"]["mode"] = "synthetic_fixture"
+    for group, manifest in zip(
+        data["groups"], data["preparation"]["dependency_manifests"], strict=True
+    ):
+        group.update(source_fixture.dependency_observations(manifest))
+    group = data["groups"][0]
+    group["evidence_artifacts"]["fixture:source-declaration"] = (
+        b"Fictional official source test evidence, with no statutory review or authority."
+    )
+    subject = subjects[0]
+    for index, (signer, role) in enumerate(zip(data["signers"], roles, strict=True)):
+        encoding = source_fixture.serialization
+        key = {
+            "key_id": f"fixture:official-source-key:{index}",
+            "signer_did": signer.did,
+            "public_key_hex": signer.public_key.public_bytes(
+                encoding.Encoding.Raw, encoding.PublicFormat.Raw
+            ).hex(),
+            "principal_id": f"fixture:official-source-principal:{index}",
+            "roles": [role],
+            "scope_ids": scopes,
+            "valid_from_utc": source_fixture.START,
+            "valid_until_utc": source_fixture.END,
+            "revoked_at_utc": None,
+        }
+        data["registry"]["keys"].append(key)
+        group["reviews"].append({
+            "schema": source_owner.CLAIM_SCHEMA,
+            "action": source_owner.ACTION,
+            "audience": source_owner.AUDIENCE,
+            "review_id": f"fixture:official-source-review:{index}",
+            "key_id": key["key_id"],
+            "principal_id": key["principal_id"],
+            "role": role,
+            "issued_at_utc": source_fixture.ISSUED,
+            "expires_at_utc": source_fixture.EXPIRES,
+            "subject": deepcopy(subject),
+            "interpretation": {
+                "decision": "support",
+                "reviewed_graph_sha256": subject["graph_sha256"],
+                "reviewed_ast_sha256": subject["ast_sha256"],
+                "rationale": "Fictional source declarations for the typed response fixture.",
+                "ambiguity": [],
+            },
+        })
+    return signed_typed_case(corpus_source_review_responses, data)
+
+
+def test_official_v2_typed_responses_keep_all_blank_groups_pending(
+    owner, official_v2_pending_typed_data
+):
+    data = official_v2_pending_typed_data
+    report = assess(owner, data)
+    assert report["manifest"]["raw_source_assessment_ref"] == ref(data["raw"]["manifest"])
+    assert [row["raw_source_assessment_record"] for row in report["records"]] == data["raw"]["records"]
+    assert len(report["records"]) == 4
+    assert report["response_results"] == report["answer_variants"] == []
+    counts = report["manifest"]["counts"]
+    assert counts["authenticated_typed_responses"] == 0
+    assert counts["pending_adjudication_slots"] == 36 and counts["deferred_questions"] == 28
+    assert all(
+        row["exact_answer_comparison"] == "no_authenticated_answers"
+        for row in report["adjudication_requests"]
+    )
+    assert_no_authority(owner, report)
+    assert validate(owner, report, data) == report
+
+
+def test_official_v2_typed_responses_authenticate_exact_fictional_answers(
+    owner, official_v2_signed_typed_data
+):
+    data = official_v2_signed_typed_data
+    request = data["preparation"]["requests"][0]
+    subject = data["preparation"]["subjects"][0]
+    value = data["response_inputs"][0][0]
+    assert request["schema"] == source_owner.OFFICIAL_REQUEST_SCHEMA
+    assert subject["schema"] == source_owner.OFFICIAL_SUBJECT_SCHEMA
+    assert data["registry"]["mode"] == "synthetic_fixture"
+
+    response = author(owner, data, value)
+    entry = data["response_bindings"][0]["responses"][0]
+    assert canonical_dag_json_bytes(response) == data["groups"][0]["evidence_artifacts"][entry["artifact_id"]]
+    assert response["request_ref"] == ref(request) and response["subject_ref"] == ref(subject)
+    assert [row["slot_id"] for row in response["answers"]] == request["context_slot_ids"]
+    assert response["deferred_review_slot_ids"] == request["deferred_review_slot_ids"]
+    assert response["status"] == "declared_unauthenticated_source_response"
+    assert all(response[field] is False for field in owner.FALSE_FLAGS)
+    assert owner.validate_source_review_response(
+        response, request, subject, value, **author_pins(data)
+    ) == response
+
+    raw = source_owner.assess_official_source_review_groups_v2(
+        data["preparation"], data["registry"], data["policy"], data["groups"],
+        **helper().assess_arguments(data),
+    )
+    report = assess(owner, data)
+    assert report["manifest"]["raw_source_assessment_ref"] == ref(raw["manifest"])
+    assert [row["raw_source_assessment_record"] for row in report["records"]] == raw["records"]
+    first = raw["records"][0]["assessment"]
+    assert first["authenticated_evidence_count"] == 2
+    assert all(row["signature_status"] == "valid" for row in first["reviews"])
+    assert "production_trust_registry_unavailable" in first["blockers"]
+    assert report["manifest"]["counts"]["authenticated_typed_responses"] == 2
+    assert len(report["response_results"]) == 2
+    assert all(
+        row["authenticated_typed_content"]
+        and row["typed_answer_declarations_complete"]
+        and row["content_status"] == "valid_declared_content"
+        for row in report["response_results"]
+    )
+    assert [row["slot_id"] for row in report["answer_variants"]] == request["context_slot_ids"]
+    assert all(len(row["respondents"]) == 2 for row in report["answer_variants"])
+    assert [row["deferred_review_slot_ids"] for row in report["records"]] == [
+        item["deferred_review_slot_ids"] for item in data["preparation"]["requests"]
+    ]
+    assert all(row["deferred_questions_remain_pending"] is True for row in report["records"])
+    assert_no_authority(owner, report)
+    assert validate(owner, report, data) == report
+
+
+def test_official_v2_typed_response_refuses_a_repinned_legacy_subject(
+    owner, official_v2_signed_typed_data
+):
+    data = official_v2_signed_typed_data
+    request = data["preparation"]["requests"][0]
+    subject = data["preparation"]["subjects"][0]
+    legacy_subject = reseal(dict(
+        subject, schema=source_owner.SUBJECT_SCHEMA, profile=source_owner.PROFILE,
+    ))
+    assert legacy_subject["review_request_cid"] == request["record_cid"]
+    pins = dict(author_pins(data), expected_subject_sha256=ref(legacy_subject)["sha256"])
+    with pytest.raises(ValueError):
+        owner.record_source_review_response(
+            request, legacy_subject, data["response_inputs"][0][0], **pins
+        )
+
+
+@pytest.mark.parametrize(
+    "pin, diagnostic",
+    [
+        ("expected_preparation_manifest_sha256", "independent typed source preparation root differs"),
+        ("expected_response_bindings_sha256", "complete response binding population differs"),
+    ],
+)
+def test_official_v2_typed_response_assessment_requires_independent_pins(
+    owner, official_v2_signed_typed_data, monkeypatch, pin, diagnostic
+):
+    monkeypatch.setattr(source_owner, "assess_official_source_review_groups_v2", refuse_replay)
+    with pytest.raises(ValueError, match=diagnostic):
+        assess(owner, official_v2_signed_typed_data, **{pin: "0" * 64})
