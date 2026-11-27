@@ -36318,6 +36318,121 @@
       "root": "artifact_workspace",
       "scope": "Checked legal proof feedback producer-to-learning handoff and ordinary software qualification with controlled fixtures.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase1_lean_proof_cache_translation_agreement_ordinary9_20261127",
+      "closed_runtime_facts": {
+        "actual_live_code_publication": {
+          "bytes": 15468,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/actual-Phase1-cache-translation-ordinary9-three-FF-publication.json",
+          "sha256": "d7ca14c392c0fdc91c3bdab15d027929cff6d699e214d89f9bb82cecc8a07c65"
+        },
+        "actual_live_exact_two_freeze": {
+          "bytes": 6190,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/actual-isolated-Phase1-cache-translation-exact-two-local-freeze.json",
+          "sha256": "38999ef02d990f6bfb348c01a80455b00b58fed94283c153011bc3afbcf50b4a"
+        },
+        "actual_live_ordinary9": {
+          "bytes": 3616,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/actual-Phase1-current-cache-translation-ordinary9-closed.json",
+          "sha256": "3514c4fd3f0067b6c11378d22bdc9f54689522cba38bbadfcfef74bf20f09d57"
+        },
+        "actual_live_ordinary9_raw_JUnit": {
+          "bytes": 1686,
+          "path": "/tmp/P1-proofcache-translation-ordinary9-nonclock-INERT-mg3Ycz45/actual-output/phase1-proof-cache-translation9-run-result0-output1.bin",
+          "sha256": "1e6ed08c175504d475e69d10136be2a2ce763b49cac8eda6ad44a8a2db2da3de"
+        },
+        "actual_live_ordinary9_report": {
+          "bytes": 447955,
+          "path": "/tmp/P1-proofcache-translation-ordinary9-nonclock-INERT-mg3Ycz45/actual-output/complete-frozen-local-D-phase1-proof-cache-translation9-existing-owner-report.json",
+          "sha256": "8eaed28daa2ff852fcb30af75695759f2754af6efe941dd502415239e6309c93"
+        },
+        "actual_live_reconciled_Source42_READ3": {
+          "bytes": 7227,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/actual-isolated-P1-cache-translation-READ3-closed.json",
+          "sha256": "b643b0dfdf6e32d47e2b55cff1eb77bc409f09c52c55a36bcd2cb76fe4a82bbf"
+        },
+        "actual_live_reconciled_Source42_epoch": {
+          "bytes": 6236,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/actual-live-reconciled-Source42-content-epoch-closed.json",
+          "sha256": "44e3761cedbc50ed9967e330f4c35f4b7d39269257acbe9e41cb7f2e69407783"
+        },
+        "actual_ordinary9_counts": {
+          "errors": 0,
+          "failures": 0,
+          "functions": 5,
+          "passed": 9,
+          "skipped": 0,
+          "tests": 9
+        },
+        "checked_Lean_translation_cache_replay_software_qualified": true,
+        "evidence_ordinal": 575,
+        "exact_candidate": {
+          "bytes": 3969,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/SEALED-P1-cache-translation-exact-two.json",
+          "sha256": "c73d2362f0414fcbad3a6b3d0552f4f0f231163ea41503328e7e9936ecb63592"
+        },
+        "live_qualified_A_HEAD": "219ba3da0f62f772801d71715e22c506faa21126",
+        "live_qualified_D_HEAD": "4cc1311f12a317b8a0a0aa92c950011cd09399f0",
+        "ordinary_Source_resource_and_parent_closed": true,
+        "ordinary_collect_run_raw_JUnit_order_equal": true,
+        "physical_IO_accounting_complete": false,
+        "prior_verified_guide574_publication": {
+          "bytes": 2647,
+          "path": "/tmp/P7-checked-feedback-revalidated-final-LadvXFyf/actual-Guide574-four-docs-three-FF-publication.json",
+          "sha256": "84d3364b66b4990a14a687417fb17ae38bc1fdb85131c51bfda55d34a0a1e84d"
+        },
+        "private_same_nine_lineage": {
+          "green": {
+            "failed": [],
+            "terminal": {
+              "bytes": 24,
+              "path": "/tmp/P1-proof-cache-translation-current-6btZZr/green/terminal.json",
+              "sha256": "a583519ae991581a8d2aec66e5dd60ef75df71d5d2411bbf4e42c541751eb8e2"
+            },
+            "xml": {
+              "bytes": 1666,
+              "path": "/tmp/P1-proof-cache-translation-current-6btZZr/green/result.xml",
+              "sha256": "96361b8599d1bd3b128e2b9c228d45f05a3be44f66be48429ab2842e847dd7cd"
+            }
+          },
+          "red": {
+            "failed": [
+              "test_bound_cache_requires_checked_lean_translation_agreement[request-only]",
+              "test_bound_cache_requires_checked_lean_translation_agreement[receipt-only]",
+              "test_bound_cache_requires_checked_lean_translation_agreement[different-digest]"
+            ],
+            "terminal": {
+              "bytes": 24,
+              "path": "/tmp/P1-proof-cache-translation-current-6btZZr/red/terminal.json",
+              "sha256": "a95e2f804b1a2a69f226812ad41d797eb07c98a71762654d80bfef5e63a1697a"
+            },
+            "xml": {
+              "bytes": 2992,
+              "path": "/tmp/P1-proof-cache-translation-current-6btZZr/red/result.xml",
+              "sha256": "14e601e09c8d8c0d0d726fda7f8e4314f41b23854773897443f03eaa505b4490"
+            }
+          }
+        },
+        "qualified_commit_blobs": {
+          "ipfs_datasets_py/logic/legal_ir/proof_cache.py": "e74f30f960193827687b9f28faf07ccb20a38a06",
+          "tests/unit/logic/legal_ir/test_proof_cache.py": "5ff29423462c009bc5c8f4541b78842411c59e96"
+        },
+        "related_catalog_component": "kernel-proof-evidence-integrity",
+        "schema": "live-reconciled-Phase1-checked-Lean-translation-cache-engineering-evidence/v1",
+        "statutory_or_corpus_admission_or_large_model_fit_or_new_Native_qualification": false,
+        "task": "LIR-14",
+        "task_status_changed": false
+      },
+      "evidence_ordinal": 575,
+      "id": "phase1-lean-proof-cache-translation-agreement-ordinary9-evidence575-20261127",
+      "observed_bytes": 4769,
+      "observed_sha256": "2817113a76d874a040f585e4d92c00129f4d32f3b89510c7a861ff8ca9c51d1c",
+      "path": "/tmp/P1-proof-cache-translation-current-6btZZr/guide575-composition/current-Phase1-checked-Lean-translation-cache-ordinary9-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Checked Lean translation agreement at legal proof-cache construction and persisted replay.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }
