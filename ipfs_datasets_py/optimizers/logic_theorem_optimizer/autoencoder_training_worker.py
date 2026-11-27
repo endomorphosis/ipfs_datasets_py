@@ -5058,12 +5058,34 @@ def load_local_reviewed_decoder_runtime_v3(*, admission_profile, registry, curre
         _admission_version="v3", _runtime_profile=runtime_profile)
 
 
+def load_local_reviewed_source_bound_decoder_runtime_v5(*, spec, registry, current_admission_provider,
+        current_bound_component_inputs_provider, execution_guard, asset_policy_guard, recipe_artifact,
+        model_config_artifact, max_model_bytes, runtime_profile="builtin-t5-gpt2-float32/v1"):
+    """Replay the selected V5 source and training inputs before constructing a model."""
+    if type(spec) is not ReviewedSourceBoundMixedDecoderTrainingJobSpec:
+        raise TrainingJobValidationError("explicit source-bound reviewed decoder job required")
+    if any(type(item) is not CheckpointArtifact or item not in spec.backend_artifacts
+           for item in (recipe_artifact, model_config_artifact)):
+        raise TrainingJobValidationError("V5 recipe and model configuration must be exact job assets")
+    return _load_local_reviewed_decoder_runtime(registry=registry, current_admission_provider=current_admission_provider,
+        execution_guard=execution_guard, asset_policy_guard=asset_policy_guard,
+        recipe_artifact=recipe_artifact, model_config_artifact=model_config_artifact,
+        tokenizer_artifact=spec.tokenizer_artifact, license_artifact=spec.license_artifact,
+        model_checkpoint=spec.base_model_checkpoint, optimizer_checkpoint=spec.base_optimizer_checkpoint,
+        expected_backend_identity=_thaw(spec.backend_identity),
+        expected_source_sha256=_thaw(spec.expected_source_sha256),
+        expected_admission_inputs_sha256=spec.expected_admission_inputs_sha256, max_model_bytes=max_model_bytes,
+        _admission_version="v3", _runtime_profile=runtime_profile, _source_bound_job=spec,
+        _current_bound_component_inputs_provider=current_bound_component_inputs_provider)
+
+
 def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider,
         execution_guard, asset_policy_guard, recipe_artifact, model_config_artifact,
         tokenizer_artifact, license_artifact, model_checkpoint, optimizer_checkpoint,
         expected_backend_identity, expected_source_sha256,
         expected_admission_inputs_sha256, max_model_bytes, _admission_version, _runtime_profile,
-        _source_epoch_migration=None, _target_codec="complete-reviewed-norm-json/v2", _cache_epoch_migration_artifact=None):
+        _source_epoch_migration=None, _target_codec="complete-reviewed-norm-json/v2", _cache_epoch_migration_artifact=None,
+        _source_bound_job=None, _current_bound_component_inputs_provider=None):
     """Load an explicitly profiled built-in CPU decoder and paired state.
 
     The caller owns live execution, license/asset policy and current admission.
@@ -5076,6 +5098,14 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
     if type(_target_codec) is not str or _target_codec not in {"complete-reviewed-norm-json/v2", REVIEWED_DIGEST_OMITTED_TARGET_CODEC}:
         raise TrainingJobValidationError("explicit local loader target codec required")
     digest_omitted = _target_codec == REVIEWED_DIGEST_OMITTED_TARGET_CODEC
+    source_bound = _source_bound_job is not None
+    if source_bound and (type(_source_bound_job) is not ReviewedSourceBoundMixedDecoderTrainingJobSpec
+            or _admission_version != "v3" or digest_omitted or _source_epoch_migration is not None
+            or _cache_epoch_migration_artifact is not None
+            or not callable(_current_bound_component_inputs_provider)):
+        raise TrainingJobValidationError("explicit current V5 loader binding and live source input provider required")
+    if not source_bound and _current_bound_component_inputs_provider is not None:
+        raise TrainingJobValidationError("current bound component inputs require an explicit source-bound job")
     if digest_omitted and (_admission_version != "v3" or (_source_epoch_migration is not None and
             (type(_source_epoch_migration) is not dict or _source_epoch_migration.get("profile") not in (REVIEWED_DIGEST_CACHE_EPOCH_PROFILE, REVIEWED_DIGEST_CACHE_PRISTINE_EPOCH_PROFILE)))):
         raise TrainingJobValidationError("digest-omitted loader requires fresh current-source admission; no old-objective migration")
@@ -5107,9 +5137,12 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
             or re.fullmatch(r"[0-9a-f]{64}", expected_admission_inputs_sha256) is None):
         raise TrainingJobValidationError("bounded model bytes and exact admission commitment required")
     pins = dict(expected_source_sha256) if type(expected_source_sha256) is dict else {}
-    if set(pins) != REVIEWED_DECODER_SOURCE_NAMES or any(type(value) is not str or
+    source_names = (REVIEWED_DECODER_SOURCE_NAMES | {"source_bindings", "dependencies"}
+                    if source_bound else REVIEWED_DECODER_SOURCE_NAMES)
+    if set(pins) != source_names or any(type(value) is not str or
             re.fullmatch(r"[0-9a-f]{64}", value) is None for value in pins.values()):
-        raise TrainingJobValidationError("exact five reviewed decoder source pins required")
+        raise TrainingJobValidationError("exact V5 reviewed decoder source pins required" if source_bound else
+                                         "exact five reviewed decoder source pins required")
     identity = _parse_json(_json_bytes(expected_backend_identity))
     if (type(identity) is not dict or set(identity) != {"backend_id", "implementation_sha256",
             "checkpoint_format", "target_codec", "source_conditioned", "pretrained"}
@@ -5120,6 +5153,18 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
                   license_artifact, model_checkpoint, optimizer_checkpoint)
     if any(type(item) is not CheckpointArtifact for item in references) or len({item.path for item in references}) != 6:
         raise TrainingJobValidationError("six distinct exact local decoder artifacts required")
+    additional_assets = ()
+    job_artifacts = ()
+    if source_bound:
+        job_assets = (_source_bound_job.model_artifact, tokenizer_artifact, license_artifact,
+                      *_source_bound_job.backend_artifacts)
+        job_artifacts = (_source_bound_job.exposure_artifact, _source_bound_job.source_contexts_artifact,
+                         _source_bound_job.parent_checkpoint_artifact)
+        additional_assets = tuple(item for item in job_assets if item not in references)
+        if len({item.path for item in (*references, *additional_assets, *job_artifacts)}) != (
+                len(references) + len(additional_assets) + len(job_artifacts)):
+            raise TrainingJobValidationError("source-bound local decoder artifact roles differ or alias")
+    watched_artifacts = (*references, *additional_assets, *job_artifacts)
     from . import legal_span_consumer_binding as consumer
     policy = {"schema": ("reviewed-local-decoder-load-policy/v2" if admission_profile else
                          "reviewed-local-decoder-load-policy/v1"), "backend_identity": identity,
@@ -5130,6 +5175,12 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
         "downloads_requested": False, "resource_grant_requested": False}
     if digest_omitted:
         policy.update(schema="reviewed-local-digest-omitted-decoder-load-policy/v1", target_codec=_target_codec)
+    if source_bound:
+        policy.update(schema="reviewed-local-source-bound-decoder-load-policy/v1",
+            job_spec_sha256=_source_bound_job.canonical_sha256,
+            stage_artifact=asdict(_source_bound_job.stage_artifact),
+            bound_component_inputs_sha256=_source_bound_job.expected_bound_component_inputs_sha256,
+            assets=[asdict(item) for item in (*references, *additional_assets)])
     if _source_epoch_migration is not None:
         policy["source_epoch_migration_requested"] = True
         policy["source_epoch_migration_profile"] = (REVIEWED_DECODER_TRAIN_RESUME_EPOCH_PROFILE
@@ -5146,6 +5197,8 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
     frozen = _json_bytes([expected_backend_identity, expected_source_sha256])
     stamps = {}
     guards = {"execution": 0, "asset_policy": 0, "current_admission": 0}
+    if source_bound:
+        guards["current_bound_component_inputs"] = 0
 
     def file_stamp(item):
         path = Path(item.path)
@@ -5158,6 +5211,8 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
                       for parent in path.parents))
 
     def current_source_pins():
+        if source_bound:
+            return _reviewed_decoder_source_pins(admission_profile=admission_profile, source_bound=True)
         return (_reviewed_decoder_source_pins() if admission_profile is None else
                 _reviewed_decoder_source_pins(admission_profile=admission_profile))
 
@@ -5172,24 +5227,47 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
         guards["current_admission"] += 1
         if consumer.reviewed_admission_inputs_sha256(admission) != expected_admission_inputs_sha256:
             raise TrainingJobValidationError("current local decoder admission inputs changed")
+        bound = None
+        if source_bound:
+            bound = _current_bound_component_inputs_provider()
+            guards["current_bound_component_inputs"] += 1
+            if (type(bound) is not dict or not bound or
+                    consumer.reviewed_admission_inputs_sha256(bound)
+                    != _source_bound_job.expected_bound_component_inputs_sha256):
+                raise TrainingJobValidationError("current local decoder bound component inputs changed")
+            if consumer.reviewed_admission_inputs_sha256(admission) != expected_admission_inputs_sha256:
+                raise TrainingJobValidationError("current local decoder admission inputs changed")
         if (_json_bytes([expected_backend_identity, expected_source_sha256]) != frozen
                 or current_source_pins() != pins
-                or any(file_stamp(item) != stamps[item.path] for item in references if item.path in stamps)):
+                or any(file_stamp(item) != stamps[item.path] for item in watched_artifacts if item.path in stamps)):
             raise TrainingJobValidationError("local decoder source, identity or asset binding changed")
+        if source_bound:
+            return admission, bound
 
     # Both real policies run before any artifact loader or numerical import.
     current()
     if any(not callable(getattr(registry, name, None)) for name in ("read_artifact", "artifact_path")):
         raise TrainingJobValidationError("read-only existing artifact registry protocol required before local model loading")
+    if source_bound:
+        stamps.update({item.path: file_stamp(item) for item in watched_artifacts})
     recipe_raw = _reviewed_decoder_artifact(recipe_artifact, limit=1024**2)
     config_raw = _reviewed_decoder_artifact(model_config_artifact, limit=1024**2)
     tokenizer_raw = _reviewed_decoder_artifact(tokenizer_artifact, limit=MAX_REVIEWED_TOKENIZER_PIPELINE_BYTES)
     _reviewed_decoder_artifact(license_artifact, load=False)
-    model_raw = _reviewed_decoder_artifact(model_checkpoint, limit=state_limit)
-    optimizer_raw = _reviewed_decoder_artifact(optimizer_checkpoint, limit=state_limit)
-    stamps.update({item.path: file_stamp(item) for item in references})
-    if len({stamp[:2] for stamp in stamps.values()}) != 6:
-        raise TrainingJobValidationError("local decoder artifacts require six unique physical files")
+    if source_bound:
+        exposure_raw, contexts_raw, parent_raw = (_reviewed_decoder_artifact(item) for item in job_artifacts)
+        exposure, contexts, parent = map(_parse_json, (exposure_raw, contexts_raw, parent_raw))
+        if _json_bytes(exposure) != exposure_raw or _json_bytes(contexts) != contexts_raw:
+            raise TrainingJobValidationError("exact canonical reviewed exposure/context artifacts required")
+        for item in additional_assets:
+            _reviewed_decoder_artifact(item, limit=state_limit, load=False)
+    else:
+        model_raw = _reviewed_decoder_artifact(model_checkpoint, limit=state_limit)
+        optimizer_raw = _reviewed_decoder_artifact(optimizer_checkpoint, limit=state_limit)
+        stamps.update({item.path: file_stamp(item) for item in watched_artifacts})
+    if len({stamp[:2] for stamp in stamps.values()}) != len(watched_artifacts):
+        raise TrainingJobValidationError("source-bound local decoder artifacts require unique physical files" if source_bound else
+                                         "local decoder artifacts require six unique physical files")
     recipe, config_data = _parse_json(recipe_raw), _parse_json(config_raw)
     tokenizer_data = _parse_json(tokenizer_raw)
     json_identities = {name: {"raw_sha256": _digest(raw), "canonical_json_sha256": _digest(_json_bytes(value))}
@@ -5251,6 +5329,18 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
             or tokenizer_options["pad_token"] is not None and (type(tokenizer_options["pad_token"]) is not str
                 or not 0 < len(tokenizer_options["pad_token"]) <= 512)) :
         raise TrainingJobValidationError("closed finite AdamW and lossless fast-tokenizer options required")
+    def replay_source_bound(tokenizer):
+        admission, bound = current()
+        prepared = _prepare_reviewed_source_bound_worker_inputs(
+            _source_bound_job, registry, tokenizer, admission, bound, exposure, contexts)
+        receipt = prepared["receipt"]
+        progress = _reviewed_exact_resume_parent(_source_bound_job, parent, receipt,
+            checkpoint_schema=REVIEWED_SOURCE_BOUND_MIXED_DECODER_CHECKPOINT_SCHEMA,
+            identity=identity, assets=job_assets, source_pins=pins)
+        _reviewed_validate_resume_progress(progress, len(prepared["records"]), _source_bound_job.batch_size)
+        current()
+        return _digest(_json_bytes(prepared)), receipt, progress
+
     current()
     import torch
     entry_rng = torch.get_rng_state().clone()
@@ -5276,6 +5366,10 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
         # Do not retain the original constructor tokenizer or its input wire
         # alongside the model and independent decoded checkpoint tensors.
         del native, tokenizer_raw
+        if source_bound:
+            prepared_sha256, _, progress = replay_source_bound(tokenizer)
+            model_raw = _reviewed_decoder_artifact(model_checkpoint, limit=state_limit)
+            optimizer_raw = _reviewed_decoder_artifact(optimizer_checkpoint, limit=state_limit)
         current()
         if qwen2_profile:
             from transformers import Qwen2Config, Qwen2ForCausalLM
@@ -5408,6 +5502,15 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
         elif _source_epoch_migration is not None:
             model_raw, optimizer_raw = _reviewed_epoch_restore(backend, model_raw, optimizer_raw,
                 _source_epoch_migration, registry, current_admission_provider, current)
+        if source_bound:
+            pre_restore_sha256, _, _ = replay_source_bound(tokenizer)
+            if pre_restore_sha256 != prepared_sha256:
+                raise TrainingJobValidationError("source-bound local decoder inputs changed before restore")
+            inspection = backend.inspect_checkpoint(model_raw, optimizer_raw)
+            if (type(progress.get("optimizer_steps")) is not int
+                    or inspection != {"optimizer_steps": progress["optimizer_steps"]}):
+                raise TrainingJobValidationError("source-bound local decoder checkpoint progress differs")
+            current()
         backend.restore_checkpoint(model_raw, optimizer_raw, execution_guard=current)
         current()
         if not backend.restored_checkpoint_matches(model_raw, optimizer_raw):
@@ -5416,7 +5519,8 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
         for item in references:
             _reviewed_decoder_artifact(item, limit=state_limit, load=False)
         runtime = ReviewedDecoderRuntime(registry, backend, tokenizer,
-            current_admission_provider, execution_guard, asset_policy_guard)
+            current_admission_provider, execution_guard, asset_policy_guard,
+            **({"current_bound_component_inputs_provider": _current_bound_component_inputs_provider} if source_bound else {}))
         receipt = {"schema": ("reviewed-local-decoder-runtime-load/v2" if admission_profile else
                               "reviewed-local-decoder-runtime-load/v1"), "artifacts": [asdict(item) for item in references],
             "producer_pins": pins, "json_artifact_identities": json_identities,
@@ -5448,6 +5552,18 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
             receipt["cache_source_epoch_migration"] = asdict(_cache_epoch_migration_artifact)
             receipt["cache_source_epoch_marker"] = _thaw(backend.cache_source_epoch_marker)
             current()
+        if source_bound:
+            final_sha256, final_binding, _ = replay_source_bound(tokenizer)
+            if final_sha256 != prepared_sha256:
+                raise TrainingJobValidationError("source-bound local decoder inputs changed after restore")
+            receipt.update(schema="reviewed-local-source-bound-decoder-runtime-load/v1",
+                job_spec_sha256=_source_bound_job.canonical_sha256,
+                stage_artifact_sha256=_source_bound_job.stage_artifact.sha256,
+                parent_checkpoint_sha256=_source_bound_job.parent_checkpoint_artifact.sha256,
+                assets=[asdict(item) for item in (*references, *additional_assets)],
+                staged_bound_component_inputs_sha256=final_binding["staged_bound_component_inputs_sha256"],
+                current_bound_component_inputs_sha256=final_binding["current_bound_component_inputs_sha256"],
+                training_input_receipt_sha256=_digest(_json_bytes(final_binding)))
         if backend.identity() != identity or not backend.restored_checkpoint_matches(model_raw, optimizer_raw):
             raise TrainingJobValidationError("loaded decoder pair changed after final policy guard")
         receipt["guard_calls"] = dict(guards)
@@ -5466,7 +5582,8 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
             torch.set_rng_state(entry_rng)
 
 
-__all__ += ["load_local_reviewed_decoder_runtime", "load_local_reviewed_decoder_runtime_v3"]
+__all__ += ["load_local_reviewed_decoder_runtime", "load_local_reviewed_decoder_runtime_v3",
+            "load_local_reviewed_source_bound_decoder_runtime_v5"]
 
 # Explicit same-semantics Source transition. Default loaders and numerical
 # methods retain their strict configuration equality and original behavior.
