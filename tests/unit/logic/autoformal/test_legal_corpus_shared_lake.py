@@ -3493,3 +3493,110 @@ def test_reviewed_source_bound_preservation_v4_retains_signed_mixed_graph_and_ch
             graph, admission, *args, bound_component_inputs=bound_inputs,
             expected_bound_component_inputs_sha256="0" * 64, **preservation_options,
         )
+
+
+def test_reviewed_source_bound_realization_v2_retains_conditional_both_uses(tmp_path):
+    from ipfs_datasets_py.logic.autoformal import corpus_norm_definition_adapter as graph_owner
+    from ipfs_datasets_py.logic.autoformal import corpus_source_bindings as source_owner
+    from ipfs_datasets_py.logic.autoformal import legal_reviewed_norm_admission_v3 as admission_owner
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_span_consumer_binding as consumer
+    from tests.unit.logic.autoformal.test_corpus_source_bindings import _lir02_arguments, _lir02_complete_case
+
+    fixture = _lir02_complete_case(tmp_path, source_owner, mixed=True)
+    source_inputs = _lir02_arguments(fixture)
+    source_report = source_owner.prepare_bound_norm_component_v2(**source_inputs)
+    args, replay = fixture["norm_fixture"].reviewed_assessment_arguments_v2(admission_owner, fixture["case"])
+    admission = admission_owner.assess_reviewed_norm_admission_v3(*args, **replay)
+    assert admission["fixture_only"] is admission["semantic_use_eligible"] is True
+    assert not replay["preparation_inputs"]["declaration"]["cross_references"]
+    bound_inputs = {
+        "report": source_report,
+        "expected_report_sha256": admission_owner.norm.norm_review_sha256(source_report),
+        "preparation_inputs": source_inputs,
+    }
+    bound_sha256 = consumer.reviewed_admission_inputs_sha256(bound_inputs)
+    graph_options = {"expected_admission_sha256": admission_owner.norm_content_adjudication_sha256(admission), **replay}
+    source_options = {"bound_component_inputs": bound_inputs, "expected_bound_component_inputs_sha256": bound_sha256}
+    graph = graph_owner.build_reviewed_source_bound_norm_graph_v4(admission, *args, **graph_options, **source_options)
+    preservation_options = {
+        "expected_graph_sha256": graph_owner.norm_definition_graph_sha256(graph), "toolchain": TOOLCHAIN,
+        "instance_identity_profile": shared.REVIEWED_SOURCE_USE_IDENTITY_PROFILE, **graph_options,
+    }
+    preservation = shared.prepare_reviewed_source_bound_norm_preservation_corpus_v4(
+        graph, admission, *args, **preservation_options, **source_options)
+    realization_options = {
+        "expected_preservation_sha256": shared.reviewed_preservation_corpus_sha256(preservation),
+        "definition_application_profile": "whole-norm-definition-expansion/v1", **preservation_options,
+    }
+    realization = shared.prepare_reviewed_source_bound_definition_realization_corpus_v2(
+        preservation, graph, admission, *args, **realization_options, **source_options)
+    manifest, files = realization.to_dict(), dict(realization.files)
+    upstream = preservation.to_dict()
+    bindings = json.loads(files["definition-realization-input-bindings.json"])
+    assert manifest["schema"] == shared.REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_SCHEMA
+    assert manifest["profile"] == (shared.REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_PROFILE
+        + "+reviewed-source-use/v1+whole-norm-definition-expansion/v1")
+    assert bindings["schema"] == "legal-reviewed-source-bound-definition-realization-bindings/v2"
+    identity = graph["admission_record"]["bound_component_identity"]
+    assert identity["bound_component_report_sha256"] == bound_inputs["expected_report_sha256"]
+    assert identity["binding_manifest_sha256"] == source_report["binding_manifest_sha256"]
+    for record in (manifest, bindings, upstream):
+        assert record["bound_component_identity"] == identity
+        assert record["bound_component_inputs_sha256"] == bound_sha256
+    assert manifest["upstream_manifest"] == bindings["upstream_manifest"] == upstream
+    assert all(manifest["producer_pins"][path] == digest for path, digest in upstream["producer_pins"].items())
+    assert manifest["units"] == upstream["units"]
+    assert manifest["expected_modules"][:-2] == upstream["expected_modules"]
+    assert len(manifest["expected_modules"]) == 10
+    obligations = manifest["preservation_obligations"]
+    assert obligations[:15] == upstream["preservation_obligations"]
+    assert len(obligations) == len(set(obligations)) == 30
+    for name, body in preservation.files:
+        retained = "definition-realization-original-lakefile.txt" if name == "lakefile.toml" else name
+        assert files[retained] == body
+
+    uses = graph["definition_use_records"]
+    applications = manifest["definition_applications"]
+    assert len({use["use_unit_id"] for use in uses}) == 2
+    assert [len(use["target_typed_paths"]) for use in uses] == [1, 2]
+    assert [row["definition_use_record_cid"] for row in applications] == [use["record_cid"] for use in uses]
+    assert [row["target_typed_paths"] for row in applications] == [use["target_typed_paths"] for use in uses]
+    application_obligations = manifest["definition_application_obligations"]
+    assert len(application_obligations) == 4
+    assert obligations[-4:] == application_obligations
+    conditional = [row for row in manifest["theorem_bindings"]
+                   if row["binding"]["kind"] == "whole_norm_definition_expansion"]
+    assert [row["binding"]["unit_id"] for row in conditional] == [use["use_unit_id"] for use in uses]
+    module = manifest["expected_modules"][-2]
+    identity_input = {"profile": manifest["profile"],
+        "upstream_preservation_sha256": realization_options["expected_preservation_sha256"],
+        "selection": manifest["selection"], "definition_applications": applications,
+        "bound_component_identity": identity, "bound_component_inputs_sha256": bound_sha256}
+    assert module == shared.REVIEWED_DEFINITION_REALIZATION_ROOT + ".Instance" + sha(
+        canonical_dag_json_bytes(identity_input))
+    source = files[module.replace(".", "/") + ".lean"]
+    for row in conditional:
+        assert row["binding"]["premise_kind"] == "independently_denoted_source_definition"
+        assert row["binding"]["desired_equivalence_hypothesis"] is False
+        assert "(hSourceDefinition : " in row["declaration"]
+        assert row["declaration"] in source
+    assert manifest["preparation_only"] is True and manifest["semantic_use_eligible"] is False
+    assert manifest["lean_compilation_status"] == manifest["proof_status"] == "not_executed"
+    assert not any(manifest["authority"].values())
+    assert manifest["training_mask"] == manifest["evaluation_gold_mask"] == 0
+    validation_options = {
+        "expected_realization_sha256": shared.reviewed_preservation_corpus_sha256(realization), **realization_options,
+    }
+    assert shared.validate_reviewed_source_bound_definition_realization_corpus_v2(
+        realization, preservation, graph, admission, *args, **validation_options, **source_options) == realization
+    with pytest.raises(ValueError, match="independent complete bound component inputs pin differs"):
+        shared.prepare_reviewed_source_bound_definition_realization_corpus_v2(
+            preservation, graph, admission, *args, **realization_options,
+            bound_component_inputs=bound_inputs, expected_bound_component_inputs_sha256="0" * 64)
+    with pytest.raises(TypeError, match="expected_bound_component_inputs_sha256"):
+        shared.validate_reviewed_source_bound_definition_realization_corpus_v2(
+            realization, preservation, graph, admission, *args, **validation_options,
+            bound_component_inputs=bound_inputs)
+    with pytest.raises(ValueError, match="record schema or CID scope differs"):
+        shared.prepare_reviewed_definition_realization_corpus_v1(
+            preservation, graph, admission, *args, **realization_options)

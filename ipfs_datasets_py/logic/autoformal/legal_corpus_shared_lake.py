@@ -1623,25 +1623,40 @@ __all__ += ["REVIEWED_SOURCE_BOUND_PRESERVATION_SCHEMA", "REVIEWED_SOURCE_BOUND_
 REVIEWED_DEFINITION_REALIZATION_SCHEMA = "legal-reviewed-definition-realization-preparation/v1"
 REVIEWED_DEFINITION_REALIZATION_PROFILE = "reviewed-unary-object-definition-realization/v1"
 REVIEWED_DEFINITION_REALIZATION_ROOT = "LegalReviewedDefinitionRealization"
+REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_SCHEMA = "legal-reviewed-source-bound-definition-realization-preparation/v2"
+REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_PROFILE = "reviewed-source-bound-unary-object-definition-realization/v2"
+_REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_BINDINGS_SCHEMA = "legal-reviewed-source-bound-definition-realization-bindings/v2"
 
 
-def _reviewed_definition_realization_profile(instance_identity_profile, *, definition_application_profile=None):
+def _reviewed_definition_realization_profile(instance_identity_profile, *, definition_application_profile=None,
+        source_bound=False):
     """Select the caller's realization identity domain without reading artifacts."""
     _reviewed_definition_application_kwargs(definition_application_profile)
     _reviewed_source_use_profile(instance_identity_profile, version=3)
-    profile = (REVIEWED_DEFINITION_REALIZATION_PROFILE if instance_identity_profile is None else
-        REVIEWED_DEFINITION_REALIZATION_PROFILE + "+reviewed-source-use/v1")
-
+    profile = (REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_PROFILE if source_bound else
+        REVIEWED_DEFINITION_REALIZATION_PROFILE)
+    if instance_identity_profile is not None:
+        profile += "+reviewed-source-use/v1"
     return profile if definition_application_profile is None else profile + "+whole-norm-definition-expansion/v1"
 
-def _reviewed_definition_realization_policy(*, instance_identity_profile=None, definition_application_profile=None):
-    _reviewed_definition_realization_profile(instance_identity_profile, **_reviewed_definition_application_kwargs(definition_application_profile))
+def _reviewed_definition_realization_policy(*, instance_identity_profile=None, definition_application_profile=None,
+        source_bound=False):
+    _reviewed_definition_realization_profile(instance_identity_profile, source_bound=source_bound,
+        **_reviewed_definition_application_kwargs(definition_application_profile))
     _reviewed_mixed_preservation_policy()
     if (REVIEWED_DEFINITION_REALIZATION_SCHEMA, REVIEWED_DEFINITION_REALIZATION_PROFILE,
             REVIEWED_DEFINITION_REALIZATION_ROOT) != (
             "legal-reviewed-definition-realization-preparation/v1",
             "reviewed-unary-object-definition-realization/v1", "LegalReviewedDefinitionRealization"):
         _fail("fixed explicit reviewed definition realization profile required")
+    if source_bound:
+        _reviewed_source_bound_preservation_policy()
+        if (REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_SCHEMA, REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_PROFILE,
+                _REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_BINDINGS_SCHEMA) != (
+                "legal-reviewed-source-bound-definition-realization-preparation/v2",
+                "reviewed-source-bound-unary-object-definition-realization/v2",
+                "legal-reviewed-source-bound-definition-realization-bindings/v2"):
+            _fail("fixed explicit source-bound definition realization profile required")
 
 
 def _reviewed_definition_realization_selection(graph, admission, replay, upstream, native, *, instance_identity_profile=None, physical_context=None):
@@ -1942,8 +1957,9 @@ def _reviewed_definition_realization_lean(selection, units, native, module):
 def _reviewed_definition_realization_project(preservation, graph, admission, replay, owners, pins,
         commitment, expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain, *,
         instance_identity_profile=None, definition_application_profile=None,
-        physical_context=None, physical_context_owner_sha256=None, physical_bridge_version=1):
-    profile = _reviewed_definition_realization_profile(instance_identity_profile, **_reviewed_definition_application_kwargs(definition_application_profile))
+        physical_context=None, physical_context_owner_sha256=None, physical_bridge_version=1, source_binding=None):
+    profile = _reviewed_definition_realization_profile(instance_identity_profile, source_bound=source_binding is not None,
+        **_reviewed_definition_application_kwargs(definition_application_profile))
     if physical_context is not None:
         if physical_bridge_version == 2:
             _reviewed_physical_realization_policy_v2()
@@ -1955,15 +1971,26 @@ def _reviewed_definition_realization_project(preservation, graph, admission, rep
             profile = REVIEWED_PHYSICAL_REALIZATION_PROFILE
     native = owners[2]
     manifest, files = preservation.to_dict(), dict(preservation.files)
-    if (manifest["schema"] != REVIEWED_MIXED_PRESERVATION_SCHEMA
-            or manifest["profile"] != _reviewed_source_use_profile(instance_identity_profile, version=3)
-            or manifest["support_profile"]["cross_unit_definition_application_proved"] is not False):
-        _fail("unchanged current V3 preservation profile required before realization")
+    upstream_schema = REVIEWED_MIXED_PRESERVATION_SCHEMA
+    upstream_profile = _reviewed_source_use_profile(instance_identity_profile, version=3)
+    if source_binding is not None:
+        upstream_schema = REVIEWED_SOURCE_BOUND_PRESERVATION_SCHEMA
+        upstream_profile = (REVIEWED_SOURCE_BOUND_PRESERVATION_PROFILE if instance_identity_profile is None else
+            REVIEWED_SOURCE_BOUND_SOURCE_USE_PRESERVATION_PROFILE)
+    if (manifest["schema"] != upstream_schema or manifest["profile"] != upstream_profile
+            or manifest["support_profile"]["cross_unit_definition_application_proved"] is not False
+            or (source_binding is not None and any(manifest.get(key) != value
+                for key, value in source_binding.items()))):
+        if source_binding is None:
+            _fail("unchanged current V3 preservation profile required before realization")
+        _fail("unchanged current V4 preservation profile and source custody required before realization")
     selection = _reviewed_definition_realization_selection(graph, admission, replay, manifest, native,
         **({"physical_context": physical_context} if physical_context is not None else {}),
         **({"instance_identity_profile": instance_identity_profile} if instance_identity_profile is not None else {}))
     identity_input = {"profile": profile,
         "upstream_preservation_sha256": expected_preservation_sha256, "selection": selection}
+    if source_binding is not None:
+        identity_input.update(source_binding)
     physical_binding = {} if physical_context is None else {
         "physical_context": physical_context, "physical_context_owner_sha256": physical_context_owner_sha256,
         "physical_context_sha256": _sha(canonical_dag_json_bytes(physical_context))}
@@ -2015,6 +2042,8 @@ def _reviewed_definition_realization_project(preservation, graph, admission, rep
         "declaration_sha256": admission["declaration_sha256"], "selection": selection,
         "upstream_manifest": manifest, "original_file_sha256": manifest["file_sha256"],
         "theorem_bindings": theorem_bindings, **physical_binding}
+    if source_binding is not None:
+        bindings.update(source_binding, schema=_REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_BINDINGS_SCHEMA)
     if instance_identity_profile is not None:
         bindings["instance_identity_profile"] = instance_identity_profile
     if applications is not None:
@@ -2028,15 +2057,23 @@ def _reviewed_definition_realization_project(preservation, graph, admission, rep
         _fail("realization cannot rewrite any original V3 child, root, binding or companion")
     imports = {**manifest["module_imports"], module: [row["instance_module"] for row in manifest["units"]],
         root: [REVIEWED_MIXED_PRESERVATION_ROOT, module]}
+    schema = (REVIEWED_DEFINITION_REALIZATION_SCHEMA if physical_context is None else
+        REVIEWED_PHYSICAL_REALIZATION_SCHEMA_V2 if physical_bridge_version == 2 else REVIEWED_PHYSICAL_REALIZATION_SCHEMA)
+    retained_units = "all_original_V3_units_and_children_retained"
+    replay_scope = "Complete current V3 source, review, graph, dependency and child preservation inputs are replayed."
+    if source_binding is not None:
+        schema = REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_SCHEMA
+        retained_units = "all_original_source_bound_V4_units_and_children_retained"
+        replay_scope = ("The original signed source history, reviewed admission, V4 graph, dependencies "
+            "and child preservation inputs are replayed.")
     result_manifest = contracts.seal_record({**bindings,
-        "schema": (REVIEWED_DEFINITION_REALIZATION_SCHEMA if physical_context is None else
-            REVIEWED_PHYSICAL_REALIZATION_SCHEMA_V2 if physical_bridge_version == 2 else REVIEWED_PHYSICAL_REALIZATION_SCHEMA), "profile": profile,
+        "schema": schema, "profile": profile,
         "toolchain": toolchain, "target": "legal", "expected_modules": modules, "module_imports": imports,
         "units": manifest["units"], "preservation_obligations": obligations,
         "realization_obligations": additions, "file_sha256": {name: _sha(value.encode("utf-8")) for name, value in sorted(files.items())},
         "producer_pins": pins, "native_producer_pins": manifest["native_producer_pins"],
         "support_profile": {"single_unary_Object_definition": True, "nonrecursive_boolean_body": True,
-            "all_original_V3_units_and_children_retained": True, "explicit_common_Object_carrier": True,
+            retained_units: True, "explicit_common_Object_carrier": True,
             "mixed_Object_injection": "Sum.inr(Sum.inl entity)", "implicit_namespace_coercion": False,
             "single_binder_quantifier_nodes_only": True,
             "head_occurrences_under_modalities_supported": False, "opaque_modal_rewrite": False,
@@ -2046,7 +2083,7 @@ def _reviewed_definition_realization_project(preservation, graph, admission, rep
             "max_project_utf8_bytes": joint_owner.MAX_PROJECT_BYTES,
             **({"conditional_whole_norm_obligations": True, "source_definition_premise_required": True,
                 "original_atom_interpretations_unchanged": True} if applications is not None else {})},
-        "trust_boundary": ["Complete current V3 source, review, graph, dependency and child preservation inputs are replayed.",
+        "trust_boundary": [replay_scope,
             ("Only constructed role-atom interpretations realize the independently denoted definition body; arbitrary original interpretations are not equated."
              if applications is None else
              "Old constructed-model obligations remain; new whole-norm expansion obligations require satisfaction of the exact original independently denoted SOURCE definition under unchanged arbitrary original atom interpretations. Mixed source-definition evaluation uses the canonical Object restriction of the same mixed atoms. No source-definition truth, unconditional arbitrary-model equivalence, legal applicability/meaning, corpus, training or release authority is supplied."),
@@ -2063,7 +2100,7 @@ def _reviewed_definition_realization_project(preservation, graph, admission, rep
     return result
 
 
-def _reviewed_definition_realization_callbacks(owners, *, definition_application_profile=None):
+def _reviewed_definition_realization_callbacks(owners, *, definition_application_profile=None, source_bound=False):
     native = owners[2]
     functions = (_reviewed_definition_realization_policy, _reviewed_definition_realization_profile,
         _reviewed_definition_application_kwargs, _reviewed_definition_application_pins,
@@ -2079,6 +2116,13 @@ def _reviewed_definition_realization_callbacks(owners, *, definition_application
         owners[1].norm._snapshot, contracts.require_sha256, contracts.load_record_bytes,
         contracts.seal_record, native._relational_source_syntax, native._string, native._lean_list, native._need,
         owners[0].validate_reviewed_norm_graph_v3, owners[1].assess_reviewed_norm_admission_v3)
+    if source_bound:
+        from . import corpus_source_bindings
+        functions += (prepare_reviewed_source_bound_definition_realization_corpus_v2,
+            validate_reviewed_source_bound_definition_realization_corpus_v2,
+            validate_reviewed_source_bound_norm_preservation_corpus_v4, _reviewed_source_bound_preservation_policy,
+            _reviewed_bound_preservation_pins, owners[0].validate_reviewed_source_bound_norm_graph_v4,
+            corpus_source_bindings.validate_bound_norm_component_for_admission_v1)
     if definition_application_profile is not None:
         from ..syntax_core import algebra, ast
         functions += (_reviewed_definition_application_copy,
@@ -2099,17 +2143,31 @@ def _reviewed_definition_realization_callbacks(owners, *, definition_application
 def _reviewed_definition_realization_operation(preservation, graph, admission, args, kwargs, *,
         expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain, offered=None,
         instance_identity_profile=None, definition_application_profile=None,
-        physical_request_raw=None, expected_physical_request_sha256=None, physical_bridge_version=1):
+        physical_request_raw=None, expected_physical_request_sha256=None, physical_bridge_version=1,
+        source_bound=False, bound_component_inputs=None, expected_bound_component_inputs_sha256=None):
     import inspect
     if type(physical_bridge_version) is not int or physical_bridge_version not in (1, 2):
         _fail("explicit supported physical bridge version required")
     if physical_bridge_version == 2 and physical_request_raw is None:
         _fail("physical bridge V2 requires its original request")
-    _reviewed_definition_realization_policy(**({"instance_identity_profile": instance_identity_profile} if instance_identity_profile is not None else {}), **_reviewed_definition_application_kwargs(definition_application_profile))
+    if source_bound:
+        if physical_request_raw is not None:
+            _fail("source-bound realization requires its own explicit physical bridge")
+        contracts.require_sha256(expected_bound_component_inputs_sha256, "expected_bound_component_inputs_sha256")
+        if type(bound_component_inputs) is not dict:
+            _fail("complete bound component inputs required")
+    callback_options = _reviewed_definition_application_kwargs(definition_application_profile)
+    if source_bound:
+        callback_options["source_bound"] = True
+    identity_options = ({"instance_identity_profile": instance_identity_profile}
+        if instance_identity_profile is not None else {})
+    _reviewed_definition_realization_policy(**identity_options, **callback_options)
     for value, label in ((expected_preservation_sha256, "expected_preservation_sha256"),
             (expected_graph_sha256, "expected_graph_sha256"), (expected_admission_sha256, "expected_admission_sha256")):
         contracts.require_sha256(value, label)
     if reviewed_preservation_corpus_sha256(preservation) != expected_preservation_sha256:
+        if source_bound:
+            _fail("independent complete original V4 preservation pin differs")
         _fail("independent complete original V3 preservation pin differs")
     owners = _reviewed_mixed_preservation_owners()
     norm = owners[1].norm
@@ -2156,6 +2214,9 @@ def _reviewed_definition_realization_operation(preservation, graph, admission, a
             original["instance_identity_profile"] = instance_identity_profile
         if definition_application_profile is not None:
             original["definition_application_profile"] = definition_application_profile
+        if source_bound:
+            original.update(bound_component_inputs=bound_component_inputs,
+                expected_bound_component_inputs_sha256=expected_bound_component_inputs_sha256)
         if physical_owner is not None:
             original.update(physical_request_raw=physical_request_raw,
                 expected_physical_request_sha256=expected_physical_request_sha256)
@@ -2165,8 +2226,9 @@ def _reviewed_definition_realization_operation(preservation, graph, admission, a
     detached, commitment = norm._snapshot(original_inputs())
     upstream = ReviewedPreservationCorpusPreparation(detached["preservation"]["manifest_json"],
         tuple(tuple(pair) for pair in detached["preservation"]["files"]))
-    pins, callbacks = (_reviewed_definition_application_pins(owners, definition_application_profile),
-        _reviewed_definition_realization_callbacks(owners, **_reviewed_definition_application_kwargs(definition_application_profile)))
+    baseline_pins = _reviewed_definition_application_pins(owners, definition_application_profile)
+    callbacks = _reviewed_definition_realization_callbacks(owners, **callback_options)
+    source_pins = None
     offered_commitment = None if offered is None else norm._snapshot(_reviewed_preservation_offered(offered))[1]
     authority, false_flags = dict(owners[2].AUTHORITY), dict(owners[2].FALSE_FLAGS)
     if not authority or not false_flags or any(value is not False for value in [*authority.values(), *false_flags.values()]):
@@ -2181,12 +2243,14 @@ def _reviewed_definition_realization_operation(preservation, graph, admission, a
             if _sha(Path(physical_owner.__file__).read_bytes()) != physical_owner_pin:
                 _fail("physical realization evidence owner changed during operation")
         if (norm._snapshot(original_inputs())[1] != commitment or norm._snapshot(detached)[1] != commitment
-                or _reviewed_definition_application_pins(owners, definition_application_profile) != pins
-                or _reviewed_definition_realization_callbacks(owners, **_reviewed_definition_application_kwargs(definition_application_profile)) != callbacks
+                or _reviewed_definition_application_pins(owners, definition_application_profile) != baseline_pins
+                or (source_pins is not None
+                    and _reviewed_bound_preservation_pins(baseline_pins, detached["graph"]) != source_pins)
+                or _reviewed_definition_realization_callbacks(owners, **callback_options) != callbacks
                 or owners[2].AUTHORITY != authority or owners[2].FALSE_FLAGS != false_flags
                 or (offered is not None and norm._snapshot(_reviewed_preservation_offered(offered))[1] != offered_commitment)):
             _fail("realization inputs, callbacks, policy, preparation or producer changed during operation")
-        _reviewed_definition_realization_policy(**({"instance_identity_profile": instance_identity_profile} if instance_identity_profile is not None else {}), **_reviewed_definition_application_kwargs(definition_application_profile))
+        _reviewed_definition_realization_policy(**identity_options, **callback_options)
     fence()
     physical_context = None
     if physical_owner is not None:
@@ -2213,23 +2277,37 @@ def _reviewed_definition_realization_operation(preservation, graph, admission, a
                 or physical_context["ordered_unit_ids"] != [unit["unit_id"] for unit in declaration["units"]]):
             _fail("physical request source units or reviewed dependencies differ")
         fence()
-    validate_reviewed_norm_preservation_corpus_v3(upstream, detached["graph"], detached["admission"],
+    source_options = {}
+    validate_preservation = validate_reviewed_norm_preservation_corpus_v3
+    if source_bound:
+        validate_preservation = validate_reviewed_source_bound_norm_preservation_corpus_v4
+        source_options = {key: detached[key] for key in
+            ("bound_component_inputs", "expected_bound_component_inputs_sha256")}
+    validate_preservation(upstream, detached["graph"], detached["admission"],
         *detached["args"], expected_preservation_sha256=expected_preservation_sha256,
         expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
-        toolchain=toolchain, **detached["kwargs"],
-        **({"instance_identity_profile": instance_identity_profile} if instance_identity_profile is not None else {}))
+        toolchain=toolchain, **detached["kwargs"], **identity_options, **source_options)
     fence()
+    project_options = {}
+    if source_bound:
+        admission_record = detached["graph"]["admission_record"]
+        if admission_record["bound_component_inputs_sha256"] != expected_bound_component_inputs_sha256:
+            _fail("source-bound graph differs from independent bound component pin")
+        project_options["source_binding"] = {key: admission_record[key] for key in
+            ("bound_component_identity", "bound_component_inputs_sha256")}
+        source_pins = _reviewed_bound_preservation_pins(baseline_pins, detached["graph"])
+        fence()
     signature = inspect.signature(owners[1].assess_reviewed_norm_admission_v3)
     bound = signature.bind(*detached["args"], **detached["kwargs"])
     if set(bound.arguments) != set(signature.parameters):
         _fail("complete original V3 replay inputs required for realization")
     result = _reviewed_definition_realization_project(upstream, detached["graph"], detached["admission"],
-        bound.arguments, owners, pins, commitment, expected_preservation_sha256, expected_graph_sha256,
+        bound.arguments, owners, baseline_pins if source_pins is None else source_pins,
+        commitment, expected_preservation_sha256, expected_graph_sha256,
         expected_admission_sha256, toolchain,
         **({"physical_context": physical_context, "physical_context_owner_sha256": physical_owner_pin,
             "physical_bridge_version": physical_bridge_version} if physical_context is not None else {}),
-        **({"instance_identity_profile": instance_identity_profile} if instance_identity_profile is not None else {}),
-        **_reviewed_definition_application_kwargs(definition_application_profile))
+        **identity_options, **_reviewed_definition_application_kwargs(definition_application_profile), **project_options)
     result_envelope = _reviewed_preservation_offered(result)
     # Detach all buffers before another callback can retain or change the
     # serializer's temporary containers. Strings and these tuple pairs are
@@ -2288,6 +2366,40 @@ def validate_reviewed_definition_realization_corpus_v1(preparation, preservation
 __all__ += ["REVIEWED_DEFINITION_REALIZATION_SCHEMA", "REVIEWED_DEFINITION_REALIZATION_PROFILE",
     "REVIEWED_DEFINITION_REALIZATION_ROOT", "prepare_reviewed_definition_realization_corpus_v1",
     "validate_reviewed_definition_realization_corpus_v1"]
+
+
+def prepare_reviewed_source_bound_definition_realization_corpus_v2(preservation, graph, admission, *args,
+        expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain,
+        bound_component_inputs, expected_bound_component_inputs_sha256, instance_identity_profile=None,
+        definition_application_profile=None, **kwargs):
+    """Prepare realization obligations from the original independently pinned signed source history."""
+    return _reviewed_definition_realization_operation(preservation, graph, admission, args, kwargs,
+        expected_preservation_sha256=expected_preservation_sha256, expected_graph_sha256=expected_graph_sha256,
+        expected_admission_sha256=expected_admission_sha256, toolchain=toolchain,
+        instance_identity_profile=instance_identity_profile, definition_application_profile=definition_application_profile,
+        source_bound=True, bound_component_inputs=bound_component_inputs,
+        expected_bound_component_inputs_sha256=expected_bound_component_inputs_sha256)
+
+
+def validate_reviewed_source_bound_definition_realization_corpus_v2(preparation, preservation, graph, admission, *args,
+        expected_realization_sha256, expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256,
+        toolchain, bound_component_inputs, expected_bound_component_inputs_sha256, instance_identity_profile=None,
+        definition_application_profile=None, **kwargs):
+    """Replay the complete source-bound realization and require exact prepared bytes."""
+    contracts.require_sha256(expected_realization_sha256, "expected_realization_sha256")
+    if reviewed_preservation_corpus_sha256(preparation) != expected_realization_sha256:
+        _fail("independent complete source-bound realization pin differs")
+    return _reviewed_definition_realization_operation(preservation, graph, admission, args, kwargs,
+        expected_preservation_sha256=expected_preservation_sha256, expected_graph_sha256=expected_graph_sha256,
+        expected_admission_sha256=expected_admission_sha256, toolchain=toolchain,
+        instance_identity_profile=instance_identity_profile, definition_application_profile=definition_application_profile,
+        offered=preparation, source_bound=True, bound_component_inputs=bound_component_inputs,
+        expected_bound_component_inputs_sha256=expected_bound_component_inputs_sha256)
+
+
+__all__ += ["REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_SCHEMA", "REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_PROFILE",
+    "prepare_reviewed_source_bound_definition_realization_corpus_v2",
+    "validate_reviewed_source_bound_definition_realization_corpus_v2"]
 
 
 def _reviewed_definition_application_kwargs(definition_application_profile):
