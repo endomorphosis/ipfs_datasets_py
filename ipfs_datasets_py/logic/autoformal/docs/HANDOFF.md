@@ -4226,4 +4226,6 @@ The local coordinator verifies that each referenced file is regular and matches 
 
 The generic publisher prepares runtime pointers only after original pinned readback through its configured Hub client. The readback must cover the same repository, approved plan, commit, ordered file paths, and byte count. Patent and Abby pointer rehearsals remain marked as non-runtime. The selected compatibility suite passed 143 offline cases, including nine earlier false-acceptance cases. Eight cases were outside this run due to State Law import dependencies or legacy Abby fixture and script requirements. [Pointer qualification](/tmp/LIR21-pointer-readback-provenance-lepd1z2e/actual-isolated-pointer-provenance-software-qualified.json)
 
+The six separate State Law controls then passed with their tracked fixture and import files present. The pointer work has 149 passing offline cases across both runs. Two Abby checks remain unqualified because their expected assets are absent. [Additional State Law qualification](/tmp/LIR21-pointer-readback-provenance-lepd1z2e/actual-isolated-pointer-provenance-149-two-disjoint-offline-cohorts.json)
+
 Live Hub release selection, immutable remote readback, and independent statutory review remain pending. LIR-21 remains proposed.
