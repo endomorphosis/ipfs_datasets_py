@@ -672,6 +672,42 @@ def _reviewed_units(body, source_inputs, relational_inputs):
     return results, expected_artifacts
 
 
+def _reviewed_definition_dependencies(body, units):
+    """Require explicit local sense selection for typed definition references."""
+    from ..syntax_core import ast
+
+    def predicate_key(ir, symbol):
+        signature = ir["typed_expression"]["signature"]
+        declaration = next(row for row in signature["symbols"]
+                           if row["kind"] == "predicate" and row["name"] == symbol)
+        roles = next(row["roles"] for row in ir["argument_roles"] if row["symbol"] == symbol)
+        return symbol, tuple(sort["name"] for sort in declaration["domain"]), tuple(roles)
+
+    heads, definitions = {}, {}
+    parents = {unit["unit_id"]: set(unit["parent_unit_ids"]) for unit in body["units"]}
+    for unit in units:
+        if unit["kind"] != "definition":
+            continue
+        ir = unit["canonical_ir"]
+        root = ir["typed_expression"]["root"]
+        while root["kind"] == "forall":
+            root = root["arguments"][0]
+        left, right = root["arguments"]
+        identity = unit["unit_id"]
+        heads.setdefault(predicate_key(ir, left["symbol"]), set()).add(identity)
+        definitions[identity] = ir, ast.LogicNode.from_dict(right)
+
+    for identity, (ir, right) in definitions.items():
+        for term in right.walk():
+            if term.kind is not ast.NodeKind.PREDICATE:
+                continue
+            candidates = heads.get(predicate_key(ir, term.symbol), set()) - {identity}
+            if candidates:
+                _need(len(candidates & parents[identity]) == 1,
+                      "cyclic or unresolved reviewed governing dependency: "
+                      "exactly one matching local definition parent required")
+
+
 def _reviewed_body(body, source_inputs, relational_inputs):
     _keys(body, {"schema", "component_id", "provenance_kind", "interpretation_id", "governing_context",
         "units", "definition_uses", "cross_references", "permitted_uses", "unresolved", "unsupported",
@@ -774,6 +810,7 @@ def _reviewed_body(body, source_inputs, relational_inputs):
         version = ref["version"]
         _need(versions.setdefault(key, version) == version, "conflicting dependency versions")
         artifacts[key] = ref["dependency_sha256"]
+    _reviewed_definition_dependencies(body, units)
     # The artifact manifest can be acyclic even when the reviewed units are not.
     # Match the incremental owner's dependent-to-dependency relation.
     unit_edges = [

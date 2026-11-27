@@ -279,6 +279,7 @@ def _reviewed_body(body, source_inputs, relational_inputs):
         version = ref["version"]
         _need(versions.setdefault(key, version) == version, "conflicting dependency versions")
         artifacts[key] = ref["dependency_sha256"]
+    legacy._reviewed_definition_dependencies(body, units)
     # The artifact manifest can be acyclic even when the reviewed units are not.
     # Match the incremental owner's dependent-to-dependency relation.
     unit_edges = [

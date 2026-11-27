@@ -606,3 +606,285 @@ def test_reviewed_v3_refuses_governing_definition_reusing_its_predicate(sibling,
     assert kwargs["dependency_manifest"]["cycles"] == []
     with pytest.raises(ValueError, match="cyclic or unresolved reviewed governing dependency"):
         sibling.prepare_reviewed_norm_admission_v3(mixed_case["declaration"], **kwargs)
+
+
+def _reviewed_dependency_fixture_report(case, unit, request, prepare_report, report_sha256):
+    raw = fixture.wire(request)
+    pin = fixture.sha(raw)
+    report = prepare_report(raw, expected_request_sha256=pin)
+    unit["relational_request_sha256"] = pin
+    occurrence = unit["occurrence"]
+    unit["coverage"] = [{"typed_path": row["typed_path"], **{key: occurrence[key] for key in
+        ("start_char", "end_char", "start_utf8", "end_utf8")}} for row in report["structural_mapping"]]
+    case["relational_inputs"][unit["unit_id"]] = {
+        "request_raw": raw, "report": report, "expected_report_sha256": report_sha256(report),
+    }
+
+
+def _reviewed_two_definition_fixture(case, *, recursive, identity="same"):
+    declaration = case["declaration"]
+    first, duty, permission = declaration["units"]
+    head, dependency = "CoveredOfficer", "AppointedByBoard"
+    second = deepcopy(first)
+    second_id = first["source_version"]["release_id"] + "/unit-4"
+    second.update(unit_id=second_id, source_artifact_id=second_id + ":source",
+                  ir_artifact_id=second_id + ":ir")
+    declaration["units"].insert(1, second)
+
+    if recursive:
+        source_body, rhs = "a covered officer", head
+    else:
+        source_body, rhs = "an officer qualified for appointment", "QualifiedForAppointment"
+        if identity == "same":
+            first["parent_unit_ids"] = [second_id]
+    head_role = "reviewer" if identity == "different-role" else "officer"
+    is_mixed = permission.get("relational_profile") == relational.MIXED_PROFILE
+    permission_text = case["source_inputs"][permission["unit_id"]]["extracted_text"]
+    if is_mixed:
+        assert "covered officers" in permission_text
+        permission_text = permission_text.replace("covered officers", "officers appointed by the Board")
+    else:
+        assert "covered officer" in permission_text
+        permission_text = permission_text.replace("covered officer", "officer appointed by the Board")
+    second_text = f"For this fictional Act, an officer appointed by the Board means {source_body}."
+    if identity == "different-sort":
+        assert is_mixed
+        second_text = "For this fictional Act, a Board appointment event means one qualified for appointment."
+        permission_text = ("For every officer, supervisor, event and time, if the event is a Board "
+                           "appointment, the officer may inspect the register under the supervisor then.")
+    for unit, source_text in (
+        (second, second_text),
+        (permission, permission_text),
+    ):
+        unit_id = unit["unit_id"]
+        raw = source_text.encode("utf-8")
+        digest = fixture.sha(raw)
+        version = sources.build_source_version(
+            source_id=unit_id, release_id=first["source_version"]["release_id"],
+            edition=first["source_version"]["edition"], provision_id=unit_id,
+            raw_bytes=raw, expected_raw_sha256=digest, extracted_text=source_text,
+            expected_extracted_sha256=digest, extraction_profile="identity/v1",
+            normalization_profile="identity/v1", media_type="text/plain",
+        )
+        unit["source_version"] = version
+        unit["occurrence"] = sources.build_source_occurrence(
+            version, expected_raw_sha256=digest, extracted_text=source_text,
+            expected_extracted_sha256=digest, start_char=0, end_char=len(source_text),
+            start_utf8=0, end_utf8=len(raw),
+        )
+        case["source_inputs"][unit_id] = {"raw_bytes": raw, "extracted_text": source_text}
+
+    builder = relational_fixture.Builder()
+    second_request = relational_fixture.request_for(
+        builder, builder.binary("iff", builder.atom(dependency, "officer"), builder.atom(rhs, "officer")),
+        [(dependency, (head_role,)), (rhs, ("officer",))], [("officer", "forall")],
+    )
+    if identity == "different-sort":
+        second["relational_profile"] = relational.MIXED_PROFILE
+        event = signatures.LogicSort("EventFrame")
+        sort = event.to_dict()
+        wire = second_request["expression"]
+        wire["signature"]["sorts"] = mixed_request()["expression"]["signature"]["sorts"]
+        for symbol in wire["signature"]["symbols"]:
+            symbol["domain"] = [sort]
+        root = wire["root"]
+        root["binders"][0]["sort"] = sort
+        for atom in root["arguments"][0]["arguments"]:
+            atom["arguments"][0]["sort"] = sort
+        second_request.update(schema=relational.MIXED_REQUEST_SCHEMA, profile=relational.MIXED_PROFILE,
+                              expression=ast.TypedExpression.from_dict(
+                                  dict(wire, content_digest="")).to_dict())
+        prepare_second = relational.prepare_mixed_relational_norm_v1
+        second_sha = relational.mixed_relational_norm_report_sha256
+    else:
+        prepare_second = relational.prepare_relational_norm_v1
+        second_sha = relational.relational_norm_report_sha256
+    _reviewed_dependency_fixture_report(case, second, second_request, prepare_second, second_sha)
+
+    duty_use, permission_use = declaration["definition_uses"]
+    assert duty_use["use_unit_id"] == duty["unit_id"] and duty_use["definition_unit_id"] == first["unit_id"]
+    assert permission_use["use_unit_id"] == permission["unit_id"]
+    if identity == "different-sort":
+        request = mixed_request(covered_sort="EventFrame")
+    else:
+        request = json.loads(case["relational_inputs"][permission["unit_id"]]["request_raw"])
+    for typed_path in permission_use["target_typed_paths"]:
+        atom = request["expression"]
+        for token in typed_path.split("/")[1:]:
+            atom = atom[int(token)] if type(atom) is list else atom[token]
+        assert atom["kind"] == "predicate" and atom["symbol"] == head
+        atom["symbol"] = dependency
+    for row in request["expression"]["signature"]["symbols"]:
+        if row["name"] == head:
+            row["name"] = dependency
+    for row in request["argument_roles"]:
+        if row["symbol"] == head:
+            row.update(symbol=dependency, roles=[head_role])
+    request["expression"] = ast.TypedExpression.from_dict(
+        dict(request["expression"], content_digest="")).to_dict()
+    if is_mixed:
+        prepare_report = relational.prepare_mixed_relational_norm_v1
+        report_sha256 = relational.mixed_relational_norm_report_sha256
+    else:
+        prepare_report = relational.prepare_relational_norm_v1
+        report_sha256 = relational.relational_norm_report_sha256
+    _reviewed_dependency_fixture_report(case, permission, request, prepare_report, report_sha256)
+    permission_use.update(definition_unit_id=second_id, defined_predicate=dependency,
+                          use_occurrence_cid=permission["occurrence"]["record_cid"])
+    fixture.reviewed_refresh_manifest_v2(case)
+    assert case["manifest"]["cycles"] == []
+    return first, second
+
+
+@pytest.mark.parametrize("domain", ["v2", "v3"])
+@pytest.mark.parametrize("recursive", [True, False], ids=["mutual-cycle", "acyclic-parent-missing"])
+def test_reviewed_refuses_unbound_typed_definition_dependencies(
+        sibling, mixed_case, v2_saved, domain, recursive):
+    if domain == "v3":
+        case = mixed_case
+        prepare_admission = sibling.prepare_reviewed_norm_admission_v3
+    else:
+        case = cloned(v2_saved[0])
+        prepare_admission = legacy.prepare_reviewed_norm_admission_v2
+    first, second = _reviewed_two_definition_fixture(case, recursive=recursive)
+    if not recursive:
+        first["parent_unit_ids"] = []
+        fixture.reviewed_refresh_manifest_v2(case)
+    assert first["parent_unit_ids"] == second["parent_unit_ids"] == []
+    assert case["manifest"]["cycles"] == []
+
+    try:
+        case["preparation"] = prepare_admission(case["declaration"], **prepare_args(case))
+    except ValueError as error:
+        assert "reviewed governing dependency" in str(error)
+        return
+
+    if domain == "v3":
+        refresh_signed_reviews(case, sibling)
+        assert_signatures_valid(case)
+        evaluated = assess(sibling, case)
+    else:
+        fixture.reviewed_refresh_signed_preparation_v2(legacy, case)
+        assert_signatures_valid(case)
+        evaluated = fixture.assess_reviewed_fixture_v2(legacy, case)
+    assert evaluated["semantic_use_eligible"] is False, (
+        domain, recursive, "fresh independently valid reviews admitted an unbound typed dependency",
+        evaluated["blockers"],
+    )
+
+
+@pytest.mark.parametrize("identity", ["same", "different-role", "different-sort"])
+def test_reviewed_v3_preserves_acyclic_typed_definition_dependency_in_graph(sibling, mixed_case, identity):
+    from ipfs_datasets_py.logic.autoformal import corpus_norm_definition_adapter as graph_owner
+
+    first, second = _reviewed_two_definition_fixture(mixed_case, recursive=False, identity=identity)
+    first_id, second_id = first["unit_id"], second["unit_id"]
+    expected_roles = ["reviewer"] if identity == "different-role" else ["officer"]
+    expected_domain = ["EventFrame"] if identity == "different-sort" else ["Object"]
+    for unit_id, roles, domain in (
+        (first_id, ["officer"], ["Object"]), (second_id, expected_roles, expected_domain),
+    ):
+        report = mixed_case["relational_inputs"][unit_id]["report"]
+        actual_roles = next(row["roles"] for row in report["argument_roles"]
+                            if row["symbol"] == "AppointedByBoard")
+        symbol = next(row for row in report["typed_expression"]["signature"]["symbols"]
+                      if row["name"] == "AppointedByBoard")
+        assert actual_roles == roles and [sort["name"] for sort in symbol["domain"]] == domain
+    mixed_case["preparation"] = prepare(sibling, mixed_case)
+    refresh_signed_reviews(mixed_case, sibling)
+    assert_signatures_valid(mixed_case)
+    admission = assess(sibling, mixed_case)
+    assert admission["semantic_use_eligible"] is admission["fixture_only"] is True
+    assert admission["blockers"] == []
+    args, kwargs = fixture.reviewed_assessment_arguments_v2(sibling, mixed_case)
+    pin = sibling.norm_content_adjudication_sha256(admission)
+    graph = graph_owner.build_reviewed_norm_graph_v3(admission, *args, expected_admission_sha256=pin, **kwargs)
+    assert graph_owner.validate_reviewed_norm_graph_v3(
+        graph, admission, *args, expected_graph_sha256=graph_owner.norm_definition_graph_sha256(graph),
+        expected_admission_sha256=pin, **kwargs) == graph
+
+    records = {row["unit_id"]: row for row in graph["unit_records"]}
+    expected_parents = [second_id] if identity == "same" else []
+    assert records[first_id]["parent_unit_ids"] == expected_parents
+    assert records[second_id]["parent_unit_ids"] == []
+    nodes = {node["stable_id"]: node["record_cid"] for node in graph["graph"]["nodes"]
+             if node["node_type"] == "definition_assertion"}
+    definition_links = [(edge["src_cid"], edge["dst_cid"]) for edge in graph["graph"]["edges"]
+                        if edge["relation"] == "CONTAINS"
+                        and edge["src_cid"] in nodes.values() and edge["dst_cid"] in nodes.values()]
+    assert definition_links == [(nodes[parent], nodes[first_id]) for parent in expected_parents]
+    assert [(row["definition_unit_id"], row["defined_predicate"]) for row in graph["definition_use_records"]] == [
+        (first_id, "CoveredOfficer"), (second_id, "AppointedByBoard"),
+    ]
+    assert graph["semantic_use_eligible"] is graph["graph"]["formalized"] is False
+    assert not any(graph["authority"].values())
+
+
+@pytest.mark.parametrize("selection", ["one", "both"])
+def test_reviewed_v3_same_typed_head_requires_one_declared_parent(sibling, mixed_case, selection):
+    first, second = _reviewed_two_definition_fixture(mixed_case, recursive=False)
+    declaration = mixed_case["declaration"]
+    permission = declaration["units"][-1]
+    release = first["source_version"]["release_id"]
+    edition = first["source_version"]["edition"]
+    alternative, additional_use = deepcopy(second), deepcopy(permission)
+    for unit, unit_id, text in (
+        (alternative, release + "/unit-5", "In this fictional provision, an officer appointed by the "
+         "Board means an officer certified for appointment."),
+        (additional_use, release + "/unit-6", "This second fictional provision also provides: "
+         + mixed_case["source_inputs"][permission["unit_id"]]["extracted_text"]),
+    ):
+        raw = text.encode("utf-8")
+        digest = fixture.sha(raw)
+        version = sources.build_source_version(
+            source_id=unit_id, release_id=release, edition=edition, provision_id=unit_id,
+            raw_bytes=raw, expected_raw_sha256=digest, extracted_text=text, expected_extracted_sha256=digest,
+            extraction_profile="identity/v1", normalization_profile="identity/v1", media_type="text/plain",
+        )
+        occurrence = sources.build_source_occurrence(
+            version, expected_raw_sha256=digest, extracted_text=text, expected_extracted_sha256=digest,
+            start_char=0, end_char=len(text), start_utf8=0, end_utf8=len(raw),
+        )
+        unit.update(unit_id=unit_id, source_artifact_id=unit_id + ":source", ir_artifact_id=unit_id + ":ir",
+                    source_version=version, occurrence=occurrence)
+        mixed_case["source_inputs"][unit_id] = {"raw_bytes": raw, "extracted_text": text}
+
+    symbol, term = "AppointedByBoard", "CertifiedForAppointment"
+    builder = relational_fixture.Builder()
+    definition = relational_fixture.request_for(
+        builder, builder.binary("iff", builder.atom(symbol, "officer"), builder.atom(term, "officer")),
+        [(symbol, ("officer",)), (term, ("officer",))], [("officer", "forall")],
+    )
+    _reviewed_dependency_fixture_report(
+        mixed_case, alternative, definition, relational.prepare_relational_norm_v1,
+        relational.relational_norm_report_sha256,
+    )
+    original_request = json.loads(mixed_case["relational_inputs"][permission["unit_id"]]["request_raw"])
+    _reviewed_dependency_fixture_report(
+        mixed_case, additional_use, original_request, relational.prepare_mixed_relational_norm_v1,
+        relational.mixed_relational_norm_report_sha256,
+    )
+    declaration["units"].insert(2, alternative)
+    declaration["units"].append(additional_use)
+    declaration["definition_uses"].append(dict(
+        declaration["definition_uses"][-1], definition_unit_id=alternative["unit_id"],
+        use_unit_id=additional_use["unit_id"], use_occurrence_cid=additional_use["occurrence"]["record_cid"],
+    ))
+    first["parent_unit_ids"] = [alternative["unit_id"]]
+    if selection == "both":
+        first["parent_unit_ids"].append(second["unit_id"])
+
+    fixture.reviewed_refresh_manifest_v2(mixed_case)
+    assert mixed_case["manifest"]["cycles"] == []
+    if selection == "both":
+        with pytest.raises(ValueError, match="reviewed governing dependency"):
+            sibling.prepare_reviewed_norm_admission_v3(declaration, **prepare_args(mixed_case))
+    else:
+        mixed_case["preparation"] = prepare(sibling, mixed_case)
+        refresh_signed_reviews(mixed_case, sibling)
+        assert_signatures_valid(mixed_case)
+        report = assess(sibling, mixed_case)
+        assert report["semantic_use_eligible"] is report["fixture_only"] is True
+        assert report["blockers"] == []
+        assert report["declaration_sha256"] == sibling.norm_content_adjudication_sha256(declaration)
+        assert mixed_case["preparation"]["declaration"]["units"][0]["parent_unit_ids"] == [alternative["unit_id"]]
