@@ -37099,6 +37099,79 @@
       "root": "artifact_workspace",
       "scope": "Lean JSON diagnostics and a separate Native namespaced declaration check on fictional Lean source.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase8_result_cache_replacement_preservation_ordinary11_20261127",
+      "closed_runtime_facts": {
+        "Source_resource_parent_closed": true,
+        "actual_READ4": {
+          "bytes": 8850,
+          "path": "/tmp/Root-result-cache-owned-existing-route-L4Wyme59/read4-controls/actual-output/actual-D27-observed-D-root-initializer-Source-READ-v01-small-closeout.json",
+          "sha256": "ee3d2db43d42c04e529b071ad9b927c590b551322b5a6b71400858fdb9361b88"
+        },
+        "actual_Source2": {
+          "bytes": 66277,
+          "path": "/tmp/Root-result-cache-owned-existing-route-L4Wyme59/source2-output/actual-existing-two-Python-code-CAS-receipt.json",
+          "sha256": "0ec62fdbcc01a96ff72924e98ec322a4c881c837509f1f1b66061f8f2634c635"
+        },
+        "actual_ordinary_qualification": {
+          "bytes": 4153,
+          "path": "/tmp/Root-result-cache-owned-existing-route-L4Wyme59/actual-ordinary11-qualified.json",
+          "sha256": "04a6c1491461f8b72a93b950390a467db696c26d3b929dc94b35825b6ba8151d"
+        },
+        "actual_ordinary_report": {
+          "bytes": 900188,
+          "path": "/tmp/Root-result-cache-owned-existing-route-L4Wyme59/ordinary11-controls-v02/actual-output/complete-frozen-local-D-Phase8-result-cache-replacement-ordinary11-existing-owner-report.json",
+          "sha256": "6a45a78f66423bfe9fe56c700a6ee015d9a8b90902712b261b7e543628e8119c"
+        },
+        "actual_raw_JUnit": {
+          "bytes": 2264,
+          "logical_name": "junit.xml",
+          "path": "/tmp/Root-result-cache-owned-existing-route-L4Wyme59/ordinary11-controls-v02/actual-output/Phase8-result-cache-replacement-ordinary11-run-result0-output1.bin",
+          "sha256": "8037661bdccdd3d0db5d7ac36447738f88dea55f722b00947aabdf4ad8c107e8"
+        },
+        "collect_call_JUnit_order_match": true,
+        "errors": 0,
+        "evidence_ordinal": 582,
+        "exact_local_freeze": {
+          "bytes": 3589,
+          "path": "/tmp/Root-result-cache-owned-existing-route-L4Wyme59/source2-freeze.json",
+          "sha256": "3bf02c7eee22675bcffd01d4d8bd979d9e4712d7b3bdf7d212b46ab7102db6ea"
+        },
+        "failed_factory_preserves_new_same_lineage_artifact": true,
+        "failed_factory_still_evicts_unchanged_artifact": true,
+        "failures": 0,
+        "new_cases": 2,
+        "ordinary_cases": 11,
+        "ordinary_test_functions": 11,
+        "prior_cases": 9,
+        "prior_verified_guide": {
+          "bytes": 3578,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/lean-json-diagnostics/actual-Guide581-four-docs-three-FF-publication.json",
+          "sha256": "0e5e9a2bc004e7ba1c1a6b681afe50a8890c557433b39706aca55971363ec9d6"
+        },
+        "qualified_A_head": "fae7981fa576817536a3c7aa62c5d28dc417f214",
+        "qualified_D_head": "72e5160bf588f8c689ecbb11c658acc2bc3c9a97",
+        "qualified_D_tree": "b013f7af9eb02e9c3bd43dd90def88a33fee3607",
+        "qualified_commit_blobs": {
+          "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_evaluation_cache.py": "0df35c4ec921e083ee508dd9b4d5f85877366011",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_evaluation_cache.py": "c99cc23d7322a703ef8eeeaaf898007fe85c895b"
+        },
+        "related_catalog_component": "reviewed-evaluation-and-retention",
+        "schema": "phase8-result-cache-replacement-preservation-engineering-evidence/v1",
+        "skipped": 0,
+        "task": "LIR-23",
+        "task_status_changed": false
+      },
+      "evidence_ordinal": 582,
+      "id": "phase8-result-cache-replacement-preservation-ordinary11-evidence582-20261127",
+      "observed_bytes": 3035,
+      "observed_sha256": "d7d4ba88fe1a5c4288e56e28c9467fc39a2e3ff40ae21829cf389f533e53d363",
+      "path": "/tmp/result-cache-existing-guide582-compose-QvKKkYWq/guide582-result-cache-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Software qualification of result-cache replacement preservation under factory failure.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }
