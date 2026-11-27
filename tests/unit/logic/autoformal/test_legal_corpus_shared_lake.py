@@ -3405,3 +3405,91 @@ def test_physical_realization_api_refuses_none_request_on_healthy_legacy_control
             shared.validate_reviewed_physical_definition_realization_corpus_v1(
                 offered, original, control["graph"], control["admission"], *control["args"],
                 expected_realization_sha256=shared.reviewed_preservation_corpus_sha256(offered), **options)
+
+
+def test_reviewed_source_bound_preservation_v4_retains_signed_mixed_graph_and_children(tmp_path):
+    from ipfs_datasets_py.logic.autoformal import corpus_norm_definition_adapter as graph_owner
+    from ipfs_datasets_py.logic.autoformal import corpus_source_bindings as source_owner
+    from ipfs_datasets_py.logic.autoformal import legal_reviewed_norm_admission_v3 as admission_owner
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_span_consumer_binding as consumer
+    from tests.unit.logic.autoformal.test_corpus_source_bindings import _lir02_arguments, _lir02_complete_case
+
+    fixture = _lir02_complete_case(tmp_path, source_owner, mixed=True)
+    source_inputs = _lir02_arguments(fixture)
+    source_report = source_owner.prepare_bound_norm_component_v2(**source_inputs)
+    args, replay = fixture["norm_fixture"].reviewed_assessment_arguments_v2(admission_owner, fixture["case"])
+    assert args[0] == source_report["norm_preparation"]
+    assert replay["preparation_inputs"] == source_inputs["norm_preparation_inputs"]
+    admission = admission_owner.assess_reviewed_norm_admission_v3(*args, **replay)
+    assert admission["fixture_only"] is True and admission["semantic_use_eligible"] is True
+    assert {"formalization", "proof_obligation"} <= set(admission["permitted_uses"])
+    bound_inputs = {
+        "report": source_report,
+        "expected_report_sha256": admission_owner.norm.norm_review_sha256(source_report),
+        "preparation_inputs": source_inputs,
+    }
+    bound_sha256 = consumer.reviewed_admission_inputs_sha256(bound_inputs)
+    graph_options = {
+        "expected_admission_sha256": admission_owner.norm_content_adjudication_sha256(admission),
+        **replay,
+    }
+    graph = graph_owner.build_reviewed_source_bound_norm_graph_v4(
+        admission, *args, bound_component_inputs=bound_inputs,
+        expected_bound_component_inputs_sha256=bound_sha256, **graph_options,
+    )
+    preservation_options = {
+        "expected_graph_sha256": graph_owner.norm_definition_graph_sha256(graph), "toolchain": TOOLCHAIN,
+        "instance_identity_profile": shared.REVIEWED_SOURCE_USE_IDENTITY_PROFILE, **graph_options,
+    }
+    prepared = shared.prepare_reviewed_source_bound_norm_preservation_corpus_v4(
+        graph, admission, *args, bound_component_inputs=bound_inputs,
+        expected_bound_component_inputs_sha256=bound_sha256, **preservation_options,
+    )
+    manifest = prepared.to_dict()
+    files = dict(prepared.files)
+    bindings = json.loads(files["reviewed-input-bindings.json"])
+    assert manifest["schema"] == "legal-corpus-reviewed-preservation-preparation/v4"
+    assert manifest["profile"] == shared.REVIEWED_SOURCE_BOUND_SOURCE_USE_PRESERVATION_PROFILE
+    assert bindings["schema"] == "legal-corpus-reviewed-preservation-bindings/v4"
+    identity = graph["admission_record"]["bound_component_identity"]
+    assert identity["bound_component_report_sha256"] == bound_inputs["expected_report_sha256"]
+    assert identity["binding_manifest_sha256"] == source_report["binding_manifest_sha256"]
+    for record in (manifest, bindings):
+        assert record["bound_component_identity"] == identity
+        assert record["bound_component_inputs_sha256"] == bound_sha256
+        assert record["reviewed_graph_sha256"] == preservation_options["expected_graph_sha256"]
+        assert record["definition_use_record_cids"] == [entry["record_cid"] for entry in graph["definition_use_records"]]
+    for pins in (graph["producer_pins"], identity["producer_pins"]):
+        assert all(manifest["producer_pins"][path] == digest for path, digest in pins.items())
+    assert bindings["units"] == manifest["units"]
+    assert len(manifest["units"]) == len(graph["unit_records"]) == 3
+    assert [unit["unit_id"] for unit in manifest["units"]] == [unit["unit_id"] for unit in graph["unit_records"]]
+    assert [unit["child_family"] for unit in manifest["units"]] == ["deontic_fol", "deontic_fol", "tdfol"]
+    assert len(manifest["preservation_obligations"]) == len(set(manifest["preservation_obligations"])) == 15
+    for unit in manifest["units"]:
+        child = files[unit["child_manifest_path"]]
+        assert sha(child.encode("utf-8")) == unit["child_manifest_sha256"]
+        assert json.loads(child)["theorems"] == unit["preservation_obligations"]
+        assert len(unit["original_child_files"]) == 7
+        for entry in unit["original_child_files"]:
+            assert sha(files[entry["companion_path"]].encode("utf-8")) == entry["sha256"]
+            if entry["original_path"] == unit["instance_module"].replace(".", "/") + ".lean":
+                assert files[entry["original_path"]] == files[entry["companion_path"]]
+    assert manifest["file_sha256"] == {name: sha(body.encode("utf-8")) for name, body in files.items()}
+    assert manifest["preparation_only"] is True and manifest["semantic_use_eligible"] is False
+    assert manifest["lean_compilation_status"] == manifest["proof_status"] == "not_executed"
+    assert not any(manifest["authority"].values())
+    assert manifest["training_mask"] == manifest["evaluation_gold_mask"] == 0
+
+    assert shared.validate_reviewed_source_bound_norm_preservation_corpus_v4(
+        prepared, graph, admission, *args, expected_preservation_sha256=shared.reviewed_preservation_corpus_sha256(prepared),
+        bound_component_inputs=bound_inputs, expected_bound_component_inputs_sha256=bound_sha256,
+        **preservation_options,
+    ) == prepared
+    with pytest.raises(ValueError):
+        shared.prepare_reviewed_norm_preservation_corpus_v3(graph, admission, *args, **preservation_options)
+    with pytest.raises(ValueError):
+        shared.prepare_reviewed_source_bound_norm_preservation_corpus_v4(
+            graph, admission, *args, bound_component_inputs=bound_inputs,
+            expected_bound_component_inputs_sha256="0" * 64, **preservation_options,
+        )
