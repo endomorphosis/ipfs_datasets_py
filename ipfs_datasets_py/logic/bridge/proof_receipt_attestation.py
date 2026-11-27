@@ -478,7 +478,11 @@ class TrustedProofReceipt:
             backend_version=result.backend_version,
             assumptions=result.assumptions,
             translation_ceiling=result.translation_ceiling,
-            metadata=result.metadata,
+            metadata=(
+                result.metadata if "bounds" in result.metadata else FrozenMap({
+                    **result.metadata.to_dict(), "bounds": result.bounds.to_dict(),
+                })
+            ),
         )
 
 

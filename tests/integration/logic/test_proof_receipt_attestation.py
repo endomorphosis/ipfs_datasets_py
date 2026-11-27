@@ -629,3 +629,112 @@ def test_request_repr_redacts_witness() -> None:
     assert "redacted" in text
     assert SECRET not in text
     assert "PrivateWitness redacted" in repr(_witness())
+
+
+def _execution_bound_receipt_expectation(result, receipt):
+    return {
+        "tree_id": "tree:repo@abc123",
+        "property_id": "property:functional-correctness",
+        "backend_id": result.backend_id,
+        "authority": result.authority.value,
+        "assumptions": list(result.assumptions),
+        "bounds": result.bounds.to_dict(),
+        "source_result_digest": result.digest,
+        "content_id": receipt.content_id,
+    }
+
+
+def test_receipt_factory_preserves_typed_execution_bounds_without_metadata_copy():
+    from ipfs_datasets_py.logic.ir_core.claims import FrozenMap
+    from ipfs_datasets_py.logic.verification_api import LogicVerificationAPI, VerificationStatus
+
+    result = _theorem(
+        bounds=ExecutionBounds(timeout_ms=1500, max_steps=33,
+                               max_memory_bytes=67108864, max_output_bytes=4096),
+        metadata=FrozenMap({"fixture": "fictional-typed-bounds-no-prover-execution"}),
+    )
+    before_metadata = result.metadata.to_dict()
+    before_digest = result.digest
+    receipt = _receipt(result)
+    assert receipt.metadata.to_dict().get("bounds") == result.bounds.to_dict()
+    assert result.metadata.to_dict() == before_metadata
+    assert result.digest == receipt.source_result_digest == before_digest
+    assert receipt.underlying_authority is result.authority
+    assert receipt.translation_ceiling is result.translation_ceiling
+    response = LogicVerificationAPI().verify_receipt(
+        receipt, expectation=_execution_bound_receipt_expectation(result, receipt),
+    )
+    assert response.status is VerificationStatus.SUCCEEDED
+    assert response.result["valid"] is True
+
+
+@pytest.mark.parametrize("declared", [{}, None, {"timeout_ms": 1000, "max_steps": 100}],
+                         ids=["empty", "null", "partial"])
+def test_receipt_factory_preserves_explicit_metadata_bounds_exactly(declared):
+    from ipfs_datasets_py.logic.ir_core.claims import FrozenMap
+
+    metadata = {"bounds": copy.deepcopy(declared), "unrelated": "retained"}
+    result = _theorem(metadata=FrozenMap(metadata))
+    before_digest = result.digest
+    receipt = _receipt(result)
+    assert receipt.metadata.to_dict() == metadata
+    assert result.metadata.to_dict() == metadata
+    assert receipt.source_result_digest == result.digest == before_digest
+
+
+def test_declared_conflicting_bounds_are_not_rewritten_into_valid_evidence():
+    from ipfs_datasets_py.logic.ir_core.claims import FrozenMap
+    from ipfs_datasets_py.logic.verification_api import LogicVerificationAPI, VerificationStatus
+
+    result = _theorem(metadata=FrozenMap({"bounds": {"max_steps": 999}}))
+    receipt = _receipt(result)
+    assert receipt.metadata.to_dict()["bounds"] == {"max_steps": 999}
+    response = LogicVerificationAPI().verify_receipt(
+        receipt, expectation=_execution_bound_receipt_expectation(result, receipt),
+    )
+    assert response.status is VerificationStatus.INVALID
+    assert response.result["valid"] is False
+
+
+def test_adding_execution_bounds_does_not_upgrade_missing_translation_authority():
+    from ipfs_datasets_py.logic.verification_api import LogicVerificationAPI, VerificationStatus
+
+    result = _theorem(translation_ceiling=EvidenceAuthority.NONE)
+    receipt = _receipt(result)
+    assert receipt.translation_ceiling is EvidenceAuthority.NONE
+    response = LogicVerificationAPI().verify_receipt(
+        receipt, expectation=_execution_bound_receipt_expectation(result, receipt),
+    )
+    assert response.status is VerificationStatus.INVALID
+    assert response.result["valid"] is False
+
+
+def test_old_receipt_without_bounds_keeps_its_serialized_content_identity():
+    from ipfs_datasets_py.logic.bridge.proof_receipt_attestation import (
+        TRUSTED_PROOF_RECEIPT_SCHEMA_VERSION,
+    )
+    from ipfs_datasets_py.logic.ir_core.claims import stable_digest
+
+    result = _theorem()
+    old_wire = {
+        "receipt_id": "receipt:fictional-legacy-no-bounds",
+        "theorem_id": "theorem:sort-correct",
+        "property_id": "property:functional-correctness",
+        "translation_receipt_id": "translation:fol-to-lean:v1",
+        "tree_id": "tree:repo@abc123",
+        "policy_id": "policy:formal@1",
+        "underlying_authority": result.authority.value,
+        "underlying_status": result.status.value,
+        "source_result_digest": result.digest,
+        "backend_id": result.backend_id,
+        "backend_version": result.backend_version,
+        "assumptions": list(result.assumptions),
+        "translation_ceiling": result.translation_ceiling.value,
+        "metadata": {"legacy": "fictional-saved-receipt"},
+        "schema_version": TRUSTED_PROOF_RECEIPT_SCHEMA_VERSION,
+    }
+    content_id = stable_digest(old_wire)
+    restored = TrustedProofReceipt.from_dict({**copy.deepcopy(old_wire), "content_id": content_id})
+    assert restored.to_dict() == old_wire
+    assert restored.content_id == content_id
+    assert "bounds" not in restored.metadata
