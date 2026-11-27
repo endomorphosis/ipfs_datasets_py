@@ -18,17 +18,34 @@ UA = (
     "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 "
     "legal-corpora-collector/1.0 (research; source=https://www.congreso.gob.gt/)"
 )
+# Cap/Artículo v2: OCR mixed-case, ALL-CAPS ordinals, Acuerdo PRIMERO: clauses
+ART_WORD = (
+    r"(?:A[Rr][Tt][IÍií1l][Cc][UuÚú][Ll][Oo]|ART[IÍ]CULO|ARTICULO|"
+    r"Art[íiÍI]c[uúU]lo|Articulo|Artlculo|Artculo|ArtIculo|Artfculo|Art\.)"
+)
+ORD = (
+    r"(?:[Uu][Nn][Ii][Cc][Oo]|[Pp][Rr][Ii][Mm][Ee][Rr][Oo]|"
+    r"[Ss][Ee][Gg][Uu][Nn][Dd][Oo]|[Tt][Ee][Rr][Cc][Ee][Rr][Oo]|"
+    r"[Cc][Uu][Aa][Rr][Tt][Oo]|[Qq][Uu][Ii][Nn][Tt][Oo]|"
+    r"[Ss][Ee][Xx][Tt][Oo]|[Ss][EeÉé][Pp][Tt][Ii][Mm][Oo]|"
+    r"[Oo][Cc][Tt][Aa][Vv][Oo]|[Nn][Oo][Vv][Ee][Nn][Oo]|"
+    r"[Dd][EeÉé][Cc][Ii][Mm][Oo])"
+)
+NUM = rf"(?:[\dOo]+|[IlÍí](?=[\s.\-–:_;,~'\"°º])|[IVXLCIl]{{1,8}}|{ORD})"
+SUF = r"[A-Za-zº°o.\-_~'\"]{0,6}"
+BIS = r"(?:\s*(?:bis|ter|qu[aá]ter|quinquies|sexies|transitori[oa]))?"
+LOOK = r"(?=\s*[.\-–:_;,~·'\"°º]|[\s]|$)"
+ANCH = r"(?:^|(?<=\n)|(?<=[ \t]{2})|(?<=['\"“”«»]))"
+CAP_WORD = (
+    r"(?:CAP[IÍ]TULO|CAPITULO|Cap[iíÍI]tulo|Capitulo|"
+    r"T[IÍ]TULO|TITULO|T[iíÍI]tulo|Titulo|"
+    r"SECCI[OÓ]N|SECCION|Secci[oó]n|Seccion|TiTULO|LIBRO|Libro)"
+)
+PUNTO = rf"({ORD}\s*[:.\-–])"
 ART = re.compile(
-    r"(?m)(?:^|(?<=\n)|(?<=[ \t]{2}))"
-    r"((?:ART[IÍ]CULO|ARTICULO|Art[íi]culo|Articulo|Artlculo|Artculo|ArtIculo|Art\.)\s*"
-    r"(?:[\d]+|[IVXLC]{1,6}|[Uu]nico|[Pp]rimero|[Ss]egundo|[Tt]ercero|"
-    r"[Cc]uarto|[Qq]uinto|[Ss]exto|[Ss][eé]ptimo|[Oo]ctavo|[Nn]oveno|[Dd][eé]cimo)"
-    r"[A-Za-zº°o.\-]*(?:\s*(?:bis|ter|qu[aá]ter|quinquies|sexies|transitori[oa]))?"
-    r"|"
-    r"(?:CAP[IÍ]TULO|CAPITULO|Cap[ií]tulo|Capitulo|T[IÍ]TULO|TITULO|T[ií]tulo|Titulo|"
-    r"SECCI[OÓ]N|SECCION|Secci[oó]n|Seccion|TiTULO)\s+"
-    r"(?:[IVXLC]{1,8}|\d+[º°o.]?|[Pp]rimero|[Ss]egundo|[Uu]nico))"
-    r"(?=\s*[.\-–:]|\s|$)"
+    rf"(?m){ANCH}(({ART_WORD})[\s·.•_\-–—]*{NUM}{SUF}{BIS}"
+    rf"|{CAP_WORD}[\s·.•_\-–—]+(?:[IVXLC]{{1,8}}|\d+[º°o.]?|{ORD})"
+    rf"|{PUNTO}){LOOK}"
 )
 log = logging.getLogger("gt")
 SKIP_SUB = ("/actas_de_sesiones/", "/iniciativas/", "/dictamen/")

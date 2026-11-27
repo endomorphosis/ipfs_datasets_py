@@ -116,3 +116,18 @@ A search for a line beginning `SCHEMA_VERSION` under `national_collectors/` retu
 ## This tree was not deleted
 
 This tree was not deleted. No harvested script was moved or rewritten. `national_collectors` was not edited. `module_index_v1.py` and `law_v1.py` were not edited by this record.
+
+## 2026-11-26: harvested collectors are shims to national_collectors
+
+`shared/` no longer carries a second copy of any collector that has a
+`national_collectors/` counterpart. Each such file is a small exec shim that
+runs the canonical `national_collectors/<name>` source in its own namespace
+(the same mechanism the shared helpers use since 08cfba29a), so the catalog's
+collector file names, `collector_path_for()`, `python shared/<name>` and
+load-by-path callers are unchanged. The facts recorded above about
+`shared/collect_be.py` describe the file before this change; its behavior is
+the canonical `national_collectors/collect_be.py`.
+
+Files whose harvested implementation still differs from the national one are
+listed in `tests/unit/legal_scrapers/test_harvested_collector_shims.py`
+(`STILL_DIVERGENT`) until their behavior is merged.

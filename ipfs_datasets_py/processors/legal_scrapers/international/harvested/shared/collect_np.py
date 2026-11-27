@@ -1,117 +1,34 @@
-#!/usr/bin/env python3
-"""Nepal: lawcommission.gov.np / Nepal Law Commission official acts (HTML/PDF)."""
-from __future__ import annotations
-import logging, re, sys, time
-from pathlib import Path
-from urllib.parse import urljoin
-from bs4 import BeautifulSoup
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import existing_ids, log_failure, utcnow, write_summary
-from world_lib import cdx_urls, env_int, fetch_official, live_get, save_instrument, setup_log, slug_id
+"""Compatibility shim for the harvested collector ``collect_np``.
 
-CC, COUNTRY, LANG = "np", "Nepal", "ne"
-SOURCE_TYPE = "nepal_law_commission"
-LICENSE = (
-    "Nepal Law Commission (lawcommission.gov.np). Official texts prevail. Not legal advice."
-)
-UA = "legal-corpora-collector/1.0 (research; source=https://www.lawcommission.gov.np/)"
-ART = re.compile(r"(?im)^\s*((?:\d+\.\s*|Section\s+\d+|दफा\s*\d+))\b")
-log = logging.getLogger("np")
+The one maintained implementation is
+``ipfs_datasets_py/processors/legal_scrapers/national_collectors/collect_np.py``.
+The harvested runtime, ``python collect_np.py`` and load-by-path callers keep using this
+path, so instead of shipping a second copy this file executes the canonical
+source in its own namespace (``__name__`` is kept, so ``__main__`` runs still
+run ``main()``). ``__file__`` points at the canonical file so its sibling helper
+imports resolve there, and ``sys.path`` is restored afterwards.
+"""
+
+import importlib.util as _ipfs_shim_ilu
+import sys as _ipfs_shim_sys
+from pathlib import Path as _ipfs_shim_Path
 
 
-def discover():
-    items, seen = [], set()
-    seeds = [
-        "https://www.lawcommission.gov.np/en/",
-        "https://www.lawcommission.gov.np/np/",
-        "https://www.lawcommission.gov.np/en/archives/category/documents/prevailing-law",
-        "https://www.lawcommission.gov.np/en/category/prevailing-laws/",
-    ]
-    for su in seeds:
-        try:
-            r = live_get(su, ua=UA, verify=False, timeout=(20, 50))
-        except Exception as exc:
-            log.info("seed fail %s: %s", su, exc)
-            continue
-        for href in re.findall(r'href="([^"]+)"', r.text or ""):
-            full = urljoin(su, href)
-            if "lawcommission.gov.np" not in full:
-                continue
-            if any(x in full.lower() for x in [".pdf", "/archives/", "/documents/", "prevailing", "act", "statute"]):
-                if full in seen:
-                    continue
-                seen.add(full)
-                ident = Path(full.rstrip("/").split("?")[0]).stem[:140] or re.sub(r"\W+", "-", full)[-80:]
-                items.append((ident, full))
-    for prefix in (
-        "www.lawcommission.gov.np/wp-content/uploads/",
-        "lawcommission.gov.np/wp-content/uploads/",
-        "www.lawcommission.gov.np/en/wp-content/uploads/",
-    ):
-        for h in cdx_urls(prefix, limit=env_int("CDX_LIMIT", 150), match_type="prefix",
-                          extra_filters=["mimetype:application/pdf"]):
-            orig = (h.get("original") or "").replace("http://", "https://")
-            if not orig or orig in seen:
-                continue
-            seen.add(orig)
-            items.append((Path(orig).stem[:140], orig))
-    log.info("catalog %s", len(items))
-    return items
+def _ipfs_shim_canonical_path(filename):
+    for parent in _ipfs_shim_Path(__file__).resolve().parents:
+        candidate = parent / "national_collectors" / filename
+        if parent.name == "legal_scrapers" and candidate.is_file():
+            return candidate
+    spec = _ipfs_shim_ilu.find_spec("ipfs_datasets_py.processors.legal_scrapers.national_collectors")
+    if spec is None or not spec.submodule_search_locations:
+        raise ImportError(f"canonical collector {filename} not found")
+    return _ipfs_shim_Path(list(spec.submodule_search_locations)[0]) / filename
 
 
-def main():
-    setup_log(CC)
-    t0 = utcnow()
-    max_new = env_int("MAX_NEW", 40)
-    max_seconds = env_int("MAX_SECONDS", 2000)
-    t_start = time.time()
-    done = existing_ids(CC)
-    ok = skip = fail = 0
-    for ident, url in discover():
-        if max_new and ok >= max_new:
-            break
-        if time.time() - t_start > max_seconds:
-            break
-        rid = slug_id(CC, ident)
-        if rid in done:
-            skip += 1
-            continue
-        got = fetch_official(url, ua=UA, verify=False, min_text=200)
-        text = got.get("text") or ""
-        if got.get("status") != "success":
-            fail += 1
-            log_failure(CC, {"identifier": ident, "source_url": url, "reason": got.get("error")})
-            continue
-        # Skip pure index pages
-        if text.count("\n") < 5 and len(text) < 500:
-            fail += 1
-            continue
-        title = None
-        for line in text.splitlines():
-            if len(line.strip()) > 18:
-                title = line.strip()[:240]
-                break
-        if save_instrument(
-            cc=CC, country=COUNTRY, language=LANG, ident=ident,
-            title=title or ident, text=text, source_url=url,
-            source_type=SOURCE_TYPE, license_text=LICENSE, collector="collect_np.py",
-            article_re=ART, extra_meta={"fetch_method": got.get("method")},
-        ):
-            ok += 1
-            done.add(rid)
-            log.info("ok %s chars=%s", ident[:60], len(text))
-        else:
-            fail += 1
-    write_summary(
-        CC, country=COUNTRY, source="Nepal Law Commission",
-        source_urls=["https://www.lawcommission.gov.np/"],
-        license_text=LICENSE, discovered=ok + skip + fail, fetched=ok, skipped=skip, failed=fail,
-        coverage="uploads/archives incomplete",
-        notes="Official Nepal Law Commission documents. Not legal advice.",
-        last_run=t0,
-    )
-    log.info("done ok=%s skip=%s fail=%s", ok, skip, fail)
-
-
-if __name__ == "__main__":
-    main()
+_ipfs_shim_path = _ipfs_shim_canonical_path("collect_np.py")
+_ipfs_shim_saved_sys_path = list(_ipfs_shim_sys.path)
+__file__ = str(_ipfs_shim_path)
+try:
+    exec(compile(_ipfs_shim_path.read_bytes(), __file__, "exec"), globals())
+finally:
+    _ipfs_shim_sys.path[:] = _ipfs_shim_saved_sys_path

@@ -7,6 +7,7 @@ from urllib.parse import unquote
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import existing_ids, log_failure, utcnow, write_summary
 from world_lib import cdx_urls, env_int, fetch_official, save_instrument, setup_log, slug_id
+import world_lib as wl
 from pdf_extract_lib import extract_pdf_text, is_garbage_text, normalize_rtl_text
 
 CC, COUNTRY, LANG = "iq", "Iraq", "ar"
@@ -97,6 +98,12 @@ def main():
     max_seconds = env_int("MAX_SECONDS", 2400)
     t_start = time.time()
     done = existing_ids(CC)
+    _old = wl.live_get
+    def _short_live(u, **kw):
+        kw.setdefault("timeout", (10, 45))
+        kw.setdefault("retries", 1)
+        return _old(u, **kw)
+    wl.live_get = _short_live
     ok = skip = fail = 0
     for ident, url in discover():
         if max_new and ok >= max_new:
