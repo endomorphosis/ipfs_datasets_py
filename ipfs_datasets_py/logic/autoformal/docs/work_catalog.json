@@ -37746,6 +37746,68 @@
       "root": "artifact_workspace",
       "scope": "Two published LIR-21 software qualifications and a separate bounded public Hub metadata observation.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/lir21_local_artifacts_coherent_selection_20261127",
+      "closed_runtime_facts": {
+        "evidence_ordinal": 589,
+        "independent_statutory_review": null,
+        "live_hub_immutable_readback": null,
+        "live_hub_release_selection": null,
+        "local_artifact_scope": {
+          "artifact_envelope_max_bytes": 1000000,
+          "errors": 0,
+          "failures": 0,
+          "initial_regressions": {
+            "baseline_failures": 3,
+            "baseline_junit": {
+              "bytes": 2466,
+              "path": "/tmp/LIR21-local-release-artifact-fence-Gmi8WC8e/local-artifact-fence-red.xml",
+              "sha256": "c63470bcd985fb9930d1962669190bf3ff1b67c2beccb87bd0d073ff7c7ab148"
+            },
+            "case_names": [
+              "test_local_coordinator_rejects_oversized_replacement_without_unbounded_read",
+              "test_local_coordinator_rejects_linked_artifact_parent[artifact]",
+              "test_local_coordinator_rejects_linked_artifact_parent[receipt]"
+            ]
+          },
+          "offline_fixture_only": true,
+          "qualification_ref": {
+            "bytes": 2431,
+            "path": "/tmp/LIR21-local-release-artifact-fence-Gmi8WC8e/actual-current-local-artifact-fence-qualified-40.json",
+            "sha256": "aee137fce22bbe796ff262f3fd2db9946c1a7bda59fac2bc00c88ba7207e0479"
+          },
+          "qualified_datasets_commit": "56cf8eab1dcef6fc16b24ade61909a6015df9b7e",
+          "replaced_publication_entry_regressions": {
+            "baseline_failures": 2,
+            "baseline_junit": {
+              "bytes": 1287,
+              "path": "/tmp/LIR21-local-release-artifact-fence-Gmi8WC8e/local-artifact-final-entry-red.xml",
+              "sha256": "8b69159832cfd785a5a3b4947b0ae6dd1baa509c9aa15d6454952105b01dcdcb"
+            },
+            "case_names": [
+              "test_local_coordinator_does_not_confirm_a_replaced_publication[artifact]",
+              "test_local_coordinator_does_not_confirm_a_replaced_publication[receipt]"
+            ]
+          },
+          "scope": "Bounded local readback, checked parent directories, and final staged-file identity before reporting publication success.",
+          "skips": 0,
+          "software_tests": 40
+        },
+        "schema": "autoformal-selected-software-evidence/v1",
+        "task_id": "LIR-21",
+        "task_status": "proposed",
+        "task_status_changed": false
+      },
+      "evidence_ordinal": 589,
+      "id": "lir21-local-artifacts-coherent-selection-evidence589-20261127",
+      "observed_bytes": 2431,
+      "observed_sha256": "aee137fce22bbe796ff262f3fd2db9946c1a7bda59fac2bc00c88ba7207e0479",
+      "path": "/tmp/LIR21-local-release-artifact-fence-Gmi8WC8e/actual-current-local-artifact-fence-qualified-40.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Offline software qualification of bounded local coordinator publication and readback.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }
