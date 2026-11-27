@@ -4070,3 +4070,8 @@ Reviewed mixed-sort V3 admission now refuses a governing definition when its def
 ## Evidence577 — Evaluation metric-cache lineage recovery
 
 Malformed or stale metric-cache lineage now takes the existing cache-miss and recomputation path. The published candidate passed all 19 ordinary software cases across 10 functions. Those cases cover the retained checks, invalid lineage fields, and recomputation through the real daemon using authored codec and cache hooks. The ordinary run used the existing offline import profile and disabled real metric-cache disk writes in the parent and worker. Source and resource custody closed. [Ordinary qualification](/tmp/P1-proof-cache-translation-current-6btZZr/phase8-metric-lineage/actual-Phase8-current-metric-lineage-ordinary19-closed.json) · [Code publication](/tmp/P1-proof-cache-translation-current-6btZZr/phase8-metric-lineage/actual-Phase8-metric-lineage-ordinary19-three-FF-publication.json)
+
+
+## Evidence578 — Typed execution bounds in new proof receipts
+
+New proof receipts now carry the typed execution bounds when the result metadata omits the bounds field. Explicit values, including partial, empty and null values, retain their existing meaning. Stored receipt identities and the default translation ceiling are preserved. All 22 ordinary software cases passed, including the 15 retained cases and seven new cases. The qualification used in-memory attestation callbacks. [Ordinary qualification](/tmp/P1-proof-cache-translation-current-6btZZr/receipt-bounds/actual-Phase7-current-receipt-bounds-ordinary22-closed.json) · [Code publication](/tmp/P1-proof-cache-translation-current-6btZZr/receipt-bounds/actual-Phase7-receipt-bounds-ordinary22-three-FF-publication.json)

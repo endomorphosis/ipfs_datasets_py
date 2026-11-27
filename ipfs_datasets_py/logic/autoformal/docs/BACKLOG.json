@@ -5051,6 +5051,25 @@
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
       "statutory_or_corpus_admission_or_large_model_fit_or_new_Native_qualification": false,
       "task": "LIR-23"
+    },
+    "phase7_receipt_typed_bounds_ordinary22_20261127": {
+      "actual_live_ordinary22": {
+        "bytes": 5236,
+        "path": "/tmp/P1-proof-cache-translation-current-6btZZr/receipt-bounds/actual-Phase7-current-receipt-bounds-ordinary22-closed.json",
+        "sha256": "c02ca0f02e331cef5a94b0cfa115fa01ed05405619026b37185d4b6096f7fa0c"
+      },
+      "evidence_ordinal": 578,
+      "facts": {
+        "bytes": 4956,
+        "path": "/tmp/P1-proof-cache-translation-current-6btZZr/receipt-bounds/guide578-composition/current-Phase7-receipt-bounds-ordinary22-scoped-facts.json",
+        "sha256": "e62ff840ef95412addc5e39d5f7d85b127eeb406b011b823aaa73460bae24e95"
+      },
+      "record_id": "phase2-reviewed-governing-definition-self-reference-ordinary22-evidence576-20261127",
+      "related_catalog_component": "kernel-proof-evidence-integrity",
+      "related_tasks": [],
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
+      "statutory_or_corpus_admission_or_large_model_fit_or_new_Native_qualification": false,
+      "task": "LIR-03"
     }
   },
   "programme_goal_hierarchy": {

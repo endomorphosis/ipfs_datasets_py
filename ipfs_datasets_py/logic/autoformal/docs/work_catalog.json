@@ -36631,6 +36631,118 @@
       "root": "artifact_workspace",
       "scope": "Evaluation metric-cache mismatch classification and daemon recomputation with controlled fixtures.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase7_receipt_typed_bounds_ordinary22_20261127",
+      "closed_runtime_facts": {
+        "actual_live_code_publication": {
+          "bytes": 15579,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/receipt-bounds/actual-Phase7-receipt-bounds-ordinary22-three-FF-publication.json",
+          "sha256": "77d888220bff3b11a0781a314c78feb6151f9d89981150c5b2ca95fe10bb5004"
+        },
+        "actual_live_exact_two_freeze": {
+          "bytes": 9962,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/receipt-bounds/actual-isolated-Phase7-receipt-bounds-exact-two-local-freeze.json",
+          "sha256": "29802789293f7af8358cbb2437753ade2a10873310b19eed1855dd4d77e024c6"
+        },
+        "actual_live_ordinary22": {
+          "bytes": 5236,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/receipt-bounds/actual-Phase7-current-receipt-bounds-ordinary22-closed.json",
+          "sha256": "c02ca0f02e331cef5a94b0cfa115fa01ed05405619026b37185d4b6096f7fa0c"
+        },
+        "actual_live_ordinary22_raw_JUnit": {
+          "bytes": 3640,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/receipt-bounds/actual-output/Phase7-receipt-bounds-ordinary22-run-result0-output1.bin",
+          "sha256": "730c6d493fa393a72cd266c8e4a45b4c3c0ca3e006ee14abe9779b2128656e37"
+        },
+        "actual_live_ordinary22_report": {
+          "bytes": 671125,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/receipt-bounds/actual-output/complete-frozen-local-D-Phase7-receipt-bounds-ordinary22-existing-owner-report.json",
+          "sha256": "ca380f69a1586a1168063edd0f372199468f3c5f270c80bbbd7da10bcd312621"
+        },
+        "actual_live_reconciled_Source42_READ3": {
+          "bytes": 7440,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/receipt-bounds/actual-isolated-Phase7-receipt-bounds-READ3-closed.json",
+          "sha256": "a42ea50783db60b9036538108d96d855220efaac776ee54e63a34a38c998d3f5"
+        },
+        "actual_live_reconciled_Source42_epoch": {
+          "bytes": 6569,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/receipt-bounds/actual-live-reconciled-Source42-content-epoch-closed.json",
+          "sha256": "071a277ff541b7fa9303677ec5b87378735e6fff5d9d921a973299de97941bb8"
+        },
+        "actual_ordinary22_counts": {
+          "errors": 0,
+          "failures": 0,
+          "functions": 20,
+          "passed": 22,
+          "skipped": 0,
+          "tests": 22
+        },
+        "evidence_ordinal": 578,
+        "exact_candidate": {
+          "bytes": 3116,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/receipt-bounds/SEALED-Phase7-receipt-bounds-exact-two.json",
+          "sha256": "75c25b343072e543f36652328d45e924420bd083dc8a31bd2c25d586dd075e0d"
+        },
+        "live_qualified_A_HEAD": "219ba3da0f62f772801d71715e22c506faa21126",
+        "live_qualified_D_HEAD": "0cf525e0d3070135547f145e87726dade3d70a1f",
+        "ordinary_Source_resource_and_parent_closed": true,
+        "ordinary_collect_run_raw_JUnit_order_equal": true,
+        "physical_IO_accounting_complete": false,
+        "prior_verified_guide577_publication": {
+          "bytes": 2700,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/phase8-metric-lineage/actual-Guide577-four-docs-three-FF-publication.json",
+          "sha256": "22ad68b457d362a51ab947499b84e868c52bff4396123d79756ec26a53dc572d"
+        },
+        "private_same_twenty_two_lineage": {
+          "bytes": 18741,
+          "path": "/tmp/Main-board-stall-evidence-refresh-private-v01/owner-wait-consumer-integration-private-v01/Phase7-checked-receipt-owner-private-v01/SEALED-private-existing-receipt-bounds-two-file-GREEN-v01.json",
+          "sha256": "3aecbf5629c3500baac63beffd701c8e50d02783e93d7cf93c50d702967ac6d9"
+        },
+        "qualified_commit_blobs": {
+          "ipfs_datasets_py/logic/bridge/proof_receipt_attestation.py": "362660beaea798069c5fe9c7af73ef424d7704b9",
+          "tests/integration/logic/test_proof_receipt_attestation.py": "ff318f57469d6be81b76f7e2e12ec9db46b25306"
+        },
+        "receipt_typed_bounds_software_qualified": true,
+        "related_catalog_component": "kernel-proof-evidence-integrity",
+        "retained_failed_First_Source_Write": {
+          "bytes": 911,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/receipt-bounds/actual-first-write-failure-before-sparse.json",
+          "sha256": "d8a1bd12207e9ce1f4bfa23ef6c1cc2db3b3708686b36425177478a9829aa770"
+        },
+        "schema": "live-reconciled-Phase7-receipt-typed-bounds-engineering-evidence/v1",
+        "statutory_or_corpus_admission_or_large_model_fit_or_new_Native_qualification": false,
+        "task": "LIR-03",
+        "task_status_changed": false,
+        "untouched_verification_support": {
+          "ipfs_datasets_py/logic/verification_api.py": {
+            "bytes": 303308,
+            "full9": {
+              "st_ctime_ns": "1795743985087603720",
+              "st_dev": "66306",
+              "st_gid": "1000",
+              "st_ino": "72514903",
+              "st_mode": "33204",
+              "st_mtime_ns": "1795743985087603720",
+              "st_nlink": "1",
+              "st_size": "303308",
+              "st_uid": "1000"
+            },
+            "path": "/tmp/P1-proof-cache-translation-current-6btZZr/datasets/ipfs_datasets_py/logic/verification_api.py",
+            "sha256": "37a8c4ac10610b877dd4eb0dd22fc1466b35b429fa4c4f02c76a43eb427284c0",
+            "stage0_and_committed_blob": "41133c0b54b7dbcf6dee56caa9dd9957de8fe8bd"
+          }
+        }
+      },
+      "evidence_ordinal": 578,
+      "id": "phase2-reviewed-governing-definition-self-reference-ordinary22-evidence576-20261127",
+      "observed_bytes": 4956,
+      "observed_sha256": "e62ff840ef95412addc5e39d5f7d85b127eeb406b011b823aaa73460bae24e95",
+      "path": "/tmp/P1-proof-cache-translation-current-6btZZr/receipt-bounds/guide578-composition/current-Phase7-receipt-bounds-ordinary22-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "New proof receipt issuance preserves typed execution bounds when metadata omits them.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }
