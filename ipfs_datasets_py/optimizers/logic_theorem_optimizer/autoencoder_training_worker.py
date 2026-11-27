@@ -5297,6 +5297,8 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
                 len(references) + len(additional_assets) + len(job_artifacts)):
             raise TrainingJobValidationError("source-bound local decoder artifact roles differ or alias")
     watched_artifacts = (*references, *additional_assets, *job_artifacts)
+    if source_bound:
+        watched_artifacts += (_source_bound_job.stage_artifact,)
     from . import legal_span_consumer_binding as consumer
     policy = {"schema": ("reviewed-local-decoder-load-policy/v2" if admission_profile else
                          "reviewed-local-decoder-load-policy/v1"), "backend_identity": identity,
@@ -5637,14 +5639,13 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
             model_raw, optimizer_raw = _reviewed_epoch_restore(backend, model_raw, optimizer_raw,
                 _source_epoch_migration, registry, current_admission_provider, current)
         if source_bound:
+            inspection = backend.inspect_checkpoint(model_raw, optimizer_raw)
+            if (type(inspection) is not dict or type(inspection.get("optimizer_steps")) is not int
+                    or inspection != {"optimizer_steps": progress["optimizer_steps"]}):
+                raise TrainingJobValidationError("source-bound local decoder checkpoint progress differs")
             pre_restore_sha256, _, _ = replay_source_bound(tokenizer)
             if pre_restore_sha256 != prepared_sha256:
                 raise TrainingJobValidationError("source-bound local decoder inputs changed before restore")
-            inspection = backend.inspect_checkpoint(model_raw, optimizer_raw)
-            if (type(progress.get("optimizer_steps")) is not int
-                    or inspection != {"optimizer_steps": progress["optimizer_steps"]}):
-                raise TrainingJobValidationError("source-bound local decoder checkpoint progress differs")
-            current()
         backend.restore_checkpoint(model_raw, optimizer_raw, execution_guard=current)
         current()
         if not backend.restored_checkpoint_matches(model_raw, optimizer_raw):
