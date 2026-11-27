@@ -1472,7 +1472,7 @@ def evaluate_reviewed_source_span_producer_artifact(*, binding, rows, split_mani
         checkpoint_declarations, permitted_context, retrieved_examples, producer,
         allow_heldout_evaluation=False, reviewed_training_context=None, context_policy_guard=None,
         typed_structure_profile=None, candidate_syntax_profile=None, known_candidate_inputs=None,
-        reviewed_training_context_profile=None):
+        reviewed_training_context_profile=None, bound_component_inputs=None):
     """Evaluate one opt-in validation callback against replayed reviewed targets.
 
     Default hparam_selection never relabels heldout/training use. Explicit
@@ -1503,6 +1503,9 @@ def evaluate_reviewed_source_span_producer_artifact(*, binding, rows, split_mani
     route over complete V3 endpoint components. This does not upgrade the heldout
     purpose or grant model/context permission: present TRAIN reviews, the exact
     union population and the existing independent context policy are replayed.
+    When supplied, bound_component_inputs is replayed by the existing consumer
+    at every gate. Only its validated receipt and commitments are recorded.
+    The producer never receives the replay inputs.
     Stored artifacts are historical observations. Generic cache retrieval does
     not replay current admission: any later eligibility use requires another
     canonical reviewed-consumer validation against current review inputs.
@@ -1601,8 +1604,11 @@ def evaluate_reviewed_source_span_producer_artifact(*, binding, rows, split_mani
     require(text(compiler_commit), "explicit compiler identity declaration required")
     validate_binding, consume_binding = _reviewed_binding_dispatch(binding)
     admission_version = _reviewed_binding_version(binding)
-    before = validate_binding(binding, rows,
-        split_manifest=split_manifest, admission_inputs=admission_inputs, exposure_records=exposure_records)
+    binding_inputs = dict(split_manifest=split_manifest, admission_inputs=admission_inputs,
+                         exposure_records=exposure_records)
+    if bound_component_inputs is not None:
+        binding_inputs["bound_component_inputs"] = bound_component_inputs
+    before = validate_binding(binding, rows, **binding_inputs)
     require(before["operation"] == operation and before["status"] == "ready",
             "ready reviewed binding for the explicit operation required; no relabelling")
     heldout = None
@@ -1745,8 +1751,10 @@ def evaluate_reviewed_source_span_producer_artifact(*, binding, rows, split_mani
         output_holder["outputs"] = snapshot(output_holder["outputs"])
 
     def recheck_exit_evidence():
-        after = validate_binding(binding, rows,
-            split_manifest=split_manifest, admission_inputs=admission_inputs, exposure_records=exposure_records)
+        after = validate_binding(binding, rows, **binding_inputs)
+        if bound_component_inputs is not None:
+            require(after["bound_component_inputs_sha256"] == before["bound_component_inputs_sha256"],
+                    "bound component replay inputs changed during callback")
         require(after["operation"] == operation and after["status"] == "ready",
                 "reviewed operation admission no longer ready after callback")
         if allow_heldout_evaluation:
@@ -1764,8 +1772,7 @@ def evaluate_reviewed_source_span_producer_artifact(*, binding, rows, split_mani
     # independent live context policy on exit as well, including error paths.
     # Its last callback can mutate inputs, so all evidence fences run after it.
     try:
-        consume_binding(binding, rows, split_manifest=split_manifest,
-            admission_inputs=admission_inputs, exposure_records=exposure_records, consumer=dispatch)
+        consume_binding(binding, rows, consumer=dispatch, **binding_inputs)
     finally:
         after = recheck_exit_evidence()
         if rich_heldout:
