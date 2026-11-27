@@ -1425,6 +1425,8 @@ def test_current_signed_v3_source_and_meaning_reach_existing_consumer(current_mi
     binding = owner.prepare_reviewed_source_span_consumer_binding_v3(rows, **options, bound_component_inputs=handoff)
     receipt = binding.receipt()
     assert receipt["status"] == "ready"
+    assert receipt["bound_component_identity"]["schema"] == "legal-bound-norm-component-preparation/v2"
+    assert receipt["bound_component_identity"]["profile"] == "declared-source-binding-to-complete-mixed-sort-norm-preparation/v2"
     assert receipt["bound_component_identity"]["bound_component_report_sha256"] == handoff["expected_report_sha256"]
     assert receipt["bound_component_identity"]["binding_manifest_sha256"] == handoff["report"]["binding_manifest_sha256"]
     assert receipt["training_mask"] == receipt["evaluation_gold_mask"] == 0
