@@ -3452,3 +3452,12 @@ The V4 candidate graph replays the current signed source binding alongside compl
 Nine selected offline cases passed. The retained cases cover both V3 consumer entry points, the V2 source attachment, V3 preservation, and the evaluator's three source-replay gates. [Graph and preservation software qualification](/tmp/P2-bound-mixed-preservation-qual-flat-pehFm7lN/actual-source-bound-graph-preservation-qualification.json)
 
 Native build, independent statutory and formal review for Title 10 §§ 101, 7213, and 7214, corpus admission, and release remain pending.
+
+
+## Evidence597 — Prepare source-bound definition realization
+
+The V2 realization preparation replays the V4 source-bound graph and preservation inputs. It retains the bound identity, input digest, upstream units, and 15 preservation obligations. The signed fictional project contains 10 modules and 30 proposed obligations, including four application obligations across two distinct uses. Each whole-norm equivalence remains conditional on its independently denoted source-definition premise.
+
+Four selected offline cases passed. They cover the new source-bound realization, both existing V1 whole-norm parametrizations, and retained V4 preservation. The new case also checks the exact independent source pin and refusal by the legacy entry point. [Definition realization software qualification](/tmp/P2-source-bound-definition-realization-kyykelBy/actual-source-bound-definition-realization-qualification.json)
+
+Native build, independent statutory and formal review for Title 10 §§ 101, 7213, and 7214, corpus admission, and release remain pending.
