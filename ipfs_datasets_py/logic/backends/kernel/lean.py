@@ -1120,8 +1120,11 @@ def _load_lean_json_line(raw_line: str) -> Any:
                 raise ValueError("duplicate compiler JSON key")
             result[key] = value
         return result
-    return json.loads(raw_line, object_pairs_hook=unique_pairs,
-                      parse_constant=lambda _: (_ for _ in ()).throw(ValueError("nonfinite JSON")))
+    try:
+        return json.loads(raw_line, object_pairs_hook=unique_pairs,
+                          parse_constant=lambda _: (_ for _ in ()).throw(ValueError("nonfinite JSON")))
+    except RecursionError as error:
+        raise ValueError("excessive compiler JSON nesting") from error
 
 
 # A warning mentioning the word "error" is not an error diagnostic. The
@@ -1211,7 +1214,7 @@ def parse_lean_axiom_report(
         if not isinstance(data, str) or not _AXIOM_MARKER.search(data):
             continue
         match = _AXIOM_MESSAGE.fullmatch(data.strip())
-        if match is None or match.group("name") != expected or message.get("severity") not in {"info", "information"}:
+        if match is None or match.group("name") != expected or message.get("severity") not in ("info", "information"):
             return None
         reports.append((message, match))
     if len(reports) != 1:

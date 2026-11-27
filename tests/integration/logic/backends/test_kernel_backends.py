@@ -2321,3 +2321,54 @@ def test_lean_outcome_rejects_non_theorem_request_after_complete_rebind(query_ki
         replace(outcome, request=request, request_digest=request.digest,
                 source_binding=binding, receipt=receipt, result=result)
     assert len(calls) == 1
+
+
+# Authored malformed compiler output only; no Lean process is executed.
+@pytest.mark.parametrize("stream", ["stdout", "stderr"])
+def test_lean_recursion_exhausted_json_diagnostics_fail_closed(stream):
+    import sys
+    depth = max(10000, sys.getrecursionlimit() + 32)
+    diagnostic = "[" * depth + "0" + "]" * depth
+    stdout, expected = _bound_clean_lean_dependency_fixture()
+    process = _lean_output(stdout + (diagnostic if stream == "stdout" else ""),
+        stderr=diagnostic if stream == "stderr" else "")
+    accepted, report, diagnostics = evaluate_lean_kernel_output(process, **expected)
+    assert accepted is False
+    assert report is None
+    assert any("malformed Lean JSON diagnostic" in message for message in diagnostics)
+
+
+def test_lean_json_reader_skips_recursion_exhausted_records():
+    import sys
+    from ipfs_datasets_py.logic.backends.kernel import lean
+    depth = max(10000, sys.getrecursionlimit() + 32)
+    damaged = "[" * depth + "0" + "]" * depth
+    warning = {"severity": "warning", "data": "fictional harmless diagnostic"}
+    assert lean.parse_lean_json_messages(damaged + "\n" + json.dumps(warning)) == [warning]
+
+
+def test_lean_json_decoder_normalizes_recursion_exhaustion_to_invalid_json():
+    import sys
+    from ipfs_datasets_py.logic.backends.kernel import lean
+    depth = max(10000, sys.getrecursionlimit() + 32)
+    with pytest.raises(ValueError, match="excessive compiler JSON nesting"):
+        lean._load_lean_json_line("[" * depth + "0" + "]" * depth)
+
+
+def test_lean_json_reader_preserves_ordinary_nested_diagnostic_metadata():
+    from ipfs_datasets_py.logic.backends.kernel import lean
+    warning = {"severity": "warning", "data": "fictional harmless diagnostic",
+        "extra": {"items": [{"nested": [1, 2]}]}}
+    assert lean.parse_lean_json_messages(json.dumps(warning)) == [warning]
+
+
+@pytest.mark.parametrize("severity", [pytest.param([], id="list"), pytest.param({}, id="object")])
+def test_lean_rejects_non_text_dependency_report_severity(severity):
+    stdout, expected = _bound_clean_lean_dependency_fixture()
+    diagnostic = json.loads(stdout)
+    diagnostic["severity"] = severity
+    process = _lean_output(json.dumps(diagnostic) + "\n")
+    accepted, report, diagnostics = evaluate_lean_kernel_output(process, **expected)
+    assert accepted is False
+    assert report is None
+    assert any("incorrectly bound Lean declaration dependency report" in message for message in diagnostics)
