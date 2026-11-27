@@ -4249,3 +4249,12 @@ The Phase 2 path carries the signed source-history replay into mixed-sort V3 pre
 The Title 10 pilot for §§ 101, 7213, and 7214 still awaits independent legal and formal review for the exact selected subject and current trust. [Review input requirements](/tmp/P2-current-reviewed-pilot-existing-API-input-requirements-v05.json)
 
 GitHub Actions run 46067186611 at Datasets commit `487e0c27a4574cf14b1e3d4624893b4ce9245c1b` ended with all 18 jobs failing before any step ran. GitHub reported an account billing lock for the observed hosted Native job 140735356040. The run provides zero native execution evidence. [GitHub Actions job](https://github.com/endomorphosis/ipfs_datasets_py/actions/runs/46067186611/job/140735356040)
+
+
+## Evidence592 — Qualify source-bound mixed staging and decoder replay
+
+The Phase 2 V5 stage preserves signed source-history replay in a separate registry artifact. The decoder checks the independently supplied current component replay against the staged commitment and retains the bound identity in its receipt. The source and target token wires keep their existing fields.
+
+The signed stage-to-decoder cohort passed 1 offline cases. The tests cover exact transported bytes and complete target round trips, and they check that the V4 reader, missing current bindings, and a changed report commitment refuse before tokenization. The successor stage also rejected a resealed historical transport with a corrupt commitment before writing artifacts. The separate legacy mixed V4 cohort passed 25 offline cases. [Software qualification](/tmp/P2-V5-historical-source-custody-mbnF3nY4/actual-stage-decoder-software-qualification.json)
+
+The signed fictional fixture carries a training mask of zero. The qualification covers training-input preparation and tokenizer transport. Independent statutory and formal review for Title 10 §§ 101, 7213, and 7214 remains pending.

@@ -38000,6 +38000,101 @@
       "root": "artifact_workspace",
       "scope": "Qualified signed-fictional bound-source integration and one observed hosted Native run.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/lir02_mixed_source_bound_training_stage_decoder_20261127",
+      "closed_runtime_facts": {
+        "base": "b7d528a97ec1715218cac7b013733ee0978c9dec",
+        "checks": {
+          "legacy-mixed-v4": {
+            "errors": 0,
+            "failures": 0,
+            "junit": {
+              "bytes": 5286,
+              "path": "/tmp/P2-V5-historical-source-custody-mbnF3nY4/final-legacy-mixed-v4.xml",
+              "sha256": "59d1b259e7b7f367dc102c41dd96f78e02717d43fef080fef2c04928155ea686"
+            },
+            "log": {
+              "bytes": 713,
+              "path": "/tmp/P2-V5-historical-source-custody-mbnF3nY4/final-legacy-mixed-v4.log",
+              "sha256": "664c57fdf731ffe33d9c269bdae4d0990df4e03b1241d048d594934fbb2adebd"
+            },
+            "skipped": 0,
+            "terminal": {
+              "bytes": 2,
+              "path": "/tmp/P2-V5-historical-source-custody-mbnF3nY4/final-legacy-mixed-v4.terminal",
+              "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+            },
+            "tests": 25
+          },
+          "signed-stage-decoder": {
+            "errors": 0,
+            "failures": 0,
+            "junit": {
+              "bytes": 412,
+              "path": "/tmp/P2-V5-historical-source-custody-mbnF3nY4/final-signed-stage-decoder.xml",
+              "sha256": "ef145a1facc2cc88fbf3ebdfd4bc5dc4fb2427f425c25dc4f76ebffa6c208a5b"
+            },
+            "log": {
+              "bytes": 637,
+              "path": "/tmp/P2-V5-historical-source-custody-mbnF3nY4/final-signed-stage-decoder.log",
+              "sha256": "7620be832030718828ad3463ea2d22bf5f338af57b721c66fcbb36ea47a6bd43"
+            },
+            "skipped": 0,
+            "terminal": {
+              "bytes": 2,
+              "path": "/tmp/P2-V5-historical-source-custody-mbnF3nY4/final-signed-stage-decoder.terminal",
+              "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+            },
+            "tests": 1
+          }
+        },
+        "cooperative_source_read_leases_released": true,
+        "decoder_schema": "reviewed-decoder-training-inputs/v5",
+        "evidence_ordinal": 592,
+        "exact_code_blobs": {
+          "ipfs_datasets_py/logic/autoformal/training_cycle_inputs.py": {
+            "bytes": 198477,
+            "mode": "100644",
+            "oid": "823e593a2acfedefc72504ddc4cc97916a82f6dd",
+            "sha256": "d1be2abd260577f146260fbd4227bea4231e73611d41b0e5b75e20218619a8ce"
+          },
+          "tests/unit/logic/test_autoformal_campaign_training_inputs.py": {
+            "bytes": 220751,
+            "mode": "100644",
+            "oid": "56ab6251e6937f4ee5ce819ec4369ef38ef97eb1",
+            "sha256": "a43be886e7971588851d8ae8d258d5db347abc83121f7df2404ff9aeace61d8f"
+          }
+        },
+        "independent_statutory_review_or_admission": false,
+        "model_or_Native_execution": false,
+        "owned_pytest_subprocesses_reaped": true,
+        "production_training_eligible": false,
+        "qualification": {
+          "bytes": 9278,
+          "path": "/tmp/P2-V5-historical-source-custody-mbnF3nY4/actual-stage-decoder-software-qualification.json",
+          "sha256": "82de7e1050a7615c964878cfb0810e8a4352d3f34ce8cb78ab27a7fa6e2a62dd"
+        },
+        "qualified_software_commit": "baf3793156b6deba4fce7ebe76a19efee5e5310e",
+        "qualified_software_tree": "f41d09a94e9eb57fdb11c8706f703d988cd9cd3c",
+        "schema": "autoformal-selected-software-evidence/v1",
+        "scope": "offline signed-fictional software only; no model, Native, statutory review or admission",
+        "signed_fixture_only": true,
+        "stage_schema": "reviewed-example-cycle-input-artifact/v5",
+        "task_id": "LIR-02",
+        "task_status": "in_progress",
+        "task_status_changed": false,
+        "training_mask": 0
+      },
+      "evidence_ordinal": 592,
+      "id": "lir02-mixed-source-bound-training-stage-decoder-evidence592-20261127",
+      "observed_bytes": 3279,
+      "observed_sha256": "330250e3d5f9c0c6fc94790f1594b4ed1b354a85b5a95dac7e7bd7fcdf1d0ba2",
+      "path": "/tmp/P2-V5-historical-source-custody-mbnF3nY4/Guide592-docs-ready/Guide592-scoped-software-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Signed-fictional software evidence for mixed V5 staging and decoder training-data replay.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }

@@ -5263,6 +5263,16 @@
       },
       "record_id": "lir02-bound-component-reviewed-evaluator-evidence591-20261127",
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
+    },
+    "lir02_mixed_source_bound_training_stage_decoder_20261127": {
+      "evidence_ordinal": 592,
+      "facts": {
+        "bytes": 3279,
+        "path": "/tmp/P2-V5-historical-source-custody-mbnF3nY4/Guide592-docs-ready/Guide592-scoped-software-facts.json",
+        "sha256": "330250e3d5f9c0c6fc94790f1594b4ed1b354a85b5a95dac7e7bd7fcdf1d0ba2"
+      },
+      "record_id": "lir02-mixed-source-bound-training-stage-decoder-evidence592-20261127",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
     }
   },
   "programme_goal_hierarchy": {
