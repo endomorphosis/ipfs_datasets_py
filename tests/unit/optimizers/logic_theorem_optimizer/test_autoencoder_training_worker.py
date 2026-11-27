@@ -5304,6 +5304,7 @@ def _reviewed_local_v5_signed_fixture(tmp_path, monkeypatch, *, model_limit, job
         "code_identity": "fixture:independent-v5-current-source-pins", "stage_artifact": stage,
         "exposure_artifact": exposure_ref, "source_contexts_artifact": contexts_ref,
         "model_artifact": model, "tokenizer_artifact": tokenizer, "license_artifact": license_asset,
+        "backend_artifacts": backend_assets,
         "base_model_checkpoint": model, "base_optimizer_checkpoint": optimizer, "parent_checkpoint_artifact": parent_ref,
         "expected_admission_inputs_sha256": data.kwargs["expected_admission_inputs_sha256"],
         "admission_profile": profile, "expected_bound_component_inputs_sha256": bound_sha,
