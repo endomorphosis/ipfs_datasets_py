@@ -37834,6 +37834,76 @@
       "root": "artifact_workspace",
       "scope": "Offline software qualification of bounded local coordinator publication and readback.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/lir21_interrupted_ir_publication_20261127",
+      "closed_runtime_facts": {
+        "abby_compatibility": {
+          "datasets_commit": "5554a3c1b15a6839e0ebc844cdd51deee8a69b23",
+          "errors": 0,
+          "failures": 0,
+          "legacy_payload_paths_absent": 13,
+          "physical_payloads_verified": false,
+          "qualification_ref": {
+            "bytes": 6124,
+            "path": "/tmp/LIR21-abby-retained-compat-VGbHG4L7/actual-retained-abby-two-offline-qualification.json",
+            "sha256": "5d167611dbda809ad25f172a4ab2a0ba7ffe87b45ca70f1581208472f855717a"
+          },
+          "raw_junit_ref": {
+            "bytes": 534,
+            "path": "/tmp/LIR21-abby-retained-compat-VGbHG4L7/selected-two.xml",
+            "sha256": "76c4eae66476d8ad8847a81a28654c35014522b638335daee432b9fd0340e041"
+          },
+          "retained_211_ai_fixture_commit": "d2af9e4dcf7a4473187ace7dcc76f1e4134716f6",
+          "retained_cli_executed": false,
+          "scope": "Static CLI source discoverability and descriptor-only offline dry run.",
+          "selected_tests": 2,
+          "skips": 0
+        },
+        "evidence_ordinal": 590,
+        "independent_statutory_review": null,
+        "live_hub_immutable_readback": null,
+        "live_hub_release_selection": null,
+        "retained_lir2102_local54": {
+          "candidate_artifact_selector": "candidate",
+          "coordinator_canonical_body_commit_sha256": "903c12c8c51a5531ee0f1ed0655026f44f938ccc82a20a92ae386278f05e686b",
+          "coordinator_receipt_ref": {
+            "bytes": 10400,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/data/legal_ir_span_graph_lean_20261016/LIR-2102/candidate-release-v01/coordinator-receipt.json",
+            "sha256": "9a1206aa9587e283d36b33edb304bb6d53d0cda3a9af3849d8531d83add56789"
+          },
+          "files_including_coordinator": 55,
+          "independent_postinstallation_review_ref": {
+            "bytes": 31811,
+            "path": "/tmp/legal-ir-LIR2102-canonical-candidate-postinstallation-independent-review-20261107-v01.json",
+            "sha256": "1491f32f874bb7b80c087cf033a71a49ebe0cabdd207d44034a0e7e5da72c076"
+          },
+          "new_materialization": false,
+          "original_integrity_acceptance_ref": {
+            "bytes": 41706,
+            "path": "/tmp/legal-ir-current-local54-ir33-docs-20261107-v01/evidence/local54_acceptance.json",
+            "sha256": "aba87ec29851eb0f819826e33d404fcf48cc14ec7c0023651fb03e271647f9ae"
+          },
+          "prior_record_all_authority_flags_false": true,
+          "reviewed_installed_files": 57,
+          "scope": "Historical local materialization integrity and independent post-installation candidate review.",
+          "sealed_candidate_payloads": 54,
+          "separate_unsealed_custody_files": 2
+        },
+        "schema": "autoformal-selected-software-evidence/v1",
+        "task_id": "LIR-21",
+        "task_status": "proposed",
+        "task_status_changed": false
+      },
+      "evidence_ordinal": 590,
+      "id": "lir21-interrupted-ir-publication-evidence590-20261127",
+      "observed_bytes": 2591,
+      "observed_sha256": "ba32c48a19ea2c271d75625e4e48dd31b63769ff5e373e86ee3cc3086695f5e7",
+      "path": "/tmp/Root-Guide590-evidence-current-a4kn50Jy/guide590-scoped-held-receipts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Recovered offline Abby compatibility evidence and retained LIR-2102 local candidate integrity.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }

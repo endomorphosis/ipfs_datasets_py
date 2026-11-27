@@ -4229,3 +4229,12 @@ The generic publisher prepares runtime pointers only after original pinned readb
 The six separate State Law controls then passed with their tracked fixture and import files present. The pointer work has 149 passing offline cases across both runs. Two Abby checks remain unqualified because their expected assets are absent. [Additional State Law qualification](/tmp/LIR21-pointer-readback-provenance-lepd1z2e/actual-isolated-pointer-provenance-149-two-disjoint-offline-cohorts.json)
 
 Live Hub release selection, immutable remote readback, and independent statutory review remain pending. LIR-21 remains proposed.
+
+
+## Evidence590 — Preserve interrupted IR publications
+
+Both previously unqualified Abby compatibility checks passed offline on Datasets `5554a3c1b15a6839e0ebc844cdd51deee8a69b23` using the exact CLI and legacy manifest from retained `211-AI` commit `d2af9e4dcf7a4473187ace7dcc76f1e4134716f6`. The checks cover CLI source discoverability and descriptor-only dry-run planning. The 13 physical payloads were absent, and the recovered CLI was inspected as source text. [Abby qualification](/tmp/LIR21-abby-retained-compat-VGbHG4L7/actual-retained-abby-two-offline-qualification.json)
+
+The retained LIR-2102 local54 acceptance and independent post-installation review record the earlier local candidate. The independent review covered 57 installed files comprising 54 sealed candidate payloads, the coordinator receipt, and two separate unsealed custody records. It verified the original 55-file population including the coordinator and recorded coordinator body digest `903c12c8c51a5531ee0f1ed0655026f44f938ccc82a20a92ae386278f05e686b`. These are retained results from the earlier materialization. [Local54 acceptance](/tmp/legal-ir-current-local54-ir33-docs-20261107-v01/evidence/local54_acceptance.json) · [Independent installation review](/tmp/legal-ir-LIR2102-canonical-candidate-postinstallation-independent-review-20261107-v01.json)
+
+Live Hub release selection, immutable remote readback, and independent statutory review remain pending. LIR-21 remains proposed.
