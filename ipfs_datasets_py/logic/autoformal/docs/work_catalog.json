@@ -36968,6 +36968,137 @@
       "root": "artifact_workspace",
       "scope": "Durable publication order for proof records and a separate exact native replay of the fictional Lean fixture.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase1_lean_json_diagnostic_handling_20261127",
+      "closed_runtime_facts": {
+        "Lean_version": "4.34.1",
+        "actual_latest_closed_native_Source_cap": {
+          "bytes": 1749,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/lean-json-diagnostics/Source-only-lean-json-diagnostics-namespaced-Native2-full-retained-cap.json",
+          "sha256": "f86281355aee837b7da1ebdfc57f0e5418a84faeaf81b97d8cbc6304a3f60de4"
+        },
+        "actual_live_code_publication": {
+          "bytes": 17212,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/lean-json-diagnostics/actual-Phase1-lean-json-diagnostics-ordinary99-and-native-three-FF-publication.json",
+          "sha256": "fefe2ecad990326bf6269e626000bb04d68a70ed55a9448a3118d8e3b0f1c4a4"
+        },
+        "actual_live_exact_two_freeze": {
+          "bytes": 16495,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/lean-json-diagnostics/actual-isolated-Phase1-lean-json-diagnostics-exact-two-local-freeze.json",
+          "sha256": "a52014d373c00aade6e9673cb3dab91deefbfe7c23d456b4b483ce5964532e8a"
+        },
+        "actual_live_native_namespaced2": {
+          "bytes": 1026,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/lean-json-diagnostics/actual-Lean-JSON-diagnostics-namespaced-Native2-closed.json",
+          "sha256": "abbf8d4ced879afceeccba6598e56f1fd72c9b915199842cbd1e347d32dd220c"
+        },
+        "actual_live_ordinary99": {
+          "bytes": 25346,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/lean-json-diagnostics/actual-live-reconciled-P1-Lean-ordinary99-closed.json",
+          "sha256": "ba0317da64826b8d5f81839ec911a2ac9bc16fc2188d6773da467ed489e637d2"
+        },
+        "actual_live_reconciled_Source42_READ3": {
+          "bytes": 7482,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/lean-json-diagnostics/actual-isolated-Phase1-lean-json-diagnostics-READ3-closed.json",
+          "sha256": "0b9d17c27efa541b520be7d9e3578b71df4ef584d92152ccfeb2e965e527ccb5"
+        },
+        "actual_live_reconciled_Source42_epoch": {
+          "bytes": 9553,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/lean-json-diagnostics/actual-live-reconciled-Source42-content-epoch-closed.json",
+          "sha256": "1d609bd6f829ddac94791852f283e82ab5ec70a502aeae9c4ba44207f77949ed"
+        },
+        "actual_native_command_counts": {
+          "all": 3,
+          "compiler": 2,
+          "unclassified": 0,
+          "version": 1
+        },
+        "actual_native_report": {
+          "bytes": 114025,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/lean-json-diagnostics/actual-namespaced-native2-output/complete-native3-direct-existing-owner-report.json",
+          "sha256": "e808ac20533825b6c6cb353af1a83d414451655d254bf147fe1630a31843aa8c"
+        },
+        "actual_signed_statutory_review_or_corpus_admission_or_model_qualification": false,
+        "current_external_base_materialized_roles": 11,
+        "current_official_V2_base_observation": {
+          "bytes": 5270,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/lean-json-diagnostics/actual-current-main-fast-forward-official-V2-base.json",
+          "sha256": "23a507a1f439e697be16860808c32ba21af50ac094a44d8d108a6e1e35dc829f"
+        },
+        "evidence_ordinal": 581,
+        "full_Phase1_complete": false,
+        "live_A_main_HEAD": "e55316f48847b17a8b4041a2da30bcaa0ba6eb90",
+        "native_Law_wanted_wrong_type_rejected": true,
+        "native_Source_resource_and_parent_closed": true,
+        "native_compiler_exit_codes": [
+          0,
+          1
+        ],
+        "native_fictional_fixture_only": true,
+        "native_pytest_case_credit": 0,
+        "native_root_wanted_accepted": true,
+        "non_text_dependency_report_severity_is_rejected": true,
+        "ordinary_Source_resource_and_parent_closed": true,
+        "ordinary_collect_run_raw_JUnit_order_equal": true,
+        "ordinary_qualification_counts": {
+          "errors": 0,
+          "failures": 0,
+          "functions": 24,
+          "passed": 99,
+          "skipped": 0,
+          "tests": 99
+        },
+        "ordinary_raw_JUnit": {
+          "bytes": 18639,
+          "logical_name": "junit.xml",
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/lean-json-diagnostics/actual-output-v04/phase1-lean-json-diagnostics-99-run-result0-output1.bin",
+          "sha256": "0ce4209b08c2917064d3834e94b38ace3a09c35dc9c8c570102c6e65728be241"
+        },
+        "original_native_test_report": {
+          "bytes": 41748,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/lean-json-diagnostics/actual-namespaced-native2-output/original-test-temp/native-lean-v3-namespaced-declaration-result.json",
+          "sha256": "94b657dd290eeaf00add92b7c24cb4260ccc64c45453dc971474d8e7e96a7782"
+        },
+        "physical_IO_accounting_complete": false,
+        "prior_verified_guide580_publication": {
+          "bytes": 2991,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/cache-atomic-put/actual-Guide580-four-docs-three-FF-publication.json",
+          "sha256": "12de3885bbfd86bc00dd792861c9f670af1bee590b0b8a996a9eae97cbbda9fc"
+        },
+        "private_baseline_tests_passed": 93,
+        "private_fixed_tests_passed": 99,
+        "private_same_99_reproduction_and_fix": {
+          "bytes": 32086,
+          "path": "/tmp/P1-Lean-current580-diagnostics-guarded-private-jnBwI2TZ/SEALED-private-Lean-diagnostics-current-Guide580-exact-two-same99.json",
+          "sha256": "5cfa2809fbfc2c204e9fd28da81a21cf125f8fbd1537bee75a1bc3d67ccd28d1"
+        },
+        "qualified_D_HEAD": "95dc193c3a4a37f9c9227da640a346b2cd58e54c",
+        "qualified_commit_blobs": {
+          "ipfs_datasets_py/logic/backends/kernel/lean.py": "97c7e2b760f7775de3aae312557a8eccc82437ba",
+          "tests/integration/logic/backends/test_kernel_backends.py": "6568d9404adbe1a8439829321ade7588a150969e"
+        },
+        "qualified_physical_A_HEAD": "219ba3da0f62f772801d71715e22c506faa21126",
+        "recursion_exhausted_json_becomes_invalid_diagnostic": true,
+        "related_catalog_component": "kernel-proof-evidence-integrity",
+        "retained_ordinary_v03_collection_refusal": {
+          "bytes": 1784,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/lean-json-diagnostics/actual-ordinary99-v03-bootstrap-selector-refusal-closed.json",
+          "sha256": "46b6ccee43ed4fdc73c61c0391aaf2bb175981c166c8d52e4a658e0faad57461"
+        },
+        "schema": "live-reconciled-Phase1-Lean-diagnostic-handling-engineering-evidence/v1",
+        "task": "LIR-14",
+        "task_status_changed": false
+      },
+      "evidence_ordinal": 581,
+      "id": "phase1-lean-json-diagnostics-ordinary99-namespaced-native2-evidence581-20261127",
+      "observed_bytes": 5945,
+      "observed_sha256": "a85f81659953351c0bd34d6960af07d3d4c6babc04aa7e3236fbffd5cee45846",
+      "path": "/tmp/P1-proof-cache-translation-current-6btZZr/lean-json-diagnostics/guide581-composition/current-Phase1-Lean-diagnostic-handling-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Lean JSON diagnostics and a separate Native namespaced declaration check on fictional Lean source.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }

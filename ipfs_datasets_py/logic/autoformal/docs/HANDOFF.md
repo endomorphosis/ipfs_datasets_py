@@ -4134,3 +4134,8 @@ da8c0ab1306f5b0617ff968b5963705b8d7d3e1553b796762de8742935f3a5f2, and the
 replay receipt SHA-256 is c927e1ff88fc0bea7c9dc101dbfa203b34b27d41751a7be9ac5e4afec7552be7.
 Reviewer selection, signed source answers and substantive meaning review remain
 pending. The output adds no paired parent or comparison evidence.
+
+
+## Evidence581 — Reject malformed Lean JSON diagnostics
+
+The Lean adapter reports excessively nested compiler JSON as invalid. A dependency report with a list or object in the severity field now yields a structured rejection. All 99 ordinary cases passed across 24 test functions. An earlier collection attempt stopped during setup, reached no tests, and released its resources. In a separate check on fictional Lean source, Lean 4.34.1 ran one version probe and two compilations. It accepted the expected root declaration `wanted` and rejected the wrong expected type for `Law.wanted`. Signed statutory review remains pending. [Ordinary qualification](/tmp/P1-proof-cache-translation-current-6btZZr/lean-json-diagnostics/actual-live-reconciled-P1-Lean-ordinary99-closed.json) · [Native qualification](/tmp/P1-proof-cache-translation-current-6btZZr/lean-json-diagnostics/actual-Lean-JSON-diagnostics-namespaced-Native2-closed.json) · [Code publication](/tmp/P1-proof-cache-translation-current-6btZZr/lean-json-diagnostics/actual-Phase1-lean-json-diagnostics-ordinary99-and-native-three-FF-publication.json)

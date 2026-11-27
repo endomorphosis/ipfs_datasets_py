@@ -5113,6 +5113,30 @@
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
       "statutory_or_corpus_admission_or_model_qualification": false,
       "task": "LIR-14"
+    },
+    "phase1_lean_json_diagnostic_handling_20261127": {
+      "actual_live_native_namespaced2": {
+        "bytes": 1026,
+        "path": "/tmp/P1-proof-cache-translation-current-6btZZr/lean-json-diagnostics/actual-Lean-JSON-diagnostics-namespaced-Native2-closed.json",
+        "sha256": "abbf8d4ced879afceeccba6598e56f1fd72c9b915199842cbd1e347d32dd220c"
+      },
+      "actual_live_ordinary99": {
+        "bytes": 25346,
+        "path": "/tmp/P1-proof-cache-translation-current-6btZZr/lean-json-diagnostics/actual-live-reconciled-P1-Lean-ordinary99-closed.json",
+        "sha256": "ba0317da64826b8d5f81839ec911a2ac9bc16fc2188d6773da467ed489e637d2"
+      },
+      "actual_signed_statutory_review_or_corpus_admission_or_model_qualification": false,
+      "evidence_ordinal": 581,
+      "facts": {
+        "bytes": 5945,
+        "path": "/tmp/P1-proof-cache-translation-current-6btZZr/lean-json-diagnostics/guide581-composition/current-Phase1-Lean-diagnostic-handling-scoped-facts.json",
+        "sha256": "a85f81659953351c0bd34d6960af07d3d4c6babc04aa7e3236fbffd5cee45846"
+      },
+      "record_id": "phase1-lean-json-diagnostics-ordinary99-namespaced-native2-evidence581-20261127",
+      "related_catalog_component": "kernel-proof-evidence-integrity",
+      "related_tasks": [],
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
+      "task": "LIR-14"
     }
   },
   "programme_goal_hierarchy": {
