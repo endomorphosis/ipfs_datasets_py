@@ -37247,6 +37247,127 @@
       "root": "artifact_workspace",
       "scope": "Software qualification of content-addressed proof-cache filenames and reload rollback.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase1_native_translated_proof_cache_current_reload_filename_20261127",
+      "closed_runtime_facts": {
+        "actual_cache_index": {
+          "bytes": 439,
+          "path": "/tmp/Root-P1-Guide583-Native2-exact-current-owXwGME8/actual-current-native2-output/original-test-temp/native-proof-cache/index.json",
+          "sha256": "16879d6173bc8b9d6af4decec2cbee66c1cd41d26bfd93a85dcc7fdf9cb91c49"
+        },
+        "actual_cache_record": {
+          "bytes": 39431,
+          "path": "/tmp/Root-P1-Guide583-Native2-exact-current-owXwGME8/actual-current-native2-output/original-test-temp/native-proof-cache/records/bafkreiey2a3nkmddwr4nve25iaatsx7fomotrz4pe5k2ir5szwke3nvhea.json",
+          "sha256": "ef34d431bacb8d9f4f6f36c2a059c99c1b08cd44c1930033e20367bef1d18d0e"
+        },
+        "actual_native_closeout": {
+          "bytes": 7684,
+          "path": "/tmp/P1-Guide583-existing-Native2-prepared-INERT-iDXkyN/actual-Guide583-translated-proof-cache-Native2-closed.json",
+          "sha256": "e19745863f704b614f6254fda8c5f3eac66b301c9394ade6b1e1768212343e82"
+        },
+        "actual_native_commands": {
+          "all": 3,
+          "compiler": 2,
+          "unclassified": 0,
+          "version": 1
+        },
+        "actual_native_report": {
+          "bytes": 115965,
+          "path": "/tmp/Root-P1-Guide583-Native2-exact-current-owXwGME8/actual-current-native2-output/complete-native3-direct-existing-owner-report.json",
+          "sha256": "0b3e7a86928c3379598b7a05b4f263b553598aab9bffdd07a618ac2516f824b2"
+        },
+        "actual_read4": {
+          "bytes": 10611,
+          "path": "/tmp/Root-P1-Guide583-Native2-exact-current-owXwGME8/native-read4-output/actual-D27-observed-D-root-initializer-Source-READ-v01-small-closeout.json",
+          "sha256": "852531c33433044cd4ea69f9d556b3d9f044b76b714cf5c2d5b1f413ab8308f1"
+        },
+        "actual_source1": {
+          "bytes": 2412,
+          "path": "/tmp/Root-P1-Guide583-Native2-exact-current-owXwGME8/source1-terminal.json",
+          "sha256": "dda673aaab251c2c64f60e873a7516699d6da69b1da3e137278ec69f6ecf3c83"
+        },
+        "disk_reopen_and_exact_reuse": true,
+        "evidence_ordinal": 584,
+        "exact_repin_freeze": {
+          "bytes": 3144,
+          "path": "/tmp/Root-P1-Guide583-Native2-exact-current-owXwGME8/source1-freeze.json",
+          "sha256": "7dfb4e7c683f0085cc81b20ec9ca462668e5343e456aac4b0df781619b1dafd0"
+        },
+        "fictional_typed_true_fixture_only": true,
+        "native_processes_during_replay": 0,
+        "native_pytest_case_credit": 0,
+        "native_version": "4.34.1",
+        "ordinary13_counts": {
+          "added": 3,
+          "errors": 0,
+          "failures": 0,
+          "passed": 13,
+          "retained": 10,
+          "skipped": 0,
+          "tests": 13
+        },
+        "ordinary13_functions": 8,
+        "ordinary13_software_evidence": {
+          "bytes": 2571,
+          "path": "/tmp/Root-P1-cache-reload-owned-existing-route-wK9s5mUF/ordinary13-first/actual-ordinary13-qualified.json",
+          "sha256": "9fdd726486d8ca371573dcb92083765b2eeb5c424602deeec5adbb5fb0d64235"
+        },
+        "prior_verified_guide583_publication": {
+          "bytes": 4923,
+          "path": "/tmp/Root-P1-cache-reload-owned-existing-route-wK9s5mUF/actual-P1-reload-filename-Source2-READ4-ordinary13-Guide583-publication.json",
+          "sha256": "5171ea1f895771d6552f484461e708cce80dde8de2963039348801bc01a58834"
+        },
+        "published_fixture_repin": {
+          "bytes": 10491,
+          "path": "/tmp/Root-P1-Guide583-Native2-exact-current-owXwGME8/actual-code-publication-joined-to-Guide584-evidence.json",
+          "sha256": "3e898c9c1580f6f4ff99bf2351609aa3240fa9a280a12274070ea0b46c2d73d0"
+        },
+        "rejected_artifact_facets": [
+          "source",
+          "obligation",
+          "assumptions"
+        ],
+        "rejected_context_facets": [
+          "declaration",
+          "proposition",
+          "toolchain",
+          "backend-profile",
+          "interpretation",
+          "dependency"
+        ],
+        "related_catalog_component": "kernel-proof-evidence-integrity",
+        "schema": "phase1-current-native-translated-proof-cache-engineering-evidence/v1",
+        "software_reissued_backend_version_control_count": 2,
+        "source_receipt_and_cache_bound_translation": {
+          "cache_record_cid": "bafkreiey2a3nkmddwr4nve25iaatsx7fomotrz4pe5k2ir5szwke3nvhea",
+          "expected_proposition": "True",
+          "submitted_source_digest": "33fb5ff79680c9190185e0adb3e62f350c0caa6639c9c83f4578dae6c83c9842",
+          "theorem_name": "cache_native_fixture",
+          "theory_document_id": "bafkreifgf4s4cicvlb3vhgrkznhfmof32m76uzkexljyxhvpkkfutftlsq",
+          "translation_digest": "838f1cb93835ac65523b38aae28490fb28f0919edbef20a5bea2063bff40ff4f"
+        },
+        "source_resources_and_parent_closed": true,
+        "task": "LIR-14",
+        "task_status_changed": false,
+        "verified_A_head": "fae7981fa576817536a3c7aa62c5d28dc417f214",
+        "verified_D_head": "457653e9ab7743b64633e1a0ed8f6c8e1ea2f513",
+        "verified_D_tree": "4a59af25fb34dc8622763262d8331cc7421ea18d",
+        "verified_git_blobs": {
+          "ipfs_datasets_py/logic/legal_ir/proof_cache.py": "a171ee9794439540c924a2288e4ebb9262a2c859",
+          "tests/integration/logic/backends/test_kernel_backends.py": "6ada487237ea2e85c4ba19ea6b723ab6c8db3a77",
+          "tests/unit/logic/legal_ir/test_proof_cache.py": "91abcac246b2f30d9554d88d74ded0b54b1f34ed"
+        }
+      },
+      "evidence_ordinal": 584,
+      "id": "phase1-native-translated-proof-cache-current-reload-filename-evidence584-20261127",
+      "observed_bytes": 4796,
+      "observed_sha256": "e1fb0711c445a0d2b039f33d075c84faa6248141239bd7c655b33c2732608aa7",
+      "path": "/tmp/P1-Guide584-existing-private-exact-docs-idlpq6/guide584-native-translated-cache-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Native Lean 4.34.1 translated proof-cache qualification on the current filename-binding implementation.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }

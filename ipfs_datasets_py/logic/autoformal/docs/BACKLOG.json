@@ -5171,6 +5171,28 @@
       "related_catalog_component": "kernel-proof-evidence-integrity",
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
       "task": "LIR-14"
+    },
+    "phase1_native_translated_proof_cache_current_reload_filename_20261127": {
+      "actual_native_closeout": {
+        "bytes": 7684,
+        "path": "/tmp/P1-Guide583-existing-Native2-prepared-INERT-iDXkyN/actual-Guide583-translated-proof-cache-Native2-closed.json",
+        "sha256": "e19745863f704b614f6254fda8c5f3eac66b301c9394ade6b1e1768212343e82"
+      },
+      "evidence_ordinal": 584,
+      "facts": {
+        "bytes": 4796,
+        "path": "/tmp/P1-Guide584-existing-private-exact-docs-idlpq6/guide584-native-translated-cache-scoped-facts.json",
+        "sha256": "e1fb0711c445a0d2b039f33d075c84faa6248141239bd7c655b33c2732608aa7"
+      },
+      "ordinary13_software_evidence": {
+        "bytes": 2571,
+        "path": "/tmp/Root-P1-cache-reload-owned-existing-route-wK9s5mUF/ordinary13-first/actual-ordinary13-qualified.json",
+        "sha256": "9fdd726486d8ca371573dcb92083765b2eeb5c424602deeec5adbb5fb0d64235"
+      },
+      "record_id": "phase1-native-translated-proof-cache-current-reload-filename-evidence584-20261127",
+      "related_catalog_component": "kernel-proof-evidence-integrity",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
+      "task": "LIR-14"
     }
   },
   "programme_goal_hierarchy": {
