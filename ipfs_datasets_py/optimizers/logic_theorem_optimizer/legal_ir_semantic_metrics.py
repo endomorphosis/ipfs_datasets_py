@@ -348,8 +348,6 @@ def evaluate_legal_ir_semantic_equivalence(
     structural_right = _structural_signature(candidate)
     obligations_left = _obligation_signature(reference)
     obligations_right = _obligation_signature(candidate)
-    counterexamples_left = _counterexample_signature(reference)
-    counterexamples_right = _counterexample_signature(candidate)
     graph_left = _graph_signature(reference)
     graph_right = _graph_signature(candidate)
     temporal_left = _temporal_window_signature(reference)
@@ -358,6 +356,8 @@ def evaluate_legal_ir_semantic_equivalence(
     decompiler_right, round_trip_right = _legacy_round_trip_observation(candidate_ir)
     unsupported_left = _legacy_raw_ir_unsupported_paths(reference_ir)
     unsupported_right = _legacy_raw_ir_unsupported_paths(candidate_ir)
+    counterexamples_left = _counterexample_signature(reference, unsupported_left)
+    counterexamples_right = _counterexample_signature(candidate, unsupported_right)
     proof_left = _proof_obligation_signature(reference)
     proof_right = _proof_obligation_signature(candidate)
     proof_delta = float(len(proof_left ^ proof_right))
@@ -368,10 +368,6 @@ def evaluate_legal_ir_semantic_equivalence(
             obligations_left,
             obligations_right,
         ),
-        COUNTEREXAMPLE_EQUIVALENCE: _empty_aware_similarity(
-            counterexamples_left,
-            counterexamples_right,
-        ),
         GRAPH_ISOMORPHISM: _empty_aware_similarity(graph_left, graph_right),
         TEMPORAL_WINDOW_AGREEMENT: _empty_aware_similarity(
             temporal_left,
@@ -380,6 +376,12 @@ def evaluate_legal_ir_semantic_equivalence(
         PROOF_OBLIGATION_DELTA_SCORE: _proof_delta_score(proof_left, proof_right),
     }
     missing: set[str] = set()
+    if counterexamples_left is None or counterexamples_right is None:
+        missing.add(COUNTEREXAMPLE_EQUIVALENCE)
+    else:
+        scores[COUNTEREXAMPLE_EQUIVALENCE] = _empty_aware_similarity(
+            counterexamples_left, counterexamples_right,
+        )
     if decompiler_left and decompiler_right:
         scores[DECOMPILER_ROUND_TRIP_PRESERVATION] = _set_similarity(
             decompiler_left, decompiler_right,
@@ -411,8 +413,8 @@ def evaluate_legal_ir_semantic_equivalence(
                 "authority": "caller_reported_observations_only",
             },
             "counterexample_signature_sizes": {
-                "candidate": len(counterexamples_right),
-                "reference": len(counterexamples_left),
+                "candidate": None if counterexamples_right is None else len(counterexamples_right),
+                "reference": None if counterexamples_left is None else len(counterexamples_left),
             },
             "graph_signature_sizes": {
                 "candidate": len(graph_right),
@@ -455,6 +457,8 @@ def semantic_equivalence_from_metrics(
             return computed
         merged = dict(explicit)
         merged.update(computed.scores)
+        if COUNTEREXAMPLE_EQUIVALENCE in computed.missing_metrics:
+            merged.pop(COUNTEREXAMPLE_EQUIVALENCE, None)
         raw_deltas = _explicit_proof_deltas(source)
         raw_deltas.update(computed.raw_deltas)
         return SemanticEquivalenceFamilyResult(
@@ -890,6 +894,10 @@ def _legacy_raw_ir_unsupported_paths(value: Any) -> tuple[str, ...]:
             modes = [item[key] for key in groups[0] if key in item]
             if len(modes) == 1 and _normalize_scalar(modes[0]) not in _MODALITY_WORDS:
                 mark(path, "unsupported_modality")
+        elif context == "counterexample":
+            outcome = item.get("violates")
+            if "assignment" not in item or type(outcome) is not str or not outcome.strip():
+                mark(path, "incomplete_counterexample")
 
     visit(value, "root", "")
     return tuple(sorted(unsupported))
@@ -1031,8 +1039,20 @@ def _obligation_signature(value: Any) -> frozenset[str]:
     return frozenset(obligations)
 
 
-def _counterexample_signature(value: Any) -> frozenset[str]:
-    return frozenset(_contextual_values(value, ("counterexample", "cex", "witness_model")))
+def _counterexample_signature(
+    value: Any, unsupported_paths: Sequence[str],
+) -> frozenset[str] | None:
+    if any(path.startswith(("/counterexamples:", "/counterexamples/")) for path in unsupported_paths):
+        return None
+    if not isinstance(value, Mapping) or "counterexamples" not in value:
+        return frozenset(_contextual_values(value, ("counterexample", "cex", "witness_model")))
+    # Keep each reported obligation joined to its typed assignment. Scenario
+    # order and the insertion order of variables have no scoring significance.
+    return frozenset(
+        json.dumps([dict(case["assignment"]), case["violates"]], sort_keys=True,
+                   ensure_ascii=False, separators=(",", ":"), allow_nan=False)
+        for case in value["counterexamples"]
+    )
 
 
 def _graph_signature(value: Any) -> frozenset[str]:

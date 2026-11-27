@@ -901,3 +901,69 @@ def test_legacy_round_trip_observations_are_separate_from_ir_facets(observation)
         assert result.complete and result.scores[DECOMPILER_ROUND_TRIP_PRESERVATION] == 1.0
     else:
         assert result.complete and result.scores[DECOMPILER_ROUND_TRIP_PRESERVATION] < 1.0
+
+
+@pytest.mark.parametrize("drift", [None, "swapped_outcomes", "assignment_value_type", "blank_outcome", "nested_assignment"])
+def test_counterexample_scores_bind_assignments_to_reported_outcomes(drift):
+    reference, candidate = _reference_ir(), _isomorphic_ir()
+    scenarios = [
+        {"assignment": {"notice": False, "permit": True}, "violates": "po-notice"},
+        {"assignment": {"notice": True, "permit": False}, "violates": "po-permit"},
+    ]
+    reference["counterexamples"] = deepcopy(scenarios)
+    candidate["counterexamples"] = [
+        {"violates": case["violates"], "assignment": dict(reversed(tuple(case["assignment"].items())))}
+        for case in reversed(scenarios)
+    ]
+    if drift == "swapped_outcomes":
+        first, second = candidate["counterexamples"]
+        first["violates"], second["violates"] = second["violates"], first["violates"]
+    elif drift == "assignment_value_type":
+        candidate["counterexamples"][1]["assignment"]["notice"] = "false"
+    elif drift == "blank_outcome":
+        for payload in (reference, candidate):
+            payload["counterexamples"][0]["violates"] = " "
+    elif drift == "nested_assignment":
+        for payload in (reference, candidate):
+            payload["counterexamples"][0]["assignment"]["notice"] = {"observed": False}
+
+    baseline = {"view_family_metrics": {"deontic": {
+        "reference_ir": reference, "candidate_ir": reference,
+    }}}
+    observation = {"view_family_metrics": {"deontic": {
+        "reference_ir": reference, "candidate_ir": candidate,
+    }}}
+    gate = compare_legal_ir_semantic_equivalence(baseline, observation, families=("deontic",))
+    result = gate.family_results["deontic"].after
+    if drift is None:
+        assert gate.accepted is True
+        assert result.complete is True
+        assert result.scores[COUNTEREXAMPLE_EQUIVALENCE] == 1.0
+    elif drift in {"blank_outcome", "nested_assignment"}:
+        assert COUNTEREXAMPLE_EQUIVALENCE in result.missing_metrics
+        assert COUNTEREXAMPLE_EQUIVALENCE not in result.scores
+        assert gate.accepted is False
+    else:
+        assert gate.accepted is False, result.to_dict()
+        assert result.complete is True
+        assert result.scores[COUNTEREXAMPLE_EQUIVALENCE] < 1.0
+        assert result.detail["raw_input_coverage"]["canonical_typed_ir_validated"] is False
+
+
+@pytest.mark.parametrize("scenario", [
+    {"assignment": {"notice": False}, "violates": " "},
+    {"violates": "po-notice"},
+])
+def test_malformed_raw_counterexample_cannot_supply_explicit_credit(scenario):
+    reference = _reference_ir()
+    candidate = _isomorphic_ir()
+    candidate["counterexamples"] = [deepcopy(scenario)]
+    explicit = _all_semantic_scores()
+    result = semantic_equivalence_from_metrics({
+        **explicit, "reference_ir": reference, "candidate_ir": candidate,
+    }, family="deontic")
+
+    assert COUNTEREXAMPLE_EQUIVALENCE not in result.scores
+    assert COUNTEREXAMPLE_EQUIVALENCE in result.missing_metrics
+    explicit_only = semantic_equivalence_from_metrics(explicit, family="deontic")
+    assert explicit_only.scores[COUNTEREXAMPLE_EQUIVALENCE] == 1.0
