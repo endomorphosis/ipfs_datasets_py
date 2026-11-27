@@ -2940,10 +2940,15 @@ REVIEWED_LIVE_SUCCESS_SCHEMA = "legal-reviewed-native-live-success/v1"
 REVIEWED_LIVE_SUCCESS_PROFILE = "current-reviewed-live-native-owner-success/v1"
 REVIEWED_MIXED_LIVE_SUCCESS_SCHEMA = "legal-reviewed-native-live-success/v3"
 REVIEWED_MIXED_LIVE_SUCCESS_PROFILE = "current-reviewed-mixed-live-native-owner-success/v3"
+REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_NATIVE_LIVE_SUCCESS_SCHEMA = (
+    "legal-reviewed-source-bound-definition-realization-live-success/v2")
+REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_NATIVE_LIVE_SUCCESS_PROFILE = (
+    "current-reviewed-source-bound-definition-realization-live-native-owner-success/v2")
 _LIVE_SUCCESS_HANDLES = weakref.WeakKeyDictionary()
 _LIVE_MODULE_BINDINGS = None
 _LIVE_REVIEW_BINDINGS = None
 _LIVE_MIXED_REVIEW_BINDINGS = None
+_LIVE_SOURCE_BOUND_REVIEW_BINDINGS = None
 
 
 class _LiveNativeObserverRefusal(ValueError):
@@ -3088,7 +3093,8 @@ def _live_check_module_bindings(snapshot, *, skip=()):
 def _live_success_guard(owners=None, *, reviewed_version=2):
     """Fence code identity, not caller-provided success booleans or callbacks."""
     global _LIVE_MODULE_BINDINGS, _LIVE_REVIEW_BINDINGS, _LIVE_MIXED_REVIEW_BINDINGS
-    _need(type(reviewed_version) is int and reviewed_version in (2, 3, 4, 5),
+    global _LIVE_SOURCE_BOUND_REVIEW_BINDINGS
+    _need(type(reviewed_version) is int and reviewed_version in (2, 3, 4, 5, 6),
           "explicit closed live guard version required")
     for name, state in _LIVE_NATIVE_FUNCTIONS:
         _need(_live_callable_matches(globals().get(name), state),
@@ -3135,7 +3141,10 @@ def _live_success_guard(owners=None, *, reviewed_version=2):
         for snapshot in _LIVE_MODULE_BINDINGS:
             _live_check_module_bindings(snapshot)
         direct, admission_owner = _live_review_components(owners, reviewed_version)
-        bindings = _LIVE_REVIEW_BINDINGS if reviewed_version == 2 else _LIVE_MIXED_REVIEW_BINDINGS
+        if reviewed_version == 6:
+            bindings = _LIVE_SOURCE_BOUND_REVIEW_BINDINGS
+        else:
+            bindings = _LIVE_REVIEW_BINDINGS if reviewed_version == 2 else _LIVE_MIXED_REVIEW_BINDINGS
         if bindings is None:
             first = tuple(_live_compiled_module_bindings(module) for module in direct)
             # Check source origins before nested current-review callbacks run.
@@ -3145,6 +3154,8 @@ def _live_success_guard(owners=None, *, reviewed_version=2):
             bindings = (first, tuple(_live_compiled_module_bindings(module) for module in extra))
             if reviewed_version == 2:
                 _LIVE_REVIEW_BINDINGS = bindings
+            elif reviewed_version == 6:
+                _LIVE_SOURCE_BOUND_REVIEW_BINDINGS = bindings
             else:
                 _LIVE_MIXED_REVIEW_BINDINGS = bindings
         first, extra = bindings
@@ -3160,8 +3171,11 @@ def _live_success_guard(owners=None, *, reviewed_version=2):
 def _live_postrun_persistence_trusted(owners, *, reviewed_version=2):
     """Allow evidence retention only through still-original remaining owners."""
     try:
-        _need(type(reviewed_version) is int and reviewed_version in (2, 3, 4, 5), "closed live persistence version required")
-        bindings = _LIVE_REVIEW_BINDINGS if reviewed_version == 2 else _LIVE_MIXED_REVIEW_BINDINGS
+        _need(type(reviewed_version) is int and reviewed_version in (2, 3, 4, 5, 6), "closed live persistence version required")
+        if reviewed_version == 6:
+            bindings = _LIVE_SOURCE_BOUND_REVIEW_BINDINGS
+        else:
+            bindings = _LIVE_REVIEW_BINDINGS if reviewed_version == 2 else _LIVE_MIXED_REVIEW_BINDINGS
         for name, state in _LIVE_NATIVE_FUNCTIONS:
             _need(_live_callable_matches(globals().get(name), state),
                   "live success callable bindings changed: post-run persistence")
@@ -3216,7 +3230,8 @@ def _live_freeze_inputs(value):
 
 def _live_original_inputs(preparation, graph, admission, args, kwargs, *,
         realization_preservation=None, expected_upstream_preservation_sha256=None, definition_application_profile=None,
-        physical_request_raw=None, expected_physical_request_sha256=None):
+        physical_request_raw=None, expected_physical_request_sha256=None,
+        bound_component_inputs=None, expected_bound_component_inputs_sha256=None):
     original = (_reviewed_preservation_native_document(preparation), graph, admission, args, kwargs)
     if realization_preservation is not None:
         _pin(expected_upstream_preservation_sha256, "complete original realization upstream")
@@ -3232,6 +3247,10 @@ def _live_original_inputs(preparation, graph, admission, args, kwargs, *,
               and _sha(physical_request_raw) == expected_physical_request_sha256,
               "complete original physical request bytes differ")
         original = (*original, physical_request_raw, expected_physical_request_sha256)
+    if bound_component_inputs is not None or expected_bound_component_inputs_sha256 is not None:
+        _pin(expected_bound_component_inputs_sha256, "complete original bound component inputs")
+        _need(type(bound_component_inputs) is dict, "complete original bound component inputs required")
+        original = (*original, bound_component_inputs, expected_bound_component_inputs_sha256)
     return _live_freeze_inputs(original)
 
 
@@ -3285,9 +3304,9 @@ def _live_read_persisted_packet(output, checked, receipt, transport, *, reviewed
 
 def _live_handle_entry(handle, *, reviewed_version=2, instance_identity_profile=None, definition_application_profile=None):
     _reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)
-    _need(type(reviewed_version) is int and reviewed_version in (2, 3, 4, 5),
+    _need(type(reviewed_version) is int and reviewed_version in (2, 3, 4, 5, 6),
           "explicit closed live handle version required")
-    _need(definition_application_profile is None or reviewed_version in (4, 5),
+    _need(definition_application_profile is None or reviewed_version in (4, 5, 6),
           "whole-norm application requires an explicit realization live handle")
     if reviewed_version == 5:
         _need(instance_identity_profile == "reviewed-source-use/v1"
@@ -3315,15 +3334,31 @@ def _live_handle_entry(handle, *, reviewed_version=2, instance_identity_profile=
 def _live_success_domain(reviewed_version, *, instance_identity_profile=None, definition_application_profile=None):
     """Select one closed literal domain after the independent callable fence."""
     _reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)
-    _need(type(reviewed_version) is int and reviewed_version in (2, 3, 4, 5),
+    _need(type(reviewed_version) is int and reviewed_version in (2, 3, 4, 5, 6),
           "explicit closed live success version required")
     _need(type(PARENT_FALSE_FLAGS) is dict and set(PARENT_FALSE_FLAGS) == _REVIEWED_MIXED_FALSE_KEYS
           and all(value is False for value in PARENT_FALSE_FLAGS.values())
           and type(AUTHORITY) is dict and set(AUTHORITY) == _REVIEWED_MIXED_AUTHORITY_KEYS
           and all(value is False for value in AUTHORITY.values()),
           "live success cannot widen its closed false-authority policy")
-    _need(definition_application_profile is None or reviewed_version in (4, 5),
+    _need(definition_application_profile is None or reviewed_version in (4, 5, 6),
           "whole-norm application requires the explicit realization live domain")
+    if reviewed_version == 6:
+        _reviewed_source_bound_definition_realization_native_policy(
+            **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
+        return (REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_BUILD_SCHEMA,
+            _reviewed_realization_domain(REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_NATIVE_PROFILE,
+                instance_identity_profile, definition_application_profile),
+            REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_NATIVE_LIVE_SUCCESS_SCHEMA,
+            _reviewed_realization_domain(REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_NATIVE_LIVE_SUCCESS_PROFILE,
+                instance_identity_profile, definition_application_profile),
+            _reviewed_source_bound_definition_realization_receipt_binding,
+            _reviewed_source_bound_definition_realization_native_pins,
+            reviewed_source_bound_definition_realization_packet_sha256_v2,
+            _reviewed_source_bound_definition_realization_load_adapter,
+            _reviewed_source_bound_definition_realization_validate_adapter,
+            reviewed_source_bound_definition_realization_receipt_bytes_v2,
+            _reviewed_definition_realization_scope(definition_application_profile))
     if reviewed_version == 5:
         _reviewed_physical_definition_realization_native_policy(instance_identity_profile=instance_identity_profile, definition_application_profile=definition_application_profile)
         return (REVIEWED_PHYSICAL_DEFINITION_REALIZATION_BUILD_SCHEMA,
@@ -3371,7 +3406,7 @@ def _live_success_domain(reviewed_version, *, instance_identity_profile=None, de
 
 def _live_review_components(owners, reviewed_version):
     """Retain the existing V2 owners and the explicit V3 legacy-alias closure."""
-    _need(type(reviewed_version) is int and reviewed_version in (2, 3, 4, 5),
+    _need(type(reviewed_version) is int and reviewed_version in (2, 3, 4, 5, 6),
           "explicit closed live review version required")
     if reviewed_version == 2:
         graph, admission, preservation = owners[4]._reviewed_preservation_owners()
@@ -3389,7 +3424,14 @@ def _live_review_components(owners, reviewed_version):
     for name in ("_need", "_keys", "_sha"):
         _need(vars(legacy).get(name) is vars(legacy.norm).get(name),
               "mixed live legacy predicate binding changed: " + name)
-    return ((graph, admission, preservation, legacy, legacy.norm, legacy.content, legacy.reader), legacy)
+    direct = (graph, admission, preservation, legacy, legacy.norm, legacy.content, legacy.reader)
+    if reviewed_version == 6:
+        from . import corpus_source_bindings
+        _need(Path(corpus_source_bindings.__file__).resolve() ==
+              Path(__file__).resolve().with_name("corpus_source_bindings.py"),
+              "live success callable bindings changed: canonical source binding owner path required")
+        direct = (*direct, corpus_source_bindings)
+    return direct, legacy
 
 
 def _physical_planned_request_modules():
@@ -3532,6 +3574,7 @@ def _build_verified_reviewed_norm_preservation_native(preparation, graph, admiss
         toolchain, lake_executable, output_directory, timeout_seconds=60, cancellation=None, instance_identity_profile=None, definition_application_profile=None,
         realization_preservation=None, expected_upstream_preservation_sha256=None,
         physical_request_raw=None, expected_physical_request_sha256=None,
+        bound_component_inputs=None, expected_bound_component_inputs_sha256=None,
         _planned_whole_norm_binding=None, **kwargs):
     """Issue an opaque handle after one fresh default native build and replay.
 
@@ -3544,12 +3587,17 @@ def _build_verified_reviewed_norm_preservation_native(preparation, graph, admiss
           "physical request requires the explicit physical realization live domain")
     _need(reviewed_version == 5 or _planned_whole_norm_binding is None,
           "planned whole-norm request requires the explicit physical realization live domain")
-    domain_arguments = ({} if reviewed_version not in (4, 5) else {
+    _need(reviewed_version == 6 or bound_component_inputs is expected_bound_component_inputs_sha256 is None,
+          "bound component inputs require the explicit source-bound realization live domain")
+    domain_arguments = ({} if reviewed_version not in (4, 5, 6) else {
         "realization_preservation": realization_preservation,
         "expected_upstream_preservation_sha256": expected_upstream_preservation_sha256})
     if reviewed_version == 5:
         domain_arguments.update(physical_request_raw=physical_request_raw,
             expected_physical_request_sha256=expected_physical_request_sha256)
+    if reviewed_version == 6:
+        domain_arguments.update(bound_component_inputs=bound_component_inputs,
+            expected_bound_component_inputs_sha256=expected_bound_component_inputs_sha256)
     (integrity_function, integrity_code, integrity_defaults,
      integrity_keywords, persistence_state) = _live_integrity_state
 
@@ -3732,6 +3780,7 @@ def _load_verified_reviewed_norm_preservation_native(handle, packet_files, prepa
         expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256, toolchain, instance_identity_profile=None, definition_application_profile=None,
         realization_preservation=None, expected_upstream_preservation_sha256=None,
         physical_request_raw=None, expected_physical_request_sha256=None,
+        bound_component_inputs=None, expected_bound_component_inputs_sha256=None,
         _planned_whole_norm_binding=None, **kwargs):
     """Join this process's live issuance to exact bytes and current review state.
 
@@ -3743,12 +3792,17 @@ def _load_verified_reviewed_norm_preservation_native(handle, packet_files, prepa
           "physical request requires the explicit physical realization live domain")
     _need(reviewed_version == 5 or _planned_whole_norm_binding is None,
           "planned whole-norm request requires the explicit physical realization live domain")
-    domain_arguments = ({} if reviewed_version not in (4, 5) else {
+    _need(reviewed_version == 6 or bound_component_inputs is expected_bound_component_inputs_sha256 is None,
+          "bound component inputs require the explicit source-bound realization live domain")
+    domain_arguments = ({} if reviewed_version not in (4, 5, 6) else {
         "realization_preservation": realization_preservation,
         "expected_upstream_preservation_sha256": expected_upstream_preservation_sha256})
     if reviewed_version == 5:
         domain_arguments.update(physical_request_raw=physical_request_raw,
             expected_physical_request_sha256=expected_physical_request_sha256)
+    if reviewed_version == 6:
+        domain_arguments.update(bound_component_inputs=bound_component_inputs,
+            expected_bound_component_inputs_sha256=expected_bound_component_inputs_sha256)
     (integrity_function, integrity_code, integrity_defaults,
      integrity_keywords, persistence_state) = _live_integrity_state
 
@@ -3827,7 +3881,7 @@ def _load_verified_reviewed_norm_preservation_native(handle, packet_files, prepa
     fence()
     _need(bound_original_inputs(checked) == original,
           "exact issued live success regenerated project required")
-    binding = receipt_binding(checked.to_dict(), admission, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)) if reviewed_version in (3, 4, 5) else {}
+    binding = receipt_binding(checked.to_dict(), admission, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)) if reviewed_version in (3, 4, 5, 6) else {}
     if _planned_whole_norm_binding is not None:
         binding["planned_whole_norm_observation"] = _physical_planned_success_observation(
             _planned_whole_norm_binding, receipt, sampled_rss,
@@ -5906,6 +5960,94 @@ def _bind_live_success_independent_guard_v1():
             integrity(reviewed_version=4)
             return result
 
+    def build_verified_reviewed_source_bound_definition_realization_native_v2(preparation, preservation, graph, admission, *args,
+                expected_realization_sha256, expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256,
+                toolchain, lake_executable, output_directory, bound_component_inputs, expected_bound_component_inputs_sha256,
+            timeout_seconds=60, cancellation=None, instance_identity_profile=None, definition_application_profile=None, **kwargs):
+            """Issue a live result for the exact independently pinned signed source history."""
+            _reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)
+            _need(type(timeout_seconds) in (int, float) and math.isfinite(timeout_seconds)
+                  and 0 < timeout_seconds <= 60, "finite compiler timeout in (0,60] required")
+            if (entry_guard.__code__ is not entry_code
+                    or entry_guard.__defaults__ is not entry_defaults
+                    or guarded.__code__ is not guard_code
+                    or guarded.__defaults__ is not guard_defaults
+                    or set(guarded.__kwdefaults__ or {}) != {key for key, _ in guard_keywords}
+                    or not all((guarded.__kwdefaults__ or {})[key] is value
+                               for key, value in guard_keywords)):
+                raise ValueError("live success callable bindings changed: independent guard")
+            if "_live_integrity_state" in kwargs:
+                raise ValueError("private live integrity hook cannot be supplied")
+            entry_guard(6)
+            result = original_build_core(
+                preparation, graph, admission, *args, _live_integrity_state=integrity_state, reviewed_version=6,
+                expected_preservation_sha256=expected_realization_sha256,
+                realization_preservation=preservation, expected_upstream_preservation_sha256=expected_preservation_sha256,
+                bound_component_inputs=bound_component_inputs,
+                expected_bound_component_inputs_sha256=expected_bound_component_inputs_sha256,
+                expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
+                toolchain=toolchain, lake_executable=lake_executable, output_directory=output_directory,
+                timeout_seconds=timeout_seconds, cancellation=cancellation, **kwargs,
+                **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
+            try:
+                if (integrity.__code__ is not integrity_state[1]
+                        or integrity.__defaults__ is not integrity_state[2]
+                        or set(integrity.__kwdefaults__ or {}) != {key for key, _ in integrity_state[3]}
+                        or not all((integrity.__kwdefaults__ or {})[key] is value
+                                   for key, value in integrity_state[3])):
+                    raise ValueError("live success callable bindings changed: captured public integrity")
+                integrity(reviewed_version=6)
+            except BaseException:
+                if type(result) is issued_handle_class:
+                    issued_handles.pop(result, None)
+                raise
+            return result
+
+    def load_verified_reviewed_source_bound_definition_realization_native_v2(handle, packet_files, preparation, preservation, graph, admission, *args,
+                expected_receipt_sha256, expected_packet_sha256, expected_binary_sha256,
+                expected_realization_sha256, expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256,
+            toolchain, bound_component_inputs, expected_bound_component_inputs_sha256,
+            instance_identity_profile=None, definition_application_profile=None, **kwargs):
+            """Join original live issuance to the exact packet and signed source history."""
+            _reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)
+            if (globals().get("_live_handle_entry") is not original_handle_entry
+                    or original_handle_entry.__code__ is not handle_code
+                    or original_handle_entry.__defaults__ is not handle_defaults
+                    or set(original_handle_entry.__kwdefaults__ or {}) != {key for key, _ in handle_keywords}
+                    or not all((original_handle_entry.__kwdefaults__ or {})[key] is value
+                               for key, value in handle_keywords)):
+                raise ValueError("live success callable bindings changed: independent _live_handle_entry")
+            original_handle_entry(handle, reviewed_version=6, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
+            if (entry_guard.__code__ is not entry_code
+                    or entry_guard.__defaults__ is not entry_defaults
+                    or guarded.__code__ is not guard_code
+                    or guarded.__defaults__ is not guard_defaults
+                    or set(guarded.__kwdefaults__ or {}) != {key for key, _ in guard_keywords}
+                    or not all((guarded.__kwdefaults__ or {})[key] is value
+                               for key, value in guard_keywords)):
+                raise ValueError("live success callable bindings changed: independent guard")
+            if "_live_integrity_state" in kwargs:
+                raise ValueError("private live integrity hook cannot be supplied")
+            entry_guard(6)
+            result = original_load_core(
+                handle, packet_files, preparation, graph, admission, *args, _live_integrity_state=integrity_state, reviewed_version=6,
+                expected_receipt_sha256=expected_receipt_sha256, expected_packet_sha256=expected_packet_sha256,
+                expected_binary_sha256=expected_binary_sha256,
+                expected_preservation_sha256=expected_realization_sha256,
+                realization_preservation=preservation, expected_upstream_preservation_sha256=expected_preservation_sha256,
+                bound_component_inputs=bound_component_inputs,
+                expected_bound_component_inputs_sha256=expected_bound_component_inputs_sha256,
+                expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
+                toolchain=toolchain, **kwargs, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
+            if (integrity.__code__ is not integrity_state[1]
+                    or integrity.__defaults__ is not integrity_state[2]
+                    or set(integrity.__kwdefaults__ or {}) != {key for key, _ in integrity_state[3]}
+                    or not all((integrity.__kwdefaults__ or {})[key] is value
+                               for key, value in integrity_state[3])):
+                raise ValueError("live success callable bindings changed: captured public integrity")
+            integrity(reviewed_version=6)
+            return result
+
     def build_verified_reviewed_physical_definition_realization_native_v2(preparation, preservation, graph, admission, *args,
                 expected_realization_sha256, expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256,
                 toolchain, lake_executable, output_directory, physical_request_raw, expected_physical_request_sha256, timeout_seconds=60, cancellation=None, instance_identity_profile, definition_application_profile,
@@ -6039,6 +6181,8 @@ def _bind_live_success_independent_guard_v1():
         load_verified_reviewed_norm_preservation_native_v3=load_verified_reviewed_norm_preservation_native_v3,
         build_verified_reviewed_definition_realization_native_v1=build_verified_reviewed_definition_realization_native_v1,
         load_verified_reviewed_definition_realization_native_v1=load_verified_reviewed_definition_realization_native_v1,
+        build_verified_reviewed_source_bound_definition_realization_native_v2=build_verified_reviewed_source_bound_definition_realization_native_v2,
+        load_verified_reviewed_source_bound_definition_realization_native_v2=load_verified_reviewed_source_bound_definition_realization_native_v2,
         build_verified_reviewed_physical_definition_realization_native_v2=build_verified_reviewed_physical_definition_realization_native_v2,
         load_verified_reviewed_physical_definition_realization_native_v2=load_verified_reviewed_physical_definition_realization_native_v2)
     states = tuple((name, _live_callable_state(value)) for name, value in functions.items())
@@ -6048,6 +6192,8 @@ def _bind_live_success_independent_guard_v1():
             load_verified_reviewed_norm_preservation_native_v3,
             build_verified_reviewed_definition_realization_native_v1,
             load_verified_reviewed_definition_realization_native_v1,
+            build_verified_reviewed_source_bound_definition_realization_native_v2,
+            load_verified_reviewed_source_bound_definition_realization_native_v2,
             build_verified_reviewed_physical_definition_realization_native_v2,
             load_verified_reviewed_physical_definition_realization_native_v2, states)
 
@@ -6056,5 +6202,12 @@ def _bind_live_success_independent_guard_v1():
  load_verified_reviewed_norm_preservation_native_v2, build_verified_reviewed_norm_preservation_native_v3,
  load_verified_reviewed_norm_preservation_native_v3,
  build_verified_reviewed_definition_realization_native_v1, load_verified_reviewed_definition_realization_native_v1,
+ build_verified_reviewed_source_bound_definition_realization_native_v2,
+ load_verified_reviewed_source_bound_definition_realization_native_v2,
  build_verified_reviewed_physical_definition_realization_native_v2, load_verified_reviewed_physical_definition_realization_native_v2,
  _LIVE_NATIVE_FUNCTIONS) = _bind_live_success_independent_guard_v1()
+
+__all__ += ["REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_NATIVE_LIVE_SUCCESS_SCHEMA",
+    "REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_NATIVE_LIVE_SUCCESS_PROFILE",
+    "build_verified_reviewed_source_bound_definition_realization_native_v2",
+    "load_verified_reviewed_source_bound_definition_realization_native_v2"]
