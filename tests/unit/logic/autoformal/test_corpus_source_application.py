@@ -1760,3 +1760,224 @@ print('inert source application import verified')
     )
     assert result.returncode == 0, result.stdout + result.stderr
     assert result.stdout.strip() == "inert source application import verified"
+
+
+@pytest.fixture(scope="module")
+def official_v2_adjudication_for_application():
+    adjudication_fixture = helper()
+    response_fixture = adjudication_fixture.helper()
+    original = adjudication_fixture.official_typed_adjudication_data.__wrapped__()
+    typed = response_fixture.signed_typed_case(
+        response_owner, original, trust_mode="external_pinned_trust"
+    )
+    typed_report = response_fixture.assess(response_owner, typed)
+    data = adjudication_fixture.signed_case(
+        adjudication_owner, typed, typed_report, mode="external_pinned_trust"
+    )
+    report = adjudication_fixture.assess(adjudication_owner, data)
+    assert report["records"][0]["authority_prerequisites_satisfied_under_selected_trust"] is True
+    assert report["manifest"]["counts"]["authenticated_authority_claims"] == 2
+    assert report["manifest"]["counts"]["source_decisions_applied"] == 0
+    data["adjudication_report"] = report
+    return data
+
+
+def test_official_application_declaration_binds_exact_official_adjudication(
+    owner, official_v2_adjudication_for_application
+):
+    data = official_v2_adjudication_for_application
+    request, subject, adjudicated = unit(data)
+    body = author(owner, data)
+    assert request["profile"] == subject["profile"] == source_owner.OFFICIAL_PROFILE
+    assert body["request_ref"] == ref(request)
+    assert body["subject_ref"] == ref(subject)
+    assert body["adjudication_group_ref"] == ref(adjudicated)
+    assert body["preparation_manifest_sha256"] == ref(data["preparation"]["manifest"])["sha256"]
+    assert body["typed_response_manifest_sha256"] == ref(data["typed_report"]["manifest"])["sha256"]
+    assert body["adjudication_manifest_sha256"] == ref(data["adjudication_report"]["manifest"])["sha256"]
+    assert body["source_review_scope_id"] == subject["scope_id"]
+    assert body["selected_answer_variant_refs"] == [
+        choice["selected_variant_ref"] for choice in adjudicated["declaration_record"]["decisions"]
+    ]
+    assert len(body["selected_answer_variant_refs"]) == 9
+    assert body["status"] == "declared_unauthenticated_candidate_source_application"
+    assert all(body[field] is False for field in owner.FALSE_FLAGS)
+    assert owner.validate_source_application_declaration(
+        body, *unit(data), deepcopy(DESCRIPTOR), **declaration_pins(data)
+    ) == body
+
+
+def test_official_application_replays_complete_adjudication_without_application_bodies(
+    owner, official_v2_adjudication_for_application
+):
+    data = clone_case(official_v2_adjudication_for_application)
+    data["descriptor"] = deepcopy(DESCRIPTOR)
+    data["application_registry"], data["application_policy"], _ = authority(owner, data)
+    data["application_groups"] = [
+        {
+            "request_cid": group["request_cid"],
+            "reviews": [],
+            "app_artifact_id": None,
+            "evidence_artifacts": {},
+            "observed_artifact_sha256s": deepcopy(group["observed_artifact_sha256s"]),
+            "observed_pins": deepcopy(group["observed_pins"]),
+        }
+        for group in data["groups"]
+    ]
+    report = assess(owner, data)
+    assert report["manifest"]["adjudication_manifest_ref"] == ref(
+        data["adjudication_report"]["manifest"]
+    )
+    assert [row["original_adjudication_group_record"] for row in report["records"]] == (
+        data["adjudication_report"]["records"]
+    )
+    assert [row["deferred_review_slot_ids"] for row in report["records"]] == [
+        request["deferred_review_slot_ids"] for request in data["preparation"]["requests"]
+    ]
+    assert all(
+        row["application_declaration_record"] is None
+        and row["application_content_status"] == "absent"
+        and not row["source_answer_snapshot_activated_under_selected_profile"]
+        and row["activated_answer_variant_refs"] == []
+        and row["authority_assessment"]["authenticated_evidence_count"] == 0
+        for row in report["records"]
+    )
+    counts = report["manifest"]["counts"]
+    assert counts["groups"] == counts["blocked_groups"] == len(data["preparation"]["requests"])
+    assert counts["application_bodies"] == counts["authenticated_application_claims"] == 0
+    assert counts["activated_candidate_answer_snapshots"] == counts["activated_answer_slots"] == 0
+    assert_narrow_effect(owner, report)
+    assert validate(owner, report, data) == report
+
+
+def test_official_signed_application_activates_only_exact_candidate_answers(
+    owner, official_v2_adjudication_for_application
+):
+    original = official_v2_adjudication_for_application
+    data = signed_case(owner, original)
+    report = assess(owner, data)
+    first = report["records"][0]
+    _, subject, adjudicated = unit(data)
+    assert first["original_adjudication_group_record"] == adjudicated
+    assert first["application_content_status"] == "valid_declared_content"
+    assert first["authority_assessment"]["subject_sha256"] == ref(subject)["sha256"]
+    assert first["authority_assessment"]["review_prerequisites_satisfied_under_selected_trust"] is True
+    assert first["authority_assessment"]["authenticated_evidence_count"] == 2
+    assert first["source_answer_snapshot_activated_under_selected_profile"] is True
+    assert first["activated_answer_variant_refs"] == [
+        choice["selected_variant_ref"] for choice in adjudicated["declaration_record"]["decisions"]
+    ]
+    assert len(first["activated_answer_variant_refs"]) == 9
+    assert all(
+        not row["source_answer_snapshot_activated_under_selected_profile"]
+        and row["activated_answer_variant_refs"] == []
+        for row in report["records"][1:]
+    )
+    counts = report["manifest"]["counts"]
+    assert counts["activated_candidate_answer_snapshots"] == 1
+    assert counts["activated_answer_slots"] == 9
+    assert counts["deferred_questions"] == 7 * len(data["preparation"]["requests"])
+    assert_narrow_effect(owner, report)
+    assert validate(owner, report, data) == report
+
+
+def test_official_application_refuses_resealed_adjudication_for_another_subject(
+    owner, official_v2_adjudication_for_application
+):
+    data = clone_case(official_v2_adjudication_for_application)
+    _, subject, group = unit(data)
+    other_subject = data["preparation"]["subjects"][1]
+    declaration = group["declaration_record"]
+    assert declaration["subject_ref"] == ref(subject)
+    assert other_subject["record_cid"] != subject["record_cid"]
+    declaration["subject_ref"] = ref(other_subject)
+    group["declaration_record"] = reseal(declaration)
+    data["adjudication_report"]["records"][0] = reseal(group)
+
+    with pytest.raises(ValueError, match="application declaration must preserve exact adjudication source roots"):
+        author(owner, data)
+
+
+def test_official_application_refuses_a_different_binding_population_pin_before_replay(
+    owner, official_v2_adjudication_for_application, monkeypatch
+):
+    data = signed_case(owner, official_v2_adjudication_for_application)
+    replay = replay_inputs(data)
+    bindings = replay["response_bindings"]
+    subset_pin = sha(canonical(bindings[1:]))
+    assert len(bindings) == len(data["preparation"]["requests"]) > 1
+    assert subset_pin != replay["expected_response_bindings_sha256"]
+    replay["expected_response_bindings_sha256"] = subset_pin
+    monkeypatch.setattr(adjudication_owner, "validate_source_adjudications", refuse_replay)
+
+    with pytest.raises(ValueError, match="complete response binding population differs"):
+        assess(owner, data, adjudication_replay_inputs=replay)
+
+
+def test_official_application_refuses_resealed_raw_assessment_for_another_subject(
+    owner, official_v2_adjudication_for_application
+):
+    data = clone_case(official_v2_adjudication_for_application)
+    _, subject, group = unit(data)
+    typed = group["typed_response_group_record"]
+    raw = typed["raw_source_assessment_record"]
+    assert raw["subject_sha256"] == ref(subject)["sha256"]
+    raw["subject_sha256"] = ref(data["preparation"]["subjects"][1])["sha256"]
+    typed["raw_source_assessment_record"] = reseal(raw)
+    group["typed_response_group_record"] = reseal(typed)
+    declaration = group["declaration_record"]
+    declaration["typed_group_ref"] = ref(group["typed_response_group_record"])
+    group["declaration_record"] = reseal(declaration)
+    data["adjudication_report"]["records"][0] = reseal(group)
+
+    with pytest.raises(ValueError, match="exact official application request, subject and adjudicated source assessment required"):
+        author(owner, data)
+
+
+def test_official_application_preserves_each_replayed_context_status(owner):
+    from ipfs_datasets_py.logic.autoformal import corpus_source
+
+    adjudication_fixture = helper()
+    response_fixture = adjudication_fixture.helper()
+    source_fixture = response_fixture.helper()
+    inputs = source_fixture.official_occurrence_case()
+    first = inputs["occurrence_inputs"][0]
+    occurrence = first["source_occurrence"]
+    first["context"] = corpus_source.build_context_declaration(
+        occurrence,
+        expected_occurrence_cid=occurrence["record_cid"],
+        availability="declared_context",
+        reason="Fictional context reference.",
+        context_references=first["context"]["context_references"],
+    )
+    source_fixture.repin_official_inputs(inputs)
+    preparation, registry, policy, groups, options, _ = source_fixture.official_pending_assessment(
+        source_owner, inputs
+    )
+    data = {
+        "data": {"arguments": inputs}, "preparation": preparation, "registry": registry,
+        "policy": policy, "groups": groups, "at_time_utc": options["at_time_utc"],
+        "response_bindings": [{"request_cid": row["request_cid"], "responses": []} for row in groups],
+        "descriptor": deepcopy(DESCRIPTOR),
+    }
+    data["typed_report"] = response_fixture.assess(response_owner, data)
+    data["adjudication_registry"], data["adjudication_policy"], data["adjudication_signers"] = (
+        adjudication_fixture.authority(adjudication_owner, data)
+    )
+    data["adjudication_groups"] = [
+        {**deepcopy(row), "declaration_artifact_id": None} for row in groups
+    ]
+    data["adjudication_report"] = adjudication_fixture.assess(adjudication_owner, data)
+    data["application_registry"], data["application_policy"], _ = authority(owner, data)
+    data["application_groups"] = [{**deepcopy(row), "app_artifact_id": None} for row in groups]
+
+    report = assess(owner, data)
+    contexts = [row["original_contexts_remain_required_unavailable"] for row in report["records"]]
+    assert contexts == [False, True, True, True]
+    assert [row["original_adjudication_group_record"] for row in report["records"]] == (
+        data["adjudication_report"]["records"]
+    )
+    assert report["manifest"]["counts"]["activated_candidate_answer_snapshots"] == 0
+    assert report["manifest"]["counts"]["source_decisions_applied"] == 0
+    assert all(report["manifest"][field] is False for field in owner.FALSE_FLAGS)
+    assert validate(owner, report, data) == report

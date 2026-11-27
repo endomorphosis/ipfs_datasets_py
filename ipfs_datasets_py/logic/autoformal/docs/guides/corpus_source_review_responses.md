@@ -109,11 +109,19 @@ adjudication registry and policy. Each of the nine choices refers to a retained
 answer variant or stays unresolved. The seven deferred questions and the
 original context availability stay intact.
 
-Application, history and binding consumers still require legacy preparation.
 An adjudication assessment retains evidence and declared choices for later
 use. Its authority-prerequisite field reports the result under the caller's
-selected trust inputs. Applying source decisions and qualifying reviewed legal
-meaning remain separate operations.
+selected trust inputs.
+
+The existing `corpus_source_application` owner also accepts official V2
+adjudication. It regenerates the original population, verifies the exact
+adjudication and an independently pinned application policy and reviews, and
+can activate a generation-one **candidate answer snapshot**. Activation copies
+all nine selected answer-variant references in order. It carries forward the
+original context availability and seven deferred questions. This operation
+leaves governing-source bindings, source decisions and reviewed legal meaning
+unselected. The history and physical-binding consumers still require legacy
+paired preparation with its alignment inputs.
 
 Response bindings are a complete ordered list, one group per original request:
 `{request_cid, responses: [{review_id, artifact_id, raw_sha256}]}`. Entries match
