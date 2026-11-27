@@ -7181,6 +7181,9 @@
       "notes": "Current V3 source now has a closed7-case numerical qualification for tiny fictional projections; rich candidate/decoder and real-asset quality gates remain pending. The following records the earlier selected public lineage: Exact nine-file source delivery matches the complete 294-case qualification. Unknown pairs/analogies do not become automatic negatives; candidate context grants no decoder or legal authority. Historical 225/287 cohorts, failed requests and unrelated runtime changes retain their own scopes. All137 executed clean-checkout product buffers match selected public index; three private dependency deltas were excluded and freshly qualified separately.",
       "owner_module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_joint_retrieval",
       "ownership_role": "existing_single_owner",
+      "owning_tests": [
+        "tests/unit/optimizers/logic_theorem_optimizer/test_legal_joint_retrieval.py"
+      ],
       "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_joint_retrieval.py",
       "required": true,
       "reviewed_complete_composition_integration": {
@@ -10092,6 +10095,9 @@
       },
       "owner_module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_evaluation_artifacts",
       "ownership_role": "existing_single_owner",
+      "owning_tests": [
+        "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_evaluation_artifacts.py"
+      ],
       "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_evaluation_artifacts.py",
       "profiled_generation_v3_retention_20261114": {
         "CI_selector_and_weights_published": true,
@@ -37367,6 +37373,116 @@
       "required_for_catalog_check": false,
       "root": "artifact_workspace",
       "scope": "Native Lean 4.34.1 translated proof-cache qualification on the current filename-binding implementation.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase2_whole_project_managed234_and_current_generic_lean_policy_20261127",
+      "closed_runtime_facts": {
+        "catalog_links_scope": "Existing test paths recorded on two existing components",
+        "catalog_owning_test_link_proposal": {
+          "bytes": 6206,
+          "path": "/tmp/Main-board-stall-evidence-refresh-private-v01/owner-wait-consumer-integration-private-v01/Phase8-evaluation-lineage-current-v01/catalog-existing-test-links-private-v01-cwzfy8ie/sealed-existing-catalog-owning-tests-two-field-proposal-v01.json",
+          "sha256": "0e8f8bdd4fafb48ad4d7267626553464575df1d71fd10c372f3872c18ae74cb1"
+        },
+        "evidence_ordinal": 585,
+        "generic_Native3": {
+          "A": "fae7981fa576817536a3c7aa62c5d28dc417f214",
+          "D": "793b93c8e67ae0da830e8b323430965b55b610fc",
+          "Source_resources_parent_closed": true,
+          "actual": {
+            "bytes": 24131,
+            "path": "/tmp/Root-P1-Guide584-generic-Native3-N3iAXWzm/actual-current-Guide584-generic-Native3-expected-policy-qualification-closed.json",
+            "sha256": "e68520d6b4688e1e480301bc4b1d0e1118ab99dcf3814f6b38ddb86585b15766"
+          },
+          "commands": {
+            "all": 5,
+            "compiler": 3,
+            "unclassified": 0,
+            "version": 2
+          },
+          "installed_toolchain": "Lean (version 4.34.1, aarch64-unknown-linux-gnu, commit 5045d0056413266e57c625dcd7c365b10e377c52, Release)",
+          "outcomes": {
+            "positive": "accepted",
+            "unapproved_dependency": "policy rejected",
+            "wrong_type": "compiler rejected"
+          },
+          "pytest_case_credit": 0
+        },
+        "historical_R5_d2ddb": {
+          "actual": {
+            "bytes": 2959,
+            "path": "/tmp/Root-P2-whole-component-managed-R5-n8Fkdm2q/R5-first/Root-current-R5-detached-verifier-terminal.json",
+            "sha256": "9aca9dbf3a1bf3ee868960582ee5100d9e68153f74f58b470f0f02546aa4cdb7"
+          },
+          "fresh_on_managed234_D": false,
+          "local_D": "d2ddb5fc873c38370268975f4e76a80ff427c87c",
+          "local_tree": "7f668c3ebb11734d725565401f459111c58df9f6",
+          "logical_output_bytes": 5568961,
+          "post_cleanup_portable_replay_executed": false,
+          "retained_members": 93,
+          "signed_fictional_fixture": true,
+          "verifier": {
+            "bytes": 40095,
+            "path": "/tmp/Root-P2-whole-component-managed-R5-n8Fkdm2q/R5-first/launch/actual-R5-physical-v4-checked-whole-project-current.json",
+            "sha256": "7b9a7defac06f184dc53edb0e7cacb63cc6ff75c26d14d5b2f7a047c91629d03"
+          }
+        },
+        "joint_run_claimed": false,
+        "managed234": {
+          "A": "fae7981fa576817536a3c7aa62c5d28dc417f214",
+          "D": "868925f044004da79b08adc9608bada01fd00733",
+          "Source_read": {
+            "bytes": 9945,
+            "path": "/tmp/Root-P2-existing-owner-Guide584-reconciliation-hxm7h07u/actual-p2-composed234-source3-output/actual-D27-observed-D-root-initializer-Source-READ-v01-small-closeout.json",
+            "sha256": "130672edafe7d4c12f9d31020cf5ced86c9b6701559c7cf00871b9c824a922ab"
+          },
+          "actual_qualification": {
+            "bytes": 2301,
+            "path": "/tmp/Root-P2-existing-owner-Guide584-reconciliation-hxm7h07u/actual-managed-composed234-qualified.json",
+            "sha256": "f350f2dda46a38cd7e4bd3821c520b6071f18112cafda068dc350fd8292f9cfc"
+          },
+          "counts": {
+            "errors": 0,
+            "failures": 0,
+            "functions": 65,
+            "passed": 234,
+            "skipped": 0,
+            "tests": 234
+          },
+          "managed_report": {
+            "bytes": 5730005,
+            "path": "/tmp/Root-P2-existing-owner-Guide584-reconciliation-hxm7h07u/runtime-controls-iSCWSq/Root-composed234-late-selected-retry/actual-output/complete-frozen-local-D-phase1-phase2-current-composed-ordinary234-existing-owner-report.json",
+            "sha256": "2cdc116be373d7dcee9a1cdfd4414bece52f7a07e035982dcfdbfe0fec6017ba"
+          },
+          "published_exact_code": {
+            "bytes": 51608,
+            "path": "/tmp/Root-P2-existing-owner-Guide584-reconciliation-hxm7h07u/guides-preparation-INERT/code-only-actual-parent-pins/actual-P2-managed234-code-normal-FF-publication.json",
+            "sha256": "deda922e3bfc29030e6e601c535c6f04f7df6c9a1448d20477f78f52d5da27de"
+          },
+          "raw_JUnit": {
+            "bytes": 44183,
+            "path": "/tmp/Root-P2-existing-owner-Guide584-reconciliation-hxm7h07u/runtime-controls-iSCWSq/Root-composed234-late-selected-retry/actual-output/phase1-phase2-current-composed-ordinary234-run-result0-output1.bin",
+            "sha256": "1253d97527ef9e1dca53d908b4e439e143638dc5090012e724d7efaf43c82f86"
+          },
+          "subcohorts": [
+            62,
+            159,
+            13
+          ],
+          "tree": "64729842188e0b36eb08cf6aff4c211404b59174"
+        },
+        "real_review_corpus_or_model_authority": false,
+        "schema": "managed-whole-project-and-generic-Lean-policy-engineering-evidence/v1",
+        "task_status_changed": false
+      },
+      "evidence_ordinal": 585,
+      "id": "phase2-whole-project-managed234-and-current-generic-lean-policy-evidence585-20261127",
+      "observed_bytes": 4482,
+      "observed_sha256": "15553f0fe435eeffaf2a24ac4a38ed761260e398dd881dc95efd36198b88c65c",
+      "path": "/tmp/Root-P2-existing-owner-Guide584-reconciliation-hxm7h07u/guides-preparation-INERT/actual-Guide585-four-doc-composition/guide585-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Managed software qualification and separate generic Lean proposition and dependency-policy checks.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]

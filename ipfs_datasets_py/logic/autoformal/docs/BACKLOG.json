@@ -5193,6 +5193,16 @@
       "related_catalog_component": "kernel-proof-evidence-integrity",
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
       "task": "LIR-14"
+    },
+    "phase2_whole_project_managed234_and_current_generic_lean_policy_20261127": {
+      "evidence_ordinal": 585,
+      "facts": {
+        "bytes": 4482,
+        "path": "/tmp/Root-P2-existing-owner-Guide584-reconciliation-hxm7h07u/guides-preparation-INERT/actual-Guide585-four-doc-composition/guide585-scoped-facts.json",
+        "sha256": "15553f0fe435eeffaf2a24ac4a38ed761260e398dd881dc95efd36198b88c65c"
+      },
+      "record_id": "phase2-whole-project-managed234-and-current-generic-lean-policy-evidence585-20261127",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
     }
   },
   "programme_goal_hierarchy": {
