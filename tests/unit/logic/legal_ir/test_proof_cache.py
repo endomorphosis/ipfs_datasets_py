@@ -1920,3 +1920,91 @@ def test_unified_get_eligibility_snapshot_after_actual_lookup(change, monkeypatc
             assert returned.result_authority is policy["require_result_authority"], row
         if "max_trust_level" in policy:
             assert trust_rank(returned.trust_level) <= trust_rank(policy["max_trust_level"]), row
+
+
+@pytest.mark.parametrize(
+    ("request_translation", "receipt_translation", "agrees"),
+    (
+        pytest.param(False, "absent", True, id="both-absent"),
+        pytest.param(True, "matching", True, id="exact-match"),
+        pytest.param(True, "absent", False, id="request-only"),
+        pytest.param(False, "matching", False, id="receipt-only"),
+        pytest.param(True, "different", False, id="different-digest"),
+    ),
+)
+def test_bound_cache_requires_checked_lean_translation_agreement(
+    tmp_path: Path, request_translation: bool, receipt_translation: str, agrees: bool
+) -> None:
+    """Exercise binding and cache replay with an explicitly fictional kernel receipt."""
+    from ipfs_datasets_py.logic.backends.kernel import lean
+    from ipfs_datasets_py.logic.backends.kernel.wasm import KernelTranslationBinding
+
+    artifact, original_receipt, original, context = _bound_fixture()
+    claim = IRClaim.from_dict(original["claim"])
+    request = BackendRequest.from_dict(original["request"])
+    translation = KernelTranslationBinding(
+        translation_id="translation:fictional-proof-cache",
+        translation_digest=stable_digest({"fictional_translation": "selected"}),
+        source_family="software_verification",
+        target_family="lean4",
+        fidelity="exact",
+    )
+    if request_translation:
+        translation_payload = translation.to_dict()
+        del translation_payload["metadata"]
+        request = replace(request, payload={**request.payload.to_dict(), "translation": translation_payload})
+    _, _, normalized_translation = lean._payload_source(request)
+    assert normalized_translation == (translation if request_translation else None)
+
+    kernel = _fictional_kernel_receipt(request)
+    if receipt_translation == "matching":
+        kernel = replace(kernel, translation=translation)
+    elif receipt_translation == "different":
+        kernel = replace(kernel, translation=replace(
+            translation, translation_digest=stable_digest({"fictional_translation": "different"})
+        ))
+    assert lean.LeanKernelReceipt.from_dict(kernel.to_dict()) == kernel
+    assert (kernel.translation == normalized_translation) is agrees
+
+    attempt = replace(BackendAttempt.from_dict(original["attempt"]),
+        request_digest=request.digest,
+        output_digest=stable_digest({"authored_kernel_fixture": kernel.to_dict()}))
+    original_result = ProofResult.from_dict(original["result"])
+    result = ProofResult.for_attempt(
+        request, attempt,
+        result_id=original_result.result_id,
+        authority=replace(original_result.authority, scope_digest=request.digest),
+        status=ResultStatus.PROVED,
+        payload={"kernel_receipt": kernel.to_dict(), "fixture_only": True},
+    )
+    receipt = ProofReceipt.issue(
+        claim, request, attempt, result,
+        receipt_id=original_receipt.receipt_id, verifier=original_receipt.verifier,
+    )
+    assert receipt.request_digest == kernel.request_digest == request.digest
+    evidence = dict(claim=claim, request=request, attempt=attempt, result=result, context=context)
+    binding_wire = {
+        **original, "receipt_digest": receipt.digest, **{
+            name: evidence[name].to_dict() for name in ("claim", "request", "attempt", "result")
+        },
+    }
+    cache = LegalProofCache(root=tmp_path)
+    fields = dict(profile="fictional-translation-agreement", jurisdiction="fictional",
+                  theorem_receipts=(receipt,))
+
+    if not agrees:
+        with pytest.raises(LegalProofIntegrityError, match="translation"):
+            build_legal_proof_binding(artifact, receipt, **evidence)
+        with pytest.raises(LegalProofIntegrityError, match="translation"):
+            cache.put(artifact, proof_bindings=(binding_wire,), **fields)
+        assert not cache.cids()
+        return
+
+    binding = build_legal_proof_binding(artifact, receipt, **evidence)
+    assert binding == binding_wire
+    stored = cache.put(artifact, proof_bindings=(binding,), **fields)
+    loaded = LegalProofCache(root=tmp_path).get(stored.content_cid)
+    assert loaded.to_dict() == stored.to_dict()
+    assert loaded.theorem_receipt_results(
+        expected_context=context, obligation_id=receipt.obligation_id
+    ) == (receipt,)

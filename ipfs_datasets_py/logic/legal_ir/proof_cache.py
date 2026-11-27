@@ -365,7 +365,7 @@ def _validate_proof_binding(
     # Replay the same source-alias and encoding policy as a fresh backend run;
     # an archival receipt cannot bypass a stricter current request boundary.
     try:
-        source, _, _ = _payload_source(request)
+        source, _, translation = _payload_source(request)
     except (TypeError, ValueError, AttributeError) as exc:
         raise LegalProofIntegrityError(
             "one unambiguous checked Lean source is required by the current backend"
@@ -373,6 +373,8 @@ def _validate_proof_binding(
     if (not isinstance(source, str) or kernel.submitted_source != source
             or kernel.theorem_digest != content_digest(source)):
         raise LegalProofIntegrityError("checked Lean source identity differs from request")
+    if kernel.translation != translation:
+        raise LegalProofIntegrityError("checked Lean translation differs from request")
     if kernel.source_binding.source_digest != kernel.theorem_digest:
         raise LegalProofIntegrityError("kernel source binding differs from checked source")
     compiled = instrument_lean_source_for_axioms(
