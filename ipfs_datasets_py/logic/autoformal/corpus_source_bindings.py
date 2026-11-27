@@ -747,9 +747,9 @@ def _prepare_bound_norm_component(binding_report, *, binding_replay_inputs,
             _fail('complete explicitly declared source context requirements remain unavailable')
         for reference in supplied['context_references']:
             record = component_records.get(reference['record_cid'])
-            schema = (source_records.SOURCE_VERSION_SCHEMA if reference['record_kind'] == 'source_version'
-                      else source_records.SOURCE_OCCURRENCE_SCHEMA)
-            if record is None or record['schema'] != schema:
+            record_schema = (source_records.SOURCE_VERSION_SCHEMA if reference['record_kind'] == 'source_version'
+                             else source_records.SOURCE_OCCURRENCE_SCHEMA)
+            if record is None or record['schema'] != record_schema:
                 _fail('context reference lacks its complete independently validated component source')
         context_bindings.append({'unit_id': unit['unit_id'], 'request_cid': link['request_cid'],
             'binding_declaration_ref': link['binding_declaration_ref'],

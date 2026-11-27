@@ -1696,6 +1696,8 @@ def test_bound_norm_component_fictional_positive_reaches_existing_consumer_witho
     case = lir02_complete_handoff_case
     arguments = _lir02_arguments(case)
     report = _lir02_prepare(owner, arguments)
+    assert report["schema"] == "legal-bound-norm-component-preparation/v1"
+    assert report["profile"] == "declared-source-binding-to-complete-norm-preparation/v1"
     assert report["norm_preparation"] == case["case"]["preparation"]
     assert report["semantic_use_eligible"] is False
     assert report["training_mask"] == report["evaluation_gold_mask"] == 0
