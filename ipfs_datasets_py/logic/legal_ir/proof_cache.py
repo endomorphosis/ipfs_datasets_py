@@ -1114,6 +1114,10 @@ class LegalProofCache:
 
             for path in sorted(records_dir.glob("*.json")):
                 record = self._load_record_file(path)
+                if path != self._record_path(record.content_cid):
+                    raise LegalProofIntegrityError(
+                        "proof record filename does not match content CID"
+                    )
                 if record.content_cid in loaded:
                     raise LegalProofIntegrityError(
                         f"duplicate proof content_cid on disk: {record.content_cid}"

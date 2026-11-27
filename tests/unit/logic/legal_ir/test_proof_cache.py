@@ -2066,3 +2066,74 @@ def test_failed_record_replace_preserves_committed_cache_indexes(tmp_path: Path,
     assert selected_cids(reopened) == (replacement.content_cid,) * 3
     assert reopened.get(previous.content_cid).to_dict() == previous.to_dict()
     assert reopened.get(replacement.content_cid).to_dict() == replacement.to_dict()
+
+
+@pytest.mark.parametrize("with_index", [True, False], ids=["with-index", "without-index"])
+def test_reload_rejects_renamed_record_without_losing_verified_indexes(
+    tmp_path: Path, with_index: bool
+) -> None:
+    cache = LegalProofCache(root=tmp_path / "renamed-record")
+    record = cache.put(_legal_artifact(), profile="legal-strict", jurisdiction="us-federal")
+    canonical_path = cache._record_path(record.content_cid)
+    index_path = cache._index_path()
+    assert canonical_path is not None and index_path is not None
+    assert canonical_path.is_file() and index_path.is_file()
+    original_bytes = canonical_path.read_bytes()
+    if not with_index:
+        index_path.unlink()
+    index_bytes = index_path.read_bytes() if with_index else None
+    before_cids = cache.cids()
+    before_profiles = cache.profiles()
+    before_sources = cache.source_digests()
+    before_wire = cache.get(record.content_cid).to_dict()
+    before_stats = cache.stats()
+
+    # Keep the genuine validated record and any retained index byte-for-byte.
+    renamed_path = canonical_path.with_name("renamed-" + canonical_path.name)
+    canonical_path.rename(renamed_path)
+    assert renamed_path.read_bytes() == original_bytes
+    assert not canonical_path.exists()
+    with pytest.raises(LegalProofIntegrityError, match="filename"):
+        cache.reload()
+
+    assert cache.stats() == before_stats
+    assert cache.cids() == before_cids
+    assert cache.profiles() == before_profiles
+    assert cache.source_digests() == before_sources
+    assert cache.get(record.content_cid).to_dict() == before_wire
+    assert cache.get_by_profile("legal-strict").to_dict() == before_wire
+    assert cache.get_by_source_digest(record.source_digest).to_dict() == before_wire
+    assert cache.get_by_source_digest(
+        record.source_digest, profile="legal-strict"
+    ).to_dict() == before_wire
+    assert renamed_path.read_bytes() == original_bytes
+    assert (index_path.read_bytes() if with_index else None) == index_bytes
+    assert index_path.exists() is with_index
+    with pytest.raises(LegalProofIntegrityError, match="filename"):
+        LegalProofCache(root=cache.root)
+
+
+def test_reload_canonical_record_without_persisted_index(tmp_path: Path) -> None:
+    cache = LegalProofCache(root=tmp_path / "canonical-no-index")
+    record = cache.put(_legal_artifact(), profile="legal-strict", jurisdiction="us-federal")
+    canonical_path = cache._record_path(record.content_cid)
+    index_path = cache._index_path()
+    assert canonical_path is not None and index_path is not None
+    before_bytes = canonical_path.read_bytes()
+    before_wire = record.to_dict()
+    index_path.unlink()
+
+    assert cache.reload() == 1
+    reopened = LegalProofCache(root=cache.root)
+    assert reopened.reload() == 1
+    assert reopened.cids() == (record.content_cid,)
+    assert reopened.profiles() == ("legal-strict",)
+    assert reopened.source_digests() == (record.source_digest,)
+    assert reopened.get(record.content_cid).to_dict() == before_wire
+    assert reopened.get_by_profile("legal-strict").to_dict() == before_wire
+    assert reopened.get_by_source_digest(record.source_digest).to_dict() == before_wire
+    assert reopened.get_by_source_digest(
+        record.source_digest, profile="legal-strict"
+    ).to_dict() == before_wire
+    assert canonical_path.read_bytes() == before_bytes
+    assert not index_path.exists()
