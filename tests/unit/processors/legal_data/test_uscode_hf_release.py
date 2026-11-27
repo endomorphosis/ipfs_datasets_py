@@ -643,7 +643,7 @@ def _wire_profile_fixture(**kwargs):
     return _build_fixture_release(metadata_profile="hf-default-parquet-envelope/v1", **kwargs)
 
 
-def _wire_profile_intake(release):
+def _wire_profile_request(release):
     import hashlib
     from ipfs_datasets_py.logic.autoformal import legal_source_package_intake_v1 as intake
     blobs = {name: release.artifact(name).content for name in intake.FILES}
@@ -664,8 +664,14 @@ def _wire_profile_intake(release):
                    "sha256": hashlib.sha256(body).hexdigest()} for name, body in blobs.items()],
     }
     raw = canonical_json_bytes(request)
-    return intake.prepare_source_package_intake_v2(raw, blobs,
-        expected_request_sha256=hashlib.sha256(raw).hexdigest())
+    return raw, hashlib.sha256(raw).hexdigest(), blobs
+
+
+def _wire_profile_intake(release):
+    from ipfs_datasets_py.logic.autoformal import legal_source_package_intake_v1 as intake
+
+    raw, digest, blobs = _wire_profile_request(release)
+    return intake.prepare_source_package_intake_v2(raw, blobs, expected_request_sha256=digest)
 
 
 def test_wire_profile_producer_connects_actual_parquet_to_strict_intake_v2():
@@ -781,3 +787,121 @@ def test_wire_profile_validation_rejects_resealed_drift(damage):
 def test_wire_profile_legacy_package_is_refused_by_strict_intake_v2():
     with pytest.raises(ValueError, match="explicit HF wire declaration"):
         _wire_profile_intake(_build_fixture_release())
+
+
+def _remote_viewer_canary():
+    from importlib.util import module_from_spec, spec_from_file_location
+
+    repo = Path(__file__).resolve().parents[4]
+    script = repo / "scripts/ops/legal_data/canary_uscode_hf_release.py"
+    spec = spec_from_file_location("canary_uscode_hf_viewer_test", script)
+    assert spec is not None and spec.loader is not None
+    module = module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_remote_viewer_cli_reads_exact_pinned_controls_and_members(
+    tmp_path: Path, monkeypatch
+) -> None:
+    import huggingface_hub
+
+    release = _wire_profile_fixture(max_rows_per_shard=1)
+    raw, digest, metadata = _wire_profile_request(release)
+    declaration = release.manifest_dict()["wire_metadata"]
+    members = declaration["data_files"][0]["path"]
+    files = {item.relative_path: item.content for item in release.artifacts}
+    fetched = []
+    request_path = tmp_path / "viewer-request.json"
+    request_path.write_bytes(raw)
+    receipt_path = tmp_path / "viewer-receipt.json"
+
+    def download(*, repo_id, filename, repo_type, revision, token, force_download):
+        assert (repo_id, repo_type, revision, token, force_download) == (
+            release.dataset_id, "dataset", "a" * 40, None, True
+        )
+        fetched.append(filename)
+        local = tmp_path / f"transport-{len(fetched)}"
+        local.write_bytes(files[filename])
+        return str(local)
+
+    monkeypatch.setattr(huggingface_hub, "hf_hub_download", download)
+    canary = _remote_viewer_canary()
+    assert canary.main([
+        "--viewer-request", str(request_path), "--viewer-request-sha256", digest,
+        "--repo-id", release.dataset_id, "--revision", "a" * 40, "--network",
+        "--output", str(receipt_path),
+    ]) == 0
+    receipt = json.loads(receipt_path.read_bytes())
+    assert fetched == [item["path_in_repo"] for item in json.loads(raw)["files"]] + members
+    assert receipt["immutable_viewer_readback_verified"] is True
+    assert receipt["viewer_config"] == "publicus-ir-graphrag-v2"
+    assert receipt["physical_rows"] == declaration["num_examples"]
+    assert receipt["decoded_arrow_bytes"] == declaration["num_bytes"]
+    assert receipt["total_redownload_bytes"] == sum(len(files[name]) for name in [*metadata, *members])
+
+
+@pytest.mark.parametrize("damage", ["missing_readme", "changed_infos", "changed_member", "physical_schema"])
+def test_remote_viewer_refuses_unverified_or_physically_incoherent_population(damage):
+    from ipfs_datasets_py.retrieval.hf_graphrag.resolver import MappingTransport
+
+    canary = _remote_viewer_canary()
+    release = _wire_profile_fixture()
+    path = release.manifest_dict()["wire_metadata"]["data_files"][0]["path"][0]
+    if damage == "physical_schema":
+        import pyarrow as pa
+        import pyarrow.parquet as pq
+
+        table = pq.ParquetFile(pa.BufferReader(release.artifact(path).content)).read()
+        table = table.set_column(0, "entry_cid", pa.array([1] * table.num_rows))
+        sink = pa.BufferOutputStream()
+        pq.write_table(table, sink)
+        release = _reseal_wire_profile_test_package(release, {path: sink.getvalue().to_pybytes()})
+    raw, digest, _ = _wire_profile_request(release)
+    files = {item.relative_path: item.content for item in release.artifacts}
+    if damage == "missing_readme":
+        files.pop(README_FILENAME)
+    elif damage == "changed_infos":
+        files[DATASET_INFOS_FILENAME] += b" "
+    elif damage == "changed_member":
+        files[path] += b" "
+    with pytest.raises(canary.CanaryViewerError, match={
+        "missing_readme": "missing",
+        "changed_infos": "digest or size differs",
+        "changed_member": "digest or size differs",
+        "physical_schema": "physical envelope schema differs",
+    }[damage]):
+        canary.run_remote_viewer_canary(
+            repo_id=release.dataset_id, revision="a" * 40,
+            request_raw=raw, expected_request_sha256=digest, transport=MappingTransport(files),
+        )
+
+
+def test_remote_viewer_refuses_wrong_revision_and_over_budget_before_member_fetch():
+    from ipfs_datasets_py.retrieval.hf_graphrag.resolver import MappingTransport
+
+    canary = _remote_viewer_canary()
+    release = _wire_profile_fixture()
+    raw, digest, metadata = _wire_profile_request(release)
+    fetched = []
+
+    class RecordMetadataOnly(MappingTransport):
+        def fetch(self, **kwargs):
+            fetched.append(kwargs["relative_path"])
+            return super().fetch(**kwargs)
+
+    transport = RecordMetadataOnly(metadata)
+    with pytest.raises(canary.CanaryViewerError, match="differs from.*revision"):
+        canary.run_remote_viewer_canary(
+            repo_id=release.dataset_id, revision="b" * 40,
+            request_raw=raw, expected_request_sha256=digest, transport=transport,
+        )
+    assert fetched == []
+
+    with pytest.raises(canary.CanaryBudgetError, match="viewer files.*file budget"):
+        canary.run_remote_viewer_canary(
+            repo_id=release.dataset_id, revision="a" * 40, request_raw=raw,
+            expected_request_sha256=digest, transport=transport,
+            recipe={"budgets": {"max_shards": len(metadata)}},
+        )
+    assert fetched == [item["path_in_repo"] for item in json.loads(raw)["files"]]

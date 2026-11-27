@@ -292,6 +292,9 @@ def test_remote_canary_with_explicit_staging_coordinates(tmp_path: Path) -> None
     assert receipt["ok"] is True
     assert receipt["mode"] == "remote"
     assert receipt["network_invoked"] is False
+    assert receipt["immutable_viewer_readback_verified"] is False
+    assert receipt["viewer"]["scope"] == "local_config_policy"
+    assert receipt["disk_viewer"]["ok"] is None
     assert receipt["revision"] == staging_revision
     assert receipt["repo_id"] == staging_repo
     assert receipt["acceptance"]["bounded_downloads"] is True

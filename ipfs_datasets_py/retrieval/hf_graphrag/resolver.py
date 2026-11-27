@@ -507,6 +507,9 @@ class HuggingFaceHubTransport:
     happens only when :meth:`fetch` is invoked by a resolver.
     """
 
+    def __init__(self, *, force_download: bool = False) -> None:
+        self.force_download = force_download
+
     def fetch(
         self,
         *,
@@ -530,6 +533,7 @@ class HuggingFaceHubTransport:
                 repo_type="dataset",
                 revision=revision,
                 token=token,
+                **({"force_download": True} if self.force_download else {}),
             )
             # Hub often returns a symlink into its CAS; materialize real bytes.
             shutil.copyfile(Path(downloaded), destination)

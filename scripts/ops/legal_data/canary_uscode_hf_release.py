@@ -36,16 +36,24 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
 if str(REPOSITORY_ROOT) not in sys.path:
     sys.path.insert(0, str(REPOSITORY_ROOT))
 
+from ipfs_datasets_py.logic.autoformal.legal_source_package_intake_v1 import (  # noqa: E402
+    MAX_REQUEST_BYTES,
+    prepare_source_package_intake_v2,
+    validate_source_package_request_v2,
+)
 from ipfs_datasets_py.processors.legal_data.uscode_hf_release import (  # noqa: E402
     DEFAULT_CONFIG_NAME,
     DEFAULT_DATASET_REPO_ID,
     DEFAULT_SOURCE_REVISION,
     RECOVERY_CONFIG_NAME,
+    WIRE_PARQUET_SCHEMA_IDS,
+    ReleaseArtifact,
     UscodeHFReleaseConfigError,
     UscodeHFReleaseError,
     UscodeHFReleaseSafetyError,
     advertised_viewer_configs,
     assert_configs_schema_coherent,
+    measure_uscode_wire_parquet,
 )
 from ipfs_datasets_py.processors.legal_data.uscode_query import (  # noqa: E402
     UscodeQueryClient,
@@ -55,6 +63,7 @@ from ipfs_datasets_py.processors.legal_data.uscode_query import (  # noqa: E402
 )
 from ipfs_datasets_py.retrieval.hf_graphrag.query import QueryLimits  # noqa: E402
 from ipfs_datasets_py.retrieval.hf_graphrag.resolver import (  # noqa: E402
+    ArtifactDescriptor,
     HuggingFaceHubTransport,
     ImmutableHubResolver,
     LocalRootTransport,
@@ -1237,7 +1246,9 @@ def run_canary(
                     "remote canary without --network requires an injected "
                     "transport (use fixture mode or pass a fake Hub transport)"
                 )
-            disk_viewer = {"ok": True, "dataset_configs_present": False}
+            disk_viewer = {"ok": None, "dataset_configs_present": False,
+                           "scope": "immutable_viewer_readback_not_selected"}
+            viewer_report["scope"] = "local_config_policy"
 
         # 1) Redownload control indexes
         control_report = redownload_paths(
@@ -1363,6 +1374,8 @@ def run_canary(
             "total_redownload_bytes": total_redownload_bytes,
             "viewer": viewer_report,
         }
+        if mode_text == "remote":
+            receipt["immutable_viewer_readback_verified"] = False
         receipt["receipt_sha256"] = digest_mapping(
             {k: v for k, v in receipt.items() if k != "receipt_sha256"}
         )
@@ -1392,6 +1405,121 @@ def run_fixture_canary(
         network=False,
         repo_root=repo_root,
     )
+
+
+def run_remote_viewer_canary(
+    *,
+    repo_id: str,
+    revision: str,
+    request_raw: bytes,
+    expected_request_sha256: str,
+    recipe: Mapping[str, Any] | None = None,
+    transport: Any | None = None,
+    network: bool = False,
+) -> dict[str, Any]:
+    """Verify the selected immutable revision's exact viewer files and Parquet members."""
+    pin_repo = require_repo_id(repo_id)
+    pin_revision = require_immutable_staging_revision(revision)
+    budgets = _budgets_from_recipe(recipe or {})
+    if transport is None and not network:
+        raise CanaryRemoteError("viewer readback requires --network or an injected transport")
+
+    try:
+        request = validate_source_package_request_v2(
+            request_raw, expected_request_sha256=expected_request_sha256
+        )
+        if (request["repository_id"], request["revision"]) != (pin_repo, pin_revision):
+            raise CanaryViewerError("viewer request differs from the selected repository or revision")
+        controls = [
+            ArtifactDescriptor(item["path_in_repo"], item["bytes"], item["sha256"])
+            for item in request["files"]
+        ]
+        control_bytes = sum(item.size_bytes for item in controls)
+        if len(controls) > budgets["max_shards"]:
+            raise CanaryBudgetError("viewer controls exceed the selected file budget")
+        if control_bytes > min(budgets["max_bytes"], budgets["max_control_index_bytes"]):
+            raise CanaryBudgetError("viewer controls exceed the selected byte budget")
+
+        # A previously verified cache entry cannot attest current availability at the revision.
+        with tempfile.TemporaryDirectory(prefix="uscode-viewer-readback-") as cache:
+            resolver = ImmutableHubResolver(
+                repo_id=pin_repo,
+                revision=pin_revision,
+                cache_dir=cache,
+                transport=transport if transport is not None else HuggingFaceHubTransport(force_download=True),
+                require_descriptor=True,
+                supported_schemas=WIRE_PARQUET_SCHEMA_IDS,
+                max_artifact_bytes=budgets["max_bytes"],
+            )
+            metadata = {
+                item.relative_path: resolver.resolve_bytes(item.relative_path, descriptor=item)
+                for item in controls
+            }
+            intake = prepare_source_package_intake_v2(
+                request_raw, metadata, expected_request_sha256=expected_request_sha256
+            )
+            wire = intake["wire_metadata_reconciliation"]
+            declaration = wire["declaration"]
+            manifest = intake["primary_manifest_selection"]["manifest"]
+            by_path = {item["relative_path"]: item for item in manifest["artifacts"]}
+            selected = [ArtifactDescriptor.from_mapping(by_path[path]) for path in wire["selected_paths"]]
+            compressed_bytes = sum(item.size_bytes for item in selected)
+            if len(controls) + len(selected) > budgets["max_shards"]:
+                raise CanaryBudgetError("viewer files exceed the selected file budget")
+            if (compressed_bytes > budgets["max_selected_shard_bytes"]
+                    or control_bytes + compressed_bytes > budgets["max_bytes"]):
+                raise CanaryBudgetError("viewer Parquet members exceed the selected byte budget")
+
+            artifacts = [
+                ReleaseArtifact(
+                    relative_path=item.relative_path,
+                    content=resolver.resolve_bytes(item.relative_path, descriptor=item),
+                    media_type=item.media_type,
+                    family=by_path[item.relative_path]["family"],
+                    row_count=by_path[item.relative_path]["row_count"],
+                    config_name=DEFAULT_CONFIG_NAME,
+                    schema_id=item.schema_id,
+                    sha256=item.sha256,
+                )
+                for item in selected
+            ]
+            paths, rows, arrow_bytes = measure_uscode_wire_parquet(artifacts)
+            if (paths, rows, arrow_bytes) != (
+                wire["selected_paths"], declaration["num_examples"], declaration["num_bytes"]
+            ):
+                raise CanaryViewerError("viewer declarations differ from measured Parquet members")
+            fetched = resolver.fetch_trace()["files"]
+            if (len(fetched) != len(controls) + len(selected)
+                    or any(item["cache_hit"] or not item["verified"] for item in fetched)):
+                raise CanaryViewerError("viewer readback requires fresh descriptor-bound files")
+
+    except (ResolverError, UscodeHFReleaseError, ValueError) as exc:
+        raise CanaryViewerError(f"immutable viewer readback failed: {exc}") from exc
+
+    receipt = {
+        "schema": "ipfs_datasets_py/uscode-immutable-viewer-readback@1",
+        "mode": "remote_viewer",
+        "ok": True,
+        "repo_id": pin_repo,
+        "revision": pin_revision,
+        "network_invoked": transport is None,
+        "transport_scope": "live_hub" if transport is None else "injected",
+        "metadata_request_sha256": expected_request_sha256,
+        "manifest_sha256": intake["primary_manifest_selection"]["manifest_sha256"],
+        "producer_manifest_digest": intake["source_identity"]["producer_manifest_digest"],
+        "immutable_viewer_readback_verified": True,
+        "viewer_config": declaration["default_config"],
+        "logical_config": declaration["logical_default_config"],
+        "metadata_files": [item.to_dict() for item in controls],
+        "parquet_members": [item.to_dict() for item in selected],
+        "physical_rows": rows,
+        "decoded_arrow_bytes": arrow_bytes,
+        "total_redownload_bytes": control_bytes + compressed_bytes,
+        "read_only": True,
+    }
+    receipt["receipt_sha256"] = digest_mapping(receipt)
+    reject_credentials_in_payload(receipt, label="viewer_readback_receipt")
+    return receipt
 
 
 def run_remote_canary(
@@ -1472,6 +1600,14 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--viewer-request", type=Path,
+        help="Existing explicit wire intake request for immutable viewer readback only",
+    )
+    parser.add_argument(
+        "--viewer-request-sha256",
+        help="Independently pinned SHA-256 of --viewer-request",
+    )
+    parser.add_argument(
         "--release-root",
         type=Path,
         default=None,
@@ -1521,6 +1657,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         return int(exc.code or 0)
 
     try:
+        if (args.viewer_request is None) != (args.viewer_request_sha256 is None):
+            raise CanaryViewerError("viewer readback requires both request and independent SHA-256")
+        if args.viewer_request is not None and (args.fixture_only or args.check or args.write_fixture):
+            raise CanaryViewerError("viewer readback requires explicit remote mode")
         if args.write_fixture:
             if not args.fixture_only:
                 raise CanaryUscodeError("--write-fixture requires --fixture-only")
@@ -1562,7 +1702,23 @@ def main(argv: Sequence[str] | None = None) -> int:
             or (remote_repo and remote_rev and not args.fixture_only)
         )
 
-        if args.fixture_only or not want_remote:
+        if args.viewer_request is not None:
+            if not remote_repo or not remote_rev:
+                raise CanaryRemoteError("viewer readback requires explicit repository and revision")
+            try:
+                with args.viewer_request.open("rb") as stream:
+                    request_raw = stream.read(MAX_REQUEST_BYTES + 1)
+            except OSError as exc:
+                raise CanaryViewerError("cannot read the selected viewer request") from exc
+            receipt = run_remote_viewer_canary(
+                repo_id=remote_repo,
+                revision=remote_rev,
+                request_raw=request_raw,
+                expected_request_sha256=args.viewer_request_sha256,
+                recipe=recipe,
+                network=bool(args.network or remote_env_enabled),
+            )
+        elif args.fixture_only or not want_remote:
             receipt = run_fixture_canary(
                 recipe=recipe,
                 release_root=args.release_root,

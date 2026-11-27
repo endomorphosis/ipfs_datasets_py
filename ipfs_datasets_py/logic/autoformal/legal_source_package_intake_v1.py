@@ -305,7 +305,8 @@ def _v2_owner_state():
     return primary, {"producer_pins": pins, "producer_origins": origins}
 
 
-def _v2_preflight(request_raw, metadata_bytes, expected_request_sha256):
+def validate_source_package_request_v2(request_raw, *, expected_request_sha256):
+    """Validate the independently pinned exact metadata selection before reading its files."""
     ordinary._digest(expected_request_sha256, "wire source package request")
     ordinary._need(type(request_raw) is bytes and 0 < len(request_raw) <= MAX_REQUEST_BYTES
         and _sha(request_raw) == expected_request_sha256, "bounded independently pinned wire request required")
@@ -317,8 +318,7 @@ def _v2_preflight(request_raw, metadata_bytes, expected_request_sha256):
         "unsupported explicit wire source-package profile")
     ordinary._need(type(request["revision"]) is str and _REVISION.fullmatch(request["revision"]),
         "immutable lowercase forty-hex source revision required")
-    ordinary._need(type(request["files"]) is list and len(request["files"]) == len(FILES)
-        and type(metadata_bytes) is dict and all(type(key) is str for key in metadata_bytes),
+    ordinary._need(type(request["files"]) is list and len(request["files"]) == len(FILES),
         "exact five-file wire metadata selection required")
     seen, total = set(), 0
     for entry in request["files"]:
@@ -332,7 +332,15 @@ def _v2_preflight(request_raw, metadata_bytes, expected_request_sha256):
         total += size
         ordinary._need(total <= MAX_METADATA_TOTAL_BYTES, "wire metadata aggregate bound exceeded")
         ordinary._digest(entry["sha256"], "wire metadata file")
-    ordinary._need(seen == set(FILES) == set(metadata_bytes), "wire metadata mapping population differs")
+    ordinary._need(seen == set(FILES), "wire metadata selection population differs")
+    return request
+
+
+def _v2_preflight(request_raw, metadata_bytes, expected_request_sha256):
+    request = validate_source_package_request_v2(
+        request_raw, expected_request_sha256=expected_request_sha256)
+    ordinary._need(type(metadata_bytes) is dict and set(FILES) == set(metadata_bytes),
+        "wire metadata mapping population differs")
     captured, parsed = {}, {}
     for entry in request["files"]:
         name, raw = entry["path_in_repo"], metadata_bytes[entry["path_in_repo"]]

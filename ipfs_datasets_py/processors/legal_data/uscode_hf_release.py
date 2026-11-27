@@ -254,6 +254,10 @@ _FAMILY_SCHEMA_IDS: Final[Mapping[str, str]] = MappingProxyType(
     }
 )
 
+WIRE_PARQUET_SCHEMA_IDS: Final = frozenset(
+    _FAMILY_SCHEMA_IDS[family] for family in DEFAULT_CONFIG_FAMILIES
+)
+
 # Feature columns advertised per config (Dataset Viewer schema coherence).
 _CONFIG_FEATURES: Final[Mapping[str, tuple[str, ...]]] = MappingProxyType(
     {
@@ -2360,10 +2364,10 @@ def load_fixture_dataset_card(path: str | Path | None = None) -> str:
 # ---------------------------------------------------------------------------
 
 
-def _wire_metadata_declaration(
-    artifacts: Sequence[ReleaseArtifact], configs: Sequence[ViewerConfig],
-) -> dict[str, Any]:
-    """Measure the actual local Parquet envelope, separate from compressed bytes."""
+def measure_uscode_wire_parquet(
+    artifacts: Sequence[ReleaseArtifact],
+) -> tuple[list[str], int, int]:
+    """Return the selected Parquet paths, physical rows and decoded Arrow bytes."""
     import pyarrow as pa
     import pyarrow.parquet as pq
 
@@ -2392,12 +2396,19 @@ def _wire_metadata_declaration(
         arrow_bytes += table.nbytes
     if max(rows, arrow_bytes) > (1 << 63) - 1:
         raise UscodeHFReleaseIntegrityError("wire Parquet counts exceed bounded integer profile")
+    return [item.relative_path for item in selected], rows, arrow_bytes
+
+
+def _wire_metadata_declaration(
+    artifacts: Sequence[ReleaseArtifact], configs: Sequence[ViewerConfig],
+) -> dict[str, Any]:
+    paths, rows, arrow_bytes = measure_uscode_wire_parquet(artifacts)
     return {
         "schema": "uscode-hf-wire-metadata/v1", "profile": WIRE_METADATA_PROFILE,
         "default_config": _HUB_CONFIG_ALIASES[DEFAULT_CONFIG_NAME],
         "logical_default_config": DEFAULT_CONFIG_NAME,
         "aliases": {DEFAULT_CONFIG_NAME: _HUB_CONFIG_ALIASES[DEFAULT_CONFIG_NAME]},
-        "data_files": [{"split": "train", "path": [item.relative_path for item in selected]}],
+        "data_files": [{"split": "train", "path": paths}],
         "num_examples": rows, "num_bytes": arrow_bytes,
         "unadvertised_configs": [cfg.config_name for cfg in configs if not cfg.is_default],
     }
