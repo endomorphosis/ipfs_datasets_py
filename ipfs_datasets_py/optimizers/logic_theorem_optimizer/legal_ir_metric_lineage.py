@@ -257,7 +257,7 @@ def metric_lineage_matches_block(
 ) -> bool:
     try:
         observed = metric_lineage_from_block(block)
-    except LegalIRMetricLineageError:
+    except (LegalIRMetricLineageError, TypeError, ValueError):
         return False
     return observed.to_dict(include_digest=False) == expected.to_dict(include_digest=False)
 

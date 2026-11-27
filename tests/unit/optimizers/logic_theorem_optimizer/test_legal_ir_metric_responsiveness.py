@@ -227,3 +227,117 @@ def test_stale_or_cross_path_cache_reuse_is_prevented(monkeypatch) -> None:
     assert codec.calls == 1
     assert recomputed["persistent_cache_hit"] is False
     assert metric_lineage_from_block(recomputed).path == (DETERMINISTIC_COMPILER_IR_METRIC_PATH)
+
+
+# Fictional cache metadata only; no new source, proof or admission authority.
+def _malformed_metric_cache_lineage_fixture():
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_metric_lineage import (
+        DETERMINISTIC_COMPILER_IR_METRIC_PATH, LegalIRMetricLineage,
+    )
+
+    return LegalIRMetricLineage(
+        path=DETERMINISTIC_COMPILER_IR_METRIC_PATH,
+        sample_hashes=("fictional-sample-content",),
+        state_hash="fictional-state", compiler_commit="fictional-compiler",
+        metric_schema="fictional-metric-schema", target_hash="fictional-target",
+        cache_namespace="compiler_ir_metric_block", cache_key="fictional-cache-key",
+        config_hash="fictional-config",
+    )
+
+
+@pytest.mark.parametrize("field,value", [
+    ("schema_version", "obsolete-metric-lineage-schema"),
+    ("config_hash", ""),
+    ("config_hash", "invalid\nidentity"),
+    ("sample_hashes", 17),
+], ids=["stale-schema", "empty-identity", "newline-identity", "noniterable-hashes"])
+def test_malformed_metric_lineage_is_a_cache_miss(field, value):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_metric_lineage import (
+        metric_lineage_matches_block,
+    )
+
+    expected = _malformed_metric_cache_lineage_fixture()
+    wire = expected.to_dict()
+    wire[field] = value
+    assert metric_lineage_matches_block({"metric_lineage": wire}, expected) is False
+
+
+@pytest.mark.parametrize("field,value", [
+    ("schema_version", "obsolete-metric-lineage-schema"),
+    ("config_hash", ""),
+    ("config_hash", "invalid\nidentity"),
+    ("sample_hashes", 17),
+], ids=["stale-schema", "empty-identity", "newline-identity", "noniterable-hashes"])
+def test_malformed_metric_lineage_uses_typed_cache_reuse_error(field, value):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_metric_lineage import (
+        LegalIRMetricCacheReuseError, require_cache_lineage,
+    )
+
+    expected = _malformed_metric_cache_lineage_fixture()
+    wire = expected.to_dict()
+    wire[field] = value
+    with pytest.raises(LegalIRMetricCacheReuseError):
+        require_cache_lineage({"metric_lineage": wire}, expected)
+
+
+def test_valid_metric_lineage_remains_reusable():
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_metric_lineage import (
+        metric_lineage_matches_block, require_cache_lineage,
+    )
+
+    expected = _malformed_metric_cache_lineage_fixture()
+    block = {"metric_lineage": expected.to_dict()}
+    assert metric_lineage_matches_block(block, expected) is True
+    assert require_cache_lineage(block, expected) is None
+
+
+def test_metric_lineage_constructor_still_rejects_stale_schema():
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_metric_lineage import (
+        LegalIRMetricLineage,
+    )
+
+    wire = _malformed_metric_cache_lineage_fixture().to_dict()
+    wire["schema_version"] = "obsolete-metric-lineage-schema"
+    with pytest.raises(ValueError, match="schema version is stale"):
+        LegalIRMetricLineage.from_mapping(wire)
+
+
+def test_metric_lineage_matcher_preserves_unexpected_programming_errors():
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_metric_lineage import (
+        metric_lineage_matches_block,
+    )
+
+    class BrokenMapping(dict):
+        def get(self, *_args, **_kwargs):
+            raise RuntimeError("fictional mapping implementation fault")
+
+    with pytest.raises(RuntimeError, match="mapping implementation fault"):
+        metric_lineage_matches_block(BrokenMapping(), _malformed_metric_cache_lineage_fixture())
+
+
+@pytest.mark.parametrize("field,value", [
+    ("schema_version", "obsolete-metric-lineage-schema"),
+    ("config_hash", ""),
+    ("config_hash", "invalid\nidentity"),
+    ("sample_hashes", 17),
+], ids=["stale-schema", "empty-identity", "newline-identity", "noniterable-hashes"])
+def test_malformed_persistent_metric_lineage_recomputes_with_existing_codec(monkeypatch, field, value):
+    # Reuse the existing fake disk boundary and _Codec fixture; lineage parsing
+    # and the full compiler metric/recomputation path remain the real owners.
+    monkeypatch.setattr(runner, "_read_metric_disk_cache", lambda *_args: None)
+    monkeypatch.setattr(runner, "_write_metric_disk_cache", lambda *_args: None)
+    cached = _compiler_block(_Codec(mutation="same", ce=0.22, cosine=0.82))
+    cached["metric_lineage"][field] = value
+    reads = []
+
+    def malformed_read(kind, key):
+        reads.append((kind, key))
+        return cached if kind == "compiler_ir_metric_block" else None
+
+    monkeypatch.setattr(runner, "_read_metric_disk_cache", malformed_read)
+    codec = _Codec(mutation="same", ce=0.22, cosine=0.82)
+    recomputed = _compiler_block(codec)
+    assert reads
+    assert codec.calls == 1
+    assert recomputed["persistent_cache_hit"] is False
+    assert metric_lineage_from_block(recomputed).path == DETERMINISTIC_COMPILER_IR_METRIC_PATH
