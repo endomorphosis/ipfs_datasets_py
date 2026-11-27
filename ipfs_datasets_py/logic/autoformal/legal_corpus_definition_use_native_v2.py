@@ -4127,8 +4127,9 @@ def _validate_reviewed_native_retained_domain(
         expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256,
         toolchain, observation_profile=_REVIEWED_REPLAY_ACTUAL, instance_identity_profile=None, definition_application_profile=None, reviewed_version=3,
         realization_preservation=None, expected_upstream_preservation_sha256=None,
-        physical_request_raw=None, expected_physical_request_sha256=None, **kwargs):
-    """Replay the complete retained V3 mixed aggregate and current inputs without Lean.
+        physical_request_raw=None, expected_physical_request_sha256=None,
+        bound_component_inputs=None, expected_bound_component_inputs_sha256=None, **kwargs):
+    """Replay complete retained reviewed observations and current inputs without Lean.
 
     The caller owns physical acquisition and independently trusted receipt,
     packet and compiler pins. Historical PIDs are never inspected. This API
@@ -4136,9 +4137,9 @@ def _validate_reviewed_native_retained_domain(
     kernel or authorize release/cache/native/statutory admission. The missing
     original-success adapter remains an explicit prerequisite in every result.
     """
-    _need(type(reviewed_version) is int and reviewed_version in (3, 4, 5), "closed retained native domain required")
+    _need(type(reviewed_version) is int and reviewed_version in (3, 4, 5, 6), "closed retained native domain required")
     _reviewed_definition_application_kwargs(definition_application_profile)
-    _need(definition_application_profile is None or reviewed_version in (4, 5),
+    _need(definition_application_profile is None or reviewed_version in (4, 5, 6),
           "whole-norm application requires the explicit realization retained domain")
     _need(reviewed_version == 5 or physical_request_raw is expected_physical_request_sha256 is None,
           "physical request requires the explicit physical realization retained domain")
@@ -4148,6 +4149,14 @@ def _validate_reviewed_native_retained_domain(
     if reviewed_version == 5:
         domain_arguments.update(physical_request_raw=physical_request_raw,
             expected_physical_request_sha256=expected_physical_request_sha256)
+    if reviewed_version == 6:
+        _need(bound_component_inputs is not None and expected_bound_component_inputs_sha256 is not None,
+              "current bound component inputs and their independent commitment required")
+        domain_arguments.update(bound_component_inputs=bound_component_inputs,
+            expected_bound_component_inputs_sha256=expected_bound_component_inputs_sha256)
+    else:
+        _need(bound_component_inputs is expected_bound_component_inputs_sha256 is None,
+              "bound component inputs require the explicit source-bound realization retained domain")
     if reviewed_version == 3:
         domain_policy = _reviewed_mixed_native_policy
         build_schema, replay_schema, replay_profile = (REVIEWED_MIXED_PRESERVATION_BUILD_SCHEMA,
@@ -4166,6 +4175,18 @@ def _validate_reviewed_native_retained_domain(
             reviewed_physical_definition_realization_receipt_bytes_v2)
         receipt_binding, pin_reader, receipt_scope = (_reviewed_physical_definition_realization_receipt_binding,
             _reviewed_physical_definition_realization_native_pins, _reviewed_definition_realization_scope(definition_application_profile))
+    elif reviewed_version == 6:
+        domain_policy = _reviewed_source_bound_definition_realization_native_policy
+        build_schema = REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_BUILD_SCHEMA
+        replay_schema = REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_RECEIPT_REPLAY_SCHEMA
+        replay_profile = _reviewed_realization_domain(
+            REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_RECEIPT_REPLAY_PROFILE,
+            instance_identity_profile, definition_application_profile)
+        validator = _reviewed_source_bound_definition_realization_validate_adapter
+        formatter = reviewed_source_bound_definition_realization_receipt_bytes_v2
+        receipt_binding = _reviewed_source_bound_definition_realization_receipt_binding
+        pin_reader = _reviewed_source_bound_definition_realization_native_pins
+        receipt_scope = _reviewed_definition_realization_scope(definition_application_profile)
     else:
         domain_policy = _reviewed_definition_realization_native_policy
         build_schema, replay_schema, replay_profile = (REVIEWED_DEFINITION_REALIZATION_BUILD_SCHEMA,
@@ -4326,15 +4347,18 @@ def _validate_reviewed_native_retained_domain(
           and axioms == receipt["theorem_axiom_dependencies"],
           "retained exact preservation obligation/axiom reports differ")
     # Recheck current source/review/graph dependencies after the full byte replay.
-    validator(preparation, graph, admission, *args,
+    rechecked = validator(preparation, graph, admission, *args,
         expected_preservation_sha256=expected_preservation_sha256,
         expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
         toolchain=toolchain, **domain_arguments, **kwargs, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
+    if reviewed_version == 6:
+        _need(rechecked.manifest_json == checked.manifest_json and rechecked.files == checked.files,
+              "source-bound realization project changed during retained replay")
     _need(_sha(Path(packets.__file__).read_bytes()) == packet_owner_pin,
           "retained-packet validator changed during replay")
     domain_policy(**_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
     return contracts.seal_record({**dict(PARENT_FALSE_FLAGS),
-        **(receipt_binding(manifest, admission, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)) if reviewed_version in (4, 5) else {}), "schema": replay_schema,
+        **(receipt_binding(manifest, admission, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile)) if reviewed_version in (4, 5, 6) else {}), "schema": replay_schema,
         "profile": replay_profile, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile), "observation_profile": observation_profile,
         "retained_receipt_sha256": expected_receipt_sha256, "retained_packet_sha256": expected_packet_sha256,
         "preparation_sha256": expected_preservation_sha256, "graph_sha256": expected_graph_sha256,
@@ -5262,6 +5286,88 @@ def load_reviewed_physical_definition_realization_native_v2(packet_files, prepar
         instance_identity_profile=instance_identity_profile, definition_application_profile=definition_application_profile)
 
 __all__ += ['_reviewed_physical_definition_realization_native_policy', '_reviewed_physical_definition_realization_native_pins', '_reviewed_physical_definition_realization_native_manifest', '_reviewed_physical_definition_realization_receipt_binding', '_reviewed_physical_definition_realization_native_operation', 'validate_reviewed_physical_definition_realization_native_v2', 'build_reviewed_physical_definition_realization_native_v2', 'reviewed_physical_definition_realization_receipt_bytes_v2', 'reviewed_physical_definition_realization_packet_sha256_v2', '_reviewed_physical_definition_realization_validate_adapter', '_reviewed_physical_definition_realization_load_adapter', 'validate_reviewed_physical_definition_realization_native_receipt_v2', 'load_reviewed_physical_definition_realization_native_v2', 'build_verified_reviewed_physical_definition_realization_native_v2', 'load_verified_reviewed_physical_definition_realization_native_v2']
+
+def reviewed_source_bound_definition_realization_packet_sha256_v2(
+        packet_files, *, instance_identity_profile=None, definition_application_profile=None):
+    """Hash the complete retained packet inventory for this replay domain."""
+    _reviewed_source_bound_definition_realization_native_policy(
+        **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
+    _, inventory = _reviewed_retained_packet(packet_files)
+    return _sha(_wire(inventory, MAX_RECORD_BYTES))
+
+
+def _reviewed_source_bound_definition_realization_validate_adapter(
+        preparation, graph, admission, *args, expected_preservation_sha256,
+        realization_preservation, expected_upstream_preservation_sha256,
+        bound_component_inputs, expected_bound_component_inputs_sha256,
+        instance_identity_profile=None, definition_application_profile=None, **kwargs):
+    return validate_reviewed_source_bound_definition_realization_native_v2(
+        preparation, realization_preservation, graph, admission, *args,
+        expected_realization_sha256=expected_preservation_sha256,
+        expected_preservation_sha256=expected_upstream_preservation_sha256,
+        bound_component_inputs=bound_component_inputs,
+        expected_bound_component_inputs_sha256=expected_bound_component_inputs_sha256,
+        **kwargs, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
+
+
+def _reviewed_source_bound_definition_realization_load_adapter(
+        packet_files, preparation, graph, admission, *args, expected_preservation_sha256,
+        realization_preservation, expected_upstream_preservation_sha256,
+        bound_component_inputs, expected_bound_component_inputs_sha256,
+        instance_identity_profile=None, definition_application_profile=None, **kwargs):
+    return load_reviewed_source_bound_definition_realization_native_v2(
+        packet_files, preparation, realization_preservation, graph, admission, *args,
+        expected_realization_sha256=expected_preservation_sha256,
+        expected_preservation_sha256=expected_upstream_preservation_sha256,
+        bound_component_inputs=bound_component_inputs,
+        expected_bound_component_inputs_sha256=expected_bound_component_inputs_sha256,
+        **kwargs, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
+
+
+def validate_reviewed_source_bound_definition_realization_native_receipt_v2(
+        receipt_raw, preparation, preservation, graph, admission, *args, packet_files,
+        expected_receipt_sha256, expected_packet_sha256, expected_binary_sha256,
+        expected_realization_sha256, expected_preservation_sha256, expected_graph_sha256,
+        expected_admission_sha256, toolchain, bound_component_inputs,
+        expected_bound_component_inputs_sha256, observation_profile=_REVIEWED_REPLAY_ACTUAL,
+        instance_identity_profile=None, definition_application_profile=None, **kwargs):
+    """Check retained bytes against the current source-bound realization."""
+    return _validate_reviewed_native_retained_domain(
+        receipt_raw, preparation, graph, admission, *args,
+        reviewed_version=6, realization_preservation=preservation,
+        expected_upstream_preservation_sha256=expected_preservation_sha256,
+        bound_component_inputs=bound_component_inputs,
+        expected_bound_component_inputs_sha256=expected_bound_component_inputs_sha256,
+        packet_files=packet_files, expected_receipt_sha256=expected_receipt_sha256,
+        expected_packet_sha256=expected_packet_sha256, expected_binary_sha256=expected_binary_sha256,
+        expected_preservation_sha256=expected_realization_sha256, expected_graph_sha256=expected_graph_sha256,
+        expected_admission_sha256=expected_admission_sha256, toolchain=toolchain,
+        observation_profile=observation_profile, **kwargs,
+        **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
+
+
+def load_reviewed_source_bound_definition_realization_native_v2(
+        packet_files, preparation, preservation, graph, admission, *args,
+        bound_component_inputs, expected_bound_component_inputs_sha256,
+        instance_identity_profile=None, definition_application_profile=None, **kwargs):
+    """Load and check the canonical receipt from its complete retained packet."""
+    _reviewed_source_bound_definition_realization_native_policy(
+        **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
+    contents, _ = _reviewed_retained_packet(packet_files)
+    _need("build-receipt.json" in contents, "original complete source-bound realization native receipt required")
+    return validate_reviewed_source_bound_definition_realization_native_receipt_v2(
+        contents["build-receipt.json"], preparation, preservation, graph, admission, *args,
+        packet_files=packet_files, bound_component_inputs=bound_component_inputs,
+        expected_bound_component_inputs_sha256=expected_bound_component_inputs_sha256,
+        **kwargs, **_reviewed_realization_kwargs(instance_identity_profile, definition_application_profile))
+
+
+__all__ += [
+    "validate_reviewed_source_bound_definition_realization_native_receipt_v2",
+    "load_reviewed_source_bound_definition_realization_native_v2",
+    "reviewed_source_bound_definition_realization_packet_sha256_v2",
+]
+
 
 # Capture callable objects AND code/default bindings at import completion. The
 # existing public profiles remain unchanged and never consult these guards.
