@@ -7,8 +7,8 @@ Autonomous workers stop after a dry-run.  A remote write requires:
 * human :class:`PublicationApproval` of the exact plan digest; and
 * an injected Hugging Face API client.
 
-Partial uploads retry by skipping exact path+digest matches only.  Basename
-collisions never skip.  Mismatched remote objects are refused (no overwrite).
+Retry planning skips exact path+digest matches only. Basename collisions never
+skip. The live publisher requires an unused release prefix.
 Published versions are never deleted; rollback emits a supersession record.
 """
 
@@ -133,9 +133,10 @@ def plan_ir_dry_run(
     policy: IRPublicationPolicy | None = None,
     existing_remote_paths: Sequence[str] = (),
     existing_remote_digests: Mapping[str, str] | None = None,
+    audited_parent_commit: str = "",
     publisher: HuggingFaceReleasePublisher | None = None,
 ) -> tuple[PublicationPlan, dict[str, Any]]:
-    """Deterministic dry-run: operation list, cost, no write-endpoint contact."""
+    """Plan offline, binding the audited parent when supplied for live upload."""
 
     pub_policy = policy or IRPublicationPolicy(repository_id=package.repository_id)
     if pub_policy.repository_id != package.repository_id:
@@ -148,6 +149,7 @@ def plan_ir_dry_run(
             local_root=package.output_dir,
             existing_remote_paths=existing_remote_paths,
             existing_remote_digests=existing_remote_digests,
+            audited_parent_commit=audited_parent_commit,
         )
     except HuggingFacePublicationError as exc:
         if "at least one add" not in str(exc):
@@ -192,6 +194,7 @@ def publish_ir_release(
     api: Any | None = None,
     existing_remote_paths: Sequence[str] = (),
     existing_remote_digests: Mapping[str, str] | None = None,
+    audited_parent_commit: str = "",
     receipt_path: str | Path | None = None,
     remote_objects: Mapping[str, Mapping[str, Any]] | None = None,
     remote_payloads: Mapping[str, bytes] | None = None,
@@ -201,7 +204,15 @@ def publish_ir_release(
 ) -> dict[str, Any]:
     """Plan, and optionally upload, an IR release package.
 
-    Default mode is dry-run only.  The remote revision is captured on upload.
+    Default mode is dry-run only. An approved upload binds the audited parent
+    and captures the resulting immutable revision.
+
+    Every supplied remote observation must name that revision. With a cache
+    destination and a Hub downloader, the publisher can collect its own pinned
+    observations. A cache destination by itself supplies no evidence.
+    Explicit `remote_payloads` and a standalone `fetch_bytes` callback retain
+    byte-validation evidence. The immutable remote readback flag requires the
+    Hub client's pinned download path and verified inventory.
     """
 
     pub_policy = policy or IRPublicationPolicy(repository_id=package.repository_id)
@@ -213,6 +224,7 @@ def publish_ir_release(
             policy=pub_policy,
             existing_remote_paths=existing_remote_paths,
             existing_remote_digests=existing_remote_digests,
+            audited_parent_commit=audited_parent_commit,
             publisher=publisher,
         )
     except IRPublicationError as exc:
@@ -231,6 +243,7 @@ def publish_ir_release(
             },
             "evidence": {
                 "cards_complete": True,
+                "immutable_remote_readback_verified": False,
                 "p1_configs_complete": True,
                 "p4_evidence": True,
                 "publication_lease": lease is not None,
@@ -299,39 +312,39 @@ def publish_ir_release(
     except HuggingFacePublicationError as exc:
         raise IRPublicationError(str(exc)) from exc
 
-    post = publisher.verify_post_publication(
-        commit_receipt=commit,
-        plan=plan,
-        remote_objects=remote_objects
-        or {
-            item.remote_path: {
-                "sha256": item.sha256,
-                "size_bytes": item.size_bytes,
-                "commit_sha": commit.commit_sha,
-            }
-            for item in plan.operations
-        },
+    use_hub_downloader = (
+        remote_payloads is None
+        and (verified_cache_root is not None or fetch_bytes is not None)
+        and callable(getattr(api, "hf_hub_download", None))
     )
+    if remote_objects is None and use_hub_downloader:
+        remote_objects = publisher.inventory_remote_objects_at_commit(
+            commit_receipt=commit, plan=plan
+        )
+    post = None
+    if remote_objects is not None:
+        for item in plan.operations:
+            observation = remote_objects.get(item.remote_path)
+            if isinstance(observation, Mapping) and not observation.get("commit_sha"):
+                raise IRPublicationError(
+                    f"post-publication verification requires an observed commit: {item.remote_path}"
+                )
+        post = publisher.verify_post_publication(
+            commit_receipt=commit, plan=plan, remote_objects=remote_objects
+        )
     pinned = None
-    if remote_payloads is not None or fetch_bytes is not None or verified_cache_root is not None:
+    if remote_payloads is not None or fetch_bytes is not None or use_hub_downloader:
         cache = Path(verified_cache_root) if verified_cache_root is not None else Path(
             package.output_dir
         ).with_name(Path(package.output_dir).name + ".pinned-cache")
         if cache.exists() and any(cache.iterdir()):
             # Retry path: reuse an empty sibling rather than fail a second call.
             cache = cache.with_name(cache.name + f".{commit.commit_sha[:8]}")
-        payloads = remote_payloads
-        if payloads is None and fetch_bytes is None:
-            root = Path(package.output_dir)
-            payloads = {
-                item.remote_path: root.joinpath(*item.relative_path.split("/")).read_bytes()
-                for item in plan.operations
-            }
         pinned = publisher.redownload_and_validate_pinned(
             commit_sha=commit.commit_sha,
             plan=plan,
             cache_root=cache,
-            remote_payloads=payloads,
+            remote_payloads=remote_payloads,
         )
 
     receipt = _build_ir_receipt(
@@ -342,8 +355,17 @@ def publish_ir_release(
         commit=commit,
         approval=approval,
         lease=lease,
-        post_publication=post.to_dict(),
+        post_publication=post.to_dict() if post is not None else None,
         pinned_redownload=pinned.to_dict() if pinned is not None else None,
+        immutable_remote_readback_verified=(
+            use_hub_downloader
+            and post is not None
+            and post.ok
+            and pinned is not None
+            and pinned.ok
+            and pinned.network_fetch_performed
+            and not plan.skipped_exact_matches
+        ),
         status="published_pending_promotion",
     )
     if receipt_path is not None:
@@ -361,10 +383,10 @@ def retry_partial_upload(
     api: Any | None = None,
     remote_digests: Mapping[str, str] | None = None,
 ) -> dict[str, Any]:
-    """Resume a partial upload by skipping exact path+digest matches.
+    """Plan exact-match skips for a retry under the append-only policy.
 
-    Already-written objects with a matching digest are treated as complete.
-    Objects with a mismatched digest are refused (append-only, no overwrite).
+    A fully matching retry is a no-op. A partially occupied release prefix is
+    ineligible for another live commit under the publisher's immutable-prefix rule.
     """
 
     pub_policy = policy or IRPublicationPolicy(repository_id=package.repository_id)
@@ -470,6 +492,7 @@ def _build_ir_receipt(
     lease: PublicationLease | None = None,
     post_publication: Mapping[str, Any] | None = None,
     pinned_redownload: Mapping[str, Any] | None = None,
+    immutable_remote_readback_verified: bool = False,
 ) -> dict[str, Any]:
     remote_revision = commit.commit_sha if commit is not None else ""
     receipt = {
@@ -481,6 +504,7 @@ def _build_ir_receipt(
         "dry_run_diff_and_cost_receipt": dict(wrapped_plan),
         "evidence": {
             "cards_complete": True,
+            "immutable_remote_readback_verified": immutable_remote_readback_verified,
             "p1_configs_complete": True,
             "p4_evidence": True,
             "publication_lease": lease is not None,
@@ -517,6 +541,7 @@ def package_and_publish(
     approval: PublicationApproval | None = None,
     lease: PublicationLease | None = None,
     api: Any | None = None,
+    audited_parent_commit: str = "",
     receipt_path: str | Path | None = None,
 ) -> dict[str, Any]:
     """One-shot local package plus dry-run (or approved append-only upload)."""
@@ -536,6 +561,7 @@ def package_and_publish(
         approval=approval,
         lease=lease,
         api=api,
+        audited_parent_commit=audited_parent_commit,
         receipt_path=receipt_path,
     )
 
