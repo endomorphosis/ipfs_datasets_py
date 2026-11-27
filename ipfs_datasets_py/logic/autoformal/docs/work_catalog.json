@@ -37750,6 +37750,22 @@
     {
       "backlog_crosslink": "BACKLOG.json#/migration/lir21_local_artifacts_coherent_selection_20261127",
       "closed_runtime_facts": {
+        "coherent_pointer_software": {
+          "actual_live_hub_execution": false,
+          "actual_release_pointer_write": false,
+          "earlier_false_acceptances": 9,
+          "errors": 0,
+          "excluded_cases": 8,
+          "failures": 0,
+          "qualification_ref": {
+            "bytes": 3899,
+            "path": "/tmp/LIR21-pointer-readback-provenance-lepd1z2e/actual-isolated-pointer-provenance-software-qualified.json",
+            "sha256": "f9d35fc862bf27c5a4d13a056bd8126e7e0af280f4376af196faeef5dc804126"
+          },
+          "qualified_datasets_commit": "b69e701d3606a9762c9afb4b1d1a049d74394ad9",
+          "skips": 0,
+          "software_tests": 143
+        },
         "evidence_ordinal": 589,
         "independent_statutory_review": null,
         "live_hub_immutable_readback": null,
