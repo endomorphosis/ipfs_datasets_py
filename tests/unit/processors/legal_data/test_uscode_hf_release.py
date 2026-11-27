@@ -444,6 +444,12 @@ def test_legacy_files_not_deleted_on_stage(tmp_path: Path) -> None:
 
 def test_stage_preserves_and_binds_legacy_when_reemitted(tmp_path: Path) -> None:
     legacy = fixture_legacy_files()
+    original_inodes = {}
+    for path, content in legacy.items():
+        target = tmp_path / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(content)
+        original_inodes[path] = target.stat().st_ino
     release = build_uscode_hf_release(
         fixture_family_rows(),
         legacy_files=legacy,
@@ -455,8 +461,31 @@ def test_stage_preserves_and_binds_legacy_when_reemitted(tmp_path: Path) -> None
         on_disk = tmp_path / path
         assert on_disk.is_file()
         assert on_disk.read_bytes() == content
+        assert on_disk.stat().st_ino == original_inodes[path]
     assert any(c.is_legacy for c in release.configs)
     assert any(c.is_recovery for c in release.configs)
+
+
+@pytest.mark.parametrize("use_parent_alias", [False, True])
+def test_stage_rejects_conflicting_preserved_legacy_before_writing(
+    tmp_path: Path, use_parent_alias: bool
+) -> None:
+    release = _build_fixture_release()
+    legacy_path = next(iter(fixture_legacy_files()))
+    target = tmp_path / legacy_path
+    target.parent.mkdir(parents=True)
+    original = b"existing legacy bytes"
+    assert release.artifact(legacy_path).content != original
+    target.write_bytes(original)
+    protected = target.parent / ".." / target.parent.name / target.name if use_parent_alias else target
+
+    with pytest.raises(UscodeHFReleaseSafetyError, match="preserved legacy file"):
+        stage_uscode_hf_release(
+            release, tmp_path, dry_run=False, preserve_existing=(str(protected.relative_to(tmp_path)),)
+        )
+
+    assert target.read_bytes() == original
+    assert [path for path in tmp_path.rglob("*") if path.is_file()] == [target]
 
 
 def test_dataset_card_matches_advertised_configs() -> None:

@@ -1769,12 +1769,29 @@ def stage_uscode_hf_release(
         if (root / path).is_file()
     }
 
-    for artifact in release.artifacts:
-        target = root.joinpath(*PurePosixPath(artifact.relative_path).parts)
-        target.parent.mkdir(parents=True, exist_ok=True)
-        temporary = target.with_name(f".{target.name}.partial")
-        temporary.write_bytes(artifact.content)
-        os.replace(temporary, target)
+    targets = [
+        (artifact, root.joinpath(*PurePosixPath(artifact.relative_path).parts))
+        for artifact in release.artifacts
+    ]
+    preserved_targets = set()
+    if pre_existing:
+        protected = {(root / path).resolve(): content for path, content in pre_existing.items()}
+        for artifact, target in targets:
+            original = protected.get(target.resolve())
+            if original is None:
+                continue
+            if artifact.content != original:
+                raise UscodeHFReleaseSafetyError(
+                    f"release would overwrite preserved legacy file: {artifact.relative_path}"
+                )
+            preserved_targets.add(target)
+
+    for artifact, target in targets:
+        if target not in preserved_targets:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            temporary = target.with_name(f".{target.name}.partial")
+            temporary.write_bytes(artifact.content)
+            os.replace(temporary, target)
         descriptor = describe_file(
             target,
             root=root,
@@ -1802,16 +1819,9 @@ def stage_uscode_hf_release(
                 f"legacy file was deleted during staging: {path}"
             )
         if current.read_bytes() != original:
-            # Allow overwrite only when the release itself re-emits the same path
-            # with identical bytes (additive re-bind). Different bytes that
-            # clobber operator legacy content are rejected.
-            released = {
-                item.relative_path: item.content for item in release.artifacts
-            }
-            if path not in released or released[path] != current.read_bytes():
-                raise UscodeHFReleaseSafetyError(
-                    f"legacy file was mutated during staging: {path}"
-                )
+            raise UscodeHFReleaseSafetyError(
+                f"legacy file was mutated during staging: {path}"
+            )
 
     # Walk the tree: no deletions of pre-existing files outside our write set.
     # (We never call unlink; this is a structural guarantee + preserve check.)
