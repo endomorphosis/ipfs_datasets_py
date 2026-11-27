@@ -7381,6 +7381,9 @@ def test_reviewed_source_bound_native_installed_preserves_history_through_retain
         bound_norm_installed_lake, reviewed_source_bound_realization_native_control_v2, tmp_path):
     executable, binary_pins = bound_norm_installed_lake
     operands, options = reviewed_source_bound_realization_native_control_v2
+    profiles = {
+        key: options[key] for key in ("instance_identity_profile", "definition_application_profile")
+    }
     manifest = operands[0].to_dict()
     output = tmp_path / "actual-source-bound-realization"
     handle = native.build_verified_reviewed_source_bound_definition_realization_native_v2(
@@ -7388,7 +7391,7 @@ def test_reviewed_source_bound_native_installed_preserves_history_through_retain
     packet = reviewed_live_success_packet_v2(output)
     raw = dict(packet)["build-receipt.json"]
     receipt = json.loads(raw)
-    assert native.reviewed_source_bound_definition_realization_receipt_bytes_v2(receipt) == raw
+    assert native.reviewed_source_bound_definition_realization_receipt_bytes_v2(receipt, **profiles) == raw
     assert receipt["binary_sha256"] == binary_pins
     assert receipt["compiled_modules"] == manifest["expected_modules"]
     assert receipt["conditional_theorems"] == manifest["preservation_obligations"]
@@ -7398,7 +7401,7 @@ def test_reviewed_source_bound_native_installed_preserves_history_through_retain
     pinned = {
         **options,
         "expected_receipt_sha256": sha(raw),
-        "expected_packet_sha256": native.reviewed_source_bound_definition_realization_packet_sha256_v2(packet),
+        "expected_packet_sha256": native.reviewed_source_bound_definition_realization_packet_sha256_v2(packet, **profiles),
         "expected_binary_sha256": binary_pins,
     }
     detached = native.validate_reviewed_source_bound_definition_realization_native_receipt_v2(
@@ -7418,14 +7421,16 @@ def test_reviewed_source_bound_native_installed_preserves_history_through_retain
 
     # Re-pin the altered receipt and complete packet so only source-history
     # regeneration can identify the mismatch.
+    changed = {key: value for key, value in receipt.items() if key not in {"record_cid", "cid_scope"}}
+    changed["bound_component_inputs_sha256"] = sha(b"different complete source history")
     changed_raw = native.reviewed_source_bound_definition_realization_receipt_bytes_v2(
-        dict(receipt, bound_component_inputs_sha256=sha(b"different complete source history")))
+        contracts.seal_record(changed), **profiles)
     changed_packet = tuple(sorted({**dict(packet), "build-receipt.json": changed_raw}.items()))
     changed_pins = {
         **pinned,
         "expected_receipt_sha256": sha(changed_raw),
-        "expected_packet_sha256": native.reviewed_source_bound_definition_realization_packet_sha256_v2(changed_packet),
+        "expected_packet_sha256": native.reviewed_source_bound_definition_realization_packet_sha256_v2(changed_packet, **profiles),
     }
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="retained receipt differs from current whole reviewed semantics or producers"):
         native.validate_reviewed_source_bound_definition_realization_native_receipt_v2(
             changed_raw, *operands, packet_files=changed_packet, **changed_pins)
