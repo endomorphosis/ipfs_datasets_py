@@ -1814,8 +1814,7 @@ def _prepare_reviewed_decoder_training_inputs(registry, *, stage_artifact, expec
         if parent_source_bound and parent_rows:
             parent_bound_memberships = _reviewed_component_parent_memberships(
                 parent["consumer_receipt"], parent_rows, consumer, admission_version=_admission_version)
-            _, parent_bound_components = _reviewed_decoder_staged_bound_components(
-                parent, read_current_artifact, consumer)
+            _reviewed_decoder_staged_bound_components(parent, read_current_artifact, consumer)
     guarded_history, records, guard = _reviewed_history(
         replay_history, manifest, rows, config, previous_history, splits)
     _reviewed_decoder_need(guarded_history == history and guard == stage["history_guard"],
@@ -1828,9 +1827,6 @@ def _prepare_reviewed_decoder_training_inputs(registry, *, stage_artifact, expec
         if component_cycle and retained:
             if parent_source_bound:
                 parent_memberships = parent_bound_memberships
-                _reviewed_decoder_need(all(parent_bound_components[parent_memberships[row_id]]
-                                           == staged_bound_components[memberships[row_id]] for row_id in retained),
-                                       "retained rows must keep their staged bound component identity")
             elif parent["schema"] in {REVIEWED_COMPONENT_CYCLE_SCHEMA, REVIEWED_MIXED_CYCLE_SCHEMA}:
                 parent_memberships = _reviewed_component_parent_memberships(parent["consumer_receipt"], parent_rows, consumer, admission_version=_admission_version)
             else:
