@@ -2109,3 +2109,63 @@ def test_reviewed_v2_cross_reference_version_consistency(owner, reviewed_case_v2
     assert report["fixture_only"] and report["training_mask"] == report["evaluation_gold_mask"] == 0
     assert [unit["canonical_ir"]["cross_references"][0] for unit in report["units"][1:]] == references
     assert not conflict, "contradictory dependency version labels became eligible in a freshly signed V2 review"
+
+
+@pytest.mark.parametrize("shape", ["independent", "identity", "nested-self-use"])
+def test_reviewed_v2_requires_nonrecursive_governing_definition(owner, reviewed_case_v2, shape, tmp_path):
+    from ipfs_datasets_py.logic.autoformal import legal_relational_norm_v1 as relational
+    helper = load_fixture("_reviewed_v2_nonrecursive_relational_fixture", "test_legal_relational_norm_v1.py")
+    case = reviewed_case_v2
+    definition = case["declaration"]["units"][0]
+    assert definition["kind"] == "definition"
+    builder = helper.Builder()
+    head = builder.atom("CoveredOfficer", "officer")
+    roles = [("CoveredOfficer", ("officer",))]
+    if shape == "identity":
+        right = builder.atom("CoveredOfficer", "officer")
+    else:
+        right = builder.atom("AppointedByBoard", "officer")
+        roles.append(("AppointedByBoard", ("officer",)))
+        if shape == "nested-self-use":
+            right = builder.binary("and", right, builder.atom("CoveredOfficer", "officer"))
+    request = helper.request_for(builder, builder.binary("iff", head, right), roles, [("officer", "forall")])
+    raw = wire(request)
+    request_sha = sha(raw)
+    typed = relational.prepare_relational_norm_v1(raw, expected_request_sha256=request_sha)
+    assert typed["typed_expression"]["root"]["arguments"][0]["kind"] == "iff"
+    definition["relational_request_sha256"] = request_sha
+    occurrence = definition["occurrence"]
+    definition["coverage"] = [
+        {"typed_path": item["typed_path"], **{key: occurrence[key] for key in
+            ("start_char", "end_char", "start_utf8", "end_utf8")}}
+        for item in typed["structural_mapping"]
+    ]
+    case["relational_inputs"][definition["unit_id"]] = {
+        "request_raw": raw, "report": typed,
+        "expected_report_sha256": relational.relational_norm_report_sha256(typed),
+    }
+    try:
+        reviewed_refresh_signed_preparation_v2(owner, case)
+    except ValueError as exc:
+        assert shape != "independent", str(exc)
+        assert "predicate occurs in its own definition" in str(exc)
+        return
+    keys = {row["key_id"]: row for row in case["registry"]["keys"]}
+    assert all(auth._verify_signature(claim, keys[claim["key_id"]]) == "valid" for claim in case["reviews"])
+    observed = assess_reviewed_fixture_v2(owner, case)
+    observation = {
+        "shape": shape, "semantic_use_eligible": observed["semantic_use_eligible"],
+        "fixture_only": observed["fixture_only"], "training_mask": observed["training_mask"],
+        "evaluation_gold_mask": observed["evaluation_gold_mask"], "Lean_admitted": observed["Lean_admitted"],
+        "proof_authority": observed["proof_authority"], "blockers": observed["blockers"],
+        "preparation_sha256": norm.norm_review_sha256(case["preparation"]),
+        "assessment_sha256": norm.norm_review_sha256(observed),
+        "review_statuses": [row["status"] for row in observed["review_authority"]["reviews"]],
+    }
+    (tmp_path / "nonrecursive-v2-observation.json").write_text(json.dumps(observation, sort_keys=True, indent=2) + "\n")
+    if shape != "independent":
+        pytest.fail(f"Recursive {shape} passed real V2 typed preparation and was assessed as semantic_use_eligible={observed['semantic_use_eligible']} under exact fictional signatures.")
+    assert observed["semantic_use_eligible"] is True
+    assert observed["fixture_only"] is True
+    assert observed["training_mask"] == observed["evaluation_gold_mask"] == 0
+    assert observed["Lean_admitted"] is observed["proof_authority"] is False

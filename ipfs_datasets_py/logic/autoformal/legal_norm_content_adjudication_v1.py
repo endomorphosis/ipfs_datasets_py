@@ -704,6 +704,8 @@ def _reviewed_body(body, source_inputs, relational_inputs):
         _need(type(actor["signer_did"]) is str and auth._DID.fullmatch(actor["signer_did"]), "source signer DID required")
         _sha(actor["public_key_hex"], "source Ed25519 public key")
     units, artifacts = _reviewed_units(body, source_inputs, relational_inputs)
+    from ..syntax_core import ast
+
     by_id = {row["unit_id"]: row for row in units}
     definitions = {key for key, row in by_id.items() if row["kind"] == "definition"}
     norms = {key for key, row in by_id.items() if row["kind"] == "norm"}
@@ -730,6 +732,10 @@ def _reviewed_body(body, source_inputs, relational_inputs):
         left = node["arguments"][0]
         _need(left["symbol"] == symbol and [argument["symbol"] for argument in left["arguments"]] == binders,
               "defined predicate must apply to the complete ordered definition binders")
+        right = ast.LogicNode.from_dict(node["arguments"][1])
+        _need(not any(term.kind is ast.NodeKind.PREDICATE and term.symbol == symbol
+                      for term in right.walk()),
+              "cyclic or unresolved reviewed governing dependency: predicate occurs in its own definition")
         definition_roles = next(row["roles"] for row in definition_ir["argument_roles"] if row["symbol"] == symbol)
         norm_ir = by_id[target]["canonical_ir"]
         norm_roles = [row["roles"] for row in norm_ir["argument_roles"] if row["symbol"] == symbol]
