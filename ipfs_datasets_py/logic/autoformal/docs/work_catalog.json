@@ -37658,6 +37658,20 @@
       "backlog_crosslink": "BACKLOG.json#/migration/lir21_uscode_immutable_viewer_and_publication_20261127",
       "closed_runtime_facts": {
         "evidence_ordinal": 588,
+        "current_cutover_controls_software": {
+          "catalog_cases": 57,
+          "ir_publication_and_packaging_cases": 28,
+          "live_hub_execution": false,
+          "qualification_ref": {
+            "bytes": 1583,
+            "path": "/tmp/LIR21-publication-seal-scope-CFw4Eb1j/actual-LIR21-cutover-readback-and-catalog-148-offline-tests.json",
+            "sha256": "310e63d210a5136a5889ecbbde7067a808ce34a3e3eee38fa823671b244a7706"
+          },
+          "release_pointer_mutated": false,
+          "seal_and_handoff_cases": 63,
+          "software_tests": 148,
+          "tracked_catalog_checker_valid": true
+        },
         "immutable_law_viewer_closure": {
           "code_only_publication_ref": {
             "bytes": 7007,
