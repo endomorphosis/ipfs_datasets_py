@@ -7377,6 +7377,48 @@ def test_legacy_native_realization_refuses_current_source_bound_domain(
         native.validate_reviewed_definition_realization_native_v1(*operands, **legacy)
 
 
+def test_reviewed_source_bound_native_replays_authored_packet_without_live_authority(
+        reviewed_source_bound_realization_native_control_v2, synthetic_compiler, monkeypatch, tmp_path):
+    operands, options = reviewed_source_bound_realization_native_control_v2
+    prepared = operands[0]
+    profiles = {key: options[key] for key in ("instance_identity_profile", "definition_application_profile")}
+    executable, calls = synthetic_compiler(prepared, stdout=reviewed_native_stdout_v2(prepared))
+    output = tmp_path / "authored-source-bound"
+    receipt = native.build_reviewed_source_bound_definition_realization_native_v2(
+        *operands, **options, lake_executable=str(executable), output_directory=output, timeout_seconds=12)
+    packet = reviewed_live_success_packet_v2(output)
+    raw = dict(packet)["build-receipt.json"]
+    assert native.reviewed_source_bound_definition_realization_receipt_bytes_v2(receipt, **profiles) == raw
+    assert len(calls) == 1
+    pins = {
+        **options,
+        "expected_receipt_sha256": sha(raw),
+        "expected_packet_sha256": native.reviewed_source_bound_definition_realization_packet_sha256_v2(packet, **profiles),
+        "expected_binary_sha256": receipt["binary_sha256"],
+        "observation_profile": native._REVIEWED_REPLAY_FICTIONAL,
+    }
+
+    reviewed_retained_no_tools_v2(monkeypatch)
+    result = native.load_reviewed_source_bound_definition_realization_native_v2(packet, *operands, **pins)
+    assert result["bound_component_identity"] == prepared.to_dict()["bound_component_identity"]
+    assert result["bound_component_inputs_sha256"] == options["expected_bound_component_inputs_sha256"]
+    assert result["obligations"] == prepared.to_dict()["preservation_obligations"]
+    assert result["current_complete_semantics_replayed"] is True
+    assert result["native_execution_authenticated"] is result["live_native_success_authenticated"] is False
+    assert result["training_mask"] == result["evaluation_gold_mask"] == 0
+
+    changed = {key: value for key, value in receipt.items() if key not in {"record_cid", "cid_scope"}}
+    changed["bound_component_inputs_sha256"] = sha(b"another source history")
+    altered = native.reviewed_source_bound_definition_realization_receipt_bytes_v2(
+        contracts.seal_record(changed), **profiles)
+    changed_packet = tuple(sorted({**dict(packet), "build-receipt.json": altered}.items()))
+    altered_pins = {**pins, "expected_receipt_sha256": sha(altered),
+        "expected_packet_sha256": native.reviewed_source_bound_definition_realization_packet_sha256_v2(
+            changed_packet, **profiles)}
+    with pytest.raises(ValueError, match="retained receipt differs from current whole reviewed semantics or producers"):
+        native.load_reviewed_source_bound_definition_realization_native_v2(changed_packet, *operands, **altered_pins)
+
+
 def test_reviewed_source_bound_native_installed_preserves_history_through_retained_and_original_handle_replay(
         bound_norm_installed_lake, reviewed_source_bound_realization_native_control_v2, tmp_path):
     executable, binary_pins = bound_norm_installed_lake
