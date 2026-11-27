@@ -7246,3 +7246,186 @@ def test_physical_v4_whole_project_requires_live_selection_before_wire_replay():
             raw, expected_request_sha256=sha(raw),
             whole_project_artifact_sha256s={"compiled/Fictional.olean": sha(b"fictional binary DATA")},
         )
+
+
+@pytest.fixture(scope="module")
+def reviewed_source_bound_realization_native_control_v2(tmp_path_factory):
+    from ipfs_datasets_py.logic.autoformal import corpus_norm_definition_adapter as graph_owner
+    from ipfs_datasets_py.logic.autoformal import corpus_source_bindings as source_owner
+    from ipfs_datasets_py.logic.autoformal import legal_corpus_shared_lake as shared
+    from ipfs_datasets_py.logic.autoformal import legal_reviewed_norm_admission_v3 as admission_owner
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_span_consumer_binding as consumer
+    from tests.unit.logic.autoformal.test_corpus_source_bindings import _lir02_arguments, _lir02_complete_case
+
+    directory = tmp_path_factory.mktemp("source-bound-realization-native-v2")
+    fixture = _lir02_complete_case(directory, source_owner, mixed=True)
+    source_inputs = _lir02_arguments(fixture)
+    source_report = source_owner.prepare_bound_norm_component_v2(**source_inputs)
+    args, replay = fixture["norm_fixture"].reviewed_assessment_arguments_v2(admission_owner, fixture["case"])
+    admission = admission_owner.assess_reviewed_norm_admission_v3(*args, **replay)
+    assert admission["fixture_only"] is admission["semantic_use_eligible"] is True
+    bound_inputs = {
+        "report": source_report,
+        "expected_report_sha256": admission_owner.norm.norm_review_sha256(source_report),
+        "preparation_inputs": source_inputs,
+    }
+    source_options = {
+        "bound_component_inputs": bound_inputs,
+        "expected_bound_component_inputs_sha256": consumer.reviewed_admission_inputs_sha256(bound_inputs),
+    }
+    graph_options = {"expected_admission_sha256": admission_owner.norm_content_adjudication_sha256(admission),
+                     **replay}
+    graph = graph_owner.build_reviewed_source_bound_norm_graph_v4(
+        admission, *args, **graph_options, **source_options)
+    preservation_options = {
+        "expected_graph_sha256": graph_owner.norm_definition_graph_sha256(graph),
+        "toolchain": TOOLCHAIN,
+        "instance_identity_profile": shared.REVIEWED_SOURCE_USE_IDENTITY_PROFILE,
+        **graph_options, **source_options,
+    }
+    preservation = shared.prepare_reviewed_source_bound_norm_preservation_corpus_v4(
+        graph, admission, *args, **preservation_options)
+    realization_options = {
+        "expected_preservation_sha256": shared.reviewed_preservation_corpus_sha256(preservation),
+        "definition_application_profile": "whole-norm-definition-expansion/v1",
+        **preservation_options,
+    }
+    realization = shared.prepare_reviewed_source_bound_definition_realization_corpus_v2(
+        preservation, graph, admission, *args, **realization_options)
+    options = {
+        "expected_realization_sha256": shared.reviewed_preservation_corpus_sha256(realization),
+        **realization_options,
+    }
+    return (realization, preservation, graph, admission, *args), options
+
+
+def test_reviewed_source_bound_native_preflight_keeps_both_uses_and_complete_history(
+        reviewed_source_bound_realization_native_control_v2, monkeypatch, tmp_path):
+    operands, options = reviewed_source_bound_realization_native_control_v2
+    prepared, preservation, graph = operands[:3]
+    reviewed_retained_no_tools_v2(monkeypatch)
+    checked = native.validate_reviewed_source_bound_definition_realization_native_v2(*operands, **options)
+    assert checked == prepared
+    manifest = checked.to_dict()
+    assert manifest["upstream_manifest"] == preservation.to_dict()
+    assert manifest["bound_component_identity"] == graph["admission_record"]["bound_component_identity"]
+    assert manifest["bound_component_inputs_sha256"] == options["expected_bound_component_inputs_sha256"]
+    use_ids = [row["use_unit_id"] for row in graph["definition_use_records"]]
+    assert len(set(use_ids)) == 2
+    assert [row["unit_id"] for row in manifest["definition_applications"]] == use_ids
+    assert [len(row["target_typed_paths"]) for row in manifest["definition_applications"]] == [1, 2]
+    assert len(manifest["expected_modules"]) == 10
+    assert len(set(manifest["preservation_obligations"])) == 30
+    assert manifest["preservation_obligations"][-4:] == manifest["definition_application_obligations"]
+    assert manifest["preparation_only"] is True
+    assert manifest["proof_status"] == manifest["lean_compilation_status"] == "not_executed"
+    assert manifest["training_mask"] == manifest["evaluation_gold_mask"] == 0
+    assert all(value is False for value in manifest["authority"].values())
+
+    class BuildPreflightReached(Exception):
+        pass
+
+    def stop_before_build(original, checked_project, *, receipt_binding, **_kwargs):
+        assert original is prepared and checked_project == checked
+        binding = receipt_binding(checked_project.to_dict())
+        assert binding["bound_component_identity"] == manifest["bound_component_identity"]
+        assert binding["bound_component_inputs_sha256"] == manifest["bound_component_inputs_sha256"]
+        raise BuildPreflightReached
+
+    output = tmp_path / "would-build"
+    monkeypatch.setattr(native, "_build_validated_native", stop_before_build)
+    with pytest.raises(BuildPreflightReached):
+        native.build_reviewed_source_bound_definition_realization_native_v2(
+            *operands, **options, lake_executable="/not-executed/lake", output_directory=output)
+    assert not output.exists()
+
+
+@pytest.mark.parametrize("damage", ["wrong-history-pin", "repinned-other-history", "missing-history-pin"])
+def test_reviewed_source_bound_native_refuses_changed_or_missing_history_before_dispatch(
+        reviewed_source_bound_realization_native_control_v2, monkeypatch, tmp_path, damage):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_span_consumer_binding as consumer
+
+    operands, options = reviewed_source_bound_realization_native_control_v2
+    options = dict(options)
+    reviewed_retained_no_tools_v2(monkeypatch)
+    expected_error = ValueError
+    if damage == "wrong-history-pin":
+        options["expected_bound_component_inputs_sha256"] = "0" * 64
+    elif damage == "repinned-other-history":
+        changed = dict(options["bound_component_inputs"], expected_report_sha256="0" * 64)
+        options["bound_component_inputs"] = changed
+        options["expected_bound_component_inputs_sha256"] = consumer.reviewed_admission_inputs_sha256(changed)
+    else:
+        del options["expected_bound_component_inputs_sha256"]
+        expected_error = TypeError
+    output = tmp_path / "would-build"
+    with pytest.raises(expected_error):
+        native.build_reviewed_source_bound_definition_realization_native_v2(
+            *operands, **options, lake_executable="/not-executed/lake", output_directory=output)
+    assert not output.exists()
+
+
+def test_legacy_native_realization_refuses_current_source_bound_domain(
+        reviewed_source_bound_realization_native_control_v2, monkeypatch):
+    operands, options = reviewed_source_bound_realization_native_control_v2
+    legacy = {
+        key: value for key, value in options.items()
+        if key not in {"bound_component_inputs", "expected_bound_component_inputs_sha256"}
+    }
+    reviewed_retained_no_tools_v2(monkeypatch)
+    with pytest.raises(ValueError):
+        native.validate_reviewed_definition_realization_native_v1(*operands, **legacy)
+
+
+def test_reviewed_source_bound_native_installed_preserves_history_through_retained_and_original_handle_replay(
+        bound_norm_installed_lake, reviewed_source_bound_realization_native_control_v2, tmp_path):
+    executable, binary_pins = bound_norm_installed_lake
+    operands, options = reviewed_source_bound_realization_native_control_v2
+    manifest = operands[0].to_dict()
+    output = tmp_path / "actual-source-bound-realization"
+    handle = native.build_verified_reviewed_source_bound_definition_realization_native_v2(
+        *operands, **options, lake_executable=str(executable), output_directory=output, timeout_seconds=60)
+    packet = reviewed_live_success_packet_v2(output)
+    raw = dict(packet)["build-receipt.json"]
+    receipt = json.loads(raw)
+    assert native.reviewed_source_bound_definition_realization_receipt_bytes_v2(receipt) == raw
+    assert receipt["binary_sha256"] == binary_pins
+    assert receipt["compiled_modules"] == manifest["expected_modules"]
+    assert receipt["conditional_theorems"] == manifest["preservation_obligations"]
+    assert set(receipt["theorem_axiom_dependencies"]) == set(manifest["preservation_obligations"])
+    assert all(not dependencies for dependencies in receipt["theorem_axiom_dependencies"].values())
+
+    pinned = {
+        **options,
+        "expected_receipt_sha256": sha(raw),
+        "expected_packet_sha256": native.reviewed_source_bound_definition_realization_packet_sha256_v2(packet),
+        "expected_binary_sha256": binary_pins,
+    }
+    detached = native.validate_reviewed_source_bound_definition_realization_native_receipt_v2(
+        raw, *operands, packet_files=packet, **pinned)
+    live = native.load_verified_reviewed_source_bound_definition_realization_native_v2(
+        handle, packet, *operands, **pinned)
+    assert len({record["schema"] for record in (receipt, detached, live)}) == 3
+    assert detached["retained_observations_consistent"] is detached["current_complete_semantics_replayed"] is True
+    assert detached["live_native_success_authenticated"] is detached["native_execution_authenticated"] is False
+    assert live["live_native_success_authenticated"] is live["native_execution_authenticated"] is True
+    for record in (receipt, detached, live):
+        assert record["bound_component_identity"] == manifest["bound_component_identity"]
+        assert record["bound_component_inputs_sha256"] == manifest["bound_component_inputs_sha256"]
+        assert record["training_mask"] == record["evaluation_gold_mask"] == 0
+        assert all(value is False for value in record["authority"].values())
+    assert live["original_admitted_parent_custody_authenticated"] is live["original_success_authenticated"] is False
+
+    # Re-pin the altered receipt and complete packet so only source-history
+    # regeneration can identify the mismatch.
+    changed_raw = native.reviewed_source_bound_definition_realization_receipt_bytes_v2(
+        dict(receipt, bound_component_inputs_sha256=sha(b"different complete source history")))
+    changed_packet = tuple(sorted({**dict(packet), "build-receipt.json": changed_raw}.items()))
+    changed_pins = {
+        **pinned,
+        "expected_receipt_sha256": sha(changed_raw),
+        "expected_packet_sha256": native.reviewed_source_bound_definition_realization_packet_sha256_v2(changed_packet),
+    }
+    with pytest.raises(ValueError):
+        native.validate_reviewed_source_bound_definition_realization_native_receipt_v2(
+            changed_raw, *operands, packet_files=changed_packet, **changed_pins)
