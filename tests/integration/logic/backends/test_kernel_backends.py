@@ -2372,3 +2372,81 @@ def test_lean_rejects_non_text_dependency_report_severity(severity):
     assert accepted is False
     assert report is None
     assert any("incorrectly bound Lean declaration dependency report" in message for message in diagnostics)
+
+
+# Shape checks use an otherwise complete fictional compiler result.
+@pytest.mark.parametrize("stream", ["stdout", "stderr"])
+@pytest.mark.parametrize("diagnostic", [
+    pytest.param({"data": "fictional unsolved goals"}, id="severity-missing"),
+    pytest.param({"severity": None, "data": "fictional unsolved goals"}, id="severity-null"),
+    pytest.param({"severity": True, "data": "fictional unsolved goals"}, id="severity-bool"),
+    pytest.param({"severity": 1, "data": "fictional unsolved goals"}, id="severity-int"),
+    pytest.param({"severity": 1.5, "data": "fictional unsolved goals"}, id="severity-float"),
+    pytest.param({"severity": ["error"], "data": "fictional unsolved goals"}, id="severity-list"),
+    pytest.param({"severity": {"value": "error"}, "data": "fictional unsolved goals"}, id="severity-object"),
+    pytest.param({"severity": "fatal", "data": "fictional unsolved goals"}, id="severity-unknown"),
+    pytest.param({"severity": "warning"}, id="data-missing"),
+    pytest.param({"severity": "warning", "data": None}, id="data-null"),
+    pytest.param({"severity": "warning", "data": False}, id="data-bool"),
+    pytest.param({"severity": "warning", "data": 1}, id="data-int"),
+    pytest.param({"severity": "warning", "data": 1.5}, id="data-float"),
+    pytest.param({"severity": "warning", "data": ["fictional warning"]}, id="data-list"),
+    pytest.param({"severity": "warning", "data": {"text": "fictional warning"}}, id="data-object"),
+])
+def test_lean_bound_malformed_extra_diagnostic_record_fails_closed(stream, diagnostic):
+    stdout, expected = _bound_clean_lean_dependency_fixture()
+    extra = json.dumps(diagnostic) + "\n"
+    process = _lean_output(stdout + (extra if stream == "stdout" else ""),
+                           stderr=extra if stream == "stderr" else "")
+    accepted, report, diagnostics = evaluate_lean_kernel_output(process, **expected)
+    assert accepted is False and report is None
+    assert any(f"malformed Lean JSON diagnostic on {stream}" in message for message in diagnostics)
+
+
+@pytest.mark.parametrize("stream", ["stdout", "stderr"])
+@pytest.mark.parametrize("severity", ["info", "information", "warning"])
+def test_lean_bound_well_shaped_extra_diagnostic_retains_proof_binding(stream, severity):
+    stdout, expected = _bound_clean_lean_dependency_fixture()
+    extra = json.dumps({
+        "severity": severity,
+        "data": "Main.lean:2:0: error: quoted text in a fictional message",
+        "extra": {"items": [{"nested": [1, 2]}]},
+    }) + "\n"
+    process = _lean_output(stdout + (extra if stream == "stdout" else ""),
+                           stderr=extra if stream == "stderr" else "")
+    accepted, report, diagnostics = evaluate_lean_kernel_output(process, **expected)
+    assert accepted is True and report is not None and diagnostics == ()
+    assert (report.declaration, report.source_path, report.source_line, report.source_column) == (
+        expected["declaration"], expected["expected_source_path"], expected["expected_source_line"], 0,
+    )
+    assert report.axioms == ()
+
+
+@pytest.mark.parametrize("stream", ["stdout", "stderr"])
+def test_lean_bound_opaque_json_without_diagnostic_keys_retains_proof_binding(stream):
+    stdout, expected = _bound_clean_lean_dependency_fixture()
+    extra = json.dumps({
+        "event": "fictional_trace",
+        "metadata": {"severity": ["error"], "data": {"shape": "unrelated"}},
+    }) + "\n"
+    process = _lean_output(stdout + (extra if stream == "stdout" else ""),
+                           stderr=extra if stream == "stderr" else "")
+    accepted, report, diagnostics = evaluate_lean_kernel_output(process, **expected)
+    assert accepted is True and report is not None and diagnostics == ()
+    assert (report.declaration, report.source_path, report.source_line, report.source_column) == (
+        expected["declaration"], expected["expected_source_path"], expected["expected_source_line"], 0,
+    )
+    assert report.axioms == ()
+
+
+def test_lean_json_message_collector_preserves_objects_independently_of_proof_predicate():
+    from ipfs_datasets_py.logic.backends.kernel import lean
+
+    records = [
+        {"severity": ["error"], "data": "fictional unsolved goals"},
+        {"severity": "warning", "data": {"text": "fictional warning"}},
+        {"data": "fictional unclassified text"},
+        {"event": "fictional_trace", "metadata": {"nested": [1, 2]}},
+    ]
+    wire = "\n".join(json.dumps(record) for record in records)
+    assert lean.parse_lean_json_messages(wire) == records

@@ -1156,8 +1156,18 @@ def _lean_error_diagnostics(stdout: str, stderr: str) -> tuple[str, ...]:
                 continue
             if type(message) is not dict:
                 errors.append("non-object Lean JSON diagnostic on " + stream)
-            elif message.get("severity") == "error":
-                errors.append(str(message.get("data", "")))
+            elif "severity" in message or "data" in message:
+                severity = message.get("severity")
+                data = message.get("data")
+                if (type(severity) is not str
+                        or severity not in ("info", "information", "warning", "error")
+                        or type(data) is not str):
+                    diagnostic = "malformed Lean JSON diagnostic on " + stream
+                    if isinstance(data, str) and _AXIOM_MARKER.search(data):
+                        diagnostic += " (incorrectly bound Lean declaration dependency report)"
+                    errors.append(diagnostic)
+                elif severity == "error":
+                    errors.append(data)
     return tuple(errors)
 
 
