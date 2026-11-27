@@ -5032,6 +5032,25 @@
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
       "statutory_or_corpus_admission_or_large_model_fit_or_new_Native_qualification": false,
       "task": "LIR-09"
+    },
+    "phase8_metric_lineage_cache_recovery_ordinary19_20261127": {
+      "actual_live_ordinary19": {
+        "bytes": 5768,
+        "path": "/tmp/P1-proof-cache-translation-current-6btZZr/phase8-metric-lineage/actual-Phase8-current-metric-lineage-ordinary19-closed.json",
+        "sha256": "5a4dbca147a2179a2540209d256550dffd4e1426cc7065e221037c2f680bac37"
+      },
+      "evidence_ordinal": 577,
+      "facts": {
+        "bytes": 4464,
+        "path": "/tmp/P1-proof-cache-translation-current-6btZZr/phase8-metric-lineage/guide577-composition/current-Phase8-metric-lineage-cache-recovery-ordinary19-scoped-facts.json",
+        "sha256": "d79cea645e748927f2c74416c13f70617792a45d152773a518e886729bf0244f"
+      },
+      "record_id": "phase2-reviewed-governing-definition-self-reference-ordinary19-evidence576-20261127",
+      "related_catalog_component": "reviewed-evaluation-and-retention",
+      "related_tasks": [],
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change",
+      "statutory_or_corpus_admission_or_large_model_fit_or_new_Native_qualification": false,
+      "task": "LIR-23"
     }
   },
   "programme_goal_hierarchy": {

@@ -3304,3 +3304,8 @@ Legal proof-cache replay now requires the translation recorded by the checked Le
 ## Evidence576 — Reviewed governing-definition cycle validation
 
 Reviewed mixed-sort V3 admission now refuses a governing definition when its defining expression contains the predicate it defines. The published candidate passed all 37 ordinary software cases across 15 functions, including direct and nested self-reference controls and all 35 existing cases. The checks used fictional review and source fixtures. The statutory pilot still requires independent interpretation and applicability review. [Ordinary qualification](/tmp/P1-proof-cache-translation-current-6btZZr/phase2-self-reference/actual-Phase2-current-V3-definition-ordinary37-closed.json) · [Code publication](/tmp/P1-proof-cache-translation-current-6btZZr/phase2-self-reference/actual-Phase2-V3-definition-ordinary37-three-FF-publication.json)
+
+
+## Evidence577 — Evaluation metric-cache lineage recovery
+
+Malformed or stale metric-cache lineage now takes the existing cache-miss and recomputation path. The published candidate passed all 19 ordinary software cases across 10 functions. Those cases cover the retained checks, invalid lineage fields, and recomputation through the real daemon using authored codec and cache hooks. The ordinary run used the existing offline import profile and disabled real metric-cache disk writes in the parent and worker. Source and resource custody closed. [Ordinary qualification](/tmp/P1-proof-cache-translation-current-6btZZr/phase8-metric-lineage/actual-Phase8-current-metric-lineage-ordinary19-closed.json) · [Code publication](/tmp/P1-proof-cache-translation-current-6btZZr/phase8-metric-lineage/actual-Phase8-metric-lineage-ordinary19-three-FF-publication.json)

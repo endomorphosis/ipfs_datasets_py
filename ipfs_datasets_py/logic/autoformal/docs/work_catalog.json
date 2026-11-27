@@ -36537,6 +36537,100 @@
       "root": "artifact_workspace",
       "scope": "Fictional V3 reviewed admission refuses self-referential governing definitions.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/phase8_metric_lineage_cache_recovery_ordinary19_20261127",
+      "closed_runtime_facts": {
+        "actual_live_code_publication": {
+          "bytes": 15701,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/phase8-metric-lineage/actual-Phase8-metric-lineage-ordinary19-three-FF-publication.json",
+          "sha256": "3f0a1e4487ef85bada8904383ce45606b29df1f77b268eb4ee23ed175116bc98"
+        },
+        "actual_live_exact_two_freeze": {
+          "bytes": 7762,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/phase8-metric-lineage/actual-isolated-Phase8-metric-lineage-exact-two-local-freeze.json",
+          "sha256": "8611c18407c338ca365cae4c14737e9fb029332618ad81f8f70cab7508e9f309"
+        },
+        "actual_live_ordinary19": {
+          "bytes": 5768,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/phase8-metric-lineage/actual-Phase8-current-metric-lineage-ordinary19-closed.json",
+          "sha256": "5a4dbca147a2179a2540209d256550dffd4e1426cc7065e221037c2f680bac37"
+        },
+        "actual_live_ordinary19_raw_JUnit": {
+          "bytes": 3967,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/phase8-metric-lineage/actual-output/Phase8-metric-lineage-cache-recovery-ordinary19-run-result0-output1.bin",
+          "sha256": "db03a1b672d2a61473625f433ce7d83f9ca9ba693f23c486f5943891f8fb9fbb"
+        },
+        "actual_live_ordinary19_report": {
+          "bytes": 1054537,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/phase8-metric-lineage/actual-output/complete-frozen-local-D-Phase8-metric-lineage-cache-recovery-ordinary19-existing-owner-report.json",
+          "sha256": "6c4f0da1a917ac1894b1c7325c761af2466fd46698a8eaff37934f1c7076654a"
+        },
+        "actual_live_reconciled_Source42_READ3": {
+          "bytes": 7560,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/phase8-metric-lineage/actual-isolated-Phase8-metric-lineage-READ3-closed.json",
+          "sha256": "78c8f4b2bff2097ed74567a59d8bd26805bc21273ee7f9682ca4f2a9578c90d6"
+        },
+        "actual_live_reconciled_Source42_epoch": {
+          "bytes": 6270,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/phase8-metric-lineage/actual-live-reconciled-Source42-content-epoch-closed.json",
+          "sha256": "e336ad0e6b0b84816b8ff795261873b34ae9662f1a532855ba8715c3c9eda090"
+        },
+        "actual_ordinary19_counts": {
+          "errors": 0,
+          "failures": 0,
+          "functions": 10,
+          "passed": 19,
+          "skipped": 0,
+          "tests": 19
+        },
+        "evidence_ordinal": 577,
+        "exact_candidate": {
+          "bytes": 3262,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/phase8-metric-lineage/SEALED-Phase8-metric-lineage-cache-recovery-exact-two.json",
+          "sha256": "dd42c46f650f828c8195819beac1ca03fd4120e4173069762c95da07813b5b09"
+        },
+        "live_qualified_A_HEAD": "219ba3da0f62f772801d71715e22c506faa21126",
+        "live_qualified_D_HEAD": "da3024e6ab94fecad9f258375dcc18b04902bfe2",
+        "metric_lineage_cache_recovery_software_qualified": true,
+        "ordinary_Source_resource_and_parent_closed": true,
+        "ordinary_collect_run_raw_JUnit_order_equal": true,
+        "physical_IO_accounting_complete": false,
+        "prior_verified_guide576_publication": {
+          "bytes": 2703,
+          "path": "/tmp/P1-proof-cache-translation-current-6btZZr/phase2-self-reference/actual-Guide576-four-docs-three-FF-publication.json",
+          "sha256": "28c2677788637620b8eedf080dd4b4da948cc0173735316f909bd516b4d458db"
+        },
+        "private_same_eleven_lineage": {
+          "bytes": 11446,
+          "path": "/tmp/Main-board-stall-evidence-refresh-private-v01/owner-wait-consumer-integration-private-v01/Phase8-evaluation-lineage-current-v01/SEALED-private-metric-lineage-cache-recovery-two-file-v01.json",
+          "sha256": "ed2b7f020d68c7564a99dc6e65857bf92ccb97f80204b3b2e8da53e3c9161e9d"
+        },
+        "qualified_commit_blobs": {
+          "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_metric_lineage.py": "29f2ff8ba693812e4fea7a798f0da21ead56c1cf",
+          "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_metric_responsiveness.py": "de3144b88fdc62f398fdb041e55449be22c6bcb8"
+        },
+        "real_metric_disk_cache_disabled": true,
+        "related_catalog_component": "reviewed-evaluation-and-retention",
+        "retained_private_collection_refusal": {
+          "bytes": 2886,
+          "path": "/tmp/P8-metric-lineage-existing-private-pytest19-ewyx7a5c/SEALED-metric-lineage-private-full19-collection-refusal.json",
+          "sha256": "f6bff267051a701fc91012c38953fd5adf540aedcbebc2f3ce1e62b8c1e81560"
+        },
+        "schema": "live-reconciled-Phase8-metric-lineage-cache-recovery-engineering-evidence/v1",
+        "statutory_or_corpus_admission_or_large_model_fit_or_new_Native_qualification": false,
+        "task": "LIR-23",
+        "task_status_changed": false
+      },
+      "evidence_ordinal": 577,
+      "id": "phase2-reviewed-governing-definition-self-reference-ordinary19-evidence576-20261127",
+      "observed_bytes": 4464,
+      "observed_sha256": "d79cea645e748927f2c74416c13f70617792a45d152773a518e886729bf0244f",
+      "path": "/tmp/P1-proof-cache-translation-current-6btZZr/phase8-metric-lineage/guide577-composition/current-Phase8-metric-lineage-cache-recovery-ordinary19-scoped-facts.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Evaluation metric-cache mismatch classification and daemon recomputation with controlled fixtures.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }
