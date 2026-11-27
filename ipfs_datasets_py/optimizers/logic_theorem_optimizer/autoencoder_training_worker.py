@@ -5176,10 +5176,11 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
     if digest_omitted:
         policy.update(schema="reviewed-local-digest-omitted-decoder-load-policy/v1", target_codec=_target_codec)
     if source_bound:
+        job_spec_sha256 = _source_bound_job.canonical_sha256
+        bound_inputs_sha256 = _source_bound_job.expected_bound_component_inputs_sha256
         policy.update(schema="reviewed-local-source-bound-decoder-load-policy/v1",
-            job_spec_sha256=_source_bound_job.canonical_sha256,
-            stage_artifact=asdict(_source_bound_job.stage_artifact),
-            bound_component_inputs_sha256=_source_bound_job.expected_bound_component_inputs_sha256,
+            job_spec_sha256=job_spec_sha256, stage_artifact=asdict(_source_bound_job.stage_artifact),
+            bound_component_inputs_sha256=bound_inputs_sha256,
             assets=[asdict(item) for item in (*references, *additional_assets)])
     if _source_epoch_migration is not None:
         policy["source_epoch_migration_requested"] = True
@@ -5232,11 +5233,12 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
             bound = _current_bound_component_inputs_provider()
             guards["current_bound_component_inputs"] += 1
             if (type(bound) is not dict or not bound or
-                    consumer.reviewed_admission_inputs_sha256(bound)
-                    != _source_bound_job.expected_bound_component_inputs_sha256):
+                    consumer.reviewed_admission_inputs_sha256(bound) != bound_inputs_sha256):
                 raise TrainingJobValidationError("current local decoder bound component inputs changed")
             if consumer.reviewed_admission_inputs_sha256(admission) != expected_admission_inputs_sha256:
                 raise TrainingJobValidationError("current local decoder admission inputs changed")
+            if _source_bound_job.canonical_sha256 != job_spec_sha256:
+                raise TrainingJobValidationError("source-bound local decoder job changed")
         if (_json_bytes([expected_backend_identity, expected_source_sha256]) != frozen
                 or current_source_pins() != pins
                 or any(file_stamp(item) != stamps[item.path] for item in watched_artifacts if item.path in stamps)):
@@ -5557,7 +5559,7 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
             if final_sha256 != prepared_sha256:
                 raise TrainingJobValidationError("source-bound local decoder inputs changed after restore")
             receipt.update(schema="reviewed-local-source-bound-decoder-runtime-load/v1",
-                job_spec_sha256=_source_bound_job.canonical_sha256,
+                job_spec_sha256=job_spec_sha256,
                 stage_artifact_sha256=_source_bound_job.stage_artifact.sha256,
                 parent_checkpoint_sha256=_source_bound_job.parent_checkpoint_artifact.sha256,
                 assets=[asdict(item) for item in (*references, *additional_assets)],
