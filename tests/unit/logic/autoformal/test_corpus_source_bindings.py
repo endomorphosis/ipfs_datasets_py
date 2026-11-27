@@ -2127,13 +2127,13 @@ def test_bound_mixed_norm_component_replays_complete_current_v4_graph(
         if node["node_type"] in {"definition_assertion", "norm_assertion"}
     }
     assert set(assertion_cids) == set(records)
-    assert [
+    assert {
         (edge["src_cid"], edge["dst_cid"], edge["ordinal"])
         for edge in graph["graph"]["edges"] if edge["relation"] == "USES_DEFINITION"
-    ] == [
+    } == {
         (assertion_cids[use["use_unit_id"]], assertion_cids[use["definition_unit_id"]], ordinal)
         for ordinal, use in enumerate(declaration["definition_uses"])
-    ]
+    }
     assert graph["view"] == "candidate" and graph["external_complete_inputs_required"] is True
     assert graph["semantic_use_eligible"] is graph["graph"]["admitted"] is graph["graph"]["formalized"] is False
     assert set(graph["authority"]) == set(graphs.FALSE_FLAGS)
