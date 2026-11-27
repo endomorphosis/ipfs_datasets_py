@@ -1129,18 +1129,30 @@ def _reviewed_exact_resume_parent(spec, parent, receipt, *, checkpoint_schema, i
         "parent_checkpoint_sha256", "producer_pins", "token_budgets", "qualified", "promotion_performed"}
     if type(parent) is not dict or set(parent) != expected_fields or parent["schema"] != checkpoint_schema:
         raise TrainingJobValidationError("closed complete reviewed decoder parent checkpoint required")
-    if (parent["checkpoint_lineage_id"] != spec.checkpoint_lineage_id or parent["base_version_id"] != spec.base_version_id or
-            parent["backend_identity"] != identity or parent["assets"] != [asdict(item) for item in assets] or
-            parent["model_state"] != asdict(spec.base_model_checkpoint) or
-            parent["optimizer_state"] != asdict(spec.base_optimizer_checkpoint) or
-            (parent["training_binding"] != receipt and not (parent["training_binding"] is None and
-                parent["progress"] == {"epochs_completed": 0, "row_cursor": 0, "optimizer_steps": 0})) or
-            parent["token_budgets"] != {"max_source_tokens": spec.max_source_tokens, "max_target_tokens": spec.max_target_tokens,
-                "tokenizer_contract": receipt["tokenizer_contract"]} or parent["batch_size"] != spec.batch_size or
-            parent["seed"] != spec.seed or parent["producer_pins"] != source_pins or
-            parent["qualified"] is not False or parent["promotion_performed"] is not False):
+    expected_identity = {
+        "checkpoint_lineage_id": spec.checkpoint_lineage_id,
+        "base_version_id": spec.base_version_id,
+        "backend_identity": identity,
+        "assets": [asdict(item) for item in assets],
+        "model_state": asdict(spec.base_model_checkpoint),
+        "optimizer_state": asdict(spec.base_optimizer_checkpoint),
+        "token_budgets": {"max_source_tokens": spec.max_source_tokens, "max_target_tokens": spec.max_target_tokens,
+                          "tokenizer_contract": receipt["tokenizer_contract"]},
+        "batch_size": spec.batch_size,
+        "seed": spec.seed,
+        "producer_pins": source_pins,
+        "qualified": False,
+        "promotion_performed": False,
+    }
+    progress = parent["progress"]
+    # Canonical JSON equality distinguishes true/false, integers and floats.
+    if (type(progress) is not dict
+            or _json_bytes({field: parent[field] for field in expected_identity}) != _json_bytes(expected_identity)
+            or (_json_bytes(parent["training_binding"]) != _json_bytes(receipt)
+                and not (parent["training_binding"] is None and _json_bytes(progress) ==
+                         _json_bytes({"epochs_completed": 0, "row_cursor": 0, "optimizer_steps": 0})))):
         raise TrainingJobValidationError("reviewed decoder exact-resume identities differ")
-    return dict(parent["progress"])
+    return dict(progress)
 
 
 def _reviewed_validate_resume_progress(progress, row_count, batch_size, optimizer_step_offset=0):
@@ -3563,6 +3575,10 @@ class TorchReviewedDecoderBackend:
         return frame
 
     def validate_training_records(self, records, *, max_source_tokens, max_target_tokens):
+        self._validate_training_record_contract(records, max_source_tokens=max_source_tokens,
+            max_target_tokens=max_target_tokens, compare_live_weights=True)
+
+    def _validate_training_record_contract(self, records, *, max_source_tokens, max_target_tokens, compare_live_weights):
         torch = self._torch()
         config = self._configuration()
         vocab = config["tokenizer"]["vocab_size"]
@@ -3571,7 +3587,8 @@ class TorchReviewedDecoderBackend:
         for embedding in (self.model.get_input_embeddings(), self.model.get_output_embeddings()):
             if embedding is None or embedding.weight.shape[0] < vocab:
                 raise TrainingJobValidationError("model embeddings do not cover declared tokenizer IDs")
-        self._finite_state(self._model_state())
+        if compare_live_weights:
+            self._finite_state(self._model_state())
         if type(records) is not list or not records:
             raise TrainingJobValidationError("nonempty complete reviewed records required")
         for row in records:
@@ -5475,7 +5492,7 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
             identity=identity, assets=job_assets, source_pins=pins)
         _reviewed_validate_resume_progress(progress, len(prepared["records"]), _source_bound_job.batch_size)
         current()
-        return _digest(_json_bytes(prepared)), receipt, progress
+        return _digest(_json_bytes(prepared)), prepared, progress
 
     current()
     import torch
@@ -5503,9 +5520,7 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
         # alongside the model and independent decoded checkpoint tensors.
         del native, tokenizer_raw
         if source_bound:
-            prepared_sha256, _, progress = replay_source_bound(tokenizer)
-            model_raw = _reviewed_decoder_artifact(model_checkpoint, limit=state_limit)
-            optimizer_raw = _reviewed_decoder_artifact(optimizer_checkpoint, limit=state_limit)
+            prepared_sha256, prepared, progress = replay_source_bound(tokenizer)
         current()
         if qwen2_profile:
             from transformers import Qwen2Config, Qwen2ForCausalLM
@@ -5632,13 +5647,14 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
         if backend.identity() != identity:
             raise TrainingJobValidationError("local constructed decoder backend identity differs")
         current()
-        if digest_omitted and _source_epoch_migration is not None:
-            model_raw, optimizer_raw = _reviewed_digest_cache_epoch_restore(backend, model_raw, optimizer_raw,
-                _source_epoch_migration, registry, current_admission_provider, current)
-        elif _source_epoch_migration is not None:
-            model_raw, optimizer_raw = _reviewed_epoch_restore(backend, model_raw, optimizer_raw,
-                _source_epoch_migration, registry, current_admission_provider, current)
         if source_bound:
+            # CPU weights are still uninitialized after to_empty(). Check the
+            # full token/model contract now, then inspect the verified pair.
+            backend._validate_training_record_contract(prepared["records"],
+                max_source_tokens=_source_bound_job.max_source_tokens,
+                max_target_tokens=_source_bound_job.max_target_tokens, compare_live_weights=False)
+            model_raw = _reviewed_decoder_artifact(model_checkpoint, limit=state_limit)
+            optimizer_raw = _reviewed_decoder_artifact(optimizer_checkpoint, limit=state_limit)
             inspection = backend.inspect_checkpoint(model_raw, optimizer_raw)
             if (type(inspection) is not dict or type(inspection.get("optimizer_steps")) is not int
                     or inspection != {"optimizer_steps": progress["optimizer_steps"]}):
@@ -5646,6 +5662,12 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
             pre_restore_sha256, _, _ = replay_source_bound(tokenizer)
             if pre_restore_sha256 != prepared_sha256:
                 raise TrainingJobValidationError("source-bound local decoder inputs changed before restore")
+        elif digest_omitted and _source_epoch_migration is not None:
+            model_raw, optimizer_raw = _reviewed_digest_cache_epoch_restore(backend, model_raw, optimizer_raw,
+                _source_epoch_migration, registry, current_admission_provider, current)
+        elif _source_epoch_migration is not None:
+            model_raw, optimizer_raw = _reviewed_epoch_restore(backend, model_raw, optimizer_raw,
+                _source_epoch_migration, registry, current_admission_provider, current)
         backend.restore_checkpoint(model_raw, optimizer_raw, execution_guard=current)
         current()
         if not backend.restored_checkpoint_matches(model_raw, optimizer_raw):
@@ -5688,9 +5710,10 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
             receipt["cache_source_epoch_marker"] = _thaw(backend.cache_source_epoch_marker)
             current()
         if source_bound:
-            final_sha256, final_binding, _ = replay_source_bound(tokenizer)
+            final_sha256, final_prepared, _ = replay_source_bound(tokenizer)
             if final_sha256 != prepared_sha256:
                 raise TrainingJobValidationError("source-bound local decoder inputs changed after restore")
+            final_binding = final_prepared["receipt"]
             receipt.update(schema="reviewed-local-source-bound-decoder-runtime-load/v1",
                 job_spec_sha256=job_spec_sha256,
                 stage_artifact_sha256=_source_bound_job.stage_artifact.sha256,
