@@ -39662,6 +39662,137 @@
       "root": "artifact_workspace",
       "scope": "Signed fictional Source and detached authored packet checks for source-bound Native realization routing.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/lir02_source_bound_component_release_observation_20261128",
+      "closed_runtime_facts": {
+        "checked_lean_declared_eligible": false,
+        "fixture_only": true,
+        "managed_Lean": {
+          "bytes": 14257,
+          "path": "/tmp/P2-source-bound-release-owner-n44uvv9h/actual-source-bound-release-coordinator-closeout.json",
+          "sha256": "a789c739b23587cb57fee9cfa374eb44d02e743442e9417b0088905e6d78cef7"
+        },
+        "ordinary_checks": [
+          {
+            "checks": [
+              [
+                "tests.unit.logic.autoformal.test_legal_corpus_definition_use_native_v2",
+                "test_source_bound_release_refuses_invalid_selections_before_project_replay[missing-current-review-current review]"
+              ],
+              [
+                "tests.unit.logic.autoformal.test_legal_corpus_definition_use_native_v2",
+                "test_source_bound_release_refuses_invalid_selections_before_project_replay[invalid-artifact-path-compiled]"
+              ],
+              [
+                "tests.unit.logic.autoformal.test_legal_corpus_definition_use_native_v2",
+                "test_source_bound_release_refuses_invalid_selections_before_project_replay[unissued-handle-live success handle was not issued by this process and native thread]"
+              ],
+              [
+                "tests.unit.logic.autoformal.test_legal_corpus_definition_use_native_v2",
+                "test_source_bound_release_refuses_invalid_selections_before_project_replay[rebound-current-review-loaded-owner implementation binding differs]"
+              ],
+              [
+                "tests.unit.logic.autoformal.test_legal_corpus_definition_use_native_v2",
+                "test_source_bound_release_current_review_refuses_stale_or_revoked_inputs[dependency]"
+              ],
+              [
+                "tests.unit.logic.autoformal.test_legal_corpus_definition_use_native_v2",
+                "test_source_bound_release_current_review_refuses_stale_or_revoked_inputs[revoked-reviewer]"
+              ]
+            ],
+            "junit": {
+              "bytes": 1617,
+              "path": "/tmp/P2-source-bound-release-owner-n44uvv9h/source-bound-release-guard-v02.xml",
+              "sha256": "0724e52abdd9051ccbbfb9fa34406b07504965ec087d1a38fbae1a31f5e9e8d2"
+            },
+            "log": {
+              "bytes": 780,
+              "path": "/tmp/P2-source-bound-release-owner-n44uvv9h/source-bound-release-guard-v02.log",
+              "sha256": "539511f96e526bb0b8cda61a89bac455db97433a4c5c9cb2512a532554ed36d9"
+            },
+            "scope": "source-bound-release-guard-v02",
+            "source_commit": "d18c73eb29d2a43c8bfc316167eee06600bd26a4",
+            "terminal": {
+              "bytes": 2,
+              "path": "/tmp/P2-source-bound-release-owner-n44uvv9h/source-bound-release-guard-v02.terminal",
+              "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+            },
+            "tests": 6
+          },
+          {
+            "checks": [
+              [
+                "tests.unit.logic.autoformal.test_corpus_release_cli",
+                "test_physical_v4_projects_independently_observed_current_review"
+              ],
+              [
+                "tests.unit.logic.autoformal.test_corpus_release_cli",
+                "test_physical_v4_refuses_stale_wire_against_independent_current_review[revoked-registry]"
+              ],
+              [
+                "tests.unit.logic.autoformal.test_corpus_release_cli",
+                "test_physical_v4_refuses_stale_wire_against_independent_current_review[changed-policy]"
+              ],
+              [
+                "tests.unit.logic.autoformal.test_corpus_release_cli",
+                "test_physical_v4_refuses_stale_wire_against_independent_current_review[expiry]"
+              ],
+              [
+                "tests.unit.logic.autoformal.test_corpus_release_cli",
+                "test_physical_v4_refuses_stale_wire_against_independent_current_review[dependency]"
+              ],
+              [
+                "tests.unit.logic.autoformal.test_corpus_release_cli",
+                "test_physical_v4_refuses_stale_wire_against_independent_current_review[rollback]"
+              ],
+              [
+                "tests.unit.logic.autoformal.test_corpus_release_cli",
+                "test_physical_v4_current_review_selection_preserves_legacy_default"
+              ],
+              [
+                "tests.unit.logic.autoformal.test_corpus_release_cli",
+                "test_physical_v4_checked_native_requires_independent_current_review_first"
+              ],
+              [
+                "tests.unit.logic.autoformal.test_corpus_release_cli",
+                "test_physical_v4_checked_native_requires_closed_selection_before_plan[missing-field]"
+              ],
+              [
+                "tests.unit.logic.autoformal.test_corpus_release_cli",
+                "test_physical_v4_checked_native_requires_closed_selection_before_plan[unexpected-field]"
+              ]
+            ],
+            "junit": {
+              "bytes": 1989,
+              "path": "/tmp/P2-source-bound-release-owner-n44uvv9h/physical-release-review-retention-v01.xml",
+              "sha256": "2b37adef1139f06e59080a64e5df44ec12573e567bc91b4d35b22b47194f8724"
+            },
+            "log": {
+              "bytes": 705,
+              "path": "/tmp/P2-source-bound-release-owner-n44uvv9h/physical-release-review-retention-v01.log",
+              "sha256": "9ba13334e03f8ddafa018f271db3bbaa6058845b342091b521c19d1e9deca636"
+            },
+            "scope": "physical-release-review-retention-v01",
+            "source_commit": "2fe143692a6ef72c1569e694c21bd99289688836",
+            "terminal": {
+              "bytes": 2,
+              "path": "/tmp/P2-source-bound-release-owner-n44uvv9h/physical-release-review-retention-v01.terminal",
+              "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+            },
+            "tests": 10
+          }
+        ]
+      },
+      "evidence_ordinal": 599,
+      "id": "lir02-source-bound-component-release-observation-evidence599-20261128",
+      "observed_bytes": 7374,
+      "observed_sha256": "875bb88bfbac135638909d440429b08c05673aa0b0edd97798e98244cb2b6a2c",
+      "path": "/tmp/P2-source-bound-release-owner-n44uvv9h/actual-source-bound-release-coordinator-qualification.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Current-review and conditional Lean artifact observations for a signed fictional source-bound component.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }

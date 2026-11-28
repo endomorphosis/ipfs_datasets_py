@@ -3466,3 +3466,8 @@ Native build, independent statutory and formal review for Title 10 §§ 101, 721
 ## Evidence598 — Source-bound Native realization software checks
 
 This evidence records software-only source replay, authored packet validation and legacy compatibility. The run selected no fitting or checkpoint operation. Training and evaluation gold masks remain zero. [Qualification and the retained admission refusals](/tmp/P2-source-bound-native-owner-jkxv16fd/actual-source-bound-native-realization-qualification.json)
+
+
+## Evidence599 — Conditional compilation in the existing release coordinator
+
+The signed fictional component passed its original-handle and compiled-project checks. Training and evaluation gold masks stayed zero. This verification selected no model fit or checkpoint update. [Source-bound release qualification](/tmp/P2-source-bound-release-owner-n44uvv9h/actual-source-bound-release-coordinator-qualification.json)
