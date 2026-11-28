@@ -401,7 +401,8 @@ def test_build_symbol_table_extracts_common_legal_ir_shapes() -> None:
 
 
 @pytest.mark.parametrize("supply_external", [True, False], ids=["supplied-external", "absent-external"])
-def test_external_target_id_alias_validation_matches_resolution(supply_external):
+@pytest.mark.parametrize("target_context", ["matching", "unspecified", "wrong-document", "wrong-scope"])
+def test_external_target_id_alias_validation_matches_resolution(supply_external, target_context):
     """An explicit external ID is available only from the supplied table."""
     external_builder = LegalIRSymbolTableBuilder(symbol_table_id="external-id-alias-doc-b")
     doc_b = external_builder.add_document_scope("doc-b")
@@ -429,8 +430,12 @@ def test_external_target_id_alias_validation_matches_resolution(supply_external)
         "external officer",
         alias_id="alias:external-officer",
         target_symbol_id="authority:external-records-officer",
-        target_document_id="doc-b",
-        target_scope_id=doc_b.scope_id,
+        target_document_id=(
+            "" if target_context == "unspecified" else "doc-a" if target_context == "wrong-document" else "doc-b"
+        ),
+        target_scope_id=(
+            "" if target_context == "unspecified" else doc_a.scope_id if target_context == "wrong-scope" else doc_b.scope_id
+        ),
         symbol_kind=LegalIRSymbolKind.AUTHORITY,
         scope_id=doc_a.scope_id,
         document_id="doc-a",
@@ -445,7 +450,9 @@ def test_external_target_id_alias_validation_matches_resolution(supply_external)
     table = builder.to_symbol_table(external_symbol_tables=external_tables)
     resolution = table.resolution_by_reference_id["ref:external-officer"]
     validation = validate_legal_ir_symbol_table(table, external_symbol_tables=external_tables)
-    if supply_external:
+    replayed = resolve_legal_ir_symbol(table, "ref:external-officer", external_symbol_tables=external_tables)
+    assert replayed == resolution
+    if supply_external and target_context in {"matching", "unspecified"}:
         assert resolution.status is LegalIRResolutionStatus.RESOLVED
         assert resolution.symbol_ids == ("authority:external-records-officer",)
         assert resolution.alias_ids == ("alias:external-officer",)
