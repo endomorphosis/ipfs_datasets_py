@@ -213,3 +213,97 @@ def test_compiler_and_decompiler_remain_the_measured_authorities() -> None:
     assert cycle.l1_result is not None
     assert cycle.l1_result.canonical_ir is not None
     assert cycle.l1_result.canonical_ir.ir_cid == compiled.canonical_ir.ir_cid
+
+
+def _same_predicate_modal_rules() -> tuple[CanonicalRule, CanonicalRule]:
+    return (
+        CanonicalRule("O", "agency", "file", "notice", conditions=("public_interest",)),
+        CanonicalRule("P", "agency", "file", "notice", conditions=("emergency",)),
+    )
+
+
+def test_identical_same_predicate_modal_rules_have_no_differences() -> None:
+    rules = _same_predicate_modal_rules()
+    left = CanonicalRoundTripIR(rules)
+    right = CanonicalRoundTripIR.from_dict(left.to_dict())
+    assert left.ir_cid == right.ir_cid
+    assert compare_canonical_semantics(left, right) == ()
+    assert classify_ir_preservation(left, right) == (TranslationPreservationClass.LOSSLESS, ())
+
+
+def test_dropped_rule_keeps_unchanged_sibling_polarity() -> None:
+    unchanged, removed = _same_predicate_modal_rules()
+    full = CanonicalRoundTripIR((unchanged, removed))
+    remaining = CanonicalRoundTripIR((unchanged,))
+    differences = compare_canonical_semantics(full, remaining)
+    assert [row["kind"] for row in differences] == ["ir_cid_mismatch", "rule_set_mismatch", "dropped_rule"]
+    assert differences[-1]["rule_cid"] == removed.rule_cid
+    assert classify_ir_preservation(full, remaining) == (
+        TranslationPreservationClass.UNDER_APPROXIMATION,
+        (removed.rule_cid,),
+    )
+
+
+def test_one_changed_qualifier_is_matched_after_unchanged_sibling() -> None:
+    obligation, permission = _same_predicate_modal_rules()
+    changed = CanonicalRule("O", "agency", "file", "notice", conditions=("approval",))
+    before = CanonicalRoundTripIR((obligation, permission))
+    after = CanonicalRoundTripIR((changed, permission))
+    differences = compare_canonical_semantics(before, after)
+    assert [row["kind"] for row in differences] == [
+        "ir_cid_mismatch", "rule_set_mismatch", "changed_qualifiers",
+    ]
+    assert differences[-1] == {
+        "kind": "changed_qualifiers", "facet": "conditions",
+        "added": ["approval"], "dropped": ["public_interest"], "rule_cid": changed.rule_cid,
+    }
+
+
+def test_ambiguous_unmatched_siblings_are_not_paired_speculatively() -> None:
+    before = CanonicalRoundTripIR(_same_predicate_modal_rules())
+    after = CanonicalRoundTripIR((
+        CanonicalRule("O", "agency", "file", "notice", conditions=("approval",)),
+        CanonicalRule("P", "agency", "file", "notice", conditions=("urgency",)),
+    ))
+    differences = compare_canonical_semantics(before, after)
+    assert [row["kind"] for row in differences] == [
+        "ir_cid_mismatch", "rule_set_mismatch", "added_rule", "added_rule", "dropped_rule", "dropped_rule",
+    ]
+    assert {row["rule_cid"] for row in differences if row["kind"] == "dropped_rule"} == {
+        rule.rule_cid for rule in before.rules
+    }
+    assert {row["rule_cid"] for row in differences if row["kind"] == "added_rule"} == {
+        rule.rule_cid for rule in after.rules
+    }
+
+
+def test_exact_cycle_admits_two_rules_with_the_same_predicate() -> None:
+    request = measured_parity_compiler_request(
+        "Agency must file notice if public interest. Agency may file notice if emergency.",
+        request_id="gate-two-modal-siblings",
+        atom_vocabulary=CanonicalAtomVocabulary(
+            actors=("agency",), actions=("file",), objects=("notice",),
+            qualifiers=("public_interest", "emergency"),
+        ),
+    )
+    gate = run_with_preservation(request)
+    assert gate.roundtrip.status is OperationStatus.SUCCESS
+    assert gate.l1_ir_cid == gate.l2_ir_cid
+    assert gate.roundtrip.l1_result is not None
+    assert gate.roundtrip.l1_result.canonical_ir is not None
+    assert gate.roundtrip.l1_result.canonical_ir.rules == _same_predicate_modal_rules()
+    assert gate.admitted and gate.differences == ()
+    assert gate.preservation_class is TranslationPreservationClass.LOSSLESS
+    assert gate.fidelity_claim is FidelityClaim.SEMANTIC
+
+
+def test_exact_rule_multiplicity_preserves_one_unmatched_occurrence() -> None:
+    rule, sibling = _same_predicate_modal_rules()
+    before = CanonicalRoundTripIR((rule, rule, sibling))
+    after = CanonicalRoundTripIR((rule, sibling))
+    dropped = compare_canonical_semantics(before, after)
+    added = compare_canonical_semantics(after, before)
+    assert [row["kind"] for row in dropped] == ["ir_cid_mismatch", "dropped_rule"]
+    assert dropped[1]["rule_cid"] == rule.rule_cid
+    assert [row["kind"] for row in added] == ["ir_cid_mismatch", "added_rule"]
+    assert added[1]["rule_cid"] == rule.rule_cid
