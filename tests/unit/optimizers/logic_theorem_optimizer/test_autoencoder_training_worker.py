@@ -5398,15 +5398,18 @@ def test_reviewed_local_loader_v5_refuses_crossed_job_or_changed_source_before_m
     assert not Path(spec.output_directory).exists()
 
 
-def _reviewed_local_v5_signed_fixture(tmp_path, monkeypatch, *, model_limit, job_limit, compact_tokenizer=False):
+def _reviewed_local_v5_signed_fixture(tmp_path, monkeypatch, *, model_limit, job_limit,
+        compact_tokenizer=False, prepare_historical_step=False):
     from types import SimpleNamespace
     from tests.unit.logic import test_autoformal_campaign_training_inputs as fixtures
 
     data = fixtures._reviewed_mixed_source_bound_cycle_fixture(tmp_path)
     local = _reviewed_local_loader_hf_fixture(tmp_path, max_sequence_tokens=model_limit,
-        fixed_json_schema_subwords=compact_tokenizer, fixed_typed_schema_subwords=compact_tokenizer, pristine_pair=True)
-    _reviewed_local_loader_no_remote_or_training(monkeypatch, local)
+        fixed_json_schema_subwords=compact_tokenizer, fixed_typed_schema_subwords=compact_tokenizer,
+        pristine_pair=True)
     assert local.backend._optimizer_steps == 0 and not local.backend.optimizer.state
+    original_model = asdict(local.options["model_checkpoint"])
+    seed = 1729
 
     def provide_admission():
         return data.deepcopy(data.kwargs["current_admission_inputs"])
@@ -5417,6 +5420,26 @@ def _reviewed_local_v5_signed_fixture(tmp_path, monkeypatch, *, model_limit, job
     # Observe actual prepares from inside the public loader without changing
     # how it validates the signed inputs or which object it receives.
     original_prepare = fixtures.inputs.prepare_reviewed_mixed_source_bound_decoder_training_inputs_v5
+    historical_binding = None
+    if prepare_historical_step:
+        from random import Random
+
+        historical_inputs = dict(data.kwargs, tokenizer=local.backend.tokenizer,
+            max_source_tokens=job_limit, max_target_tokens=job_limit,
+            current_bound_component_inputs=data.bound_component_inputs,
+            expected_bound_component_inputs_sha256=data.bound_component_inputs_sha256)
+        prepared = original_prepare(data.registry, **historical_inputs)
+        historical_binding = prepared["receipt"]
+        records = list(prepared["records"])
+        assert len(records) == 3 and historical_binding["fixture_only"]
+        Random(seed).shuffle(records)
+        assert local.backend.train_batch(records[:1])["optimizer_steps"] == 1
+        local.checkpoint = local.backend.snapshot_checkpoint()
+        local.pair_rng = local.torch.get_rng_state().clone()
+        local.options["model_checkpoint"] = local.artifact("historical-model.pt", local.checkpoint["model_state"])
+        local.options["optimizer_checkpoint"] = local.artifact("historical-optimizer.pt", local.checkpoint["optimizer_state"])
+    _reviewed_local_loader_no_remote_or_training(monkeypatch, local)
+    steps = local.backend._optimizer_steps
     replays = []
 
     @wraps(original_prepare)
@@ -5439,12 +5462,12 @@ def _reviewed_local_v5_signed_fixture(tmp_path, monkeypatch, *, model_limit, job
     pins = worker._reviewed_decoder_source_pins(admission_profile=profile, source_bound=True)
     lineage = "fixture:v5-signed-exact-local-restore"
     base = "fixture:v5-signed-local-t5"
-    seed = 1729
     parent = {"schema": worker.REVIEWED_SOURCE_BOUND_MIXED_DECODER_CHECKPOINT_SCHEMA,
         "checkpoint_lineage_id": lineage, "base_version_id": base,
-        "backend_identity": options["expected_backend_identity"], "assets": [model, tokenizer, license_asset, *backend_assets],
-        "training_binding": None, "model_state": model, "optimizer_state": optimizer,
-        "progress": {"epochs_completed": 0, "row_cursor": 0, "optimizer_steps": 0}, "batch_size": 1, "seed": seed,
+        "backend_identity": options["expected_backend_identity"],
+        "assets": [original_model, tokenizer, license_asset, *backend_assets],
+        "training_binding": historical_binding, "model_state": model, "optimizer_state": optimizer,
+        "progress": {"epochs_completed": 0, "row_cursor": steps, "optimizer_steps": steps}, "batch_size": 1, "seed": seed,
         "parent_checkpoint_sha256": None, "producer_pins": pins, "qualified": False, "promotion_performed": False,
         "token_budgets": {"max_source_tokens": job_limit, "max_target_tokens": job_limit,
             "tokenizer_contract": fixtures.inputs._reviewed_decoder_tokenizer_contract(local.backend.tokenizer)}}
@@ -5458,7 +5481,7 @@ def _reviewed_local_v5_signed_fixture(tmp_path, monkeypatch, *, model_limit, job
         "base_version_id": base, "checkpoint_lineage_id": lineage, "output_directory": str(tmp_path / "unused-worker-output"),
         "code_identity": "fixture:independent-v5-current-source-pins", "stage_artifact": stage,
         "exposure_artifact": exposure_ref, "source_contexts_artifact": contexts_ref,
-        "model_artifact": model, "tokenizer_artifact": tokenizer, "license_artifact": license_asset,
+        "model_artifact": original_model, "tokenizer_artifact": tokenizer, "license_artifact": license_asset,
         "backend_artifacts": backend_assets,
         "base_model_checkpoint": model, "base_optimizer_checkpoint": optimizer, "parent_checkpoint_artifact": parent_ref,
         "expected_admission_inputs_sha256": data.kwargs["expected_admission_inputs_sha256"],
@@ -5470,6 +5493,8 @@ def _reviewed_local_v5_signed_fixture(tmp_path, monkeypatch, *, model_limit, job
     })
     original_artifacts = (stage, exposure_ref, contexts_ref, parent_ref, model, optimizer, tokenizer, license_asset,
                           *backend_assets)
+    if prepare_historical_step:
+        original_artifacts += (original_model,)
     policies = []
 
     def asset_policy(policy):
@@ -5494,6 +5519,70 @@ def _assert_reviewed_local_v5_artifacts_unchanged(fixture):
     for artifact in fixture.original_artifacts:
         raw = Path(artifact["path"]).read_bytes()
         assert len(raw) == artifact["bytes"] and hashlib.sha256(raw).hexdigest() == artifact["sha256"]
+
+
+def test_reviewed_local_loader_v5_changed_stage_requires_training_intent(tmp_path, monkeypatch):
+    from tests.unit.logic import test_autoformal_campaign_training_inputs as fixtures
+
+    maximum = 4096
+    fixture = _reviewed_local_v5_signed_fixture(tmp_path, monkeypatch,
+        model_limit=maximum, job_limit=maximum, compact_tokenizer=True, prepare_historical_step=True)
+    data, local = fixture.data, fixture.local
+    stage, (exposure, contexts) = fixtures._source_bound_ancestry_successor(
+        data, fixture.stage, tmp_path / "amended-stage", readmission=False)
+    exposure_ref = _complete_reviewed_artifact(tmp_path / "amended-exposure.json", worker._json_bytes(exposure))
+    contexts_ref = _complete_reviewed_artifact(tmp_path / "amended-contexts.json", worker._json_bytes(contexts))
+    profile = worker.REVIEWED_SOURCE_BOUND_MIXED_DECODER_CONTINUATION_PROFILE
+    spec = worker.TrainingJobSpec.from_dict(dict(fixture.spec.to_dict(), stage_artifact=stage,
+        exposure_artifact=exposure_ref, source_contexts_artifact=contexts_ref, continuation_profile=profile))
+    fixture.staged_writes = data.registry.stage_calls
+    fixture.original_artifacts += (stage, exposure_ref, contexts_ref)
+
+    def asset_policy(policy):
+        local.options["asset_policy_guard"](policy)
+        assert policy["job_spec_sha256"] == spec.canonical_sha256
+        assert policy["stage_artifact"] == stage
+        assert policy["bound_component_inputs_sha256"] == fixture.bound_sha
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("evaluation of a pending V5 stage reached model construction or checkpoint restore")
+
+    load_options = dict(fixture.load_options, spec=spec, asset_policy_guard=asset_policy)
+    local.torch.manual_seed(90210)
+    original_rng = local.torch.get_rng_state().clone()
+    assert not local.torch.equal(original_rng, local.pair_rng)
+    with monkeypatch.context() as refuse:
+        refuse.setattr(local.model_class, "__init__", forbidden)
+        refuse.setattr(worker.TorchReviewedDecoderBackend, "inspect_checkpoint", forbidden)
+        refuse.setattr(worker.TorchReviewedDecoderBackend, "restore_checkpoint", forbidden)
+        with pytest.raises(worker.TrainingJobValidationError, match="evaluation requires the checkpoint's trained stage"):
+            worker.load_local_reviewed_source_bound_decoder_runtime_v5(**load_options, allow_stage_transition=False)
+    assert local.torch.equal(local.torch.get_rng_state(), original_rng)
+    refused_preparation, = fixture.replays
+    fixture.replays.clear()
+    _assert_reviewed_local_v5_artifacts_unchanged(fixture)
+
+    runtime, receipt = worker.load_local_reviewed_source_bound_decoder_runtime_v5(**load_options)
+    before_model, before_restore, after_restore = fixture.replays
+    assert refused_preparation == before_model == before_restore == after_restore
+    binding = after_restore["receipt"]
+    assert binding["stage_artifact_sha256"] == stage["sha256"]
+    historical = json.loads(Path(fixture.parent_ref["path"]).read_bytes())
+    assert historical["training_binding"]["stage_artifact_sha256"] == fixture.stage["sha256"]
+    assert historical["training_binding"]["training_record_ids"] != binding["training_record_ids"]
+    assert runtime.backend is not local.backend
+    assert runtime.backend.restored_checkpoint_matches(local.checkpoint["model_state"], local.checkpoint["optimizer_state"])
+    assert local.torch.equal(local.torch.get_rng_state(), local.pair_rng)
+    assert runtime._loaded_checkpoint_source_anchor is None
+    assert receipt["schema"] == "reviewed-local-source-bound-decoder-runtime-load/v1"
+    assert receipt["continuation_profile"] == profile and receipt["stage_transition_pending"] is True
+    assert receipt["optimizer_steps"] == receipt["optimizer_step_offset"] == runtime.backend._optimizer_steps == 1
+    assert receipt["parent_checkpoint_sha256"] == fixture.parent_ref["sha256"]
+    assert receipt["stage_artifact_sha256"] == stage["sha256"]
+    assert receipt["training_input_receipt_sha256"] == hashlib.sha256(worker._json_bytes(binding)).hexdigest()
+    assert receipt["checkpoint_restored"] is receipt["matched_pair"] is True
+    assert receipt["training_performed"] is receipt["corpus_admitted"] is False
+    _assert_reviewed_local_v5_artifacts_unchanged(fixture)
 
 
 def test_reviewed_local_loader_v5_restores_exact_builtin_pair_with_signed_source_bound_inputs(tmp_path, monkeypatch):
