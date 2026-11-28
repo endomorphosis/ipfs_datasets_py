@@ -40360,6 +40360,18 @@
       "root": "artifact_workspace",
       "scope": "Managed native proof-cache qualification of the exact Guide 638 source snapshot on a fictional theorem fixture.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/pinned_native_ci_namespaced_declaration_20261128",
+      "evidence_ordinal": 642,
+      "id": "pinned-native-ci-namespaced-declaration-evidence642-20261128",
+      "observed_bytes": 961,
+      "observed_sha256": "17519a165eca7c5f120d3d92053ee00603f8b1340a6e4b91e9e58de5b5a8bc1a",
+      "path": "/tmp/Guide641-namespace-ci-integration-RSSIq5IJ/actual-Guide642-namespaced-evidence.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Pinned native CI selector and isolated report wiring for the existing namespaced declaration test.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }

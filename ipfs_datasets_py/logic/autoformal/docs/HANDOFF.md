@@ -4539,3 +4539,8 @@ A temporal atom with a literal conjunction can render identically to two separat
 ## Evidence641 — Verify the Guide 638 proof-cache round trip with Lean 4.34.1
 
 The managed cache case on Guide 638 ran one Lean version probe and two successful compilations. Disk reopen and exact reuse passed, and the context and artifact refusals triggered zero additional Lean commands. [Exact qualification evidence](/tmp/Guide638-native-cache-one-case-retry-INERT-5ihpqtfv/actual-guide638-native-cache-roundtrip-qualified-closed.json)
+
+
+## Evidence642 — Select the namespaced declaration test in pinned Lean CI
+
+The existing Lean 4.34.1 native matrix now runs the namespaced declaration regression and uploads its own JSON and JUnit files. The gate requires the exact selected case to pass without a skip. [Exact qualification evidence](/tmp/Guide641-namespace-ci-integration-RSSIq5IJ/actual-Guide642-namespaced-evidence.json)

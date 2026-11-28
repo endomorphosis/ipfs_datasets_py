@@ -5763,6 +5763,16 @@
       },
       "record_id": "lir09-reviewed-dependency-multiplicity-evidence639-20261128",
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
+    },
+    "pinned_native_ci_namespaced_declaration_20261128": {
+      "evidence_ordinal": 642,
+      "facts": {
+        "bytes": 961,
+        "path": "/tmp/Guide641-namespace-ci-integration-RSSIq5IJ/actual-Guide642-namespaced-evidence.json",
+        "sha256": "17519a165eca7c5f120d3d92053ee00603f8b1340a6e4b91e9e58de5b5a8bc1a"
+      },
+      "record_id": "pinned-native-ci-namespaced-declaration-evidence642-20261128",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
     }
   },
   "programme_goal_hierarchy": {

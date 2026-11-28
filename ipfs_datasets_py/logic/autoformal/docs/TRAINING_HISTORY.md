@@ -3679,3 +3679,8 @@ All 203 selected renderer, qualifier, relational reconstruction, and recompilati
 ## Evidence641 — Verify the Guide 638 proof-cache round trip with Lean 4.34.1
 
 The first managed attempt stopped at a missing tracked package import before Lean invocation. The retry materialized the full package, checked the missing imports, and passed the original integration case under the unchanged resource profile. The Source lease, scheduler grant, and child processes closed. [Exact qualification evidence](/tmp/Guide638-native-cache-one-case-retry-INERT-5ihpqtfv/actual-guide638-native-cache-roundtrip-qualified-closed.json)
+
+
+## Evidence642 — Select the namespaced declaration test in pinned Lean CI
+
+The static workflow check reproduced the missing selector and verified the correction. The JUnit guard accepted one exact passing result and refused seven invalid inputs. A separate managed local run on the exact Guide 641 source passed. Lean accepted the root declaration and returned a type mismatch for the same-short-name declaration inside the namespace. [Exact qualification evidence](/tmp/Guide641-namespace-ci-integration-RSSIq5IJ/actual-Guide642-namespaced-evidence.json)
