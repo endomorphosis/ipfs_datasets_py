@@ -3461,3 +3461,8 @@ The V2 realization preparation replays the V4 source-bound graph and preservatio
 Four selected offline cases passed. They cover the new source-bound realization, both existing V1 whole-norm parametrizations, and retained V4 preservation. The new case also checks the exact independent source pin and refusal by the legacy entry point. [Definition realization software qualification](/tmp/P2-source-bound-definition-realization-kyykelBy/actual-source-bound-definition-realization-qualification.json)
 
 Native build, independent statutory and formal review for Title 10 §§ 101, 7213, and 7214, corpus admission, and release remain pending.
+
+
+## Evidence598 — Source-bound Native realization software checks
+
+This evidence records software-only source replay, authored packet validation and legacy compatibility. The run selected no fitting or checkpoint operation. Training and evaluation gold masks remain zero. [Qualification and the retained admission refusals](/tmp/P2-source-bound-native-owner-jkxv16fd/actual-source-bound-native-realization-qualification.json)

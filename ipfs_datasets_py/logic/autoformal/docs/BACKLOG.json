@@ -5323,6 +5323,16 @@
       },
       "record_id": "lir02-source-bound-v2-definition-realization-evidence597-20261127",
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
+    },
+    "lir02_source_bound_definition_native_routing_20261128": {
+      "evidence_ordinal": 598,
+      "facts": {
+        "bytes": 41224,
+        "path": "/tmp/P2-source-bound-native-owner-jkxv16fd/actual-source-bound-native-realization-qualification.json",
+        "sha256": "01064783610a7341358fb25fa847bf4d3c8fada06b5b323f082ce840ea2b4f37"
+      },
+      "record_id": "lir02-source-bound-definition-native-routing-evidence598-20261128",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
     }
   },
   "programme_goal_hierarchy": {

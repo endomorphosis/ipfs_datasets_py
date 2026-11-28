@@ -38875,6 +38875,793 @@
       "root": "artifact_workspace",
       "scope": "Signed-fictional software evidence for source-bound V2 conditional definition realization preparation.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/lir02_source_bound_definition_native_routing_20261128",
+      "closed_runtime_facts": {
+        "checks": [
+          {
+            "artifacts": {
+              "source-bound-native-online-free-v01.log": {
+                "bytes": 1031,
+                "path": "/tmp/P2-source-bound-native-owner-jkxv16fd/source-bound-native-online-free-v01.log",
+                "sha256": "e51168f959ba56f90dd56e1c00288a395842163c6105921d16ed1a6ac5dd5083"
+              },
+              "source-bound-native-online-free-v01.terminal": {
+                "bytes": 2,
+                "path": "/tmp/P2-source-bound-native-owner-jkxv16fd/source-bound-native-online-free-v01.terminal",
+                "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+              },
+              "source-bound-native-online-free-v01.xml": {
+                "bytes": 1833,
+                "path": "/tmp/P2-source-bound-native-owner-jkxv16fd/source-bound-native-online-free-v01.xml",
+                "sha256": "7b99e8d644cd886b78b742e4e6e72cd00173bce0db4d767467507c020ccd128d"
+              }
+            },
+            "cases": [
+              {
+                "case": "test_reviewed_source_bound_native_preflight_keeps_both_uses_and_complete_history",
+                "classname": "tests.unit.logic.autoformal.test_legal_corpus_definition_use_native_v2",
+                "seconds": "295.311",
+                "skipped": false
+              },
+              {
+                "case": "test_reviewed_source_bound_native_refuses_changed_or_missing_history_before_dispatch[wrong-history-pin]",
+                "classname": "tests.unit.logic.autoformal.test_legal_corpus_definition_use_native_v2",
+                "seconds": "2.658",
+                "skipped": false
+              },
+              {
+                "case": "test_reviewed_source_bound_native_refuses_changed_or_missing_history_before_dispatch[repinned-other-history]",
+                "classname": "tests.unit.logic.autoformal.test_legal_corpus_definition_use_native_v2",
+                "seconds": "3.172",
+                "skipped": false
+              },
+              {
+                "case": "test_reviewed_source_bound_native_refuses_changed_or_missing_history_before_dispatch[missing-history-pin]",
+                "classname": "tests.unit.logic.autoformal.test_legal_corpus_definition_use_native_v2",
+                "seconds": "0.001",
+                "skipped": false
+              },
+              {
+                "case": "test_legacy_native_realization_refuses_current_source_bound_domain",
+                "classname": "tests.unit.logic.autoformal.test_legal_corpus_definition_use_native_v2",
+                "seconds": "0.171",
+                "skipped": false
+              },
+              {
+                "case": "test_reviewed_source_bound_native_installed_preserves_history_through_retained_and_original_handle_replay",
+                "classname": "tests.unit.logic.autoformal.test_legal_corpus_definition_use_native_v2",
+                "seconds": "0.004",
+                "skipped": true
+              }
+            ],
+            "errors": 0,
+            "failures": 0,
+            "label": "source-bound-native-online-free-v01",
+            "skipped": 1,
+            "source_commit": "824611befa3a8e508a4eec982c816ebb2a1f45e2",
+            "tests": 6
+          },
+          {
+            "artifacts": {
+              "retained-native-domain-v01.log": {
+                "bytes": 774,
+                "path": "/tmp/P2-source-bound-native-owner-jkxv16fd/retained-native-domain-v01.log",
+                "sha256": "ffdc7a1adbbb7d504ae7e5b18f2be5e275d1bb977e967b91506799f841b318b1"
+              },
+              "retained-native-domain-v01.terminal": {
+                "bytes": 2,
+                "path": "/tmp/P2-source-bound-native-owner-jkxv16fd/retained-native-domain-v01.terminal",
+                "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+              },
+              "retained-native-domain-v01.xml": {
+                "bytes": 2605,
+                "path": "/tmp/P2-source-bound-native-owner-jkxv16fd/retained-native-domain-v01.xml",
+                "sha256": "d1621bd30d9438877aab399cd2edc1d10e968854597a199b52172a57f25e0422"
+              }
+            },
+            "cases": [
+              {
+                "case": "test_realization_native_validation_replays_both_envelopes_without_a_compiler",
+                "classname": "tests.unit.logic.autoformal.test_legal_corpus_definition_use_native_v2",
+                "seconds": "6.970",
+                "skipped": false
+              },
+              {
+                "case": "test_realization_native_malformed_independent_pins_refuse_before_owners[expected_realization_sha256]",
+                "classname": "tests.unit.logic.autoformal.test_legal_corpus_definition_use_native_v2",
+                "seconds": "0.933",
+                "skipped": false
+              },
+              {
+                "case": "test_realization_native_malformed_independent_pins_refuse_before_owners[expected_preservation_sha256]",
+                "classname": "tests.unit.logic.autoformal.test_legal_corpus_definition_use_native_v2",
+                "seconds": "0.926",
+                "skipped": false
+              },
+              {
+                "case": "test_realization_native_malformed_independent_pins_refuse_before_owners[expected_graph_sha256]",
+                "classname": "tests.unit.logic.autoformal.test_legal_corpus_definition_use_native_v2",
+                "seconds": "0.929",
+                "skipped": false
+              },
+              {
+                "case": "test_realization_native_malformed_independent_pins_refuse_before_owners[expected_admission_sha256]",
+                "classname": "tests.unit.logic.autoformal.test_legal_corpus_definition_use_native_v2",
+                "seconds": "0.932",
+                "skipped": false
+              },
+              {
+                "case": "test_realization_native_authored_runner_keeps_complete_new_domain_and_empty_axiom_inventory",
+                "classname": "tests.unit.logic.autoformal.test_legal_corpus_definition_use_native_v2",
+                "seconds": "4.283",
+                "skipped": false
+              },
+              {
+                "case": "test_realization_native_late_source_mutation_after_genuine_shared_replay_refuses",
+                "classname": "tests.unit.logic.autoformal.test_legal_corpus_definition_use_native_v2",
+                "seconds": "1.956",
+                "skipped": false
+              },
+              {
+                "case": "test_reviewed_physical_realization_native_refuses_profile_downgrade_before_execution[instance_identity_profile-None]",
+                "classname": "tests.unit.logic.autoformal.test_legal_corpus_definition_use_native_v2",
+                "seconds": "37.587",
+                "skipped": false
+              },
+              {
+                "case": "test_reviewed_physical_realization_native_refuses_profile_downgrade_before_execution[definition_application_profile-None]",
+                "classname": "tests.unit.logic.autoformal.test_legal_corpus_definition_use_native_v2",
+                "seconds": "0.000",
+                "skipped": false
+              },
+              {
+                "case": "test_reviewed_physical_realization_native_refuses_profile_downgrade_before_execution[instance_identity_profile-borrowed-source-use]",
+                "classname": "tests.unit.logic.autoformal.test_legal_corpus_definition_use_native_v2",
+                "seconds": "0.000",
+                "skipped": false
+              },
+              {
+                "case": "test_reviewed_physical_realization_native_refuses_complete_plain_project_in_physical_domain",
+                "classname": "tests.unit.logic.autoformal.test_legal_corpus_definition_use_native_v2",
+                "seconds": "22.978",
+                "skipped": false
+              }
+            ],
+            "errors": 0,
+            "failures": 0,
+            "label": "retained-native-domain-v01",
+            "skipped": 0,
+            "source_commit": "824611befa3a8e508a4eec982c816ebb2a1f45e2",
+            "tests": 11
+          },
+          {
+            "artifacts": {
+              "source-bound-native-authored-v01.log": {
+                "bytes": 699,
+                "path": "/tmp/P2-source-bound-native-owner-jkxv16fd/source-bound-native-authored-v01.log",
+                "sha256": "587cb9bf940755db8cf62277572a5d6fe2ab01b600a197d24520847c80db22a8"
+              },
+              "source-bound-native-authored-v01.terminal": {
+                "bytes": 2,
+                "path": "/tmp/P2-source-bound-native-owner-jkxv16fd/source-bound-native-authored-v01.terminal",
+                "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+              },
+              "source-bound-native-authored-v01.xml": {
+                "bytes": 426,
+                "path": "/tmp/P2-source-bound-native-owner-jkxv16fd/source-bound-native-authored-v01.xml",
+                "sha256": "65ec37d85684a691b0316f09cb5bf2ccfa9befbc5de310fa4cef2526e012b8dc"
+              }
+            },
+            "cases": [
+              {
+                "case": "test_reviewed_source_bound_native_replays_authored_packet_without_live_authority",
+                "classname": "tests.unit.logic.autoformal.test_legal_corpus_definition_use_native_v2",
+                "seconds": "391.826",
+                "skipped": false
+              }
+            ],
+            "errors": 0,
+            "failures": 0,
+            "label": "source-bound-native-authored-v01",
+            "skipped": 0,
+            "source_commit": "1a53ae27f94b4ac48909701b37a1342f8a4b5b71",
+            "tests": 1
+          },
+          {
+            "artifacts": {
+              "existing-frozen-ledger-cap-v5-ordinary.log": {
+                "bytes": 793,
+                "path": "/tmp/P2-source-bound-native-owner-jkxv16fd/existing-frozen-ledger-cap-v5-ordinary.log",
+                "sha256": "05d32f7abeb7ca84e43f7bd15e31324f3b6e5fa77bf8c9104cb67b2e762b7e33"
+              },
+              "existing-frozen-ledger-cap-v5-ordinary.terminal": {
+                "bytes": 2,
+                "path": "/tmp/P2-source-bound-native-owner-jkxv16fd/existing-frozen-ledger-cap-v5-ordinary.terminal",
+                "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+              },
+              "existing-frozen-ledger-cap-v5-ordinary.xml": {
+                "bytes": 7737,
+                "path": "/tmp/P2-source-bound-native-owner-jkxv16fd/existing-frozen-ledger-cap-v5-ordinary.xml",
+                "sha256": "8eb655dd4d5b61a1af729671c0c9d52486bc9db5eab6829edc049968b0ea584d"
+              }
+            },
+            "cases": [
+              {
+                "case": "test_ordinary_scratch_v5_binds_existing_ledger_cap_to_the_frozen_request",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.024",
+                "skipped": false
+              },
+              {
+                "case": "test_ordinary_scratch_v5_samples_first_stat_absence_without_claiming_leaf_ownership[.scheduler.json.PID.UUID.tmp]",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.118",
+                "skipped": false
+              },
+              {
+                "case": "test_ordinary_scratch_v5_samples_first_stat_absence_without_claiming_leaf_ownership[.daemon-reservation-actual]",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.115",
+                "skipped": false
+              },
+              {
+                "case": "test_ordinary_scratch_v5_charges_previously_observed_regular_bytes_after_loss",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.112",
+                "skipped": false
+              },
+              {
+                "case": "test_ordinary_scratch_v5_refuses_reappearance_with_injected_special_metadata[regular]",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.106",
+                "skipped": false
+              },
+              {
+                "case": "test_ordinary_scratch_v5_refuses_reappearance_with_injected_special_metadata[symlink]",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.102",
+                "skipped": false
+              },
+              {
+                "case": "test_ordinary_scratch_v5_refuses_reappearance_with_injected_special_metadata[fifo]",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.106",
+                "skipped": false
+              },
+              {
+                "case": "test_ordinary_scratch_v5_refuses_injected_unsafe_leaf_metadata[symlink]",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.109",
+                "skipped": false
+              },
+              {
+                "case": "test_ordinary_scratch_v5_refuses_injected_unsafe_leaf_metadata[hardlink]",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.105",
+                "skipped": false
+              },
+              {
+                "case": "test_ordinary_scratch_v5_refuses_injected_unsafe_leaf_metadata[fifo]",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.104",
+                "skipped": false
+              },
+              {
+                "case": "test_ordinary_scratch_v5_rejects_replaced_bound_directory[attempt]",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.088",
+                "skipped": false
+              },
+              {
+                "case": "test_ordinary_scratch_v5_rejects_replaced_bound_directory[output]",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.087",
+                "skipped": false
+              },
+              {
+                "case": "test_ordinary_scratch_v5_rechecks_same_clock_and_stop_inside_walk[deadline]",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.112",
+                "skipped": false
+              },
+              {
+                "case": "test_ordinary_scratch_v5_rechecks_same_clock_and_stop_inside_walk[formal_stop]",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.113",
+                "skipped": false
+              },
+              {
+                "case": "test_ordinary_scratch_v5_stopped_sample_reverts_to_strict_inventory",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.187",
+                "skipped": false
+              },
+              {
+                "case": "test_ordinary_scratch_v5_profile_is_closed_before_admission[malformed0]",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.008",
+                "skipped": false
+              },
+              {
+                "case": "test_ordinary_scratch_v5_profile_is_closed_before_admission[malformed1]",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.008",
+                "skipped": false
+              },
+              {
+                "case": "test_ordinary_scratch_v5_profile_is_closed_before_admission[malformed2]",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.008",
+                "skipped": false
+              },
+              {
+                "case": "test_ordinary_scratch_v5_enforces_inclusive_entry_limit_with_actual_scandir[False]",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.110",
+                "skipped": false
+              },
+              {
+                "case": "test_ordinary_scratch_v5_enforces_inclusive_entry_limit_with_actual_scandir[True]",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.109",
+                "skipped": false
+              },
+              {
+                "case": "test_ordinary_scratch_v5_enforces_real_depth32_boundary[False]",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.228",
+                "skipped": false
+              },
+              {
+                "case": "test_ordinary_scratch_v5_enforces_real_depth32_boundary[True]",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.169",
+                "skipped": false
+              },
+              {
+                "case": "test_ordinary_scratch_v5_rejects_observed_byte_overrun_before_return",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.110",
+                "skipped": false
+              },
+              {
+                "case": "test_ordinary_scratch_v5_real_threads_serialize_the_same_descriptor_walker",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.201",
+                "skipped": false
+              },
+              {
+                "case": "test_ordinary_scratch_v5_waiter_keeps_original_clock_and_refuses_closed_custody[deadline]",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.303",
+                "skipped": false
+              },
+              {
+                "case": "test_ordinary_scratch_v5_waiter_keeps_original_clock_and_refuses_closed_custody[cancellation]",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.206",
+                "skipped": false
+              },
+              {
+                "case": "test_ordinary_scratch_v5_waiter_keeps_original_clock_and_refuses_closed_custody[formal_stop]",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.210",
+                "skipped": false
+              },
+              {
+                "case": "test_ordinary_scratch_v5_strips_ambient_physical_transport_without_special_slots",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.106",
+                "skipped": false
+              },
+              {
+                "case": "test_ordinary_scratch_v5_never_combines_another_profile[physical_fixture_profile]",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.009",
+                "skipped": false
+              },
+              {
+                "case": "test_ordinary_scratch_v5_never_combines_another_profile[live_inventory_profile]",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.008",
+                "skipped": false
+              },
+              {
+                "case": "test_ordinary_scratch_v5_never_combines_another_profile[unknown]",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.008",
+                "skipped": false
+              },
+              {
+                "case": "test_ordinary_scratch_v5_preserves_peer_admission_and_productive_epochs",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.126",
+                "skipped": false
+              },
+              {
+                "case": "test_cancelled_retained_v5_profile_is_an_explicit_closed_keyword[True]",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.048",
+                "skipped": false
+              },
+              {
+                "case": "test_cancelled_retained_v5_profile_is_an_explicit_closed_keyword[False]",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.029",
+                "skipped": false
+              },
+              {
+                "case": "test_cancelled_retained_v5_profile_is_an_explicit_closed_keyword[0]",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.031",
+                "skipped": false
+              },
+              {
+                "case": "test_cancelled_retained_v5_profile_is_an_explicit_closed_keyword[]",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.031",
+                "skipped": false
+              },
+              {
+                "case": "test_cancelled_retained_v5_profile_is_an_explicit_closed_keyword[cancelled_retained_v4]",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.034",
+                "skipped": false
+              },
+              {
+                "case": "test_cancelled_retained_v5_profile_is_an_explicit_closed_keyword[profile5]",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.031",
+                "skipped": false
+              }
+            ],
+            "errors": 0,
+            "failures": 0,
+            "label": "existing-frozen-ledger-cap-v5-ordinary",
+            "skipped": 0,
+            "source_commit": "2b2d737bf483a9c2a8708c6d3d1cb7fc7bb2b4b7",
+            "tests": 38
+          },
+          {
+            "artifacts": {
+              "retained-ledger-capacity-refusal-scopes-v01.log": {
+                "bytes": 798,
+                "path": "/tmp/P2-source-bound-native-owner-jkxv16fd/retained-ledger-capacity-refusal-scopes-v01.log",
+                "sha256": "339404ef19e4d516bc7e14dd874ba03f25d67deaeccc6333a3ba715fdcbed1e9"
+              },
+              "retained-ledger-capacity-refusal-scopes-v01.terminal": {
+                "bytes": 2,
+                "path": "/tmp/P2-source-bound-native-owner-jkxv16fd/retained-ledger-capacity-refusal-scopes-v01.terminal",
+                "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+              },
+              "retained-ledger-capacity-refusal-scopes-v01.xml": {
+                "bytes": 2858,
+                "path": "/tmp/P2-source-bound-native-owner-jkxv16fd/retained-ledger-capacity-refusal-scopes-v01.xml",
+                "sha256": "1b1136d2d9d50bb0080a194eedd9b9f0acfe18640ad3bf8de63549535e9fd741"
+              }
+            },
+            "cases": [
+              {
+                "case": "test_pregrant_capacity_classifier_keeps_ambiguous_or_forged_terminals_unknown",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.223",
+                "skipped": false
+              },
+              {
+                "case": "test_pregrant_capacity_classifier_rechecks_source_request_and_owner_bindings",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.165",
+                "skipped": false
+              },
+              {
+                "case": "test_actual_v4_cli_pregrant_capacity_refusal_closes_only_source_custody",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.218",
+                "skipped": false
+              },
+              {
+                "case": "test_actual_v4_pregrant_capacity_classifier_refuses_forged_or_started_evidence",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.232",
+                "skipped": false
+              },
+              {
+                "case": "test_actual_v4_pregrant_capacity_classifier_rechecks_request_and_original_sources",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.214",
+                "skipped": false
+              },
+              {
+                "case": "test_capacity_refusal_reporter_preserves_default_and_post_open_aggregate[default-owner-open]",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.021",
+                "skipped": false
+              },
+              {
+                "case": "test_capacity_refusal_reporter_preserves_default_and_post_open_aggregate[post-owner-open]",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.021",
+                "skipped": false
+              },
+              {
+                "case": "test_capacity_refusal_reporter_rejects_unrecognized_stage_before_snapshot[None]",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.021",
+                "skipped": false
+              },
+              {
+                "case": "test_capacity_refusal_reporter_rejects_unrecognized_stage_before_snapshot[True]",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.021",
+                "skipped": false
+              },
+              {
+                "case": "test_capacity_refusal_reporter_rejects_unrecognized_stage_before_snapshot[owner.attach_child]",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.021",
+                "skipped": false
+              },
+              {
+                "case": "test_capacity_refusal_reporter_rejects_unrecognized_stage_before_snapshot[post_owner_open ]",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.021",
+                "skipped": false
+              },
+              {
+                "case": "test_capacity_refusal_reporter_rejects_unrecognized_stage_before_snapshot[]",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.021",
+                "skipped": false
+              },
+              {
+                "case": "test_actual_v5_cli_native_timeout_proves_only_exact_no_child_no_grant_custody",
+                "classname": "tests.unit.optimizers.logic_theorem_optimizer.test_validation_run_resources",
+                "seconds": "0.185",
+                "skipped": false
+              }
+            ],
+            "errors": 0,
+            "failures": 0,
+            "label": "retained-ledger-capacity-refusal-scopes-v01",
+            "skipped": 0,
+            "source_commit": "2b2d737bf483a9c2a8708c6d3d1cb7fc7bb2b4b7",
+            "tests": 13
+          }
+        ],
+        "installed_Lean_qualified": true,
+        "managed_Lean_attempt": {
+          "bytes": 14090,
+          "path": "../actual-source-bound-installed-native-closeout.json",
+          "sha256": "5b213e9d83509198723d005d4f64226828b94ea1bc314aa87a97aead0ed9c088"
+        },
+        "managed_native_pre_dispatch_refusals": [
+          {
+            "artifacts": {
+              "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v01/actual-Root-selected.json": {
+                "bytes": 639,
+                "path": "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v01/actual-Root-selected.json",
+                "sha256": "6f843cdc85d81516095eb05bce882b69d8efe6313cd23df035835353d9f62f4a"
+              },
+              "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v01/actual-owned-parent.json": {
+                "bytes": 157,
+                "path": "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v01/actual-owned-parent.json",
+                "sha256": "4add9771ce43d102c25002d341b6151812d4661cace44b91cc6f787868dbdecb"
+              },
+              "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v01/actual-owner-terminal.json": {
+                "bytes": 172,
+                "path": "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v01/actual-owner-terminal.json",
+                "sha256": "c295ac37b62a8fcc070aa9d5594c58dd82ec502e25a8c06455e38fd960f3fef5"
+              },
+              "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v01/owner.stderr": {
+                "bytes": 1892,
+                "path": "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v01/owner.stderr",
+                "sha256": "a4a9162089eefbc90038140e8108de00132e78ec42918ea7624297679cd6a88c"
+              },
+              "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v01/owner.stdout": {
+                "bytes": 1765,
+                "path": "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v01/owner.stdout",
+                "sha256": "d225b690006d8f09f21d9f91fa9e9053e37e9870d7a3850598c4eb056b84877a"
+              }
+            },
+            "failure": "missing resource path: /tmp/pytest-of-barberb/managed-Guide597-source-bound-jkxv16fd/attempt",
+            "scope": "pre-dispatch",
+            "selected_reported_checks": []
+          },
+          {
+            "artifacts": {
+              "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v02/actual-Root-selected.json": {
+                "bytes": 1259,
+                "path": "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v02/actual-Root-selected.json",
+                "sha256": "9a9077db9217a3199114d9e772cc8bdc7c2377d75005f4a46217ce67945a79b9"
+              },
+              "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v02/actual-owned-parent.json": {
+                "bytes": 157,
+                "path": "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v02/actual-owned-parent.json",
+                "sha256": "fe6dc6b2b3c008e6a1fb91c92a495415f0ce7b0e66ae56648e56bf9c63e4071b"
+              },
+              "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v02/actual-owner-terminal.json": {
+                "bytes": 172,
+                "path": "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v02/actual-owner-terminal.json",
+                "sha256": "1e4a399c6aa5e05cb4d362c467c9c1fa08add57f476cc5ee3abf35d61251ffa8"
+              },
+              "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v02/owner.stderr": {
+                "bytes": 1557,
+                "path": "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v02/owner.stderr",
+                "sha256": "f012a2209e50e6263a1a547f4b3820401bd92aa523a9664c68d661fdc0cf65b1"
+              },
+              "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v02/owner.stdout": {
+                "bytes": 3785,
+                "path": "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v02/owner.stdout",
+                "sha256": "a654bbd0b1f9bcdae27da950b0249ea9a20697d486b0e086d05fcc0c99b8fd26"
+              }
+            },
+            "failure": "disk ledger storage scope differs",
+            "scope": "pre-dispatch",
+            "selected_reported_checks": []
+          },
+          {
+            "artifacts": {
+              "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v03/actual-Root-selected.json": {
+                "bytes": 1348,
+                "path": "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v03/actual-Root-selected.json",
+                "sha256": "e98032c3070fd0ff85a9172f5e9d8e77b3e1bfdfe939d77401e6436388e8e090"
+              },
+              "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v03/actual-owned-parent.json": {
+                "bytes": 157,
+                "path": "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v03/actual-owned-parent.json",
+                "sha256": "1c8e2c91b307ae535c5b2c36a873b6e6f4de5dea71898a274f099a4a5856105b"
+              },
+              "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v03/actual-owner-terminal.json": {
+                "bytes": 174,
+                "path": "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v03/actual-owner-terminal.json",
+                "sha256": "9cb3fcd8a62f2d13344a77806288ca885086edfb7fb4f02b631ff42c9b530f63"
+              },
+              "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v03/owner.stderr": {
+                "bytes": 695,
+                "path": "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v03/owner.stderr",
+                "sha256": "0d2cbea80013a1f2efeb26209f7a58a346e679986892fb626e9f31105c91fada"
+              },
+              "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v03/owner.stdout": {
+                "bytes": 8171,
+                "path": "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v03/owner.stdout",
+                "sha256": "38ab08c3e463119a984f211f9591119af125e41b99cfd9c707fc9d1909f44bc0"
+              },
+              "/tmp/pytest-of-barberb/managed-Guide597-source-bound-cap-v03-jkxv16fd/attempt/logs/failure.json": {
+                "bytes": 1352,
+                "path": "/tmp/pytest-of-barberb/managed-Guide597-source-bound-cap-v03-jkxv16fd/attempt/logs/failure.json",
+                "sha256": "7bf3154319ee6e2cb223ecd0fe4bbbd4304b5958427c8b77227e06618a4d5d76"
+              },
+              "/tmp/pytest-of-barberb/managed-Guide597-source-bound-cap-v03-jkxv16fd/attempt/logs/stderr.log": {
+                "bytes": 1733,
+                "path": "/tmp/pytest-of-barberb/managed-Guide597-source-bound-cap-v03-jkxv16fd/attempt/logs/stderr.log",
+                "sha256": "0bf387c6547e8b8afdd6aa31750128ea8a5b0754e93c5782c01c9d7c7ac6cff3"
+              },
+              "/tmp/pytest-of-barberb/managed-Guide597-source-bound-cap-v03-jkxv16fd/attempt/logs/stdout.log": {
+                "bytes": 0,
+                "path": "/tmp/pytest-of-barberb/managed-Guide597-source-bound-cap-v03-jkxv16fd/attempt/logs/stdout.log",
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              }
+            },
+            "failure": "validation command failed with returncode 3",
+            "scope": "pytest or managed workspace setup",
+            "selected_reported_checks": [
+              "/tmp/P2-source-bound-native-owner-jkxv16fd/datasets/tests/unit/logic/autoformal/test_legal_corpus_definition_use_native_v2.py::test_reviewed_source_bound_native_installed_preserves_history_through_retained_and_original_handle_replay"
+            ]
+          },
+          {
+            "artifacts": {
+              "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v04/actual-Root-selected.json": {
+                "bytes": 1554,
+                "path": "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v04/actual-Root-selected.json",
+                "sha256": "197fb2432408d05d4ab51f02f91437c42aaf54ae0b42086ecdacad2483dd40c6"
+              },
+              "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v04/actual-owned-parent.json": {
+                "bytes": 157,
+                "path": "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v04/actual-owned-parent.json",
+                "sha256": "c7eba90911ec59ed41f58912996cd6b45f626a6bc44de234f4603b2ef7c22526"
+              },
+              "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v04/actual-owner-terminal.json": {
+                "bytes": 174,
+                "path": "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v04/actual-owner-terminal.json",
+                "sha256": "e58b8141d22be38e54aac78252407d92792b7a6906ef5d778ff04495dc1048a6"
+              },
+              "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v04/owner.stderr": {
+                "bytes": 872,
+                "path": "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v04/owner.stderr",
+                "sha256": "95c0ca0f6996d764dccc8c920058bf624043bd715d08e5710740fc9e574cf062"
+              },
+              "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v04/owner.stdout": {
+                "bytes": 8093,
+                "path": "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v04/owner.stdout",
+                "sha256": "5ea4cc8d63b751449349f4147b272177f8ab06333c20e441d0dde9e4f81d6c4b"
+              },
+              "/tmp/pytest-of-barberb/managed-Guide597-source-bound-cap-v04-jkxv16fd/attempt/logs/failure.json": {
+                "bytes": 1274,
+                "path": "/tmp/pytest-of-barberb/managed-Guide597-source-bound-cap-v04-jkxv16fd/attempt/logs/failure.json",
+                "sha256": "df38819d5cfe88fda8dfd3dfff11ed5a9deb22cad66037cec81da43a1a9ecba2"
+              },
+              "/tmp/pytest-of-barberb/managed-Guide597-source-bound-cap-v04-jkxv16fd/attempt/logs/stderr.log": {
+                "bytes": 0,
+                "path": "/tmp/pytest-of-barberb/managed-Guide597-source-bound-cap-v04-jkxv16fd/attempt/logs/stderr.log",
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              },
+              "/tmp/pytest-of-barberb/managed-Guide597-source-bound-cap-v04-jkxv16fd/attempt/logs/stdout.log": {
+                "bytes": 550,
+                "path": "/tmp/pytest-of-barberb/managed-Guide597-source-bound-cap-v04-jkxv16fd/attempt/logs/stdout.log",
+                "sha256": "f6f947190b43c017e6b40b00ccb8fb346657df0bef9a60d6bb5dc951d48a7dac"
+              }
+            },
+            "failure": "validation cancelled: ['ValidationResourceError: physical inventory requires owned single-link regular files']",
+            "scope": "pytest or managed workspace setup",
+            "selected_reported_checks": []
+          },
+          {
+            "artifacts": {
+              "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v05/actual-Root-selected.json": {
+                "bytes": 1773,
+                "path": "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v05/actual-Root-selected.json",
+                "sha256": "a1a99a9b47cc801d01a8da21f2a12d59b93fd3b0ab6686d45a6caee628a142cc"
+              },
+              "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v05/actual-owned-parent.json": {
+                "bytes": 157,
+                "path": "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v05/actual-owned-parent.json",
+                "sha256": "f3affa30296766129fe0e7add54358bc922fe813f7049e70428aa9cb7833a0c9"
+              },
+              "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v05/actual-owner-terminal.json": {
+                "bytes": 174,
+                "path": "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v05/actual-owner-terminal.json",
+                "sha256": "c11be78b01baa91cbb7cec4b1541e85732a12aaa5b6bcb9319ad3cffb89a7d31"
+              },
+              "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v05/owner.stderr": {
+                "bytes": 1381,
+                "path": "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v05/owner.stderr",
+                "sha256": "77f9079c107fb2ebf8398e202c3caabcd92d0166c17d6a925c9f03057e50b84b"
+              },
+              "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v05/owner.stdout": {
+                "bytes": 9913,
+                "path": "/tmp/P2-source-bound-native-owner-jkxv16fd/managed-single-installed-v05/owner.stdout",
+                "sha256": "ae3d9c6d5539d8569d3fa9b6a76c757acd1d3e43a19b746bc037d8a149f09f2f"
+              },
+              "/tmp/pytest-of-barberb/managed-Guide597-source-bound-cap-v05-jkxv16fd/attempt/logs/failure.json": {
+                "bytes": 2561,
+                "path": "/tmp/pytest-of-barberb/managed-Guide597-source-bound-cap-v05-jkxv16fd/attempt/logs/failure.json",
+                "sha256": "261500e48ddecfe5efcc03c9138d3bc9887b3ff052dc9512e9de9678ce1a362f"
+              },
+              "/tmp/pytest-of-barberb/managed-Guide597-source-bound-cap-v05-jkxv16fd/attempt/logs/stderr.log": {
+                "bytes": 0,
+                "path": "/tmp/pytest-of-barberb/managed-Guide597-source-bound-cap-v05-jkxv16fd/attempt/logs/stderr.log",
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              },
+              "/tmp/pytest-of-barberb/managed-Guide597-source-bound-cap-v05-jkxv16fd/attempt/logs/stdout.log": {
+                "bytes": 550,
+                "path": "/tmp/pytest-of-barberb/managed-Guide597-source-bound-cap-v05-jkxv16fd/attempt/logs/stdout.log",
+                "sha256": "0b3d2bf2ab11b869c3c6f31a044c0e4fa397d48ca69919ae62fa68f4eb0ae527"
+              },
+              "/tmp/pytest-of-barberb/managed-Guide597-source-bound-cap-v05-jkxv16fd/attempt/tmp/pytest/test_reviewed_source_bound_native_installed_pres-wkj1s5ah/actual-source-bound-realization/build-receipt.json": {
+                "bytes": 253433,
+                "path": "/tmp/pytest-of-barberb/managed-Guide597-source-bound-cap-v05-jkxv16fd/attempt/tmp/pytest/test_reviewed_source_bound_native_installed_pres-wkj1s5ah/actual-source-bound-realization/build-receipt.json",
+                "sha256": "dcb4193847e235855427ed9adbfa097ad777ce4d926355355b00c8cf46f93552"
+              }
+            },
+            "failure": "validation run deadline exceeded",
+            "scope": "deadline during original-handle / detached replay test after the Lean build",
+            "selected_reported_checks": []
+          }
+        ],
+        "qualified_software_commit": "537440ac857b6f8bddfb42d3abc9d074b83419a6",
+        "source_history_commitment_retained": true
+      },
+      "evidence_ordinal": 598,
+      "id": "lir02-source-bound-definition-native-routing-evidence598-20261128",
+      "observed_bytes": 41224,
+      "observed_sha256": "01064783610a7341358fb25fa847bf4d3c8fada06b5b323f082ce840ea2b4f37",
+      "path": "/tmp/P2-source-bound-native-owner-jkxv16fd/actual-source-bound-native-realization-qualification.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Signed fictional Source and detached authored packet checks for source-bound Native realization routing.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }
