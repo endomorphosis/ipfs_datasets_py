@@ -45,6 +45,8 @@ CROSS_REFERENCE_SPLIT: Final = "cross_reference"
 IR_SPLIT_MANIFEST_SCHEMA: Final = "IRSplitManifest@1"
 DEDUPLICATED_CAMPAIGN_SPLIT_PROFILE: Final = "dependency-grouped-campaign-split/v1"
 UNICODE_CAMPAIGN_SPLIT_PROFILE: Final = "unicode-campaign-split/v1"
+US_CODE_SECTION_CITATION_GROUPING_POLICY: Final = "us-code-section/v2"
+_LEGACY_USC_TITLE_CLUSTER: Final = re.compile(r"usc:\d+:")
 
 LEGAL_IR_EVAL_SPLITS: Final = (
     TRAIN_SPLIT,
@@ -269,8 +271,36 @@ def legal_ir_split_source_fingerprint(
     return _content_hash(text), fingerprint
 
 
-def _citation_cluster(value: str) -> str:
+def _usc_section_cluster(value: str) -> str:
+    match = re.fullmatch(
+        r"(\d+)\s*u\.?\s*s\.?\s*c\.?\s*§?\s*(\d[0-9a-z]*(?:[.-][0-9a-z]+)*)"
+        r"(?:\s*\(\s*[0-9a-z]+\s*\))*\.?",
+        value.strip(),
+        re.IGNORECASE,
+    )
+    if match is None:
+        return ""
+    title, section = match.groups()
+    return f"usc:{title}:{section.lower()}"
+
+
+def _validate_citation_grouping_policy(policy: str | None) -> None:
+    if policy not in (None, US_CODE_SECTION_CITATION_GROUPING_POLICY):
+        raise ValueError(f"unknown LegalIR citation grouping policy: {policy!r}")
+
+
+def _citation_grouping_metadata(policy: str | None) -> dict[str, str]:
+    return {} if policy is None else {"citation_grouping_policy": policy}
+
+
+def _citation_cluster(value: str, *, policy: str | None = None) -> str:
     text = str(value or "").lower()
+    if policy == US_CODE_SECTION_CITATION_GROUPING_POLICY:
+        section = _usc_section_cluster(value)
+        if section:
+            return section
+        text_key = re.sub(r"[^a-z0-9]+", ":", text).strip(":")
+        return f"text:{text_key}" if text_key else ""
     text = text.replace("§", " ")
     text = re.sub(r"\bu\.?\s*s\.?\s*c\.?\b", "usc", text)
     match = re.search(r"\b(\d+)\s*usc\s*([0-9a-z.-]+)", text)
@@ -359,8 +389,10 @@ class LegalIREvalSplitConfig:
     temporal_holdout_after: str = ""
     near_duplicate_jaccard_threshold: float = 0.82
     protected_splits: tuple[str, ...] = PROTECTED_LEGAL_IR_SPLITS
+    citation_grouping_policy: str | None = None
 
     def __post_init__(self) -> None:
+        _validate_citation_grouping_policy(self.citation_grouping_policy)
         ratios = (
             self.train_ratio,
             self.validation_ratio,
@@ -423,6 +455,7 @@ class LegalIREvalSplitConfig:
             "temporal_ratio": self.temporal_ratio,
             "train_ratio": self.train_ratio,
             "validation_ratio": self.validation_ratio,
+            **_citation_grouping_metadata(self.citation_grouping_policy),
         }
 
 
@@ -444,7 +477,10 @@ class LegalIRSplitExample:
     sibling_keys: tuple[str, ...] = ()
 
     @classmethod
-    def from_sample(cls, sample: Any) -> "LegalIRSplitExample":
+    def from_sample(
+        cls, sample: Any, *, citation_grouping_policy: str | None = None,
+    ) -> "LegalIRSplitExample":
+        _validate_citation_grouping_policy(citation_grouping_policy)
         text = _string(_get(sample, "normalized_text", "text", "source_text", default=""))
         sample_id = _string(_get(sample, "sample_id", "id", "document_id", default=""))
         content_hash = _content_hash(text)
@@ -454,9 +490,9 @@ class LegalIRSplitExample:
         citation = _string(_get(sample, "citation", default=""))
         if citation:
             citations = (*citations, citation)
-        clusters = tuple(
-            dict.fromkeys(_citation_cluster(item) for item in citations if _citation_cluster(item))
-        )
+        clusters = tuple(filter(None, dict.fromkeys(
+            _citation_cluster(item, policy=citation_grouping_policy) for item in citations
+        )))
         source_span_key = _source_span_key(sample)
         raw_amendment = _string(
             _get(
@@ -630,7 +666,14 @@ class LegalIRSplitManifest:
     def __post_init__(self) -> None:
         if self.schema_version != LEGAL_IR_EVAL_SPLIT_SCHEMA_VERSION:
             raise ValueError("unsupported LegalIR split schema version")
+        citation_policy = self.metadata.get("citation_grouping_policy")
+        _validate_citation_grouping_policy(citation_policy)
         examples = tuple(sorted(self.examples, key=lambda item: item.sample_id))
+        if citation_policy is not None and any(
+            _LEGACY_USC_TITLE_CLUSTER.fullmatch(key)
+            for item in examples for key in item.citation_clusters
+        ):
+            raise ValueError("section citation grouping cannot use lossy legacy title keys")
         ids = [item.sample_id for item in examples]
         if len(ids) != len(set(ids)):
             raise ValueError("LegalIR split examples must have unique sample_id values")
@@ -767,10 +810,17 @@ def build_legal_ir_eval_splits(
     samples: Sequence[Any],
     config: LegalIREvalSplitConfig | None = None,
 ) -> LegalIRSplitManifest:
-    """Build deterministic LegalIR partitions with leakage clusters intact."""
+    """Build deterministic LegalIR partitions with leakage clusters intact.
+
+    Opt in with US_CODE_SECTION_CITATION_GROUPING_POLICY for canonical U.S. Code
+    section keys. The default continues to reproduce legacy split manifests.
+    """
 
     cfg = config or LegalIREvalSplitConfig()
-    examples = [LegalIRSplitExample.from_sample(sample) for sample in samples]
+    examples = [
+        LegalIRSplitExample.from_sample(sample, citation_grouping_policy=cfg.citation_grouping_policy)
+        for sample in samples
+    ]
     return _build_eval_splits(examples, cfg)
 
 
@@ -778,13 +828,14 @@ def _build_eval_splits(
     examples: list[LegalIRSplitExample], cfg: LegalIREvalSplitConfig,
 ) -> LegalIRSplitManifest:
     examples.sort(key=lambda item: item.sample_id)
+    metadata = {"seed": cfg.seed, **_citation_grouping_metadata(cfg.citation_grouping_policy)}
     if not examples:
         return LegalIRSplitManifest(
             examples=(),
             assignments={},
             config_digest=cfg.digest,
             protected_splits=cfg.protected_splits,
-            metadata={"seed": cfg.seed},
+            metadata=metadata,
         )
 
     duplicate_clusters = _near_duplicate_clusters(examples, cfg.near_duplicate_jaccard_threshold)
@@ -803,10 +854,7 @@ def _build_eval_splits(
         members = [item.sample_id for item in examples if sibling in item.sibling_keys]
         for member in members[1:]:
             uf.union(members[0], member)
-    for citation in sorted({key for item in examples for key in item.citation_clusters}):
-        members = [item.sample_id for item in examples if citation in item.citation_clusters]
-        for member in members[1:]:
-            uf.union(members[0], member)
+    _union_citation_clusters(uf, examples)
     _union_overlapping_source_spans(uf, examples)
 
     groups: dict[str, list[LegalIRSplitExample]] = defaultdict(list)
@@ -824,10 +872,21 @@ def _build_eval_splits(
         config_digest=cfg.digest,
         protected_splits=cfg.protected_splits,
         metadata={
+            **metadata,
             "near_duplicate_jaccard_threshold": cfg.near_duplicate_jaccard_threshold,
-            "seed": cfg.seed,
         },
     )
+
+
+def _union_citation_clusters(uf: _UnionFind, examples: Sequence[LegalIRSplitExample]) -> None:
+    by_citation: dict[str, list[str]] = defaultdict(list)
+    for item in examples:
+        for citation in item.citation_clusters:
+            by_citation[citation].append(item.sample_id)
+    for citation in sorted(by_citation):
+        first, *others = by_citation[citation]
+        for member in others:
+            uf.union(first, member)
 
 
 def _union_by_key(
@@ -1143,6 +1202,19 @@ def authorize_legal_ir_split_use(
         raise ValueError(f"unknown LegalIR split operation: {operation!r}")
     disallowed: list[dict[str, Any]] = []
     by_id = {item.sample_id: item for item in resolved.examples}
+    citation_policy = resolved.metadata.get("citation_grouping_policy")
+    # Legacy examples lost the section in some U.S. Code keys. Their saved
+    # assignments cannot recover it, but a citation-only lookup must not
+    # authorize use across a protected row whose title might cover the citation.
+    protected_legacy_titles = {
+        key
+        for example in resolved.examples
+        if citation_policy is None
+        and resolved.assignments[example.sample_id] in resolved.protected_splits
+        and resolved.assignments[example.sample_id] not in allowed
+        for key in example.citation_clusters
+        if _LEGACY_USC_TITLE_CLUSTER.fullmatch(key)
+    }
     for item_index, item in enumerate(items):
         sample_ids = _sequence_strings(_get(item, "sample_ids", default=None))
         sample_id = _string(_get(item, "sample_id", "id", default=""))
@@ -1151,12 +1223,23 @@ def authorize_legal_ir_split_use(
         if not sample_ids:
             citation = _string(_get(item, "citation", default=""))
             if citation:
-                cluster = _citation_cluster(citation)
+                cluster = _citation_cluster(citation, policy=citation_policy)
                 sample_ids = tuple(
                     example.sample_id
                     for example in resolved.examples
                     if cluster in example.citation_clusters
                 )
+                if sample_ids and protected_legacy_titles and all(
+                    resolved.assignments[sid] in allowed for sid in sample_ids
+                ):
+                    title_cluster = _usc_section_cluster(citation).rpartition(":")[0] + ":"
+                    if title_cluster in protected_legacy_titles:
+                        disallowed.append({
+                            "reason": "ambiguous_legacy_citation_title",
+                            "item_index": item_index,
+                            "citation_cluster": title_cluster,
+                        })
+                        continue
         if not sample_ids:
             source_key = _source_span_key(item)
             sample_ids = tuple(
@@ -1317,6 +1400,8 @@ def build_ir_campaign_splits(
     The explicit profiles apply content-aware grouping even when every sample
     has a lineage ID. The Unicode profile uses character trigrams instead of
     ASCII words. Supply actual text and reviewed lineage and sibling keys.
+    Set the citation grouping policy on the config to combine equivalent U.S.
+    Code section citations, including on the lineage-only path.
     """
 
     cfg = config or LegalIREvalSplitConfig()
@@ -1331,7 +1416,9 @@ def build_ir_campaign_splits(
             text = _get(sample, "normalized_text", "text", "source_text", default=None)
             if type(text) is not str or not text.strip():
                 raise ValueError("dependency-grouped campaign splits require sample text")
-            example = LegalIRSplitExample.from_sample(sample)
+            example = LegalIRSplitExample.from_sample(
+                sample, citation_grouping_policy=cfg.citation_grouping_policy
+            )
             if split_profile == UNICODE_CAMPAIGN_SPLIT_PROFILE:
                 content_hash, fingerprint = legal_ir_split_source_fingerprint(text, metadata=profile_metadata)
                 example = replace(example, content_hash=content_hash, token_fingerprint=fingerprint)
@@ -1365,7 +1452,10 @@ def build_ir_campaign_splits(
 def _build_lineage_campaign_splits(
     samples: Sequence[Any], cfg: LegalIREvalSplitConfig,
 ) -> LegalIRSplitManifest:
-    examples = [LegalIRSplitExample.from_sample(sample) for sample in samples]
+    examples = [
+        LegalIRSplitExample.from_sample(sample, citation_grouping_policy=cfg.citation_grouping_policy)
+        for sample in samples
+    ]
     examples.sort(key=lambda item: item.sample_id)
     if examples and all(item.lineage_group_id for item in examples):
         uf = _UnionFind(tuple(item.sample_id for item in examples))
@@ -1374,6 +1464,8 @@ def _build_lineage_campaign_splits(
             members = [item.sample_id for item in examples if sibling in item.sibling_keys]
             for member in members[1:]:
                 uf.union(members[0], member)
+        if cfg.citation_grouping_policy is not None:
+            _union_citation_clusters(uf, examples)
         groups: dict[str, list[LegalIRSplitExample]] = defaultdict(list)
         for item in examples:
             groups[uf.find(item.sample_id)].append(item)
@@ -1387,9 +1479,9 @@ def _build_lineage_campaign_splits(
             assignments=assignments,
             config_digest=cfg.digest,
             protected_splits=cfg.protected_splits,
-            metadata={"seed": cfg.seed},
+            metadata={"seed": cfg.seed, **_citation_grouping_metadata(cfg.citation_grouping_policy)},
         )
-    return build_legal_ir_eval_splits(samples, cfg)
+    return _build_eval_splits(examples, cfg)
 
 
 def campaign_samples_from_corpus_root(corpus_root: Mapping[str, Any]) -> list[dict[str, Any]]:
@@ -1488,8 +1580,11 @@ def seal_ir_campaign_splits(
         "schema_version": manifest.schema_version,
         "split_manifest_digest": manifest.digest,
     }
-    profile_metadata = {key: manifest.metadata[key] for key in ("campaign_split_profile", "unicode_data_version")
-                        if key in manifest.metadata}
+    profile_metadata = {
+        key: manifest.metadata[key]
+        for key in ("campaign_split_profile", "unicode_data_version", "citation_grouping_policy")
+        if key in manifest.metadata
+    }
     compact.update(profile_metadata)
     raw = json.dumps(compact, allow_nan=False, ensure_ascii=True, separators=(",", ":"), sort_keys=True).encode("utf-8") + b"\n"
     (output / "ir_split_manifest.json").write_bytes(raw)
@@ -1545,6 +1640,7 @@ __all__ = [
     "DECLARED_HOLDOUTS",
     "DEDUPLICATED_CAMPAIGN_SPLIT_PROFILE",
     "UNICODE_CAMPAIGN_SPLIT_PROFILE",
+    "US_CODE_SECTION_CITATION_GROUPING_POLICY",
     "DOMAIN_SPLIT",
     "EXCEPTION_SPLIT",
     "EXTERNAL_TEST_SPLIT",
