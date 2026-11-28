@@ -391,6 +391,219 @@ REVIEWED_EVALUATION_OUTPUT_LIMIT = 32 * 1024**2
 
 
 REVIEWED_DIGEST_OMITTED_EVALUATION_REQUEST_SCHEMA = "reviewed-source-evaluation-request/v11"
+REVIEWED_SOURCE_BOUND_EVALUATION_REQUEST_SCHEMA = "reviewed-source-evaluation-request/v12"
+_SOURCE_BOUND_DIGEST_KEYS = {
+    "query_admission": "admission_inputs_sha256",
+    "query_bound_component_inputs": "query_bound_component_inputs_sha256",
+    "checkpoint_admission": "checkpoint_admission_inputs_sha256",
+    "checkpoint_bound_component_inputs": "checkpoint_bound_component_inputs_sha256",
+}
+_NO_CURRENT_SOURCE_BOUND_INPUTS = object()
+
+
+def _source_bound_evaluation_commitment(request, current=_NO_CURRENT_SOURCE_BOUND_INPUTS):
+    """Compose the existing typed digests, with the four roles kept distinct."""
+    from . import legal_span_consumer_binding as consumer
+
+    replay = request["source_bound_replay"]
+    expected = {role: (request if role == "query_admission" else replay)[key]
+                for role, key in _SOURCE_BOUND_DIGEST_KEYS.items()}
+    if current is not _NO_CURRENT_SOURCE_BOUND_INPUTS:
+        if (type(current) is not dict or set(current) != set(expected)
+                or any(type(value) is not dict or not value for value in current.values())):
+            raise ValueError("closed original source-bound evaluation inputs required")
+        query_source = current["query_bound_component_inputs"]
+        checkpoint_admission = current["checkpoint_admission"]
+        checkpoint_source = current["checkpoint_bound_component_inputs"]
+        if (set(query_source) != {"report", "expected_report_sha256", "preparation_inputs"}
+                or checkpoint_admission.keys() != checkpoint_source.keys()
+                or any(type(value) is not dict for component in (checkpoint_admission, checkpoint_source)
+                       for value in component.values())):
+            raise ValueError("source-bound query and checkpoint input roles differ")
+        for role, raw in current.items():
+            if consumer.reviewed_admission_inputs_sha256(raw) != expected[role]:
+                raise ValueError("current source-bound evaluation input differs: " + role)
+    return {"schema": "reviewed-source-bound-evaluation-input-commitment/v1", **expected}
+
+
+def _read_source_bound_checkpoint_job(request):
+    from dataclasses import asdict
+    from . import autoencoder_training_worker as worker
+
+    replay = request["source_bound_replay"]
+    reference = worker.CheckpointArtifact.from_dict(replay["checkpoint_job_artifact"])
+    raw = worker._reviewed_decoder_artifact(reference, limit=4 * 1024**2)
+    try:
+        spec = worker.ReviewedSourceBoundMixedDecoderTrainingJobSpec.from_dict(worker._parse_json(raw))
+    except TypeError as error:
+        raise ValueError("complete source-bound evaluation checkpoint job required") from error
+    assets = request["assets"]
+    if (worker._json_bytes(spec.to_dict()) != raw
+            or spec.admission_profile != request["admission_profile"]
+            or spec.expected_admission_inputs_sha256 != replay["checkpoint_admission_inputs_sha256"]
+            or spec.expected_bound_component_inputs_sha256 != replay["checkpoint_bound_component_inputs_sha256"]
+            or dict(spec.expected_source_sha256) != request["source_sha256"]
+            or dict(spec.backend_identity) != request["backend_identity"]
+            or spec.allow_fictional_fixture != request["allow_fictional_fixture"]
+            or any(asdict(getattr(spec, role)) != assets[key] for role, key in (
+                ("tokenizer_artifact", "tokenizer_artifact"), ("license_artifact", "license_artifact"),
+                ("base_model_checkpoint", "model_checkpoint"), ("base_optimizer_checkpoint", "optimizer_checkpoint")))
+            or any(worker.CheckpointArtifact.from_dict(assets[key]) not in spec.backend_artifacts
+                   for key in ("recipe_artifact", "model_config_artifact"))):
+        raise ValueError("source-bound evaluation checkpoint job differs from original request")
+    return spec
+
+
+def _check_source_bound_asset_policy(request, spec, policy):
+    from dataclasses import asdict
+    from . import autoencoder_training_worker as worker
+
+    assets = request["assets"]
+    base = [assets[key] for key in ("recipe_artifact", "model_config_artifact", "tokenizer_artifact", "license_artifact")]
+    model, optimizer = assets["model_checkpoint"], assets["optimizer_checkpoint"]
+    if type(policy) is not dict:
+        raise ValueError("closed source-bound evaluation asset policy required")
+    schema = policy.get("schema")
+    if schema == "reviewed-local-source-bound-decoder-load-policy/v1":
+        all_assets = base + [model, optimizer]
+        all_assets.extend(asdict(item) for item in (spec.model_artifact, *spec.backend_artifacts)
+                          if asdict(item) not in all_assets)
+        expected = dict(schema=schema, backend_identity=request["backend_identity"], assets=all_assets,
+            producer_pins=request["source_sha256"], admission_inputs_sha256=spec.expected_admission_inputs_sha256,
+            bound_component_inputs_sha256=spec.expected_bound_component_inputs_sha256,
+            job_spec_sha256=spec.canonical_sha256, stage_artifact=asdict(spec.stage_artifact),
+            max_model_bytes=request["max_model_bytes"], device="cpu", dtype="float32", load_requested=True,
+            restore_requested=True, training_requested=False, downloads_requested=False,
+            resource_grant_requested=False, admission_profile=request["admission_profile"])
+    elif schema == "reviewed-decoder-source-producer-policy/v2":
+        contexts = worker._parse_json(worker._reviewed_decoder_artifact(
+            worker.CheckpointArtifact.from_dict(request["source_contexts_artifact"]),
+            limit=REVIEWED_EVALUATION_OUTPUT_LIMIT))
+        expected = dict(schema=schema, backend_identity=request["backend_identity"], assets=base,
+            model_checkpoint=model, optimizer_checkpoint=optimizer,
+            source_contexts_sha256=worker._digest(worker._json_bytes(contexts)),
+            admission_inputs_sha256=request["admission_inputs_sha256"],
+            max_source_tokens=request["max_source_tokens"], max_output_tokens=request["max_output_tokens"],
+            operation=request["operation"], training_requested=False, restore_requested=False,
+            admission_profile=request["admission_profile"])
+    else:
+        raise ValueError("source-bound evaluation asset policy domain differs")
+    if worker._json_bytes(policy) != worker._json_bytes(expected):
+        raise ValueError("source-bound evaluation asset policy differs from original request")
+
+
+def _check_source_bound_evaluation_outputs(cycle, request, outputs):
+    from dataclasses import asdict
+    import re
+    from . import autoencoder_training_worker as worker
+    from . import legal_span_consumer_binding as consumer
+    from ...logic.autoformal import training_cycle_inputs as inputs
+
+    def read(descriptor):
+        return worker._reviewed_decoder_artifact(worker.CheckpointArtifact.from_dict(descriptor),
+                                                limit=REVIEWED_EVALUATION_OUTPUT_LIMIT)
+
+    spec = _read_source_bound_checkpoint_job(request)
+    expected = _source_bound_evaluation_commitment(request)
+    if (cycle.get("source_bound_evaluation_inputs") != expected
+            or cycle.get("current_admission_sha256") != expected["query_admission"]):
+        raise ValueError("saved source-bound evaluation input commitment differs from request")
+    loader, generation, evaluation = (outputs[key] for key in ("loader", "generation", "evaluation"))
+    if any(type(value) is not dict for value in (loader, generation, evaluation)):
+        raise ValueError("complete saved source-bound evaluation objects required")
+    assets = request["assets"]
+    references = [assets[key] for key in ("recipe_artifact", "model_config_artifact", "tokenizer_artifact",
+                                        "license_artifact", "model_checkpoint", "optimizer_checkpoint")]
+    all_assets = references + [asdict(item) for item in (spec.model_artifact, *spec.backend_artifacts)
+                               if asdict(item) not in references]
+    if (loader.get("schema") != "reviewed-local-source-bound-decoder-runtime-load/v1"
+            or loader.get("job_spec_sha256") != spec.canonical_sha256
+            or loader.get("stage_artifact_sha256") != spec.stage_artifact.sha256
+            or loader.get("parent_checkpoint_sha256") != spec.parent_checkpoint_artifact.sha256
+            or loader.get("artifacts") != references or loader.get("assets") != all_assets
+            or loader.get("producer_pins") != request["source_sha256"]
+            or loader.get("expected_backend_identity") != request["backend_identity"]
+            or loader.get("loaded_backend_identity") != request["backend_identity"]
+            or any(loader.get(field) != expected["checkpoint_bound_component_inputs"] for field in (
+                "staged_bound_component_inputs_sha256", "current_bound_component_inputs_sha256"))
+            or type(loader.get("training_input_receipt_sha256")) is not str
+            or re.fullmatch(r"[0-9a-f]{64}", loader["training_input_receipt_sha256"]) is None
+            or loader.get("checkpoint_restored") is not True or loader.get("matched_pair") is not True
+            or any(loader.get(field) is not False for field in ("training_performed", "downloads_performed",
+                "resource_granted", "license_bytes_are_permission", "pretrained_quality_verified",
+                "legal_meaning_verified", "proof_authority", "convergence_proved", "corpus_admitted"))):
+        raise ValueError("saved V5 loader output differs from the exact stage and checkpoint lineage")
+
+    commitment = generation.get("input_commitment")
+    policy_keys = {"schema", "backend_identity", "assets", "model_checkpoint", "optimizer_checkpoint",
+        "source_contexts_sha256", "admission_inputs_sha256", "max_source_tokens", "max_output_tokens",
+        "operation", "training_requested", "restore_requested", "admission_profile"}
+    bound_keys = {"source_sha256", "exposure_sha256", "supplied_context_supported", "bound_component_identity",
+                  "bound_component_inputs_sha256", "checkpoint_admission_inputs_sha256",
+                  "checkpoint_bound_component_inputs_sha256"}
+    exposure = worker._parse_json(read(request["exposure_artifact"]))
+    if (generation.get("schema") != "reviewed-decoder-source-producer-observation/v2"
+            or type(generation.get("calls")) is not int or generation["calls"] != 1
+            or generation.get("admission_profile") != request["admission_profile"]
+            or any(generation.get(field) is not False for field in ("training_or_restore_performed",
+                "resource_authority_granted", "pretrained_quality_verified", "process_sandbox"))
+            or type(commitment) is not dict or set(commitment) != policy_keys | bound_keys
+            or commitment["source_sha256"] != request["source_sha256"]
+            or commitment["exposure_sha256"] != worker._digest(inputs._reviewed_wire(exposure))
+            or commitment["supplied_context_supported"] != "empty_permitted_and_retrieved_only"
+            or commitment["bound_component_inputs_sha256"] != expected["query_bound_component_inputs"]
+            or commitment["checkpoint_admission_inputs_sha256"] != expected["checkpoint_admission"]
+            or commitment["checkpoint_bound_component_inputs_sha256"] != expected["checkpoint_bound_component_inputs"]):
+        raise ValueError("saved generation differs from independent source-bound replay roles")
+    _check_source_bound_asset_policy(request, spec, {key: commitment[key] for key in policy_keys})
+    commitment_sha256 = worker._digest(inputs._reviewed_wire(commitment))
+    profile_id = "reviewed-decoder-source-producer/v2:" + commitment_sha256
+    metadata = evaluation.get("metadata")
+    if (generation.get("input_commitment_sha256") != commitment_sha256
+            or generation.get("input_profile_id") != profile_id
+            or evaluation.get("schema_version") != "legal-ir-evaluation-artifact-v1"
+            or type(metadata) is not dict
+            or worker._json_bytes(metadata.get("source_generation_observation")) != worker._json_bytes(generation)
+            or metadata.get("source_generation_input_commitment_sha256") != commitment_sha256):
+        raise ValueError("saved source-bound evaluation observation differs from generation")
+
+    rows = worker._parse_json(read(request["rows_artifact"]))
+    _reviewed_evaluation_measurement_cases(rows, evaluation, generation, request["checkpoint_declarations"])
+    payload = evaluation["compiler_artifact"]["reviewed_source_span_producer_evaluation"]
+    configuration = payload["configuration"]
+    last = generation["last_call"]
+    identity = commitment["bound_component_identity"]
+    query_transport = worker._parse_json(read(request["source_bound_replay"]["query_bound_component_transport_artifact"]))
+    query_source = inputs._reviewed_restore_bound_component_inputs(query_transport, read)
+    if (consumer.reviewed_admission_inputs_sha256(query_source) != expected["query_bound_component_inputs"]
+            or type(identity) is not dict or type(query_source) is not dict or type(query_source.get("report")) is not dict
+            or identity.get("bound_component_report_sha256") != query_source.get("expected_report_sha256")
+            or identity != {**{key: query_source["report"].get(key) for key in (
+                "schema", "profile", "binding_manifest_sha256", "source_history_manifest_ref", "current_epoch_id",
+                "unit_bindings_sha256", "norm_preparation_inputs_sha256", "norm_preparation_sha256", "producer_pins")},
+                "bound_component_report_sha256": query_source.get("expected_report_sha256")}):
+        raise ValueError("saved source-bound query identity differs from the pinned source report")
+    for role in ("admission_before", "admission_after"):
+        receipt = payload.get(role)
+        if (type(receipt) is not dict or receipt.get("schema") != consumer.REVIEWED_V3_SCHEMA
+                or receipt.get("profile") != consumer.REVIEWED_V3_PROFILE or receipt.get("status") != "ready"
+                or receipt.get("operation") != request["operation"] or receipt.get("training_mask") != 0
+                or receipt.get("admission_inputs_sha256") != expected["query_admission"]
+                or receipt.get("bound_component_inputs_sha256") != expected["query_bound_component_inputs"]
+                or receipt.get("bound_component_identity") != identity
+                or receipt.get("heldout_evaluation") != configuration.get("heldout_evaluation")
+                or configuration.get(role + "_sha256") != worker._digest(inputs._reviewed_wire(receipt))):
+            raise ValueError("saved source-bound query admission observation differs from request")
+    if (configuration.get("profile") != "reviewed-source-span-producer-heldout/v1"
+            or configuration.get("input_profile") != {"profile_id": profile_id,
+                "max_source_tokens": request["max_source_tokens"], "max_context_tokens": 1,
+                "max_output_tokens": request["max_output_tokens"]}
+            or payload.get("declared_compiler_identity") != request["compiler_commit"]
+            or last.get("entry_pair_match") is not True or last.get("exit_pair_match") is not True
+            or worker._digest(inputs._reviewed_wire(payload["producer_arguments"])) != last.get("source_arguments_sha256")
+            or configuration.get("permitted_context") != []
+            or configuration.get("retrieved_examples") != {row["id"]: [] for row in rows}):
+        raise ValueError("saved source-bound heldout evaluation scope differs from the original request")
 
 
 def _check_reviewed_generation_policy(request, policy):
@@ -460,16 +673,22 @@ def _check_reviewed_evaluation_outputs(cycle, request):
             or cycle.get("inference") != {"profile": request["schema"], **paths}):
         raise ValueError("reviewed output artifacts must bind the exact closed output paths")
     digest_omitted = request["schema"] == REVIEWED_DIGEST_OMITTED_EVALUATION_REQUEST_SCHEMA
+    source_bound = request["schema"] == REVIEWED_SOURCE_BOUND_EVALUATION_REQUEST_SCHEMA
     evaluation_bytes = None
+    source_bound_outputs = {}
     for name, path in paths.items():
         reference = worker.CheckpointArtifact.from_dict(descriptors[name])
         if reference.path != path:
             raise ValueError("reviewed output artifact path differs from original request")
         load_evaluation = digest_omitted and name == "evaluation"
         body = worker._reviewed_decoder_artifact(reference, limit=REVIEWED_EVALUATION_OUTPUT_LIMIT,
-                                                 load=load_evaluation)
+                                                 load=load_evaluation or source_bound)
         if load_evaluation:
             evaluation_bytes = body
+        if source_bound:
+            source_bound_outputs[name] = worker._parse_json(body)
+    if source_bound:
+        _check_source_bound_evaluation_outputs(cycle, request, source_bound_outputs)
     if "generation_policy" in request:
         generation = worker._parse_json(worker._reviewed_decoder_artifact(
             worker.CheckpointArtifact.from_dict(descriptors["generation"]), limit=REVIEWED_EVALUATION_OUTPUT_LIMIT))
@@ -539,18 +758,22 @@ def _read_reviewed_evaluation_request(request_artifact):
             "reviewed-source-evaluation-request/v1", "reviewed-source-evaluation-request/v2",
             "reviewed-source-evaluation-request/v3", "reviewed-source-evaluation-request/v4",
             "reviewed-source-evaluation-request/v5", "reviewed-source-evaluation-request/v6",
-            "reviewed-source-evaluation-request/v7", "reviewed-source-evaluation-request/v8", "reviewed-source-evaluation-request/v9", "reviewed-source-evaluation-request/v10", REVIEWED_DIGEST_OMITTED_EVALUATION_REQUEST_SCHEMA):
+            "reviewed-source-evaluation-request/v7", "reviewed-source-evaluation-request/v8", "reviewed-source-evaluation-request/v9", "reviewed-source-evaluation-request/v10", REVIEWED_DIGEST_OMITTED_EVALUATION_REQUEST_SCHEMA,
+            REVIEWED_SOURCE_BOUND_EVALUATION_REQUEST_SCHEMA):
         raise ValueError("closed reviewed source evaluation DATA request required")
+    source_bound = value["schema"] == REVIEWED_SOURCE_BOUND_EVALUATION_REQUEST_SCHEMA
     rich_context = value["schema"] in ("reviewed-source-evaluation-request/v2", "reviewed-source-evaluation-request/v4", "reviewed-source-evaluation-request/v6", "reviewed-source-evaluation-request/v8", "reviewed-source-evaluation-request/v10")
     mixed_admission = value["schema"] in ("reviewed-source-evaluation-request/v3", "reviewed-source-evaluation-request/v4", "reviewed-source-evaluation-request/v5", "reviewed-source-evaluation-request/v6", "reviewed-source-evaluation-request/v7", "reviewed-source-evaluation-request/v8", "reviewed-source-evaluation-request/v9", "reviewed-source-evaluation-request/v10", REVIEWED_DIGEST_OMITTED_EVALUATION_REQUEST_SCHEMA)
     explicit_runtime = value["schema"] in ("reviewed-source-evaluation-request/v5", "reviewed-source-evaluation-request/v6", "reviewed-source-evaluation-request/v7", "reviewed-source-evaluation-request/v8", "reviewed-source-evaluation-request/v9", "reviewed-source-evaluation-request/v10", REVIEWED_DIGEST_OMITTED_EVALUATION_REQUEST_SCHEMA)
     explicit_generation = value["schema"] in ("reviewed-source-evaluation-request/v7", "reviewed-source-evaluation-request/v8", "reviewed-source-evaluation-request/v9", "reviewed-source-evaluation-request/v10", REVIEWED_DIGEST_OMITTED_EVALUATION_REQUEST_SCHEMA)
     if explicit_generation:
         fields.add("generation_policy")
-    if explicit_runtime:
+    if explicit_runtime or source_bound:
         fields.add("runtime_profile")
-    if mixed_admission:
+    if mixed_admission or source_bound:
         fields.add("admission_profile")
+    if source_bound:
+        fields.add("source_bound_replay")
     if rich_context:
         fields.add("training_context")
     if (set(value) != fields
@@ -568,9 +791,13 @@ def _read_reviewed_evaluation_request(request_artifact):
     if explicit_runtime and (type(value["runtime_profile"]) is not str or
             value["runtime_profile"] != ("builtin-qwen2-bfloat16/v1" if qwen2 else "builtin-llama-bfloat16/v1")):
         raise ValueError("explicit built-in Llama/BF16 runtime profile required")
-    if mixed_admission and (type(value["admission_profile"]) is not str
+    if (mixed_admission or source_bound) and (type(value["admission_profile"]) is not str
             or value["admission_profile"] != worker.REVIEWED_MIXED_ADMISSION_PROFILE):
         raise ValueError("explicit mixed-sort admission V3 request profile required")
+    if source_bound and (type(value["runtime_profile"]) is not str
+            or value["runtime_profile"] != "builtin-t5-gpt2-float32/v1"
+            or value["operation"] != "heldout_evaluation"):
+        raise ValueError("v12 requires the source-only V5 heldout evaluation profile")
     identity = value.get("backend_identity")
     if digest_omitted:
         if (type(identity) is not dict or set(identity) != {"backend_id", "implementation_sha256", "checkpoint_format", "target_codec", "source_conditioned", "pretrained"}
@@ -626,9 +853,11 @@ def _read_reviewed_evaluation_request(request_artifact):
             raise ValueError("closed independently committed TRAIN context required")
         for name in artifacts:
             worker.CheckpointArtifact.from_dict(context[name])
+    source_roles = (worker.REVIEWED_SOURCE_BOUND_DECODER_SOURCE_NAMES if source_bound
+                    else worker.REVIEWED_DECODER_SOURCE_NAMES)
     if (type(value["admission_inputs_sha256"]) is not str
             or re.fullmatch(r"[0-9a-f]{64}", value["admission_inputs_sha256"]) is None
-            or type(value["source_sha256"]) is not dict or set(value["source_sha256"]) != worker.REVIEWED_DECODER_SOURCE_NAMES
+            or type(value["source_sha256"]) is not dict or set(value["source_sha256"]) != source_roles
             or any(type(pin) is not str or re.fullmatch(r"[0-9a-f]{64}", pin) is None for pin in value["source_sha256"].values())):
         raise ValueError("exact source and current admission commitments required")
     if mixed_admission and value["source_sha256"] != worker._reviewed_decoder_source_pins(
@@ -636,6 +865,38 @@ def _read_reviewed_evaluation_request(request_artifact):
         raise ValueError("mixed-sort admission V3 request source map differs")
     if digest_omitted and identity["implementation_sha256"] != value["source_sha256"]["worker"]:
         raise ValueError("v11 backend implementation differs from current worker Source")
+    if source_bound:
+        replay = value["source_bound_replay"]
+        transport_keys = {"query_bound_component_transport_artifact", "checkpoint_admission_transport_artifact",
+                          "checkpoint_bound_component_transport_artifact"}
+        digest_keys = set(_SOURCE_BOUND_DIGEST_KEYS.values()) - {"admission_inputs_sha256"}
+        if (type(replay) is not dict
+                or set(replay) != transport_keys | digest_keys | {"checkpoint_job_artifact", "checkpoint_stage_artifacts"}
+                or any(type(replay[key]) is not str or re.fullmatch(r"[0-9a-f]{64}", replay[key]) is None
+                       for key in digest_keys)
+                or len(set(_source_bound_evaluation_commitment(value).values())) != 5
+                or type(replay["checkpoint_stage_artifacts"]) is not list
+                or len(replay["checkpoint_stage_artifacts"]) > 4096):
+            raise ValueError("closed independent source-bound query and checkpoint replay required")
+        separate = [worker.CheckpointArtifact.from_dict(reference) for reference in (
+            value["admission_transport_artifact"], replay["checkpoint_job_artifact"],
+            *(replay[key] for key in transport_keys))]
+        if len({item.path for item in separate}) != len(separate) or len({item.sha256 for item in separate}) != len(separate):
+            raise ValueError("source-bound replay artifacts must have distinct role identities")
+        spec = _read_source_bound_checkpoint_job(value)
+        stage_items = [spec.stage_artifact, *(worker.CheckpointArtifact.from_dict(reference)
+                                            for reference in replay["checkpoint_stage_artifacts"])]
+        if (len({item.path for item in stage_items}) != len(stage_items)
+                or len({(item.sha256, item.bytes) for item in stage_items}) != len(stage_items)):
+            raise ValueError("source-bound checkpoint stage artifact identities are ambiguous")
+        if value["source_sha256"] != worker._reviewed_decoder_source_pins(
+                admission_profile=value["admission_profile"], source_bound=True):
+            raise ValueError("source-bound evaluation request source map differs")
+        if (identity["implementation_sha256"] != value["source_sha256"]["worker"]
+                or type(value["checkpoint_declarations"]) is not dict
+                or value["checkpoint_declarations"].get("decoder") != {
+                    "id": identity["backend_id"], "sha256": value["assets"]["model_checkpoint"]["sha256"]}):
+            raise ValueError("source-bound evaluation decoder declaration differs from checkpoint")
     for name, low, high in (("max_source_tokens", 3, 65536), ("max_output_tokens", 2, 65536),
                             ("max_model_bytes", 1, 2*1024**3 if qwen2 else worker.MAX_REVIEWED_DECODER_STATE_BYTES)):
         if type(value[name]) is not int or not low <= value[name] <= high:
@@ -662,6 +923,11 @@ def _execute_reviewed_evaluation_request(request_artifact, *, parent_client):
     class ReadOnlyArtifacts:
         def __init__(self):
             self._byte_references = {}
+        def bind_reference(self, item):
+            key = (item.sha256, item.bytes)
+            if key in self._byte_references and self._byte_references[key] != item:
+                raise ValueError("ambiguous physical path for pinned admission byte artifact")
+            self._byte_references[key] = item
         def bind_transport(self, transport):
             # The authenticated existing v2 transport supplies full references;
             # its registry protocol subsequently offers only {sha256,bytes}.
@@ -670,11 +936,7 @@ def _execute_reviewed_evaluation_request(request_artifact, *, parent_client):
                 raise ValueError("complete pinned byte-preserving admission transport required")
             for leaf in transport["byte_leaves"]:
                 if type(leaf) is dict and leaf.get("kind") == "artifact_bytes":
-                    item = worker.CheckpointArtifact.from_dict(leaf["artifact"])
-                    key = (item.sha256, item.bytes)
-                    if key in self._byte_references and self._byte_references[key] != item:
-                        raise ValueError("ambiguous physical path for pinned admission byte artifact")
-                    self._byte_references[key] = item
+                    self.bind_reference(worker.CheckpointArtifact.from_dict(leaf["artifact"]))
         def resolve(self, descriptor):
             if type(descriptor) is dict and set(descriptor) == {"sha256", "bytes"}:
                 key = (descriptor["sha256"], descriptor["bytes"])
@@ -702,8 +964,52 @@ def _execute_reviewed_evaluation_request(request_artifact, *, parent_client):
         if consumer.reviewed_admission_inputs_sha256(restored) != acknowledged:
             raise ValueError("pinned local admission transport differs from original parent snapshot")
         return restored
+
+    source_bound = request["schema"] == REVIEWED_SOURCE_BOUND_EVALUATION_REQUEST_SCHEMA
+    bound_replay = request.get("source_bound_replay")
+    if source_bound:
+        root_sha256 = consumer.reviewed_admission_inputs_sha256(_source_bound_evaluation_commitment(request))
+
+        def acknowledge_role(expected):
+            if parent_client.current_admission_digest(root_sha256) != root_sha256:
+                raise ValueError("original parent current source-bound evaluation commitment differs")
+            return expected
+
+        def replay_bound_source(role, artifact_registry):
+            expected = bound_replay[role + "_inputs_sha256"]
+            acknowledge_role(expected)
+            transport = read_json(bound_replay[role + "_transport_artifact"], artifact_registry=artifact_registry)
+            artifact_registry.bind_transport(transport)
+            restored = inputs._reviewed_restore_bound_component_inputs(transport,
+                lambda reference: inputs._reviewed_read(artifact_registry, reference))
+            if consumer.reviewed_admission_inputs_sha256(restored) != expected:
+                raise ValueError("pinned local source transport differs from original parent replay role: " + role)
+            return restored
+
+        query_source_registry = ReadOnlyArtifacts()
+        checkpoint_admission_registry = ReadOnlyArtifacts()
+        checkpoint_source_registry = ReadOnlyArtifacts()
+        stage_registry = ReadOnlyArtifacts()
+        checkpoint_spec = _read_source_bound_checkpoint_job(request)
+        stage_registry.bind_reference(checkpoint_spec.stage_artifact)
+        for item in bound_replay["checkpoint_stage_artifacts"]:
+            stage_registry.bind_reference(worker.CheckpointArtifact.from_dict(item))
+        checkpoint_admission_spec = {
+            "admission_inputs_sha256": bound_replay["checkpoint_admission_inputs_sha256"],
+            "admission_transport_artifact": bound_replay["checkpoint_admission_transport_artifact"],
+        }
+
+        def current_query_source():
+            return replay_bound_source("query_bound_component", query_source_registry)
+
+        def current_checkpoint_admission():
+            return replay_admission(checkpoint_admission_spec, acknowledge_role, checkpoint_admission_registry)
+
+        def current_checkpoint_source():
+            return replay_bound_source("checkpoint_bound_component", checkpoint_source_registry)
+
     def current_admission():
-        return replay_admission(request, parent_client.current_admission_digest, registry)
+        return replay_admission(request, acknowledge_role if source_bound else parent_client.current_admission_digest, registry)
     def execution_guard():
         parent_client.execution_guard()
         _check_reviewed_evaluation_lifecycle(request)
@@ -715,16 +1021,17 @@ def _execute_reviewed_evaluation_request(request_artifact, *, parent_client):
     heldout = request["operation"] == "heldout_evaluation"
     admission = current_admission()
     canonical_sha = lambda value: hashlib.sha256(inputs._reviewed_wire(value)).hexdigest()
-    mixed_admission = request["schema"] in ("reviewed-source-evaluation-request/v3", "reviewed-source-evaluation-request/v4", "reviewed-source-evaluation-request/v5", "reviewed-source-evaluation-request/v6", "reviewed-source-evaluation-request/v7", "reviewed-source-evaluation-request/v8", "reviewed-source-evaluation-request/v9", "reviewed-source-evaluation-request/v10", REVIEWED_DIGEST_OMITTED_EVALUATION_REQUEST_SCHEMA)
+    mixed_admission = source_bound or request["schema"] in ("reviewed-source-evaluation-request/v3", "reviewed-source-evaluation-request/v4", "reviewed-source-evaluation-request/v5", "reviewed-source-evaluation-request/v6", "reviewed-source-evaluation-request/v7", "reviewed-source-evaluation-request/v8", "reviewed-source-evaluation-request/v9", "reviewed-source-evaluation-request/v10", REVIEWED_DIGEST_OMITTED_EVALUATION_REQUEST_SCHEMA)
     prepare_binding = (consumer.prepare_reviewed_source_span_consumer_binding_v3 if mixed_admission
                        else consumer.prepare_reviewed_source_span_consumer_binding_v2)
+    binding_options = {"bound_component_inputs": current_query_source()} if source_bound else {}
     binding = prepare_binding(rows,
         expected_rows_sha256=canonical_sha(rows), split_manifest=manifest,
         expected_split_manifest_sha256=canonical_sha(manifest), admission_inputs=admission,
         expected_admission_inputs_sha256=request["admission_inputs_sha256"], exposure_records=exposure,
         expected_exposure_sha256=canonical_sha(exposure), operation=request["operation"],
         allow_fictional_fixture=request["allow_fictional_fixture"], allow_heldout_evaluation=heldout,
-        heldout_evaluation_purpose=request["heldout_evaluation_purpose"])
+        heldout_evaluation_purpose=request["heldout_evaluation_purpose"], **binding_options)
     if binding.receipt()["status"] != "ready":
         raise ValueError("current reviewed evaluator binding is blocked before model loading")
     context_options = {}
@@ -766,12 +1073,31 @@ def _execute_reviewed_evaluation_request(request_artifact, *, parent_client):
     load_options = {"admission_profile": request["admission_profile"]} if mixed_admission else {}
     if "runtime_profile" in request:
         load_options["runtime_profile"] = request["runtime_profile"]
-    runtime, load_receipt = load_runtime(registry=registry,
-        current_admission_provider=current_admission, execution_guard=execution_guard,
-        asset_policy_guard=parent_client.asset_policy_guard, **assets,
-        expected_backend_identity=request["backend_identity"], expected_source_sha256=request["source_sha256"],
-        expected_admission_inputs_sha256=request["admission_inputs_sha256"], max_model_bytes=request["max_model_bytes"],
-        **load_options)
+    source_options = {}
+    if source_bound:
+        _source_bound_evaluation_commitment(request, {
+            "query_admission": admission, "query_bound_component_inputs": binding_options["bound_component_inputs"],
+            "checkpoint_admission": current_checkpoint_admission(),
+            "checkpoint_bound_component_inputs": current_checkpoint_source(),
+        })
+        runtime, load_receipt = worker.load_local_reviewed_source_bound_decoder_runtime_v5(
+            spec=checkpoint_spec, registry=stage_registry, current_admission_provider=current_checkpoint_admission,
+            current_bound_component_inputs_provider=current_checkpoint_source, execution_guard=execution_guard,
+            asset_policy_guard=parent_client.asset_policy_guard, recipe_artifact=assets["recipe_artifact"],
+            model_config_artifact=assets["model_config_artifact"], max_model_bytes=request["max_model_bytes"],
+            runtime_profile=request["runtime_profile"])
+        source_options = dict(current_query_admission_provider=current_admission,
+            current_query_bound_component_inputs_provider=current_query_source,
+            expected_query_bound_component_inputs_sha256=bound_replay["query_bound_component_inputs_sha256"],
+            expected_checkpoint_admission_inputs_sha256=bound_replay["checkpoint_admission_inputs_sha256"],
+            expected_checkpoint_bound_component_inputs_sha256=bound_replay["checkpoint_bound_component_inputs_sha256"])
+    else:
+        runtime, load_receipt = load_runtime(registry=registry,
+            current_admission_provider=current_admission, execution_guard=execution_guard,
+            asset_policy_guard=parent_client.asset_policy_guard, **assets,
+            expected_backend_identity=request["backend_identity"], expected_source_sha256=request["source_sha256"],
+            expected_admission_inputs_sha256=request["admission_inputs_sha256"], max_model_bytes=request["max_model_bytes"],
+            **load_options)
     make_producer = (worker.make_reviewed_decoder_digest_omitted_source_producer_v1 if digest_omitted else
                      worker.make_reviewed_decoder_source_producer_v3 if mixed_admission
                      else worker.make_reviewed_decoder_source_producer)
@@ -784,7 +1110,7 @@ def _execute_reviewed_evaluation_request(request_artifact, *, parent_client):
             ("recipe_artifact", "model_config_artifact", "tokenizer_artifact", "license_artifact")),
         model_checkpoint=assets["model_checkpoint"], optimizer_checkpoint=assets["optimizer_checkpoint"],
         max_source_tokens=request["max_source_tokens"], max_output_tokens=request["max_output_tokens"],
-        allow_heldout_evaluation=heldout, **context_options, **generation_options)
+        allow_heldout_evaluation=heldout, **context_options, **generation_options, **source_options)
     artifact = producer.evaluate(compiler_commit=request["compiler_commit"],
                                  checkpoint_declarations=request["checkpoint_declarations"])
     execution_guard()
@@ -809,6 +1135,8 @@ def _execute_reviewed_evaluation_request(request_artifact, *, parent_client):
     if context_options:
         cycle.update(current_training_admission_sha256=context["admission_inputs_sha256"],
                      context_inputs_sha256=context["context_inputs_sha256"])
+    if source_bound:
+        cycle["source_bound_evaluation_inputs"] = _source_bound_evaluation_commitment(request)
     execution_guard()
     worker._write_exclusive(directory / "cycle.json", worker._json_bytes(cycle))
     return cycle
@@ -845,7 +1173,25 @@ def run_reviewed_source_inference_cycle(config, cli, *, owner, source_guard, ass
     source_guard()
     reference, raw, request = _read_reviewed_evaluation_request(config["reviewed_evaluation_request"])
     checked_asset_policy = asset_policy_guard
-    if "generation_policy" in request:
+    source_bound = request["schema"] == REVIEWED_SOURCE_BOUND_EVALUATION_REQUEST_SCHEMA
+    callback_admission_provider = current_admission_provider
+    if source_bound:
+        if any(value is not None for value in (current_training_admission_provider, context_policy_guard,
+                                                 typed_structure_profile, candidate_syntax_profile)):
+            raise ValueError("v12 source-only evaluation requires its closed original parent profile")
+        checkpoint_spec = _read_source_bound_checkpoint_job(request)
+
+        def callback_admission_provider():
+            return _source_bound_evaluation_commitment(request, current_admission_provider())
+
+        def checked_asset_policy(policy):
+            _check_source_bound_asset_policy(request, checkpoint_spec, policy)
+            decision = asset_policy_guard(policy)
+            _check_source_bound_asset_policy(request, checkpoint_spec, policy)
+            return decision
+
+        callback_admission_provider()
+    elif "generation_policy" in request:
         def checked_asset_policy(policy):
             _check_reviewed_generation_policy(request, policy)
             decision = asset_policy_guard(policy)
@@ -966,7 +1312,7 @@ def run_reviewed_source_inference_cycle(config, cli, *, owner, source_guard, ass
             server = processes._ReviewedParentCallbackServer(callback_fd, owner=owner,
                 child_identity=child_identity, owner_identity=owner_identity, request_sha256=reference.sha256,
                 deadline=deadline_monotonic, source_guard=source_guard, asset_policy_guard=checked_asset_policy,
-                current_admission_provider=current_admission_provider, **context_callbacks)
+                current_admission_provider=callback_admission_provider, **context_callbacks)
             if os.write(release_write, b"RUN\n") != 4:
                 raise ValueError("original reviewed child RUN release incomplete")
             released = True
@@ -1032,8 +1378,8 @@ def run_reviewed_source_inference_cycle(config, cli, *, owner, source_guard, ass
             if context is not None and (last_context_policy is None
                     or context_policy_guard(json.loads(last_context_policy)) is not None):
                 raise ValueError("fresh original TRAIN context policy acknowledgement required after child completion")
-            final_admission = current_admission_provider()
-            if consumer.reviewed_admission_inputs_sha256(final_admission) != request["admission_inputs_sha256"]:
+            final_admission = callback_admission_provider()
+            if not source_bound and consumer.reviewed_admission_inputs_sha256(final_admission) != request["admission_inputs_sha256"]:
                 raise ValueError("current original parent admission changed after child completion")
             if context is not None:
                 final_training_admission = current_training_admission_provider()
