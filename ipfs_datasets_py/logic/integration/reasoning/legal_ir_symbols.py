@@ -1440,11 +1440,14 @@ def _resolve_alias(
         definition = table.definition_by_id.get(alias.target_symbol_id) or _external_definition(
             alias.target_symbol_id, external_tables
         )
-        if definition is None:
+        if definition is None or (
+            alias.target_document_id and definition.document_id != alias.target_document_id
+        ) or (alias.target_scope_id and definition.scope_id != alias.target_scope_id):
             return (), (
                 _diagnostic(
                     LegalIRSymbolDiagnosticType.ALIAS_TARGET_UNRESOLVED,
-                    "Alias target symbol is missing.",
+                    "Alias target symbol is missing."
+                    if definition is None else "Alias target symbol contradicts its declared document or scope.",
                     alias_ids=(alias.alias_id,),
                     symbol_ids=(alias.target_symbol_id,),
                     scope_id=alias.scope_id,

@@ -856,3 +856,30 @@ print(json.dumps(forbidden))
         check=True,
     )
     assert json.loads(result.stdout) == []
+
+
+
+@pytest.mark.parametrize("target_context", ["matching", "unspecified", "wrong-document", "wrong-scope"])
+def test_alias_target_id_respects_its_own_declaration_across_pinned_partitions(owner, target_context):
+    local = partition("local", aliases=(("alias:covered-filer", "covered filer", "term:registered-member"),))
+    donor = partition("donor", "doc-B", definitions=(("term:registered-member", "registered member"),))
+    table_record = json.loads(local["table_raw"])
+    alias = table_record["aliases"][0]
+    if target_context != "unspecified":
+        alias["target_document_id"] = "doc-A" if target_context == "wrong-document" else "doc-B"
+        alias["target_scope_id"] = "document:doc-A" if target_context == "wrong-scope" else "document:doc-B"
+    local["table_raw"] = wire(table_record)
+    value = registry(owner, local, donor)
+    request = query(["local", "donor"])
+    result = lookup(owner, value, request)
+    if target_context in {"matching", "unspecified"}:
+        assert result["status"] == "resolved"
+        assert result["selected_symbol_id"] == "term:registered-member"
+        assert result["owner_resolution"]["alias_ids"] == ["alias:covered-filer"]
+    else:
+        assert result["status"] == "unresolved"
+        assert result["selected_symbol_id"] is None
+        assert any(row["code"] == "alias_target_unresolved" and row["alias_ids"] == ["alias:covered-filer"]
+                   for row in result["owner_resolution"]["diagnostics"])
+    assert all(result[key] is False for key in owner.FALSE_FLAGS)
+    assert owner.validate_definition_lookup(result, value, wire(request), sha(wire(request))) == result
