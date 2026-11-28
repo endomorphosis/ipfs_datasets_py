@@ -934,3 +934,30 @@ def test_JSON_escaping_counts_toward_replay_budget_before_bulk_serialization(
     with pytest.raises(contracts.CorpusContractError):
         build(owner, data, limits=limits)
     assert bulk_target_seen is False
+
+
+@pytest.mark.parametrize("text", [
+    "",
+    "plain source record" * 300,
+    "".join(map(chr, range(128))),
+    'Quoted "source"\\field\n\t\b\f\r\x00\x1f\x7f',
+    "Café and \u6cd5 with a non-BMP character \U0001f4d6",
+])
+def test_bounded_json_counts_exact_canonical_string_bytes(owner, monkeypatch, text):
+    value = {text[:1024]: [text]}
+    expected = canonical(value)
+    assert owner._plain(value, len(expected)) == expected
+
+    def refuse_bulk_serialization(*_args, **_kwargs):
+        pytest.fail("over-budget input reached JSON serialization")
+
+    monkeypatch.setattr(owner.json, "dumps", refuse_bulk_serialization)
+    with pytest.raises(contracts.CorpusContractError, match="byte bound exceeded"):
+        owner._plain(value, len(expected) - 1)
+
+
+def test_bounded_json_rejects_oversized_key_and_unpaired_surrogate(owner):
+    with pytest.raises(contracts.CorpusContractError, match="bounded JSON strings|byte bound"):
+        owner._plain({"x" * 4097: None}, 8192)
+    with pytest.raises(contracts.CorpusContractError, match="valid UTF8 JSON strings"):
+        owner._plain(["\ud800"], 8192)

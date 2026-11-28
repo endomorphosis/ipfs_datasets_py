@@ -12,6 +12,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import re
 from collections import Counter
 from pathlib import Path
 
@@ -112,6 +113,9 @@ def _limits(value):
     return result
 
 
+_JSON_ASCII_ESCAPE = re.compile(r'["\\\x00-\x1f]')
+
+
 def _plain(value, maximum):
     """Separate report/collection bounds never enlarge common sealed records."""
     remaining = MAX_JSON_NODES
@@ -129,6 +133,13 @@ def _plain(value, maximum):
         if len(item) + 2 > remaining_bytes or key and len(item) > 4096:
             _fail("complete JSON string/key byte bound exceeded before encoding")
         consume(2)  # quotation delimiters
+        if item.isascii():
+            # Scan only the characters that expand on the wire. Leave the
+            # byte limit in force before allocating an encoded string.
+            consume(len(item))
+            for match in _JSON_ASCII_ESCAPE.finditer(item):
+                consume(1 if match.group() in '\"\\\b\f\n\r\t' else 5)
+            return
         utf8_size = 0
         for char in item:
             code = ord(char)
