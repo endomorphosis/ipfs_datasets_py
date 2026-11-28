@@ -3516,3 +3516,8 @@ The external benchmark now checks each required U.S. Code provision at its full 
 ## Evidence608 — Miniature offline V5 continuation and V12 evaluation
 
 The V5 fixture made one local update from optimizer step 1 to 2. The V12 fixture restored the resulting pair and measured all three held-out fictional rows. The row and query-context bytes match the earlier pristine fixture. Admission and bound-component commitments differ between the two runs, so the results describe each fixture independently. Correctly accepted legal count and cost per correct formalization remain unmeasured. [Exact miniature fixture evidence](/tmp/P7-P8-persisted-v5-v12-public-composition-INERT-z0p32dud/actual-composed-miniature-V5-and-V12-fixture-qualification.json)
+
+
+## Evidence609 — Citation spelling and held-out isolation
+
+A controlled reproduction assigned independent rows with equivalent U.S. Code section citations to training and external test under legacy normalization. The explicit new grouping policy kept them together, with a separate section still available for training. Legacy assignments and digests are retained. The split fixture did not measure a model. [Split grouping fixture evidence](/tmp/P7-P8-persisted-v5-v12-public-composition-INERT-z0p32dud/actual-citation-section-split-grouping-qualification.json)

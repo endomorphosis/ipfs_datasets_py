@@ -39959,6 +39959,23 @@
       "root": "artifact_workspace",
       "scope": "Persist and reopen a miniature offline successor checkpoint through the existing V5 and V12 owners.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/lir23_versioned_usc_section_grouping_20261128",
+      "closed_runtime_facts": {
+        "final_tests_passed": 187,
+        "focused_before_failures": 6,
+        "legacy_sealed_files_byte_exact": 12
+      },
+      "evidence_ordinal": 609,
+      "id": "lir23-versioned-usc-section-grouping-evidence609-20261128",
+      "observed_bytes": 1922,
+      "observed_sha256": "b12eab87813b390609768b2eb3e168b7769dcdfcdbeb15829589efdd54232f15",
+      "path": "/tmp/P7-P8-persisted-v5-v12-public-composition-INERT-z0p32dud/actual-citation-section-split-grouping-qualification.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Group equivalent U.S. Code section spellings before new protected split assignment.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }

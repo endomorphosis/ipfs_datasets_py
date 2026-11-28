@@ -4374,3 +4374,8 @@ External benchmark citation credit now requires the selected U.S. Code section a
 ## Evidence608 — Persist and reopen a miniature successor
 
 The offline V5 fixture restored the prior model and optimizer at step 1 and persisted step 2 after one supervised update on the selected signed fictional stage. The existing V12 owner reopened the exact saved pair and evaluated three independently held-out fictional cases with training disabled. The output census was 3 incomplete. Full typed-payload exactness was 0/3. The saved optimizer offset and complete stage ancestry remained bound to the checkpoint. The worker setup failure from a missing test helper is retained alongside the passing rerun. [Exact miniature fixture evidence](/tmp/P7-P8-persisted-v5-v12-public-composition-INERT-z0p32dud/actual-composed-miniature-V5-and-V12-fixture-qualification.json)
+
+
+## Evidence609 — Versioned U.S. Code section grouping
+
+Select `LegalIREvalSplitConfig(citation_grouping_policy="us-code-section/v2")` for new source/dependency-grouped splits. The builder groups dotted and plain U.S. Code citations at the section boundary and records the selected policy in sealed manifests. Twelve retained legacy files matched byte for byte. A legacy title-only key cannot establish the section, so ambiguous citation-only requests crossing a protected title are refused. The final run passed 187 owning, split-membership, and external benchmark tests. The earlier miniature V5 and V12 evidence remains tied to its own source. [Split grouping fixture evidence](/tmp/P7-P8-persisted-v5-v12-public-composition-INERT-z0p32dud/actual-citation-section-split-grouping-qualification.json)

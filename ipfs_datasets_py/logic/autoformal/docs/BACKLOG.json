@@ -5433,6 +5433,16 @@
       },
       "record_id": "lir19-lir22-persisted-miniature-successor-v12-evidence608-20261128",
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
+    },
+    "lir23_versioned_usc_section_grouping_20261128": {
+      "evidence_ordinal": 609,
+      "facts": {
+        "bytes": 1922,
+        "path": "/tmp/P7-P8-persisted-v5-v12-public-composition-INERT-z0p32dud/actual-citation-section-split-grouping-qualification.json",
+        "sha256": "b12eab87813b390609768b2eb3e168b7769dcdfcdbeb15829589efdd54232f15"
+      },
+      "record_id": "lir23-versioned-usc-section-grouping-evidence609-20261128",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
     }
   },
   "programme_goal_hierarchy": {
