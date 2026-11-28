@@ -5,6 +5,7 @@ import json
 import sys
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any
 
 import pytest
 
@@ -13,6 +14,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_eval_splits im
     CODEX_TODO_PROJECTION_OPERATION,
     DECLARED_HOLDOUTS,
     EXTERNAL_TEST_SPLIT,
+    HELDOUT_EVALUATION_OPERATION,
     HOLDOUT_SPLIT,
     HPARAM_SELECTION_OPERATION,
     IR_SPLIT_MANIFEST_SCHEMA,
@@ -265,6 +267,7 @@ def test_manifest_validation_detects_content_citation_and_near_duplicate_leakage
         "near_duplicate",
     }
     assert set(result.blocked_operations) == {
+        HELDOUT_EVALUATION_OPERATION,
         TRAINING_OPERATION,
         HPARAM_SELECTION_OPERATION,
         REPRESENTATION_PROMOTION_OPERATION,
@@ -652,3 +655,151 @@ def test_official_corpus_seal_keeps_patent_groups_together(tmp_path: Path) -> No
     assert all(key.startswith("src:") for key in assignments)
     assert payload["hidden_test_commitment"].startswith("sha256:")
     assert set(payload["holdouts"]) == {name for name, _split in DECLARED_HOLDOUTS}
+
+
+def _cross_format_citation_samples() -> list[dict[str, object]]:
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_external_benchmark import (
+        load_external_expert_benchmark_packets,
+    )
+
+    packet = load_external_expert_benchmark_packets(
+        ROOT / "tests" / "fixtures" / "legal_ir" / "external_expert_benchmark.jsonl"
+    )[0]
+    return [
+        {**packet.split_sample(), "lineage_group_id": "benchmark-lineage"},
+        {
+            **_sample(
+                "same-provision",
+                citation="5 USC § 552a(e)(4)",
+                text="Thirty agency archives supplied unique historical headings.",
+                source_document_id="independent-docket",
+            ),
+            "lineage_group_id": "independent-lineage",
+        },
+        {
+            **_sample(
+                "different-section",
+                citation="5 USC § 701",
+                text="Inspection requests generally await municipal security clearance.",
+                source_document_id="another-docket",
+            ),
+            "lineage_group_id": "another-lineage",
+        },
+        {
+            **_sample(
+                "different-title",
+                citation="10 USC § 101",
+                text="Favorable scores rewarded accurately transcribed inventory codes.",
+                source_document_id="other-title-docket",
+            ),
+            "lineage_group_id": "other-title-lineage",
+        },
+    ]
+
+
+def _citation_split_config(**options: Any) -> LegalIREvalSplitConfig:
+    return LegalIREvalSplitConfig(
+        seed="unit-citation-grouping",
+        train_ratio=1.0,
+        validation_ratio=0.0,
+        canary_ratio=0.0,
+        holdout_ratio=0.0,
+        statute_family_ratio=0.0,
+        jurisdiction_ratio=0.0,
+        temporal_ratio=0.0,
+        **options,
+    )
+
+
+@pytest.mark.parametrize(
+    "profile",
+    ["generic", None, "dependency-grouped-campaign-split/v1", "unicode-campaign-split/v1"],
+    ids=["generic", "lineage", "dependency-grouped", "unicode"],
+)
+def test_versioned_citation_grouping_keeps_equivalent_provisions_together(profile) -> None:
+    samples = _cross_format_citation_samples()
+    config = _citation_split_config(citation_grouping_policy="us-code-section/v2")
+    manifest = (
+        build_legal_ir_eval_splits(samples, config)
+        if profile == "generic"
+        else build_ir_campaign_splits(samples, config, split_profile=profile)
+    )
+    external_id = str(samples[0]["sample_id"])
+    examples = {item.sample_id: item for item in manifest.examples}
+    assert manifest.config_digest == config.digest
+    assert LegalIREvalSplitConfig(**config.to_dict()) == config
+    assert manifest.metadata["citation_grouping_policy"] == "us-code-section/v2"
+    assert manifest.assignments[external_id] == manifest.assignments["same-provision"] == EXTERNAL_TEST_SPLIT
+    assert manifest.assignments["different-section"] == TRAIN_SPLIT
+    assert examples[external_id].citation_clusters == examples["same-provision"].citation_clusters == (
+        "usc:5:552a",
+    )
+    assert examples["different-section"].citation_clusters == ("usc:5:701",)
+    assert len({item.source_span_key for item in examples.values()}) == 4
+    assert manifest.guard_result().passed
+
+    payload = manifest.to_dict()
+    roundtrip = LegalIRSplitManifest.from_mapping(payload)
+    assert roundtrip.to_dict() == payload
+    with pytest.raises(LegalIRSplitPolicyError):
+        require_training_split(roundtrip, [{"citation": "5 U.S.C. § 552a(e)(4)"}])
+    assert require_training_split(roundtrip, [{"citation": "5 U.S.C. § 701"}]).passed
+
+    crossed = {**payload, "assignments": {**manifest.assignments, "same-provision": TRAIN_SPLIT}}
+    violations = validate_legal_ir_eval_splits(crossed).violations
+    assert [(item.kind, item.key) for item in violations] == [("citation_cluster", "usc:5:552a")]
+
+
+def test_legacy_citation_grouping_refuses_ambiguous_citation_only_lookup() -> None:
+    samples = _cross_format_citation_samples()
+    config = _citation_split_config()
+    old = build_legal_ir_eval_splits(samples, config)
+    payload = old.to_dict()
+    assert "citation_grouping_policy" not in config.to_dict()
+    assert "citation_grouping_policy" not in payload["metadata"]
+    assert old.assignments[str(samples[0]["sample_id"])] == EXTERNAL_TEST_SPLIT
+    assert old.assignments["same-provision"] == TRAIN_SPLIT
+    assert old.guard_result().passed
+
+    restored = LegalIRSplitManifest.from_mapping(payload)
+    assert restored.to_dict() == payload
+    assert require_training_split(restored, [{"sample_id": "same-provision"}]).passed
+    assert require_training_split(restored, [{"citation": "10 USC § 101"}]).passed
+    with pytest.raises(LegalIRSplitPolicyError) as exc_info:
+        require_training_split(restored, [{"citation": "5 USC § 552a(e)(4)"}])
+    assert exc_info.value.disallowed == ({
+        "reason": "ambiguous_legacy_citation_title",
+        "item_index": 0,
+        "citation_cluster": "usc:5:",
+    },)
+
+
+def test_versioned_citation_grouping_seal_pins_the_policy(tmp_path: Path) -> None:
+    config = _citation_split_config(citation_grouping_policy="us-code-section/v2")
+    sealed = seal_ir_campaign_splits(
+        _cross_format_citation_samples(), tmp_path, config=config,
+        split_profile="dependency-grouped-campaign-split/v1",
+    )
+    compact = json.loads((tmp_path / "ir_split_manifest.json").read_text())
+    root = json.loads((tmp_path / "split_root.json").read_text())
+    manifest_payload = sealed["payload"]["legal_ir_split_manifest"]
+    manifest = LegalIRSplitManifest.from_mapping(manifest_payload)
+    assert root["citation_grouping_policy"] == compact["citation_grouping_policy"] == (
+        manifest.metadata["citation_grouping_policy"]
+    ) == config.citation_grouping_policy
+    assert compact["config_digest"] == manifest.config_digest == config.digest
+    assert compact["assignments"] == manifest.assignments
+    assert root["split_manifest_digest"] == compact["split_manifest_digest"] == manifest.digest
+    assert manifest.assignments["same-provision"] == EXTERNAL_TEST_SPLIT
+    assert manifest.guard_result().passed
+
+    legacy = build_ir_campaign_splits(_cross_format_citation_samples(), _citation_split_config())
+    relabeled = {
+        **legacy.to_dict(),
+        "metadata": {
+            **legacy.metadata,
+            "citation_grouping_policy": config.citation_grouping_policy,
+        },
+    }
+    with pytest.raises(ValueError, match="lossy legacy title keys"):
+        LegalIRSplitManifest.from_mapping(relabeled)
