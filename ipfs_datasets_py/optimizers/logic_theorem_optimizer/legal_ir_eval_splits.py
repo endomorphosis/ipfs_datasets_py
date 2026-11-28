@@ -45,6 +45,7 @@ CROSS_REFERENCE_SPLIT: Final = "cross_reference"
 IR_SPLIT_MANIFEST_SCHEMA: Final = "IRSplitManifest@1"
 DEDUPLICATED_CAMPAIGN_SPLIT_PROFILE: Final = "dependency-grouped-campaign-split/v1"
 UNICODE_CAMPAIGN_SPLIT_PROFILE: Final = "unicode-campaign-split/v1"
+UNICODE_CITATION_GROUPING_POLICY: Final = "unicode-citation/v1"
 US_CODE_SECTION_CITATION_GROUPING_POLICY: Final = "us-code-section/v2"
 _LEGACY_USC_TITLE_CLUSTER: Final = re.compile(r"usc:\d+:")
 
@@ -285,7 +286,7 @@ def _usc_section_cluster(value: str) -> str:
 
 
 def _validate_citation_grouping_policy(policy: str | None) -> None:
-    if policy not in (None, US_CODE_SECTION_CITATION_GROUPING_POLICY):
+    if policy not in (None, US_CODE_SECTION_CITATION_GROUPING_POLICY, UNICODE_CITATION_GROUPING_POLICY):
         raise ValueError(f"unknown LegalIR citation grouping policy: {policy!r}")
 
 
@@ -295,10 +296,16 @@ def _citation_grouping_metadata(policy: str | None) -> dict[str, str]:
 
 def _citation_cluster(value: str, *, policy: str | None = None) -> str:
     text = str(value or "").lower()
-    if policy == US_CODE_SECTION_CITATION_GROUPING_POLICY:
+    if policy in (US_CODE_SECTION_CITATION_GROUPING_POLICY, UNICODE_CITATION_GROUPING_POLICY):
         section = _usc_section_cluster(value)
         if section:
             return section
+        if policy == UNICODE_CITATION_GROUPING_POLICY:
+            label = unicodedata.normalize("NFC", value.strip())
+            if not label.isascii():
+                # Keep opaque non-ASCII labels in their original script, with marks.
+                return f"text:{label}" if any(char.isalnum() for char in label) else ""
+            text = label.lower()
         text_key = re.sub(r"[^a-z0-9]+", ":", text).strip(":")
         return f"text:{text_key}" if text_key else ""
     text = text.replace("§", " ")
@@ -813,7 +820,8 @@ def build_legal_ir_eval_splits(
     """Build deterministic LegalIR partitions with leakage clusters intact.
 
     Opt in with US_CODE_SECTION_CITATION_GROUPING_POLICY for canonical U.S. Code
-    section keys. The default continues to reproduce legacy split manifests.
+    section keys, or UNICODE_CITATION_GROUPING_POLICY to also retain NFC opaque
+    citation labels in their original script. The default reproduces legacy manifests.
     """
 
     cfg = config or LegalIREvalSplitConfig()
@@ -1400,8 +1408,9 @@ def build_ir_campaign_splits(
     The explicit profiles apply content-aware grouping even when every sample
     has a lineage ID. The Unicode profile uses character trigrams instead of
     ASCII words. Supply actual text and reviewed lineage and sibling keys.
-    Set the citation grouping policy on the config to combine equivalent U.S.
-    Code section citations, including on the lineage-only path.
+    Set the citation grouping policy on the config to group equivalent U.S.
+    Code section citations or retain Unicode citation labels, including on the
+    lineage-only path.
     """
 
     cfg = config or LegalIREvalSplitConfig()
@@ -1640,6 +1649,7 @@ __all__ = [
     "DECLARED_HOLDOUTS",
     "DEDUPLICATED_CAMPAIGN_SPLIT_PROFILE",
     "UNICODE_CAMPAIGN_SPLIT_PROFILE",
+    "UNICODE_CITATION_GROUPING_POLICY",
     "US_CODE_SECTION_CITATION_GROUPING_POLICY",
     "DOMAIN_SPLIT",
     "EXCEPTION_SPLIT",

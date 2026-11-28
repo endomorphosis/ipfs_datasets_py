@@ -803,3 +803,140 @@ def test_versioned_citation_grouping_seal_pins_the_policy(tmp_path: Path) -> Non
     }
     with pytest.raises(ValueError, match="lossy legacy title keys"):
         LegalIRSplitManifest.from_mapping(relabeled)
+
+
+
+def _unicode_citation_samples() -> list[dict[str, object]]:
+    return [
+        {
+            **_sample(
+                "fictional-external",
+                citation="星間手続法第十条",
+                text="Marine forecasting relies on offshore buoys and seasonal winds.",
+                jurisdiction="fictional",
+                source="external_test",
+                source_document_id="first-fictitious-source",
+            ),
+            "lineage_group_id": "first-lineage",
+        },
+        {
+            **_sample(
+                "repeated-citation",
+                citation="星間手続法第十条",
+                text="The orchard caretaker measures dry soil around maple roots.",
+                jurisdiction="fictional",
+                source_document_id="second-fictitious-source",
+            ),
+            "lineage_group_id": "second-lineage",
+        },
+        {
+            **_sample(
+                "different-provision",
+                citation="港湾手続法第十条",
+                text="Satellite archives document isolated storms above winter lakes.",
+                jurisdiction="fictional",
+                source_document_id="third-fictitious-source",
+            ),
+            "lineage_group_id": "third-lineage",
+        },
+    ]
+
+
+@pytest.mark.parametrize(
+    "profile",
+    ["generic", None, "dependency-grouped-campaign-split/v1", "unicode-campaign-split/v1"],
+    ids=["generic", "lineage", "dependency-grouped", "unicode"],
+)
+def test_unicode_citation_grouping_keeps_the_same_provision_out_of_training(profile) -> None:
+    samples = _unicode_citation_samples()
+    config = _citation_split_config(citation_grouping_policy="unicode-citation/v1")
+    manifest = (
+        build_legal_ir_eval_splits(samples, config)
+        if profile == "generic"
+        else build_ir_campaign_splits(samples, config, split_profile=profile)
+    )
+    examples = {example.sample_id: example for example in manifest.examples}
+    assert len({example.source_span_key for example in examples.values()}) == len(samples)
+    assert examples["fictional-external"].citation_clusters == (
+        "text:星間手続法第十条",
+    ) == examples["repeated-citation"].citation_clusters
+    assert examples["different-provision"].citation_clusters == ("text:港湾手続法第十条",)
+    assert manifest.assignments == {
+        "different-provision": TRAIN_SPLIT,
+        "fictional-external": EXTERNAL_TEST_SPLIT,
+        "repeated-citation": EXTERNAL_TEST_SPLIT,
+    }
+    assert manifest.guard_result().passed
+    raw = manifest.to_dict()
+    roundtrip = LegalIRSplitManifest.from_mapping(raw)
+    assert roundtrip.to_dict() == raw
+    with pytest.raises(LegalIRSplitPolicyError):
+        require_training_split(roundtrip, [{"citation": "星間手続法第十条"}])
+    assert require_training_split(roundtrip, [{"citation": "港湾手続法第十条"}]).passed
+
+    crossed = {**raw, "assignments": {**manifest.assignments, "repeated-citation": TRAIN_SPLIT}}
+    violations = validate_legal_ir_eval_splits(crossed).violations
+    assert [(item.kind, item.key) for item in violations] == [
+        ("citation_cluster", "text:星間手続法第十条"),
+    ]
+
+
+def test_unicode_citation_grouping_matches_nfc_without_erasing_marks(tmp_path: Path) -> None:
+    samples = _unicode_citation_samples()
+    samples[0]["citation"] = "かがみ条例第十条"
+    samples[1]["citation"] = "かか\u3099み条例第十条"
+    samples[2]["citation"] = "かかみ条例第十条"
+    config = _citation_split_config(citation_grouping_policy="unicode-citation/v1")
+    sealed = seal_ir_campaign_splits(
+        samples, tmp_path, config=config, split_profile="unicode-campaign-split/v1",
+    )
+    payload = sealed["payload"]["legal_ir_split_manifest"]
+    manifest = LegalIRSplitManifest.from_mapping(payload)
+    compact = json.loads((tmp_path / "ir_split_manifest.json").read_text())
+    root = json.loads((tmp_path / "split_root.json").read_text())
+    assert manifest.metadata["citation_grouping_policy"] == (
+        compact["citation_grouping_policy"]
+    ) == root["citation_grouping_policy"] == config.citation_grouping_policy
+    assert compact["config_digest"] == manifest.config_digest == config.digest
+    assert root["split_manifest_digest"] == compact["split_manifest_digest"] == manifest.digest
+    assert manifest.assignments["fictional-external"] == manifest.assignments["repeated-citation"] == (
+        EXTERNAL_TEST_SPLIT
+    )
+    assert manifest.assignments["different-provision"] == TRAIN_SPLIT
+    with pytest.raises(LegalIRSplitPolicyError):
+        require_training_split(manifest, [{"citation": "かか\u3099み条例第十条"}])
+    assert require_training_split(manifest, [{"citation": "かかみ条例第十条"}]).passed
+
+
+def test_unicode_citation_grouping_keeps_us_section_and_ascii_aliases() -> None:
+    samples = _cross_format_citation_samples()
+    config = _citation_split_config(citation_grouping_policy="unicode-citation/v1")
+    manifest = build_legal_ir_eval_splits(samples, config)
+    assert manifest.assignments[str(samples[0]["sample_id"])] == manifest.assignments[
+        "same-provision"
+    ] == EXTERNAL_TEST_SPLIT
+    assert manifest.assignments["different-section"] == TRAIN_SPLIT
+    assert require_training_split(manifest, [{"citation": "5 U.S.C. § 701"}]).passed
+    with pytest.raises(LegalIRSplitPolicyError):
+        require_training_split(manifest, [{"citation": "5 U.S.C. § 552a(e)(4)"}])
+    example = LegalIRSplitExample.from_sample(
+        {"id": "ascii", "citations": ["Model Procedure Act art. 7", "model procedure act art 7"]},
+        citation_grouping_policy=config.citation_grouping_policy,
+    )
+    assert example.citation_clusters == ("text:model:procedure:act:art:7",)
+
+
+@pytest.mark.parametrize("policy", [None, "us-code-section/v2"], ids=["default", "us-code-v2"])
+def test_existing_citation_policies_retain_their_unicode_sample_manifests(policy) -> None:
+    config = _citation_split_config(citation_grouping_policy=policy)
+    manifest = build_ir_campaign_splits(
+        _unicode_citation_samples(), config, split_profile="unicode-campaign-split/v1",
+    )
+    assert all(example.citation_clusters == () for example in manifest.examples)
+    assert manifest.assignments == {
+        "different-provision": TRAIN_SPLIT,
+        "fictional-external": EXTERNAL_TEST_SPLIT,
+        "repeated-citation": TRAIN_SPLIT,
+    }
+    assert manifest.metadata.get("citation_grouping_policy") == policy
+    assert LegalIRSplitManifest.from_mapping(manifest.to_dict()).to_dict() == manifest.to_dict()
