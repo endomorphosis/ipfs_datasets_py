@@ -1952,11 +1952,14 @@ class LeanKernelBackend:
             max_output_bytes=remaining_output_bytes))
         process = self._runner.run(tool_request, cancellation=cancellation, runtime=ToolRuntime.NATIVE)
         usage = _usage_from_process(process)
-        accepted, axiom_report, eval_diagnostics = evaluate_lean_kernel_output(
-            process, declaration=guard or theorem_name, approved_axioms=self.approved_axioms,
-            expected_source_path=process.command[-1] if process.command else "",
-            expected_source_line=axiom_line,
-        )
+        if process.command != tool_request.argv:
+            accepted, axiom_report = False, None
+            eval_diagnostics = ("returned Lean command differs from the selected compiler command",)
+        else:
+            accepted, axiom_report, eval_diagnostics = evaluate_lean_kernel_output(
+                process, declaration=guard or theorem_name, approved_axioms=self.approved_axioms,
+                expected_source_path=tool_request.argv[-1], expected_source_line=axiom_line,
+            )
         diagnostics.extend(eval_diagnostics)
         try:
             identity_unchanged = identity is not None and self._recheck_native_identity(identity)
