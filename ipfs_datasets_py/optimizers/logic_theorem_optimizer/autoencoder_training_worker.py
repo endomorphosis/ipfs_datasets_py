@@ -887,6 +887,8 @@ class ReviewedDecoderRuntime:
     execution_guard: Callable[[], Any]
     asset_policy_guard: Callable[[Mapping[str, Any]], Any]
     current_bound_component_inputs_provider: Callable[[], Mapping[str, Any]] | None = field(default=None, kw_only=True)
+    _loaded_checkpoint_source_anchor: tuple[tuple[str, int], tuple[str, int], str, str] | None = field(
+        default=None, init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         if self.current_bound_component_inputs_provider is not None and not callable(
@@ -4619,6 +4621,7 @@ def _make_reviewed_decoder_source_producer(runtime, *, binding, rows, split_mani
     need(type(runtime) is ReviewedDecoderRuntime, "explicit caller-owned reviewed runtime required")
     checkpoint_bound_provider = runtime.current_bound_component_inputs_provider
     checkpoint_admission_provider = runtime.current_admission_provider if checkpoint_bound_provider is not None else None
+    checkpoint_anchor = runtime._loaded_checkpoint_source_anchor
     query_bound = binding.receipt().get("bound_component_inputs_sha256") is not None
     if query_bound:
         need(_admission_version == "v3" and callable(current_query_bound_component_inputs_provider)
@@ -4635,10 +4638,18 @@ def _make_reviewed_decoder_source_producer(runtime, *, binding, rows, split_mani
                      for pin in (expected_checkpoint_admission_inputs_sha256,
                                  expected_checkpoint_bound_component_inputs_sha256)),
              "source-bound runtime requires separate pinned checkpoint and query replay")
+        need(type(checkpoint_anchor) is tuple
+             and type(model_checkpoint) is CheckpointArtifact and type(optimizer_checkpoint) is CheckpointArtifact
+             and checkpoint_anchor == ((model_checkpoint.sha256, model_checkpoint.bytes),
+                                        (optimizer_checkpoint.sha256, optimizer_checkpoint.bytes),
+                                        expected_checkpoint_admission_inputs_sha256,
+                                        expected_checkpoint_bound_component_inputs_sha256),
+             "source-bound producer must match the original V5 loaded checkpoint and training replay pins")
     else:
         need(current_query_admission_provider is None and expected_checkpoint_admission_inputs_sha256 is None
              and expected_checkpoint_bound_component_inputs_sha256 is None,
              "separate checkpoint and query replay requires the runtime's current checkpoint source provider")
+        need(checkpoint_anchor is None, "source-bound loaded checkpoints require their original replay providers")
     backend, tokenizer = runtime.backend, runtime.tokenizer
     if generation_copy is not None:
         need(type(backend) is TorchReviewedDecoderBackend and backend.architecture == "causal_lm"
@@ -4793,6 +4804,8 @@ def _make_reviewed_decoder_source_producer(runtime, *, binding, rows, split_mani
         if checkpoint_admission_provider is not None:
             need(runtime.current_admission_provider is checkpoint_admission_provider,
                  "runtime checkpoint admission provider changed")
+            need(runtime._loaded_checkpoint_source_anchor is checkpoint_anchor,
+                 "runtime loaded checkpoint source anchor changed")
         need(wire(originals) == frozen_raw, "bound producer inputs changed")
         need(all(file_stamp(path) == expected for path, expected in stamps.items()),
              "producer source or asset file identity changed")
@@ -5821,6 +5834,13 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
             receipt["deterministic_buffer_dtype"] = "float32"
         if admission_profile is not None:
             receipt["admission_profile"] = admission_profile
+        if source_bound:
+            # Only the V5 loader establishes this provenance, after confirming
+            # the original training input replay and the exact restored pair.
+            object.__setattr__(runtime, "_loaded_checkpoint_source_anchor",
+                ((model_checkpoint.sha256, model_checkpoint.bytes),
+                 (optimizer_checkpoint.sha256, optimizer_checkpoint.bytes),
+                 expected_admission_inputs_sha256, bound_inputs_sha256))
         succeeded = True
         return runtime, receipt
     finally:

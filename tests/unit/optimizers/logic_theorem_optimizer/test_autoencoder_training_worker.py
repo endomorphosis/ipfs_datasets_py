@@ -4820,6 +4820,10 @@ def test_reviewed_source_producer_replays_signed_query_and_independent_checkpoin
     runtime = worker.ReviewedDecoderRuntime(SimpleNamespace(read_artifact=no_registry, artifact_path=no_registry),
         backend, backend.tokenizer, lambda: deepcopy(current["checkpoint_admission"]), lambda: None, lambda _: None,
         current_bound_component_inputs_provider=lambda: deepcopy(current["checkpoint"]))
+    # Simulate the already verified loader association for the analytic pair.
+    # The public loader test below establishes the actual runtime anchor.
+    object.__setattr__(runtime, "_loaded_checkpoint_source_anchor",
+        ((model.sha256, model.bytes), (optimizer.sha256, optimizer.bytes), checkpoint_admission_pin, checkpoint_pin))
     contexts = {"profile": "reviewed-source-selection-context/v2",
         "selection_context": {"schema": "caller-known-interpretation-selection/v1",
             "interpretation_id": case["declaration"]["interpretation_id"], "selection_mode": "identifier_only"},
@@ -4876,21 +4880,25 @@ def test_reviewed_source_producer_replays_signed_query_and_independent_checkpoin
         "checkpoint_admission_inputs_sha256": checkpoint_admission_pin,
         "checkpoint_bound_component_inputs_sha256": checkpoint_pin}
 
-    for rewrite_admission, diagnostic in (
-            (False, "normal retention bound source differs from observed admission"),
-            (True, "normal retention observations differ in frozen producer inputs")):
+    for change, diagnostic in (
+            ("producer_only", "normal retention bound source differs from observed admission"),
+            ("query", "normal retention observations differ in frozen producer inputs"),
+            ("same_pair", "normal retention checkpoint source commitments differ for the same checkpoint pair")):
         tampered = artifact.to_dict()
         tampered_metadata = tampered["metadata"]
         observed = tampered_metadata["source_generation_observation"]
         tampered_commitment = observed["input_commitment"]
-        tampered_commitment["bound_component_inputs_sha256"] = checkpoint_pin
+        if change == "same_pair":
+            tampered_commitment["checkpoint_bound_component_inputs_sha256"] = query_pin
+        else:
+            tampered_commitment["bound_component_inputs_sha256"] = checkpoint_pin
         pin = evaluation.stable_digest(tampered_commitment)
         prefix = observed["input_profile_id"].removesuffix(observed["input_commitment_sha256"])
         observed["input_commitment_sha256"] = tampered_metadata["source_generation_input_commitment_sha256"] = pin
         observed["input_profile_id"] = prefix + pin
         tampered_payload = tampered["compiler_artifact"]["reviewed_source_span_producer_evaluation"]
         tampered_payload["configuration"]["input_profile"]["profile_id"] = observed["input_profile_id"]
-        if rewrite_admission:
+        if change == "query":
             for gate in ("admission_before", "admission_after"):
                 tampered_payload[gate]["bound_component_inputs_sha256"] = checkpoint_pin
         offered = _reseal_reviewed_retention(artifact, tampered)
@@ -5518,6 +5526,50 @@ def test_reviewed_local_loader_v5_restores_exact_builtin_pair_with_signed_source
     assert len(fixture.policies) == receipt["guard_calls"]["asset_policy"] > 0
     assert all(receipt[key] is False for key in ("training_performed", "downloads_performed", "resource_granted",
         "pretrained_quality_verified", "legal_meaning_verified", "proof_authority", "corpus_admitted"))
+    _assert_reviewed_local_v5_artifacts_unchanged(fixture)
+
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_span_consumer_binding as consumer
+    _, _, _, query_rows, query_options = data.fixtures.reviewed_public_mixed_consumer_case(
+        current=data.case, operation="heldout_evaluation")
+    query_source = data.bound_component_inputs[data.key]
+    heldout = consumer.prepare_reviewed_source_span_consumer_binding_v3(
+        query_rows, **query_options, bound_component_inputs=query_source)
+    assert heldout.receipt()["status"] == "ready"
+    original_model, original_optimizer = fixture.spec.base_model_checkpoint, fixture.spec.base_optimizer_checkpoint
+    assert runtime._loaded_checkpoint_source_anchor == (
+        (original_model.sha256, original_model.bytes), (original_optimizer.sha256, original_optimizer.bytes),
+        fixture.spec.expected_admission_inputs_sha256, fixture.bound_sha)
+
+    # Substitute both populations after the real loader returns, then offer
+    # their correct new hashes as if they had been the source of this pair.
+    monkeypatch.setitem(data.kwargs, "current_admission_inputs", {data.key: {"replacement": b"different training review"}})
+    monkeypatch.setattr(data, "bound_component_inputs", {data.key: {"replacement": b"different training source"}})
+    present_admission_pin = consumer.reviewed_admission_inputs_sha256(runtime.current_admission_provider())
+    present_source_pin = consumer.reviewed_admission_inputs_sha256(runtime.current_bound_component_inputs_provider())
+    assert present_admission_pin != fixture.spec.expected_admission_inputs_sha256 and present_source_pin != fixture.bound_sha
+
+    def forbidden_generation(*_, **__):
+        pytest.fail("relabelled V5 checkpoint reached generation")
+
+    monkeypatch.setattr(runtime.backend, "generate_batch", forbidden_generation)
+    contexts = {"profile": "reviewed-source-selection-context/v2",
+        "selection_context": {"schema": "caller-known-interpretation-selection/v1",
+            "interpretation_id": data.case["declaration"]["interpretation_id"], "selection_mode": "identifier_only"},
+        "rows": [{"id": row["id"], "unit_id": row["unit_id"], "governing_context": row["canonical_ir"]["governing_context"],
+                  "source_binding": row["canonical_ir"]["source_binding"]} for row in query_rows]}
+    with pytest.raises(worker.TrainingJobValidationError, match="original V5 loaded checkpoint and training replay pins"):
+        worker.make_reviewed_decoder_source_producer_v3(runtime, binding=heldout, rows=query_rows,
+            split_manifest=query_options["split_manifest"], exposure_records=query_options["exposure_records"],
+            source_contexts=contexts, expected_source_contexts_sha256=data.fixtures.digest(contexts),
+            expected_admission_inputs_sha256=query_options["expected_admission_inputs_sha256"],
+            backend_identity=runtime.backend.identity(), assets=(original_model,), model_checkpoint=original_model,
+            optimizer_checkpoint=original_optimizer, max_source_tokens=maximum, max_output_tokens=3,
+            allow_heldout_evaluation=True, current_query_admission_provider=lambda: query_options["admission_inputs"],
+            current_query_bound_component_inputs_provider=lambda: query_source,
+            expected_query_bound_component_inputs_sha256=consumer.reviewed_admission_inputs_sha256(query_source),
+            expected_checkpoint_admission_inputs_sha256=present_admission_pin,
+            expected_checkpoint_bound_component_inputs_sha256=present_source_pin)
+    assert runtime.backend.restored_checkpoint_matches(local.checkpoint["model_state"], local.checkpoint["optimizer_state"])
     _assert_reviewed_local_v5_artifacts_unchanged(fixture)
 
 

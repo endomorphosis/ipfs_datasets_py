@@ -2283,6 +2283,12 @@ def compare_reviewed_source_span_retention(before, after, *, expected_before_sha
     if prior_generation is not None:
         require(("checkpoint_source_commitments" in prior_generation) == ("checkpoint_source_commitments" in next_generation),
                 "retention checkpoint provenance routes differ")
+        if "checkpoint_source_commitments" in prior_generation:
+            previous_pair, current_pair = (item["checkpoint_pair"] for item in (prior_generation, next_generation))
+            same_pair = all((ref["sha256"], ref["bytes"]) == (current_pair[role]["sha256"], current_pair[role]["bytes"])
+                            for role, ref in previous_pair.items())
+            require(not same_pair or prior_generation["checkpoint_source_commitments"] == next_generation["checkpoint_source_commitments"],
+                    "normal retention checkpoint source commitments differ for the same checkpoint pair")
         require(stable_digest(prior_generation["fixed_commitment"] if cache_projected_commitments is None else cache_projected_commitments[0]) == stable_digest(next_generation["fixed_commitment"] if cache_projected_commitments is None else cache_projected_commitments[1])
                 and (prior_generation["input_receipt"] is None or next_generation["input_receipt"] is None
                      or stable_digest(prior_generation["input_receipt"]) == stable_digest(next_generation["input_receipt"])),
