@@ -400,27 +400,37 @@ def _require_disjoint_heldout_review(heldout, training_admission, training_rows,
     _require({row["unit_id"] for row in training_rows} == {unit["unit_id"] for unit in training_units},
              "rich heldout context requires the complete reviewed TRAIN component")
     _require_disjoint_reviewed_dependency_sources(group, subject, dependencies, training_declaration)
+    _require_disjoint_heldout_near_duplicates(queries, training_rows, manifest.metadata)
+    return subject["dependency_manifest_sha256"]
+
+
+def _require_disjoint_heldout_near_duplicates(queries, training_rows, metadata):
+    from . import legal_ir_eval_splits as split_owner
+
     source_rows = [*queries, *training_rows]
-    split_owner = bound.splits
     source_examples = [split_owner.LegalIRSplitExample.from_sample(row) for row in source_rows]
     fingerprint_views = [source_examples]
-    if "unicode_data_version" in manifest.metadata:
+    if "unicode_data_version" in metadata:
         from dataclasses import replace
 
         # Recompute the manifest's selected profile from source bytes on both
         # sides. The frozen near-duplicate labels may omit a cross-split edge.
         fingerprint_views.append([
             replace(example, token_fingerprint=split_owner.legal_ir_split_source_fingerprint(
-                row["source_text"], metadata=manifest.metadata)[1])
+                row["source_text"], metadata=metadata)[1])
             for row, example in zip(source_rows, source_examples, strict=True)
         ])
-    threshold = split_owner.LegalIREvalSplitConfig().near_duplicate_jaccard_threshold
+    default_threshold = split_owner.LegalIREvalSplitConfig().near_duplicate_jaccard_threshold
+    configured_threshold = metadata.get("near_duplicate_jaccard_threshold", default_threshold)
+    _require(type(configured_threshold) in (int, float) and 0 < configured_threshold <= 1,
+             "near_duplicate_jaccard_threshold must be a finite number in (0, 1]")
+    # The manifest may identify more overlaps while the default keeps its existing protection.
+    threshold = min(default_threshold, configured_threshold)
     for examples in fingerprint_views:
         clusters = split_owner._near_duplicate_clusters(examples, threshold)
         holdout_clusters = {clusters[query["id"]] for query in queries if query["id"] in clusters}
         _require(not holdout_clusters.intersection(clusters.get(row["id"]) for row in training_rows),
                  "heldout and TRAIN share a near-duplicate source group")
-    return subject["dependency_manifest_sha256"]
 
 
 def _screen_reviewed_heldout_context(value, *, heldout_evaluation, reference_rows):
