@@ -3501,3 +3501,8 @@ The current ordinary run passed 17 tests with a fictional signed V5 stage histor
 ## Evidence605 — Signed fictional V5 worker continuation
 
 A scoped analytic worker test exercised a changed stage and exact resume on signed fictional records. A separate local test restored a miniature CPU T5 and AdamW pair after one update on a signed fictional historical row, with no second update in the loader. The evidence supports checkpoint continuity and custody checks. The original V12 parent also passed on the current source with the pristine pair. It retained three incomplete held-out candidates, with zero exact matches under the cap. The persisted V5 successor still requires its own original-parent evaluation. Independent statutory review, production model quality, retention and cost remain open. [Exact worker and loader evidence](/tmp/P7-v5-worker-guide605-current-hd0V27gS/actual-composed-v5-worker-transition-qualification.json)
+
+
+## Evidence606 — Civil deadline scoring coverage
+
+The offline scorer retained all five previously lost candidate attempts with unknown date fidelity. The 182-case composed test run covers source-withheld parsing, lexical abstention, valid deadline attachment, and invalid reference contexts. This evidence concerns scoring behavior on fixtures. [Exact scorer test evidence](/tmp/P7-v5-worker-guide605-current-hd0V27gS/actual-composed-civil-deadline-score-coverage-qualification.json)

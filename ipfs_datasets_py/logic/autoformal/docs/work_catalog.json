@@ -39900,6 +39900,22 @@
       "root": "artifact_workspace",
       "scope": "Opt-in signed fictional V5 worker transition, exact resume and miniature T5 loader boundary.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/lir23_civil_deadline_candidate_context_accounting_20261128",
+      "closed_runtime_facts": {
+        "baseline_failures": 5,
+        "owning_and_composed_cases_passed": 182
+      },
+      "evidence_ordinal": 606,
+      "id": "lir23-civil-deadline-candidate-context-accounting-evidence606-20261128",
+      "observed_bytes": 1272,
+      "observed_sha256": "9b01ea5bcda43b405ec975e14f199de4c2b7b602df8fe8bf09373bc81e188cdb",
+      "path": "/tmp/P7-v5-worker-guide605-current-hd0V27gS/actual-composed-civil-deadline-score-coverage-qualification.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Retain civil deadline candidates with unresolved date evaluation in the scoring denominator.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }
