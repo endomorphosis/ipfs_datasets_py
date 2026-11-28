@@ -5553,6 +5553,26 @@
       },
       "record_id": "v12-emitted-text-pinned-tokenizer-validation",
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
+    },
+    "saved_retention_admitted_source_version_occurrence": {
+      "evidence_ordinal": 622,
+      "facts": {
+        "bytes": 1398,
+        "path": "/tmp/Guide620-current-verified-integration-ut8jf6gp/actual-composed-qualification-Evidence622.json",
+        "sha256": "c692c438455803b308367f463e76f16d416687da5091e7e7429061f5d707cec1"
+      },
+      "record_id": "heldout-retention-admitted-version-and-occurrence-consistency",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
+    },
+    "source_withheld_modal_negation_boundary": {
+      "evidence_ordinal": 621,
+      "facts": {
+        "bytes": 1557,
+        "path": "/tmp/Guide620-current-verified-integration-ut8jf6gp/actual-composed-qualification-Evidence621.json",
+        "sha256": "ecc30733bd9d95237a7e5b6c2c46704470928d73bf847ef33645f5213e8c50ac"
+      },
+      "record_id": "source-withheld-prose-modal-negation-refusal",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
     }
   },
   "programme_goal_hierarchy": {

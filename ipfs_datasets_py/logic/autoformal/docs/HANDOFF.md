@@ -4434,3 +4434,13 @@ The existing staging owner repeats its authenticated historical and retirement-r
 ## Evidence620 — Finite evaluation cache duration accounting
 
 The cache treats unrepresentable duration values and nonfinite totals as cache misses. Such entries do not contribute saved-time credit. [Exact qualification evidence](/tmp/Guide616-current-verified-integration-ZQ1EnK4x/actual-composed-qualification-Evidence620.json)
+
+
+## Evidence621 — Unambiguous modal polarity in source-withheld prose
+
+Leading action negation in an opaque atom now abstains with an explicit action diagnostic. Before the change, an obligation using not_file emitted the same controlled sentence as an explicit prohibition. The existing inverse read that sentence as a prohibition. [Exact qualification evidence](/tmp/Guide620-current-verified-integration-ut8jf6gp/actual-composed-qualification-Evidence621.json)
+
+
+## Evidence622 — Exact admitted source identity in saved retention
+
+The existing retention comparator now joins each canonical reference to its admitted dependency-group source version and occurrence. Matching before and after manifests cannot authorize mismatches to either field. [Exact qualification evidence](/tmp/Guide620-current-verified-integration-ut8jf6gp/actual-composed-qualification-Evidence622.json)

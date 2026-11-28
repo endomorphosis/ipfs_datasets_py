@@ -40108,6 +40108,30 @@
       "root": "artifact_workspace",
       "scope": "Existing LegalIR evaluation cache timing and saved-time credit",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/source_withheld_modal_negation_boundary",
+      "evidence_ordinal": 621,
+      "id": "source-withheld-prose-modal-negation-refusal",
+      "observed_bytes": 1557,
+      "observed_sha256": "ecc30733bd9d95237a7e5b6c2c46704470928d73bf847ef33645f5213e8c50ac",
+      "path": "/tmp/Guide620-current-verified-integration-ut8jf6gp/actual-composed-qualification-Evidence621.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Existing canonical renderer and its controlled inverse",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/saved_retention_admitted_source_version_occurrence",
+      "evidence_ordinal": 622,
+      "id": "heldout-retention-admitted-version-and-occurrence-consistency",
+      "observed_bytes": 1398,
+      "observed_sha256": "c692c438455803b308367f463e76f16d416687da5091e7e7429061f5d707cec1",
+      "path": "/tmp/Guide620-current-verified-integration-ut8jf6gp/actual-composed-qualification-Evidence622.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Version and occurrence consistency across saved held-out retention panels",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }

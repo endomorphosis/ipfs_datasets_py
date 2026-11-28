@@ -3574,3 +3574,13 @@ The three matched controls now distinguish stable withdrawal, changed parent his
 ## Evidence620 — Finite evaluation cache duration accounting
 
 All fifteen owning tests passed, including four reproduced corrupt-duration cases. Historical V5 and V12 receipts supply worker and callback wall-clock observations for the fictional population only. Compute, monetary cost, independently accepted results and cost per accepted formalization remain unmeasured. [Exact qualification evidence](/tmp/Guide616-current-verified-integration-ZQ1EnK4x/actual-composed-qualification-Evidence620.json)
+
+
+## Evidence621 — Unambiguous modal polarity in source-withheld prose
+
+The explicit prohibition still round trips and the frozen proof-free texts retain their bytes and CIDs. All 117 selected software cases passed, including all five matched controls. No statutory meaning, source correspondence, proof validation, or model quality is established. [Exact qualification evidence](/tmp/Guide620-current-verified-integration-ut8jf6gp/actual-composed-qualification-Evidence621.json)
+
+
+## Evidence622 — Exact admitted source identity in saved retention
+
+Both resealed mismatches reproduced before the change. All 32 selected retention cases passed, including both regressions. Seven selected cross-component checks passed on the composed source. This measurement does not add a legal review or a new model comparison. [Exact qualification evidence](/tmp/Guide620-current-verified-integration-ut8jf6gp/actual-composed-qualification-Evidence622.json)
