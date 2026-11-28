@@ -131,6 +131,8 @@ def _reviewed_units(body, source_inputs, relational_inputs):
         _keys(ir_inputs, {"request_raw", "report", "expected_report_sha256"}, "complete relational replay inputs")
         report = _validate_relational(relational, unit["relational_profile"], ir_inputs,
                                       unit["relational_request_sha256"])
+        _need(unit["kind"] != "norm" or report["counts"]["modal_nodes"] > 0,
+              "reviewed normative use must retain an O/P/F modality")
         coverage = unit["coverage"]
         paths = [row["typed_path"] for row in report["structural_mapping"]]
         _need(type(coverage) is list and len(coverage) == len(paths), "complete typed-node source correspondence required")

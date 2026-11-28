@@ -981,3 +981,58 @@ def test_reviewed_norm_requires_each_matching_local_definition_selection(
 
     assert finished["semantic_use_eligible"] is (selection != "omitted")
     assert finished["fixture_only"] and not finished["corpus_admitted"]
+
+
+@pytest.mark.parametrize("domain", ["v2", "v3"])
+@pytest.mark.parametrize("retain_modality", [False, True], ids=["factual-only", "deontic"])
+def test_reviewed_norm_distinguishes_facts_from_deontic_uses(
+        sibling, mixed_case, v2_saved, domain, retain_modality):
+    case = mixed_case if domain == "v3" else cloned(v2_saved[0])
+    declaration = case["declaration"]
+    definition = declaration["units"][0]
+    target = declaration["units"][2 if domain == "v3" else 1]
+    assert definition["kind"] == "definition" and target["kind"] == "norm"
+    assert case["relational_inputs"][definition["unit_id"]]["report"]["counts"]["modal_nodes"] == 0
+    authored = case["relational_inputs"][target["unit_id"]]["report"]
+    request = deepcopy(authored["request"])
+    assert authored["counts"]["modal_nodes"] == 1
+
+    if not retain_modality:
+        def without_modality(node):
+            if node["kind"] == "extension":
+                return node["extension"]["children"][0]
+            node["arguments"] = [without_modality(child) for child in node["arguments"]]
+            return node
+
+        expression = request["expression"]
+        expression["root"] = without_modality(expression["root"])
+        del expression["content_digest"]
+        request["expression"] = ast.TypedExpression.from_dict(expression).to_dict()
+    if domain == "v3":
+        prepare_admission = sibling.prepare_reviewed_norm_admission_v3
+        prepare_relational = relational.prepare_mixed_relational_norm_v1
+        report_digest = relational.mixed_relational_norm_report_sha256
+    else:
+        prepare_admission = legacy.prepare_reviewed_norm_admission_v2
+        prepare_relational = relational.prepare_relational_norm_v1
+        report_digest = relational.relational_norm_report_sha256
+    _reviewed_dependency_fixture_report(case, target, request, prepare_relational, report_digest)
+    assert case["relational_inputs"][target["unit_id"]]["report"]["counts"]["modal_nodes"] == int(retain_modality)
+    fixture.reviewed_refresh_manifest_v2(case)
+
+    try:
+        case["preparation"] = prepare_admission(declaration, **prepare_args(case))
+    except ValueError as error:
+        assert not retain_modality and "normative use must retain an O/P/F modality" in str(error)
+        return
+
+    if domain == "v3":
+        refresh_signed_reviews(case, sibling)
+        assert_signatures_valid(case)
+        finished = assess(sibling, case)
+    else:
+        fixture.reviewed_refresh_signed_preparation_v2(legacy, case)
+        assert_signatures_valid(case)
+        finished = fixture.assess_reviewed_fixture_v2(legacy, case)
+    assert finished["fixture_only"] and not finished["corpus_admitted"]
+    assert finished["semantic_use_eligible"] is retain_modality, finished["blockers"]
