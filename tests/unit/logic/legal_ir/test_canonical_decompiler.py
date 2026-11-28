@@ -476,3 +476,44 @@ def test_modal_guard_preserves_actions_with_nonmodal_word_prefix():
     result = SourceWithheldCanonicalDecompiler().decompile(notice)
     assert result.status is OperationStatus.SUCCESS
     assert result.text == "Agency must notify owner."
+
+
+@pytest.mark.parametrize("actor_word", ["must", "may"])
+def test_actor_modal_words_cannot_collide_with_the_rule_modal_boundary(actor_word):
+    first_modality, second_modality, second_action = (
+        ("P", "O", "may_file") if actor_word == "must" else ("O", "P", "must_file")
+    )
+    actor_request = _request(CanonicalRule(
+        first_modality, "agency_" + actor_word, "file", "report"
+    ))
+    explicit_request = _request(CanonicalRule(
+        second_modality, "agency", second_action, "report"
+    ))
+    assert actor_request.canonical_ir.ir_cid != explicit_request.canonical_ir.ir_cid
+    decompiler = SourceWithheldCanonicalDecompiler()
+    actor_result = decompiler.decompile(actor_request)
+    explicit_result = decompiler.decompile(explicit_request)
+    assert explicit_result.status is OperationStatus.SUCCESS
+    assert explicit_result.text == (
+        "Agency must may file report." if actor_word == "must" else "Agency may must file report."
+    )
+    for actor, text in (
+        ("mayor", "Mayor must file report."),
+        ("mustard_office", "Mustard office must file report."),
+        ("notifier", "Notifier must file report."),
+    ):
+        positive_request = _request(CanonicalRule("O", actor, "file", "report"))
+        positive_result = decompiler.decompile(positive_request)
+        assert positive_result.status is OperationStatus.SUCCESS
+        assert positive_result.text == text
+        assert positive_result.request_cid == positive_request.request_cid
+    if actor_result.status is OperationStatus.SUCCESS:
+        # Reproduce the old collision with a different actor/modal/action IR.
+        assert actor_result.text == explicit_result.text
+    assert actor_result.status is OperationStatus.ABSTAINED
+    assert actor_result.text is None and actor_result.text_cid is None
+    assert actor_result.component_trace == ()
+    assert actor_result.error is not None
+    assert actor_result.error.code is CanonicalErrorCode.UNSUPPORTED_SEMANTICS
+    assert actor_result.error.details["facet"] == "actor"
+    assert actor_result.error.details["delimiter"] == actor_word
