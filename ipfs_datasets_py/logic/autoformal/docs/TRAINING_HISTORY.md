@@ -3481,3 +3481,8 @@ The existing kernel owner passed its ordinary software checks and one managed in
 ## Evidence601 — Source-bound rich TRAIN replay fixture
 
 The existing structured retrieval consumer preserves complete examples while checking the supplied current source history and its independent commitment. The isolated qualification reproduced two baseline failures and passed 12 signed source replay cases, alongside 19 direct-context and five heldout integration cases. The merge into Guide600 retained those exact source changes and used static compatibility checks. This evidence covers ordinary fictional fixtures. [Exact Phase 4 fixture and merge evidence](/tmp/P4-rich-bound-train-onubtv2a/Guide601-isolated/actual-Guide601-P4-qualified-fixture-integration.json)
+
+
+## Evidence602 — Fixed-vector V4 retrieval diagnostics
+
+The signed fictional V4 fixture reproduced one baseline refusal and passed all 10 comparison controls after the fix. All 128 retained scorer cases passed in a separate cohort. The lexical and raw controls exercised the existing fixed-vector ranking path. The joint control abstained before forward execution. This evidence covers literal payload and complete denominator checks. Learned fitting, model quality, and semantic judgments remain outside its scope. [Exact fixture, hashes and results](/tmp/P8-v4-frozen-ranking-comparator-lumab68q/actual-Guide602-frozen-V4-retrieval-evidence.json)
