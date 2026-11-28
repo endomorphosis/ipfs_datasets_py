@@ -529,3 +529,26 @@ def test_metadata_only_native_refusal_uses_exported_error_with_all_call_flags_fa
     assert caught.value.model_load_started is caught.value.model_load_performed is False
     assert caught.value.model_inference_started is caught.value.model_inference_executed is False
     assert caught.value.raw_candidate_report is None and loader["loads"] == loader["calls"] == []
+
+
+@pytest.mark.parametrize(("name", "maximum"), [
+    ("autoencoder_training_worker", 1024 * 1024),
+    ("autoencoder_embedding_runtime", 512 * 1024),
+])
+def test_current_source_pin_bounds_remain_finite_by_owner(tmp_path, monkeypatch, loader, name, maximum):
+    data = make_cached(tmp_path, monkeypatch)
+    kwargs = options(data)
+    kwargs["source_owner_pins"][name]["bytes"] = maximum + 1
+    with pytest.raises(runtime.NormativeCachedLegalRuntimeError, match="bounded exact file bytes/SHA256 required"):
+        runtime.open_normative_cached_legal_ir_autoencoder(**kwargs)
+    assert loader["loads"] == loader["calls"] == []
+
+
+def test_current_training_worker_pin_cannot_substitute_its_digest(tmp_path, monkeypatch, loader):
+    data = make_cached(tmp_path, monkeypatch)
+    kwargs = options(data)
+    worker = kwargs["source_owner_pins"]["autoencoder_training_worker"]
+    worker["sha256"] = "0" * 64
+    with pytest.raises(runtime.NormativeCachedLegalRuntimeError, match="pinned bytes/SHA256 differ"):
+        runtime.open_normative_cached_legal_ir_autoencoder(**kwargs)
+    assert loader["loads"] == loader["calls"] == []
