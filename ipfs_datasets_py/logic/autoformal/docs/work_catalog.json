@@ -40264,6 +40264,18 @@
       "root": "artifact_workspace",
       "scope": "Exact two-file deadline fix and local software checks for reviewed definition realization using authored compiler fixtures.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/lir18_masked_contrastive_pair_mass_stability_20261128",
+      "evidence_ordinal": 634,
+      "id": "lir18-masked-contrastive-pair-mass-stability-evidence634-20261128",
+      "observed_bytes": 2582,
+      "observed_sha256": "6fd7e02d6b75a2bdd778926acab545f281f55dc5a9a2cb73965aa384bd98cd8e",
+      "path": "/tmp/Guide633-masked-contrastive-publication-iSjmL5WF/actual-composed-qualification-Evidence634.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Exact two-file masked contrastive arithmetic fix and ordinary CPU tensor qualification.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }

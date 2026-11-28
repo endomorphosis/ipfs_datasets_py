@@ -4499,3 +4499,8 @@ The existing retained-cache runtime can explicitly compare conditioned input aga
 ## Evidence633 — Incremental realization checks the deadline through receipt readback
 
 The incremental realization build now checks its monotonic operation deadline after the final source and policy fence and again after reading back the build receipt. Caller cancellation is checked before the final fence. The three regression cases cover timeout at either check and a successful on-time return. [Exact qualification evidence](/tmp/Guide632-incremental-deadline-publication-PA8fMeDX/actual-composed-qualification-Evidence633.json)
+
+
+## Evidence634 — Stable masked contrastive loss and gradients under large common logits
+
+The contrastive loss now centers the positive and permitted log-mass terms separately and applies negative weights after removing the common logit. The compatibility check considers normalized pair probabilities as well as the forward loss, covering cases where the scalar agrees but the gradients differ. [Exact qualification evidence](/tmp/Guide633-masked-contrastive-publication-iSjmL5WF/actual-composed-qualification-Evidence634.json)

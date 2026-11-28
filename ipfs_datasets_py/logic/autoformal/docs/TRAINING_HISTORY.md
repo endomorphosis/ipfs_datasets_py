@@ -3639,3 +3639,8 @@ The real numeric and greedy paths reproduced three late-start conditions with a 
 ## Evidence633 — Incremental realization checks the deadline through receipt readback
 
 All 77 affected software cases passed. The full 166-case software run recorded 163 passes and three older fixture-validation failures. The published Guide 632 commit reproduced all three with byte-identical tracebacks before entering the incremental build. Five installed-Lean cases were deselected. [Exact qualification evidence](/tmp/Guide632-incremental-deadline-publication-PA8fMeDX/actual-composed-qualification-Evidence633.json)
+
+
+## Evidence634 — Stable masked contrastive loss and gradients under large common logits
+
+The full owning suite passed 69 real CPU PyTorch cases across 21 functions. It included 52 retained numerical cases, the original cold-import check, and 16 new cases for common-offset values, weighted and masked logits, and balanced pair gradients. The private 68-case comparison recorded 12 failures on the published preimage and 68 passes on the correction. [Exact qualification evidence](/tmp/Guide633-masked-contrastive-publication-iSjmL5WF/actual-composed-qualification-Evidence634.json)
