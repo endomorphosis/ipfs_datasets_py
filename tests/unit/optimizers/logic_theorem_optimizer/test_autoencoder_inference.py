@@ -3869,3 +3869,351 @@ def test_reviewed_inference_v11_evaluation_scores_the_verified_generation(tmp_pa
     assert evaluation_path.read_bytes() == raw
     for name, before in fixed.items():
         assert Path(cycle["output_artifacts"][name]["path"]).read_bytes() == before
+
+
+def _source_bound_v12_request_data(tmp_path, live=None, *, backend=None):
+    from ipfs_datasets_py.logic.autoformal import training_cycle_inputs as inputs
+
+    worker, consumer, request, write_request = _reviewed_mixed_request_data(tmp_path)
+    pins = worker._reviewed_decoder_source_pins(
+        admission_profile=worker.REVIEWED_MIXED_ADMISSION_PROFILE, source_bound=True)
+    if live is None:
+        live = {
+            "query_admission": {"query": b"direct review"},
+            "query_bound_component_inputs": {
+                "report": {}, "expected_report_sha256": "a" * 64, "preparation_inputs": {"query": b"source"}},
+            "checkpoint_admission": {"train": {"admission": b"training review"}},
+            "checkpoint_bound_component_inputs": {"train": {
+                "report": {}, "expected_report_sha256": "b" * 64, "preparation_inputs": {"train": b"source"}}},
+        }
+
+    def put(name, raw):
+        path = tmp_path / name
+        path.write_bytes(raw)
+        return {"path": str(path), "sha256": _sha(path), "bytes": len(raw)}
+
+    def transport(role, *, source=False):
+        leaves = []
+        references = {}
+
+        def skeleton(value, path):
+            if type(value) is bytes:
+                if value:
+                    if value not in references:
+                        references[value] = put(f"{role}-{len(leaves)}.bin", value)
+                    entry = dict(kind="artifact_bytes", artifact=references[value])
+                else:
+                    entry = dict(kind="empty_bytes", bytes=0, sha256=hashlib.sha256(value).hexdigest())
+                leaves.append(dict(path=path, **entry))
+                return None
+            if type(value) is dict:
+                return {key: skeleton(item, [*path, key]) for key, item in value.items()}
+            if type(value) in (list, tuple):
+                return [skeleton(item, [*path, index]) for index, item in enumerate(value)]
+            return value
+
+        value = live[role]
+        digest_key = "bound_component_inputs_sha256" if source else "admission_inputs_sha256"
+        schema = (inputs._REVIEWED_BOUND_COMPONENT_TRANSPORT_SCHEMA if source
+                  else inputs._REVIEWED_ADMISSION_TRANSPORT_SCHEMA)
+        return put(role + ".json", inputs._reviewed_wire(dict(schema=schema,
+            skeleton=skeleton(value, []), byte_leaves=leaves,
+            **{digest_key: consumer.reviewed_admission_inputs_sha256(value)})))
+
+    identity = (backend.identity() if backend is not None else {
+        "backend_id": "fictional:source-bound-analytic", "implementation_sha256": pins["worker"],
+        "checkpoint_format": "fictional:source-bound-pair", "target_codec": "complete-reviewed-norm-json/v2",
+        "pretrained": False, "source_conditioned": True})
+    pair = backend.snapshot_checkpoint() if backend is not None else {"model_state": b"model", "optimizer_state": b"Adam"}
+    assets = {role: put(role, role.encode()) for role in (
+        "recipe_artifact", "model_config_artifact", "tokenizer_artifact", "license_artifact")}
+    assets.update(model_checkpoint=put("model_checkpoint", pair["model_state"]),
+                  optimizer_checkpoint=put("optimizer_checkpoint", pair["optimizer_state"]))
+    stage_child = put("stage-child.json", b"{}")
+    stage = put("stage.json", worker._json_bytes({"rows_artifact": stage_child}))
+    parent = put("checkpoint-lineage.json", b"{}")
+    exposure = put("checkpoint-exposure.json", b"[]")
+    contexts = put("checkpoint-context.json", b"{}")
+    role_digests = {role: consumer.reviewed_admission_inputs_sha256(value) for role, value in live.items()}
+    spec = worker.ReviewedSourceBoundMixedDecoderTrainingJobSpec.from_dict({
+        "schema_version": worker.REVIEWED_SOURCE_BOUND_MIXED_DECODER_JOB_SCHEMA,
+        "job_id": "fictional:current-checkpoint-job", "run_id": "fictional:heldout-route",
+        "base_version_id": "fictional:existing-checkpoint", "checkpoint_lineage_id": "fictional:checkpoint-lineage",
+        "output_directory": str(tmp_path / "must-not-create-training-output"),
+        "code_identity": "fictional:source-bound-analytic", "stage_artifact": stage, "exposure_artifact": exposure,
+        "source_contexts_artifact": contexts, "model_artifact": assets["model_checkpoint"],
+        "tokenizer_artifact": assets["tokenizer_artifact"], "license_artifact": assets["license_artifact"],
+        "backend_artifacts": [assets["recipe_artifact"], assets["model_config_artifact"]],
+        "base_model_checkpoint": assets["model_checkpoint"], "base_optimizer_checkpoint": assets["optimizer_checkpoint"],
+        "parent_checkpoint_artifact": parent, "expected_admission_inputs_sha256": role_digests["checkpoint_admission"],
+        "admission_profile": worker.REVIEWED_MIXED_ADMISSION_PROFILE,
+        "expected_bound_component_inputs_sha256": role_digests["checkpoint_bound_component_inputs"],
+        "split_config": {}, "expected_split_config_sha256": hashlib.sha256(b"{}").hexdigest(),
+        "backend_identity": identity, "expected_source_sha256": pins, "allow_fictional_fixture": True})
+    request.update(schema=inference.REVIEWED_SOURCE_BOUND_EVALUATION_REQUEST_SCHEMA,
+        runtime_profile="builtin-t5-gpt2-float32/v1", assets=assets, source_sha256=pins, backend_identity=identity,
+        max_source_tokens=8192, admission_inputs_sha256=role_digests["query_admission"],
+        admission_transport_artifact=transport("query_admission"),
+        checkpoint_declarations={"encoder": {"id": "fictional:encoder", "sha256": "1" * 64},
+            "decoder": {"id": identity["backend_id"], "sha256": assets["model_checkpoint"]["sha256"]}},
+        source_bound_replay={
+            "query_bound_component_inputs_sha256": role_digests["query_bound_component_inputs"],
+            "query_bound_component_transport_artifact": transport("query_bound_component_inputs", source=True),
+            "checkpoint_admission_inputs_sha256": role_digests["checkpoint_admission"],
+            "checkpoint_admission_transport_artifact": transport("checkpoint_admission"),
+            "checkpoint_bound_component_inputs_sha256": role_digests["checkpoint_bound_component_inputs"],
+            "checkpoint_bound_component_transport_artifact": transport("checkpoint_bound_component_inputs", source=True),
+            "checkpoint_job_artifact": put("checkpoint-job.json", worker._json_bytes(spec.to_dict())),
+            "checkpoint_stage_artifacts": [stage_child],
+        })
+    return SimpleNamespace(worker=worker, consumer=consumer, request=request, write_request=write_request,
+                           spec=spec, put=put, live=live, stage_child=stage_child)
+
+
+@pytest.mark.parametrize("damage", [None, "legacy", "missing", "rich", "query-checkpoint-alias",
+                                    "stage-artifact-alias", "job-pins", "decoder-pair"])
+def test_reviewed_inference_v12_request_is_closed_before_model(tmp_path, monkeypatch, damage):
+    fixture = _source_bound_v12_request_data(tmp_path)
+    worker, request = fixture.worker, fixture.request
+    replay = request["source_bound_replay"]
+
+    def no_model(**_options):
+        pytest.fail("request validation invoked the V5 model loader")
+
+    monkeypatch.setattr(worker, "load_local_reviewed_source_bound_decoder_runtime_v5", no_model)
+    if damage == "legacy":
+        request["schema"] = "reviewed-source-evaluation-request/v3"
+    elif damage == "missing":
+        replay.pop("query_bound_component_transport_artifact")
+    elif damage == "rich":
+        request["training_context"] = {}
+    elif damage == "query-checkpoint-alias":
+        replay["query_bound_component_transport_artifact"] = replay["checkpoint_bound_component_transport_artifact"]
+    elif damage == "stage-artifact-alias":
+        replay["checkpoint_stage_artifacts"] *= 2
+    elif damage == "job-pins":
+        replay["checkpoint_admission_inputs_sha256"] = "0" * 64
+    elif damage == "decoder-pair":
+        request["checkpoint_declarations"]["decoder"]["sha256"] = "0" * 64
+
+    if damage is None:
+        assert inference._read_reviewed_evaluation_request(fixture.write_request())[2] == request
+    else:
+        with pytest.raises(ValueError):
+            inference._read_reviewed_evaluation_request(fixture.write_request())
+    assert not Path(fixture.spec.output_directory).exists()
+    assert not Path(request["output_directory"]).exists()
+
+
+@pytest.mark.parametrize("damage", [None, "null", "pins-only", "extra", "role-swap", "changed-checkpoint-source"])
+def test_reviewed_inference_v12_original_owner_ack_commits_four_current_roles(tmp_path, damage):
+    from copy import deepcopy
+
+    fixture = _source_bound_v12_request_data(tmp_path)
+    request, live = fixture.request, deepcopy(fixture.live)
+    expected = inference._source_bound_evaluation_commitment(request)
+    if damage == "null":
+        live = None
+    elif damage == "pins-only":
+        live = {key: expected[key] for key in live}
+    elif damage == "extra":
+        live["rich_train_context"] = {}
+    elif damage == "role-swap":
+        live["query_bound_component_inputs"], live["checkpoint_bound_component_inputs"] = (
+            live["checkpoint_bound_component_inputs"], live["query_bound_component_inputs"])
+    elif damage == "changed-checkpoint-source":
+        live["checkpoint_bound_component_inputs"]["train"]["preparation_inputs"]["train"] = b"changed"
+    if damage is None:
+        assert inference._source_bound_evaluation_commitment(request, live) == expected
+        assert fixture.consumer.reviewed_admission_inputs_sha256(expected) != request["admission_inputs_sha256"]
+    else:
+        with pytest.raises(ValueError, match="source-bound"):
+            inference._source_bound_evaluation_commitment(request, live)
+
+
+def test_reviewed_inference_v12_fixed_child_uses_distinct_replay_and_saved_joins(tmp_path, monkeypatch):
+    from copy import deepcopy
+    from ipfs_datasets_py.logic.autoformal import corpus_source_bindings, training_cycle_inputs as inputs
+    from ipfs_datasets_py.logic.autoformal import legal_norm_interpretation_review_v1 as norm
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_training_worker as worker
+    from tests.unit.logic.autoformal.test_corpus_source_bindings import _lir02_complete_case
+    from tests.unit.optimizers.logic_theorem_optimizer.test_autoencoder_training_worker import (
+        _CompleteReviewedByteTokenizer, _CompleteReviewedSGDBackend,
+    )
+    from tests.unit.optimizers.logic_theorem_optimizer.test_legal_span_consumer_binding import (
+        reviewed_public_mixed_consumer_case,
+    )
+
+    signed = _lir02_complete_case(tmp_path, corpus_source_bindings, mixed=True)
+    _, _, case, rows, admissions = reviewed_public_mixed_consumer_case(
+        current=signed["case"], operation="heldout_evaluation")
+    report = corpus_source_bindings.prepare_bound_norm_component_v2(**signed["arguments"])
+    live = {
+        "query_admission": admissions["admission_inputs"],
+        "query_bound_component_inputs": {"report": report, "expected_report_sha256": norm.norm_review_sha256(report),
+                                        "preparation_inputs": signed["arguments"]},
+        "checkpoint_admission": {"fictional:train-only": {"review": b"aggregate review"}},
+        "checkpoint_bound_component_inputs": {"fictional:train-only": {
+            "report": {}, "expected_report_sha256": "b" * 64, "preparation_inputs": {"raw": b"aggregate source"}}},
+    }
+    calls = []
+
+    class AnalyticBackend(_CompleteReviewedSGDBackend):
+        def identity(self):
+            return dict(super().identity(), implementation_sha256=_sha(worker.__file__))
+
+        def generate_batch(self, records, *, max_output_tokens, execution_guard):
+            execution_guard()
+            calls.append(("generate", [row["id"] for row in records]))
+            assert all(set(json.loads(row["source_wire"])) == {
+                "profile", "source_text", "source_binding", "governing_context", "selection_context"} for row in records)
+            return [{"id": row["id"], "unit_id": row["unit_id"], "outcome": "abstained", "candidate": None,
+                "generated_token_ids": [self.tokenizer.bos_token_id, self.tokenizer.eos_token_id],
+                "generated_text": "", "reason": "fictional analytic abstention"} for row in records]
+
+    backend = AnalyticBackend()
+    backend.tokenizer = _CompleteReviewedByteTokenizer()
+    fixture = _source_bound_v12_request_data(tmp_path, live, backend=backend)
+    request, consumer = fixture.request, fixture.consumer
+    contexts = {"profile": "reviewed-source-selection-context/v2",
+        "selection_context": {"schema": "caller-known-interpretation-selection/v1",
+            "interpretation_id": case["declaration"]["interpretation_id"], "selection_mode": "identifier_only"},
+        "rows": [{"id": row["id"], "unit_id": row["unit_id"],
+            "governing_context": row["canonical_ir"]["governing_context"],
+            "source_binding": row["canonical_ir"]["source_binding"]} for row in rows]}
+    for field, value in (("rows_artifact", rows), ("split_manifest_artifact", admissions["split_manifest"]),
+                         ("source_contexts_artifact", contexts), ("exposure_artifact", admissions["exposure_records"])):
+        request[field] = fixture.put(field + ".json", worker._json_bytes(value))
+
+    class OriginalOwnerClient:
+        def __init__(self):
+            self.acknowledged = []
+
+        def execution_guard(self):
+            pass
+
+        def current_admission_digest(self, offered):
+            root = inference._source_bound_evaluation_commitment(request, live)
+            actual = consumer.reviewed_admission_inputs_sha256(root)
+            assert offered == actual != request["admission_inputs_sha256"]
+            self.acknowledged.append(offered)
+            return actual
+
+        def asset_policy_guard(self, policy):
+            inference._check_source_bound_asset_policy(request, fixture.spec, policy)
+            calls.append(("policy", policy["schema"]))
+
+        def observation(self):
+            return {"fixture": "in-process callback, no process custody claim"}
+
+    client = OriginalOwnerClient()
+
+    def analytic_v5_loader(*, spec, registry, current_admission_provider, current_bound_component_inputs_provider,
+                           execution_guard, asset_policy_guard, recipe_artifact, model_config_artifact,
+                           max_model_bytes, runtime_profile):
+        assert spec == fixture.spec
+        assert current_admission_provider() == live["checkpoint_admission"]
+        assert current_bound_component_inputs_provider() == live["checkpoint_bound_component_inputs"]
+        assert worker._parse_json(inputs._reviewed_read(registry, asdict(spec.stage_artifact))) == {
+            "rows_artifact": fixture.stage_child}
+        assert inputs._reviewed_read(registry, fixture.stage_child) == b"{}"
+        references = list(map(asdict, (recipe_artifact, model_config_artifact, spec.tokenizer_artifact,
+            spec.license_artifact, spec.base_model_checkpoint, spec.base_optimizer_checkpoint)))
+        assert runtime_profile == "builtin-t5-gpt2-float32/v1"
+        execution_guard()
+        asset_policy_guard(dict(schema="reviewed-local-source-bound-decoder-load-policy/v1",
+            backend_identity=backend.identity(), assets=references, producer_pins=dict(spec.expected_source_sha256),
+            admission_inputs_sha256=spec.expected_admission_inputs_sha256, max_model_bytes=max_model_bytes,
+            device="cpu", dtype="float32", load_requested=True, restore_requested=True, training_requested=False,
+            downloads_requested=False, resource_grant_requested=False, job_spec_sha256=spec.canonical_sha256,
+            stage_artifact=asdict(spec.stage_artifact),
+            bound_component_inputs_sha256=spec.expected_bound_component_inputs_sha256,
+            admission_profile=spec.admission_profile))
+        calls.append(("loader", spec.canonical_sha256))
+        runtime = worker.ReviewedDecoderRuntime(registry, backend, backend.tokenizer,
+            current_admission_provider, execution_guard, asset_policy_guard,
+            current_bound_component_inputs_provider=current_bound_component_inputs_provider)
+        receipt = dict(schema="reviewed-local-source-bound-decoder-runtime-load/v1", artifacts=references,
+            assets=references, producer_pins=dict(spec.expected_source_sha256),
+            expected_backend_identity=backend.identity(), loaded_backend_identity=backend.identity(),
+            job_spec_sha256=spec.canonical_sha256, stage_artifact_sha256=spec.stage_artifact.sha256,
+            parent_checkpoint_sha256=spec.parent_checkpoint_artifact.sha256,
+            staged_bound_component_inputs_sha256=spec.expected_bound_component_inputs_sha256,
+            current_bound_component_inputs_sha256=spec.expected_bound_component_inputs_sha256,
+            training_input_receipt_sha256="c" * 64, checkpoint_restored=True, matched_pair=True)
+        receipt.update(dict.fromkeys(("training_performed", "downloads_performed", "resource_granted",
+            "license_bytes_are_permission", "pretrained_quality_verified", "legal_meaning_verified",
+            "proof_authority", "convergence_proved", "corpus_admitted"), False))
+        return runtime, receipt
+
+    monkeypatch.setattr(worker, "load_local_reviewed_source_bound_decoder_runtime_v5", analytic_v5_loader)
+
+    def forbidden_legacy_loader(**_options):
+        pytest.fail("v12 used the legacy V3 local loader")
+
+    monkeypatch.setattr(worker, "load_local_reviewed_decoder_runtime_v3", forbidden_legacy_loader)
+    replay = request["source_bound_replay"]
+    checkpoint_transport = replay["checkpoint_bound_component_transport_artifact"]
+    replay["checkpoint_bound_component_transport_artifact"] = fixture.put("copied-query-transport.json",
+        Path(replay["query_bound_component_transport_artifact"]["path"]).read_bytes() + b"\n")
+    with pytest.raises(ValueError, match="local source transport differs"):
+        inference._execute_reviewed_evaluation_request(fixture.write_request(), parent_client=client)
+    assert calls == [] and not Path(request["output_directory"]).exists()
+    replay["checkpoint_bound_component_transport_artifact"] = checkpoint_transport
+
+    cycle = inference._execute_reviewed_evaluation_request(fixture.write_request(), parent_client=client)
+    inference._check_reviewed_evaluation_outputs(cycle, request)
+    assert client.acknowledged and len(set(client.acknowledged)) == 1
+    assert [call for call in calls if call[0] == "loader"] == [("loader", fixture.spec.canonical_sha256)]
+    assert [call for call in calls if call[0] == "generate"] == [("generate", [row["id"] for row in rows])]
+    assert cycle["training_executed"] is cycle["corpus_admitted"] is False
+    assert not Path(fixture.spec.output_directory).exists()
+
+    def change_saved_output(role, change, offered_cycle):
+        path = Path(offered_cycle["output_artifacts"][role]["path"])
+        value = worker._parse_json(path.read_bytes())
+        change(value)
+        raw = worker._json_bytes(value)
+        path.write_bytes(raw)
+        offered_cycle["output_artifacts"][role] = dict(path=str(path), sha256=worker._digest(raw), bytes=len(raw))
+
+    mutated = deepcopy(cycle)
+    change_saved_output("loader", lambda receipt: receipt.update(stage_artifact_sha256="0" * 64), mutated)
+    with pytest.raises(ValueError, match="exact stage and checkpoint lineage"):
+        inference._check_reviewed_evaluation_outputs(mutated, request)
+
+
+def test_reviewed_inference_v12_parent_refuses_missing_live_roles_before_child(tmp_path, monkeypatch):
+    import os
+    import time
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_daemon_resources as resources
+
+    fixture = _source_bound_v12_request_data(tmp_path)
+    observed = []
+
+    class UnusedOwner:
+        _entered = True
+
+        def __init__(self):
+            self._owner_pid = os.getpid()
+
+        def __getattr__(self, name):
+            pytest.fail("v12 malformed live inputs crossed the original resource boundary: " + name)
+
+    monkeypatch.setattr(resources, "DaemonResourceReservation", UnusedOwner)
+    config = {"execution_mode": "inference", "state_directory": fixture.request["attempt_directory"],
+              "reviewed_evaluation_request": fixture.write_request()}
+
+    def old_live_provider():
+        observed.append("old admission callback")
+        return fixture.live["query_admission"]
+
+    def unused_asset_policy(_policy):
+        pytest.fail("v12 malformed live inputs reached the asset policy")
+
+    with pytest.raises(ValueError, match="closed original source-bound evaluation inputs"):
+        inference.run_reviewed_source_inference_cycle(config, SimpleNamespace(_sha=_sha),
+            owner=UnusedOwner(), source_guard=lambda: None, asset_policy_guard=unused_asset_policy,
+            current_admission_provider=old_live_provider, deadline_monotonic=time.monotonic() + 5)
+    assert observed == ["old admission callback"]
+    assert not Path(fixture.request["output_directory"]).exists()

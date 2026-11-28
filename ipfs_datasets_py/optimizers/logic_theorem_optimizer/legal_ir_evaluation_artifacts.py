@@ -2037,6 +2037,30 @@ def compare_reviewed_source_span_retention(before, after, *, expected_before_sha
                     and payload[field].get("profile") == consumer_profile
                     for field in ("admission_before", "admission_after")),
                 "normal retention source-producer admission domain differs")
+        bound_fields = {"bound_component_inputs_sha256", "bound_component_identity"}
+        checkpoint_source_fields = {"checkpoint_admission_inputs_sha256", "checkpoint_bound_component_inputs_sha256"}
+        checkpoint_sources = {}
+        observed_admissions = (payload["admission_before"], payload["admission_after"])
+        source_bound = any(bound_fields.intersection(receipt) for receipt in observed_admissions)
+        if source_bound:
+            require(consumer_schema == REVIEWED_V3_SCHEMA and type(commitment) is dict,
+                    "normal retention requires a V3 source-bound producer commitment")
+            source_pin = commitment.get("bound_component_inputs_sha256")
+            source_identity = commitment.get("bound_component_identity")
+            require(type(source_pin) is str and re.fullmatch(r"[0-9a-f]{64}", source_pin) is not None
+                    and type(source_identity) is dict and bool(source_identity)
+                    and all(receipt.get("bound_component_inputs_sha256") == source_pin
+                            and stable_digest(receipt.get("bound_component_identity")) == stable_digest(source_identity)
+                            for receipt in observed_admissions),
+                    "normal retention bound source differs from observed admission")
+            fields.update(bound_fields)
+            if checkpoint_source_fields.intersection(commitment):
+                require(all(type(commitment.get(key)) is str
+                            and re.fullmatch(r"[0-9a-f]{64}", commitment[key]) is not None
+                            for key in checkpoint_source_fields),
+                        "normal retention requires an exact checkpoint source commitment")
+                fields.update(checkpoint_source_fields)
+                checkpoint_sources = {key: commitment[key] for key in checkpoint_source_fields}
         require(type(commitment) is dict and set(commitment) == fields
                 and commitment.get("schema") == policy_schema
                 and (admission_profile is None or commitment.get("admission_profile") == admission_profile)
@@ -2115,7 +2139,10 @@ def compare_reviewed_source_span_retention(before, after, *, expected_before_sha
                         is not None,
                     "normal retention digest-omitted checkpoint identity differs")
         code = commitment["source_sha256"]
-        require(type(code) is dict and set(code) == {"worker", "inputs", "consumer", "admission", "splits"}
+        code_roles = {"worker", "inputs", "consumer", "admission", "splits"}
+        if source_bound:
+            code_roles.update(("source_bindings", "dependencies"))
+        require(type(code) is dict and set(code) == code_roles
                 and all(type(value) is str and re.fullmatch(r"[0-9a-f]{64}", value) is not None
                         for value in [*code.values(), identity["implementation_sha256"],
                                       commitment["source_contexts_sha256"], commitment["admission_inputs_sha256"]])
@@ -2236,10 +2263,12 @@ def compare_reviewed_source_span_retention(before, after, *, expected_before_sha
                     "normal retention input receipt differs from source generation commitments")
         else:
             require(call.get("completed") is False, "normal retention completed generation requires its input receipt")
-        normalized = {key: value for key, value in commitment.items() if key not in pair and key != "assets"}
+        normalized = {key: value for key, value in commitment.items()
+                      if key not in pair and key not in checkpoint_sources and key != "assets"}
         normalized["assets"] = normalized_assets
         return {"fixed_commitment": normalized, "input_receipt": receipt, "checkpoint_pair": pair,
-                "input_commitment_sha256": expected}
+                "input_commitment_sha256": expected, **({"checkpoint_source_commitments": checkpoint_sources}
+                                                       if checkpoint_sources else {})}
 
     cache_profile_evidence = None
     cache_projected_commitments = None
@@ -2252,6 +2281,8 @@ def compare_reviewed_source_span_retention(before, after, *, expected_before_sha
         cache_profile_evidence, cache_projected_commitments = _reviewed_digest_cache_retention_profile(
             cache_source_epoch_profile, (prior_generation, next_generation))
     if prior_generation is not None:
+        require(("checkpoint_source_commitments" in prior_generation) == ("checkpoint_source_commitments" in next_generation),
+                "retention checkpoint provenance routes differ")
         require(stable_digest(prior_generation["fixed_commitment"] if cache_projected_commitments is None else cache_projected_commitments[0]) == stable_digest(next_generation["fixed_commitment"] if cache_projected_commitments is None else cache_projected_commitments[1])
                 and (prior_generation["input_receipt"] is None or next_generation["input_receipt"] is None
                      or stable_digest(prior_generation["input_receipt"]) == stable_digest(next_generation["input_receipt"])),
