@@ -39864,6 +39864,23 @@
       "root": "artifact_workspace",
       "scope": "Original-parent V12 pristine CPU T5 restore and source-bound generation on a signed fictional heldout population.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/lir21_source_bound_stage_ancestry_20261128",
+      "closed_runtime_facts": {
+        "current_ordinary_passed": 17,
+        "initial_private_passed": 16,
+        "model_updates": 0
+      },
+      "evidence_ordinal": 604,
+      "id": "lir21-source-bound-v5-stage-ancestry-evidence604-20261128",
+      "observed_bytes": 5297,
+      "observed_sha256": "f7ffb8f35af75447e5a49f9b40578bbbdb8888e255701ee7f266a6e64ca034c6",
+      "path": "/tmp/P7-v5-guide604-current-kbFwrP7y/actual-current-V5-source-bound-stage-ancestry-qualification.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "V5 source-bound stage ancestry metadata, signed fictional lineage, and exact-resume compatibility.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }

@@ -5383,6 +5383,16 @@
       },
       "record_id": "lir19-lir22-original-parent-v12-heldout-evidence603-20261128",
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
+    },
+    "lir21_source_bound_stage_ancestry_20261128": {
+      "evidence_ordinal": 604,
+      "facts": {
+        "bytes": 5297,
+        "path": "/tmp/P7-v5-guide604-current-kbFwrP7y/actual-current-V5-source-bound-stage-ancestry-qualification.json",
+        "sha256": "f7ffb8f35af75447e5a49f9b40578bbbdb8888e255701ee7f266a6e64ca034c6"
+      },
+      "record_id": "lir21-source-bound-v5-stage-ancestry-evidence604-20261128",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
     }
   },
   "programme_goal_hierarchy": {

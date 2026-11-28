@@ -3491,3 +3491,8 @@ The signed fictional V4 fixture reproduced one baseline refusal and passed all 1
 ## Evidence603 — Original-parent pristine V12 heldout run
 
 The managed test restored a pristine CPU T5 model and optimizer, kept optimizer steps at zero and ran genuine generation on three signed fictional heldout cases. All three outputs were incomplete at the selected token limit. The scorer retained all three with zero exact full payloads. The earlier analytic fixture exercised three abstentions in a separate run. Callback, comparison, and parent wall times are recorded separately. No fitting, broad model comparison, statutory admission, or accepted-unit cost was established. [Exact source, fixture and run evidence](/tmp/P8-V12-b1256-regenerated-fictional-data-XbptNbvP/actual-closed-V12-original-parent-v03-software-qualification.json)
+
+
+## Evidence604 — Signed V5 lineage checks
+
+The current ordinary run passed 17 tests with a fictional signed V5 stage history and its retained compatibility controls. Positive stage history and loss of eligibility survive the recorded withdrawal and readmission. The run verified archived source bindings and endpoint commitments without fitting or mutating the historical checkpoint pair. Changed-stage numerical continuation and retention measurements remain open. [Exact source and test evidence](/tmp/P7-v5-guide604-current-kbFwrP7y/actual-current-V5-source-bound-stage-ancestry-qualification.json)
