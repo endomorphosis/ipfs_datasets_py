@@ -369,13 +369,16 @@ def evaluate_legal_ir_semantic_equivalence(
             obligations_right,
         ),
         GRAPH_ISOMORPHISM: _empty_aware_similarity(graph_left, graph_right),
-        TEMPORAL_WINDOW_AGREEMENT: _empty_aware_similarity(
-            temporal_left,
-            temporal_right,
-        ),
         PROOF_OBLIGATION_DELTA_SCORE: _proof_delta_score(proof_left, proof_right),
     }
     missing: set[str] = set()
+    # An absent window and an explicit window we cannot measure are different
+    # observations, even when both produce the same empty or partial signature.
+    if any(re.match(r"/rules/\d+/temporal_window(?:/|:)", path)
+           for paths in (unsupported_left, unsupported_right) for path in paths):
+        missing.add(TEMPORAL_WINDOW_AGREEMENT)
+    else:
+        scores[TEMPORAL_WINDOW_AGREEMENT] = _empty_aware_similarity(temporal_left, temporal_right)
     if counterexamples_left is None or counterexamples_right is None:
         missing.add(COUNTEREXAMPLE_EQUIVALENCE)
     else:
@@ -457,8 +460,9 @@ def semantic_equivalence_from_metrics(
             return computed
         merged = dict(explicit)
         merged.update(computed.scores)
-        if COUNTEREXAMPLE_EQUIVALENCE in computed.missing_metrics:
-            merged.pop(COUNTEREXAMPLE_EQUIVALENCE, None)
+        for metric in (COUNTEREXAMPLE_EQUIVALENCE, TEMPORAL_WINDOW_AGREEMENT):
+            if metric in computed.missing_metrics:
+                merged.pop(metric, None)
         raw_deltas = _explicit_proof_deltas(source)
         raw_deltas.update(computed.raw_deltas)
         return SemanticEquivalenceFamilyResult(
@@ -815,7 +819,10 @@ def _legacy_raw_ir_unsupported_paths(value: Any) -> tuple[str, ...]:
         "rule": {**text_keys("modality type norm_type obligation_type subject actor agent party "
                              "action predicate verb duty obligation condition unless if exception"),
                  "proof_obligation_ids": "texts", "temporal_window": "temporal"},
-        "temporal": text_keys("start from effective begin after end to expires deadline before duration within window"),
+        "temporal": {
+            **dict.fromkeys("start from effective begin after end to expires deadline before".split(), "temporal_date"),
+            **dict.fromkeys(("duration", "within", "window"), "temporal_duration"),
+        },
         "graph": {"nodes": "nodes", "edges": "edges", "relationships": "edges",
                   "triples": "triples", "kg_triples": "triples"},
         "node": text_keys("node_id label name type"),
@@ -837,9 +844,13 @@ def _legacy_raw_ir_unsupported_paths(value: Any) -> tuple[str, ...]:
         )
 
     def visit(item: Any, context: str, path: str) -> None:
-        if context == "text":
+        if context in {"text", "temporal_date", "temporal_duration"}:
             if type(item) is not str:
                 mark(path, "scalar_text_required")
+            elif context == "temporal_date" and not _date_like(item):
+                mark(path, "unmeasured_temporal_date")
+            elif context == "temporal_duration" and not _duration_like(item):
+                mark(path, "unmeasured_temporal_duration")
             return
         if context in sequence_items:
             if not isinstance(item, Sequence) or isinstance(item, (str, bytes, bytearray)):

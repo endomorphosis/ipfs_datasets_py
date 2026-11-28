@@ -967,3 +967,46 @@ def test_malformed_raw_counterexample_cannot_supply_explicit_credit(scenario):
     assert COUNTEREXAMPLE_EQUIVALENCE in result.missing_metrics
     explicit_only = semantic_equivalence_from_metrics(explicit, family="deontic")
     assert explicit_only.scores[COUNTEREXAMPLE_EQUIVALENCE] == 1.0
+
+
+@pytest.mark.parametrize(("reference_window", "candidate_window", "measured"), [
+    pytest.param(None, None, True, id="no-temporal-constraint"),
+    pytest.param({"deadline": "2026-02-01"}, {"deadline": "2026-02-01"}, True, id="reported-date"),
+    pytest.param({"deadline": "when filing date is determined"},
+                 {"deadline": "when filing date is determined"}, False, id="unresolved-on-both-sides"),
+    pytest.param({"start": "2026-01-01"}, {"start": "2026-01-01", "deadline": "after filing"},
+                 False, id="partly-measured-candidate"),
+    pytest.param({"start": "2026-01-01", "duration": "until the report is filed"},
+                 {"start": "2026-01-01"}, False, id="partly-measured-reference"),
+    pytest.param({"deadline": "2026-02-01"}, {"deadline": None}, False, id="null-reported-deadline"),
+])
+def test_temporal_comparison_withholds_explicit_unmeasured_deadline_credit(
+    reference_window, candidate_window, measured
+):
+    reference, candidate = _reference_ir(), _isomorphic_ir()
+    for value, window in ((reference, reference_window), (candidate, candidate_window)):
+        rule = value["rules"][0]
+        del rule["condition"]
+        del rule["temporal_window"]
+        if window is not None:
+            rule["temporal_window"] = window
+
+    result = evaluate_legal_ir_semantic_equivalence(reference, candidate, family="deontic")
+    assert (TEMPORAL_WINDOW_AGREEMENT in result.scores) is measured, result.to_dict()
+    assert (TEMPORAL_WINDOW_AGREEMENT in result.missing_metrics) is (not measured)
+
+    payload = {
+        **_all_semantic_scores(),
+        "reference_ir": reference,
+        "candidate_ir": candidate,
+    }
+    gate = compare_legal_ir_semantic_equivalence(
+        {"view_family_metrics": {"deontic": _all_semantic_scores()}},
+        {"view_family_metrics": {"deontic": payload}},
+        families=("deontic",),
+    )
+    compared = gate.family_results["deontic"].after
+    assert compared.scores.get(TEMPORAL_WINDOW_AGREEMENT) == (1.0 if measured else None)
+    assert gate.accepted is measured
+    if not measured:
+        assert "deontic:semantic_equivalence_evidence_missing" in gate.block_reasons
