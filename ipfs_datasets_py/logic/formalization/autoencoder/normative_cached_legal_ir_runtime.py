@@ -281,7 +281,8 @@ def _capture(request, *, checkpoint_pin, preprocessing_pin, donor_checkpoint_pin
         source_owner_pins={name: source_owner_pins[name] for name in normative.SOURCE_OWNER_NAMES},
         row_ids=row_ids, deadline_seconds=deadline_seconds, max_reference_bytes=max_reference_bytes)
     for name in SOURCE_OWNER_NAMES:
-        pin = contextual._pin(source_owner_pins[name], 512 * 1024)
+        maximum = 1024 * 1024 if name == "autoencoder_training_worker" else 512 * 1024
+        pin = contextual._pin(source_owner_pins[name], maximum)
         contextual._require(pin["path"] == source_owner_paths()[name], "cached-input owner must be the fixed current library file")
         options["pins"]["source:" + name] = pin
     options["pins"]["source_plan"] = contextual._pin(source_plan_pin, max_reference_bytes)
