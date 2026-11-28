@@ -1789,8 +1789,15 @@ def reviewed_incremental_changed_component_v3(control, facet):
     elif facet == "exception":
         guarded = next(node for node in reviewed_incremental_nodes_v3(root)
             if node["kind"] == "implies" and node["arguments"][0]["kind"] == "not")
-        replacement = deepcopy(guarded["arguments"][1])
-        guarded.clear(); guarded.update(replacement)
+        # Move the exception under the obligation while retaining its complete
+        # condition and consequence at the same fictional source occurrence.
+        condition, obligation = guarded["arguments"]
+        modal = deepcopy(obligation)
+        payload = modal["extension"]
+        assert payload["payload"]["letter"] == "O"
+        payload["children"] = [dict(guarded, arguments=[condition, payload["children"][0]])]
+        guarded.clear()
+        guarded.update(modal)
     elif facet == "sort":
         # Change the event carrier while keeping the governing officer Object.
         # The original three sort declarations and every source clause survive.
@@ -1806,7 +1813,9 @@ def reviewed_incremental_changed_component_v3(control, facet):
         alter(request["expression"]["signature"]["symbols"])
     else:
         assert facet in ("cardinality-three", "cardinality-two")
+        from functools import reduce
         from ipfs_datasets_py.logic.syntax_core import signatures
+
         bound = 3 if facet == "cardinality-three" else 2
         obj = signatures.LogicSort("Object")
         serial = iter(range(10000))
@@ -1816,7 +1825,9 @@ def reviewed_incremental_changed_component_v3(control, facet):
         members = [ast.mk_predicate(nid(), "CoveredOfficer", [variable(name)]) for name in variables]
         equalities = [ast.mk_equality(nid(), variable(left), variable(right))
             for i, left in enumerate(variables) for right in variables[i + 1:]]
-        cap = ast.mk_implies(nid(), ast.mk_and(nid(), *members), ast.mk_or(nid(), *equalities))
+        all_members = reduce(lambda left, right: ast.mk_and(nid(), left, right), members)
+        any_equality = reduce(lambda left, right: ast.mk_or(nid(), left, right), equalities)
+        cap = ast.mk_implies(nid(), all_members, any_equality)
         for name in reversed(variables): cap = ast.mk_forall(nid(), [ast.Binder(name, obj)], cap)
         request["expression"]["root"] = ast.mk_and(nid(), ast.LogicNode.from_dict(root), cap).to_dict()
     reviewed_incremental_refresh_request_v3(control, case, ordinal, request)
@@ -1896,6 +1907,17 @@ def test_reviewed_incremental_v3_corrected_complete_meaning_invalidates_and_matc
         assert old_instances[old_units[0]["unit_id"]] not in artifacts(updated)
     if facet == "role":
         assert old_units[2]["relational_request_sha256"] != new_units[2]["relational_request_sha256"]
+        assert old_units[2]["instance_module"] != new_units[2]["instance_module"]
+    if facet == "exception":
+        assert old_units[1]["relational_request_sha256"] != new_units[1]["relational_request_sha256"]
+        assert old_units[1]["instance_module"] != new_units[1]["instance_module"]
+        assert old_units[1]["source_occurrence_cid"] == new_units[1]["source_occurrence_cid"]
+    if facet == "cardinality-two":
+        mixed_unit_id = new_units[2]["unit_id"]
+        old_report = control["case"]["relational_inputs"][mixed_unit_id]["report"]
+        new_report = changed["case"]["relational_inputs"][mixed_unit_id]["report"]
+        assert old_report["counts"]["equality_occurrences"] == 6
+        assert new_report["counts"]["equality_occurrences"] == 3
         assert old_units[2]["instance_module"] != new_units[2]["instance_module"]
     assert len(updated[0]["fresh_theorems"]) + len(updated[0]["reused_theorems"]) == 15
 
@@ -2005,12 +2027,32 @@ def test_reviewed_incremental_v3_uses_exact_upstream_module_boundary_without_dro
     control = _FIXTURE_MODULE.reviewed_preservation_capacity_control_v3(original, total_units)
     if namespaces == 1:
         helper, owner, case = control["mixed_helper"], control["owner"], control["case"]
-        unit = case["declaration"]["units"][2]
-        source_unit = case["declaration"]["units"][1]
-        request = json.loads(case["relational_inputs"][source_unit["unit_id"]]["request_raw"])
-        request["expression"]["expression_id"] += ":independent-object-use"
-        unit["relational_profile"] = relational.PROFILE
-        reviewed_incremental_refresh_request_v3(control, case, 2, request)
+        units = case["declaration"]["units"]
+        mixed_use = units[2]
+        assert mixed_use["relational_profile"] == relational.MIXED_PROFILE
+        mixed_input = deepcopy(case["relational_inputs"][mixed_use["unit_id"]])
+        mixed_signature = json.loads(mixed_input["request_raw"])["expression"]["signature"]
+        assert mixed_input["report"]["predicate_sorts"]["InspectsRegisterAt"] == [
+            "Object", "Object", "EventFrame", "TimeFrame"]
+        physical_sources = deepcopy(case["source_inputs"])
+        physical_occurrences = [(unit["source_version"], unit["occurrence"]) for unit in deepcopy(units)]
+        # Keep the original mixed use. Render the Object-only formulas with
+        # the same mixed carrier declarations, without changing their trees.
+        for ordinal, unit in enumerate(units):
+            if unit["relational_profile"] == relational.MIXED_PROFILE:
+                continue
+            request = json.loads(case["relational_inputs"][unit["unit_id"]]["request_raw"])
+            request["schema"] = relational.MIXED_REQUEST_SCHEMA
+            request["profile"] = relational.MIXED_PROFILE
+            symbols = request["expression"]["signature"]["symbols"]
+            request["expression"]["signature"] = dict(mixed_signature, symbols=symbols)
+            original_root = request["expression"]["root"]
+            unit["relational_profile"] = relational.MIXED_PROFILE
+            reviewed_incremental_refresh_request_v3(control, case, ordinal, request)
+            assert case["relational_inputs"][unit["unit_id"]]["report"]["typed_expression"]["root"] == original_root
+        assert case["source_inputs"] == physical_sources
+        assert [(unit["source_version"], unit["occurrence"]) for unit in units] == physical_occurrences
+        assert case["relational_inputs"][mixed_use["unit_id"]] == mixed_input
         case["preparation"] = helper.prepare(owner, case)
         helper.refresh_signed_reviews(case, owner)
         helper.assert_signatures_valid(case)
@@ -2032,10 +2074,17 @@ def test_reviewed_incremental_v3_uses_exact_upstream_module_boundary_without_dro
         assert reviewed_incremental_runtime_v3["compiler"].calls == []
     else:
         control["preparation"] = _FIXTURE_MODULE.reviewed_preservation_prepare_fixture_v3(control)
-        assert len(control["preparation"].to_dict()["expected_modules"]) == expected_modules == 11
+        manifest = control["preparation"].to_dict()
+        assert len(manifest["expected_modules"]) == expected_modules == 11
+        if namespaces == 1:
+            assert len({unit["signature_namespace_sha256"] for unit in manifest["units"]}) == 1
+            assert {unit["relational_profile"] for unit in manifest["units"]} == {relational.MIXED_PROFILE}
+            assert {unit["child_family"] for unit in manifest["units"]} == {"tdfol"}
         result = build_reviewed_incremental_v3(reviewed_incremental_runtime_v3, control, "exact-boundary")
         assert result[0]["build_passed"] is True
         assert len(result[0]["compiled_modules"]) == expected_modules
+        assert set(result[0]["compiled_modules"]) == set(manifest["expected_modules"])
+        assert result[0]["units"] == manifest["units"]
         assert len(result[0]["units"]) == total_units
         assert len(result[0]["fresh_theorems"]) == 5 * total_units
     assert snapshot == control["owner"].norm._snapshot({"args": list(control["args"]), "kwargs": control["kwargs"]})[1]
