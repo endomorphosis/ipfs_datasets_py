@@ -3992,6 +3992,56 @@ def _source_bound_v12_request_data(tmp_path, live=None, *, backend=None):
                            training=training)
 
 
+@pytest.mark.parametrize("damage", [None, "plain-v1", "pending", "binding-stage", "binding-sha",
+    "typed-loader-step", "typed-parent-step", "different-step", "no-stage-update",
+    "different-offset", "typed-loader-offset", "typed-parent-offset"])
+def test_reviewed_inference_v12_saved_continuation_requires_trained_stage(tmp_path, damage):
+    fixture = _source_bound_v12_request_data(tmp_path)
+    worker, request = fixture.worker, fixture.request
+    profile = worker.REVIEWED_SOURCE_BOUND_MIXED_DECODER_CONTINUATION_PROFILE
+    plain = damage == "plain-v1"
+    offset = 0 if plain or damage in ("typed-loader-step", "typed-parent-step") else 1
+    steps = offset if damage == "no-stage-update" else offset + 1
+    binding = {"stage_artifact_sha256": "0" * 64 if damage == "binding-stage" else fixture.spec.stage_artifact.sha256}
+    checkpoint = {"schema": (worker.REVIEWED_SOURCE_BOUND_MIXED_DECODER_CHECKPOINT_SCHEMA if plain
+                             else worker.REVIEWED_SOURCE_BOUND_MIXED_DECODER_CONTINUATION_CHECKPOINT_SCHEMA),
+        "training_binding": binding,
+        "progress": {"epochs_completed": 0, "row_cursor": 1,
+                     "optimizer_steps": True if damage == "typed-parent-step" else steps}}
+    if not plain:
+        checkpoint["optimizer_step_offset"] = True if damage == "typed-parent-offset" else offset
+    parent = fixture.put("saved-continuation-checkpoint.json", worker._json_bytes(checkpoint))
+    spec = worker.ReviewedSourceBoundMixedDecoderTrainingJobSpec.from_dict(dict(fixture.spec.to_dict(),
+        parent_checkpoint_artifact=parent, continuation_profile=profile))
+    request["source_bound_replay"]["checkpoint_job_artifact"] = fixture.put(
+        "saved-continuation-job.json", worker._json_bytes(spec.to_dict()))
+    request["exposure_artifact"] = fixture.put("saved-query-exposure.json", b"[]")
+    expected = inference._source_bound_evaluation_commitment(request)
+    cycle = {"source_bound_evaluation_inputs": expected, "current_admission_sha256": expected["query_admission"]}
+    references = [request["assets"][role] for role in ("recipe_artifact", "model_config_artifact",
+        "tokenizer_artifact", "license_artifact", "model_checkpoint", "optimizer_checkpoint")]
+    loader = dict(schema="reviewed-local-source-bound-decoder-runtime-load/v1", artifacts=references,
+        assets=references, producer_pins=request["source_sha256"], expected_backend_identity=request["backend_identity"],
+        loaded_backend_identity=request["backend_identity"], job_spec_sha256=spec.canonical_sha256,
+        stage_artifact_sha256=spec.stage_artifact.sha256, parent_checkpoint_sha256=spec.parent_checkpoint_artifact.sha256,
+        staged_bound_component_inputs_sha256=spec.expected_bound_component_inputs_sha256,
+        current_bound_component_inputs_sha256=spec.expected_bound_component_inputs_sha256,
+        training_input_receipt_sha256="0" * 64 if damage == "binding-sha" else worker._digest(worker._json_bytes(binding)),
+        checkpoint_restored=True, matched_pair=True, continuation_profile=profile, stage_transition_pending=damage == "pending",
+        optimizer_steps={"typed-loader-step": True, "different-step": steps + 1}.get(damage, steps),
+        optimizer_step_offset={"typed-loader-offset": True, "different-offset": 0}.get(damage, offset))
+    loader.update(dict.fromkeys(("training_performed", "downloads_performed", "resource_granted",
+        "license_bytes_are_permission", "pretrained_quality_verified", "legal_meaning_verified", "proof_authority",
+        "convergence_proved", "corpus_admitted"), False))
+
+    # Valid stage metadata passes this guard and reaches the independent check
+    # of the intentionally empty generation result.
+    message = ("saved generation differs from independent source-bound replay roles" if damage in (None, "plain-v1")
+               else "saved V5 evaluation checkpoint did not train the selected stage")
+    with pytest.raises(ValueError, match=message):
+        inference._check_source_bound_evaluation_outputs(cycle, request, {"loader": loader, "generation": {}, "evaluation": {}})
+
+
 @pytest.mark.parametrize("damage", [None, "legacy", "missing", "rich", "query-checkpoint-alias",
                                     "stage-artifact-alias", "job-pins", "decoder-pair"])
 def test_reviewed_inference_v12_request_is_closed_before_model(tmp_path, monkeypatch, damage):

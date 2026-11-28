@@ -1096,6 +1096,9 @@ def _reviewed_mixed_decoder_continuation_state(spec, registry, parent_reference,
                  and progress["optimizer_steps"] == offset + progress["epochs_completed"] * math.ceil(count/spec.batch_size)
                      + progress["row_cursor"] // spec.batch_size,
                  "reviewed decoder continuation global/local progress differs")
+            if source_bound:
+                need(progress["optimizer_steps"] > offset,
+                     "source-bound continuation checkpoint has no updates on its selected stage")
         if migrated:
             migration_ref = asdict(CheckpointArtifact.from_dict(document["source_epoch_migration"]))
             if migration_ref["sha256"] not in epoch_migrations:

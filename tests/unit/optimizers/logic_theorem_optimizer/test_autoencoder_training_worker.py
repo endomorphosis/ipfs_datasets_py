@@ -13645,6 +13645,7 @@ def test_reviewed_source_bound_v5_changed_stage_preserves_global_steps_and_resum
     ("v4-checkpoint", "closed complete reviewed decoder continuation checkpoint"),
     ("integer-identity", "reviewed decoder continuation numerical identities differ"),
     ("missing-history", "nonzero optimizer-step offset requires its authenticated stage continuation"),
+    ("zero-stage-updates", "source-bound continuation checkpoint has no updates on its selected stage"),
 ])
 def test_reviewed_source_bound_v5_continuation_refuses_cross_domain_metadata(tmp_path, damage, message):
     fixture = _complete_reviewed_worker_fixture(tmp_path)
@@ -13663,8 +13664,9 @@ def test_reviewed_source_bound_v5_continuation_refuses_cross_domain_metadata(tmp
     else:
         parent.update(schema=worker.REVIEWED_SOURCE_BOUND_MIXED_DECODER_CONTINUATION_CHECKPOINT_SCHEMA,
             continuation_profile=profile, optimizer_step_offset=1, stage_continuation=None)
-        parent["progress"]["optimizer_steps"] = 2
-        parent["progress"]["row_cursor"] = 1
+        did_update = damage == "missing-history"
+        parent["progress"]["optimizer_steps"] = 1 + int(did_update)
+        parent["progress"]["row_cursor"] = int(did_update)
         parent["training_binding"] = {
             "schema": fixture.inputs.REVIEWED_SOURCE_BOUND_MIXED_DECODER_INPUT_RECEIPT_SCHEMA,
             "profile": fixture.inputs.REVIEWED_SOURCE_BOUND_MIXED_DECODER_INPUT_PROFILE,

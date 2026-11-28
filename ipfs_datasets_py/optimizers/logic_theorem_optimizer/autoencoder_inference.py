@@ -607,13 +607,23 @@ def _check_source_bound_evaluation_outputs(cycle, request, outputs):
                 "legal_meaning_verified", "proof_authority", "convergence_proved", "corpus_admitted"))):
         raise ValueError("saved V5 loader output differs from the exact stage and checkpoint lineage")
     if spec.continuation_profile is not None:
-        parent = worker._parse_json(read(asdict(spec.parent_checkpoint_artifact)))
+        parent_raw = worker._reviewed_decoder_artifact(spec.parent_checkpoint_artifact,
+            limit=inputs.MAX_REVIEWED_STAGE_BYTES)
+        parent = worker._parse_json(parent_raw)
         binding = parent.get("training_binding") if type(parent) is dict else None
         progress = parent.get("progress") if type(parent) is dict else None
+        schema = parent.get("schema") if type(parent) is dict else None
+        offset = None
+        if schema == worker.REVIEWED_SOURCE_BOUND_MIXED_DECODER_CHECKPOINT_SCHEMA:
+            offset = 0
+        elif schema == worker.REVIEWED_SOURCE_BOUND_MIXED_DECODER_CONTINUATION_CHECKPOINT_SCHEMA:
+            offset = parent.get("optimizer_step_offset")
         if (loader.get("continuation_profile") != spec.continuation_profile
                 or loader.get("stage_transition_pending") is not False
                 or type(binding) is not dict or binding.get("stage_artifact_sha256") != spec.stage_artifact.sha256
                 or type(progress) is not dict or type(progress.get("optimizer_steps")) is not int
+                or type(offset) is not int or not 0 <= offset < progress["optimizer_steps"]
+                or type(loader.get("optimizer_step_offset")) is not int or loader["optimizer_step_offset"] != offset
                 or type(loader.get("optimizer_steps")) is not int
                 or loader["optimizer_steps"] != progress["optimizer_steps"]
                 or loader["training_input_receipt_sha256"] != worker._digest(worker._json_bytes(binding))):
