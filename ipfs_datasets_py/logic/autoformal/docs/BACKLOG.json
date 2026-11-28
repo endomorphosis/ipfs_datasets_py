@@ -5363,6 +5363,16 @@
       },
       "record_id": "lir20-source-bound-rich-TRAIN-replay-evidence601-20261128",
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
+    },
+    "lir20_frozen_v4_retrieval_comparator_20261128": {
+      "evidence_ordinal": 602,
+      "facts": {
+        "bytes": 4615,
+        "path": "/tmp/P8-v4-frozen-ranking-comparator-lumab68q/actual-Guide602-frozen-V4-retrieval-evidence.json",
+        "sha256": "c01b83db6aa1baf3e105227a681c7b8223567ce05bcd57dd48d112972c9dc620"
+      },
+      "record_id": "lir20-frozen-v4-retrieval-comparator-evidence602-20261128",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
     }
   },
   "programme_goal_hierarchy": {

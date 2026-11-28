@@ -39828,6 +39828,23 @@
       "root": "artifact_workspace",
       "scope": "Existing V3 and V4 rich TRAIN context source-history replay with independent component commitments.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/lir20_frozen_v4_retrieval_comparator_20261128",
+      "closed_runtime_facts": {
+        "owning_scorer_retention_passed": 128,
+        "reproduced_baseline_refusals": 1,
+        "signed_V4_controls_passed": 10
+      },
+      "evidence_ordinal": 602,
+      "id": "lir20-frozen-v4-retrieval-comparator-evidence602-20261128",
+      "observed_bytes": 4615,
+      "observed_sha256": "c01b83db6aa1baf3e105227a681c7b8223567ce05bcd57dd48d112972c9dc620",
+      "path": "/tmp/P8-v4-frozen-ranking-comparator-lumab68q/actual-Guide602-frozen-V4-retrieval-evidence.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Frozen V4 retrieval payload diagnostics with shared context-set and exact candidate census.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }

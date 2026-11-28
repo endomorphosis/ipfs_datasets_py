@@ -2428,6 +2428,8 @@ def evaluate_complete_norm_retrieval_rankings(rankings, reference_rows, candidat
     Producer formal-view links use canonical UTF8 JSON, as the norm owner does.
     This compares literal structure/custody; it authenticates no producer,
     reference, legal relationship, syntax family, split or governing definition.
+    V4 requires one shared reviewed context-set commitment and checks the
+    selected endpoint scopes against the independent formal payloads.
     Absent exact counterparts have no conditional-match denominator. Unknown
     semantic relevance remains unscored, even when payload fields match.
     """
@@ -2469,20 +2471,39 @@ def evaluate_complete_norm_retrieval_rankings(rankings, reference_rows, candidat
         for j,cid in enumerate(bank):
             pair=pairs['cases'][i*n+j];grid[qid][cid]=pair['scores']
             details.append(dict(query_id=qid,candidate_id=cid,candidate_payload_shape_supported=pair['candidate_payload_shape_supported'],scores=pair['scores']))
-    formal_hashes={key:hashlib.sha256(json.dumps(value,sort_keys=True,separators=(',',':'),ensure_ascii=False,allow_nan=False).encode('utf-8')).hexdigest() for key,value in bank.items()}
+    def formal_pin(value):
+        wire = json.dumps(value, sort_keys=True, separators=(',', ':'), ensure_ascii=False, allow_nan=False)
+        return hashlib.sha256(wire.encode('utf-8')).hexdigest()
+
+    formal_hashes = {key: formal_pin(value) for key, value in bank.items()}
     common=None;order=None;methods={};eligible_by_query={}
     identity_fields=('checkpoint_sha256','current_index_handoff_sha256','query_input_sha256','query_lane_bundle_sha256')
+    v4_schema = 'legal-joint-retrieval-result/v4'
     for method,producer in ranked.items():
         need(identity(method) and len(method)<=64 and type(producer) is dict
-             and producer.get('schema') in ('legal-joint-retrieval-result/v2','legal-joint-retrieval-result/v3')
+             and producer.get('schema') in ('legal-joint-retrieval-result/v2','legal-joint-retrieval-result/v3',v4_schema)
              and producer.get('mode')==method and producer.get('status')=='retrieval_completed'
              and producer.get('query_target_access') is False
              and producer.get('inference_reference_content_forwarded') is False,
              'frozen completed source-only retriever DATA required')
-        offered=[producer.get(key) for key in identity_fields]
-        need(all(pin(value) for value in offered),'complete frozen producer identities required')
-        if common is None:common=offered
-        need(offered==common,'retrieval methods have different checkpoint, index or query identities')
+        v4 = producer['schema'] == v4_schema
+        offered = {key: producer.get(key) for key in identity_fields}
+        if v4:
+            need(producer.get('endpoint_admission_version') == 'v3'
+                 and producer.get('query_split_guard_verified') is True
+                 and producer.get('legal_applicability_verified') is False
+                 and producer.get('controlling_authority') is False,
+                 'reviewed V4 context and endpoint admission fields required')
+            offered['context_set_sha256'] = producer.get('context_set_sha256')
+        need(all(pin(value) for value in offered.values()), 'complete frozen producer identities required')
+        if v4:
+            offered['endpoint_admission_version'] = producer['endpoint_admission_version']
+        if common is None:
+            common = offered
+        mismatch = ('retrieval methods have different checkpoint, index, query or context identities'
+                    if v4 or 'context_set_sha256' in common
+                    else 'retrieval methods have different checkpoint, index or query identities')
+        need(offered == common, mismatch)
         rows=producer.get('rows');need(type(rows) is list and len(rows)==len(refs),'complete enrolled query denominator required')
         ids=[row.get('id') if type(row) is dict else None for row in rows]
         need(all(identity(key) for key in ids) and len(ids)==len(set(ids)) and set(ids)==set(refs),'unique complete query population required')
@@ -2509,6 +2530,16 @@ def evaluate_complete_norm_retrieval_rankings(rankings, reference_rows, candidat
             for key,link in zip(chosen,links,strict=True):
                 need(type(link) is dict and link.get('id')==key and link.get('formal_view_sha256')==formal_hashes[key],
                      'ranked producer formal payload differs from independent candidate')
+                if v4:
+                    candidate = bank[key]
+                    scope_fields = ('governing_context', 'interpretation_id', 'assumptions')
+                    need(type(candidate) is dict and set(scope_fields) <= candidate.keys(),
+                         'ranked V4 candidate requires complete context fields')
+                    scope = {field: candidate[field] for field in scope_fields}
+                    need(link.get('split') == 'train'
+                         and link.get('context_sha256') == formal_pin(scope)
+                         and _complete_norm_payload_wire(link.get('scope')) == _complete_norm_payload_wire(scope),
+                         'ranked producer context differs from independent TRAIN candidate')
             need((status=='abstained' and not chosen) or (status=='retrieved' and len(chosen)==ranking_depth),
                  'fixed ranking depth or explicit abstention required')
             abstentions+=int(status=='abstained')
@@ -2535,7 +2566,7 @@ def evaluate_complete_norm_retrieval_rankings(rankings, reference_rows, candidat
         candidate_view_count=len(bank),unique_candidate_payload_count=len({sha(value) for value in bank.values()}),
         ranking_depth=ranking_depth,cutoffs=list(cutoffs),methods=methods,pair_diagnostics=details,
         input_commitments=dict(rankings=expected_rankings_sha256,references=expected_reference_rows_sha256,candidates=expected_candidate_rows_sha256),
-        frozen_producer_identities=dict(zip(identity_fields,common,strict=True)),
+        frozen_producer_identities=common,
         semantic_relevance_metrics=None,legal_applicability_metrics=None,producer_authenticity_verified=False,
         reference_authenticity_verified=False,source_or_dependency_split_verified=False,
         syntax_or_logic_family_validity_verified=False,semantic_equivalence_proved=False,
