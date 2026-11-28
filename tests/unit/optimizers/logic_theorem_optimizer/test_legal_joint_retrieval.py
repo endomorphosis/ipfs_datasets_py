@@ -1238,3 +1238,145 @@ def test_reviewed_v4_tiny_joint_updates_restore_and_rank_current_index(steps, tm
     assert denied["model_forward_executed"] is False and denied["retrieved_count"] == 0
     assert denied["rows"][0]["context"] is None
     assert model.checkpoint == original_checkpoint
+
+
+@pytest.fixture(scope="module")
+def reviewed_v4_fixed_comparison():
+    """Run the signed producer with fixed vectors and no learned-model execution."""
+    from tests.unit.logic.formalization.autoencoder import test_alignment_relation_mask_handoff as owner
+
+    case = owner.fixtures.reviewed_pair_fixture_v4()
+    current = owner.reviewed_mask_compile_v4(case)
+    assert current["reviewed_objective_mask_ready"] is True
+    indexed, query, lane, expected = _reviewed_structural_query_fixture(owner, case, admission_version="v4")
+
+    class UnusedProjection:
+        def state_dict(self):
+            return {}
+
+        def __call__(self, *args):
+            pytest.fail("fixed ranking fixture must not invoke a learned model")
+
+    # Exercise actual current admission, eligibility and ranking. Only the
+    # historical model restore is outside this fixed-vector test's scope.
+    producer = object.__new__(retrieval.ReviewedLegalJointRetriever)
+    producer._checkpoint = {
+        "schema": "legal-joint-retrieval-checkpoint/v4",
+        "training_handoff": current,
+        "training_handoff_sha256": retrieval.checkpoint_digest(current),
+        "implementation": retrieval._reviewed_implementation("v4"),
+        "config": {"temperature": 0.1},
+    }
+    producer._checkpoint_sha256 = retrieval.checkpoint_digest(producer._checkpoint)
+    producer._model, producer._torch = UnusedProjection(), torch
+    producer._state_sha256 = retrieval.checkpoint_digest({})
+    admissions = indexed["preparation_inputs"]["endpoint_admissions"]
+    candidates = [{"id": row["id"], "canonical_ir": next(
+        unit["canonical_ir"] for unit in admissions[row["admission_id"]]["report"]["units"]
+        if unit["unit_id"] == row["unit_id"])} for row in current["formal_endpoints"]]
+    # An independent diagnostic reference fixture, never offered to retrieve.
+    reference = copy.deepcopy(candidates[0]["canonical_ir"])
+    reference["interpretation_id"] = "fixture:separate-unscored-reference"
+    references = [{"id": query["id"], "canonical_ir": reference}]
+
+    def retrieve(modes, top_k):
+        return {mode: _structural_call(producer, owner, indexed, query, lane, expected, mode=mode, top_k=top_k)
+                for mode in modes}
+
+    return retrieve, references, candidates, current["context_set_sha256"]
+
+
+@pytest.fixture(scope="module")
+def reviewed_v4_retrieved_comparison(reviewed_v4_fixed_comparison):
+    retrieve, references, candidates, context_sha256 = reviewed_v4_fixed_comparison
+    rankings = retrieve(("lexical", "raw"), 2)
+    assert all(report["schema"] == "legal-joint-retrieval-result/v4"
+               and report["context_set_sha256"] == context_sha256
+               and report["retrieved_count"] == 1
+               and not report["model_forward_executed"]
+               for report in rankings.values())
+    return rankings, references, candidates, context_sha256
+
+
+def _score_v4_fixed_comparison(rankings, references, candidates, *, ranking_depth):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_semantic_metrics as metrics
+
+    def pin(value):
+        return hashlib.sha256(metrics._complete_norm_payload_wire(value)).hexdigest()
+
+    return metrics.evaluate_complete_norm_retrieval_rankings(rankings, references, candidates,
+        expected_rankings_sha256=pin(rankings), expected_reference_rows_sha256=pin(references),
+        expected_candidate_rows_sha256=pin(candidates), ranking_depth=ranking_depth, cutoffs=(1, ranking_depth))
+
+
+def test_reviewed_v4_actual_fixed_rankings_reach_posthoc_comparison(reviewed_v4_retrieved_comparison):
+    rankings, references, candidates, context_sha256 = reviewed_v4_retrieved_comparison
+    result = _score_v4_fixed_comparison(rankings, references, candidates, ranking_depth=2)
+    assert result["reference_count"] == 1 and result["candidate_view_count"] == 6
+    assert result["frozen_producer_identities"]["context_set_sha256"] == context_sha256
+    assert result["frozen_producer_identities"]["endpoint_admission_version"] == "v3"
+    assert result["producer_authenticity_verified"] is result["source_or_dependency_split_verified"] is False
+    assert result["semantic_relevance_metrics"] is result["legal_applicability_metrics"] is None
+    for method, observed in result["methods"].items():
+        row, = rankings[method]["rows"]
+        assert observed["query_count"] == observed["retrieved_count"] == 1
+        assert observed["abstention_count"] == 0
+        assert observed["cases"][0]["ranked_candidate_ids"] == row["retrieved_ids"]
+        assert observed["cases"][0]["eligible_candidate_count"] == row["eligible_rows"]
+        assert all(cutoff["denominator"] == 1 for cutoff in observed["cutoffs"].values())
+
+
+def test_reviewed_v4_fixed_comparison_retains_attempts_when_all_modes_abstain(reviewed_v4_fixed_comparison):
+    retrieve, references, candidates, _ = reviewed_v4_fixed_comparison
+    rankings = retrieve(("lexical", "raw", "joint"), len(candidates) + 1)
+    assert all(report["status"] == "retrieval_completed" and not report["model_forward_executed"]
+               and report["rows"][0]["status"] == "abstained" for report in rankings.values())
+    result = _score_v4_fixed_comparison(rankings, references, candidates, ranking_depth=len(candidates) + 1)
+    assert set(result["methods"]) == {"lexical", "raw", "joint"}
+    for method in result["methods"].values():
+        assert method["query_count"] == method["abstention_count"] == 1
+        assert method["retrieved_count"] == 0
+        assert all(cutoff["denominator"] == 1 and not any(cutoff["metric_numerators"].values())
+                   for cutoff in method["cutoffs"].values())
+
+
+@pytest.mark.parametrize(("damage", "message"), [
+    ("missing-context-set", "complete frozen producer identities"),
+    ("changed-context-set", "different checkpoint, index, query or context identities"),
+    ("wrong-endpoint-domain", "reviewed V4 context and endpoint admission"),
+    ("claimed-authority", "reviewed V4 context and endpoint admission"),
+    ("bad-scope", "ranked producer context differs"),
+    ("bad-scope-pin", "ranked producer context differs"),
+    ("mixed-schema", "different checkpoint, index, query or context identities"),
+    ("changed-candidate-census", "different eligible candidate populations"),
+])
+def test_reviewed_v4_posthoc_comparison_refuses_rebound_provenance_or_census(
+        reviewed_v4_retrieved_comparison, damage, message):
+    saved_rankings, references, candidates, context_sha256 = reviewed_v4_retrieved_comparison
+    rankings = copy.deepcopy(saved_rankings)
+    changed = rankings["raw"]
+    row, = changed["rows"]
+    if damage == "missing-context-set":
+        del changed["context_set_sha256"]
+    elif damage == "changed-context-set":
+        changed["context_set_sha256"] = hashlib.sha256(context_sha256.encode()).hexdigest()
+        assert changed["context_set_sha256"] != context_sha256
+    elif damage == "wrong-endpoint-domain":
+        changed["endpoint_admission_version"] = "v2"
+    elif damage == "claimed-authority":
+        changed["controlling_authority"] = True
+    elif damage == "bad-scope":
+        row["retrieved_endpoint_refs"][0]["scope"]["interpretation_id"] = "fixture:foreign-context"
+    elif damage == "bad-scope-pin":
+        row["retrieved_endpoint_refs"][0]["context_sha256"] = "0" * 64
+    elif damage == "mixed-schema":
+        changed["schema"] = "legal-joint-retrieval-result/v3"
+        del changed["context_set_sha256"], changed["endpoint_admission_version"]
+    else:
+        excluded = {entry["id"] for entry in row["excluded_examples"]}
+        identity = next(candidate["id"] for candidate in candidates
+                        if candidate["id"] not in set(row["retrieved_ids"]) | excluded)
+        row["excluded_examples"].append({"id": identity, "reason": "fixture:wrong-common-population"})
+        row["eligible_rows"] -= 1
+    with pytest.raises(ValueError, match=message):
+        _score_v4_fixed_comparison(rankings, references, candidates, ranking_depth=2)
