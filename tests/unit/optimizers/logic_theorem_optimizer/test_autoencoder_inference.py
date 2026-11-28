@@ -4050,9 +4050,11 @@ def test_reviewed_inference_v12_original_owner_ack_commits_four_current_roles(tm
 
 def test_reviewed_inference_v12_fixed_child_uses_distinct_replay_and_saved_joins(tmp_path, monkeypatch):
     from copy import deepcopy
+    from dataclasses import replace
     from ipfs_datasets_py.logic.autoformal import corpus_source_bindings, training_cycle_inputs as inputs
     from ipfs_datasets_py.logic.autoformal import legal_norm_interpretation_review_v1 as norm
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_training_worker as worker
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_eval_splits as splits
     from tests.unit.logic.autoformal.test_corpus_source_bindings import _lir02_complete_case
     from tests.unit.optimizers.logic_theorem_optimizer.test_autoencoder_training_worker import (
         _CompleteReviewedByteTokenizer, _CompleteReviewedSGDBackend,
@@ -4096,13 +4098,18 @@ def test_reviewed_inference_v12_fixed_child_uses_distinct_replay_and_saved_joins
     backend.tokenizer = _CompleteReviewedByteTokenizer()
     fixture = _source_bound_v12_request_data(tmp_path, live, backend=backend)
     request, consumer = fixture.request, fixture.consumer
+    # The earlier consumer fixture uses an opaque stand-in policy digest. V12
+    # evaluates both populations under the exact frozen V5 split policy.
+    split_config = splits.LegalIREvalSplitConfig(**fixture.spec.to_dict()["split_config"])
+    query_manifest = replace(splits.LegalIRSplitManifest.from_mapping(admissions["split_manifest"]),
+                             config_digest=split_config.digest).to_dict()
     contexts = {"profile": "reviewed-source-selection-context/v2",
         "selection_context": {"schema": "caller-known-interpretation-selection/v1",
             "interpretation_id": case["declaration"]["interpretation_id"], "selection_mode": "identifier_only"},
         "rows": [{"id": row["id"], "unit_id": row["unit_id"],
             "governing_context": row["canonical_ir"]["governing_context"],
             "source_binding": row["canonical_ir"]["source_binding"]} for row in rows]}
-    for field, value in (("rows_artifact", rows), ("split_manifest_artifact", admissions["split_manifest"]),
+    for field, value in (("rows_artifact", rows), ("split_manifest_artifact", query_manifest),
                          ("source_contexts_artifact", contexts), ("exposure_artifact", admissions["exposure_records"])):
         request[field] = fixture.put(field + ".json", worker._json_bytes(value))
 
