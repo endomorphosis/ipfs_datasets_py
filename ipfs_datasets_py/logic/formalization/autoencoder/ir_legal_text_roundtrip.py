@@ -619,7 +619,9 @@ def score_deadline_legal_text_roundtrip(reference_ir, candidate_text, *,
     The inverse receives only the candidate prose and its fixed profile.
     The date and workday context is used after reconstruction. Due date
     equality compares ordered dates at their original statement positions
-    in that context. The date lists in the report show the dates alone.
+    in that context. Candidate-only date evaluation failures keep the
+    reconstruction measurements and leave date agreement unresolved. The
+    support and abstention counts describe prose reconstruction.
     """
     from datetime import date
 
@@ -656,11 +658,19 @@ def score_deadline_legal_text_roundtrip(reference_ir, candidate_text, *,
         reference_ir, candidate_text, profile=profile, original_text=original_text)
     reference_dates = due_dates_by_statement(reference)
     _require(bool(reference_dates), "reference must contain at least one evaluable deadline")
-    candidate_dates = None if candidate is None else due_dates_by_statement(candidate)
+    candidate_dates = None
+    status = "unsupported_candidate_abstained"
+    if candidate is not None:
+        try:
+            candidate_dates = due_dates_by_statement(candidate)
+        except ValueError:
+            status = "candidate_deadline_unresolved"
+        else:
+            status = "complete_candidate_scored"
     return {
         "schema": "legal-civil-deadline-text-roundtrip-score/v1",
         "profile": profile,
-        "status": "unsupported_candidate_abstained" if candidate is None else "complete_candidate_scored",
+        "status": status,
         "input_count": 1, "supported_count": int(candidate is not None),
         "abstention_count": int(candidate is None),
         "normalized_reference_prose": reference_prose,
