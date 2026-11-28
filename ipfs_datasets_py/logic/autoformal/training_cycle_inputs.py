@@ -312,6 +312,8 @@ def _reviewed_history(value, current_manifest, rows, config, parent_history, spl
         _reviewed_need(entry["sha256"] not in manifest_hashes, "duplicate historical manifest identity")
         manifest_hashes.add(entry["sha256"])
         resolved = split_owner.LegalIRSplitManifest.from_mapping(data)
+        _reviewed_need(resolved.metadata.get("citation_grouping_policy") == cfg.citation_grouping_policy,
+                       "frozen citation grouping policy differs from split configuration")
         _reviewed_need(resolved.to_dict() == data and resolved.config_digest == cfg.digest
                        and resolved.protected_splits == split_owner.PROTECTED_LEGAL_IR_SPLITS
                        and resolved.partition_names == split_owner.LEGAL_IR_EVAL_SPLITS
@@ -378,10 +380,12 @@ def _reviewed_history(value, current_manifest, rows, config, parent_history, spl
     for row in rows:
         _reviewed_need(row["id"] in records and records[row["id"]]["source_text"] == row["source_text"],
                        "successor source differs from full historical guard")
+    guard_metadata = {"guard_only": True, "assignments_recomputed": False,
+                      **split_owner._citation_grouping_metadata(cfg.citation_grouping_policy)}
     frozen_union = split_owner.LegalIRSplitManifest(
         examples=tuple(examples.values()), assignments=assignments, config_digest=cfg.digest,
         protected_splits=cfg.protected_splits, assignment_conflicts=assignment_conflicts,
-        metadata={"guard_only": True, "assignments_recomputed": False, "duplicate_view": "frozen"})
+        metadata=dict(guard_metadata, duplicate_view="frozen"))
     views = [frozen_union]
     for profile, members in recomputed.items():
         # Every row participates in each selected feature space before comparison.
@@ -391,8 +395,7 @@ def _reviewed_history(value, current_manifest, rows, config, parent_history, spl
             examples=tuple(members[key].with_near_duplicate_key(clusters[key]) for key in examples),
             assignments=assignments, config_digest=cfg.digest, protected_splits=cfg.protected_splits,
             assignment_conflicts=assignment_conflicts,
-            metadata={"guard_only": True, "assignments_recomputed": False,
-                      "duplicate_view": "recomputed_unicode" if profile else "recomputed"}))
+            metadata=dict(guard_metadata, duplicate_view="recomputed_unicode" if profile else "recomputed")))
     # Recomputed token relations add a check; they cannot replace committed
     # duplicate groups or assignment conflicts. Keep only actual violations
     # returned by the canonical guards, in the canonical result type.
