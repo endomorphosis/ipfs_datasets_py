@@ -39976,6 +39976,42 @@
       "root": "artifact_workspace",
       "scope": "Group equivalent U.S. Code section spellings before new protected split assignment.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/lir01_current_lean_verification_epoch_20261128",
+      "evidence_ordinal": 610,
+      "id": "lir01-current-lean-verification-epoch-evidence610-20261128",
+      "observed_bytes": 910,
+      "observed_sha256": "7bddf6ae26bb60f1e976ae56fd1050257e01a39789d263c9b9fc551ca8434ce3",
+      "path": "/tmp/P1-P3-Guide609-current-verified-restorations-TcePVYCc/actual-current-Lean-profile-and-managed-cache-qualification.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Require the current Lean verifier profile for proof reuse and aggregation.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/lir07_lir22_counted_v4_compact_positive_prose_20261128",
+      "evidence_ordinal": 611,
+      "id": "lir07-lir22-counted-v4-compact-positive-prose-evidence611-20261128",
+      "observed_bytes": 679,
+      "observed_sha256": "6bb5bcc7fbc77be9dad6e3c1bff6c8c814640757fa9f04cf17576c44f4fffe76",
+      "path": "/tmp/P1-P3-Guide609-current-verified-restorations-TcePVYCc/actual-current-counted-and-compact-prose-qualification.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Restore counted V4 preparation and round-trip authored positive quantities.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/lir23_signed_citation_split_config_join_20261128",
+      "evidence_ordinal": 612,
+      "id": "lir23-signed-citation-split-config-join-evidence612-20261128",
+      "observed_bytes": 415,
+      "observed_sha256": "f23995dd5184e0cd7635f5ebfe7fb9fc171b232014c693e12654749a951845f0",
+      "path": "/tmp/P1-P3-Guide609-current-verified-restorations-TcePVYCc/actual-current-signed-split-policy-qualification.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Bind current and historical signed split manifests to the selected citation policy.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }

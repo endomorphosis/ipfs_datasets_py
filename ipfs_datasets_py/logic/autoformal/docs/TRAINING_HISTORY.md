@@ -3521,3 +3521,16 @@ The V5 fixture made one local update from optimizer step 1 to 2. The V12 fixture
 ## Evidence609 — Citation spelling and held-out isolation
 
 A controlled reproduction assigned independent rows with equivalent U.S. Code section citations to training and external test under legacy normalization. The explicit new grouping policy kept them together, with a separate section still available for training. Legacy assignments and digests are retained. The split fixture did not measure a model. [Split grouping fixture evidence](/tmp/P7-P8-persisted-v5-v12-public-composition-INERT-z0p32dud/actual-citation-section-split-grouping-qualification.json)
+
+
+## Evidence610 — Verifier and proof-cache custody
+
+The installed Lean cache fixture opened the exact current receipt, checked both compilations and matched the disk record under its exact reuse context. The v2 evidence remains archived. [Lean verification and cache evidence](/tmp/P1-P3-Guide609-current-verified-restorations-TcePVYCc/actual-current-Lean-profile-and-managed-cache-qualification.json)
+
+## Evidence611 — Authored lower and exact cardinalities
+
+The source-withheld compiler and renderer support an explicit compact profile for authored lower-bound and exact-count expressions. The tests cover typed round trips, capacity and semantic mutations. [Counted preparation and prose evidence](/tmp/P1-P3-Guide609-current-verified-restorations-TcePVYCc/actual-current-counted-and-compact-prose-qualification.json)
+
+## Evidence612 — Signed input grouping consistency
+
+The existing reviewed training-input owner checks the citation policy before preparing a signed V5 stage. Prior manifests retain their bytes, and the valid new controls reach preparation with complete source and split bindings. The four signed cases used fictional inputs. [Signed split and V12 isolation evidence](/tmp/P1-P3-Guide609-current-verified-restorations-TcePVYCc/actual-current-signed-split-policy-qualification.json)

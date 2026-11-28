@@ -4379,3 +4379,18 @@ The offline V5 fixture restored the prior model and optimizer at step 1 and pers
 ## Evidence609 — Versioned U.S. Code section grouping
 
 Select `LegalIREvalSplitConfig(citation_grouping_policy="us-code-section/v2")` for new source/dependency-grouped splits. The builder groups dotted and plain U.S. Code citations at the section boundary and records the selected policy in sealed manifests. Twelve retained legacy files matched byte for byte. A legacy title-only key cannot establish the section, so ambiguous citation-only requests crossing a protected title are refused. The final run passed 187 owning, split-membership, and external benchmark tests. The earlier miniature V5 and V12 evidence remains tied to its own source. [Split grouping fixture evidence](/tmp/P7-P8-persisted-v5-v12-public-composition-INERT-z0p32dud/actual-citation-section-split-grouping-qualification.json)
+
+
+## Evidence610 — Current Lean verifier profile
+
+New accepted receipts name `lean-kernel-verification/v3`. Archived v2 cache bytes remain readable with their original identities. Current reuse, accepted outcomes and theorem coverage require the new profile. Three focused checks reproduced the old behavior. The same 12 checks and 614 ordinary kernel and cache cases passed after the change. Installed Lean 4.34.1 passed the cache case with one version probe, two actual compilations, exact reuse and zero extra native commands during cache comparisons. An earlier collection attempt stopped at a missing tracked import and closed. The owned temporary DuckDB run passed 4 persisted coverage cases. [Lean verification and cache evidence](/tmp/P1-P3-Guide609-current-verified-restorations-TcePVYCc/actual-current-Lean-profile-and-managed-cache-qualification.json)
+
+## Evidence611 — Counted V4 preparation and compact positive quantities
+
+The counted V4 owner now pins the reviewed mixed relational source. The intervening owner change concerns candidate digest limits. The selected typed preparation and Lean emitter dependencies were byte-identical. All 26 formerly refused cases passed. The threshold suite passed 125 cases and the separate preservation preparation suite passed 329.
+
+The opt-in `source-withheld-authored-positive-counted-legal-prose/v1` profile round-trips authored lower and exact cardinalities within their existing capacities. It preserves ordered membership roles and refuses changed quantifiers, missing coverage and trailing unsupported input. The existing scorer detects a changed operator or threshold. All 515 selected round-trip tests passed, including 23 new cases. [Counted preparation and prose evidence](/tmp/P1-P3-Guide609-current-verified-restorations-TcePVYCc/actual-current-counted-and-compact-prose-qualification.json)
+
+## Evidence612 — Bind the signed split to its citation policy
+
+The V5 history reader checks that every current and historical frozen manifest names the citation grouping policy selected by its exact configuration. The frozen and recomputed guard views retain the same policy. Two inconsistent signed fixtures previously reached staging. Both now refuse before writing a stage. The disjoint case reaches decoder preparation, and the same-section alias remains blocked. Thirty distinct tests passed across the main run and the exact tracked-fixture recovery, including four signed V5 controls and four V12 isolation cases. [Signed split and V12 isolation evidence](/tmp/P1-P3-Guide609-current-verified-restorations-TcePVYCc/actual-current-signed-split-policy-qualification.json)
