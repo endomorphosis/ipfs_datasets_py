@@ -40012,6 +40012,54 @@
       "root": "artifact_workspace",
       "scope": "Bind current and historical signed split manifests to the selected citation policy.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/current_finite_counted_codec_factory",
+      "evidence_ordinal": 613,
+      "id": "current-finite-counted-codec-factory-qualification",
+      "observed_bytes": 1362,
+      "observed_sha256": "5b511afd573d3cbf6cc702071df447be2816dcfe934a106a32c7b82f51b597af",
+      "path": "/tmp/Guide612-current-verified-continuation-jzQ7hESc/actual-composed-qualification-Evidence613.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Current finite symbolic codec and threshold paths",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/heldout_overlap_threshold_enforcement",
+      "evidence_ordinal": 614,
+      "id": "rich-heldout-configured-overlap-threshold-qualification",
+      "observed_bytes": 1644,
+      "observed_sha256": "52c9b478ae27dd9a8585165d21297d1f62ac2cbcdb48b24e3a583fe24875d7ce",
+      "path": "/tmp/Guide612-current-verified-continuation-jzQ7hESc/actual-composed-qualification-Evidence614.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Declared near-duplicate limits on rich-context held-out rows",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/v12_saved_terminal_source_evidence",
+      "evidence_ordinal": 615,
+      "id": "v12-saved-terminal-and-producer-source-evidence",
+      "observed_bytes": 1375,
+      "observed_sha256": "6ef943959a9c30e583d80695bdc1bdb5fd63452d6f319761844da070f1d0c8d4",
+      "path": "/tmp/Guide612-current-verified-continuation-jzQ7hESc/actual-composed-qualification-Evidence615.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Saved artifact validation against the request-pinned tokenizer contract and producer rows",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/physical_replay_canonical_uscode_identity",
+      "evidence_ordinal": 616,
+      "id": "physical-replay-canonical-uscode-reviewed-provision-identity",
+      "observed_bytes": 1828,
+      "observed_sha256": "ea664c56f67fe6e5f654a006b6224606fd5b6fc9fee2f38f1251d004c65c3e87",
+      "path": "/tmp/Guide612-current-verified-continuation-jzQ7hESc/actual-composed-qualification-Evidence616.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Reviewed and captured provision identity matching in the physical release route",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }

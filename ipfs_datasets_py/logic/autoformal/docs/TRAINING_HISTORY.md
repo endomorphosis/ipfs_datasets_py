@@ -3534,3 +3534,23 @@ The source-withheld compiler and renderer support an explicit compact profile fo
 ## Evidence612 — Signed input grouping consistency
 
 The existing reviewed training-input owner checks the citation policy before preparing a signed V5 stage. Prior manifests retain their bytes, and the valid new controls reach preparation with complete source and split bindings. The four signed cases used fictional inputs. [Signed split and V12 isolation evidence](/tmp/P1-P3-Guide609-current-verified-restorations-TcePVYCc/actual-current-signed-split-policy-qualification.json)
+
+
+## Evidence613 — Current finite counted codec factory
+
+Local structural validation passed 384 cases and compared 525 prefix states and 14,700 edges. The original numerical checkpoint retains its historical source identity. No current numerical fit or model quality result accompanies this change. [Exact qualification evidence](/tmp/Guide612-current-verified-continuation-jzQ7hESc/actual-composed-qualification-Evidence613.json)
+
+
+## Evidence614 — Configured rich-context held-out overlap threshold
+
+Eleven matched fictional regression cases passed after the change. Six existing public and structured positive cases passed separately. This is software split validation without a new corpus admission or model run. [Exact qualification evidence](/tmp/Guide612-current-verified-continuation-jzQ7hESc/actual-composed-qualification-Evidence614.json)
+
+
+## Evidence615 — V12 saved terminal token and producer evidence
+
+The retained signed report and four inconsistent copies exercised the before/after verifier. Updated validation rejects the four copies. Forty-six V11 and V12 software cases passed. The fixture contains zero decoded text comparisons and no new model run. [Exact qualification evidence](/tmp/Guide612-current-verified-continuation-jzQ7hESc/actual-composed-qualification-Evidence615.json)
+
+
+## Evidence616 — Canonical U.S. Code identity in physical replay
+
+The signed fictional control previously accepted different captured and reviewed sections. The corrected run passed 46 local software cases, including five canonical physical cases, three legacy cases and 38 identity parser cases. Source contents matched before and after and both leases closed. The audit wrapper separately reported three blocked subprocess attempts, with no subprocess execution credit. No real provision received a new independent review or admission. [Exact qualification evidence](/tmp/Guide612-current-verified-continuation-jzQ7hESc/actual-composed-qualification-Evidence616.json)

@@ -5473,6 +5473,46 @@
       },
       "record_id": "lir23-signed-citation-split-config-join-evidence612-20261128",
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
+    },
+    "current_finite_counted_codec_factory": {
+      "evidence_ordinal": 613,
+      "facts": {
+        "bytes": 1362,
+        "path": "/tmp/Guide612-current-verified-continuation-jzQ7hESc/actual-composed-qualification-Evidence613.json",
+        "sha256": "5b511afd573d3cbf6cc702071df447be2816dcfe934a106a32c7b82f51b597af"
+      },
+      "record_id": "current-finite-counted-codec-factory-qualification",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
+    },
+    "heldout_overlap_threshold_enforcement": {
+      "evidence_ordinal": 614,
+      "facts": {
+        "bytes": 1644,
+        "path": "/tmp/Guide612-current-verified-continuation-jzQ7hESc/actual-composed-qualification-Evidence614.json",
+        "sha256": "52c9b478ae27dd9a8585165d21297d1f62ac2cbcdb48b24e3a583fe24875d7ce"
+      },
+      "record_id": "rich-heldout-configured-overlap-threshold-qualification",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
+    },
+    "physical_replay_canonical_uscode_identity": {
+      "evidence_ordinal": 616,
+      "facts": {
+        "bytes": 1828,
+        "path": "/tmp/Guide612-current-verified-continuation-jzQ7hESc/actual-composed-qualification-Evidence616.json",
+        "sha256": "ea664c56f67fe6e5f654a006b6224606fd5b6fc9fee2f38f1251d004c65c3e87"
+      },
+      "record_id": "physical-replay-canonical-uscode-reviewed-provision-identity",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
+    },
+    "v12_saved_terminal_source_evidence": {
+      "evidence_ordinal": 615,
+      "facts": {
+        "bytes": 1375,
+        "path": "/tmp/Guide612-current-verified-continuation-jzQ7hESc/actual-composed-qualification-Evidence615.json",
+        "sha256": "6ef943959a9c30e583d80695bdc1bdb5fd63452d6f319761844da070f1d0c8d4"
+      },
+      "record_id": "v12-saved-terminal-and-producer-source-evidence",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
     }
   },
   "programme_goal_hierarchy": {

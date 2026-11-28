@@ -4394,3 +4394,23 @@ The opt-in `source-withheld-authored-positive-counted-legal-prose/v1` profile ro
 ## Evidence612 — Bind the signed split to its citation policy
 
 The V5 history reader checks that every current and historical frozen manifest names the citation grouping policy selected by its exact configuration. The frozen and recomputed guard views retain the same policy. Two inconsistent signed fixtures previously reached staging. Both now refuse before writing a stage. The disjoint case reaches decoder preparation, and the same-section alias remains blocked. Thirty distinct tests passed across the main run and the exact tracked-fixture recovery, including four signed V5 controls and four V12 isolation cases. [Signed split and V12 isolation evidence](/tmp/P1-P3-Guide609-current-verified-restorations-TcePVYCc/actual-current-signed-split-policy-qualification.json)
+
+
+## Evidence613 — Current finite counted codec factory
+
+The current finite counted codec authenticates the current typed factory. The historical source declaration is refused as current. Its three counted forms preserve all 117, 195 and 293 token IDs, typed expressions and context. [Exact qualification evidence](/tmp/Guide612-current-verified-continuation-jzQ7hESc/actual-composed-qualification-Evidence613.json)
+
+
+## Evidence614 — Configured rich-context held-out overlap threshold
+
+Held-out near-duplicate checks validate the declared finite cutoff and use the stricter of that cutoff and the existing default. The existing tokenization views and bookkeeping are preserved. [Exact qualification evidence](/tmp/Guide612-current-verified-continuation-jzQ7hESc/actual-composed-qualification-Evidence614.json)
+
+
+## Evidence615 — V12 saved terminal token and producer evidence
+
+V12 saved result replay checks token bounds and terminal markers, ordered unit identities and the producer output using the request-pinned contract. The original signed fictional saved report still replays. [Exact qualification evidence](/tmp/Guide612-current-verified-continuation-jzQ7hESc/actual-composed-qualification-Evidence615.json)
+
+
+## Evidence616 — Canonical U.S. Code identity in physical replay
+
+Physical replay compares the full normalized U.S. Code identities of the captured and reviewed provisions, including qualifiers. It rejects mismatched section or note identities and unknown or duplicate qualifiers. Older non-U.S.-Code fixture labels retain their existing comparison. [Exact qualification evidence](/tmp/Guide612-current-verified-continuation-jzQ7hESc/actual-composed-qualification-Evidence616.json)
