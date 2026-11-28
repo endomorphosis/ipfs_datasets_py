@@ -13770,3 +13770,150 @@ def test_reviewed_source_bound_v5_continuation_refuses_cross_domain_metadata(tmp
         spec = worker.TrainingJobSpec.from_dict(payload)
         worker._reviewed_mixed_decoder_continuation_state(spec, fixture.registry, spec.parent_checkpoint_artifact,
             parent, {"tokenizer_contract": parent["token_budgets"]["tokenizer_contract"]})
+
+
+@pytest.mark.slow
+def test_reviewed_source_bound_v5_persists_selected_miniature_successor():
+    """Use the existing owner-selected fixture bounds to persist one successor step."""
+    from copy import deepcopy
+
+    from ipfs_datasets_py.logic.autoformal import training_cycle_inputs as inputs
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_span_consumer_binding as consumer
+
+    encoded_reference = os.environ.get("IPFS_DATASETS_TEST_REVIEWED_V5_SUCCESSOR_INPUT")
+    if encoded_reference is None:
+        pytest.skip("requires an exact signed fictional V5 successor input readback")
+
+    def read(reference, *, max_bytes=inputs.MAX_REVIEWED_ARTIFACT_BYTES, load=True):
+        return worker._reviewed_decoder_artifact(worker.CheckpointArtifact.from_dict(reference),
+                                                limit=max_bytes, load=load)
+
+    def read_json(reference):
+        return inputs._reviewed_json(read(reference))
+
+    selection_ref = json.loads(encoded_reference)
+    selected = read_json(selection_ref)
+    assert selected["schema"] == "signed-fictional-miniature-v5-successor-input-readback/v1"
+    assert selected["fixture_only"] is selected["source_lease_closed"] is True
+    assert selected["model_loaded_or_training_dispatched"] is selected["resource_admission_or_launch_granted"] is False
+    source_root = Path(worker.__file__).resolve().parents[3]
+    assert Path(selected["source_root"]) == source_root
+    terminal = worker._parse_json(read(selected["original_local_loader_terminal"]))
+    assert terminal["candidate"] == selected["candidate"] and terminal["pytest_returncode"] == 0
+    assert terminal["source_lease_closed"] and terminal["source_stable"] and terminal["child_waited"]
+
+    job_ref = selected["job"]
+    job_raw = read(job_ref)
+    spec = worker.ReviewedSourceBoundMixedDecoderTrainingJobSpec.from_dict(inputs._reviewed_json(job_raw))
+    assert worker._json_bytes(spec.to_dict()) == job_raw and spec.canonical_sha256 == job_ref["sha256"]
+    assert spec.allow_fictional_fixture is True and spec.backend_identity["pretrained"] is False
+    assert spec.continuation_profile == worker.REVIEWED_SOURCE_BOUND_MIXED_DECODER_CONTINUATION_PROFILE
+    assert spec.max_steps == spec.batch_size == 1
+    assert asdict(spec.stage_artifact) == selected["successor_stage"]
+    assert asdict(spec.parent_checkpoint_artifact) == selected["historical_checkpoint"]
+    output = Path(spec.output_directory)
+    assert not os.path.lexists(output)
+
+    census = selected["exact_registry_artifacts"]
+    references = {(item["sha256"], item["bytes"]): item for item in census}
+    assert len(census) == len(references) == len({item["path"] for item in census}) == 68
+
+    class ReadOnlyRegistry:
+        def artifact_path(self, descriptor):
+            return Path(references[descriptor["sha256"], descriptor["bytes"]]["path"])
+
+        def read_artifact(self, descriptor, *, max_bytes):
+            return read(references[descriptor["sha256"], descriptor["bytes"]], max_bytes=max_bytes)
+
+    registry = ReadOnlyRegistry()
+    stage = read_json(selected["successor_stage"])
+    previous = read_json(selected["historical_checkpoint"])
+    assert stage["schema"] == inputs.REVIEWED_SOURCE_BOUND_MIXED_CYCLE_SCHEMA
+    assert stage["transition_kind"] == "successor" and stage["history_artifact"] == selected["successor_history"]
+    assert stage["parent_artifact"]["sha256"] == previous["training_binding"]["stage_artifact_sha256"]
+    assert len(read_json(stage["history_artifact"])["records"]) == 5
+    assert previous["schema"] == worker.REVIEWED_SOURCE_BOUND_MIXED_DECODER_CHECKPOINT_SCHEMA
+    assert previous["training_binding"]["fixture_only"] is True
+    offset, steps = selected["historical_optimizer_step"], selected["required_successor_optimizer_step"]
+    assert type(offset) is type(steps) is int and (offset, steps) == (1, 2)
+    assert previous["progress"] == {"epochs_completed": 0, "row_cursor": 1, "optimizer_steps": offset}
+    assert previous["model_state"] == asdict(spec.base_model_checkpoint)
+    assert previous["optimizer_state"] == asdict(spec.base_optimizer_checkpoint)
+
+    admission = inputs._reviewed_restore_admission(registry, read_json(stage["admission_transport_artifact"]))
+    bound = inputs._reviewed_restore_bound_component_inputs(read_json(stage["bound_component_transport_artifact"]),
+        lambda reference: inputs._reviewed_read(registry, reference))
+    assert len(admission) == 1 and set(admission) == set(bound)
+    assert consumer.reviewed_admission_inputs_sha256(admission) == spec.expected_admission_inputs_sha256
+    assert consumer.reviewed_admission_inputs_sha256(bound) == spec.expected_bound_component_inputs_sha256
+    pins = dict(spec.expected_source_sha256)
+    assert previous["producer_pins"] == pins
+
+    def execution_guard():
+        assert worker._reviewed_decoder_source_pins(admission_profile=spec.admission_profile, source_bound=True) == pins
+        assert read(job_ref) == job_raw
+
+    def asset_policy(policy):
+        if policy.get("schema") == "reviewed-local-source-bound-decoder-load-policy/v1":
+            assert policy["job_spec_sha256"] == spec.canonical_sha256
+            assert policy["stage_artifact"] == selected["successor_stage"]
+            assert policy["bound_component_inputs_sha256"] == spec.expected_bound_component_inputs_sha256
+            assert all(policy[name] is False for name in ("training_requested", "downloads_requested",
+                                                            "resource_grant_requested"))
+        else:
+            assert worker._json_bytes(policy) == job_raw
+
+    def check_frozen_inputs():
+        execution_guard()
+        for path, digest in stage["implementation"].items():
+            assert Path(path).is_relative_to(source_root) and _sha(path) == digest
+        for reference in (*census, selection_ref, selected["original_local_loader_terminal"],
+                          selected["historical_checkpoint"], *previous["assets"], previous["model_state"],
+                          previous["optimizer_state"], asdict(spec.exposure_artifact), asdict(spec.source_contexts_artifact)):
+            read(reference, load=False)
+
+    check_frozen_inputs()
+    runtime, loaded = worker.load_local_reviewed_source_bound_decoder_runtime_v5(
+        spec=spec, registry=registry, current_admission_provider=lambda: deepcopy(admission),
+        current_bound_component_inputs_provider=lambda: deepcopy(bound), execution_guard=execution_guard,
+        asset_policy_guard=asset_policy, recipe_artifact=worker.CheckpointArtifact.from_dict(selected["recipe"]),
+        model_config_artifact=worker.CheckpointArtifact.from_dict(selected["model_config"]), max_model_bytes=64 * 1024**2,
+        allow_stage_transition=True)
+    assert loaded["checkpoint_restored"] is loaded["matched_pair"] is loaded["stage_transition_pending"] is True
+    assert loaded["optimizer_steps"] == loaded["optimizer_step_offset"] == offset
+    assert runtime._loaded_checkpoint_source_anchor is None
+
+    result = worker.execute_training_job_file(job_ref["path"], job_ref["sha256"], reviewed_runtime=runtime)
+    assert (output / "receipt.json").read_bytes() == worker._json_bytes(result)
+    assert result["job_file_sha256"] == job_ref["sha256"] == result["job_spec_sha256"]
+    assert result["stage_transition_performed"] is True and result["backend_train_batch_calls"] == 1
+    assert result["backend_restore_calls"] == 1 and result["backend_reported_optimizer_steps"] == steps
+    assert result["initial_progress"] == {"epochs_completed": 0, "row_cursor": 0, "optimizer_steps": offset}
+    assert result["worker_progress"] == {"epochs_completed": 0, "row_cursor": 1, "optimizer_steps": steps}
+    assert all(result[name] is False for name in ("qualified", "admitted", "promotion_performed",
+        "corpus_admitted", "registry_modified", "downloads_performed", "legal_meaning_verified"))
+    assert Path(result["candidate"]["path"]) == output / "reviewed-decoder-checkpoint.json"
+    assert Path(result["model_checkpoint"]["path"]) == output / "model.checkpoint"
+    assert Path(result["optimizer_checkpoint"]["path"]) == output / "optimizer.checkpoint"
+    checkpoint = read_json(result["candidate"])
+    assert checkpoint["schema"] == worker.REVIEWED_SOURCE_BOUND_MIXED_DECODER_CONTINUATION_CHECKPOINT_SCHEMA
+    assert checkpoint["continuation_profile"] == spec.continuation_profile and checkpoint["producer_pins"] == pins
+    assert checkpoint["optimizer_step_offset"] == result["optimizer_step_offset"] == offset
+    assert checkpoint["progress"] == result["worker_progress"]
+    assert checkpoint["parent_checkpoint_sha256"] == selected["historical_checkpoint"]["sha256"]
+    assert checkpoint["model_state"] == result["model_checkpoint"]
+    assert checkpoint["optimizer_state"] == result["optimizer_checkpoint"]
+    read(checkpoint["model_state"], load=False)
+    read(checkpoint["optimizer_state"], load=False)
+    binding = checkpoint["training_binding"]
+    assert binding == result["complete_training_binding"] and binding["fixture_only"] is True
+    assert binding["production_training_eligible"] is False and binding["record_count"] == 3
+    assert binding["stage_artifact_sha256"] == selected["successor_stage"]["sha256"]
+    continuation = checkpoint["stage_continuation"]
+    assert continuation == result["stage_continuation"]
+    assert continuation["parent_checkpoint_artifact"] == selected["historical_checkpoint"]
+    assert continuation["global_optimizer_step_offset"] == offset
+    assert continuation["current_training_binding_sha256"] == worker._digest(worker._json_bytes(binding))
+    assert continuation["stage_ancestry"]["ancestor_stage"] == stage["parent_artifact"]
+    assert continuation["stage_ancestry"]["successor_stage"] == selected["successor_stage"]
+    check_frozen_inputs()
