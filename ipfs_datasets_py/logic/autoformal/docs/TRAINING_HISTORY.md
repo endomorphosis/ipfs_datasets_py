@@ -3476,3 +3476,8 @@ The signed fictional component passed its original-handle and compiled-project c
 ## Evidence600 — Native command-binding reference check
 
 The existing kernel owner passed its ordinary software checks and one managed installed-Lean case. The case covers proof acceptance and two policy refusals. This verification selected no model fit or checkpoint update. [Lean command-binding qualification](/tmp/P1-Lean-returned-command-binding-7kdokpme/actual-Lean-selected-command-qualification.json)
+
+
+## Evidence601 — Source-bound rich TRAIN replay fixture
+
+The existing structured retrieval consumer preserves complete examples while checking the supplied current source history and its independent commitment. The isolated qualification reproduced two baseline failures and passed 12 signed source replay cases, alongside 19 direct-context and five heldout integration cases. The merge into Guide600 retained those exact source changes and used static compatibility checks. This evidence covers ordinary fictional fixtures. [Exact Phase 4 fixture and merge evidence](/tmp/P4-rich-bound-train-onubtv2a/Guide601-isolated/actual-Guide601-P4-qualified-fixture-integration.json)
