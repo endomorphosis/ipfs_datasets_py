@@ -217,9 +217,13 @@ def _loss(torch, student_logits, teacher_logits, labels, alpha):
     return ce + alpha * kl, ce, kl
 
 
-def _greedy(torch, model, data, cap, size, deadline, *, source_context=None):
+def _greedy(torch, model, data, cap, size, deadline, *, source_context=None, strict_deadline=False):
+    if strict_deadline and time.monotonic() >= deadline:
+        return None
     projected = model.project(data)
     _require(projected.shape == data.shape and _finite(torch, projected), "invalid reconstructed input")
+    if strict_deadline and time.monotonic() >= deadline:
+        return None
     hidden = model.start(projected, **({} if source_context is None else {"source_context": source_context}))
     current = torch.ones((len(data), 1), dtype=torch.long)
     outputs = [[] for _ in data]

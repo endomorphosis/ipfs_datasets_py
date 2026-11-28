@@ -336,13 +336,15 @@ def restore_contextual_legal_model(prepared):
 
 
 def infer_contextual_legal_model(restored, source_inputs, *, output_cap=512,
-                                 deadline_seconds=120., batch_size=8):
+                                 deadline_seconds=120., batch_size=8, deadline_monotonic=None):
     """Greedy raw generation from paragraph vectors and ordered clause vectors.
 
     No gold prefix, rule count, parser, label, target or reference is accepted.
     Padding follows the original input transform; independent saved paragraph
     and clause feature normalization remains inside the restored model.
     A deadline reports unfinished rows explicitly and never repairs output.
+    An explicit monotonic deadline includes preparation time in the generation
+    budget. Integrity checks can finish after expiry.
     """
     _require(type(restored) is _RestoredContextualModel, "restored contextual handle required")
     _require(type(source_inputs) is dict and set(source_inputs) == {"rows", "contexts"},
@@ -351,6 +353,10 @@ def infer_contextual_legal_model(restored, source_inputs, *, output_cap=512,
     _require(type(batch_size) is int and 1 <= batch_size <= 32, "bounded batch size required")
     _require(type(deadline_seconds) in (int, float) and math.isfinite(deadline_seconds)
              and 0 < deadline_seconds <= 120., "deadline must be positive and at most120seconds")
+    if deadline_monotonic is not None:
+        _require(type(deadline_monotonic) in (int, float) and math.isfinite(deadline_monotonic)
+            and deadline_monotonic <= time.monotonic() + float(deadline_seconds),
+            "absolute monotonic deadline cannot extend the relative inference limit")
     rows, contexts = deepcopy((source_inputs["rows"], source_inputs["contexts"]))
     _require(type(rows) is list and 1 <= len(rows) <= 128,
              "bounded nonempty source rows required")
@@ -365,13 +371,14 @@ def infer_contextual_legal_model(restored, source_inputs, *, output_cap=512,
     _require(context_receipt["dimension"] == restored.dimension,
              "paragraph and clause dimensions differ")
     return _infer_contextual_generation(restored,source_inputs,rows,contexts,context_receipt,
-        core,contexts_owner,output_cap=output_cap,deadline_seconds=deadline_seconds,batch_size=batch_size)
+        core,contexts_owner,output_cap=output_cap,deadline_seconds=deadline_seconds,batch_size=batch_size,
+        deadline_monotonic=deadline_monotonic)
 
 
 def _infer_contextual_generation(restored, source_inputs, rows, contexts, context_receipt,
                                   core, contexts_owner, *, output_cap, deadline_seconds,
-                                  batch_size, occurrence_guard=None):
-    """Shared unchanged numerical generation; optional new-consumer custody guards."""
+                                  batch_size, occurrence_guard=None, deadline_monotonic=None):
+    """Shared numerical generation with optional custody and absolute time bounds."""
     torch = core._torch()
     model = restored.model
     core._model(model, torch)
@@ -382,7 +389,8 @@ def _infer_contextual_generation(restored, source_inputs, rows, contexts, contex
     _require(before == restored.tensor_sha256, "restored model changed before inference")
     rng_before = torch.get_rng_state().clone()
     inputs_sha = core.digest(source_inputs)
-    deadline = time.monotonic() + float(deadline_seconds)
+    deadline = deadline_monotonic if deadline_monotonic is not None else time.monotonic() + float(deadline_seconds)
+    strict_options = {"strict_deadline": True} if deadline_monotonic is not None else {}
     predictions = []
     with torch.inference_mode(), torch.device("cpu"):
         for offset in range(0, len(rows), batch_size):
@@ -401,17 +409,18 @@ def _infer_contextual_generation(restored, source_inputs, rows, contexts, contex
                 finally:
                     if occurrence_guard is not None:
                         occurrence_guard("after_batch_context",part=part,data=data,packet=packet)
-                if occurrence_guard is not None:
-                    occurrence_guard("before_greedy",part=part,data=data,packet=packet)
                 generated, greedy_returned = None, False
-                try:
-                    generated = core._greedy(torch, model, data, output_cap,
-                        len(restored.codec["target_vocabulary"]), deadline, source_context=packet)
-                    greedy_returned = True
-                finally:
+                if deadline_monotonic is None or time.monotonic() < deadline:
                     if occurrence_guard is not None:
-                        occurrence_guard("after_greedy",part=part,data=data,packet=packet,
-                            generated=generated,greedy_returned=greedy_returned)
+                        occurrence_guard("before_greedy",part=part,data=data,packet=packet)
+                    try:
+                        generated = core._greedy(torch, model, data, output_cap,
+                            len(restored.codec["target_vocabulary"]), deadline, source_context=packet, **strict_options)
+                        greedy_returned = True
+                    finally:
+                        if occurrence_guard is not None:
+                            occurrence_guard("after_greedy",part=part,data=data,packet=packet,
+                                generated=generated,greedy_returned=greedy_returned)
             if generated is None:
                 predictions.extend(dict(id=row["id"], token_ids=[], eos_reached=False,
                                          generation_status="deadline") for row in part)

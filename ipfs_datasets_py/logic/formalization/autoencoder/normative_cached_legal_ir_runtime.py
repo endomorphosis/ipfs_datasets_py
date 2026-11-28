@@ -528,7 +528,8 @@ class _NormativeCachedLegalAutoencoder(normative._NormativeLegalAutoencoder):
                 self._inference_started = True
                 arm.update(status="refused", row_outcomes=[dict(id=identity, status="refused") for identity in ids])
                 observed = self._owner.infer_contextual_legal_model(self._model, packet,
-                    output_cap=budget["decoder_output_tokens"], deadline_seconds=remaining, batch_size=budget["batch_size"])
+                    output_cap=budget["decoder_output_tokens"], deadline_seconds=remaining,
+                    batch_size=budget["batch_size"], deadline_monotonic=deadline)
                 returned += 1
                 self._inferred = True
                 contextual._require(contextual._raw(packet) == before, "matched numerical owner mutated source packet")

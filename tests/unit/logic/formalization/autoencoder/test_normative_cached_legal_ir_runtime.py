@@ -11,6 +11,7 @@ from pathlib import Path
 
 import pytest
 
+from ipfs_datasets_py.logic.formalization.autoencoder import contextual_legal_ir_numeric as numeric_owner
 from ipfs_datasets_py.logic.formalization.autoencoder import contextual_legal_ir_runtime as original
 from ipfs_datasets_py.logic.formalization.autoencoder import fresh_scalar_source_inputs as fresh
 from ipfs_datasets_py.logic.formalization.autoencoder import fresh_scalar_source_inputs_single as single
@@ -20,6 +21,8 @@ from ipfs_datasets_py.logic.formalization.autoencoder import dimension_source_in
 from ipfs_datasets_py.logic.formalization.autoencoder import source_embeddings_768_complete as complete
 from .test_contextual_legal_ir_runtime import loader, make_contextual, pin, repin, write
 from .test_fresh_scalar_source_inputs import config, plan as source_fixture_plan
+
+_REAL_CONTEXTUAL_INFERENCE = numeric_owner.infer_contextual_legal_model
 
 
 def seal(value, key, digest=fresh.digest):
@@ -631,8 +634,8 @@ def test_matched_cached_shuffle_uses_one_loaded_checkpoint_and_only_selected_don
     assert [row["input"] for row in shuffled["rows"]] == [row["input"] for row in reversed(baseline["rows"])]
     assert all(set(row) == {"id", "source_text", "input"} for row in shuffled["rows"])
     assert [call["options"] for call in loader["calls"]] == [
-        {"output_cap": 512, "batch_size": 8, "deadline_seconds": 5.},
-        {"output_cap": 512, "batch_size": 8, "deadline_seconds": 4.},
+        {"output_cap": 512, "batch_size": 8, "deadline_seconds": 5., "deadline_monotonic": 105.},
+        {"output_cap": 512, "batch_size": 8, "deadline_seconds": 4., "deadline_monotonic": 105.},
     ]
     assert [arm["control"] for arm in result["arms"]] == [
         {"kind": "conditioned", "source_assignment": dict(zip(ids, ids, strict=True))},
@@ -749,3 +752,121 @@ def test_matched_cached_shuffle_preserves_raw_rows_when_the_final_report_misses_
         assert arm["status"] == "returned" and arm["raw_candidate_report"]["completed"]
         assert [row["id"] for row in arm["raw_candidate_report"]["predictions"]] == ids
         assert arm["row_outcomes"] == [{"id": identity, "status": "eos"} for identity in ids]
+
+
+def _existing_numeric_with_inert_decoder(case, monkeypatch, loader, *, expire_during):
+    from contextlib import nullcontext
+    from types import SimpleNamespace
+
+    checkpoint = loader["loads"][0]["checkpoint"]
+    now = [100.]
+    calls = []
+    rng = SimpleNamespace()
+    rng.clone = lambda: rng
+
+    class Tensor:
+        def __init__(self, shape):
+            self.shape = shape
+
+        def __len__(self):
+            return self.shape[0]
+
+        def __iter__(self):
+            return iter(range(len(self)))
+
+        def __sub__(self, other):
+            return self
+
+        def __truediv__(self, other):
+            return self
+
+        def __getitem__(self, key):
+            return self
+
+        def argmax(self, axis):
+            return SimpleNamespace(tolist=lambda: [2] * len(self))
+
+    class InertTorch:
+        float32 = object()
+        long = object()
+        tensor = staticmethod(lambda values, **_: Tensor((len(values), checkpoint["dimension"])))
+        ones = staticmethod(lambda shape, **_: Tensor(shape))
+        inference_mode = staticmethod(nullcontext)
+        device = staticmethod(nullcontext)
+        get_rng_state = staticmethod(lambda: rng)
+        equal = staticmethod(lambda first, second: first is second)
+
+    def project(data):
+        calls.append(("project", now[0]))
+        if expire_during == "projection":
+            now[0] = 105.
+        return data
+
+    def start(data, *, source_context):
+        calls.append(("start", now[0]))
+        return object()
+
+    def next_logits(tokens, hidden):
+        calls.append(("next_logits", now[0]))
+        return Tensor((len(tokens), 1, len(checkpoint["codec"]["target_vocabulary"]))), hidden
+
+    frozen_model = SimpleNamespace(modules=lambda: [SimpleNamespace(training=False)], parameters=lambda: [],
+                                   project=project, start=start, next_logits=next_logits)
+    case["handle"]._model = numeric_owner._RestoredContextualModel(frozen_model, checkpoint["dimension"],
+        checkpoint["codec"], checkpoint["input_transform"], checkpoint["tensor_sha256"])
+
+    def model_check(model, _):
+        assert model is frozen_model
+        if expire_during == "model_check":
+            now[0] = 105.
+
+    def batch_context(*_):
+        if expire_during == "batch_context":
+            now[0] = 105.
+        return {}
+
+    core, *_, contexts = numeric_owner._owners()
+    monkeypatch.setattr(core, "_model", model_check)
+    monkeypatch.setattr(core, "_torch", lambda: InertTorch)
+    monkeypatch.setattr(core, "_finite", lambda *_: True)
+    monkeypatch.setattr(core, "tensor_digest", lambda model: checkpoint["tensor_sha256"])
+    monkeypatch.setattr(contexts, "batch_source_context", batch_context)
+    clock = lambda: now[0]
+    monkeypatch.setattr(runtime, "monotonic", clock)
+    monkeypatch.setattr(numeric_owner, "time", SimpleNamespace(monotonic=clock))
+    monkeypatch.setattr(core, "time", SimpleNamespace(monotonic=clock))
+    monkeypatch.setattr(numeric_owner, "infer_contextual_legal_model", _REAL_CONTEXTUAL_INFERENCE)
+    return calls
+
+
+@pytest.mark.parametrize(("expire_during", "allowed_calls"), [
+    ("model_check", []),
+    ("batch_context", []),
+    ("projection", [("project", 100.)]),
+])
+def test_matched_cached_real_numeric_cannot_start_layers_after_original_deadline(
+        matched_cache, monkeypatch, loader, expire_during, allowed_calls):
+    case = matched_cache
+    calls = _existing_numeric_with_inert_decoder(case, monkeypatch, loader, expire_during=expire_during)
+    result = case["handle"].infer_matched_paragraph_shuffle(case["request"],
+        control_owner_pin=case["control_owner_pin"])
+    assert calls == allowed_calls
+    assert result["numerical_dispatches_started"] == result["numerical_reports_returned"] == 1
+    assert result["comparison_deadline_reached"] and not result["execution_complete"]
+    first, second = result["arms"]
+    expected = [{"id": identity, "status": "deadline"} for identity in result["row_ids"]]
+    assert first["status"] == "returned_after_deadline" and first["row_outcomes"] == expected
+    assert first["raw_candidate_report"]["predictions"] == [
+        {"id": identity, "token_ids": [], "eos_reached": False, "generation_status": "deadline"}
+        for identity in result["row_ids"]]
+    assert second["status"] == "not_dispatched"
+    assert [row["id"] for row in second["row_outcomes"]] == result["row_ids"]
+
+
+def test_ordinary_cached_real_numeric_retains_its_relative_deadline(matched_cache, monkeypatch, loader):
+    case = matched_cache
+    calls = _existing_numeric_with_inert_decoder(case, monkeypatch, loader, expire_during="model_check")
+    result = case["handle"].infer_cached()
+    assert calls == [("project", 105.), ("start", 105.), ("next_logits", 105.)]
+    assert result["raw_candidate_report"]["completed"]
+    assert [row["id"] for row in result["raw_candidate_report"]["predictions"]] == case["request"]["row_ids"]
