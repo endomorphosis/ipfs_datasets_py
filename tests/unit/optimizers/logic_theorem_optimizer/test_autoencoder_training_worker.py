@@ -13866,7 +13866,8 @@ def test_reviewed_source_bound_v5_persists_selected_miniature_successor():
     def check_frozen_inputs():
         execution_guard()
         for path, digest in stage["implementation"].items():
-            assert Path(path).is_relative_to(source_root) and _sha(path) == digest
+            assert Path(path).is_relative_to(source_root)
+            assert hashlib.sha256(Path(path).read_bytes()).hexdigest() == digest
         for reference in (*census, selection_ref, selected["original_local_loader_terminal"],
                           selected["historical_checkpoint"], *previous["assets"], previous["model_state"],
                           previous["optimizer_state"], asdict(spec.exposure_artifact), asdict(spec.source_contexts_artifact)):
