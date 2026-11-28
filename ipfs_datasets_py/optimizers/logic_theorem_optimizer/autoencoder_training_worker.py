@@ -653,6 +653,8 @@ REVIEWED_DECODER_SCHEMA_VERSION = "autoencoder-training-job-v9-reviewed-legal-ir
 REVIEWED_MIXED_DECODER_SCHEMA_VERSION = "autoencoder-training-job-v10-reviewed-mixed-legal-ir"
 REVIEWED_SOURCE_BOUND_MIXED_DECODER_JOB_SCHEMA = "reviewed-source-bound-mixed-decoder-job/v1"
 REVIEWED_SOURCE_BOUND_MIXED_DECODER_CHECKPOINT_SCHEMA = "reviewed-source-bound-mixed-decoder-checkpoint/v1"
+REVIEWED_SOURCE_BOUND_MIXED_DECODER_CONTINUATION_CHECKPOINT_SCHEMA = "reviewed-source-bound-mixed-decoder-checkpoint/v2"
+REVIEWED_SOURCE_BOUND_MIXED_DECODER_CONTINUATION_PROFILE = "reviewed-source-bound-mixed-cycle-stage-continuation/v1"
 REVIEWED_SOURCE_BOUND_MIXED_DECODER_WORKER_RECEIPT_SCHEMA = "reviewed-source-bound-mixed-decoder-worker-receipt/v1"
 REVIEWED_DIGEST_OMITTED_JOB_SCHEMA = "reviewed-mixed-digest-omitted-decoder-job/v1"
 REVIEWED_DIGEST_OMITTED_CHECKPOINT_SCHEMA = "reviewed-digest-omitted-decoder-checkpoint/v1"
@@ -829,8 +831,11 @@ class ReviewedMixedDecoderTrainingJobSpec(ReviewedDecoderTrainingJobSpec):
     def __post_init__(self) -> None:
         if self.admission_profile != REVIEWED_MIXED_ADMISSION_PROFILE:
             raise TrainingJobValidationError("explicit mixed-sort admission V3 profile required")
+        profile = (REVIEWED_SOURCE_BOUND_MIXED_DECODER_CONTINUATION_PROFILE
+                   if type(self) is ReviewedSourceBoundMixedDecoderTrainingJobSpec
+                   else REVIEWED_MIXED_DECODER_CONTINUATION_PROFILE)
         if self.continuation_profile is not None and (type(self.continuation_profile) is not str
-                or self.continuation_profile != REVIEWED_MIXED_DECODER_CONTINUATION_PROFILE):
+                or self.continuation_profile != profile):
             raise TrainingJobValidationError("explicit mixed decoder continuation profile required")
         super().__post_init__()
 
@@ -859,14 +864,12 @@ def _reviewed_source_bound_worker_digest(value):
 
 @dataclass(frozen=True)
 class ReviewedSourceBoundMixedDecoderTrainingJobSpec(ReviewedMixedDecoderTrainingJobSpec):
-    """Explicit V5 source-bound inputs; a distinct exact-input checkpoint lineage."""
+    """V5 inputs with exact resume and explicit same-source stage continuation."""
     expected_bound_component_inputs_sha256: str = field(kw_only=True)
     schema_version: str = REVIEWED_SOURCE_BOUND_MIXED_DECODER_JOB_SCHEMA
 
     def __post_init__(self) -> None:
         _reviewed_source_bound_worker_digest(self.expected_bound_component_inputs_sha256)
-        if self.continuation_profile is not None:
-            raise TrainingJobValidationError("source-bound jobs require exact same-input resume")
         super().__post_init__()
 
 
@@ -979,11 +982,24 @@ def _reviewed_mixed_decoder_continuation_state(spec, registry, parent_reference,
     def need(condition, message):
         if not condition:
             raise TrainingJobValidationError(message)
-    need(type(spec) is ReviewedMixedDecoderTrainingJobSpec
-         and spec.continuation_profile == REVIEWED_MIXED_DECODER_CONTINUATION_PROFILE,
-         "explicit mixed decoder continuation profile required")
-    need(inputs.REVIEWED_MIXED_DECODER_CONTINUATION_PROFILE == spec.continuation_profile,
-         "worker and input continuation profiles differ")
+    source_bound = type(spec) is ReviewedSourceBoundMixedDecoderTrainingJobSpec
+    if source_bound:
+        profile = REVIEWED_SOURCE_BOUND_MIXED_DECODER_CONTINUATION_PROFILE
+        input_profile = inputs.REVIEWED_SOURCE_BOUND_MIXED_DECODER_CONTINUATION_PROFILE
+        base_schema = REVIEWED_SOURCE_BOUND_MIXED_DECODER_CHECKPOINT_SCHEMA
+        continued_schema = REVIEWED_SOURCE_BOUND_MIXED_DECODER_CONTINUATION_CHECKPOINT_SCHEMA
+        binding_schema = inputs.REVIEWED_SOURCE_BOUND_MIXED_DECODER_INPUT_RECEIPT_SCHEMA
+        binding_profile = inputs.REVIEWED_SOURCE_BOUND_MIXED_DECODER_INPUT_PROFILE
+    else:
+        profile = REVIEWED_MIXED_DECODER_CONTINUATION_PROFILE
+        input_profile = inputs.REVIEWED_MIXED_DECODER_CONTINUATION_PROFILE
+        base_schema = REVIEWED_DECODER_CHECKPOINT_SCHEMA
+        continued_schema = REVIEWED_DECODER_CONTINUATION_CHECKPOINT_SCHEMA
+        binding_schema = "reviewed-decoder-training-input-receipt/v4"
+        binding_profile = inputs.REVIEWED_MIXED_DECODER_INPUT_PROFILE
+    need((source_bound or type(spec) is ReviewedMixedDecoderTrainingJobSpec)
+         and spec.continuation_profile == profile, "explicit mixed decoder continuation profile required")
+    need(input_profile == profile, "worker and input continuation profiles differ")
     common = {"schema", "checkpoint_lineage_id", "base_version_id", "backend_identity", "assets",
         "training_binding", "model_state", "optimizer_state", "progress", "batch_size", "seed",
         "parent_checkpoint_sha256", "producer_pins", "token_budgets", "qualified", "promotion_performed"}
@@ -998,22 +1014,32 @@ def _reviewed_mixed_decoder_continuation_state(spec, registry, parent_reference,
 
     def read_manifest(reference):
         nonlocal total_bytes
-        raw = _reviewed_decoder_artifact(CheckpointArtifact.from_dict(reference))
+        artifact = CheckpointArtifact.from_dict(reference)
+        need(total_bytes + artifact.bytes <= inputs.MAX_REVIEWED_STAGE_BYTES,
+             "continuation checkpoint metadata byte capacity exceeded")
+        raw = _reviewed_decoder_artifact(artifact)
         total_bytes += len(raw)
-        need(total_bytes <= inputs.MAX_REVIEWED_STAGE_BYTES, "continuation checkpoint metadata byte capacity exceeded")
         observed.append((reference, raw))
-        return _parse_json(raw)
+        document = _parse_json(raw)
+        if source_bound:
+            need(_json_bytes(document) == raw, "canonical source-bound continuation checkpoint required")
+        return document
 
     def ancestry(previous, current, stage):
+        # The job pins the historical manifest and its receipt. The other
+        # receipt comes from live preparation under the successor job.
+        options = dict(admission_profile=spec.admission_profile, stage_artifact=stage,
+            expected_stage_sha256=current["stage_artifact_sha256"],
+            parent_training_binding=previous,
+            expected_parent_training_binding_sha256=_digest(_json_bytes(previous)),
+            current_training_binding=current,
+            expected_current_training_binding_sha256=_digest(_json_bytes(current)),
+            split_config=_thaw(spec.split_config), expected_split_config_sha256=spec.expected_split_config_sha256)
         try:
-            return inputs.prepare_reviewed_mixed_decoder_continuation_v4(registry,
-                admission_profile=spec.admission_profile, stage_artifact=stage,
-                expected_stage_sha256=current["stage_artifact_sha256"],
-                parent_training_binding=previous,
-                expected_parent_training_binding_sha256=_digest(_json_bytes(previous)),
-                current_training_binding=current,
-                expected_current_training_binding_sha256=_digest(_json_bytes(current)),
-                split_config=_thaw(spec.split_config), expected_split_config_sha256=spec.expected_split_config_sha256)
+            if source_bound:
+                return inputs.prepare_reviewed_mixed_source_bound_decoder_continuation_v5(
+                    registry, **options, expected_source_sha256=pins)
+            return inputs.prepare_reviewed_mixed_decoder_continuation_v4(registry, **options)
         except inputs.ReviewedDecoderInputValidationError as error:
             raise TrainingJobValidationError("reviewed decoder continuation ancestry differs") from error
 
@@ -1021,21 +1047,21 @@ def _reviewed_mixed_decoder_continuation_state(spec, registry, parent_reference,
         need(depth < inputs.MAX_REVIEWED_HISTORY and reference["sha256"] not in seen,
              "continuation checkpoint metadata depth or cycle exceeded")
         seen.add(reference["sha256"])
-        migrated = type(document) is dict and document.get("schema") == REVIEWED_DECODER_SOURCE_EPOCH_CHECKPOINT_SCHEMA
-        revised = migrated or (type(document) is dict and document.get("schema") == REVIEWED_DECODER_CONTINUATION_CHECKPOINT_SCHEMA)
+        schema = document.get("schema") if type(document) is dict else None
+        migrated = not source_bound and schema == REVIEWED_DECODER_SOURCE_EPOCH_CHECKPOINT_SCHEMA
+        revised = migrated or schema == continued_schema
         expected = common | ({"continuation_profile", "optimizer_step_offset", "stage_continuation"} if revised else set())
         if migrated:
             expected.add("source_epoch_migration")
-        need(type(document) is dict and set(document) == expected
-             and document["schema"] in {REVIEWED_DECODER_CHECKPOINT_SCHEMA, REVIEWED_DECODER_CONTINUATION_CHECKPOINT_SCHEMA, REVIEWED_DECODER_SOURCE_EPOCH_CHECKPOINT_SCHEMA},
+        need(type(document) is dict and set(document) == expected and (schema == base_schema or revised),
              "closed complete reviewed decoder continuation checkpoint required")
-        need(document["checkpoint_lineage_id"] == spec.checkpoint_lineage_id
-             and document["base_version_id"] == spec.base_version_id
-             and document["backend_identity"] == identity and document["assets"] == assets
-             and document["producer_pins"] == pins and document["token_budgets"] == budgets
-             and type(document["batch_size"]) is int and document["batch_size"] == spec.batch_size
-             and type(document["seed"]) is int and document["seed"] == spec.seed
-             and document["qualified"] is False and document["promotion_performed"] is False,
+        checkpoint_identity = {
+            "checkpoint_lineage_id": spec.checkpoint_lineage_id, "base_version_id": spec.base_version_id,
+            "backend_identity": identity, "assets": assets, "producer_pins": pins, "token_budgets": budgets,
+            "batch_size": spec.batch_size, "seed": spec.seed, "qualified": False, "promotion_performed": False,
+        }
+        offered_identity = {field: document[field] for field in checkpoint_identity}
+        need(_json_bytes(offered_identity) == _json_bytes(checkpoint_identity),
              "reviewed decoder continuation numerical identities differ")
         for field in ("model_state", "optimizer_state"):
             CheckpointArtifact.from_dict(document[field])
@@ -1059,11 +1085,12 @@ def _reviewed_mixed_decoder_continuation_state(spec, registry, parent_reference,
                  and (not revised or document["stage_continuation"] is None),
                  "only a pristine numerical parent may omit its complete training binding")
         else:
-            need(type(binding) is dict and binding.get("schema") == "reviewed-decoder-training-input-receipt/v4"
-                 and binding.get("profile") == inputs.REVIEWED_MIXED_DECODER_INPUT_PROFILE
+            need(type(binding) is dict and binding.get("schema") == binding_schema
+                 and binding.get("profile") == binding_profile
                  and binding.get("admission_profile") == spec.admission_profile
                  and type(binding.get("record_count")) is int and 0 < binding["record_count"] <= inputs.MAX_REVIEWED_CYCLE_ROWS,
-                 "progressed continuation parent must retain a same-domain V4 training binding")
+                 ("progressed continuation parent must retain a same-domain V5 training binding" if source_bound
+                  else "progressed continuation parent must retain a same-domain V4 training binding"))
             count = binding["record_count"]
             need(progress["row_cursor"] < count and progress["row_cursor"] % spec.batch_size == 0
                  and progress["optimizer_steps"] == offset + progress["epochs_completed"] * math.ceil(count/spec.batch_size)
@@ -1103,6 +1130,12 @@ def _reviewed_mixed_decoder_continuation_state(spec, registry, parent_reference,
         return offset
 
     parent_reference = asdict(parent_reference) if type(parent_reference) is CheckpointArtifact else parent_reference
+    if source_bound:
+        need(parent_reference == asdict(spec.parent_checkpoint_artifact),
+             "source-bound continuation parent reference differs from the selected job")
+        total_bytes = spec.parent_checkpoint_artifact.bytes
+        need(total_bytes <= inputs.MAX_REVIEWED_STAGE_BYTES,
+             "continuation checkpoint metadata byte capacity exceeded")
     parent_offset = validate(parent, parent_reference, outer=True)
     progress = dict(parent["progress"])
     transition = parent.get("stage_continuation")
@@ -1230,6 +1263,10 @@ def _execute_reviewed_decoder_job(spec: ReviewedDecoderTrainingJobSpec, runtime:
     else:
         checkpoint_schema = REVIEWED_DIGEST_OMITTED_CHECKPOINT_SCHEMA if digest_omitted else REVIEWED_DECODER_CHECKPOINT_SCHEMA
     admission_profile = spec.admission_profile if mixed else None
+    continuation_enabled = mixed and spec.continuation_profile is not None
+    source_bound_continuation = source_bound and continuation_enabled
+    continuation_checkpoint_schema = (REVIEWED_SOURCE_BOUND_MIXED_DECODER_CONTINUATION_CHECKPOINT_SCHEMA
+                                      if source_bound_continuation else REVIEWED_DECODER_CONTINUATION_CHECKPOINT_SCHEMA)
     guard_calls = {"execution": 0, "asset_policy": 0, "current_admission": 0}
     if source_bound:
         guard_calls["current_bound_component_inputs"] = 0
@@ -1347,7 +1384,7 @@ def _execute_reviewed_decoder_job(spec: ReviewedDecoderTrainingJobSpec, runtime:
             # update: Source pins are the final callback-free observation.
             if _parse_json(_json_bytes(runtime.backend.identity())) != identity:
                 raise TrainingJobValidationError("reviewed decoder backend identity changed during continuation replay")
-            if _reviewed_decoder_source_pins(admission_profile=admission_profile) != source_pins:
+            if current_pins() != source_pins:
                 raise TrainingJobValidationError("reviewed decoder producer changed during continuation replay")
         return value
 
@@ -1364,16 +1401,19 @@ def _execute_reviewed_decoder_job(spec: ReviewedDecoderTrainingJobSpec, runtime:
     if _digest(_json_bytes(validation_rows)) != validation_sha:
         raise TrainingJobValidationError("backend mutated complete preflight records")
     current()
-    model_raw = _reviewed_decoder_artifact(spec.base_model_checkpoint, limit=checkpoint_limit)
-    optimizer_raw = _reviewed_decoder_artifact(spec.base_optimizer_checkpoint, limit=checkpoint_limit)
+    if not source_bound_continuation:
+        model_raw = _reviewed_decoder_artifact(spec.base_model_checkpoint, limit=checkpoint_limit)
+        optimizer_raw = _reviewed_decoder_artifact(spec.base_optimizer_checkpoint, limit=checkpoint_limit)
     parent = None
-    continuation_enabled = mixed and spec.continuation_profile is not None
     optimizer_step_offset, stage_continuation, continuation_state = 0, None, None
     source_epoch_migration = None
     progress = {"epochs_completed": 0, "row_cursor": 0, "optimizer_steps": 0}
     if spec.parent_checkpoint_artifact is not None:
-        parent_raw = _reviewed_decoder_artifact(spec.parent_checkpoint_artifact)
+        parent_limit = inputs.MAX_REVIEWED_STAGE_BYTES if source_bound_continuation else MAX_REVIEWED_DECODER_STATE_BYTES
+        parent_raw = _reviewed_decoder_artifact(spec.parent_checkpoint_artifact, limit=parent_limit)
         parent = _parse_json(parent_raw)
+        if source_bound_continuation and _json_bytes(parent) != parent_raw:
+            raise TrainingJobValidationError("canonical source-bound continuation checkpoint required")
         if type(spec) is ReviewedDigestCacheEpochTrainingJobSpec:
             parent = _reviewed_digest_cache_epoch_ancestry(spec, runtime.backend, parent, data["receipt"])
             frozen_cache_parent = _json_bytes(parent)
@@ -1394,7 +1434,7 @@ def _execute_reviewed_decoder_job(spec: ReviewedDecoderTrainingJobSpec, runtime:
             source_epoch_migration = continuation_state["source_epoch_migration"]
             frozen_continuation = _json_bytes(continuation_state)
             def replay_continuation(binding):
-                observed = _reviewed_decoder_artifact(spec.parent_checkpoint_artifact)
+                observed = _reviewed_decoder_artifact(spec.parent_checkpoint_artifact, limit=parent_limit)
                 if observed != parent_raw:
                     raise TrainingJobValidationError("continuation parent checkpoint metadata changed")
                 current_state = _reviewed_mixed_decoder_continuation_state(spec, runtime.registry,
@@ -1413,6 +1453,9 @@ def _execute_reviewed_decoder_job(spec: ReviewedDecoderTrainingJobSpec, runtime:
         raise TrainingJobValidationError("reviewed decoder progress capacity exhausted before update")
     initial_progress = dict(progress)
     current()
+    if source_bound_continuation:
+        model_raw = _reviewed_decoder_artifact(spec.base_model_checkpoint, limit=checkpoint_limit)
+        optimizer_raw = _reviewed_decoder_artifact(spec.base_optimizer_checkpoint, limit=checkpoint_limit)
     checkpoint_info = runtime.backend.inspect_checkpoint(model_raw, optimizer_raw)
     if type(checkpoint_info) is not dict or set(checkpoint_info) != {"optimizer_steps"} or checkpoint_info["optimizer_steps"] != progress["optimizer_steps"] or type(checkpoint_info["optimizer_steps"]) is not int:
         raise TrainingJobValidationError("backend checkpoint optimizer step differs")
@@ -1500,7 +1543,7 @@ def _execute_reviewed_decoder_job(spec: ReviewedDecoderTrainingJobSpec, runtime:
             "parent_checkpoint_sha256": spec.parent_checkpoint_artifact.sha256 if spec.parent_checkpoint_artifact else None,
             "producer_pins": source_pins, "qualified": False, "promotion_performed": False}
         if continuation_enabled:
-            checkpoint.update(schema=REVIEWED_DECODER_CONTINUATION_CHECKPOINT_SCHEMA,
+            checkpoint.update(schema=continuation_checkpoint_schema,
                 continuation_profile=spec.continuation_profile, optimizer_step_offset=optimizer_step_offset,
                 stage_continuation=stage_continuation)
             if source_epoch_migration is not None:
@@ -1545,10 +1588,12 @@ def _execute_reviewed_decoder_job(spec: ReviewedDecoderTrainingJobSpec, runtime:
             "legacy_projection_sample_conversion_performed": False}
         if continuation_enabled:
             receipt.update(continuation_profile=spec.continuation_profile,
-                checkpoint_schema=REVIEWED_DECODER_CONTINUATION_CHECKPOINT_SCHEMA,
+                checkpoint_schema=continuation_checkpoint_schema,
                 optimizer_step_offset=optimizer_step_offset, stage_continuation=stage_continuation,
                 stage_transition_performed=continuation_state["stage_transition_performed"],
                 changed_population_initial_cursor_zero=continuation_state["stage_transition_performed"])
+        if source_bound_continuation:
+            receipt["checkpoint_resume_contract"] = "same_source_bound_ancestry_and_exact_backend_state"
         if source_epoch_migration is not None:
             receipt["source_epoch_migration"] = source_epoch_migration
             receipt["checkpoint_schema"] = REVIEWED_DECODER_SOURCE_EPOCH_CHECKPOINT_SCHEMA
@@ -2591,6 +2636,8 @@ def execute_training_job_file(path: str | Path, expected_sha256: str, *,
 __all__ = ["ReviewedMixedDecoderTrainingJobSpec", "REVIEWED_MIXED_DECODER_SCHEMA_VERSION",
            "ReviewedSourceBoundMixedDecoderTrainingJobSpec", "REVIEWED_SOURCE_BOUND_MIXED_DECODER_JOB_SCHEMA",
            "REVIEWED_SOURCE_BOUND_MIXED_DECODER_CHECKPOINT_SCHEMA", "REVIEWED_SOURCE_BOUND_MIXED_DECODER_WORKER_RECEIPT_SCHEMA",
+           "REVIEWED_SOURCE_BOUND_MIXED_DECODER_CONTINUATION_CHECKPOINT_SCHEMA",
+           "REVIEWED_SOURCE_BOUND_MIXED_DECODER_CONTINUATION_PROFILE",
            "REVIEWED_MIXED_DECODER_CONTINUATION_PROFILE", "REVIEWED_DECODER_CONTINUATION_CHECKPOINT_SCHEMA",
            "REVIEWED_MIXED_ADMISSION_PROFILE", "ReviewedDecoderTrainingJobSpec", "ReviewedDecoderRuntime", "REVIEWED_DECODER_SCHEMA_VERSION", "BRIDGE_NAMES", "CheckpointArtifact", "ModelVariant", "SampleRecord", "TrainingConfig",
            "TrainingJobSpec", "TrainingJobValidationError", "execute_training_job", "execute_training_job_file",
@@ -5310,10 +5357,13 @@ def load_local_reviewed_decoder_runtime_v3(*, admission_profile, registry, curre
 
 def load_local_reviewed_source_bound_decoder_runtime_v5(*, spec, registry, current_admission_provider,
         current_bound_component_inputs_provider, execution_guard, asset_policy_guard, recipe_artifact,
-        model_config_artifact, max_model_bytes, runtime_profile="builtin-t5-gpt2-float32/v1"):
-    """Replay the selected V5 source and training inputs before constructing a model."""
+        model_config_artifact, max_model_bytes, runtime_profile="builtin-t5-gpt2-float32/v1",
+        allow_stage_transition=True):
+    """Replay the selected V5 source, training inputs and optional stage ancestry."""
     if type(spec) is not ReviewedSourceBoundMixedDecoderTrainingJobSpec:
         raise TrainingJobValidationError("explicit source-bound reviewed decoder job required")
+    if type(allow_stage_transition) is not bool:
+        raise TrainingJobValidationError("explicit boolean V5 stage-transition load policy required")
     if any(type(item) is not CheckpointArtifact or item not in spec.backend_artifacts
            for item in (recipe_artifact, model_config_artifact)):
         raise TrainingJobValidationError("V5 recipe and model configuration must be exact job assets")
@@ -5326,7 +5376,8 @@ def load_local_reviewed_source_bound_decoder_runtime_v5(*, spec, registry, curre
         expected_source_sha256=_thaw(spec.expected_source_sha256),
         expected_admission_inputs_sha256=spec.expected_admission_inputs_sha256, max_model_bytes=max_model_bytes,
         _admission_version="v3", _runtime_profile=runtime_profile, _source_bound_job=spec,
-        _current_bound_component_inputs_provider=current_bound_component_inputs_provider)
+        _current_bound_component_inputs_provider=current_bound_component_inputs_provider,
+        _allow_source_bound_stage_transition=allow_stage_transition)
 
 
 def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider,
@@ -5335,7 +5386,8 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
         expected_backend_identity, expected_source_sha256,
         expected_admission_inputs_sha256, max_model_bytes, _admission_version, _runtime_profile,
         _source_epoch_migration=None, _target_codec="complete-reviewed-norm-json/v2", _cache_epoch_migration_artifact=None,
-        _source_bound_job=None, _current_bound_component_inputs_provider=None):
+        _source_bound_job=None, _current_bound_component_inputs_provider=None,
+        _allow_source_bound_stage_transition=True):
     """Load an explicitly profiled built-in CPU decoder and paired state.
 
     The caller owns live execution, license/asset policy and current admission.
@@ -5509,8 +5561,15 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
     tokenizer_raw = _reviewed_decoder_artifact(tokenizer_artifact, limit=MAX_REVIEWED_TOKENIZER_PIPELINE_BYTES)
     _reviewed_decoder_artifact(license_artifact, load=False)
     if source_bound:
-        exposure_raw, contexts_raw, parent_raw = (_reviewed_decoder_artifact(item) for item in job_artifacts)
+        exposure_raw, contexts_raw = (_reviewed_decoder_artifact(item) for item in job_artifacts[:2])
+        parent_limit = MAX_REVIEWED_DECODER_STATE_BYTES
+        if _source_bound_job.continuation_profile == REVIEWED_SOURCE_BOUND_MIXED_DECODER_CONTINUATION_PROFILE:
+            from ...logic.autoformal import training_cycle_inputs
+            parent_limit = training_cycle_inputs.MAX_REVIEWED_STAGE_BYTES
+        parent_raw = _reviewed_decoder_artifact(job_artifacts[2], limit=parent_limit)
         exposure, contexts, parent = map(_parse_json, (exposure_raw, contexts_raw, parent_raw))
+        if (_source_bound_job.continuation_profile is not None and _json_bytes(parent) != parent_raw):
+            raise TrainingJobValidationError("canonical source-bound continuation checkpoint required")
         if _json_bytes(exposure) != exposure_raw or _json_bytes(contexts) != contexts_raw:
             raise TrainingJobValidationError("exact canonical reviewed exposure/context artifacts required")
         for item in additional_assets:
@@ -5587,13 +5646,27 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
         admission, bound = current()
         prepared = _prepare_reviewed_source_bound_worker_inputs(
             _source_bound_job, registry, tokenizer, admission, bound, exposure, contexts)
-        receipt = prepared["receipt"]
-        progress = _reviewed_exact_resume_parent(_source_bound_job, parent, receipt,
-            checkpoint_schema=REVIEWED_SOURCE_BOUND_MIXED_DECODER_CHECKPOINT_SCHEMA,
-            identity=identity, assets=job_assets, source_pins=pins)
-        _reviewed_validate_resume_progress(progress, len(prepared["records"]), _source_bound_job.batch_size)
+        binding = prepared["receipt"]
+        continuation = None
+        offset = 0
+        if _source_bound_job.continuation_profile == REVIEWED_SOURCE_BOUND_MIXED_DECODER_CONTINUATION_PROFILE:
+            continuation = _reviewed_mixed_decoder_continuation_state(
+                _source_bound_job, registry, _source_bound_job.parent_checkpoint_artifact, parent, binding)
+            progress = continuation["progress"]
+            offset = continuation["optimizer_step_offset"]
+            if (not _allow_source_bound_stage_transition
+                    and (continuation["stage_transition_performed"] or parent["training_binding"] is None)):
+                raise TrainingJobValidationError("source-bound evaluation requires the checkpoint's trained stage")
+            if _reviewed_decoder_artifact(_source_bound_job.parent_checkpoint_artifact, limit=parent_limit) != parent_raw:
+                raise TrainingJobValidationError("source-bound local decoder continuation parent changed")
+        else:
+            progress = _reviewed_exact_resume_parent(_source_bound_job, parent, binding,
+                checkpoint_schema=REVIEWED_SOURCE_BOUND_MIXED_DECODER_CHECKPOINT_SCHEMA,
+                identity=identity, assets=job_assets, source_pins=pins)
+        _reviewed_validate_resume_progress(progress, len(prepared["records"]), _source_bound_job.batch_size, offset)
         current()
-        return _digest(_json_bytes(prepared)), prepared, progress
+        observed = prepared if continuation is None else [prepared, continuation]
+        return _digest(_json_bytes(observed)), prepared, progress, continuation
 
     current()
     import torch
@@ -5621,7 +5694,7 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
         # alongside the model and independent decoded checkpoint tensors.
         del native, tokenizer_raw
         if source_bound:
-            prepared_sha256, prepared, progress = replay_source_bound(tokenizer)
+            prepared_sha256, prepared, progress, _ = replay_source_bound(tokenizer)
         current()
         if qwen2_profile:
             from transformers import Qwen2Config, Qwen2ForCausalLM
@@ -5760,7 +5833,7 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
             if (type(inspection) is not dict or type(inspection.get("optimizer_steps")) is not int
                     or inspection != {"optimizer_steps": progress["optimizer_steps"]}):
                 raise TrainingJobValidationError("source-bound local decoder checkpoint progress differs")
-            pre_restore_sha256, _, _ = replay_source_bound(tokenizer)
+            pre_restore_sha256, _, _, _ = replay_source_bound(tokenizer)
             if pre_restore_sha256 != prepared_sha256:
                 raise TrainingJobValidationError("source-bound local decoder inputs changed before restore")
         elif digest_omitted and _source_epoch_migration is not None:
@@ -5811,7 +5884,7 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
             receipt["cache_source_epoch_marker"] = _thaw(backend.cache_source_epoch_marker)
             current()
         if source_bound:
-            final_sha256, final_prepared, _ = replay_source_bound(tokenizer)
+            final_sha256, final_prepared, _, continuation = replay_source_bound(tokenizer)
             if final_sha256 != prepared_sha256:
                 raise TrainingJobValidationError("source-bound local decoder inputs changed after restore")
             final_binding = final_prepared["receipt"]
@@ -5823,6 +5896,10 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
                 staged_bound_component_inputs_sha256=final_binding["staged_bound_component_inputs_sha256"],
                 current_bound_component_inputs_sha256=final_binding["current_bound_component_inputs_sha256"],
                 training_input_receipt_sha256=_digest(_json_bytes(final_binding)))
+            if continuation is not None:
+                receipt.update(continuation_profile=_source_bound_job.continuation_profile,
+                    optimizer_step_offset=continuation["optimizer_step_offset"],
+                    stage_transition_pending=continuation["stage_transition_performed"])
         if backend.identity() != identity or not backend.restored_checkpoint_matches(model_raw, optimizer_raw):
             raise TrainingJobValidationError("loaded decoder pair changed after final policy guard")
         receipt["guard_calls"] = dict(guards)
@@ -5834,9 +5911,10 @@ def _load_local_reviewed_decoder_runtime(*, registry, current_admission_provider
             receipt["deterministic_buffer_dtype"] = "float32"
         if admission_profile is not None:
             receipt["admission_profile"] = admission_profile
-        if source_bound:
-            # Only the V5 loader establishes this provenance, after confirming
-            # the original training input replay and the exact restored pair.
+        if source_bound and (continuation is None or (parent["training_binding"] is not None
+                and not continuation["stage_transition_performed"])):
+            # A transition can prepare a runtime for training, while this
+            # provenance requires the restored pair's own training binding.
             object.__setattr__(runtime, "_loaded_checkpoint_source_anchor",
                 ((model_checkpoint.sha256, model_checkpoint.bytes),
                  (optimizer_checkpoint.sha256, optimizer_checkpoint.bytes),

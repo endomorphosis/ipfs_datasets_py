@@ -13496,3 +13496,186 @@ def test_reviewed_mixed_source_bound_v5_exact_signed_resume_matches_uninterrupte
     assert all(result[key] is False for key in ("qualified", "admitted", "corpus_admitted", "promotion_performed",
         "physical_model_assets_verified", "pretrained_quality_verified", "numerical_update_independently_verified",
         "optimizer_resume_independently_verified", "legal_meaning_verified", "registry_modified", "downloads_performed"))
+
+
+def test_reviewed_source_bound_v5_changed_stage_preserves_global_steps_and_resumes_current_rows(tmp_path, monkeypatch):
+    from random import Random
+
+    from tests.unit.logic import test_autoformal_campaign_training_inputs as fixtures
+
+    signed = fixtures._reviewed_mixed_source_bound_cycle_fixture(tmp_path)
+    worker_directory = tmp_path / "worker-fixture"
+    worker_directory.mkdir()
+    batch_size = 2
+    fixture = _complete_reviewed_worker_fixture(worker_directory, batch_size=batch_size)
+    signed.kwargs["tokenizer"] = fixture.runtime.tokenizer
+    historical_stage = signed.kwargs["stage_artifact"]
+    historical_prepared = fixture.inputs.prepare_reviewed_mixed_source_bound_decoder_training_inputs_v5(
+        signed.registry, **signed.kwargs, current_bound_component_inputs=signed.bound_component_inputs,
+        expected_bound_component_inputs_sha256=signed.bound_component_inputs_sha256)
+    historical_binding = historical_prepared["receipt"]
+    historical_order = list(historical_prepared["records"])
+    seed = fixture.payload["seed"]
+    Random(seed).shuffle(historical_order)
+    assert len(historical_order) == 3 and historical_binding["fixture_only"] is True
+
+    # Build an actual progressed analytic pair, with the original asset
+    # descriptors and a full historical V5 receipt in the checkpoint manifest.
+    reference = fixture.backend
+    assert reference.train_batch(historical_order[:batch_size])["optimizer_steps"] == 1
+    historical_pair = reference.snapshot_checkpoint()
+    historic_model = _complete_reviewed_artifact(tmp_path / "parent-model.json", historical_pair["model_state"])
+    historic_optimizer = _complete_reviewed_artifact(tmp_path / "parent-optimizer.json", historical_pair["optimizer_state"])
+    pins = worker._reviewed_decoder_source_pins(admission_profile=signed.kwargs["admission_profile"], source_bound=True)
+    manifest = json.loads(Path(fixture.payload["parent_checkpoint_artifact"]["path"]).read_bytes())
+    manifest.update(schema=worker.REVIEWED_SOURCE_BOUND_MIXED_DECODER_CHECKPOINT_SCHEMA, producer_pins=pins,
+        token_budgets={"max_source_tokens": signed.kwargs["max_source_tokens"],
+                       "max_target_tokens": signed.kwargs["max_target_tokens"],
+                       "tokenizer_contract": historical_binding["tokenizer_contract"]})
+    pristine = _complete_reviewed_artifact(tmp_path / "pristine-manifest.json", worker._json_bytes(manifest))
+    manifest.update(training_binding=historical_binding, model_state=historic_model, optimizer_state=historic_optimizer,
+        progress={"epochs_completed": 0, "row_cursor": 2, "optimizer_steps": 1},
+        parent_checkpoint_sha256=pristine["sha256"])
+    manifest_raw = worker._json_bytes(manifest)
+    historical_ref = _complete_reviewed_artifact(tmp_path / "progressed-parent.json", manifest_raw)
+
+    current_stage, (exposure, contexts) = fixtures._source_bound_ancestry_successor(
+        signed, historical_stage, tmp_path / "amended-stage", readmission=False)
+    current_document = fixtures._reviewed_doc(signed.registry, current_stage)
+    current_order = fixtures._reviewed_doc(signed.registry, current_document["rows_artifact"])
+    Random(seed).shuffle(current_order)
+    current_ids = [row["id"] for row in current_order]
+    historical_ids = {row["id"] for row in historical_order}
+    assert len(current_ids) == 3 and len(historical_ids - set(current_ids)) == 2
+    options = signed.kwargs
+    payload = dict(fixture.payload, schema_version=worker.REVIEWED_SOURCE_BOUND_MIXED_DECODER_JOB_SCHEMA,
+        admission_profile=options["admission_profile"], stage_artifact=current_stage,
+        exposure_artifact=_complete_reviewed_artifact(tmp_path / "amended-exposure.json", worker._json_bytes(exposure)),
+        source_contexts_artifact=_complete_reviewed_artifact(tmp_path / "amended-contexts.json", worker._json_bytes(contexts)),
+        expected_source_sha256=pins, expected_bound_component_inputs_sha256=signed.bound_component_inputs_sha256,
+        expected_admission_inputs_sha256=options["expected_admission_inputs_sha256"],
+        split_config=options["split_config"], expected_split_config_sha256=options["expected_split_config_sha256"],
+        max_source_tokens=options["max_source_tokens"], max_target_tokens=options["max_target_tokens"],
+        max_steps=1, max_seconds=1200)
+    runtime = replace(fixture.runtime, registry=signed.registry,
+        current_admission_provider=lambda: signed.deepcopy(options["current_admission_inputs"]),
+        current_bound_component_inputs_provider=lambda: signed.deepcopy(signed.bound_component_inputs))
+    profile = worker.REVIEWED_SOURCE_BOUND_MIXED_DECODER_CONTINUATION_PROFILE
+
+    def run(label, parent, backend, *, changed_stage_enabled=True):
+        job_options = dict(payload, output_directory=str(tmp_path / label),
+            base_model_checkpoint=parent["model_checkpoint"], base_optimizer_checkpoint=parent["optimizer_checkpoint"],
+            parent_checkpoint_artifact=parent["candidate"])
+        if changed_stage_enabled:
+            job_options["continuation_profile"] = profile
+        spec = worker.TrainingJobSpec.from_dict(job_options)
+        assert type(spec) is worker.ReviewedSourceBoundMixedDecoderTrainingJobSpec
+        raw = worker._json_bytes(spec.to_dict())
+        job = tmp_path / (label + "-job.json")
+        job.write_bytes(raw)
+        receipt = worker.execute_training_job_file(job, hashlib.sha256(raw).hexdigest(),
+            reviewed_runtime=replace(runtime, backend=backend))
+        assert receipt["job_spec_sha256"] == spec.canonical_sha256
+        return receipt
+
+    historical = {"candidate": historical_ref, "model_checkpoint": historic_model, "optimizer_checkpoint": historic_optimizer}
+    refused_backend = _CompleteReviewedSGDBackend()
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("ordinary V5 resume reached checkpoint inspection or model updates for a different stage")
+
+    for method in ("inspect_checkpoint", "restore_checkpoint", "train_batch"):
+        monkeypatch.setattr(refused_backend, method, forbidden)
+    writes = signed.registry.stage_calls
+    with pytest.raises(worker.TrainingJobValidationError, match="exact-resume identities differ"):
+        run("implicit-change", historical, refused_backend, changed_stage_enabled=False)
+    assert not (tmp_path / "implicit-change").exists()
+
+    transitioned_backend = _CompleteReviewedSGDBackend()
+    transitioned = run("changed-stage", historical, transitioned_backend)
+    resumed_backend = _CompleteReviewedSGDBackend()
+    resumed = run("same-stage-resume", transitioned, resumed_backend)
+    assert transitioned["stage_transition_performed"] is True and resumed["stage_transition_performed"] is False
+    assert transitioned["initial_progress"] == {"epochs_completed": 0, "row_cursor": 0, "optimizer_steps": 1}
+    assert transitioned["worker_progress"] == {"epochs_completed": 0, "row_cursor": 2, "optimizer_steps": 2}
+    assert resumed["initial_progress"] == transitioned["worker_progress"]
+    assert resumed["worker_progress"] == {"epochs_completed": 1, "row_cursor": 0, "optimizer_steps": 3}
+    assert transitioned["optimizer_step_offset"] == resumed["optimizer_step_offset"] == 1
+
+    # Compare split execution to the same actual complete current population
+    # from the original pair. A retired row cannot survive through a cursor.
+    for result, backend, expected_rows in ((transitioned, transitioned_backend, current_order[:batch_size]),
+                                          (resumed, resumed_backend, current_order[batch_size:])):
+        assert backend.restores == backend.calls == 1
+        batch, = backend.seen
+        assert [row["id"] for row in batch] == [row["id"] for row in expected_rows]
+        assert [json.loads(row["target_json"]) for row in batch] == [row["canonical_ir"] for row in expected_rows]
+        assert result["backend_reported_metrics"] == [reference.train_batch(batch)]
+        expected_pair = reference.snapshot_checkpoint()
+        assert Path(result["model_checkpoint"]["path"]).read_bytes() == expected_pair["model_state"]
+        assert Path(result["optimizer_checkpoint"]["path"]).read_bytes() == expected_pair["optimizer_state"]
+        assert result["qualified"] is result["admitted"] is result["promotion_performed"] is False
+
+    binding = transitioned["complete_training_binding"]
+    assert resumed["complete_training_binding"] == binding and binding != historical_binding
+    transition = transitioned["stage_continuation"]
+    assert resumed["stage_continuation"] == transition
+    assert transition["parent_checkpoint_artifact"] == historical_ref
+    assert transition["parent_training_binding_sha256"] == hashlib.sha256(worker._json_bytes(historical_binding)).hexdigest()
+    assert transition["current_training_binding_sha256"] == hashlib.sha256(worker._json_bytes(binding)).hexdigest()
+    proof = transition["stage_ancestry"]
+    assert proof["source_sha256"] == pins
+    assert proof["ancestor_stage"] == historical_stage and proof["successor_stage"] == current_stage
+    assert [hop["stage"] for hop in proof["stage_chain"]] == [historical_stage, current_stage]
+
+    for result, parent in ((transitioned, historical), (resumed, transitioned)):
+        checkpoint = json.loads(Path(result["candidate"]["path"]).read_bytes())
+        assert checkpoint["schema"] == worker.REVIEWED_SOURCE_BOUND_MIXED_DECODER_CONTINUATION_CHECKPOINT_SCHEMA
+        assert checkpoint["stage_continuation"] == transition and checkpoint["optimizer_step_offset"] == 1
+        assert checkpoint["parent_checkpoint_sha256"] == parent["candidate"]["sha256"]
+        assert checkpoint["training_binding"] == binding and checkpoint["progress"] == result["worker_progress"]
+    assert Path(historical_ref["path"]).read_bytes() == manifest_raw
+    assert Path(historic_model["path"]).read_bytes() == historical_pair["model_state"]
+    assert Path(historic_optimizer["path"]).read_bytes() == historical_pair["optimizer_state"]
+    assert signed.registry.stage_calls == writes
+
+
+@pytest.mark.parametrize("damage, message", [
+    ("v4-profile", "explicit mixed decoder continuation profile"),
+    ("v4-checkpoint", "closed complete reviewed decoder continuation checkpoint"),
+    ("integer-identity", "reviewed decoder continuation numerical identities differ"),
+    ("missing-history", "nonzero optimizer-step offset requires its authenticated stage continuation"),
+])
+def test_reviewed_source_bound_v5_continuation_refuses_cross_domain_metadata(tmp_path, damage, message):
+    fixture = _complete_reviewed_worker_fixture(tmp_path)
+    pins = worker._reviewed_decoder_source_pins(
+        admission_profile=worker.REVIEWED_MIXED_ADMISSION_PROFILE, source_bound=True)
+    profile = worker.REVIEWED_SOURCE_BOUND_MIXED_DECODER_CONTINUATION_PROFILE
+    parent = json.loads(Path(fixture.payload["parent_checkpoint_artifact"]["path"]).read_bytes())
+    parent.update(schema=worker.REVIEWED_SOURCE_BOUND_MIXED_DECODER_CHECKPOINT_SCHEMA, producer_pins=pins)
+    if damage == "v4-profile":
+        profile = worker.REVIEWED_MIXED_DECODER_CONTINUATION_PROFILE
+    elif damage == "v4-checkpoint":
+        parent["schema"] = worker.REVIEWED_DECODER_CONTINUATION_CHECKPOINT_SCHEMA
+        parent.update(continuation_profile=profile, optimizer_step_offset=0, stage_continuation=None)
+    elif damage == "integer-identity":
+        parent["backend_identity"]["source_conditioned"] = 1
+    else:
+        parent.update(schema=worker.REVIEWED_SOURCE_BOUND_MIXED_DECODER_CONTINUATION_CHECKPOINT_SCHEMA,
+            continuation_profile=profile, optimizer_step_offset=1, stage_continuation=None)
+        parent["progress"]["optimizer_steps"] = 2
+        parent["progress"]["row_cursor"] = 1
+        parent["training_binding"] = {
+            "schema": fixture.inputs.REVIEWED_SOURCE_BOUND_MIXED_DECODER_INPUT_RECEIPT_SCHEMA,
+            "profile": fixture.inputs.REVIEWED_SOURCE_BOUND_MIXED_DECODER_INPUT_PROFILE,
+            "admission_profile": worker.REVIEWED_MIXED_ADMISSION_PROFILE,
+            "record_count": 3,
+        }
+    parent_ref = _complete_reviewed_artifact(tmp_path / "continuation-negative.json", worker._json_bytes(parent))
+    payload = dict(fixture.payload, schema_version=worker.REVIEWED_SOURCE_BOUND_MIXED_DECODER_JOB_SCHEMA,
+        admission_profile=worker.REVIEWED_MIXED_ADMISSION_PROFILE, expected_source_sha256=pins,
+        expected_bound_component_inputs_sha256="7"*64, continuation_profile=profile, parent_checkpoint_artifact=parent_ref)
+    with pytest.raises(worker.TrainingJobValidationError, match=message):
+        spec = worker.TrainingJobSpec.from_dict(payload)
+        worker._reviewed_mixed_decoder_continuation_state(spec, fixture.registry, spec.parent_checkpoint_artifact,
+            parent, {"tokenizer_contract": parent["token_budgets"]["tokenizer_contract"]})

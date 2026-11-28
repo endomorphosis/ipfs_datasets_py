@@ -606,6 +606,18 @@ def _check_source_bound_evaluation_outputs(cycle, request, outputs):
                 "resource_granted", "license_bytes_are_permission", "pretrained_quality_verified",
                 "legal_meaning_verified", "proof_authority", "convergence_proved", "corpus_admitted"))):
         raise ValueError("saved V5 loader output differs from the exact stage and checkpoint lineage")
+    if spec.continuation_profile is not None:
+        parent = worker._parse_json(read(asdict(spec.parent_checkpoint_artifact)))
+        binding = parent.get("training_binding") if type(parent) is dict else None
+        progress = parent.get("progress") if type(parent) is dict else None
+        if (loader.get("continuation_profile") != spec.continuation_profile
+                or loader.get("stage_transition_pending") is not False
+                or type(binding) is not dict or binding.get("stage_artifact_sha256") != spec.stage_artifact.sha256
+                or type(progress) is not dict or type(progress.get("optimizer_steps")) is not int
+                or type(loader.get("optimizer_steps")) is not int
+                or loader["optimizer_steps"] != progress["optimizer_steps"]
+                or loader["training_input_receipt_sha256"] != worker._digest(worker._json_bytes(binding))):
+            raise ValueError("saved V5 evaluation checkpoint did not train the selected stage")
 
     commitment = generation.get("input_commitment")
     policy_keys = {"schema", "backend_identity", "assets", "model_checkpoint", "optimizer_checkpoint",
@@ -1162,12 +1174,13 @@ def _execute_reviewed_evaluation_request(request_artifact, *, parent_client):
         structured._require_disjoint_reviewed_checkpoint_sources_v12(binding.receipt(), admission,
             checkpoint_admission, expected_checkpoint_admission_inputs_sha256=checkpoint_spec.expected_admission_inputs_sha256)
         execution_guard()
+        continuation_options = {"allow_stage_transition": False} if checkpoint_spec.continuation_profile is not None else {}
         runtime, load_receipt = worker.load_local_reviewed_source_bound_decoder_runtime_v5(
             spec=checkpoint_spec, registry=stage_registry, current_admission_provider=current_checkpoint_admission,
             current_bound_component_inputs_provider=current_checkpoint_source, execution_guard=execution_guard,
             asset_policy_guard=parent_client.asset_policy_guard, recipe_artifact=assets["recipe_artifact"],
             model_config_artifact=assets["model_config_artifact"], max_model_bytes=request["max_model_bytes"],
-            runtime_profile=request["runtime_profile"])
+            runtime_profile=request["runtime_profile"], **continuation_options)
         source_options = dict(current_query_admission_provider=current_admission,
             current_query_bound_component_inputs_provider=current_query_source,
             expected_query_bound_component_inputs_sha256=bound_replay["query_bound_component_inputs_sha256"],
