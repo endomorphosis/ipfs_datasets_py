@@ -39881,6 +39881,25 @@
       "root": "artifact_workspace",
       "scope": "V5 source-bound stage ancestry metadata, signed fictional lineage, and exact-resume compatibility.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/lir21_explicit_v5_worker_stage_transition_20261128",
+      "closed_runtime_facts": {
+        "pristine_original_parent_passed": 1,
+        "signed_worker_passed": 1,
+        "software_controls_passed": 40,
+        "v4_corrected_stage_passed": 1,
+        "v5_local_loader_passed": 1
+      },
+      "evidence_ordinal": 605,
+      "id": "lir21-source-bound-v5-worker-stage-transition-evidence605-20261128",
+      "observed_bytes": 2419,
+      "observed_sha256": "508414644266db02b4cdcc1cad69eb66b01ebf7d7d84ffcc2ebaec1533983453",
+      "path": "/tmp/P7-v5-worker-guide605-current-hd0V27gS/actual-composed-v5-worker-transition-qualification.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Opt-in signed fictional V5 worker transition, exact resume and miniature T5 loader boundary.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }

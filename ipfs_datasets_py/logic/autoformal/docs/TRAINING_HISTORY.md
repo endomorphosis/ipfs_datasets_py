@@ -3496,3 +3496,8 @@ The managed test restored a pristine CPU T5 model and optimizer, kept optimizer 
 ## Evidence604 — Signed V5 lineage checks
 
 The current ordinary run passed 17 tests with a fictional signed V5 stage history and its retained compatibility controls. Positive stage history and loss of eligibility survive the recorded withdrawal and readmission. The run verified archived source bindings and endpoint commitments without fitting or mutating the historical checkpoint pair. Changed-stage numerical continuation and retention measurements remain open. [Exact source and test evidence](/tmp/P7-v5-guide604-current-kbFwrP7y/actual-current-V5-source-bound-stage-ancestry-qualification.json)
+
+
+## Evidence605 — Signed fictional V5 worker continuation
+
+A scoped analytic worker test exercised a changed stage and exact resume on signed fictional records. A separate local test restored a miniature CPU T5 and AdamW pair after one update on a signed fictional historical row, with no second update in the loader. The evidence supports checkpoint continuity and custody checks. The original V12 parent also passed on the current source with the pristine pair. It retained three incomplete held-out candidates, with zero exact matches under the cap. The persisted V5 successor still requires its own original-parent evaluation. Independent statutory review, production model quality, retention and cost remain open. [Exact worker and loader evidence](/tmp/P7-v5-worker-guide605-current-hd0V27gS/actual-composed-v5-worker-transition-qualification.json)
