@@ -2455,6 +2455,8 @@ def test_lean_json_message_collector_preserves_objects_independently_of_proof_pr
 
 @pytest.mark.parametrize("changed", [None, "source-path", "executable", "flag"])
 def test_lean_native_result_requires_the_selected_compiler_command(monkeypatch, changed):
+    from dataclasses import replace
+
     runner, calls = _process_runner(_axiom_message("'wanted' does not depend on any axioms"))
     original_run = runner.run
 
