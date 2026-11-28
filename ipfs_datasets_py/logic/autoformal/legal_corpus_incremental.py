@@ -960,12 +960,15 @@ def _build_incremental_corpus(preparation, *, candidate_inputs=None, component_i
         closed_receipt = json.loads(receipt_raw)
         _deadline(operation_deadline, cancellation)
         realization_fence()
+        # Do not re-enter caller cancellation after the final input/policy fence.
+        _deadline(operation_deadline, None)
     with (output / "build-receipt.json").open("xb") as stream:
         stream.write(receipt_raw)
     if (output / "build-receipt.json").read_bytes() != receipt_raw:
         _fail("retained native build receipt differs on readback")
     if realization_fence is not None:
-        # No user/product callback follows the final input/policy fence.
+        _deadline(operation_deadline, None)
+        # No caller callback follows the final input/policy fence.
         return closed_receipt
     if strict:
         _deadline(operation_deadline, cancellation)

@@ -3304,3 +3304,60 @@ def test_source_edition_only_change_splits_shared_definition_cache_and_matches_c
     assert wire(cold[0]) == cold_receipt
     assert (cold[1] / "cache.json").read_bytes() == cold_cache
     assert artifacts(cold) == cold_artifacts
+
+
+@pytest.mark.parametrize("boundary", ["final-policy-fence", "receipt-readback", "before-deadline"])
+def test_realization_incremental_final_receipt_cannot_return_after_operation_deadline(
+        reviewed_incremental_runtime_v3, reviewed_incremental_realization_v1,
+        monkeypatch, boundary):
+    """Real replay with the existing fictional compiler; no Native Lean claim."""
+    from types import SimpleNamespace
+
+    runtime, control = reviewed_incremental_runtime_v3, reviewed_incremental_realization_v1
+    incremental = runtime["incremental"]
+    now = [incremental.time.monotonic()]
+    monkeypatch.setattr(incremental, "time", SimpleNamespace(monotonic=lambda: now[0]))
+    name = "realization-final-deadline-" + boundary
+    receipt_path = runtime["directory"] / name / "build-receipt.json"
+    reached = []
+    original_read = Path.read_bytes
+
+    if boundary == "final-policy-fence":
+        original_guard = incremental._realization_guard
+        def deadline_after_final_policy_fence(*args, **kwargs):
+            fence = original_guard(*args, **kwargs)
+            calls = []
+            def checked_fence():
+                result = fence()
+                calls.append(True)
+                if len(calls) == 2:
+                    reached.append("final-policy-fence")
+                    now[0] += 61.0
+                return result
+            return checked_fence
+        monkeypatch.setattr(incremental, "_realization_guard", deadline_after_final_policy_fence)
+    else:
+        def readback_crosses_deadline(path):
+            raw = original_read(path)
+            if path == receipt_path:
+                reached.append("receipt-readback")
+                now[0] += 59.0 if boundary == "before-deadline" else 61.0
+            return raw
+        monkeypatch.setattr(Path, "read_bytes", readback_crosses_deadline)
+
+    if boundary == "before-deadline":
+        receipt, directory = build_reviewed_incremental_realization_v1(
+            runtime, control, name, operation_timeout_seconds=60)
+        assert reached == ["receipt-readback"]
+        assert receipt["build_passed"] is True
+        assert receipt["lean_compilation_verified"] is True
+        assert json.loads(original_read(directory / "build-receipt.json")) == receipt
+        assert all(receipt[key] is False for key in incremental._reviewed_flags())
+    else:
+        with pytest.raises(ValueError, match="complete incremental build deadline exceeded"):
+            build_reviewed_incremental_realization_v1(
+                runtime, control, name, operation_timeout_seconds=60)
+        assert reached == [boundary]
+        if boundary == "final-policy-fence":
+            assert not receipt_path.exists()
+    assert runtime["compiler"].calls
