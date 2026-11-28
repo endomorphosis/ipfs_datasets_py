@@ -182,6 +182,14 @@ def decompile_rule(rule: CanonicalRule) -> str:
     if not isinstance(rule, CanonicalRule):
         raise CanonicalContractError("rule must be CanonicalRule")
 
+    actor = _readable_atom(rule.actor)
+    modal_heads = {phrase.casefold().split()[0] for phrase in _MODAL_PHRASES.values()}
+    for word in actor.casefold().split():
+        if word in modal_heads:
+            raise _UnsupportedQualifierSurface(
+                "actor", word, message="canonical actor contains a modal delimiter"
+            )
+
     action = _readable_atom(rule.action)
     # A leading "not" attaches to the preceding modal in this prose grammar.
     if action.casefold().partition(" ")[0] == "not":
@@ -189,7 +197,7 @@ def decompile_rule(rule: CanonicalRule) -> str:
             "action", "not", message="canonical action cannot begin with a modal negation"
         )
     _require_unambiguous_qualifier_surface(action, "action")
-    parts = [_readable_atom(rule.actor), _MODAL_PHRASES[rule.modality], action]
+    parts = [actor, _MODAL_PHRASES[rule.modality], action]
     if rule.object:
         object_surface = _readable_atom(rule.object)
         _require_unambiguous_qualifier_surface(object_surface, "object")
