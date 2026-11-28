@@ -16,12 +16,14 @@ import os
 from pathlib import Path
 import stat
 import sys
+from time import monotonic
 
 from . import contextual_legal_ir_runtime as contextual
 from . import normative_legal_ir_runtime as normative
 
 SCHEMA = "normative-retained-source-cache-runtime-plan/v1"
 DECODER_CONTRACT_ID = "normative-retained-source-cache-legal-ir/v1"
+MATCHED_PARAGRAPH_SHUFFLE_REQUEST_SCHEMA = "normative-retained-cache-matched-paragraph-shuffle-request/v1"
 _AUTOENCODER_NAMES = normative.SOURCE_OWNER_NAMES + (
     "normative_cached_legal_ir_runtime", "fresh_scalar_source_inputs",
     "fresh_scalar_source_inputs_single", "authored_scalar_holdout",
@@ -384,6 +386,39 @@ def prepare_normative_cached_legal_ir_runtime(request, *, checkpoint_pin, prepro
         raise NormativeCachedLegalRuntimeError("cannot prepare bounded retained-cache replay: " + str(error)) from error
 
 
+def _bind_matched_numeric_report(report, owner, plan, packet):
+    """Check the raw decoder result against the selected arm before keeping it."""
+    expected = dict(schema=owner.SCHEMA, dimension=plan["request"]["dimension"],
+        codec_sha256=plan["codec_sha256"], output_cap=plan["budgets"]["decoder_output_tokens"],
+        row_count=len(plan["row_ids"]), model_tensor_sha256=plan["model_tensor_sha256"],
+        model_tensor_sha256_before=plan["model_tensor_sha256"], model_tensor_sha256_after=plan["model_tensor_sha256"],
+        weights_unchanged=True, ambient_rng_preserved=True, source_inputs_unchanged=True,
+        source_inputs_sha256=contextual._digest(packet), source_contexts_sha256=contextual._digest(packet["contexts"]),
+        **owner._FALSE)
+    contextual._require(type(report) is dict and set(report) == set(expected) | {"predictions", "completed"}
+        and all(type(report[key]) is type(value) and report[key] == value for key, value in expected.items()),
+        "matched numeric checkpoint, source packet or profile differs")
+    predictions = report["predictions"]
+    contextual._require(type(predictions) is list and len(predictions) == len(plan["row_ids"]),
+        "matched numeric result must retain every selected row")
+    output_cap = expected["output_cap"]
+    vocabulary_size = len(plan["codec"]["target_vocabulary"])
+    for row, identity in zip(predictions, plan["row_ids"], strict=True):
+        contextual._require(type(row) is dict and set(row) == {"id", "token_ids", "eos_reached", "generation_status"}
+            and type(row["id"]) is str and row["id"] == identity,
+            "matched numeric result changed the selected row order or identity")
+        tokens, status = row["token_ids"], row["generation_status"]
+        contextual._require(type(tokens) is list and len(tokens) < output_cap
+            and all(type(token) is int and 3 <= token < vocabulary_size for token in tokens)
+            and type(status) is str and row["eos_reached"] is (status == "eos")
+            and ((status == "output_limit" and len(tokens) == output_cap - 1)
+                or (status in ("eos", "invalid_special_token") and len(tokens) <= output_cap - 2)
+                or (status == "deadline" and not tokens)), "matched numeric tokens, termination or budget differs")
+    contextual._require(report["completed"] is all(row["generation_status"] != "deadline" for row in predictions),
+        "matched numeric completion contradicts its row outcomes")
+    return json.loads(contextual._raw(report))
+
+
 class _NormativeCachedLegalAutoencoder(normative._NormativeLegalAutoencoder):
     def _recheck(self):
         plan = super()._recheck()
@@ -405,6 +440,118 @@ class _NormativeCachedLegalAutoencoder(normative._NormativeLegalAutoencoder):
         result = super().infer_cached()
         result["schema"] = "normative-retained-source-cache-inference/v1"
         return result
+
+
+    def infer_matched_paragraph_shuffle(self, request, *, control_owner_pin):
+        """Compare two source-only inputs on the selected loaded checkpoint.
+
+        The ordinary retained-cache request never enters this mode. The caller
+        explicitly selects the two arms, the same checkpoint bytes and the
+        ordered cache roster. Both calls share the original inference deadline.
+        The returned rows are raw generation outcomes for later scoring.
+        """
+        entered = monotonic()
+        result = None
+        started = returned = 0
+        try:
+            plan = self._recheck()
+            budget = plan["budgets"]
+            deadline = entered + budget["deadline_seconds"]
+            checkpoint = plan["artifact_receipts"]["checkpoint"]
+            ids = plan["row_ids"]
+            match_request = dict(schema=MATCHED_PARAGRAPH_SHUFFLE_REQUEST_SCHEMA,
+                arms=["conditioned", "paragraph_only_shuffle"], row_ids=ids, checkpoint_sha256=checkpoint["sha256"])
+            contextual._require(type(request) is dict and request == match_request
+                and all(type(request[key]) is type(value) for key, value in match_request.items())
+                and all(type(value) is str for value in request["arms"] + request["row_ids"]),
+                "matched paragraph shuffle request must select the exact two arms, checkpoint and ordered cache rows")
+            source_pin = contextual._pin(control_owner_pin, 512 * 1024)
+            name = _module_name("clause_source_controls")
+            contextual._require(source_pin["path"] == str(Path(__file__).with_name("clause_source_controls.py")),
+                "matched paragraph shuffle requires the fixed current control owner")
+            pins = {"control": source_pin}
+            witnesses = {"control": contextual._witness(source_pin["path"])}
+            contextual._fence(pins, witnesses)
+            control_owner = importlib.import_module(name)
+            options = json.loads(self._options_bytes)
+
+            def fence():
+                self._recheck()
+                contextual._fence(pins, witnesses)
+                _joint_identity_fence(options, self._witnesses)
+                contextual._require(sys.modules.get(name) is control_owner and control_owner.__file__ == source_pin["path"],
+                    "matched paragraph shuffle control owner origin changed")
+
+            fence()
+            baseline = plan["source_inputs"]
+            fixed_contexts = contextual._raw(baseline["contexts"])
+            original_hash = contextual._digest(baseline)
+            # The control owner accepts an opaque fourth field. It is removed
+            # from every numerical call packet below.
+            envelope = [dict(row, target_ids=[]) for row in baseline["rows"]]
+            changed_rows, contexts, execution = control_owner.prepare_control(
+                envelope, baseline["contexts"], "paragraph_only_shuffle")
+            shuffled = {"rows": [{key: row[key] for key in ("id", "source_text", "input")} for row in changed_rows],
+                        "contexts": contexts}
+            control = execution["control"]
+            assignment = control["source_assignment"]
+            original_by_id = {row["id"]: row for row in baseline["rows"]}
+            contextual._require(contextual._digest(baseline) == original_hash
+                and contextual._raw(contexts) == fixed_contexts
+                and control["kind"] == "paragraph_only_shuffle"
+                and set(assignment) == set(assignment.values()) == set(ids)
+                and [row["id"] for row in shuffled["rows"]] == ids
+                and all(row["source_text"] == original_by_id[row["id"]]["source_text"]
+                    and assignment[row["id"]] != row["id"]
+                    and row["input"] == original_by_id[assignment[row["id"]]]["input"] != original_by_id[row["id"]]["input"]
+                    for row in shuffled["rows"]), "matched paragraph control changed context, population or donor mapping")
+            controls = [dict(kind="conditioned", source_assignment={identity: identity for identity in ids}), control]
+            arms = [dict(control=item, status="not_dispatched", raw_candidate_report=None,
+                        row_outcomes=[dict(id=identity, status="not_dispatched") for identity in ids]) for item in controls]
+            result = dict(schema="normative-retained-cache-matched-paragraph-shuffle-inference/v1",
+                request=match_request, checkpoint_pin=checkpoint, model_tensor_sha256=plan["model_tensor_sha256"],
+                source_cache_pin=plan["artifact_receipts"]["source_cache"], control_owner_pin=source_pin, row_ids=ids,
+                row_receipts=plan["row_receipts"], source_contexts_sha256=contextual._digest(baseline["contexts"]),
+                budgets=budget, arms=arms, execution_complete=False, all_rows_reached_eos=False,
+                original_targets_accessed=False, semantic_fidelity_assessed=False, authority=dict(contextual._AUTHORITY))
+            for arm, packet in zip(arms, (baseline, shuffled), strict=True):
+                fence()
+                remaining = deadline - monotonic()
+                if remaining <= 0:
+                    break
+                before = contextual._raw(packet)
+                started += 1
+                self._inference_started = True
+                arm.update(status="refused", row_outcomes=[dict(id=identity, status="refused") for identity in ids])
+                observed = self._owner.infer_contextual_legal_model(self._model, packet,
+                    output_cap=budget["decoder_output_tokens"], deadline_seconds=remaining, batch_size=budget["batch_size"])
+                returned += 1
+                self._inferred = True
+                contextual._require(contextual._raw(packet) == before, "matched numerical owner mutated source packet")
+                report = _bind_matched_numeric_report(observed, self._owner, plan, packet)
+                arm["raw_candidate_report"] = report
+                fence()
+                contextual._require(contextual._raw(packet) == before, "matched source packet changed before closing fence")
+                arm["row_outcomes"] = [dict(id=row["id"], status=row["generation_status"]) for row in report["predictions"]]
+                if monotonic() >= deadline:
+                    arm["status"] = "returned_after_deadline"
+                    break
+                arm["status"] = "returned" if report["completed"] else "incomplete"
+            result["execution_complete"] = all(arm["status"] == "returned" for arm in arms)
+            result["all_rows_reached_eos"] = result["execution_complete"] and all(
+                row["status"] == "eos" for arm in arms for row in arm["row_outcomes"])
+            result.update(numerical_dispatches_started=started, numerical_reports_returned=returned)
+            return result
+        except Exception as error:
+            refused = error if isinstance(error, NormativeCachedLegalRuntimeError) else NormativeCachedLegalRuntimeError(str(error))
+            refused.model_load_started = refused.model_load_performed = True
+            refused.model_inference_started, refused.model_inference_executed = bool(started), bool(returned)
+            if result is not None:
+                result.update(numerical_dispatches_started=started, numerical_reports_returned=returned)
+            refused.matched_comparison_report = result
+            if refused is error:
+                raise
+            raise refused from error
 
 
 def open_normative_cached_legal_ir_autoencoder(request, *, checkpoint_pin, preprocessing_pin,
@@ -434,6 +581,7 @@ def open_normative_cached_legal_ir_autoencoder(request, *, checkpoint_pin, prepr
         raise refused from error
 
 
-__all__ = ["SCHEMA", "DECODER_CONTRACT_ID", "SOURCE_OWNER_NAMES", "MAX_REFERENCE_BYTES",
+__all__ = ["SCHEMA", "DECODER_CONTRACT_ID", "MATCHED_PARAGRAPH_SHUFFLE_REQUEST_SCHEMA",
+    "SOURCE_OWNER_NAMES", "MAX_REFERENCE_BYTES",
     "NormativeCachedLegalRuntimeError", "source_owner_paths", "prepare_normative_cached_legal_ir_runtime",
     "open_normative_cached_legal_ir_autoencoder"]
