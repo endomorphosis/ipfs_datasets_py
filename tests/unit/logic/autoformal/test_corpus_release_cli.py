@@ -5271,3 +5271,75 @@ def test_physical_release_refuses_reviewed_source_from_a_different_release(tmp_p
     replay = replay_physical_closure if reviewed_version == 2 else replay_physical_closure_v3
     with pytest.raises(release.ReleaseCoordinatorError, match="release identity differs"):
         replay(request)
+
+
+@pytest.mark.parametrize("order", ("writer-first", "sealer-first", "separate-roots"))
+def test_local_coordinator_orders_artifact_writes_against_receipt_sealing(tmp_path, monkeypatch, order):
+    import fcntl
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Event, get_ident
+
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+
+    writer_root = tmp_path / "writer"
+    writer_root.mkdir()
+    seal_root = writer_root
+    if order == "separate-roots":
+        seal_root = tmp_path / "sealer"
+        seal_root.mkdir()
+    reference = release.publish_referenced_artifact(seal_root, "initial", b"initial", "candidate")
+    receipt_path = seal_root / release.RECEIPT_NAME
+    writer_path = writer_root / "pending"
+    publish = partial(release.publish_referenced_artifact, writer_root, "pending", b"pending", "candidate")
+    seal = partial(release.seal_coordinator_receipt, seal_root, [reference])
+    sealer_first = order == "sealer-first"
+    first, second = (seal, publish) if sealer_first else (publish, seal)
+    stage_name = release.RECEIPT_NAME if sealer_first else writer_path.name
+
+    first_paused = Event()
+    second_boundary = Event()
+    second_thread = None
+    receipt_seen_before_write = []
+    original_publish = release._publish_immutable_bytes
+    original_flock = fcntl.flock
+
+    def run_second():
+        nonlocal second_thread
+        second_thread = get_ident()
+        try:
+            return second()
+        finally:
+            second_boundary.set()
+
+    def record_lock_attempt(fd, operation):
+        if order != "separate-roots" and get_ident() == second_thread:
+            second_boundary.set()
+        return original_flock(fd, operation)
+
+    def observe_publication(directory, name, payload, *, exists_message):
+        if name == stage_name:
+            first_paused.set()
+            assert second_boundary.wait(5)
+        if name == writer_path.name:
+            receipt_seen_before_write.append((writer_root / release.RECEIPT_NAME).exists())
+        return original_publish(directory, name, payload, exists_message=exists_message)
+
+    monkeypatch.setattr(fcntl, "flock", record_lock_attempt)
+    monkeypatch.setattr(release, "_publish_immutable_bytes", observe_publication)
+    with ThreadPoolExecutor(max_workers=2) as workers:
+        first_result = workers.submit(first)
+        assert first_paused.wait(5)
+        second_result = workers.submit(run_second)
+        first_result.result(timeout=10)
+        if sealer_first:
+            with pytest.raises(release.ReleaseCoordinatorError, match="artifact published after"):
+                second_result.result(timeout=10)
+        else:
+            second_result.result(timeout=10)
+
+    assert receipt_seen_before_write == ([] if sealer_first else [False])
+    assert writer_path.exists() is (not sealer_first)
+    assert json.loads(receipt_path.read_bytes())["artifacts"] == [
+        {key: value for key, value in reference.items() if key != "published"}
+    ]
+    assert not list(tmp_path.rglob(".release-*"))

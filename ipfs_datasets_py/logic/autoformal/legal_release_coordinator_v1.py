@@ -86,6 +86,19 @@ def _artifact_directory(root: Path | int, parts=(), *, create=False):
         os.close(fd)
 
 
+@contextmanager
+def _publication_root(directory: Path, *, sealing: bool):
+    """Order cooperating local writers and sealers on the opened root inode."""
+    import fcntl
+
+    with _artifact_directory(directory) as root_fd:
+        try:
+            fcntl.flock(root_fd, fcntl.LOCK_EX if sealing else fcntl.LOCK_SH)
+        except OSError as error:
+            raise ReleaseCoordinatorError("release directory lock unavailable") from error
+        yield root_fd
+
+
 def _entry_exists(directory: int, name: str) -> bool:
     try:
         os.stat(name, dir_fd=directory, follow_symlinks=False)
@@ -168,7 +181,7 @@ def publish_referenced_artifact(
     _need(status in STATUSES, "artifact status is not a separate release selector")
     *parents, name = _artifact_parts(relative_path)
     _need(name != RECEIPT_NAME, "coordinator receipt cannot be published as a referenced artifact")
-    with _artifact_directory(directory) as root_fd:
+    with _publication_root(directory, sealing=False) as root_fd:
         _need(not _entry_exists(root_fd, RECEIPT_NAME), "artifact published after the coordinator receipt")
         with _artifact_directory(root_fd, parents, create=True) as parent_fd:
             _need(not _entry_exists(parent_fd, name), "referenced artifact path already exists")
@@ -186,7 +199,7 @@ def seal_coordinator_receipt(root: Path, artifacts: list[dict[str, object]]) -> 
     """Write the coordinator receipt only after every referenced artifact matches."""
 
     directory = _root(root)
-    with _artifact_directory(directory) as root_fd:
+    with _publication_root(directory, sealing=True) as root_fd:
         _need(not _entry_exists(root_fd, RECEIPT_NAME), "coordinator receipt already sealed")
         _need(type(artifacts) is list and 1 <= len(artifacts) <= 64, "bounded referenced artifact list required")
         seen: set[str] = set()
