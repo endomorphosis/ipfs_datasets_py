@@ -789,6 +789,7 @@ class LegalProofCache:
     _source_index: dict[str, dict[str, str]] = field(
         default_factory=dict, init=False, repr=False
     )
+    _disk_selectors_need_reload: bool = field(default=False, init=False, repr=False)
     _hits: int = field(default=0, init=False, repr=False)
     _misses: int = field(default=0, init=False, repr=False)
     _lock: threading.RLock = field(
@@ -980,7 +981,18 @@ class LegalProofCache:
                     proof_bindings=proof_bindings,
                 )
 
-            self._persist_record(record)
+            prior_indexes = None
+            if self._disk_selectors_need_reload:
+                # Read the committed selection before the new record exists.
+                prior_indexes = self._records, self._profile_index, self._source_index
+                self.reload()
+            try:
+                self._persist_record(record)
+            except BaseException:
+                if prior_indexes is not None:
+                    self._records, self._profile_index, self._source_index = prior_indexes
+                    self._disk_selectors_need_reload = True
+                raise
             self._index_record(record)
             # DQK-067: skip mutable index.json when export-only/promoted;
             # in-memory + DuckDB authority remain sufficient.
@@ -1023,15 +1035,20 @@ class LegalProofCache:
                 raise LegalProofIntegrityError(
                     "on-disk proof record CID does not match requested CID"
                 )
-            self._index_record(record)
+            # Hydrating an exact CID must not select this revision for a
+            # profile or source. A later selector operation reloads disk state.
+            self._records[cid] = record
+            self._disk_selectors_need_reload = True
             self._hits += 1
             return record
 
     def get_by_profile(self, profile: str) -> LegalProofRecord:
-        """Return the proof record currently indexed for *profile*."""
+        """Return the current profile selection, restoring disk indexes if needed."""
 
         profile = _require_profile(profile)
         with self._lock:
+            if self._disk_selectors_need_reload:
+                self.reload()
             cid = self._profile_index.get(profile)
             if cid is None:
                 self._misses += 1
@@ -1055,11 +1072,9 @@ class LegalProofCache:
 
         source_digest = _require_digest(source_digest, "source_digest")
         with self._lock:
-            by_profile = self._source_index.get(source_digest)
-            if not by_profile:
-                # Fall back to scanning disk / re-verify.
+            if self._disk_selectors_need_reload or not self._source_index.get(source_digest):
                 self.reload()
-                by_profile = self._source_index.get(source_digest)
+            by_profile = self._source_index.get(source_digest)
             if not by_profile:
                 self._misses += 1
                 raise LegalProofCacheError(
@@ -1222,6 +1237,7 @@ class LegalProofCache:
             self._records = loaded
             self._profile_index = profile_index
             self._source_index = source_index
+            self._disk_selectors_need_reload = False
             return len(loaded)
 
     def clear(self) -> None:
@@ -1231,6 +1247,7 @@ class LegalProofCache:
             self._records.clear()
             self._profile_index.clear()
             self._source_index.clear()
+            self._disk_selectors_need_reload = self.root is not None
             self._hits = 0
             self._misses = 0
 
@@ -1301,6 +1318,8 @@ class LegalProofCache:
                 "export_index_json_compat requires a path or cache root"
             )
         with self._lock:
+            if self._disk_selectors_need_reload:
+                self.reload()
             payload = {
                 "interface": LEGAL_PROOF_CACHE_INTERFACE,
                 "profiles": {

@@ -2276,3 +2276,104 @@ def test_export_index_receipt_retains_serialized_snapshot_while_concurrent_clear
     assert receipts[0]["record_count"] == len(payload["record_cids"]) == 2
     assert receipts[0]["legacy_file_authoritative"] is payload["legacy_file_authoritative"] is False
     assert cache.cids() == cache.profiles() == cache.source_digests() == ()
+
+
+@pytest.mark.parametrize("first_access", ("profile", "source", "put", "export"))
+def test_exact_disk_cid_read_does_not_promote_historical_selection(
+    tmp_path: Path, first_access: str
+) -> None:
+    cache = LegalProofCache(root=tmp_path / "cache")
+    artifact = _legal_artifact()
+    historical = cache.put(artifact, profile="legal-strict", jurisdiction="fictional")
+    current = cache.put(artifact, profile="legal-strict", jurisdiction="fictional-revision")
+    assert historical.content_cid != current.content_cid
+    index_path = cache.root / "index.json"
+    committed = index_path.read_bytes()
+
+    cache.clear()
+    assert cache.get(historical.content_cid).to_dict() == historical.to_dict()
+    assert index_path.read_bytes() == committed
+
+    if first_access == "profile":
+        assert cache.get_by_profile(historical.profile).content_cid == current.content_cid
+    elif first_access == "source":
+        assert cache.get_by_source_digest(historical.source_digest).content_cid == current.content_cid
+    elif first_access == "put":
+        cache.put(artifact, profile="legal-default", jurisdiction="fictional")
+    else:
+        cache.export_index_json_compat()
+    assert cache.get_by_profile(current.profile).content_cid == current.content_cid
+    assert cache.get_by_source_digest(current.source_digest, profile=current.profile).content_cid == current.content_cid
+    assert cache.get(historical.content_cid).to_dict() == historical.to_dict()
+
+    emitted = _load_json(index_path)
+    assert emitted["profiles"][current.profile] == current.content_cid
+    assert emitted["source_digests"][current.source_digest][current.profile] == current.content_cid
+    reopened = LegalProofCache(root=cache.root)
+    assert reopened.get_by_profile(current.profile).content_cid == current.content_cid
+
+
+def test_exact_disk_cid_read_from_another_cache_restores_the_durable_selection(tmp_path: Path) -> None:
+    writer = LegalProofCache(root=tmp_path / "cache")
+    artifact = _legal_artifact()
+    writer.put(artifact, profile="legal-strict", jurisdiction="fictional-original")
+    reader = LegalProofCache(root=writer.root)
+    historical = writer.put(artifact, profile="legal-strict", jurisdiction="fictional-intermediate")
+    current = writer.put(artifact, profile="legal-strict", jurisdiction="fictional-current")
+
+    assert reader.get(historical.content_cid).to_dict() == historical.to_dict()
+    assert reader.get_by_profile(current.profile).content_cid == current.content_cid
+    assert reader.get_by_source_digest(current.source_digest).content_cid == current.content_cid
+
+
+def test_exact_disk_cid_read_verifies_only_the_requested_envelope(tmp_path: Path) -> None:
+    cache = LegalProofCache(root=tmp_path / "cache")
+    artifact = _legal_artifact()
+    current = cache.put(artifact, profile="legal-strict", jurisdiction="fictional")
+    unrelated = cache.put(artifact, profile="legal-default", jurisdiction="fictional")
+    unrelated_path = cache.root / "records" / f"{unrelated.content_cid}.json"
+    unrelated_path.write_text("{}")
+    cache.clear()
+
+    assert cache.get(current.content_cid).to_dict() == current.to_dict()
+    with pytest.raises(LegalProofCacheError):
+        cache.get(unrelated.content_cid)
+
+
+@pytest.mark.parametrize("record_write_fails", (False, True))
+def test_disk_put_after_clear_preserves_durable_selectors(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, record_write_fails: bool
+) -> None:
+    import os
+
+    cache = LegalProofCache(root=tmp_path / "cache")
+    artifact = _legal_artifact()
+    cache.put(artifact, profile="legal-strict", jurisdiction="fictional-archived")
+    current = cache.put(artifact, profile="legal-strict", jurisdiction="fictional-current")
+    candidate = LegalProofRecord.build(artifact, profile="legal-default", jurisdiction="fictional")
+    index_path = cache.root / "index.json"
+    before_index = index_path.read_bytes()
+    candidate_path = cache.root / "records" / f"{candidate.content_cid}.json"
+    replace_file = os.replace
+
+    def replace_record(source, target, **kwargs):
+        if Path(target) == candidate_path:
+            raise OSError("proof record publication failed")
+        return replace_file(source, target, **kwargs)
+
+    cache.clear()
+    assert cache.cids() == cache.profiles() == cache.source_digests() == ()
+    if record_write_fails:
+        with monkeypatch.context() as patch:
+            patch.setattr(os, "replace", replace_record)
+            with pytest.raises(OSError, match="publication failed"):
+                cache.put(candidate)
+        assert cache.cids() == cache.profiles() == cache.source_digests() == ()
+        assert cache.stats() == {"hits": 0, "misses": 0, "size": 0}
+        assert index_path.read_bytes() == before_index
+        assert not candidate_path.exists()
+    else:
+        assert cache.put(candidate).content_cid == candidate.content_cid
+        assert cache.get_by_profile(candidate.profile).content_cid == candidate.content_cid
+    assert cache.get_by_profile(current.profile).content_cid == current.content_cid
+    assert _load_json(index_path)["profiles"][current.profile] == current.content_cid
