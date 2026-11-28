@@ -7419,8 +7419,94 @@ def test_reviewed_source_bound_native_replays_authored_packet_without_live_autho
         native.load_reviewed_source_bound_definition_realization_native_v2(changed_packet, *operands, **altered_pins)
 
 
+def _source_bound_release_review_options(options):
+    return {
+        "registry_sha256": options["expected_registry_sha256"],
+        "policy_sha256": options["expected_policy_sha256"],
+        "at_time_utc": options["at_time_utc"],
+        "observed_artifact_sha256s": deepcopy(options["observed_artifact_sha256s"]),
+        "observed_pins": deepcopy(options["observed_pins"]),
+    }
+
+
+@pytest.mark.parametrize(("refusal", "message"), [
+    ("missing-current-review", "current review"),
+    ("invalid-artifact-path", "compiled"),
+    ("unissued-handle", "live success handle was not issued by this process and native thread"),
+])
+def test_source_bound_release_refuses_invalid_selections_before_project_replay(refusal, message):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+
+    independent_pin = sha(b"independently selected fictional subject")
+    review = {
+        "registry_sha256": independent_pin,
+        "policy_sha256": independent_pin,
+        "at_time_utc": "2026-10-23T00:00:00Z",
+        "observed_artifact_sha256s": {},
+        "observed_pins": {},
+    }
+    compiled = {"compiled/Fictional.olean": sha(b"fictional artifact")}
+    if refusal == "missing-current-review":
+        review = None
+    elif refusal == "invalid-artifact-path":
+        compiled = {"project/Fictional.olean": compiled["compiled/Fictional.olean"]}
+    handle = object.__new__(native.VerifiedReviewedPreservationNativeSuccess)
+    # None of the project, packet or signed admission inputs can be opened.
+    unavailable = object()
+    with pytest.raises(ValueError, match=message):
+        release.observe_reviewed_source_bound_native_component_v1(
+            handle, unavailable, unavailable, unavailable, unavailable, unavailable,
+            current_review=review, expected_compiled_artifact_sha256s=compiled,
+            expected_receipt_sha256=independent_pin, expected_packet_sha256=independent_pin,
+            expected_binary_sha256={"/fixture/lean": independent_pin, "/fixture/lake": independent_pin},
+            expected_realization_sha256=independent_pin, expected_preservation_sha256=independent_pin,
+            expected_graph_sha256=independent_pin, expected_admission_sha256=independent_pin,
+            toolchain=TOOLCHAIN, bound_component_inputs=unavailable,
+            expected_bound_component_inputs_sha256=independent_pin,
+            instance_identity_profile="reviewed-source-use/v1",
+            definition_application_profile="whole-norm-definition-expansion/v1",
+        )
+
+
+@pytest.mark.parametrize("drift", ["dependency", "revoked-reviewer"])
+def test_source_bound_release_current_review_refuses_stale_or_revoked_inputs(reviewed_native_control_v3, drift):
+    from ipfs_datasets_py.logic.autoformal import legal_graph_review as review_owner
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+
+    args, options, admission = (reviewed_native_control_v3[key] for key in ("args", "kwargs", "admission"))
+    assert admission["semantic_use_eligible"] is True and admission["fixture_only"] is True
+    current = _source_bound_release_review_options(options)
+    if drift == "dependency":
+        manifest = options["preparation_inputs"]["dependency_manifest"]
+        identity = manifest["artifacts"][0]["artifact_id"]
+        assert identity in current["observed_artifact_sha256s"]
+        current["observed_artifact_sha256s"][identity] = sha(b"replacement fictional dependency")
+    else:
+        _, historical_registry, historical_policy, original_reviews = args
+        registry, policy = deepcopy(historical_registry), deepcopy(historical_policy)
+        registry["revocation_generation"] += 1
+        key_id = original_reviews[0]["key_id"]
+        key = next(row for row in registry["keys"] if row["key_id"] == key_id)
+        key["revoked_at_utc"] = current["at_time_utc"]
+        registry_pin = review_owner.digest(registry)
+        policy["registry_sha256"] = registry_pin
+        current["current_trust"] = {
+            "registry": registry,
+            "policy": policy,
+            "expected_registry_sha256": registry_pin,
+            "expected_policy_sha256": review_owner.digest(policy),
+        }
+    before = deepcopy(current)
+    with pytest.raises(release.ReleaseCoordinatorError, match="current review"):
+        release._assess_release_current_review(args, options, admission, current)
+    assert current == before
+
+
 def test_reviewed_source_bound_native_installed_preserves_history_through_retained_and_original_handle_replay(
         bound_norm_installed_lake, reviewed_source_bound_realization_native_control_v2, tmp_path):
+    from ipfs_datasets_py.logic.autoformal import corpus_qualification as qualification
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+
     executable, binary_pins = bound_norm_installed_lake
     operands, options = reviewed_source_bound_realization_native_control_v2
     profiles = {
@@ -7430,6 +7516,12 @@ def test_reviewed_source_bound_native_installed_preserves_history_through_retain
     output = tmp_path / "actual-source-bound-realization"
     handle = native.build_verified_reviewed_source_bound_definition_realization_native_v2(
         *operands, **options, lake_executable=str(executable), output_directory=output, timeout_seconds=60)
+    # Select the complete artifact population from the realized module names
+    # and pin each compiler output at its original path before offering the packet.
+    compiled_pins = {}
+    for module in manifest["expected_modules"]:
+        path_name = "compiled/" + module.replace(".", "/") + ".olean"
+        compiled_pins[path_name] = sha((output / path_name).read_bytes())
     packet = reviewed_live_success_packet_v2(output)
     raw = dict(packet)["build-receipt.json"]
     receipt = json.loads(raw)
@@ -7446,11 +7538,11 @@ def test_reviewed_source_bound_native_installed_preserves_history_through_retain
         "expected_packet_sha256": native.reviewed_source_bound_definition_realization_packet_sha256_v2(packet, **profiles),
         "expected_binary_sha256": binary_pins,
     }
-    # The original-handle loader independently calls the same detached replay
-    # validator before checking the issued process and native-thread capability.
-    # The authored-packet case exercises detached replay alone and its mutation.
-    live = native.load_verified_reviewed_source_bound_definition_realization_native_v2(
-        handle, packet, *operands, **pinned)
+    current_review = _source_bound_release_review_options(options)
+    report = release.observe_reviewed_source_bound_native_component_v1(
+        handle, packet, *operands, current_review=current_review,
+        expected_compiled_artifact_sha256s=compiled_pins, **pinned)
+    live = report["native_opening"]
     assert live["schema"] == native.REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_NATIVE_LIVE_SUCCESS_SCHEMA
     assert live["retained_observations_consistent"] is live["current_complete_semantics_replayed"] is True
     assert live["retained_receipt_sha256"] == pinned["expected_receipt_sha256"]
@@ -7462,3 +7554,30 @@ def test_reviewed_source_bound_native_installed_preserves_history_through_retain
         assert record["training_mask"] == record["evaluation_gold_mask"] == 0
         assert all(value is False for value in record["authority"].values())
     assert live["original_admitted_parent_custody_authenticated"] is live["original_success_authenticated"] is False
+
+    review = report["current_review_observation"]
+    assert {key: review[key] for key in ("registry_sha256", "policy_sha256", "at_time_utc")} == {
+        key: current_review[key] for key in ("registry_sha256", "policy_sha256", "at_time_utc")
+    }
+    assert review["evaluation_clock_authenticated"] is review["registry_freshness_authenticated"] is False
+
+    whole = report["checked_whole_project_observation"]
+    assert whole["compiled_modules"] == manifest["expected_modules"]
+    assert len(whole["compiled_artifacts"]) == len(compiled_pins)
+    assert {item["path"]: item["sha256"] for item in whole["compiled_artifacts"]} == compiled_pins
+    assert whole["executed_source_sha256"] == receipt["executed_project_sha256"] == live["file_sha256"]
+    assert [item["declaration"] for item in whole["obligations"]] == manifest["preservation_obligations"]
+    assert all(item["axiom_dependencies"] == [] for item in whole["obligations"])
+    assert whole["bound_component_identity"] == manifest["bound_component_identity"]
+    assert whole["bound_component_inputs_sha256"] == options["expected_bound_component_inputs_sha256"]
+
+    record, eligibility = report["declared_qualification"], report["declared_eligibility"]
+    for name in ("native_translation", "lean_compilation"):
+        assert record["dimensions"][name] == {"status": "passed", "evidence_cids": [whole["record_cid"]]}
+    assert record["theorem_requested"] is True
+    assert record["dimensions"]["proof"] == {"status": "pending", "evidence_cids": []}
+    assert qualification.validate_eligibility(
+        eligibility, record, artifact_cid=record["artifact_cid"], profile=record["profile"]) == eligibility
+    assert eligibility["views"]["reviewed_graph"]["declared_eligible"] is True
+    assert eligibility["views"]["checked_lean"]["declared_eligible"] is False
+    assert all(eligibility[key] is record[key] is False for key in qualification.AUTHORITY_FIELDS)
