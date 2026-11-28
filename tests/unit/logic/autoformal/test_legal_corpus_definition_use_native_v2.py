@@ -7446,33 +7446,19 @@ def test_reviewed_source_bound_native_installed_preserves_history_through_retain
         "expected_packet_sha256": native.reviewed_source_bound_definition_realization_packet_sha256_v2(packet, **profiles),
         "expected_binary_sha256": binary_pins,
     }
-    detached = native.validate_reviewed_source_bound_definition_realization_native_receipt_v2(
-        raw, *operands, packet_files=packet, **pinned)
+    # The original-handle loader independently calls the same detached replay
+    # validator before checking the issued process and native-thread capability.
+    # The authored-packet case exercises detached replay alone and its mutation.
     live = native.load_verified_reviewed_source_bound_definition_realization_native_v2(
         handle, packet, *operands, **pinned)
-    assert len({record["schema"] for record in (receipt, detached, live)}) == 3
-    assert detached["retained_observations_consistent"] is detached["current_complete_semantics_replayed"] is True
-    assert detached["live_native_success_authenticated"] is detached["native_execution_authenticated"] is False
+    assert live["schema"] == native.REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_NATIVE_LIVE_SUCCESS_SCHEMA
+    assert live["retained_observations_consistent"] is live["current_complete_semantics_replayed"] is True
+    assert live["retained_receipt_sha256"] == pinned["expected_receipt_sha256"]
+    assert live["retained_packet_sha256"] == pinned["expected_packet_sha256"]
     assert live["live_native_success_authenticated"] is live["native_execution_authenticated"] is True
-    for record in (receipt, detached, live):
+    for record in (receipt, live):
         assert record["bound_component_identity"] == manifest["bound_component_identity"]
         assert record["bound_component_inputs_sha256"] == manifest["bound_component_inputs_sha256"]
         assert record["training_mask"] == record["evaluation_gold_mask"] == 0
         assert all(value is False for value in record["authority"].values())
     assert live["original_admitted_parent_custody_authenticated"] is live["original_success_authenticated"] is False
-
-    # Re-pin the altered receipt and complete packet so only source-history
-    # regeneration can identify the mismatch.
-    changed = {key: value for key, value in receipt.items() if key not in {"record_cid", "cid_scope"}}
-    changed["bound_component_inputs_sha256"] = sha(b"different complete source history")
-    changed_raw = native.reviewed_source_bound_definition_realization_receipt_bytes_v2(
-        contracts.seal_record(changed), **profiles)
-    changed_packet = tuple(sorted({**dict(packet), "build-receipt.json": changed_raw}.items()))
-    changed_pins = {
-        **pinned,
-        "expected_receipt_sha256": sha(changed_raw),
-        "expected_packet_sha256": native.reviewed_source_bound_definition_realization_packet_sha256_v2(changed_packet, **profiles),
-    }
-    with pytest.raises(ValueError, match="retained receipt differs from current whole reviewed semantics or producers"):
-        native.validate_reviewed_source_bound_definition_realization_native_receipt_v2(
-            changed_raw, *operands, packet_files=changed_packet, **changed_pins)
