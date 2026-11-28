@@ -58,6 +58,7 @@ LEGAL_BOUND_PROOF_RECORD_SCHEMA_VERSION: Final = "legal-proof-record/v2"
 LEGAL_PROOF_BINDING_SCHEMA_VERSION: Final = "legal-proof-binding/v1"
 LEGAL_PROOF_CONTEXT_SCHEMA_VERSION: Final = "legal-proof-reuse-context/v1"
 LEGAL_PROOF_INDEX_SCHEMA_VERSION: Final = "legal-proof-index/v1"
+_CURRENT_LEAN_VERIFICATION_PROFILE: Final = "lean-kernel-verification/v3"
 
 _PROFILE_RE: Final = re.compile(r"^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$")
 _DIGEST_RE: Final = re.compile(r"^sha256:[0-9a-f]{64}$")
@@ -273,14 +274,20 @@ def _wire(value: Any, label: str) -> dict[str, Any]:
     return _json_ready(_as_mapping(method() if callable(method) else value, label))
 
 
+def _verification_profile(context: Mapping[str, Any]) -> Any:
+    metadata = context["toolchain"].get("metadata")
+    return metadata.get("verification_profile") if isinstance(metadata, Mapping) else None
+
+
 def _validate_proof_binding(
     artifact: FormalizationArtifact,
     receipt: ProofReceipt,
     value: Any,
     *,
     jurisdiction: str,
+    retain_archived_profile: bool = False,
 ) -> dict[str, Any]:
-    """Replay the existing protocol and canonical Lean receipt owner, without a prover call."""
+    """Replay protocol and Lean evidence without running a prover."""
     binding = _wire(value, "proof binding")
     if set(binding) != _BINDING_FIELDS or binding["schema_version"] != LEGAL_PROOF_BINDING_SCHEMA_VERSION:
         raise LegalProofIntegrityError("complete closed proof binding is required")
@@ -335,15 +342,22 @@ def _validate_proof_binding(
     # A v1 source-only receipt cannot become proof of an opaque IR obligation.
     try:
         from ..backends.kernel.lean import (
-            LEAN_KERNEL_RECEIPT_VERSION, LEAN_KERNEL_VERIFICATION_PROFILE, LeanKernelReceipt,
+            LEAN_KERNEL_ARCHIVED_VERIFICATION_PROFILE, LEAN_KERNEL_RECEIPT_VERSION,
+            LEAN_KERNEL_VERIFICATION_PROFILE, LeanKernelReceipt,
             content_digest, instrument_lean_source_for_axioms,
             _payload_source,
         )
         if (LEAN_KERNEL_RECEIPT_VERSION != "lean-kernel-receipt/v3"
                 or type(LEAN_KERNEL_VERIFICATION_PROFILE) is not str
-                or LEAN_KERNEL_VERIFICATION_PROFILE != "lean-kernel-verification/v2"):
+                or LEAN_KERNEL_VERIFICATION_PROFILE != _CURRENT_LEAN_VERIFICATION_PROFILE):
             raise ValueError("the canonical Lean v3 current verification profile is required")
-        kernel = LeanKernelReceipt.from_dict(result.to_dict()["payload"]["kernel_receipt"])
+        archived = (retain_archived_profile
+                    and _verification_profile(context) == LEAN_KERNEL_ARCHIVED_VERIFICATION_PROFILE)
+        expected_profile = (LEAN_KERNEL_ARCHIVED_VERIFICATION_PROFILE if archived
+                            else LEAN_KERNEL_VERIFICATION_PROFILE)
+        wire = result.to_dict()["payload"]["kernel_receipt"]
+        kernel = (LeanKernelReceipt.from_dict(wire, _archived_profile=True) if archived
+                  else LeanKernelReceipt.from_dict(wire))
     except (ImportError, TypeError, ValueError, KeyError, AttributeError) as exc:
         raise LegalProofIntegrityError("a canonical checked Lean v3 receipt is required") from exc
     if (kernel.schema_version != LEAN_KERNEL_RECEIPT_VERSION or not kernel.accepted
@@ -351,7 +365,7 @@ def _validate_proof_binding(
             or kernel.request_digest != request.digest
             or kernel.theorem_name != context["expected_declaration"]
             or kernel.expected_proposition != context["expected_proposition"]
-            or kernel.toolchain.metadata.get("verification_profile") != LEAN_KERNEL_VERIFICATION_PROFILE
+            or kernel.toolchain.metadata.get("verification_profile") != expected_profile
             or kernel.axiom_policy_digest != context["axiom_policy_digest"]
             or _canonical_bytes(kernel.toolchain.to_dict()) != _canonical_bytes(context["toolchain"])
             or kernel.toolchain.kernel_id != receipt.backend_id):
@@ -563,7 +577,8 @@ class LegalProofRecord:
         """Return only proofs matching the caller's exact current reuse context.
 
         V1 associated headers remain readable in ``theorem_receipts`` for
-        historical custody; they are never reusable proof authority.
+        historical custody. Bound receipts from the retired verifier profile
+        remain readable for custody. Proof reuse always requires the current profile.
         """
         self.verify_integrity()
         headers = self._theorem_receipt_headers()
@@ -577,6 +592,7 @@ class LegalProofRecord:
         bindings = {item["receipt_digest"]: item for item in self.proof_bindings}
         matches = tuple(receipt for receipt in headers
                         if (obligation_id is None or receipt.obligation_id == obligation_id)
+                        and _verification_profile(bindings[receipt.digest]["context"]) == _CURRENT_LEAN_VERIFICATION_PROFILE
                         and _canonical_bytes(_json_ready(bindings[receipt.digest]["context"])) == _canonical_bytes(context))
         if not matches:
             raise LegalProofIntegrityError("no proved obligation matches the expected reuse context")
@@ -590,6 +606,8 @@ class LegalProofRecord:
         obligation_by_receipt = {receipt.digest: receipt.obligation_id for receipt in self._theorem_receipt_headers()}
         coverage: dict[bytes, set[str]] = {}
         for binding in self.proof_bindings:
+            if _verification_profile(binding["context"]) != _CURRENT_LEAN_VERIFICATION_PROFILE:
+                continue
             # The declaration and proposition are checked per receipt. All
             # other context identities must agree for their proofs to combine.
             context = _json_ready(binding["context"])
@@ -663,7 +681,10 @@ class LegalProofRecord:
             if len(by_digest) != len(headers) or set(by_digest) != {item.digest for item in headers}:
                 raise LegalProofIntegrityError("proof bindings contain duplicate, missing or unrelated receipts")
             for receipt in headers:
-                _validate_proof_binding(artifact, receipt, by_digest[receipt.digest], jurisdiction=self.jurisdiction)
+                _validate_proof_binding(
+                    artifact, receipt, by_digest[receipt.digest], jurisdiction=self.jurisdiction,
+                    retain_archived_profile=True,
+                )
         return self
 
     @classmethod

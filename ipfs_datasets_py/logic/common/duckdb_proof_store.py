@@ -71,7 +71,8 @@ UNIFIED_PROOF_KEY_SCHEMA_VERSION: Final = "unified-proof-key/v1"
 UNIFIED_PROOF_ENTRY_SCHEMA_VERSION: Final = "unified-proof-entry/v1"
 PROOFS_CATALOG_NAME: Final = "proofs"
 LEGAL_FORMAL_OBLIGATION_COVERAGE: Final = "declared_formal_obligation_coverage"
-LEGAL_FORMAL_COVERAGE_VERSION: Final = "bound-v2-coherent-coverage/v1"
+# The v2 projection counts only current Lean verification evidence.
+LEGAL_FORMAL_COVERAGE_VERSION: Final = "bound-v2-coherent-coverage/v2"
 SQL_MAX_ENTRY_JSON_BYTES: Final = 8 * 1024 * 1024
 SQL_MAX_KEY_JSON_BYTES: Final = 64 * 1024
 SQL_MAX_PREMISES: Final = 4096

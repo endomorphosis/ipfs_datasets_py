@@ -1155,6 +1155,51 @@ def test_current_lean_verification_profile_survives_bound_cache_wire_replay(tmp_
     assert reopened.theorem_receipt_results(expected_context=context) == (receipt,)
 
 
+def test_retired_lean_verification_receipt_remains_archival_without_cache_authority(tmp_path: Path) -> None:
+    from ipfs_datasets_py.logic.backends.kernel.lean import LeanKernelError, LeanKernelReceipt
+    from ipfs_datasets_py.logic.common.duckdb_proof_migration import (
+        ProofCacheFamily, RawLegacyRecord, normalize_legacy_record,
+    )
+
+    fixture = FIXTURES / "verifier_v2" / "fictional_bound_proof_record.json"
+    archived_bytes = fixture.read_bytes()
+    envelope = json.loads(archived_bytes)
+    binding, = envelope["proof_bindings"]
+    context = binding["context"]
+    assert context["toolchain"]["metadata"]["verification_profile"] == "lean-kernel-verification/v2"
+    stored_file = tmp_path / "records" / (envelope["content_cid"] + ".json")
+    stored_file.parent.mkdir()
+    stored_file.write_bytes(archived_bytes)
+    cache = LegalProofCache(root=tmp_path)
+    record = cache.get_by_profile(envelope["profile"])
+    assert cache.get(envelope["content_cid"]) is record
+    assert record.to_dict() == envelope
+    with pytest.raises(LegalProofIntegrityError, match="expected reuse context"):
+        record.theorem_receipt_results(expected_context=context)
+    assert record._formal_obligation_coverage()["complete_proof_contexts"] == []
+    with pytest.raises(LeanKernelError, match="current explicit verification profile"):
+        LeanKernelReceipt.from_dict(binding["result"]["payload"]["kernel_receipt"])
+
+    wire = dict(
+        claim=IRClaim.from_dict(binding["claim"]),
+        request=BackendRequest.from_dict(binding["request"]),
+        attempt=BackendAttempt.from_dict(binding["attempt"]),
+        result=ProofResult.from_dict(binding["result"]),
+    )
+    with pytest.raises(LegalProofIntegrityError, match="canonical checked Lean v3 receipt"):
+        build_legal_proof_binding(
+            record.formalization_artifact(), envelope["theorem_receipts"][0], context=context, **wire
+        )
+    migrated = normalize_legacy_record(
+        RawLegacyRecord(record_index=1, line_number=1, payload=envelope),
+        family=ProofCacheFamily.LEGAL_IR,
+    )
+    assert migrated.status.value == "candidate"
+    assert migrated.trust_level.value == "none"
+    assert migrated.result_payload["proof_bindings"] == envelope["proof_bindings"]
+    assert stored_file.read_bytes() == archived_bytes
+
+
 @pytest.mark.parametrize("profile", [None, "lean-kernel-verification/older", False, 1, ["lean-kernel-verification/v1"], "lean-kernel-verification/v1"])
 def test_reissued_kernel_profile_cannot_launder_old_or_wrong_verifier_into_current_cache(profile: Any) -> None:
     """Reissue the outer protocol; the canonical Lean parser must still refuse.
@@ -1397,8 +1442,10 @@ def test_artifact_coverage_requires_one_proof_context(variant, projection):
     assert record.to_dict() == before
 
 
-@pytest.mark.parametrize("legacy_version", ["legacy", "bound-v2"])
-def test_old_aggregate_cache_authority_is_unusable_but_retained(legacy_version):
+@pytest.mark.parametrize(("legacy_version", "had_complete_context"), [
+    ("legacy", False), ("bound-v2", False), ("bound-v2-coherent-coverage/v1", True),
+])
+def test_old_aggregate_cache_authority_is_unusable_but_retained(legacy_version, had_complete_context):
     from ipfs_datasets_py.logic.common.duckdb_proof_migration import (
         ProofCacheFamily, RawLegacyRecord, normalize_legacy_record,
     )
@@ -1416,7 +1463,8 @@ def test_old_aggregate_cache_authority_is_unusable_but_retained(legacy_version):
     assert store.put(current, now=1.0).usable is True
     assert store.get(current.key, now=2.0) == current
     legacy_payload = current.result_payload.to_dict()
-    legacy_payload.pop("complete_proof_contexts", None)
+    if not had_complete_context:
+        legacy_payload.pop("complete_proof_contexts", None)
     old = replace(current, key=replace(current.key, backend_version=legacy_version),
                   result_payload=legacy_payload, entry_digest="")
     # Seed the exact historical row without going through new write admission.

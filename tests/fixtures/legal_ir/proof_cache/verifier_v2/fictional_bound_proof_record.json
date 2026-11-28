@@ -1,0 +1,1406 @@
+{
+  "artifact": {
+    "assumptions": [
+      {
+        "assumption_id": "assumption:fictional-premise",
+        "metadata": {},
+        "schema_version": "ir-assumption/v1",
+        "source_refs": [
+          "source:fictional-cache-provision"
+        ],
+        "statement": "An explicitly fictional premise."
+      }
+    ],
+    "compiler_config": {
+      "compiler_id": "legal-ir-formalization-adapter",
+      "compiler_version": "legal-ir-formalization-adapter/v1",
+      "config_id": "legal-ir-adapter-default",
+      "options": {
+        "adapter_schema_version": "legal-ir-formalization-adapter/v1",
+        "legacy_identity_contract": "ModalIRDocument.canonical_hash"
+      },
+      "producer_id": "legal-ir-formalization-adapter",
+      "schema_version": "formalization-compiler-config/v1",
+      "target_view_ids": [
+        "legal-ir-view/deontic/v1",
+        "legal-ir-view/frame-logic/v1"
+      ],
+      "unsupported_policy": "preserve_opaque"
+    },
+    "compiler_config_identity": {
+      "cid": "bafkreidgwsfbrxhk7mi7t7qkagty2rghty3fyoz3gohjfmqhqu36izq3wi",
+      "digest": "sha256:66b48a18dceafb11f9fe0a01a78d44c79e365c3b3b338e92b2078537e4661bb2",
+      "domain": "formalization-compiler-config",
+      "profile": "ir-canonical-identity-v1",
+      "schema_version": "formalization-compiler-config/v1"
+    },
+    "cross_view_links": [
+      {
+        "link_id": "link:fictional-cache-provision:f0001:fictional-cache-provision:frame:0",
+        "metadata": {},
+        "preserved_properties": [
+          "legal_source_identity",
+          "provenance",
+          "selected_frame"
+        ],
+        "relation": "corresponds_to",
+        "schema_version": "formal-cross-view-link/v1",
+        "source_formula_id": "fictional-cache-provision:f0001",
+        "source_ref_ids": [
+          "source:fictional-cache-provision"
+        ],
+        "span_ids": [
+          "span:fictional-cache-provision:f0001"
+        ],
+        "target_formula_id": "fictional-cache-provision:frame:0"
+      }
+    ],
+    "declaration_digest": "sha256:54d8c29db0e5d32e9b6774787e77279d26a3138cb64567d0c14430e9287b94d6",
+    "declaration_id": "fictional-cache-provision",
+    "diagnostics": {
+      "config_id": "legal-ir-adapter-default",
+      "diagnostics": [
+        {
+          "code": "ir.feature.unsupported",
+          "config_id": "legal-ir-adapter-default",
+          "diagnostic_id": "diagnostic:88e149ccd53276ea6b0b4b905e88bac0",
+          "evidence_ref_ids": [],
+          "location": {
+            "field_path": "/embedding_vector",
+            "metadata": {},
+            "source_ref_ids": [
+              "source:fictional-cache-provision"
+            ],
+            "span_ids": [
+              "span:fictional-cache-provision:document"
+            ],
+            "subject_ids": [
+              "fictional-cache-provision"
+            ]
+          },
+          "message": "/embedding_vector: source-derived embedding values are not declaration semantics (unsupported_training_feature)",
+          "metadata": {
+            "adapter_schema_version": "legal-ir-formalization-adapter/v1",
+            "construct_id": "fictional-cache-provision",
+            "content_digest": "sha256:142fb69aac596bc34cde65dc92a29b4753db80f3c0461e2a3c068298e0f64b6c",
+            "disposition": "unsupported_training_feature",
+            "field_path": "/embedding_vector",
+            "opaque_formula_id": "",
+            "view_id": ""
+          },
+          "producer_id": "legal-ir-formalization-adapter",
+          "related_diagnostic_ids": [],
+          "remediation": "",
+          "severity": "warning"
+        },
+        {
+          "code": "ir.feature.unsupported",
+          "config_id": "legal-ir-adapter-default",
+          "diagnostic_id": "diagnostic:8def87fcb7b11f7ab482a244bc3fb2cf",
+          "evidence_ref_ids": [],
+          "location": {
+            "field_path": "/embedding_model",
+            "metadata": {},
+            "source_ref_ids": [
+              "source:fictional-cache-provision"
+            ],
+            "span_ids": [
+              "span:fictional-cache-provision:document"
+            ],
+            "subject_ids": [
+              "fictional-cache-provision"
+            ]
+          },
+          "message": "/embedding_model: Legal embedding configuration is outside shared formal semantics (unsupported_training_feature)",
+          "metadata": {
+            "adapter_schema_version": "legal-ir-formalization-adapter/v1",
+            "construct_id": "fictional-cache-provision",
+            "content_digest": "sha256:ce81d423f1c1a4ee76a147811a100f644c3c4fc243787bb21e121e2c64bfe12e",
+            "disposition": "unsupported_training_feature",
+            "field_path": "/embedding_model",
+            "opaque_formula_id": "",
+            "view_id": ""
+          },
+          "producer_id": "legal-ir-formalization-adapter",
+          "related_diagnostic_ids": [],
+          "remediation": "",
+          "severity": "warning"
+        },
+        {
+          "code": "ir.feature.unsupported",
+          "config_id": "legal-ir-adapter-default",
+          "diagnostic_id": "diagnostic:8ef33b3acd5abb5b3dccf338bd27fca4",
+          "evidence_ref_ids": [],
+          "location": {
+            "field_path": "/losses",
+            "metadata": {},
+            "source_ref_ids": [
+              "source:fictional-cache-provision"
+            ],
+            "span_ids": [
+              "span:fictional-cache-provision:document"
+            ],
+            "subject_ids": [
+              "fictional-cache-provision"
+            ]
+          },
+          "message": "/losses: training losses cannot become declaration features (unsupported_runtime_result)",
+          "metadata": {
+            "adapter_schema_version": "legal-ir-formalization-adapter/v1",
+            "construct_id": "fictional-cache-provision",
+            "content_digest": "sha256:e7f43221ea92b891d8da9941f1fe93b2918df4523fc3e6c0ca3b39c711b4323a",
+            "disposition": "unsupported_runtime_result",
+            "field_path": "/losses",
+            "opaque_formula_id": "",
+            "view_id": ""
+          },
+          "producer_id": "legal-ir-formalization-adapter",
+          "related_diagnostic_ids": [],
+          "remediation": "",
+          "severity": "warning"
+        },
+        {
+          "code": "ir.feature.unsupported",
+          "config_id": "legal-ir-adapter-default",
+          "diagnostic_id": "diagnostic:baa80a3cf048437bbf23abc3e58a0d09",
+          "evidence_ref_ids": [],
+          "location": {
+            "field_path": "/parser_trace",
+            "metadata": {},
+            "source_ref_ids": [
+              "source:fictional-cache-provision"
+            ],
+            "span_ids": [
+              "span:fictional-cache-provision:document"
+            ],
+            "subject_ids": [
+              "fictional-cache-provision"
+            ]
+          },
+          "message": "/parser_trace: the Legal parser trace is not a formal view (unsupported_producer_trace)",
+          "metadata": {
+            "adapter_schema_version": "legal-ir-formalization-adapter/v1",
+            "construct_id": "fictional-cache-provision",
+            "content_digest": "sha256:22b915ea2e3a666d3538c8036e561b440714b23bc48793fd04e3abd47f3182db",
+            "disposition": "unsupported_producer_trace",
+            "field_path": "/parser_trace",
+            "opaque_formula_id": "",
+            "view_id": ""
+          },
+          "producer_id": "legal-ir-formalization-adapter",
+          "related_diagnostic_ids": [],
+          "remediation": "",
+          "severity": "warning"
+        },
+        {
+          "code": "ir.feature.unsupported",
+          "config_id": "legal-ir-adapter-default",
+          "diagnostic_id": "diagnostic:eeb6e646885c372444e0a38797846624",
+          "evidence_ref_ids": [],
+          "location": {
+            "field_path": "/normalized_text",
+            "metadata": {},
+            "source_ref_ids": [
+              "source:fictional-cache-provision"
+            ],
+            "span_ids": [
+              "span:fictional-cache-provision:document"
+            ],
+            "subject_ids": [
+              "fictional-cache-provision"
+            ]
+          },
+          "message": "/normalized_text: normalized statutory text is not a formal declaration feature (externalized_source_body)",
+          "metadata": {
+            "adapter_schema_version": "legal-ir-formalization-adapter/v1",
+            "construct_id": "fictional-cache-provision",
+            "content_digest": "sha256:bf4026cf9bb0f9126440200bccac7e4ec5ef38681c734060502938aff2542dad",
+            "disposition": "externalized_source_body",
+            "field_path": "/normalized_text",
+            "opaque_formula_id": "",
+            "view_id": ""
+          },
+          "producer_id": "legal-ir-formalization-adapter",
+          "related_diagnostic_ids": [],
+          "remediation": "",
+          "severity": "warning"
+        },
+        {
+          "code": "ir.feature.unsupported",
+          "config_id": "legal-ir-adapter-default",
+          "diagnostic_id": "diagnostic:fb6845370518e8aeea3b56163b24f491",
+          "evidence_ref_ids": [],
+          "location": {
+            "field_path": "/modal_ir/normalized_text",
+            "metadata": {},
+            "source_ref_ids": [
+              "source:fictional-cache-provision"
+            ],
+            "span_ids": [
+              "span:fictional-cache-provision:document"
+            ],
+            "subject_ids": [
+              "fictional-cache-provision"
+            ]
+          },
+          "message": "/modal_ir/normalized_text: the legacy modal document's source copy is content-bound, not embedded (externalized_source_body)",
+          "metadata": {
+            "adapter_schema_version": "legal-ir-formalization-adapter/v1",
+            "construct_id": "fictional-cache-provision",
+            "content_digest": "sha256:bf4026cf9bb0f9126440200bccac7e4ec5ef38681c734060502938aff2542dad",
+            "disposition": "externalized_source_body",
+            "field_path": "/modal_ir/normalized_text",
+            "opaque_formula_id": "",
+            "view_id": ""
+          },
+          "producer_id": "legal-ir-formalization-adapter",
+          "related_diagnostic_ids": [],
+          "remediation": "",
+          "severity": "warning"
+        },
+        {
+          "code": "ir.feature.unsupported",
+          "config_id": "legal-ir-adapter-default",
+          "diagnostic_id": "diagnostic:fd8ab9cf5e7c4983cb3bfa065ce26af9",
+          "evidence_ref_ids": [],
+          "location": {
+            "field_path": "/text",
+            "metadata": {},
+            "source_ref_ids": [
+              "source:fictional-cache-provision"
+            ],
+            "span_ids": [
+              "span:fictional-cache-provision:document"
+            ],
+            "subject_ids": [
+              "fictional-cache-provision"
+            ]
+          },
+          "message": "/text: raw statutory text is represented by the shared SourceRef (externalized_source_body)",
+          "metadata": {
+            "adapter_schema_version": "legal-ir-formalization-adapter/v1",
+            "construct_id": "fictional-cache-provision",
+            "content_digest": "sha256:bf4026cf9bb0f9126440200bccac7e4ec5ef38681c734060502938aff2542dad",
+            "disposition": "externalized_source_body",
+            "field_path": "/text",
+            "opaque_formula_id": "",
+            "view_id": ""
+          },
+          "producer_id": "legal-ir-formalization-adapter",
+          "related_diagnostic_ids": [],
+          "remediation": "",
+          "severity": "warning"
+        }
+      ],
+      "error_count": 0,
+      "evidence_set_id": "",
+      "metadata": {
+        "adapter_schema_version": "legal-ir-formalization-adapter/v1",
+        "unsupported_field_count": 7
+      },
+      "producer_id": "legal-ir-formalization-adapter",
+      "provenance_id": "provenance:fictional-cache-provision",
+      "report_id": "diagnostics:fictional-cache-provision:66b48a18dceafb11",
+      "schema_version": "ir-diagnostics/v1",
+      "valid": true,
+      "warning_count": 7
+    },
+    "domain": "legal",
+    "formulas": [
+      {
+        "assumption_ids": [],
+        "expression": {
+          "action": "publish_notice",
+          "actor": "agency",
+          "conditions": [
+            "request_received"
+          ],
+          "exceptions": [
+            "emergency"
+          ],
+          "formula_id": "fictional-cache-provision:f0001",
+          "legal_modal_ir": {
+            "conditions": [
+              "request_received"
+            ],
+            "exceptions": [
+              "emergency"
+            ],
+            "formula_id": "fictional-cache-provision:f0001",
+            "metadata": {
+              "legal_scope": "agency_records"
+            },
+            "operator": {
+              "family": "deontic",
+              "label": "obligation",
+              "symbol": "O",
+              "system": "D"
+            },
+            "predicate": {
+              "arguments": [
+                "agency",
+                "notice"
+              ],
+              "name": "publish_notice",
+              "role": "clause"
+            },
+            "provenance": {
+              "citation": "FICTIONAL Test Act 1",
+              "end_char": 56,
+              "source_id": "fictional-cache-provision",
+              "start_char": 0
+            }
+          },
+          "norm_type": "obligation",
+          "object": "notice",
+          "operator": "O",
+          "polarity": "positive",
+          "provenance_ids": [
+            "source:fictional-cache-provision",
+            "span:fictional-cache-provision:f0001"
+          ]
+        },
+        "formula_id": "fictional-cache-provision:f0001",
+        "input_node_ids": [
+          "fictional-cache-provision"
+        ],
+        "metadata": {
+          "legacy_formula_id": "fictional-cache-provision:f0001",
+          "legacy_logic_family": "deontic",
+          "legal_contract_aliases": [
+            "deontic",
+            "deontic.ir",
+            "deontic.ir",
+            "deontic_ir",
+            "deontic_norms"
+          ],
+          "preferred_view_id": "legal-ir-view/deontic/v1"
+        },
+        "opaque": false,
+        "schema_version": "formal-formula/v1",
+        "source_ref_ids": [
+          "source:fictional-cache-provision"
+        ],
+        "span_ids": [
+          "span:fictional-cache-provision:f0001"
+        ],
+        "symbol_ids": [
+          "fictional-cache-provision:f0001:argument:0",
+          "fictional-cache-provision:f0001:argument:1",
+          "fictional-cache-provision:f0001:operator",
+          "fictional-cache-provision:f0001:predicate"
+        ],
+        "view_id": "legal-ir-view/deontic/v1"
+      },
+      {
+        "assumption_ids": [],
+        "expression": {
+          "formula_id": "fictional-cache-provision:frame:0",
+          "frame_id": "administrative_notice",
+          "legal_frame_logic": {
+            "graph_id": "legal-graph-1",
+            "metadata": {
+              "legal_relation_scope": "section_1"
+            },
+            "neo4j_node_labels": [],
+            "neo4j_relationship_types": [],
+            "ontology_name": "modal_flogic_ir",
+            "selected_frame": "administrative_notice",
+            "triples": [
+              {
+                "object": "notice",
+                "predicate": "must_publish",
+                "subject": "agency"
+              }
+            ]
+          },
+          "object": "notice",
+          "predicate": "must_publish",
+          "provenance_ids": [
+            "source:fictional-cache-provision",
+            "span:fictional-cache-provision:document"
+          ],
+          "role": "must_publish",
+          "subject": "agency"
+        },
+        "formula_id": "fictional-cache-provision:frame:0",
+        "input_node_ids": [
+          "fictional-cache-provision"
+        ],
+        "metadata": {
+          "legal_contract_aliases": [
+            "frame_logic",
+            "modal.frame_logic",
+            "modal.frame_logic",
+            "modal_frame_logic",
+            "frame-logic"
+          ],
+          "preferred_view_id": "legal-ir-view/frame-logic/v1"
+        },
+        "opaque": false,
+        "schema_version": "formal-formula/v1",
+        "source_ref_ids": [
+          "source:fictional-cache-provision"
+        ],
+        "span_ids": [
+          "span:fictional-cache-provision:document"
+        ],
+        "symbol_ids": [],
+        "view_id": "legal-ir-view/frame-logic/v1"
+      }
+    ],
+    "metadata": {
+      "adapter_schema_version": "legal-ir-formalization-adapter/v1",
+      "legacy_modal_ir_canonical_hash": "54d8c29db0e5d32e9b6774787e77279d26a3138cb64567d0c14430e9287b94d6",
+      "legacy_output_identity": "54d8c29db0e5d32e9b6774787e77279d26a3138cb64567d0c14430e9287b94d6",
+      "view_aliases": {
+        "legal-ir-view/cec/v1": [
+          "cec",
+          "CEC.native",
+          "CEC.native",
+          "cec_native",
+          "event_calculus",
+          "dcec"
+        ],
+        "legal-ir-view/decompiler/v1": [
+          "decompiler",
+          "modal.ir_decompiler",
+          "modal.ir_decompiler",
+          "modal.decompiler",
+          "ir_decompiler",
+          "round_trip"
+        ],
+        "legal-ir-view/deontic/v1": [
+          "deontic",
+          "deontic.ir",
+          "deontic.ir",
+          "deontic_ir",
+          "deontic_norms"
+        ],
+        "legal-ir-view/external-provers/v1": [
+          "external_provers",
+          "external_provers.router",
+          "external_provers.router",
+          "external_provers_router",
+          "prover_router",
+          "prover"
+        ],
+        "legal-ir-view/frame-logic/v1": [
+          "frame_logic",
+          "modal.frame_logic",
+          "modal.frame_logic",
+          "modal_frame_logic",
+          "frame-logic"
+        ],
+        "legal-ir-view/knowledge-graphs/v1": [
+          "knowledge_graphs",
+          "knowledge_graphs.neo4j_compat",
+          "knowledge_graphs.neo4j_compat",
+          "knowledge_graphs_neo4j_compat",
+          "knowledge_graph",
+          "neo4j_compat"
+        ],
+        "legal-ir-view/tdfol/v1": [
+          "tdfol",
+          "TDFOL.prover",
+          "TDFOL.prover",
+          "tdfol_prover",
+          "TDFOL",
+          "temporal"
+        ]
+      }
+    },
+    "proof_obligations": [
+      {
+        "assumption_ids": [
+          "assumption:fictional-premise"
+        ],
+        "logic_family": "lean4",
+        "metadata": {
+          "fixture_only": true
+        },
+        "obligation_id": "obligation:fictional-cache",
+        "schema_version": "ir-proof-obligation/v1",
+        "source_refs": [
+          "source:fictional-cache-provision"
+        ],
+        "statement": "True"
+      }
+    ],
+    "sample_id": "fictional-cache-provision",
+    "schema_version": "formalization-artifact/v1",
+    "source_map": {
+      "bindings": [
+        {
+          "binding_id": "binding:legal-formula:f83c4c739efa9020cfe09bde",
+          "config_id": "legal-ir-adapter-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {
+            "legacy_formula_id": "fictional-cache-provision:f0001"
+          },
+          "parent_subject_ids": [
+            "fictional-cache-provision"
+          ],
+          "producer_id": "legal-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:fictional-cache-provision"
+          ],
+          "span_ids": [
+            "span:fictional-cache-provision:f0001"
+          ],
+          "subject_id": "fictional-cache-provision:f0001"
+        },
+        {
+          "binding_id": "binding:legal-frame:614ec379d7073bc20b918192",
+          "config_id": "legal-ir-adapter-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "fictional-cache-provision"
+          ],
+          "producer_id": "legal-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:fictional-cache-provision"
+          ],
+          "span_ids": [
+            "span:fictional-cache-provision:document"
+          ],
+          "subject_id": "fictional-cache-provision:frame:0"
+        },
+        {
+          "binding_id": "binding:legal-source:9250a00aeb52a727c214dd6e",
+          "config_id": "",
+          "derived": false,
+          "evidence_ref_ids": [],
+          "metadata": {
+            "legacy_declaration_id": "fictional-cache-provision",
+            "legacy_sample_id": "fictional-cache-provision"
+          },
+          "parent_subject_ids": [],
+          "producer_id": "",
+          "source_ref_ids": [
+            "source:fictional-cache-provision"
+          ],
+          "span_ids": [
+            "span:fictional-cache-provision:document"
+          ],
+          "subject_id": "fictional-cache-provision"
+        },
+        {
+          "binding_id": "binding:legal-symbol:220668a919ee2de2cd658664",
+          "config_id": "legal-ir-adapter-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "fictional-cache-provision"
+          ],
+          "producer_id": "legal-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:fictional-cache-provision"
+          ],
+          "span_ids": [
+            "span:fictional-cache-provision:f0001"
+          ],
+          "subject_id": "fictional-cache-provision:f0001:argument:1"
+        },
+        {
+          "binding_id": "binding:legal-symbol:521ef3760ebaf5b283322528",
+          "config_id": "legal-ir-adapter-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "fictional-cache-provision"
+          ],
+          "producer_id": "legal-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:fictional-cache-provision"
+          ],
+          "span_ids": [
+            "span:fictional-cache-provision:f0001"
+          ],
+          "subject_id": "fictional-cache-provision:f0001:operator"
+        },
+        {
+          "binding_id": "binding:legal-symbol:624f9b161ea656c69143ecae",
+          "config_id": "legal-ir-adapter-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "fictional-cache-provision"
+          ],
+          "producer_id": "legal-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:fictional-cache-provision"
+          ],
+          "span_ids": [
+            "span:fictional-cache-provision:f0001"
+          ],
+          "subject_id": "fictional-cache-provision:f0001:predicate"
+        },
+        {
+          "binding_id": "binding:legal-symbol:64561534a50a099c125c6a40",
+          "config_id": "legal-ir-adapter-default",
+          "derived": true,
+          "evidence_ref_ids": [],
+          "metadata": {},
+          "parent_subject_ids": [
+            "fictional-cache-provision"
+          ],
+          "producer_id": "legal-ir-formalization-adapter",
+          "source_ref_ids": [
+            "source:fictional-cache-provision"
+          ],
+          "span_ids": [
+            "span:fictional-cache-provision:f0001"
+          ],
+          "subject_id": "fictional-cache-provision:f0001:argument:0"
+        }
+      ],
+      "configs": [
+        {
+          "config_id": "legal-ir-adapter-default",
+          "content_cid": "",
+          "content_sha256": "66b48a18dceafb11f9fe0a01a78d44c79e365c3b3b338e92b2078537e4661bb2",
+          "metadata": {},
+          "schema_id": "formalization-compiler-config/v1"
+        }
+      ],
+      "metadata": {
+        "adapter_schema_version": "legal-ir-formalization-adapter/v1",
+        "legacy_output_identity": "54d8c29db0e5d32e9b6774787e77279d26a3138cb64567d0c14430e9287b94d6"
+      },
+      "producers": [
+        {
+          "implementation_sha256": "",
+          "metadata": {
+            "compiler_id": "legal-ir-formalization-adapter"
+          },
+          "model_id": "",
+          "name": "Legal IR shared-formalization adapter",
+          "producer_id": "legal-ir-formalization-adapter",
+          "repository_revision": "",
+          "version": "legal-ir-formalization-adapter/v1"
+        }
+      ],
+      "provenance_id": "provenance:fictional-cache-provision",
+      "schema_version": "ir-provenance/v1",
+      "sources": [
+        {
+          "container_sha256": "",
+          "container_uri": "",
+          "content_cid": "",
+          "content_sha256": "9155b1af9714a8d435fe891493852bf389f94e4ccc012ad717b3894445228509",
+          "license_expression": "",
+          "metadata": {
+            "citation": "FICTIONAL Test Act 1",
+            "legal_source": "us_code",
+            "normalized_text_sha256": "9155b1af9714a8d435fe891493852bf389f94e4ccc012ad717b3894445228509"
+          },
+          "ref_id": "source:fictional-cache-provision",
+          "review_status": "trusted_fixture",
+          "source_id": "fictional-cache-provision",
+          "source_revision": "modal-ir-v1",
+          "source_uri": "urn:legal-ir:us-code:5:1:fictional-cache-provision"
+        }
+      ],
+      "spans": [
+        {
+          "end_byte": 56,
+          "end_char": 56,
+          "end_column": null,
+          "end_line": null,
+          "metadata": {
+            "scope": "legal_document"
+          },
+          "source_ref_id": "source:fictional-cache-provision",
+          "span_id": "span:fictional-cache-provision:document",
+          "start_byte": 0,
+          "start_char": 0,
+          "start_column": null,
+          "start_line": null
+        },
+        {
+          "end_byte": 56,
+          "end_char": 56,
+          "end_column": null,
+          "end_line": null,
+          "metadata": {
+            "citation": "FICTIONAL Test Act 1",
+            "coordinate_alignment": "exact",
+            "legacy_formula_id": "fictional-cache-provision:f0001",
+            "normalized_end_char": 56,
+            "normalized_start_char": 0
+          },
+          "source_ref_id": "source:fictional-cache-provision",
+          "span_id": "span:fictional-cache-provision:f0001",
+          "start_byte": 0,
+          "start_char": 0,
+          "start_column": null,
+          "start_line": null
+        }
+      ]
+    },
+    "symbol_table": {
+      "metadata": {
+        "domain": "legal"
+      },
+      "schema_version": "formal-symbol-table/v1",
+      "symbols": [
+        {
+          "kind": "constant",
+          "metadata": {
+            "argument_index": 0
+          },
+          "name": "agency",
+          "sort": "legal_argument",
+          "source_ref_ids": [
+            "source:fictional-cache-provision"
+          ],
+          "span_ids": [
+            "span:fictional-cache-provision:f0001"
+          ],
+          "symbol_id": "fictional-cache-provision:f0001:argument:0"
+        },
+        {
+          "kind": "constant",
+          "metadata": {
+            "argument_index": 1
+          },
+          "name": "notice",
+          "sort": "legal_argument",
+          "source_ref_ids": [
+            "source:fictional-cache-provision"
+          ],
+          "span_ids": [
+            "span:fictional-cache-provision:f0001"
+          ],
+          "symbol_id": "fictional-cache-provision:f0001:argument:1"
+        },
+        {
+          "kind": "operator",
+          "metadata": {
+            "legal_operator": {
+              "family": "deontic",
+              "label": "obligation",
+              "symbol": "O",
+              "system": "D"
+            }
+          },
+          "name": "O",
+          "sort": "deontic",
+          "source_ref_ids": [
+            "source:fictional-cache-provision"
+          ],
+          "span_ids": [
+            "span:fictional-cache-provision:f0001"
+          ],
+          "symbol_id": "fictional-cache-provision:f0001:operator"
+        },
+        {
+          "kind": "predicate",
+          "metadata": {
+            "legal_predicate": {
+              "arguments": [
+                "agency",
+                "notice"
+              ],
+              "name": "publish_notice",
+              "role": "clause"
+            }
+          },
+          "name": "publish_notice",
+          "sort": "clause",
+          "source_ref_ids": [
+            "source:fictional-cache-provision"
+          ],
+          "span_ids": [
+            "span:fictional-cache-provision:f0001"
+          ],
+          "symbol_id": "fictional-cache-provision:f0001:predicate"
+        }
+      ],
+      "table_id": "symbols:fictional-cache-provision"
+    },
+    "view_registry": {
+      "registry_id": "legal-ir-formalization-views",
+      "schema_version": "formalization-view-registry/v1",
+      "views": [
+        {
+          "capabilities": [
+            "event_identity",
+            "fluent_identity",
+            "time_anchor",
+            "transition_direction"
+          ],
+          "description": "Event-calculus events, fluents, and lifecycle transitions.",
+          "formula_schema": "formal-formula/v1",
+          "logic_family": "event_calculus",
+          "metadata": {
+            "aliases": [
+              "CEC.native",
+              "cec_native",
+              "event_calculus",
+              "dcec"
+            ],
+            "canonical_legal_view": "cec",
+            "legal_contract_schema": "legal-ir-view-contract-v1",
+            "preservation_rules": [
+              "event_identity",
+              "fluent_identity",
+              "transition_direction",
+              "time_anchor"
+            ],
+            "target_component": "CEC.native"
+          },
+          "schema_version": "formalization-view/v1",
+          "view_id": "legal-ir-view/cec/v1"
+        },
+        {
+          "capabilities": [
+            "argument_roles",
+            "condition_scope",
+            "exception_scope",
+            "formula_identity",
+            "operator_force",
+            "predicate_signature"
+          ],
+          "description": "Deterministic structural round trip from typed IR without copied source text.",
+          "formula_schema": "formal-formula/v1",
+          "logic_family": "structural_round_trip",
+          "metadata": {
+            "aliases": [
+              "modal.ir_decompiler",
+              "modal.decompiler",
+              "ir_decompiler",
+              "round_trip"
+            ],
+            "canonical_legal_view": "decompiler",
+            "legal_contract_schema": "legal-ir-view-contract-v1",
+            "preservation_rules": [
+              "formula_identity",
+              "operator_force",
+              "predicate_signature",
+              "argument_roles",
+              "condition_scope",
+              "exception_scope"
+            ],
+            "target_component": "modal.ir_decompiler"
+          },
+          "schema_version": "formalization-view/v1",
+          "view_id": "legal-ir-view/decompiler/v1"
+        },
+        {
+          "capabilities": [
+            "condition_scope",
+            "exception_precedence",
+            "operator_force",
+            "prohibition_polarity"
+          ],
+          "description": "Normative force, polarity, scope, conditions, and defeasible exceptions.",
+          "formula_schema": "formal-formula/v1",
+          "logic_family": "deontic",
+          "metadata": {
+            "aliases": [
+              "deontic.ir",
+              "deontic_ir",
+              "deontic_norms"
+            ],
+            "canonical_legal_view": "deontic",
+            "legal_contract_schema": "legal-ir-view-contract-v1",
+            "preservation_rules": [
+              "operator_force",
+              "prohibition_polarity",
+              "condition_scope",
+              "exception_precedence"
+            ],
+            "target_component": "deontic.ir"
+          },
+          "schema_version": "formalization-view/v1",
+          "view_id": "legal-ir-view/deontic/v1"
+        },
+        {
+          "capabilities": [
+            "input_formula_id",
+            "modal_operator",
+            "route_status",
+            "trust_boundary",
+            "type_encoding"
+          ],
+          "description": "Bounded prover route, backend result, and reconstruction receipt.",
+          "formula_schema": "formal-formula/v1",
+          "logic_family": "proof_translation",
+          "metadata": {
+            "aliases": [
+              "external_provers.router",
+              "external_provers_router",
+              "prover_router",
+              "prover"
+            ],
+            "canonical_legal_view": "external_provers",
+            "legal_contract_schema": "legal-ir-view-contract-v1",
+            "preservation_rules": [
+              "input_formula_id",
+              "modal_operator",
+              "type_encoding",
+              "route_status",
+              "trust_boundary"
+            ],
+            "target_component": "external_provers.router"
+          },
+          "schema_version": "formalization-view/v1",
+          "view_id": "legal-ir-view/external-provers/v1"
+        },
+        {
+          "capabilities": [
+            "exception_scope",
+            "modal_operator",
+            "relation_direction",
+            "typed_role"
+          ],
+          "description": "Typed frame roles and relations shared by modal and graph views.",
+          "formula_schema": "formal-formula/v1",
+          "logic_family": "frame_logic",
+          "metadata": {
+            "aliases": [
+              "modal.frame_logic",
+              "modal_frame_logic",
+              "frame-logic"
+            ],
+            "canonical_legal_view": "frame_logic",
+            "legal_contract_schema": "legal-ir-view-contract-v1",
+            "preservation_rules": [
+              "typed_role",
+              "relation_direction",
+              "modal_operator",
+              "exception_scope"
+            ],
+            "target_component": "modal.frame_logic"
+          },
+          "schema_version": "formalization-view/v1",
+          "view_id": "legal-ir-view/frame-logic/v1"
+        },
+        {
+          "capabilities": [
+            "edge_direction",
+            "edge_type",
+            "endpoint_identity",
+            "provenance_identity"
+          ],
+          "description": "Neo4j-compatible typed nodes and directed relationships.",
+          "formula_schema": "formal-formula/v1",
+          "logic_family": "graph_projection",
+          "metadata": {
+            "aliases": [
+              "knowledge_graphs.neo4j_compat",
+              "knowledge_graphs_neo4j_compat",
+              "knowledge_graph",
+              "neo4j_compat"
+            ],
+            "canonical_legal_view": "knowledge_graphs",
+            "legal_contract_schema": "legal-ir-view-contract-v1",
+            "preservation_rules": [
+              "endpoint_identity",
+              "edge_direction",
+              "edge_type",
+              "provenance_identity"
+            ],
+            "target_component": "knowledge_graphs.neo4j_compat"
+          },
+          "schema_version": "formalization-view/v1",
+          "view_id": "legal-ir-view/knowledge-graphs/v1"
+        },
+        {
+          "capabilities": [
+            "deontic_force",
+            "event_order",
+            "quantifier_scope",
+            "temporal_anchor"
+          ],
+          "description": "Typed first-order temporal formula and explicit time anchors.",
+          "formula_schema": "formal-formula/v1",
+          "logic_family": "temporal_first_order",
+          "metadata": {
+            "aliases": [
+              "TDFOL.prover",
+              "tdfol_prover",
+              "TDFOL",
+              "temporal"
+            ],
+            "canonical_legal_view": "tdfol",
+            "legal_contract_schema": "legal-ir-view-contract-v1",
+            "preservation_rules": [
+              "quantifier_scope",
+              "temporal_anchor",
+              "event_order",
+              "deontic_force"
+            ],
+            "target_component": "TDFOL.prover"
+          },
+          "schema_version": "formalization-view/v1",
+          "view_id": "legal-ir-view/tdfol/v1"
+        }
+      ]
+    },
+    "view_registry_identity": {
+      "cid": "bafkreictwwxeqfbfkp7dojs2p5wgb3i7lva7h3r6ivs6ovgh2s3ckb47ei",
+      "digest": "sha256:53b5ae48142553fe37265a7f6c60ed1f5d41f3ee3e4565e754c7d4b625079f22",
+      "domain": "formalization-view-registry",
+      "profile": "ir-canonical-identity-v1",
+      "schema_version": "formalization-view-registry/v1"
+    }
+  },
+  "artifact_cid": "bafkreih5ohhrcysitw3kcsgsun7m2k6ceex7cu2hbpivm7n6n3k74dpo74",
+  "artifact_digest": "sha256:fd71cf1162489db6a148d2a37ecd2bc2212ff153470bd1567dbe6ed5fe0deeff",
+  "content_cid": "bafkreideo5vgraxorenaibhhq3po6vzpduxdc4n77ae3on6cgg7rdvmuwi",
+  "content_digest": "sha256:64776a6882ee891a0404e786deef572f1d2e3171bff809b737c231bf11d594b2",
+  "jurisdiction": "fictional",
+  "profile": "fictional-bound",
+  "proof_bindings": [
+    {
+      "artifact_digest": "sha256:fd71cf1162489db6a148d2a37ecd2bc2212ff153470bd1567dbe6ed5fe0deeff",
+      "attempt": {
+        "artifact_digests": [],
+        "attempt_id": "attempt:fictional-cache",
+        "backend_id": "lean",
+        "backend_version": "fictional",
+        "bounds": {
+          "max_memory_bytes": 1000000,
+          "max_output_bytes": 4096,
+          "max_steps": 1000,
+          "timeout_ms": 1000
+        },
+        "diagnostics": [],
+        "output_digest": "5956e24dc0c1e207dabc1c6ea472cfaeeaf43fb98ced8c91347e87208dd551af",
+        "request_digest": "493a1ace79ace52d9b05811908fd7357610a1f290948bce0a70a141370a71546",
+        "schema_version": "proof-backend-attempt/v1",
+        "status": "succeeded",
+        "usage": {
+          "elapsed_ms": 1,
+          "output_bytes": 40,
+          "peak_memory_bytes": 1024,
+          "steps": 1
+        }
+      },
+      "claim": {
+        "assumptions": [
+          {
+            "assumption_id": "assumption:fictional-premise",
+            "metadata": {},
+            "schema_version": "ir-assumption/v1",
+            "source_refs": [
+              "source:fictional-cache-provision"
+            ],
+            "statement": "An explicitly fictional premise."
+          }
+        ],
+        "claim_id": "claim:fictional-cache",
+        "declaration_id": "fictional-cache-provision",
+        "domain": "legal",
+        "metadata": {
+          "artifact_digest": "sha256:fd71cf1162489db6a148d2a37ecd2bc2212ff153470bd1567dbe6ed5fe0deeff",
+          "proof_context_digest": "6e7621f53a6ae0824471749bcfed4a62e6cf3e1b8e9bfaedfb820de47aed3e47",
+          "source_digest": "sha256:54d8c29db0e5d32e9b6774787e77279d26a3138cb64567d0c14430e9287b94d6"
+        },
+        "obligations": [
+          {
+            "assumption_ids": [
+              "assumption:fictional-premise"
+            ],
+            "logic_family": "lean4",
+            "metadata": {
+              "fixture_only": true
+            },
+            "obligation_id": "obligation:fictional-cache",
+            "schema_version": "ir-proof-obligation/v1",
+            "source_refs": [
+              "source:fictional-cache-provision"
+            ],
+            "statement": "True"
+          }
+        ],
+        "schema_version": "ir-claim/v1",
+        "source_refs": [
+          "source:fictional-cache-provision"
+        ],
+        "statement": "True"
+      },
+      "context": {
+        "axiom_policy_digest": "2b85825f9ddb6d40b55c22df20c9fcf9da9056c3bd89db235c15bfbb550d61e2",
+        "backend_id": "lean",
+        "backend_version": "fictional",
+        "dependency_versions": {
+          "fictional-definition": "aec51d835deabda7aa70ad07f0e55b41d042c8fa2634cfb52d19f4862c2f1f4b"
+        },
+        "expected_declaration": "cache_fixture",
+        "expected_proposition": "True",
+        "interpretation_digest": "365b499344b7cd85c7667cc6d1a63e4db5aa50ff2119d63026589f3a75f97bb1",
+        "jurisdiction": "fictional",
+        "schema_version": "legal-proof-reuse-context/v1",
+        "toolchain": {
+          "command_template": "",
+          "executable": "/fictional/lean",
+          "kernel_id": "lean",
+          "metadata": {
+            "approved_axioms": [],
+            "approved_imports": [
+              "Init",
+              "Init.Classical",
+              "Init.Prelude"
+            ],
+            "axiom_policy_digest": "2b85825f9ddb6d40b55c22df20c9fcf9da9056c3bd89db235c15bfbb550d61e2",
+            "native_identity_digest": "dff3ee779c57205c1a87a7aafbb30d7705cb4b1785d41d033b8252b77961fc3a",
+            "native_library_scope": "installed runtime and approved imports are trusted; transitive libraries are not independently authenticated",
+            "verification_profile": "lean-kernel-verification/v2"
+          },
+          "module_id": "",
+          "plane": "native",
+          "toolchain_id": "fictional:lean-v3",
+          "version": "fictional"
+        }
+      },
+      "receipt_digest": "e6a502ddd717f48fe7b7ff335365a062706d3c754ac632a2cc65f595015bde31",
+      "request": {
+        "assumption_ids": [
+          "assumption:fictional-premise"
+        ],
+        "bounds": {
+          "max_memory_bytes": 1000000,
+          "max_output_bytes": 4096,
+          "max_steps": 1000,
+          "timeout_ms": 1000
+        },
+        "claim_digest": "472940d2942c3059027a1c8e43f7826d29b45c8d1a0d1412eeff256516c6939d",
+        "claim_id": "claim:fictional-cache",
+        "declaration_id": "fictional-cache-provision",
+        "logic_family": "lean4",
+        "obligation_digest": "73bc39072380c55ebd0b4b7cd06d5b49eae72d262dd6e847db2fa6684653ce83",
+        "obligation_id": "obligation:fictional-cache",
+        "payload": {
+          "expected_declaration": "cache_fixture",
+          "expected_proposition": "True",
+          "lean": "theorem cache_fixture : True := by trivial\n",
+          "legal_proof_context": {
+            "axiom_policy_digest": "2b85825f9ddb6d40b55c22df20c9fcf9da9056c3bd89db235c15bfbb550d61e2",
+            "backend_id": "lean",
+            "backend_version": "fictional",
+            "dependency_versions": {
+              "fictional-definition": "aec51d835deabda7aa70ad07f0e55b41d042c8fa2634cfb52d19f4862c2f1f4b"
+            },
+            "expected_declaration": "cache_fixture",
+            "expected_proposition": "True",
+            "interpretation_digest": "365b499344b7cd85c7667cc6d1a63e4db5aa50ff2119d63026589f3a75f97bb1",
+            "jurisdiction": "fictional",
+            "schema_version": "legal-proof-reuse-context/v1",
+            "toolchain": {
+              "command_template": "",
+              "executable": "/fictional/lean",
+              "kernel_id": "lean",
+              "metadata": {
+                "approved_axioms": [],
+                "approved_imports": [
+                  "Init",
+                  "Init.Classical",
+                  "Init.Prelude"
+                ],
+                "axiom_policy_digest": "2b85825f9ddb6d40b55c22df20c9fcf9da9056c3bd89db235c15bfbb550d61e2",
+                "native_identity_digest": "dff3ee779c57205c1a87a7aafbb30d7705cb4b1785d41d033b8252b77961fc3a",
+                "native_library_scope": "installed runtime and approved imports are trusted; transitive libraries are not independently authenticated",
+                "verification_profile": "lean-kernel-verification/v2"
+              },
+              "module_id": "",
+              "plane": "native",
+              "toolchain_id": "fictional:lean-v3",
+              "version": "fictional"
+            }
+          }
+        },
+        "query_kind": "theorem_proof",
+        "request_id": "request:fictional-cache",
+        "requested_backend_id": "lean",
+        "schema_version": "proof-backend-request/v1"
+      },
+      "result": {
+        "assumption_ids": [
+          "assumption:fictional-premise"
+        ],
+        "attempt_digest": "a877471822b0499d31c88053f60ca2473bc09401f2588a5eaa79613ede004392",
+        "authority": {
+          "configuration_digest": "6e7621f53a6ae0824471749bcfed4a62e6cf3e1b8e9bfaedfb820de47aed3e47",
+          "evidence_digests": [],
+          "issuer": "fictional-test",
+          "kind": "theorem_proof",
+          "method": "authored-fixture-only",
+          "schema_version": "result-authority/v1",
+          "scope_digest": "493a1ace79ace52d9b05811908fd7357610a1f290948bce0a70a141370a71546"
+        },
+        "backend_id": "lean",
+        "backend_version": "fictional",
+        "bounds": {
+          "max_memory_bytes": 1000000,
+          "max_output_bytes": 4096,
+          "max_steps": 1000,
+          "timeout_ms": 1000
+        },
+        "claim_digest": "472940d2942c3059027a1c8e43f7826d29b45c8d1a0d1412eeff256516c6939d",
+        "declaration_id": "fictional-cache-provision",
+        "diagnostics": [],
+        "obligation_digest": "73bc39072380c55ebd0b4b7cd06d5b49eae72d262dd6e847db2fa6684653ce83",
+        "obligation_id": "obligation:fictional-cache",
+        "output_digest": "5956e24dc0c1e207dabc1c6ea472cfaeeaf43fb98ced8c91347e87208dd551af",
+        "payload": {
+          "fixture_only": true,
+          "kernel_receipt": {
+            "accepted": true,
+            "approved_axioms": [],
+            "approved_imports": [
+              "Init",
+              "Init.Classical",
+              "Init.Prelude"
+            ],
+            "authority_disposition": "reject",
+            "axiom_policy_digest": "2b85825f9ddb6d40b55c22df20c9fcf9da9056c3bd89db235c15bfbb550d61e2",
+            "axiom_report": {
+              "axioms": [],
+              "contains_sorry_ax": false,
+              "declaration": "_ipfs_expected_obligation_581d9fbba55e2790a32f5023356ae734c050bf53567fad191f441c30afa0023f",
+              "report_text": "'_ipfs_expected_obligation_581d9fbba55e2790a32f5023356ae734c050bf53567fad191f441c30afa0023f' does not depend on any axioms",
+              "schema_version": "lean-axiom-report/v2",
+              "source_column": 0,
+              "source_line": 7,
+              "source_path": "Main.lean"
+            },
+            "compiled_source_digest": "6ab338b607ca1c809eb8af999c8ac504b701a384e7977aa3139216f97d61f49b",
+            "diagnostics": [],
+            "expected_obligation_declaration": "_ipfs_expected_obligation_581d9fbba55e2790a32f5023356ae734c050bf53567fad191f441c30afa0023f",
+            "expected_proposition": "True",
+            "expected_proposition_checked": true,
+            "expected_proposition_digest": "d25de1569786f1fa447c9c1932711f6fa9afe315ea25913ed836848e7f6a79cf",
+            "generated_proof": "theorem cache_fixture : True := by trivial",
+            "generated_proof_digest": "55fc6c627d7c116411ee5b49d4c7f4a229cb36160ced6d03e55b5da0b4f66aac",
+            "imports": [],
+            "native_identity": {
+              "actual_version": "fictional",
+              "executable_bytes": 1,
+              "executable_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+              "executable_stat_after": {
+                "ctime_ns": 1,
+                "device": 1,
+                "inode": 1,
+                "mtime_ns": 1,
+                "size": 1
+              },
+              "executable_stat_before": {
+                "ctime_ns": 1,
+                "device": 1,
+                "inode": 1,
+                "mtime_ns": 1,
+                "size": 1
+              },
+              "library_scope": "installed runtime and approved imports are trusted; transitive libraries are not independently authenticated",
+              "observation_kind": "trusted_fictional_identity_fixture",
+              "resolved_executable": "/fictional/lean",
+              "schema_version": "lean-native-identity/v1",
+              "version_command": [
+                "/fictional/lean",
+                "--version"
+              ],
+              "version_returncode": 0,
+              "version_stderr": "",
+              "version_stdout": "Lean (version fictional)"
+            },
+            "native_identity_checked_after_compile": true,
+            "plane": "native",
+            "receipt_id": "lean-kernel-receipt:7e64df08af3879f050a59f2ad441d20c2ce7f8910c036d589a9e9c0b60323215",
+            "request_digest": "493a1ace79ace52d9b05811908fd7357610a1f290948bce0a70a141370a71546",
+            "schema_version": "lean-kernel-receipt/v3",
+            "source_binding": {
+              "request_digest": "493a1ace79ace52d9b05811908fd7357610a1f290948bce0a70a141370a71546",
+              "schema_version": "lean-source-binding/v1",
+              "source_digest": "63b1259e6558b07fe99e0ea30619c03e371a6ab003a542b9ff05707536b1f257",
+              "source_format": "lean4"
+            },
+            "source_tree": {
+              "files": {
+                "Main.lean": "63b1259e6558b07fe99e0ea30619c03e371a6ab003a542b9ff05707536b1f257"
+              },
+              "primary_path": "Main.lean",
+              "root_digest": "202684053c901133c356cdf41523fd2f957afe9d22cd7df4319305bb28929a91",
+              "tree_id": "source-tree:202684053c901133c356cdf4"
+            },
+            "submitted_source": "theorem cache_fixture : True := by trivial\n",
+            "theorem_digest": "63b1259e6558b07fe99e0ea30619c03e371a6ab003a542b9ff05707536b1f257",
+            "theorem_name": "cache_fixture",
+            "toolchain": {
+              "command_template": "",
+              "executable": "/fictional/lean",
+              "kernel_id": "lean",
+              "metadata": {
+                "approved_axioms": [],
+                "approved_imports": [
+                  "Init",
+                  "Init.Classical",
+                  "Init.Prelude"
+                ],
+                "axiom_policy_digest": "2b85825f9ddb6d40b55c22df20c9fcf9da9056c3bd89db235c15bfbb550d61e2",
+                "native_identity_digest": "dff3ee779c57205c1a87a7aafbb30d7705cb4b1785d41d033b8252b77961fc3a",
+                "native_library_scope": "installed runtime and approved imports are trusted; transitive libraries are not independently authenticated",
+                "verification_profile": "lean-kernel-verification/v2"
+              },
+              "module_id": "",
+              "plane": "native",
+              "toolchain_id": "fictional:lean-v3",
+              "version": "fictional"
+            },
+            "translation": null
+          }
+        },
+        "request_digest": "493a1ace79ace52d9b05811908fd7357610a1f290948bce0a70a141370a71546",
+        "result_id": "result:fictional-cache",
+        "result_type": "proof",
+        "schema_version": "bounded-result/v1",
+        "status": "proved",
+        "usage": {
+          "elapsed_ms": 1,
+          "output_bytes": 40,
+          "peak_memory_bytes": 1024,
+          "steps": 1
+        }
+      },
+      "schema_version": "legal-proof-binding/v1",
+      "source_digest": "sha256:54d8c29db0e5d32e9b6774787e77279d26a3138cb64567d0c14430e9287b94d6"
+    }
+  ],
+  "schema_version": "legal-proof-record/v2",
+  "source_digest": "sha256:54d8c29db0e5d32e9b6774787e77279d26a3138cb64567d0c14430e9287b94d6",
+  "source_id": "fictional-cache-provision",
+  "theorem_receipts": [
+    {
+      "assumption_ids": [
+        "assumption:fictional-premise"
+      ],
+      "attempt_digest": "a877471822b0499d31c88053f60ca2473bc09401f2588a5eaa79613ede004392",
+      "backend_id": "lean",
+      "backend_version": "fictional",
+      "bounds_digest": "e9d2c08c77fc6831a4a1ec26d10dd6559527cf1a7466d6ba69e7ccd52c93503f",
+      "claim_digest": "472940d2942c3059027a1c8e43f7826d29b45c8d1a0d1412eeff256516c6939d",
+      "claim_id": "claim:fictional-cache",
+      "declaration_id": "fictional-cache-provision",
+      "obligation_digest": "73bc39072380c55ebd0b4b7cd06d5b49eae72d262dd6e847db2fa6684653ce83",
+      "obligation_id": "obligation:fictional-cache",
+      "output_digest": "5956e24dc0c1e207dabc1c6ea472cfaeeaf43fb98ced8c91347e87208dd551af",
+      "proof_authority": "theorem_proof",
+      "receipt_id": "receipt:fictional-cache",
+      "request_digest": "493a1ace79ace52d9b05811908fd7357610a1f290948bce0a70a141370a71546",
+      "result_digest": "7aaca1c1d3355dc8a0e706a842ff93e344d8c06d11997120a968b5837a4d2384",
+      "result_type": "proof",
+      "schema_version": "theorem-proof-receipt/v1",
+      "status": "proved",
+      "verifier": "fictional-test"
+    }
+  ]
+}

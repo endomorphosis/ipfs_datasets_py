@@ -1187,7 +1187,7 @@ def test_lean_v3_version_output_charge_preserves_complete_source_input_capacity(
 # Current reviewed constructors explicitly bind the current verifier profile;
 # negative cache controls changed the complete owner. This pin never follows edits itself.
 # The two fixture constructors used below retain their exact previous ASTs.
-_NATIVE_PROOF_CACHE_FIXTURE_SHA256 = "7eb500681c82e2ab762e05332d28ae2a70572b5b5bd9521fa0861098bf4b866e"
+_NATIVE_PROOF_CACHE_FIXTURE_SHA256 = "51103f60feebf3abf31b60aa6249159409268c1546a195e43ef286a8670fdafa"
 
 
 def _load_native_proof_cache_fixture_owner():
@@ -1343,6 +1343,7 @@ def _assert_lean_native_v3_proof_cache_round_trip(
         expected_proposition=obligation.statement, bounds=bounds))
     assert profile_outcome.result.status is ResultStatus.PROVED and profile_outcome.receipt.accepted
     assert profile_outcome.receipt.native_identity.actual_version == version
+    assert profile_outcome.receipt.toolchain.metadata["verification_profile"] == "lean-kernel-verification/v3"
     context = dict(schema_version=LEGAL_PROOF_CONTEXT_SCHEMA_VERSION, jurisdiction="fictional",
         interpretation_digest=stable_digest({"fictional_interpretation": 1}),
         dependency_versions={"fictional-definition": stable_digest({"definition": 1}),
@@ -1888,7 +1889,8 @@ def test_lean_fresh_backend_receipt_explicitly_binds_current_verification_profil
     assert LeanKernelReceipt.from_dict(outcome.receipt.to_dict()).to_dict() == outcome.receipt.to_dict()
 
 
-@pytest.mark.parametrize("profile", [None, "lean-kernel-verification/v0", True, {}, [], 1, "lean-kernel-verification/v1"])
+@pytest.mark.parametrize("profile", [None, "lean-kernel-verification/v0", True, {}, [], 1,
+                                    "lean-kernel-verification/v1", "lean-kernel-verification/v2"])
 def test_lean_old_or_wrong_verification_profile_cannot_be_reissued_as_current(profile):
     outcome, _, _ = _bound_lean_outcome()
     value = copy.deepcopy(outcome.receipt.to_dict())

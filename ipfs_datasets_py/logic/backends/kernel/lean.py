@@ -29,7 +29,7 @@ import re
 import stat
 import time
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass, field, replace
+from dataclasses import InitVar, dataclass, field, fields, replace
 from enum import StrEnum
 from typing import Any, Final
 
@@ -78,7 +78,8 @@ LEAN_KERNEL_RECEIPT_VERSION: Final = "lean-kernel-receipt/v3"
 # Version this token whenever trust-relevant source, obligation, dependency,
 # native-identity or diagnostic acceptance rules change. It names the verifier
 # rules, not an execution grant; never infer it when decoding old receipts.
-LEAN_KERNEL_VERIFICATION_PROFILE: Final = "lean-kernel-verification/v2"
+LEAN_KERNEL_VERIFICATION_PROFILE: Final = "lean-kernel-verification/v3"
+LEAN_KERNEL_ARCHIVED_VERIFICATION_PROFILE: Final = "lean-kernel-verification/v2"
 LEAN_SOURCE_BINDING_VERSION: Final = "lean-source-binding/v1"
 LEAN_AXIOM_REPORT_VERSION: Final = "lean-axiom-report/v2"
 LEAN_NATIVE_ADDRESS_SPACE_FLOOR_BYTES: Final = 4 * 1024**3
@@ -334,8 +335,9 @@ class LeanKernelReceipt:
     approved_imports: tuple[str, ...] = LEAN_DEFAULT_APPROVED_IMPORTS
     axiom_policy_digest: str = ""
     schema_version: str = LEAN_KERNEL_RECEIPT_VERSION
+    _archived_profile: InitVar[bool] = field(default=False, kw_only=True)
 
-    def __post_init__(self) -> None:
+    def __post_init__(self, _archived_profile: bool) -> None:
         object.__setattr__(
             self, "request_digest", _digest(self.request_digest, "request_digest")
         )
@@ -461,7 +463,9 @@ class LeanKernelReceipt:
             raise LeanKernelError("type checking requires an explicit expected proposition and compiled source identity")
         if self.accepted:
             profile = self.toolchain.metadata.get("verification_profile")
-            if type(profile) is not str or profile != LEAN_KERNEL_VERIFICATION_PROFILE:
+            expected_profile = (LEAN_KERNEL_ARCHIVED_VERIFICATION_PROFILE if _archived_profile
+                                else LEAN_KERNEL_VERIFICATION_PROFILE)
+            if type(profile) is not str or profile != expected_profile:
                 raise LeanKernelError("accepted receipts require the current explicit verification profile")
             if submitted and scan_lean_incomplete_or_unsafe(submitted):
                 raise LeanKernelError("accepted receipts cannot bypass the supported source verification profile")
@@ -496,9 +500,11 @@ class LeanKernelReceipt:
                 raise LeanKernelError("accepted receipts require the exact native toolchain and approved-axiom profile")
 
     @classmethod
-    def from_dict(cls, value: Mapping[str, Any]) -> LeanKernelReceipt:
-        """Replay a complete v2 receipt and its identity; v1 stays archival."""
-        data = _closed_mapping(value, set(cls.__dataclass_fields__) | {"receipt_id"}, "Lean receipt")
+    def from_dict(
+        cls, value: Mapping[str, Any], *, _archived_profile: bool = False,
+    ) -> LeanKernelReceipt:
+        """Replay a v3 wire receipt; the cache can also validate a retired profile for storage."""
+        data = _closed_mapping(value, {item.name for item in fields(cls)} | {"receipt_id"}, "Lean receipt")
         source = _closed_mapping(data["source_binding"],
             {"request_digest", "source_digest", "source_format", "schema_version"}, "source binding")
         tree = _closed_mapping(data["source_tree"],
@@ -535,7 +541,7 @@ class LeanKernelReceipt:
             translation=translation, axiom_report=axiom)
         for name in ("imports", "diagnostics", "approved_axioms", "approved_imports"):
             data[name] = tuple(data[name])
-        result = cls(**data)
+        result = cls(**data, _archived_profile=_archived_profile)
         if result.receipt_id != identifier:
             raise LeanKernelError("supplied Lean receipt identity does not match its exact contents")
         return result
@@ -643,6 +649,8 @@ class LeanKernelOutcome:
         if self.request.query_kind is not QueryKind.THEOREM_PROOF:
             raise LeanKernelError("outcome request must be a theorem_proof query")
         if self.receipt.accepted:
+            if self.receipt.toolchain.metadata.get("verification_profile") != LEAN_KERNEL_VERIFICATION_PROFILE:
+                raise LeanKernelError("accepted outcomes require the current explicit verification profile")
             source, _, translation = _payload_source(self.request)
             payload = self.request.payload
             if (

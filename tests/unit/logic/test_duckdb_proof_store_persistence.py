@@ -27,6 +27,7 @@ from ipfs_datasets_py.logic.common.duckdb_proof_store import (
     DuckDBProofStoreError,
     DuckDBProofStoreIntegrityError,
     ImmutableEnvelopeReference,
+    LEGAL_FORMAL_COVERAGE_VERSION,
     PROOF_AUTHORITY_DIMENSION_SET,
     ProofEvidenceRecord,
     ProofOutcomeKind,
@@ -562,13 +563,15 @@ def _selected_legal_coverage_sql_rows(connection, digest):
     return tuple(connection.execute(query, [digest]).fetchall() for query in queries)
 
 
-@pytest.mark.parametrize("historical_version", ["legacy", "bound-v2"])
+@pytest.mark.parametrize(("historical_version", "historical_context"), [
+    ("legacy", None), ("bound-v2", None), ("bound-v2-coherent-coverage/v1", True),
+])
 def test_historical_legal_aggregate_reopen_refuses_authority_without_retry(
-    duckdb_module, tmp_path, historical_version,
+    duckdb_module, tmp_path, historical_version, historical_context,
 ):
     path = tmp_path / "legal-coverage.duckdb"
-    old = _authored_legal_coverage_entry(historical_version, context_complete=None)
-    current = _authored_legal_coverage_entry("bound-v2-coherent-coverage/v1", context_complete=True)
+    old = _authored_legal_coverage_entry(historical_version, context_complete=historical_context)
+    current = _authored_legal_coverage_entry(LEGAL_FORMAL_COVERAGE_VERSION, context_complete=True)
     calls = []
 
     def compute_advisory():
@@ -609,7 +612,7 @@ def test_current_legal_aggregate_without_complete_context_refuses_sql_put(
     from ipfs_datasets_py.logic.common.duckdb_proof_store import DuckDBProofStoreAuthorityError
 
     incomplete = _authored_legal_coverage_entry(
-        "bound-v2-coherent-coverage/v1", context_complete=False,
+        LEGAL_FORMAL_COVERAGE_VERSION, context_complete=False,
     )
     with _open_legal_coverage_fixture(duckdb_module, tmp_path / "incomplete-coverage.duckdb") as connection:
         store = DuckDBProofStore(connection=connection, max_entries=16)
