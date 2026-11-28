@@ -7581,3 +7581,4 @@ def test_reviewed_source_bound_native_installed_preserves_history_through_retain
     assert eligibility["views"]["reviewed_graph"]["declared_eligible"] is True
     assert eligibility["views"]["checked_lean"]["declared_eligible"] is False
     assert all(eligibility[key] is record[key] is False for key in qualification.AUTHORITY_FIELDS)
+    (tmp_path / "checked-source-bound-component.json").write_bytes(canonical(report))
