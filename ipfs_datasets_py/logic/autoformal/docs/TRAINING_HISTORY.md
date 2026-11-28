@@ -3664,3 +3664,18 @@ Seven of eight new cases failed on the published preimage. After the correction,
 ## Evidence638 — Honor declared document and scope for aliases resolved by ID
 
 Four of the 12 reproduction cases selected a contradictory target on the published preimage. All 93 cases in the owning symbol and scoped lookup suites passed after the fix, including those 12 controls. [Exact qualification evidence](/tmp/Guide636-current-cache-and-alias-integration-B5CRXHpw/actual-composed-qualification-Evidence638.json)
+
+
+## Evidence639 — Keep one reviewed cross-reference per unit and dependency
+
+Two of ten reproduction cases passed the old admission check with a repeated citation. All 21 selected owning tests passed after the correction, including the distinct-use control. [Exact qualification evidence](/tmp/Guide638-current-reviewed-references-and-prose-integration-wgEyXHWT/actual-composed-qualification-Evidence639.json)
+
+
+## Evidence640 — Refuse ambiguous temporal conjunctions and erased atoms in canonical prose
+
+All 203 selected renderer, qualifier, relational reconstruction, and recompilation cases passed. The suite retained the prior 191 cases and added twelve empty-surface cases. [Exact qualification evidence](/tmp/Guide638-current-reviewed-references-and-prose-integration-wgEyXHWT/actual-composed-qualification-Evidence640.json)
+
+
+## Evidence641 — Verify the Guide 638 proof-cache round trip with Lean 4.34.1
+
+The first managed attempt stopped at a missing tracked package import before Lean invocation. The retry materialized the full package, checked the missing imports, and passed the original integration case under the unchanged resource profile. The Source lease, scheduler grant, and child processes closed. [Exact qualification evidence](/tmp/Guide638-native-cache-one-case-retry-INERT-5ihpqtfv/actual-guide638-native-cache-roundtrip-qualified-closed.json)

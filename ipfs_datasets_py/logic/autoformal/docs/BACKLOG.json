@@ -5733,6 +5733,36 @@
       },
       "record_id": "proof-cache-exact-disk-selection-evidence637-20261128",
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
+    },
+    "canonical_prose_temporal_and_atom_fidelity_20261128": {
+      "evidence_ordinal": 640,
+      "facts": {
+        "bytes": 3440,
+        "path": "/tmp/Guide638-current-reviewed-references-and-prose-integration-wgEyXHWT/actual-composed-qualification-Evidence640.json",
+        "sha256": "7fce94756cec6d6b2d422f25a41c97468c9833a320df56c2c5839b468f7a61e8"
+      },
+      "record_id": "canonical-prose-temporal-and-atom-fidelity-evidence640-20261128",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
+    },
+    "guide638_native_verification_profile_proof_cache_20261128": {
+      "evidence_ordinal": 641,
+      "facts": {
+        "bytes": 3464,
+        "path": "/tmp/Guide638-native-cache-one-case-retry-INERT-5ihpqtfv/actual-guide638-native-cache-roundtrip-qualified-closed.json",
+        "sha256": "93d3114c0a206eeb1a22a2bff6ab8a5c621fa71393461d50183d0e173a0ee98b"
+      },
+      "record_id": "guide638-native-verification-profile-proof-cache-evidence641-20261128",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
+    },
+    "lir09_reviewed_dependency_multiplicity_20261128": {
+      "evidence_ordinal": 639,
+      "facts": {
+        "bytes": 2838,
+        "path": "/tmp/Guide638-current-reviewed-references-and-prose-integration-wgEyXHWT/actual-composed-qualification-Evidence639.json",
+        "sha256": "55ac0871aece07d236833c20e2c8a2a016dd3622a496efc748e79bdecd24eb52"
+      },
+      "record_id": "lir09-reviewed-dependency-multiplicity-evidence639-20261128",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
     }
   },
   "programme_goal_hierarchy": {

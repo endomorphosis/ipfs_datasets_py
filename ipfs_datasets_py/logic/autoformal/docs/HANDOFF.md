@@ -4524,3 +4524,18 @@ An exact CID read now verifies and caches the requested envelope without selecti
 ## Evidence638 — Honor declared document and scope for aliases resolved by ID
 
 An alias that names its definition by ID now checks that definition against any explicitly declared target document and scope. Contradictions return the existing unresolved diagnostic through both symbol resolution and scoped lookup. [Exact qualification evidence](/tmp/Guide636-current-cache-and-alias-integration-B5CRXHpw/actual-composed-qualification-Evidence638.json)
+
+
+## Evidence639 — Keep one reviewed cross-reference per unit and dependency
+
+The reviewed dependency check rejects repeated citations to the same artifact from the same unit. Distinct units can still cite the same versioned artifact. [Exact qualification evidence](/tmp/Guide638-current-reviewed-references-and-prose-integration-wgEyXHWT/actual-composed-qualification-Evidence639.json)
+
+
+## Evidence640 — Refuse ambiguous temporal conjunctions and erased atoms in canonical prose
+
+A temporal atom with a literal conjunction can render identically to two separate qualifiers. The renderer now applies the existing ambiguity check to temporal atoms and abstains when normalizing a nonblank atom would erase its surface. [Exact qualification evidence](/tmp/Guide638-current-reviewed-references-and-prose-integration-wgEyXHWT/actual-composed-qualification-Evidence640.json)
+
+
+## Evidence641 — Verify the Guide 638 proof-cache round trip with Lean 4.34.1
+
+The managed cache case on Guide 638 ran one Lean version probe and two successful compilations. Disk reopen and exact reuse passed, and the context and artifact refusals triggered zero additional Lean commands. [Exact qualification evidence](/tmp/Guide638-native-cache-one-case-retry-INERT-5ihpqtfv/actual-guide638-native-cache-roundtrip-qualified-closed.json)
