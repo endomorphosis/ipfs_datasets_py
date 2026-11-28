@@ -110,6 +110,9 @@ def masked_multi_positive_contrastive_loss(source_embeddings, formal_embeddings,
     including NaN/Inf; weights requiring gradients are rejected. Unknown logits
     are excluded from both numerators and denominators. With no negatives, the
     result and all representation gradients are differentiable exact zero.
+    Centered log-mass terms repair cancellation and normalization errors.
+    Retain the existing path only when values and normalized pair masses agree
+    within dtype roundoff; value agreement alone cannot certify gradients.
     """
     torch = _torch()
     _require(type(temperature) in (int, float), "finite positive temperature required")
@@ -151,6 +154,42 @@ def masked_multi_positive_contrastive_loss(source_embeddings, formal_embeddings,
         rows = torch.logsumexp(denominator, dim=1) - torch.logsumexp(numerator, dim=1)
         columns = torch.logsumexp(denominator, dim=0) - torch.logsumexp(numerator, dim=0)
         loss = (rows.mean() + columns.mean()) / 2
+
+        roundoff = 8 * torch.finfo(logits.dtype).eps
+
+        def centered_mass(axis):
+            # Unknowns never choose a shift; weights enter only AFTER the
+            # large common logit has been removed. Center each LSE separately
+            # so its backward normalized masses do not lose their increments.
+            allowed_logits = logits.masked_fill(~allowed, -torch.inf)
+            logit_shift = allowed_logits.amax(dim=axis, keepdim=True).detach()
+            weighted_shifted = allowed_logits - logit_shift
+            if safe_weights is not None:
+                weighted_shifted = weighted_shifted + safe_weights.log()
+            weight_shift = weighted_shifted.amax(dim=axis, keepdim=True).detach()
+            centered_denominator = weighted_shifted - weight_shift
+            positive_shift = numerator.amax(dim=axis, keepdim=True).detach()
+            centered_numerator = numerator - positive_shift
+            den_mass = torch.logsumexp(centered_denominator, dim=axis, keepdim=True)
+            pos_mass = torch.logsumexp(centered_numerator, dim=axis, keepdim=True)
+            value = ((logit_shift - positive_shift + weight_shift)
+                     + (den_mass - pos_mass)).squeeze(axis)
+            old_den_mass = torch.logsumexp(denominator, dim=axis, keepdim=True)
+            old_pos_mass = torch.logsumexp(numerator, dim=axis, keepdim=True)
+            compatible = (torch.allclose((denominator - old_den_mass).exp(),
+                                         (centered_denominator - den_mass).exp(),
+                                         rtol=roundoff, atol=roundoff)
+                          and torch.allclose((numerator - old_pos_mass).exp(),
+                                             (centered_numerator - pos_mass).exp(),
+                                             rtol=roundoff, atol=roundoff))
+            return value, compatible
+
+        centered_rows, row_compatible = centered_mass(1)
+        centered_columns, column_compatible = centered_mass(0)
+        centered_loss = (centered_rows.mean() + centered_columns.mean()) / 2
+        if not (row_compatible and column_compatible
+                and bool(torch.isclose(loss, centered_loss, rtol=roundoff, atol=roundoff))):
+            loss = centered_loss
         _require(bool(torch.isfinite(loss)), "masked contrastive loss must remain finite")
         return loss
 

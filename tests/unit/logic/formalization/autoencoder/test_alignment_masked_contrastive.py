@@ -313,3 +313,89 @@ def test_noncontiguous_dense_inputs_are_supported_and_sparse_inputs_rejected(tor
         subject.describe_masked_contrastive_relations(positive.to_sparse(), negative)
     with pytest.raises(ValueError):
         run((source, formal, positive, negative), negative_weights=torch.ones((2, 3), dtype=torch.float64).to_sparse())
+
+
+@pytest.mark.parametrize("dtype_name,magnitude,sign", [
+    ("float32", 0.0, 1.0),
+    ("float32", 10000.0, 1.0),
+    ("float32", 10000.0, -1.0),
+    ("float64", 0.0, 1.0),
+    ("float64", 1000000000.0, 1.0),
+    ("float64", 1000000000.0, -1.0),
+])
+@pytest.mark.parametrize("negative_weight", [None, 2.0])
+def test_common_finite_logit_offset_keeps_the_exact_positive_mass(
+        torch, dtype_name, magnitude, sign, negative_weight):
+    """Equal synthetic pair scores imply mass1/(1+w), even at large offsets."""
+    import math
+
+    dtype = getattr(torch, dtype_name)
+    source = torch.full((2, 1), magnitude, dtype=dtype, requires_grad=True)
+    formal = torch.full((2, 1), sign * magnitude, dtype=dtype, requires_grad=True)
+    positive = torch.eye(2, dtype=torch.bool)
+    negative = ~positive
+    weights = (None if negative_weight is None else
+               torch.full((2, 2), negative_weight, dtype=dtype))
+    loss = run((source, formal, positive, negative),
+               temperature=1.0, negative_weights=weights)
+    # Independent counting oracle: each anchor has one equal-score positive
+    # and one permitted negative of fixed weight w. No reference target/model.
+    expected = math.log1p(1.0 if negative_weight is None else negative_weight)
+    tolerance = 1e-6 if dtype_name == "float32" else 1e-12
+    assert bool(torch.isfinite(loss))
+    assert float(loss.detach()) == pytest.approx(expected, rel=tolerance, abs=tolerance)
+    loss.backward()
+    assert bool(torch.isfinite(source.grad).all())
+    assert bool(torch.isfinite(formal.grad).all())
+
+
+@pytest.mark.parametrize("unknown_logit", [1e20, -1e20])
+def test_centered_common_offset_excludes_unknown_logits_and_ignored_weights(torch, unknown_logit):
+    """Large-offset branch: rectangular counts and exact unknown pair gradient."""
+    import math
+
+    source = torch.eye(2, dtype=torch.float64, requires_grad=True)
+    formal = torch.full((3, 2), 1e18, dtype=torch.float64)
+    formal[1, 1] = unknown_logit
+    formal.requires_grad_()
+    positive = torch.tensor([[True, True, False], [False, False, True]])
+    negative = torch.tensor([[False, False, True], [True, False, False]])
+    weights = torch.tensor([[float("nan"), float("nan"), 2.0],
+                            [2.0, float("inf"), float("nan")]], dtype=torch.float64)
+    loss = run((source, formal, positive, negative), temperature=1.0, negative_weights=weights)
+    # Rows have2/1 positives and1/1 negatives; columns have1/1/1
+    # positives and1/0/1 negatives. Keep the zero-negative column in the mean.
+    expected = ((math.log(2.0) + math.log(3.0)) / 2.0
+                + (math.log(3.0) + 0.0 + math.log(3.0)) / 3.0) / 2.0
+    assert float(loss.detach()) == pytest.approx(expected, rel=1e-12, abs=1e-12)
+    source_gradient, formal_gradient = torch.autograd.grad(loss, (source, formal))
+    assert bool(torch.isfinite(source_gradient).all())
+    assert bool(torch.isfinite(formal_gradient).all())
+    assert formal_gradient[1, 1].item() == 0.0
+
+
+@pytest.mark.parametrize("dtype_name,common", [("float32", 2.0**23), ("float64", 2.0**52)])
+def test_common_offset_keeps_balanced_pair_logit_gradients_when_loss_already_agrees(
+        torch, dtype_name, common):
+    """Forward agreement alone does not certify the legacy LSE backward path."""
+    import math
+
+    dtype = getattr(torch, dtype_name)
+    source = torch.eye(2, dtype=dtype, requires_grad=True)
+    formal = torch.full((2, 2), common, dtype=dtype, requires_grad=True)
+    positive = torch.eye(2, dtype=torch.bool)
+    negative = ~positive
+    weights = torch.full((2, 2), math.expm1(1.0), dtype=dtype)
+    loss = run((source, formal, positive, negative), temperature=1.0, negative_weights=weights)
+    tolerance = 1e-6 if dtype_name == "float32" else 1e-12
+    expected = math.log1p(weights[0, 1].item())
+    assert float(loss.detach()) == pytest.approx(expected, rel=tolerance, abs=tolerance)
+    source_gradient, formal_gradient = torch.autograd.grad(loss, (source, formal))
+    # Identity sources make formal gradients exactly the pair-logit gradients
+    # transposed. A common shift of every row or column changes no probability.
+    assert torch.allclose(formal_gradient.sum(dim=0), torch.zeros(2, dtype=dtype),
+                          rtol=0.0, atol=tolerance)
+    assert torch.allclose(formal_gradient.sum(dim=1), torch.zeros(2, dtype=dtype),
+                          rtol=0.0, atol=tolerance)
+    assert bool(torch.isfinite(source_gradient).all())
+    assert bool(torch.isfinite(formal_gradient).all())
