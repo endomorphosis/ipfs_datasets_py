@@ -713,3 +713,39 @@ def test_matched_cached_shuffle_rechecks_checkpoint_before_second_dispatch(match
     assert not result["execution_complete"]
     assert result["arms"][0]["status"] == "refused" and result["arms"][0]["raw_candidate_report"]["completed"]
     assert result["arms"][1]["status"] == "not_dispatched"
+
+
+def test_matched_cached_shuffle_counts_new_source_in_existing_custody_budget(matched_cache, monkeypatch, loader):
+    import json
+
+    case = matched_cache
+    captured = json.loads(case["handle"]._options_bytes)
+    existing_bytes = sum(pin["bytes"] for inventory in ("pins", "historical_pins")
+                         for pin in captured[inventory].values())
+    monkeypatch.setattr(original, "MAX_TOTAL_BYTES", existing_bytes)
+    with pytest.raises(runtime.NormativeCachedLegalRuntimeError, match="matched retained-cache custody bytes exceed bound"):
+        case["handle"].infer_matched_paragraph_shuffle(case["request"], control_owner_pin=case["control_owner_pin"])
+    assert loader["calls"] == []
+
+
+def test_matched_cached_shuffle_preserves_raw_rows_when_the_final_report_misses_deadline(matched_cache, monkeypatch, loader):
+    case = matched_cache
+    existing_clock = runtime.monotonic
+    after_second = 0
+
+    def clock():
+        nonlocal after_second
+        if len(case["models"]) == 2:
+            after_second += 1
+        return existing_clock() + (5. if after_second >= 2 else 0.)
+
+    monkeypatch.setattr(runtime, "monotonic", clock)
+    result = case["handle"].infer_matched_paragraph_shuffle(case["request"],
+        control_owner_pin=case["control_owner_pin"])
+    assert len(loader["calls"]) == 2 and not result["execution_complete"]
+    assert result["comparison_deadline_reached"] and result["all_rows_reached_eos"]
+    ids = result["row_ids"]
+    for arm in result["arms"]:
+        assert arm["status"] == "returned" and arm["raw_candidate_report"]["completed"]
+        assert [row["id"] for row in arm["raw_candidate_report"]["predictions"]] == ids
+        assert arm["row_outcomes"] == [{"id": identity, "status": "eos"} for identity in ids]

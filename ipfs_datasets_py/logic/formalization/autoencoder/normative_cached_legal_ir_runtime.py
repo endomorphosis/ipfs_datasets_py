@@ -469,11 +469,15 @@ class _NormativeCachedLegalAutoencoder(normative._NormativeLegalAutoencoder):
             name = _module_name("clause_source_controls")
             contextual._require(source_pin["path"] == str(Path(__file__).with_name("clause_source_controls.py")),
                 "matched paragraph shuffle requires the fixed current control owner")
+            options = json.loads(self._options_bytes)
+            captured_bytes = sum(pin["bytes"] for inventory in ("pins", "historical_pins")
+                                 for pin in options[inventory].values())
+            contextual._require(captured_bytes + source_pin["bytes"] <= contextual.MAX_TOTAL_BYTES,
+                "matched retained-cache custody bytes exceed bound")
             pins = {"control": source_pin}
             witnesses = {"control": contextual._witness(source_pin["path"])}
             contextual._fence(pins, witnesses)
             control_owner = importlib.import_module(name)
-            options = json.loads(self._options_bytes)
 
             def fence():
                 self._recheck()
@@ -516,10 +520,10 @@ class _NormativeCachedLegalAutoencoder(normative._NormativeLegalAutoencoder):
                 original_targets_accessed=False, semantic_fidelity_assessed=False, authority=dict(contextual._AUTHORITY))
             for arm, packet in zip(arms, (baseline, shuffled), strict=True):
                 fence()
+                before = contextual._raw(packet)
                 remaining = deadline - monotonic()
                 if remaining <= 0:
                     break
-                before = contextual._raw(packet)
                 started += 1
                 self._inference_started = True
                 arm.update(status="refused", row_outcomes=[dict(id=identity, status="refused") for identity in ids])
@@ -538,9 +542,12 @@ class _NormativeCachedLegalAutoencoder(normative._NormativeLegalAutoencoder):
                     break
                 arm["status"] = "returned" if report["completed"] else "incomplete"
             result["execution_complete"] = all(arm["status"] == "returned" for arm in arms)
-            result["all_rows_reached_eos"] = result["execution_complete"] and all(
+            result["all_rows_reached_eos"] = all(
                 row["status"] == "eos" for arm in arms for row in arm["row_outcomes"])
             result.update(numerical_dispatches_started=started, numerical_reports_returned=returned)
+            result["comparison_deadline_reached"] = monotonic() >= deadline
+            if result["comparison_deadline_reached"]:
+                result["execution_complete"] = False
             return result
         except Exception as error:
             refused = error if isinstance(error, NormativeCachedLegalRuntimeError) else NormativeCachedLegalRuntimeError(str(error))
