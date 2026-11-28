@@ -553,10 +553,12 @@ def parse_chunk_id(chunk_id: str) -> tuple[str, int]:
     return parent, int(match.group("index"))
 
 
-def parse_legal_id(legal_id: str) -> LegalIdentity:
-    """Parse a previously built ``legal_id`` back into components."""
+def parse_legal_id(legal_id: str, *, strict_qualifiers: bool = False) -> LegalIdentity:
+    """Parse a U.S. Code ID, optionally requiring an exact, unambiguous qualifier list."""
 
     text = _require_non_empty_str(legal_id, "legal_id")
+    if strict_qualifiers and (type(legal_id) is not str or legal_id != text):
+        raise IdentityParseError("strict legal_id requires an ordinary string without outer whitespace")
     if not text.startswith("usc:"):
         raise IdentityParseError(f"legal_id must start with 'usc:': {legal_id!r}")
     body = text[4:]
@@ -565,11 +567,16 @@ def parse_legal_id(legal_id: str) -> LegalIdentity:
         base, qual_text = body.split(";", 1)
         qualifiers: dict[str, str] = {}
         for part in qual_text.split(";"):
-            if not part:
+            if not part and not strict_qualifiers:
                 continue
             if "=" not in part:
                 raise IdentityParseError(f"malformed legal_id qualifier: {part!r}")
             key, value = part.split("=", 1)
+            if strict_qualifiers:
+                if key not in _QUALIFIER_KEYS or key in qualifiers or not value.strip():
+                    raise IdentityParseError(f"invalid or duplicate legal_id qualifier: {key!r}")
+                if key == "kind" and value.strip().lower() not in {kind.value for kind in NodeKind}:
+                    raise IdentityParseError(f"invalid legal_id kind: {value!r}")
             qualifiers[key] = value
     else:
         base = body
