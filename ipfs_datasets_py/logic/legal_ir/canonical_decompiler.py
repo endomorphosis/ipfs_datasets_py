@@ -206,8 +206,7 @@ def decompile_rule(rule: CanonicalRule) -> str:
     sentence = " ".join(parts)
     temporal = _temporal_not_already_in_object(rule)
     if temporal:
-        temporal_surface = _join_atoms(temporal, "and")
-        _require_unambiguous_qualifier_surface(temporal_surface, "temporal")
+        temporal_surface = _join_atoms(temporal, "and", facet="temporal")
         sentence += " " + temporal_surface
     if rule.conditions:
         sentence += f" {SOURCE_WITHHELD_DECOMPILER_CONFIG['condition_connector']} " + _join_atoms(

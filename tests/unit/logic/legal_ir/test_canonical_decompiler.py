@@ -345,6 +345,12 @@ def test_production_module_has_no_benchmark_dependency() -> None:
             "Agency must file report if approval unless fire.",
             id="condition-exception-boundary",
         ),
+        pytest.param(
+            {"temporal": ("after_approval_and_within_10_days",)},
+            {"temporal": ("after_approval", "within_10_days")},
+            "Agency must file report after approval and within 10 days.",
+            id="temporal-conjunction",
+        ),
     ),
 )
 def test_delimiter_ambiguous_atoms_abstain_and_split_clauses_render(
