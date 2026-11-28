@@ -390,3 +390,39 @@ def test_result_cache_factory_failure_still_evicts_unchanged_current_entry() -> 
         assert summary["lookups"] == 2
         assert summary["hits"] == 0
         assert summary["role_hits"] == {}
+
+
+@pytest.mark.parametrize(
+    "timings",
+    [
+        {"compilation_seconds": 10**400},
+        {"embedding_seconds": 10**400},
+        {"metric_seconds": 10**400},
+        {"compilation_seconds": 1e308, "embedding_seconds": 1e308},
+    ],
+    ids=["compilation", "embedding", "metrics", "combined"],
+)
+def test_cache_recomputes_checksum_valid_unrepresentable_timings(tmp_path, timings) -> None:
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_evaluation_cache import stable_digest
+
+    key = _key()
+    cache = LegalIREvaluationCache(tmp_path, memory_entries=0)
+    original = _artifact(key)
+    cache.put(original)
+    path = cache.entry_path(key)
+    envelope = json.loads(path.read_text(encoding="utf-8"))
+    payload = envelope["artifact"]
+    payload.update(timings)
+    envelope["payload_sha256"] = stable_digest(payload)
+    path.write_text(json.dumps(envelope), encoding="utf-8")
+
+    assert cache.get(key) is None
+    assert cache.summary()["corrupt_entries"] == 1
+    assert cache.summary()["saved_wall_time_seconds"] == 0.0
+    with pytest.raises(InvalidEvaluationArtifactError, match="seconds"):
+        LegalIREvaluationArtifact.from_dict(payload)
+
+    assert cache.get_or_compute(key, lambda: original) == original
+    assert cache.get(key) == original
+    assert cache.summary()["computations"] == 1
+    assert cache.summary()["saved_wall_time_seconds"] == pytest.approx(original.computation_seconds)

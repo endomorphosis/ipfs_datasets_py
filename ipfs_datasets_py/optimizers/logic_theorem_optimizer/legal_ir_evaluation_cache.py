@@ -277,11 +277,13 @@ class LegalIREvaluationArtifact:
         for name in ("compilation_seconds", "embedding_seconds", "metric_seconds"):
             try:
                 seconds = float(getattr(self, name))
-            except (TypeError, ValueError) as exc:
-                raise InvalidEvaluationArtifactError(f"{name} must be numeric") from exc
+            except (TypeError, ValueError, OverflowError) as exc:
+                raise InvalidEvaluationArtifactError(f"{name} must be representable as finite seconds") from exc
             if not math.isfinite(seconds) or seconds < 0.0:
                 raise InvalidEvaluationArtifactError(f"{name} must be finite and non-negative")
             object.__setattr__(self, name, seconds)
+        if not math.isfinite(self.computation_seconds):
+            raise InvalidEvaluationArtifactError("combined computation_seconds must be finite")
         try:
             datetime.fromisoformat(str(self.created_at).replace("Z", "+00:00"))
         except (TypeError, ValueError) as exc:
