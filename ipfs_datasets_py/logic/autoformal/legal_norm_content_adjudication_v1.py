@@ -673,7 +673,7 @@ def _reviewed_units(body, source_inputs, relational_inputs):
 
 
 def _reviewed_definition_dependencies(body, units):
-    """Require explicit local sense selection for typed definition references."""
+    """Require explicit local sense selection for definition bodies and normative uses."""
     from ..syntax_core import ast
 
     def predicate_key(ir, symbol):
@@ -706,6 +706,17 @@ def _reviewed_definition_dependencies(body, units):
                 _need(len(candidates & parents[identity]) == 1,
                       "cyclic or unresolved reviewed governing dependency: "
                       "exactly one matching local definition parent required")
+
+    declared_uses = {(use["use_unit_id"], use["defined_predicate"]) for use in body["definition_uses"]}
+    for unit in units:
+        if unit["kind"] != "norm":
+            continue
+        ir = unit["canonical_ir"]
+        root = ast.LogicNode.from_dict(ir["typed_expression"]["root"])
+        predicates = {term.symbol for term in root.walk() if term.kind is ast.NodeKind.PREDICATE}
+        _need(all(predicate_key(ir, symbol) not in heads or (unit["unit_id"], symbol) in declared_uses
+                  for symbol in predicates),
+              "normative use of a matching local governing definition requires explicit selection")
 
 
 def _reviewed_body(body, source_inputs, relational_inputs):

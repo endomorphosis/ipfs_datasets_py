@@ -888,3 +888,89 @@ def test_reviewed_v3_same_typed_head_requires_one_declared_parent(sibling, mixed
         assert report["blockers"] == []
         assert report["declaration_sha256"] == sibling.norm_content_adjudication_sha256(declaration)
         assert mixed_case["preparation"]["declaration"]["units"][0]["parent_unit_ids"] == [alternative["unit_id"]]
+
+
+@pytest.mark.parametrize(("domain", "selection"), [
+    ("v2", "omitted"), ("v3", "omitted"), ("v2", "declared"), ("v3", "declared"),
+    ("v2", "different-role"), ("v3", "different-role"), ("v3", "different-sort"),
+])
+def test_reviewed_norm_requires_each_matching_local_definition_selection(
+        sibling, mixed_case, v2_saved, domain, selection):
+    case = mixed_case if domain == "v3" else cloned(v2_saved[0])
+    identity = selection if selection in ("different-role", "different-sort") else "same"
+    _, second = _reviewed_two_definition_fixture(case, recursive=False, identity=identity)
+    declaration = case["declaration"]
+    duty = declaration["units"][2]
+    duty_use = declaration["definition_uses"][0]
+    assert duty_use["use_unit_id"] == duty["unit_id"]
+
+    text = "Every covered officer appointed by the Board must file a report unless the Board excuses that officer."
+    raw_source = text.encode("utf-8")
+    source_pin = fixture.sha(raw_source)
+    old = duty["source_version"]
+    version = sources.build_source_version(
+        **{key: old[key] for key in ("source_id", "release_id", "edition", "provision_id")},
+        raw_bytes=raw_source, expected_raw_sha256=source_pin, extracted_text=text,
+        expected_extracted_sha256=source_pin, extraction_profile="identity/v1",
+        normalization_profile="identity/v1", media_type="text/plain",
+    )
+    duty["source_version"] = version
+    duty["occurrence"] = sources.build_source_occurrence(
+        version, expected_raw_sha256=source_pin, extracted_text=text,
+        expected_extracted_sha256=source_pin, start_char=0, end_char=len(text),
+        start_utf8=0, end_utf8=len(raw_source),
+    )
+    case["source_inputs"][duty["unit_id"]] = {"raw_bytes": raw_source, "extracted_text": text}
+    duty_use["use_occurrence_cid"] = duty["occurrence"]["record_cid"]
+
+    b = relational_fixture.Builder()
+    head = "CoveredOfficer"
+    appointed = "AppointedByBoard"
+    antecedent = ast.mk_and(b.nid(), b.atom(head, "officer"), b.atom(appointed, "officer"))
+    action = b.modal("O", b.atom("FilesReport", "officer"))
+    exception = ast.mk_not(b.nid(), b.atom("Excused", "officer"))
+    request = relational_fixture.request_for(
+        b, b.binary("implies", antecedent, b.binary("implies", exception, action)),
+        [(name, ("officer",)) for name in (head, appointed, "Excused", "FilesReport")],
+        [("officer", "forall")],
+    )
+    _reviewed_dependency_fixture_report(case, duty, request, relational.prepare_relational_norm_v1,
+                                       relational.relational_norm_report_sha256)
+    report = case["relational_inputs"][duty["unit_id"]]["report"]
+    paths = {}
+    for row in report["structural_mapping"]:
+        if row["kind"] != "predicate":
+            continue
+        node = report["typed_expression"]
+        for part in row["typed_path"].split("/")[1:]:
+            node = node[int(part)] if type(node) is list else node[part]
+        paths.setdefault(node["symbol"], []).append(row["typed_path"])
+    duty_use["target_typed_paths"] = paths[head]
+    if selection == "declared":
+        declaration["definition_uses"].append(dict(
+            duty_use, definition_unit_id=second["unit_id"], defined_predicate=appointed,
+            target_typed_paths=paths[appointed],
+        ))
+    fixture.reviewed_refresh_manifest_v2(case)
+
+    if domain == "v3":
+        prepare_admission = sibling.prepare_reviewed_norm_admission_v3
+    else:
+        prepare_admission = legacy.prepare_reviewed_norm_admission_v2
+    try:
+        case["preparation"] = prepare_admission(declaration, **prepare_args(case))
+    except ValueError as error:
+        assert selection == "omitted" and "matching local governing definition" in str(error)
+        return
+
+    if domain == "v3":
+        refresh_signed_reviews(case, sibling)
+        assert_signatures_valid(case)
+        finished = assess(sibling, case)
+    else:
+        fixture.reviewed_refresh_signed_preparation_v2(legacy, case)
+        assert_signatures_valid(case)
+        finished = fixture.assess_reviewed_fixture_v2(legacy, case)
+
+    assert finished["semantic_use_eligible"] is (selection != "omitted")
+    assert finished["fixture_only"] and not finished["corpus_admitted"]
