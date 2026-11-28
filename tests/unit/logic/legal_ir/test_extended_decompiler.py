@@ -1520,3 +1520,132 @@ class TestAuthoredParametricCountedExpandedCapacity(_parametric_unittest.TestCas
                     threshold._parametric_expression(ast, signatures, maximum, capacity_profile=self.CAPACITY)
         huge = prose.replace("at most 5 distinct", "at most 1000000 distinct", 1)
         self.assertIsNone(compile_relational(huge, profile=self.PROFILE, capacity_profile=self.CAPACITY))
+
+
+
+_POSITIVE_COUNTED_PROFILE = "source-withheld-authored-positive-counted-legal-prose/v1"
+
+
+def _positive_quantity_fixture(quantity, threshold):
+    from hashlib import sha256
+    import json
+
+    from ipfs_datasets_py.logic.autoformal import legal_counted_frame_threshold_v2 as owner
+    from ipfs_datasets_py.logic.syntax_core.ast import TypedExpression
+
+    request = owner.authored_counted_quantity_request_v4(quantity, threshold)
+    raw = json.dumps(request, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    report = owner.prepare_counted_quantity_v4(raw, expected_request_sha256=sha256(raw).hexdigest())
+    return TypedExpression.from_dict(report["typed_expression"]), report["argument_roles"]
+
+
+def _positive_quantity_text(quantity, threshold):
+    return (
+        "Typed legal rule: tdfol/tdfol_default.\n"
+        "Types: EventFrame, Object, TimeFrame.\n"
+        "Predicate Member: object of type Object; event of type EventFrame; time of type TimeFrame.\n"
+        "Rule: (for each event of type EventFrame and time of type TimeFrame, "
+        f"{quantity} {threshold} distinct objects of type Object satisfy Member with "
+        "object: the object; event: event; time: time)."
+    )
+
+
+@pytest.mark.parametrize(("quantity", "threshold"), [
+    ("at_least", 0), ("at_least", 2), ("at_least", 4), ("at_least", 6),
+    ("exactly", 0), ("exactly", 2), ("exactly", 4), ("exactly", 5),
+])
+def test_positive_quantity_compact_roundtrip_uses_complete_counted_owner(quantity, threshold):
+    from ipfs_datasets_py.logic.autoformal.legal_relational_reconstruction_v1 import (
+        prepare_relational_prose_reconstruction_v1,
+    )
+    from ipfs_datasets_py.logic.formalization.autoencoder.ir_legal_text_roundtrip import (
+        score_relational_legal_text_roundtrip,
+    )
+
+    expression, roles = _positive_quantity_fixture(quantity, threshold)
+    expected = _positive_quantity_text(quantity.replace("_", " "), threshold)
+    assert decompile_relational(expression, argument_roles=roles, profile=_POSITIVE_COUNTED_PROFILE) == expected
+    reconstructed = compile_relational(expected, profile=_POSITIVE_COUNTED_PROFILE)
+    assert reconstructed is not None and reconstructed[1] == roles
+    cycle = prepare_relational_prose_reconstruction_v1(expression,
+        argument_roles=roles, profile=_POSITIVE_COUNTED_PROFILE)
+    assert cycle["normalized_prose"] == expected
+    assert cycle["measurements"]["typed_structure_equal"] is True
+    assert cycle["measurements"]["canonical_prose_fixed_point"] is True
+    assert cycle["training_mask"] == cycle["evaluation_gold_mask"] == 0
+    score = score_relational_legal_text_roundtrip(expression, expected,
+        reference_argument_roles=roles, profile=_POSITIVE_COUNTED_PROFILE)
+    assert score["input_count"] == score["supported_count"] == 1
+    assert score["abstention_count"] == 0
+    assert score["measurements"]["complete_typed_structure_exact"] is True
+    assert score["measurements"]["argument_roles_exact"] is True
+    assert score["measurements"]["semantic_equivalence_verified"] is False
+
+
+@pytest.mark.parametrize(("wording", "threshold"), [("at least", 2), ("exactly", 3)])
+def test_positive_quantity_compact_score_distinguishes_operator_and_threshold(wording, threshold):
+    from ipfs_datasets_py.logic.formalization.autoencoder.ir_legal_text_roundtrip import (
+        score_relational_legal_text_roundtrip,
+    )
+
+    reference, roles = _positive_quantity_fixture("exactly", 2)
+    score = score_relational_legal_text_roundtrip(reference, _positive_quantity_text(wording, threshold),
+        reference_argument_roles=roles, profile=_POSITIVE_COUNTED_PROFILE)
+    assert score["input_count"] == score["supported_count"] == 1
+    assert score["abstention_count"] == 0
+    assert score["measurements"]["complete_typed_structure_exact"] is False
+    assert score["measurements"]["canonical_prose_exact"] is False
+    assert score["measurements"]["argument_roles_exact"] is True
+
+
+@pytest.mark.parametrize(("old", "changed"), [
+    ("exactly 2", "at most 2"),
+    ("exactly 2", "exactly 02"),
+    ("exactly 2", "exactly -1"),
+    ("exactly 2", "exactly 6"),
+    ("exactly 2", "at least 7"),
+    ("exactly 2", "exactly 2.0"),
+    ("EventFrame and time", "TimeFrame and time"),
+    ("object: the object; event: event", "event: event; object: the object"),
+    ("time: time).", "time: time). Extra clause."),
+])
+def test_positive_quantity_compact_inverse_abstains_on_noncanonical_or_overbudget_input(old, changed):
+    candidate = _positive_quantity_text("exactly", 2).replace(old, changed, 1)
+    assert compile_relational(candidate, profile=_POSITIVE_COUNTED_PROFILE) is None
+
+
+@pytest.mark.parametrize("mutation", ["frame_quantifier", "exact_coverage", "ordered_roles"])
+def test_positive_quantity_compact_renderer_refuses_real_typed_mutations(mutation):
+    from ipfs_datasets_py.logic.syntax_core.ast import TypedExpression
+
+    expression, roles = _positive_quantity_fixture("exactly", 2)
+    wire = expression.to_dict()
+    if mutation == "frame_quantifier":
+        wire["root"]["kind"] = "exists"
+    elif mutation == "exact_coverage":
+        pending = [wire["root"]]
+        while pending:
+            node = pending.pop()
+            if node["kind"] == "iff":
+                node["kind"] = "implies"
+                break
+            pending.extend(node["arguments"])
+        else:
+            raise AssertionError("the existing exact quantity fixture is missing coverage")
+    else:
+        roles = [{"symbol": "Member", "roles": ["event", "object", "time"]}]
+    wire["content_digest"] = ""
+    changed = TypedExpression.from_dict(wire)
+    with pytest.raises(ValueError, match="complete authored positive quantity|exact counted membership roles"):
+        decompile_relational(changed, argument_roles=roles, profile=_POSITIVE_COUNTED_PROFILE)
+
+
+def test_compact_positive_quantity_uses_only_its_explicit_profile():
+    from ipfs_datasets_py.logic.legal_ir.extended_decompiler import PARAMETRIC_COUNTED_PROSE_PROFILE
+
+    text = _positive_quantity_text("at least", 2)
+    assert compile_relational(text, profile=COUNTED_PROSE_PROFILE) is None
+    assert compile_relational(text, profile=PARAMETRIC_COUNTED_PROSE_PROFILE) is None
+    assert compile_relational(text, profile=RELATIONAL_PROSE_PROFILE) is None
+    with pytest.raises(ValueError, match="explicit capacity requires"):
+        compile_relational(text, profile=_POSITIVE_COUNTED_PROFILE, capacity_profile="unselected")

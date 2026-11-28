@@ -100,6 +100,7 @@ def decompile_extended(ir: ExtendedLegalIR, *, profile: str = EXTENDED_REALIZER_
 RELATIONAL_PROSE_PROFILE = "source-withheld-typed-relational-legal-prose/v1"
 COUNTED_PROSE_PROFILE = "source-withheld-fixed-three-counted-legal-prose/v1"
 PARAMETRIC_COUNTED_PROSE_PROFILE = "source-withheld-authored-parametric-counted-legal-prose/v1"
+POSITIVE_QUANTITY_PROSE_PROFILE = "source-withheld-authored-positive-counted-legal-prose/v1"
 _COUNTED_PROSE_SENTENCE = (
     "(for each event of type EventFrame and time of type TimeFrame, "
     "at most 3 distinct objects of type Object satisfy Member with "
@@ -159,6 +160,29 @@ def _parametric_counted_value(expression, *, capacity_profile=None):
     return maximum
 
 
+def _authored_positive_quantity(expression):
+    """Recognize the complete v4 expansion, modulo transport identities."""
+    from ..syntax_core import ast, signatures
+    from ..autoformal import legal_counted_frame_threshold_v2 as counted
+    from ..autoformal.legal_relational_reconstruction_v1 import _prose_typed_projection
+
+    node = expression.root
+    for _ in range(2):
+        if node.kind is not ast.NodeKind.FORALL:
+            raise ValueError("complete authored positive quantity structure required")
+        node = node.arguments[0]
+    threshold = 0
+    while node.kind is ast.NodeKind.EXISTS:
+        threshold += 1
+        node = node.arguments[0]
+    actual = _prose_typed_projection(expression)
+    for quantity in ("at_least", "exactly"):
+        expected = counted._quantity_expression(ast, signatures, quantity, threshold)
+        if actual == _prose_typed_projection(expected):
+            return quantity, threshold
+    raise ValueError("complete authored positive quantity structure required")
+
+
 def _relational_prose_input(expression, argument_roles, profile, *, capacity_profile=None):
     """Reuse canonical authored-fragment validation, without a native operation.
 
@@ -175,7 +199,8 @@ def _relational_prose_input(expression, argument_roles, profile, *, capacity_pro
     if type(expression) is not ast.TypedExpression:
         raise ValueError("canonical TypedExpression required")
     if type(profile) is not str or profile not in (
-            RELATIONAL_PROSE_PROFILE, COUNTED_PROSE_PROFILE, PARAMETRIC_COUNTED_PROSE_PROFILE):
+            RELATIONAL_PROSE_PROFILE, COUNTED_PROSE_PROFILE, PARAMETRIC_COUNTED_PROSE_PROFILE,
+            POSITIVE_QUANTITY_PROSE_PROFILE):
         raise ValueError("explicit supported relational prose profile required")
     if type(argument_roles) is not list:
         raise ValueError("complete ordinary ordered argument role ledger required")
@@ -199,6 +224,9 @@ def _relational_prose_input(expression, argument_roles, profile, *, capacity_pro
         if argument_roles != [{"symbol": "Member", "roles": ["object", "event", "time"]}]:
             raise ValueError("exact counted membership roles required")
         return checked, {"Member": ["object", "event", "time"]}
+    if (profile == POSITIVE_QUANTITY_PROSE_PROFILE and
+            argument_roles != [{"symbol": "Member", "roles": ["object", "event", "time"]}]):
+        raise ValueError("exact counted membership roles required")
     if len(expression.signature.sorts) == 2:
         checked, _ = relational._strict_expression(request, ast, signatures)
     else:
@@ -216,6 +244,8 @@ def decompile_relational(expression, *, argument_roles, profile: str, capacity_p
     The legacy count profile recognizes only the existing fixed-three expansion.
     The separate authored parametric profile retains the producer's current finite
     AST/depth/byte limits and refuses other syntax instead of dropping clauses.
+    The positive quantity profile recognizes complete v4 lower bounds and exact
+    enumerations within their separate producer capacities.
     The relational profile also retains supported generic quantifier/equality
     expansions, without assigning them a new counting interpretation.
     """
@@ -308,7 +338,11 @@ def decompile_relational(expression, *, argument_roles, profile: str, capacity_p
             return "(it is " + word + " that " + visit(extension.children[0], bound, depth + 1) + ")"
         raise ValueError("unsupported relational construct; whole realization refused")
 
-    if profile == PARAMETRIC_COUNTED_PROSE_PROFILE:
+    if profile == POSITIVE_QUANTITY_PROSE_PROFILE:
+        quantity, threshold = _authored_positive_quantity(checked)
+        wording = quantity.replace("_", " ")
+        body = _COUNTED_PROSE_SENTENCE.replace("at most 3", f"{wording} {threshold}", 1)
+    elif profile == PARAMETRIC_COUNTED_PROSE_PROFILE:
         maximum = _parametric_counted_value(checked, **capacity_options)
         body = _COUNTED_PROSE_SENTENCE.replace("at most 3 distinct", "at most " + str(maximum) + " distinct", 1)
     elif profile == COUNTED_PROSE_PROFILE:
