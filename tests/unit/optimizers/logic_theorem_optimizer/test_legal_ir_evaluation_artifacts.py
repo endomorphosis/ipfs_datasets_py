@@ -1852,6 +1852,32 @@ def test_reviewed_retention_rejects_two_matching_partial_panels(reviewed_retenti
         _compare_reviewed_retention(*panels)
 
 
+@pytest.mark.parametrize("source_field", ("source_version_cid", "occurrence_cid"))
+def test_reviewed_retention_rejects_shared_inconsistent_source_bindings(
+        reviewed_retention_artifacts, source_field):
+    panels = []
+    for artifact in reviewed_retention_artifacts[:2]:
+        offered = artifact.to_dict()
+        payload = offered["compiler_artifact"]["reviewed_source_span_producer_evaluation"]
+        heldout = payload["configuration"]["heldout_evaluation"]
+        units = heldout["dependency_group"]["source_units"]
+        original = payload["reference_population"][0]["canonical_ir"]["source_binding"][source_field]
+        assert units[0][source_field] == original
+        different = next(unit[source_field] for unit in units[1:] if unit[source_field] != original)
+        units[0][source_field] = different
+        heldout["dependency_group_sha256"] = _producer_digest(heldout["dependency_group"])
+        payload["heldout_evaluation"] = deepcopy(heldout)
+        for field in ("admission_before", "admission_after"):
+            admission = payload[field]
+            admission["heldout_evaluation"] = deepcopy(heldout)
+            if source_field == "occurrence_cid":
+                admission["rows"][0][source_field] = different
+        panels.append(_reseal_reviewed_retention(artifact, offered))
+
+    with pytest.raises(ValueError, match="retention reference source version or occurrence differs"):
+        _compare_reviewed_retention(*panels)
+
+
 @pytest.mark.parametrize("outcome", ("incomplete", "abstained", "unsupported", "invalid", "error", "malformed"))
 def test_reviewed_retention_counts_every_failed_candidate_as_lost(reviewed_retention_artifacts, outcome):
     _, _, _, _, rows, _, options = _producer_public_heldout_case()

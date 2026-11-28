@@ -1952,6 +1952,13 @@ def compare_reviewed_source_span_retention(before, after, *, expected_before_sha
                 and config["input_sha256s"].get("rows") == stable_digest(references)
                 and heldout.get("split_manifest_sha256") == config["input_sha256s"].get("split_manifest"),
                 "retention references differ from the complete admitted dependency component")
+        for unit, row in zip(source_units, references, strict=True):
+            target = row["canonical_ir"]
+            binding = target.get("source_binding") if type(target) is dict else None
+            require(type(binding) is dict
+                    and all(type(binding.get(key)) is str and binding[key] and binding[key] == unit.get(key)
+                            for key in ("source_version_cid", "occurrence_cid")),
+                    "retention reference source version or occurrence differs from admitted dependency unit")
         profile = config["input_profile"]
         require(type(profile) is dict
                 and set(profile) == {"profile_id", "max_source_tokens", "max_context_tokens", "max_output_tokens"}
