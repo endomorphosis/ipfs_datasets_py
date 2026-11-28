@@ -1297,3 +1297,120 @@ def test_aggregate_v4_checks_complete_context_byte_bound_without_truncation(aggr
     with pytest.raises(ValueError, match="complete aggregate context exceeds byte allowance"):
         _consume_aggregate_v4_software(case, calls.append, max_context_bytes=complete_bytes - 1)
     assert calls == []
+
+
+@pytest.fixture(scope="module")
+def source_bound_rich_training_case(tmp_path_factory):
+    from tests.unit.optimizers.logic_theorem_optimizer import test_legal_span_consumer_binding as helper
+
+    current, handoff = helper.current_mixed_source_handoff.__wrapped__(tmp_path_factory)
+    _, _, _, rows, options = helper.reviewed_public_mixed_consumer_case(current=current)
+    query = {"id": "fixture:rich-bound-unseen-query",
+             "source_text": "Lighthouse operators may archive weather reports after a storm."}
+    split = helper.splits.LegalIRSplitManifest.from_mapping(options["split_manifest"])
+    example = helper.splits.LegalIRSplitExample.from_sample(dict(
+        sample_id=query["id"], text=query["source_text"], statute_family="fixture:rich-bound-lighthouses",
+        lineage_group_id="fixture:rich-bound-unseen-lineage"))
+    manifest = helper.splits.LegalIRSplitManifest(examples=(*split.examples, example),
+        assignments={**split.assignments, query["id"]: "holdout"},
+        config_digest=split.config_digest, protected_splits=split.protected_splits,
+        metadata=split.metadata).to_dict()
+    options.update(split_manifest=manifest, expected_split_manifest_sha256=helper.digest(manifest))
+    binding = helper.owner.prepare_reviewed_source_span_consumer_binding_v3(
+        rows, **options, bound_component_inputs=handoff)
+    chosen = next(row for row in rows if any(
+        use["use_unit_id"] == row["unit_id"] for use in row["canonical_ir"]["definition_uses"]))
+    return helper, binding, rows, options, handoff, query, chosen
+
+
+def _consume_source_bound_rich_training(case, version, replay, consumer):
+    helper, binding, rows, options, _, query, chosen = case
+    component = {"admission_id": "fixture:signed-source", "binding": binding, "training_rows": rows,
+        "admission_inputs": options["admission_inputs"], "exposure_records": options["exposure_records"],
+        **replay}
+    selection = {"id": query["id"], "source_sha256": helper.source_digest(query["source_text"])}
+    if version == "v4":
+        selection.update(index_sha256=helper.digest([{"admission_id": component["admission_id"], "rows": rows}]),
+            retrieved_refs=[{"admission_id": component["admission_id"], "id": chosen["id"]}])
+        return _consume_aggregate_v4_software(dict(helper=helper, components=[component],
+            split_manifest=options["split_manifest"], query_rows=[query], retrieval_rows=[selection]), consumer)
+    selection.update(index_sha256=helper.digest(rows), retrieved_ids=[chosen["id"]])
+    return structured.consume_reviewed_contexts_v3(binding, rows,
+        **helper.reviewed_validation_inputs(options), query_rows=[query], retrieval_rows=[selection],
+        expected_query_rows_sha256=helper.digest([query]),
+        expected_retrieval_rows_sha256=helper.digest([selection]), consumer=consumer, **replay)
+
+
+@pytest.mark.parametrize("version", ("v3", "v4"))
+def test_source_bound_rich_training_replays_complete_current_examples(source_bound_rich_training_case, version):
+    case = source_bound_rich_training_case
+    helper, binding, rows, _, handoff, query, chosen = case
+    receipt = binding.receipt()
+    sha = helper.owner.reviewed_admission_inputs_sha256(handoff)
+    assert receipt["status"] == "ready"
+    assert receipt["bound_component_inputs_sha256"] == sha
+    assert receipt["training_mask"] == receipt["evaluation_gold_mask"] == 0
+    observed, marker = [], object()
+
+    def consume(payload):
+        observed.append(payload)
+        return marker
+
+    assert _consume_source_bound_rich_training(case, version, dict(
+        bound_component_inputs=handoff, expected_bound_component_inputs_sha256=sha), consume) is marker
+    assert len(observed) == 1
+    payload = observed[0]
+    context, = payload["rows"]
+    assert context["source_text"] == query["source_text"]
+    assert context["query_target_access"] is context["teacher_forcing"] is False
+    definition_ids = {use["definition_unit_id"] for use in chosen["canonical_ir"]["definition_uses"]
+                      if use["use_unit_id"] == chosen["unit_id"]}
+    assert definition_ids
+    expected = {row["id"]: row for row in rows if row["unit_id"] in definition_ids | {chosen["unit_id"]}}
+    assert {example["id"] for example in context["examples"]} == expected.keys()
+    for example in context["examples"]:
+        original = expected[example["id"]]
+        assert example["canonical_ir"] == original["canonical_ir"]
+        assert example["source_text"] == original["source_text"]
+        assert example["source_link"] == original["canonical_ir"]["source_binding"]
+    if version == "v3":
+        assert payload["binding_receipt"] == receipt
+    else:
+        component, = payload["component_receipts"]
+        assert component["binding_receipt_sha256"] == helper.digest(receipt)
+    assert "bound_component_inputs" not in payload
+    for field in ("inference_context_permission_verified", "ranking_authenticated", "corpus_admitted",
+                  "proof_authority", "training_executed"):
+        assert payload[field] is False
+
+
+@pytest.mark.parametrize("version", ("v3", "v4"))
+@pytest.mark.parametrize("damage", ("absent", "missing-pin", "wrong-pin", "changed-input", "callback-change"))
+def test_source_bound_rich_training_requires_exact_independent_replay(
+        source_bound_rich_training_case, version, damage):
+    case = source_bound_rich_training_case
+    helper, _, _, _, original, _, _ = case
+    handoff = copy.deepcopy(original)
+    sha = helper.owner.reviewed_admission_inputs_sha256(original)
+    replay = dict(bound_component_inputs=handoff, expected_bound_component_inputs_sha256=sha)
+    observed = []
+
+    def change_source():
+        handoff["preparation_inputs"]["expected_binding_manifest_sha256"] = "0" * 64
+
+    def consume(payload):
+        observed.append(payload)
+        change_source()
+        return "stale-context-must-not-return"
+
+    if damage == "absent":
+        replay.clear()
+    elif damage == "missing-pin":
+        replay.pop("expected_bound_component_inputs_sha256")
+    elif damage == "wrong-pin":
+        replay["expected_bound_component_inputs_sha256"] = "0" * 64
+    elif damage == "changed-input":
+        change_source()
+    with pytest.raises(ValueError, match="bound component|aggregate TRAIN component|aggregate context inputs changed"):
+        _consume_source_bound_rich_training(case, version, replay, consume)
+    assert len(observed) == int(damage == "callback-change")
