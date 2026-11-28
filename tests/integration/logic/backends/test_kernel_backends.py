@@ -2450,3 +2450,41 @@ def test_lean_json_message_collector_preserves_objects_independently_of_proof_pr
     ]
     wire = "\n".join(json.dumps(record) for record in records)
     assert lean.parse_lean_json_messages(wire) == records
+
+
+
+@pytest.mark.parametrize("changed", [None, "source-path", "executable", "flag"])
+def test_lean_native_result_requires_the_selected_compiler_command(monkeypatch, changed):
+    runner, calls = _process_runner(_axiom_message("'wanted' does not depend on any axioms"))
+    original_run = runner.run
+
+    def run_with_returned_command(tool_request, **kwargs):
+        process = original_run(tool_request, **kwargs)
+        assert process.command == tool_request.argv
+        if changed == "source-path":
+            # The matching name in the reported command and diagnostic must
+            # still refer to the submitted instrumented source.
+            other_source = "Other.lean"
+            command = (*process.command[:-1], other_source)
+            reports = [json.loads(line) for line in process.stdout.splitlines()]
+            assert len(reports) == 1 and reports[0]["fileName"] == tool_request.argv[-1]
+            reports[0]["fileName"] = other_source
+            return replace(process, command=command, stdout=json.dumps(reports[0]) + "\n")
+        if changed == "executable":
+            return replace(process, command=("/fictional/other-lean", *process.command[1:]))
+        if changed == "flag":
+            return replace(process, command=(*process.command[:-1], "--run", process.command[-1]))
+        return process
+
+    monkeypatch.setattr(runner, "run", run_with_returned_command)
+    backend = LeanKernelBackend(native_identity_probe=_fictional_native_identity, runner=runner,
+        native_probe=lambda: _available_native("lean", "fixture-not-an-executed-compiler"))
+    outcome = backend.run(_request(family="lean4", encoding="lean4", source="theorem wanted : True := by trivial\n",
+        expected_declaration="wanted", expected_proposition="True"))
+    assert len(calls) == 1
+    if changed is None:
+        assert outcome.result.status is ResultStatus.PROVED and outcome.receipt.accepted
+    else:
+        assert outcome.result.status is ResultStatus.ERROR
+        assert outcome.receipt.accepted is False and outcome.receipt.axiom_report is None
+        assert "returned Lean command differs from the selected compiler command" in outcome.receipt.diagnostics
