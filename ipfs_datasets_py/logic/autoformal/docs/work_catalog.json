@@ -39916,6 +39916,23 @@
       "root": "artifact_workspace",
       "scope": "Retain civil deadline candidates with unresolved date evaluation in the scoring denominator.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/lir23_exact_required_usc_citation_scoring_20261128",
+      "closed_runtime_facts": {
+        "first_baseline_failures": 10,
+        "follow_up_failures": 3,
+        "passing_final_cases": 69
+      },
+      "evidence_ordinal": 607,
+      "id": "lir23-exact-required-usc-citation-scoring-evidence607-20261128",
+      "observed_bytes": 2555,
+      "observed_sha256": "10d562e84a5113aeee6ea24abd4e68d5e72952e35094533ac454e85a9588def2",
+      "path": "/tmp/P8-external-citation-identity-private-y3MYOQWy/actual-exact-citation-benchmark-qualification.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Score each required U.S. Code provision at its exact subdivision path.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }

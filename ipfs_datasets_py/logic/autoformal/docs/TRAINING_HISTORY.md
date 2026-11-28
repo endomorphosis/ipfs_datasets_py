@@ -3506,3 +3506,8 @@ A scoped analytic worker test exercised a changed stage and exact resume on sign
 ## Evidence606 — Civil deadline scoring coverage
 
 The offline scorer retained all five previously lost candidate attempts with unknown date fidelity. The 182-case composed test run covers source-withheld parsing, lexical abstention, valid deadline attachment, and invalid reference contexts. This evidence concerns scoring behavior on fixtures. [Exact scorer test evidence](/tmp/P7-v5-worker-guide605-current-hd0V27gS/actual-composed-civil-deadline-score-coverage-qualification.json)
+
+
+## Evidence607 — External benchmark citation accuracy
+
+The external benchmark now checks each required U.S. Code provision at its full subdivision path. All 69 selected scoring and downstream gate tests passed. The fixture run did not train a model or establish independent legal source correspondence. [Citation scorer fixture evidence](/tmp/P8-external-citation-identity-private-y3MYOQWy/actual-exact-citation-benchmark-qualification.json)

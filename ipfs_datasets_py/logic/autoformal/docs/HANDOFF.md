@@ -4364,3 +4364,8 @@ The local loader restored the exact miniature T5 and AdamW checkpoint trained on
 ## Evidence606 — Retain deadline candidates with unresolved dates
 
 The civil deadline round-trip scorer retains a parsed candidate when only its due date cannot be evaluated in the supplied context. The attempt stays in the denominator, prose and typed measurements remain available, and date equality remains unknown. Invalid reference context still raises. Lexical abstention and ordered deadline attachment remain distinct. Five focused regressions reproduced the exception. All 182 owning tests passed in isolation and on the combined source. [Exact scorer test evidence](/tmp/P7-v5-worker-guide605-current-hd0V27gS/actual-composed-civil-deadline-score-coverage-qualification.json)
+
+
+## Evidence607 — Exact required citation scoring
+
+External benchmark citation credit now requires the selected U.S. Code section and full case-sensitive subdivision path. Dotted and plain reporter abbreviations and subdivision spacing are accepted. Citations grouped together for split assignment still earn credit individually. Unparsed text retains its normalization under a separate key, and repeated terminal periods fail structured recognition. The first focused run reproduced ten failures. Three additional cases exposed key collisions and malformed punctuation before the follow-up fix. The final run passed 60 owning and nine downstream gate tests. Packet and split identities remain stable. [Citation scorer fixture evidence](/tmp/P8-external-citation-identity-private-y3MYOQWy/actual-exact-citation-benchmark-qualification.json)
