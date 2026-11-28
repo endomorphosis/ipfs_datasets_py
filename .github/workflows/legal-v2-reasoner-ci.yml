@@ -422,6 +422,7 @@ jobs:
           --deselect tests/integration/logic/backends/test_kernel_backends.py::test_lean_native_v2_expected_type_and_dependency_policy \
           --deselect tests/integration/logic/backends/test_kernel_backends.py::test_lean_native_v3_proof_cache_round_trip_and_exact_reuse_context \
           --deselect tests/integration/logic/backends/test_kernel_backends.py::test_lean_native_quoted_identifier_preserves_expected_goal \
+          --deselect tests/integration/logic/backends/test_kernel_backends.py::test_lean_native_v3_expected_declaration_distinguishes_namespaced_decoy \
           -q --tb=short --junitxml=legal-autoformal-contracts-junit.xml
       if: ${{ matrix.group == 'contracts' }}
     - name: Run actual Lean declaration, type and dependency controls
@@ -434,6 +435,28 @@ jobs:
           tests/integration/logic/backends/test_kernel_backends.py::test_lean_native_quoted_identifier_preserves_expected_goal \
           --basetemp=native-lean-cases \
           -v --tb=short --junitxml=native-lean-v3-junit.xml
+      if: ${{ matrix.group == 'native' }}
+    - name: Run the native namespaced Lean declaration regression
+      env:
+        PYTHONPATH: ${{ github.workspace }}
+        IPFS_DATASETS_NATIVE_LEAN_REPORT: native-lean-namespaced-result.json
+      run: |
+        set -euo pipefail
+        python -m pytest -c /dev/null --noconftest \
+          tests/integration/logic/backends/test_kernel_backends.py::test_lean_native_v3_expected_declaration_distinguishes_namespaced_decoy \
+          --basetemp=native-lean-namespaced-cases \
+          -v --tb=short --junitxml=native-lean-namespaced-junit.xml
+        test -s native-lean-namespaced-result.json
+        python - <<'NAMESPACED_LEAN_JUNIT'
+        import xml.etree.ElementTree as ET
+
+        cases = list(ET.parse("native-lean-namespaced-junit.xml").getroot().iter("testcase"))
+        if (len(cases) != 1
+                or cases[0].get("classname", "").rsplit(".", 1)[-1] != "test_kernel_backends"
+                or cases[0].get("name") != "test_lean_native_v3_expected_declaration_distinguishes_namespaced_decoy"
+                or any(cases[0].find(tag) is not None for tag in ("failure", "error", "skipped"))):
+            raise SystemExit("expected the native namespaced Lean declaration case to pass exactly once without skips")
+        NAMESPACED_LEAN_JUNIT
       if: ${{ matrix.group == 'native' }}
     - name: Run preservation mutation and custody contracts
       env:
@@ -834,6 +857,8 @@ jobs:
           native-lean-cases/**/native-lean-proof-cache-v3.json
           native-lean-cases/**/quoted-identifier-expected-goal-outcome.json
           native-lean-v3-junit.xml
+          native-lean-namespaced-result.json
+          native-lean-namespaced-junit.xml
           legal-autoformal-contracts-junit.xml
           legal-preservation-contracts-junit.xml
           native-preservation-junit.xml
