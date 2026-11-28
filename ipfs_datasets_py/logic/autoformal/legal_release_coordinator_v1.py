@@ -2190,11 +2190,11 @@ def _physical_v4_current_review_selection(current_review):
     return selection
 
 
-def _observe_physical_v4_current_review(context, selection):
-    from . import corpus_contracts as contracts, legal_graph_dependencies as dependencies
+def _assess_release_current_review(args, kwargs, admission, selection):
+    from . import legal_graph_dependencies as dependencies
     from . import legal_graph_review as review, legal_reviewed_norm_admission_v3 as admissions
 
-    prior = context["kwargs"]
+    prior = kwargs
     _need(selection["registry_sha256"] == prior["expected_registry_sha256"]
           and selection["policy_sha256"] == prior["expected_policy_sha256"],
           "current review trust pins differ from the signed replay trust")
@@ -2205,10 +2205,10 @@ def _observe_physical_v4_current_review(context, selection):
                          "observed_pins": selection["observed_pins"]}
     if "current_trust" in selection:
         _, assessment = admissions._assess_reviewed_norm_admission_v3_with_current_trust(
-            *context["args"], current_trust=selection["current_trust"], **assessment_inputs)
+            *args, current_trust=selection["current_trust"], **assessment_inputs)
     else:
-        assessment = admissions.assess_reviewed_norm_admission_v3(*context["args"], **assessment_inputs)
-    historical = context["admission"]
+        assessment = admissions.assess_reviewed_norm_admission_v3(*args, **assessment_inputs)
+    historical = admission
     _need(assessment["semantic_use_eligible"] is True,
           "current review has unresolved admission blockers")
     fields = ("declaration_sha256", "preparation_sha256", "provenance_kind", "units", "permitted_uses",
@@ -2216,7 +2216,7 @@ def _observe_physical_v4_current_review(context, selection):
     _need(all(assessment[field] == historical[field] for field in fields)
           and assessment["review_authority"]["reviews"] == historical["review_authority"]["reviews"],
           "current review differs from the selected admission")
-    # The physical release requires the full dependency closure, including any
+    # Release observations require the full dependency closure, including any
     # artifact outside the admission subject's required review dependencies.
     inputs = prior["preparation_inputs"]
     invalidation = dependencies.invalidate_dependencies(inputs["dependency_manifest"],
@@ -2225,11 +2225,7 @@ def _observe_physical_v4_current_review(context, selection):
         observed_pins=selection["observed_pins"])
     _need(not invalidation["stale_artifact_ids"], "current review dependency closure is stale")
     trust_pins = assessment.get("current_trust", selection)
-    return contracts.seal_record({
-        "schema": "legal-corpus-physical-v4-current-review-observation/v1",
-        "request_sha256": context["physical_request_sha256"],
-        "graph_sha256": context["pins"]["graph"],
-        "admission_sha256": context["pins"]["admission"],
+    return {
         "registry_sha256": trust_pins["registry_sha256"],
         "policy_sha256": trust_pins["policy_sha256"],
         "reviews_sha256": prior["expected_reviews_sha256"],
@@ -2239,6 +2235,19 @@ def _observe_physical_v4_current_review(context, selection):
         "dependency_invalidation_sha256": invalidation["invalidation_sha256"],
         "evaluation_clock_authenticated": False,
         "registry_freshness_authenticated": False,
+    }
+
+
+def _observe_physical_v4_current_review(context, selection):
+    from . import corpus_contracts as contracts
+
+    assessed = _assess_release_current_review(context["args"], context["kwargs"], context["admission"], selection)
+    return contracts.seal_record({
+        "schema": "legal-corpus-physical-v4-current-review-observation/v1",
+        "request_sha256": context["physical_request_sha256"],
+        "graph_sha256": context["pins"]["graph"],
+        "admission_sha256": context["pins"]["admission"],
+        **assessed,
     })
 
 
@@ -2265,6 +2274,10 @@ def _physical_v4_checked_native_selection(checked_native):
 
 
 def _physical_v4_whole_project_coverage(project, opened, receipt, artifact_sha256s):
+    return _reviewed_native_whole_project_coverage(project, opened, receipt, artifact_sha256s, [])
+
+
+def _reviewed_native_whole_project_coverage(project, opened, receipt, artifact_sha256s, formal_assumptions):
     """Join component coverage after the original live Native loader succeeds."""
     obligations = opened["preservation_obligations"]
     _need(bool(obligations) and len(set(obligations)) == len(obligations)
@@ -2275,7 +2288,7 @@ def _physical_v4_whole_project_coverage(project, opened, receipt, artifact_sha25
     _need(set(axioms) == set(obligations) and all(axioms[name] == [] for name in obligations)
           and receipt["axiom_observations_passed"] is True and receipt["axiom_observation_errors"] == []
           and receipt["conditional_kernel_status"] == "checked_under_explicit_hypotheses"
-          and receipt["formal_assumptions"] == opened["formal_assumptions"] == []
+          and receipt["formal_assumptions"] == opened["formal_assumptions"] == formal_assumptions
           and receipt["formal_assumptions_proved"] is False,
           "whole-project requires exact empty axiom reports under explicit hypotheses")
 
@@ -2647,6 +2660,161 @@ def validate_uscode_release_closure_v4(request_raw, *, expected_request_sha256,
             report["declared_whole_project_qualification"] = record
             report["declared_whole_project_eligibility"] = qualification.derive_eligibility(record, **scope)
     return report
+
+
+def observe_reviewed_source_bound_native_component_v1(
+        handle, packet_files, realization, preservation, graph, admission, *args,
+        current_review, expected_compiled_artifact_sha256s, expected_receipt_sha256,
+        expected_packet_sha256, expected_binary_sha256, expected_realization_sha256,
+        expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256,
+        toolchain, bound_component_inputs, expected_bound_component_inputs_sha256,
+        instance_identity_profile=None, definition_application_profile=None, **kwargs):
+    """Join a complete source-bound component to its original conditional Lean check.
+
+    Current review observations, source-history and output pins are supplied
+    independently. The original Native owner verifies the issued same-process
+    handle and replays the source, review, graph and project. The result reports
+    checked conditional declarations and declared views without granting
+    statutory, proof, training, corpus or release authority.
+    """
+    from . import corpus_contracts as contracts, corpus_qualification as qualification
+    from . import legal_corpus_definition_use_native_v2 as native
+
+    selection = _physical_v4_current_review_selection(current_review)
+    _need(type(expected_compiled_artifact_sha256s) is dict
+          and 0 < len(expected_compiled_artifact_sha256s) <= native.MAX_REVIEWED_PRESERVATION_MODULES,
+          "whole-project requires bounded independent compiled artifact pins")
+    artifact_pins = dict(expected_compiled_artifact_sha256s)
+    for path, digest in artifact_pins.items():
+        _need(type(path) is str and len(path) <= 512 and path.startswith("compiled/") and path.endswith(".olean")
+              and all(part not in ("", ".", "..") for part in path.split("/")),
+              "whole-project requires compiled packet paths")
+        contracts.require_sha256(digest, "independent compiled artifact")
+    profiles = dict(instance_identity_profile=instance_identity_profile,
+                    definition_application_profile=definition_application_profile)
+    native._live_entry_guard(6)
+    entry = native._live_handle_entry(handle, reviewed_version=6, **profiles)
+    _need(instance_identity_profile == "reviewed-source-use/v1"
+          and definition_application_profile == "whole-norm-definition-expansion/v1",
+          "source-bound component requires the joint source-use whole-norm profile")
+    binary_pins = contracts.clone_json(expected_binary_sha256)
+    contents, inventory = native._reviewed_retained_packet(packet_files)
+    offered_artifacts = {row["path"]: row["sha256"] for row in inventory if row["path"].startswith("compiled/")}
+    _need(artifact_pins == offered_artifacts, "whole-project compiled artifacts differ from the independent pins")
+    packet = tuple(contents.items())
+
+    def original_inputs():
+        return native._live_original_inputs(realization, graph, admission, args, kwargs,
+            realization_preservation=preservation, expected_upstream_preservation_sha256=expected_preservation_sha256,
+            definition_application_profile=definition_application_profile, bound_component_inputs=bound_component_inputs,
+            expected_bound_component_inputs_sha256=expected_bound_component_inputs_sha256)
+
+    def callbacks():
+        return (native.load_verified_reviewed_source_bound_definition_realization_native_v2,
+                _assess_release_current_review, _reviewed_native_whole_project_coverage)
+
+    pinned_inputs = original_inputs()
+    delegates = callbacks()
+    states = _release_callback_states_v3(delegates)
+    input_pins = dict(expected_realization_sha256=expected_realization_sha256,
+        expected_preservation_sha256=expected_preservation_sha256,
+        expected_graph_sha256=expected_graph_sha256, expected_admission_sha256=expected_admission_sha256,
+        expected_bound_component_inputs_sha256=expected_bound_component_inputs_sha256)
+    assessed = delegates[1](args, kwargs, admission, selection)
+    _release_callback_fence_v3(callbacks(), states)
+    _need(original_inputs() == pinned_inputs, "source-bound component changed during current review")
+
+    opened = delegates[0](handle, packet, realization, preservation, graph, admission, *args,
+        expected_receipt_sha256=expected_receipt_sha256, expected_packet_sha256=expected_packet_sha256,
+        expected_binary_sha256=binary_pins, toolchain=toolchain, bound_component_inputs=bound_component_inputs,
+        **input_pins, **profiles, **kwargs)
+    _release_callback_fence_v3(callbacks(), states)
+    _need(opened["schema"] == native.REVIEWED_SOURCE_BOUND_DEFINITION_REALIZATION_NATIVE_LIVE_SUCCESS_SCHEMA
+          and opened["live_native_success_authenticated"] is opened["native_execution_authenticated"] is True
+          and opened["retained_observations_consistent"] is opened["current_complete_semantics_replayed"] is True,
+          "source-bound component requires the original complete conditional Native result")
+    _need((opened["retained_receipt_sha256"], opened["retained_packet_sha256"], opened["preparation_sha256"],
+           opened["reviewed_preservation_sha256"], opened["graph_sha256"], opened["admission_sha256"],
+           opened["bound_component_inputs_sha256"]) ==
+          (expected_receipt_sha256, expected_packet_sha256, expected_realization_sha256,
+           expected_preservation_sha256, expected_graph_sha256, expected_admission_sha256,
+           expected_bound_component_inputs_sha256)
+          and opened["bound_component_identity"] == graph["admission_record"]["bound_component_identity"]
+          and opened["support_profile"]["source_definition_premise_required"] is True,
+          "source-bound observation differs from the exact original component commitments")
+    _need(all(opened[key] is False for key in (
+        "original_success_authenticated", "original_admitted_parent_custody_authenticated",
+        "native_execution_performed", "release_ready", "Lean_admitted"))
+        and opened["authority"] == dict.fromkeys(native.AUTHORITY, False)
+        and all(type(opened[key]) is int and opened[key] == 0 for key in ("training_mask", "evaluation_gold_mask")),
+        "conditional component observation cannot widen proof or admission scope")
+
+    receipt = native._parse(contents["build-receipt.json"], native.MAX_RECEIPT_BYTES)
+    document = native._reviewed_preservation_native_document(realization)
+    manifest = native._parse(document["manifest_json"].encode("utf-8"), native.MAX_RECORD_BYTES)
+    project = {key: manifest[key] for key in ("expected_modules", "module_imports", "toolchain")}
+    project["files"] = [{"path": name, "sha256": hashlib.sha256(text.encode("utf-8")).hexdigest()}
+                        for name, text in document["files"]]
+    coverage = delegates[2](project, opened, receipt, artifact_pins, admission["formal_assumptions"])
+    _need(coverage["toolchain"] == toolchain and receipt["binary_sha256"] == binary_pins,
+          "whole-project compiler differs from the independent pins")
+    commitments = {key.removeprefix("expected_"): value for key, value in input_pins.items()}
+    review = contracts.seal_record({
+        "schema": "legal-corpus-source-bound-current-review-observation/v1",
+        **commitments, **assessed,
+        "bound_component_identity": opened["bound_component_identity"],
+    })
+    compiled = contracts.seal_record({
+        "schema": "legal-corpus-source-bound-checked-whole-project-observation/v1",
+        **commitments, **coverage,
+        "bound_component_identity": opened["bound_component_identity"],
+        "ordered_unit_ids": [row["unit_id"] for row in opened["units"]],
+        "definition_application_obligations": opened["definition_application_obligations"],
+        "current_review_observation_cid": review["record_cid"],
+        "live_result_cid": opened["record_cid"],
+        "retained_receipt_sha256": expected_receipt_sha256,
+        "retained_packet_sha256": expected_packet_sha256,
+        "compiler_binary_sha256": binary_pins,
+        "native_execution_authenticated": True,
+        "checked_under_explicit_hypotheses": True,
+        "formal_assumptions": admission["formal_assumptions"],
+        "source_definition_premise_required": True,
+        "proof_receipt_issued": False,
+        "proof_authority": False,
+        "original_admitted_parent_custody_authenticated": False,
+    })
+    work = compiled["record_cid"]
+    current = review["record_cid"]
+    dimensions = {
+        "processing": ("complete", current),
+        "source_integrity": ("verified", current),
+        "interpretation": ("reviewed", current),
+        "representation": ("supported_complete", work),
+        "dependency": ("resolved", current),
+        "native_translation": ("passed", work),
+        "lean_compilation": ("passed", work),
+    }
+    scope = {"artifact_cid": graph["record_cid"], "profile": "reviewed-source-bound-conditional-component/v1"}
+    declaration = qualification.prepare_qualification(**scope, theorem_requested=True,
+        dimensions={name: {"status": status, "evidence_cids": [evidence]}
+                    for name, (status, evidence) in dimensions.items()})
+    eligible = qualification.derive_eligibility(declaration, **scope)
+    _release_callback_fence_v3(callbacks(), states)
+    _need(original_inputs() == pinned_inputs and native._live_handle_entry(handle, reviewed_version=6, **profiles) is entry,
+          "source-bound component or original handle changed during release observation")
+    return {
+        "current_review_observation": review,
+        "checked_whole_project_observation": compiled,
+        "declared_qualification": declaration,
+        "declared_eligibility": eligible,
+        "native_opening": opened,
+        "fixture_only": admission["fixture_only"],
+        "release_ready": False,
+        "admitted": False,
+        "Lean_admitted": False,
+        "training_mask": 0,
+        "evaluation_gold_mask": 0,
+    }
 
 
 def qualify_retained_physical_type_capture_v4(
