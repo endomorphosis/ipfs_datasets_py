@@ -929,13 +929,17 @@ def _decompiler_score(
     prediction: Mapping[str, Any],
 ) -> tuple[float, Mapping[str, Any], tuple[str, ...]]:
     expected = packet.decompiler_expectations
-    text = _string(
+
+    def term_key(value: str) -> str:
+        return unicodedata.normalize("NFC", value).lower()
+
+    text = term_key(_string(
         prediction.get("decompiled_text")
         or prediction.get("decompiler_output")
         or prediction.get("round_trip_text")
-    ).lower()
-    missing_terms = tuple(term for term in expected.required_terms if term.lower() not in text)
-    forbidden_hits = tuple(term for term in expected.forbidden_terms if term.lower() in text)
+    ))
+    missing_terms = tuple(term for term in expected.required_terms if term_key(term) not in text)
+    forbidden_hits = tuple(term for term in expected.forbidden_terms if term_key(term) in text)
     round_trip = prediction.get("round_trip_success")
     if round_trip is None:
         round_trip = prediction.get("decompiler_round_trip_preservation")
