@@ -2059,7 +2059,7 @@ class LeanKernelBackend:
                 else ""
             ),
         )
-        return LeanKernelOutcome(
+        outcome = LeanKernelOutcome(
             request=request,
             request_digest=request.digest,
             source_binding=binding,
@@ -2067,6 +2067,27 @@ class LeanKernelBackend:
             receipt=receipt,
             capability=capability,
         )
+        # Final receipt/result/outcome validation belongs to the same request
+        # deadline as identity observation and compilation. Retain the checked
+        # evidence, but never publish proof authority after that deadline.
+        if outcome.receipt.accepted and time.monotonic() >= request_deadline:
+            reason = "backend request deadline exhausted during final evidence validation"
+            diagnostics.append(reason)
+            receipt = replace(
+                receipt, accepted=False, diagnostics=bound_diagnostics(diagnostics)
+            )
+            usage = replace(
+                usage, elapsed_ms=max(
+                    usage.elapsed_ms, round((time.monotonic() - execution_started) * 1000)
+                )
+            )
+            result = self._build_result(
+                request=request, binding=binding, status=ResultStatus.TIMEOUT,
+                usage=usage, receipt=receipt, capability=capability,
+                reason=reason, diagnostics=receipt.diagnostics,
+            )
+            outcome = replace(outcome, result=result, receipt=receipt)
+        return outcome
 
 
 __all__ = [

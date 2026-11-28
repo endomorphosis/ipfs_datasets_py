@@ -2492,3 +2492,57 @@ def test_lean_native_result_requires_the_selected_compiler_command(monkeypatch, 
         assert outcome.result.status is ResultStatus.ERROR
         assert outcome.receipt.accepted is False and outcome.receipt.axiom_report is None
         assert "returned Lean command differs from the selected compiler command" in outcome.receipt.diagnostics
+
+
+@pytest.mark.parametrize("stage", ["receipt", "result", "outcome"])
+def test_lean_deadline_during_final_evidence_construction_never_grants_proof(monkeypatch, stage):
+    from types import SimpleNamespace
+    from ipfs_datasets_py.logic.backends.kernel import lean
+
+    # Genuine backend checks and existing fictional compiler fixtures only.
+    # No Lean executable, model, source lease or extra process is invoked.
+    clock = SimpleNamespace(now=0.0)
+    monkeypatch.setattr(lean, "time", SimpleNamespace(monotonic=lambda: clock.now))
+    constructed = []
+    if stage == "receipt":
+        original = lean.LeanKernelReceipt.__post_init__
+
+        def finish_receipt(receipt, *args, **kwargs):
+            original(receipt, *args, **kwargs)
+            if receipt.accepted:
+                constructed.append("receipt")
+                clock.now = 0.25
+
+        monkeypatch.setattr(lean.LeanKernelReceipt, "__post_init__", finish_receipt)
+    elif stage == "result":
+        original = lean.LeanKernelBackend._build_result
+
+        def finish_result(backend, *args, **kwargs):
+            result = original(backend, *args, **kwargs)
+            if result.status is ResultStatus.PROVED:
+                constructed.append("result")
+                clock.now = 0.25
+            return result
+
+        monkeypatch.setattr(lean.LeanKernelBackend, "_build_result", finish_result)
+    else:
+        original = lean.LeanKernelOutcome.__post_init__
+
+        def finish_outcome(outcome):
+            original(outcome)
+            if outcome.result.status is ResultStatus.PROVED:
+                constructed.append("outcome")
+                clock.now = 0.25
+
+        monkeypatch.setattr(lean.LeanKernelOutcome, "__post_init__", finish_outcome)
+
+    outcome, calls, request = _bound_lean_outcome()
+    assert constructed == [stage]
+    assert len(calls) == 1  # Existing modeled compiler, never a native process.
+    assert request.bounds.timeout_ms == 250
+    assert outcome.result.status is ResultStatus.TIMEOUT
+    assert outcome.receipt.accepted is False
+    assert outcome.result.translation_ceiling.value == "bounded"
+    assert outcome.result.usage.elapsed_ms >= request.bounds.timeout_ms
+    assert "deadline" in outcome.result.reason.lower()
+    assert all(not call.cwd.exists() for call in calls)
