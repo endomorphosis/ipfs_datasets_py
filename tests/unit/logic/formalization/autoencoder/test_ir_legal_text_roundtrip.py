@@ -1223,6 +1223,41 @@ def test_civil_deadline_roundtrip_abstains_on_unsupported_prose():
     assert report["measurements"]["proof_validity_verified"] is False
 
 
+@pytest.mark.parametrize(("clause", "with_calendar"), [
+    pytest.param('within 2 calendar days after event "filing"', False, id="missing-candidate-anchor"),
+    pytest.param('within 2 business days after event "notice"', False, id="missing-candidate-calendar"),
+    pytest.param('within 3 business days after event "notice"', True, id="insufficient-candidate-workdays"),
+    pytest.param('within 999999999 calendar days after event "notice"', False, id="candidate-date-overflow"),
+    pytest.param('within 2 calendar days before event "notice"', False, id="unsupported-civil-constraint"),
+])
+def test_civil_deadline_roundtrip_retains_unresolved_candidate(clause, with_calendar):
+    from datetime import date
+    from ipfs_datasets_py.logic.legal_ir.extended_compiler import compile_extended
+    from ipfs_datasets_py.logic.legal_ir.extended_decompiler import decompile_extended, TYPED_DEADLINE_PROSE_PROFILE
+
+    reference = _civil_deadline_roundtrip_reference("calendar_days")
+    reference_prose = decompile_extended(reference, profile=TYPED_DEADLINE_PROSE_PROFILE)
+    candidate = reference_prose.replace('within 2 calendar days after event "notice"', clause)
+    assert candidate != reference_prose
+    assert compile_extended(candidate, profile=TYPED_DEADLINE_PROSE_PROFILE) is not None
+
+    report = scorer.score_deadline_legal_text_roundtrip(
+        reference, candidate, anchor_dates={"notice": date(2024, 5, 24)},
+        workday_calendar=_civil_deadline_may_2024_calendar() if with_calendar else None,
+        original_text=reference_prose,
+    )
+    assert report["status"] == "candidate_deadline_unresolved"
+    assert (report["input_count"], report["supported_count"], report["abstention_count"]) == (1, 1, 0)
+    assert report["normalized_reference_prose"] == reference_prose
+    assert report["normalized_candidate_prose"] == candidate
+    assert report["reference_due_dates"] == ["2024-05-26"]
+    assert report["candidate_due_dates"] is None
+    assert report["measurements"]["due_dates_exact"] is None
+    assert report["measurements"]["original_utf8_exact"] is False
+    assert report["measurements"]["canonical_prose_exact"] is False
+    assert report["measurements"]["complete_typed_structure_exact"] is False
+
+
 @pytest.mark.parametrize("context_case", ["missing", "different-anchor"])
 def test_civil_deadline_roundtrip_requires_exact_named_anchor_context(context_case):
     from datetime import date
