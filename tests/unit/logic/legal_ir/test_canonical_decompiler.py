@@ -425,3 +425,54 @@ def test_untyped_qualifier_in_predicate_abstains_without_erasing_explicit_clause
     assert refused.error.code is CanonicalErrorCode.UNSUPPORTED_SEMANTICS
     assert refused.text is None and refused.text_cid is None
     assert refused.component_trace == ()
+
+
+@pytest.mark.parametrize(
+    ("action", "object_atom"), [("not_file", "report"), ("NOT", "file_report")],
+    ids=("action-prefix", "action-object-boundary"),
+)
+def test_opaque_action_negation_cannot_collide_with_explicit_prohibition(action, object_atom):
+    from ipfs_datasets_py.logic.legal_ir.canonical_contracts import CanonicalAtomVocabulary, CompilerRequest
+    from ipfs_datasets_py.logic.legal_ir.canonical_explicit_qualifiers import ExplicitQualifierCanonicalCompiler
+
+    ambiguous = _request(CanonicalRule("O", "agency", action, object_atom))
+    prohibition_rule = CanonicalRule("F", "agency", "file", "report")
+    prohibition = _request(prohibition_rule)
+    assert ambiguous.canonical_ir.ir_cid != prohibition.canonical_ir.ir_cid
+
+    owner = SourceWithheldCanonicalDecompiler()
+    expected = owner.decompile(prohibition)
+    assert expected.status is OperationStatus.SUCCESS
+    assert expected.text == "Agency must not file report."
+    assert expected.text_cid == cid_for_bytes(expected.text.encode("utf-8"))
+    vocabulary = CanonicalAtomVocabulary(actors=("agency",), actions=("file",),
+                                         objects=("report",), qualifiers=())
+    parsed = ExplicitQualifierCanonicalCompiler().compile(CompilerRequest(expected.text, "polarity", vocabulary))
+    assert parsed.status is OperationStatus.SUCCESS
+    assert parsed.canonical_ir.rules == (prohibition_rule,)
+
+    refused = owner.decompile(ambiguous)
+    assert refused.status is OperationStatus.ABSTAINED
+    assert refused.error.code is CanonicalErrorCode.UNSUPPORTED_SEMANTICS
+    assert refused.error.details == {"facet": "action", "delimiter": "not"}
+    assert refused.text is None and refused.text_cid is None
+    assert refused.component_trace == ()
+
+
+@pytest.mark.parametrize("modality", ["P", "F"])
+def test_opaque_action_negation_refuses_in_other_modalities(modality):
+    requested = _request(CanonicalRule(modality, "agency", "not_release", "report"))
+    owner = SourceWithheldCanonicalDecompiler()
+    refused = owner.decompile(requested)
+    assert refused.status is OperationStatus.ABSTAINED
+    assert refused.error.code is CanonicalErrorCode.UNSUPPORTED_SEMANTICS
+    assert refused.error.details == {"facet": "action", "delimiter": "not"}
+    assert refused.request_cid == requested.request_cid
+    assert refused.text is None
+
+
+def test_modal_guard_preserves_actions_with_nonmodal_word_prefix():
+    notice = _request(CanonicalRule("O", "agency", "notify", "owner"))
+    result = SourceWithheldCanonicalDecompiler().decompile(notice)
+    assert result.status is OperationStatus.SUCCESS
+    assert result.text == "Agency must notify owner."

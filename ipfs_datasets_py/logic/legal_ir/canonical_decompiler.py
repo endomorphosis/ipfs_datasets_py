@@ -113,10 +113,11 @@ def _readable_atom(atom: str) -> str:
 class _UnsupportedQualifierSurface(CanonicalContractError):
     """The frozen prose grammar cannot encode this typed clause boundary."""
 
-    def __init__(self, facet: str, delimiter: str) -> None:
+    def __init__(self, facet: str, delimiter: str, *,
+                 message: str = "canonical qualifier atom contains a structural delimiter") -> None:
         self.facet = facet
         self.delimiter = delimiter
-        super().__init__("canonical qualifier atom contains a structural delimiter")
+        super().__init__(message)
 
 
 def _require_unambiguous_qualifier_surface(
@@ -182,6 +183,11 @@ def decompile_rule(rule: CanonicalRule) -> str:
         raise CanonicalContractError("rule must be CanonicalRule")
 
     action = _readable_atom(rule.action)
+    # A leading "not" attaches to the preceding modal in this prose grammar.
+    if action.casefold().partition(" ")[0] == "not":
+        raise _UnsupportedQualifierSurface(
+            "action", "not", message="canonical action cannot begin with a modal negation"
+        )
     _require_unambiguous_qualifier_surface(action, "action")
     parts = [_readable_atom(rule.actor), _MODAL_PHRASES[rule.modality], action]
     if rule.object:
