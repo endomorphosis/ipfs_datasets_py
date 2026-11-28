@@ -360,7 +360,7 @@ def _build_parent_candidate_syntax_audit(cycle, request, cycle_reference, reques
         scope='complete_candidate_syntax_and_declared_source_context_selection_only',
         semantic_selection_supported=False, source_fidelity_proved=False)
 
-def _reviewed_evaluation_lifecycle_source_sha256(*, rich_context=False):
+def _reviewed_evaluation_lifecycle_source_sha256(*, rich_context=False, source_bound=False):
     """Fixed lifecycle source identity; no configurable importer/entry point."""
     root = Path(__file__).resolve().parents[3]
     relative = ("scripts/ops/legal_ir/run_incremental_autoencoders.py",
@@ -377,13 +377,17 @@ def _reviewed_evaluation_lifecycle_source_sha256(*, rich_context=False):
             "legal_structured_retrieval.py", "legal_joint_retrieval.py", "legal_formula_codec.py",
             "legal_ir_grammar_decoder.py", "legal_ir_evaluation_artifacts.py"))
         relative += ("ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",)
+    elif source_bound:
+        optimizer = "ipfs_datasets_py/optimizers/logic_theorem_optimizer/"
+        relative += (optimizer + "legal_structured_retrieval.py", optimizer + "legal_ir_evaluation_artifacts.py")
     from .autoencoder_daemon_invocation_contracts import describe
     return {str(root / path): describe(root / path, 1024 * 1024)["sha256"] for path in relative}
 
 
 def _check_reviewed_evaluation_lifecycle(request):
     if request["lifecycle_source_sha256"] != _reviewed_evaluation_lifecycle_source_sha256(
-            rich_context="training_context" in request):
+            rich_context="training_context" in request,
+            source_bound=request["schema"] == REVIEWED_SOURCE_BOUND_EVALUATION_REQUEST_SCHEMA):
         raise ValueError("fixed reviewed evaluation lifecycle source changed")
 
 
@@ -399,6 +403,49 @@ _SOURCE_BOUND_DIGEST_KEYS = {
     "checkpoint_bound_component_inputs": "checkpoint_bound_component_inputs_sha256",
 }
 _NO_CURRENT_SOURCE_BOUND_INPUTS = object()
+
+
+def _require_reviewed_checkpoint_heldout_isolation(*, history, query_rows, query_split_manifest, split_config):
+    """Screen complete heldout source against the checkpoint's retained split history."""
+    import hashlib
+    from ...logic.autoformal import training_cycle_inputs as inputs
+    from . import legal_ir_eval_splits as splits
+
+    history = inputs._reviewed_copy(history)
+    inputs._reviewed_closed(history, {"schema", "scope_id", "scope_kind", "split_manifests", "records",
+        "parent_history_artifact"}, "checkpoint split history")
+    inputs._reviewed_need(type(history["split_manifests"]) is list and bool(history["split_manifests"])
+                   and type(history["records"]) is list and bool(history["records"]),
+                   "nonempty retained checkpoint split history required")
+    rows = inputs._reviewed_copy(query_rows)
+    inputs._reviewed_need(type(rows) is list and 0 < len(rows) <= inputs.MAX_REVIEWED_CYCLE_ROWS
+                   and all(type(row) is dict and type(row.get("id")) is str and row["id"]
+                           and type(row.get("source_text")) is str for row in rows),
+                   "bounded complete heldout source population required")
+    manifest = inputs._reviewed_copy(query_split_manifest)
+    resolved = splits.LegalIRSplitManifest.from_mapping(manifest)
+    row_ids = {row["id"] for row in rows}
+    inputs._reviewed_need(len(row_ids) == len(rows) and set(resolved.assignments) == row_ids
+                   and {example.sample_id for example in resolved.examples} == row_ids
+                   and all(value == splits.HOLDOUT_SPLIT for value in resolved.assignments.values()),
+                   "checkpoint evaluation requires the exact complete heldout partition")
+
+    records = {record["id"]: record for record in history["records"]}
+    inputs._reviewed_need(len(records) == len(history["records"]), "duplicate checkpoint split history row")
+    examples = {example.sample_id: example.to_dict() for example in resolved.examples}
+    for row in rows:
+        sample_id, source = row["id"], row["source_text"]
+        record = {"id": sample_id, "source_text": source,
+                  "source_sha256": hashlib.sha256(source.encode("utf-8")).hexdigest(),
+                  "split_example": examples[sample_id], "assignment": splits.HOLDOUT_SPLIT}
+        inputs._reviewed_need(records.get(sample_id, record) == record,
+                       "heldout sample conflicts with the retained checkpoint split history")
+        records[sample_id] = record
+
+    # Reuse the history owner's frozen-group checks and recompute near-duplicate
+    # groups on the union of both populations in each selected fingerprint space.
+    joined = dict(history, scope_kind="complete_declared_history", records=list(records.values()))
+    inputs._reviewed_history(joined, manifest, (), inputs._reviewed_copy(split_config), history, splits)
 
 
 def _source_bound_evaluation_commitment(request, current=_NO_CURRENT_SOURCE_BOUND_INPUTS):
@@ -452,6 +499,32 @@ def _read_source_bound_checkpoint_job(request):
                    for key in ("recipe_artifact", "model_config_artifact"))):
         raise ValueError("source-bound evaluation checkpoint job differs from original request")
     return spec
+
+
+def _check_source_bound_checkpoint_history(request, spec, rows, query_manifest):
+    from . import autoencoder_training_worker as worker
+    from ...logic.autoformal import training_cycle_inputs as inputs
+
+    def read(reference):
+        return inputs._reviewed_json(worker._reviewed_decoder_artifact(reference,
+            limit=inputs.MAX_REVIEWED_ARTIFACT_BYTES))
+
+    stage = read(spec.stage_artifact)
+    if (type(stage) is not dict or stage.get("schema") != inputs.REVIEWED_SOURCE_BOUND_MIXED_CYCLE_SCHEMA
+            or stage.get("transition_kind") not in {"bootstrap", "successor"}):
+        raise ValueError("current source-bound checkpoint TRAIN stage required")
+    history_reference = stage.get("history_artifact")
+    if history_reference not in request["source_bound_replay"]["checkpoint_stage_artifacts"]:
+        raise ValueError("checkpoint split history must belong to the selected TRAIN stage")
+    history = read(worker.CheckpointArtifact.from_dict(history_reference))
+    stage_manifest = stage.get("split_manifest_artifact")
+    if (type(stage_manifest) is not dict or type(history) is not dict
+            or type(history.get("split_manifests")) is not list or not any(
+            type(item) is dict and item.get("sha256") == stage_manifest.get("sha256")
+            for item in history["split_manifests"])):
+        raise ValueError("checkpoint split history omits the selected TRAIN split manifest")
+    _require_reviewed_checkpoint_heldout_isolation(history=history, query_rows=rows,
+        query_split_manifest=query_manifest, split_config=spec.to_dict()["split_config"])
 
 
 def _check_source_bound_asset_policy(request, spec, policy):
@@ -568,6 +641,8 @@ def _check_source_bound_evaluation_outputs(cycle, request, outputs):
         raise ValueError("saved source-bound evaluation observation differs from generation")
 
     rows = worker._parse_json(read(request["rows_artifact"]))
+    _check_source_bound_checkpoint_history(request, spec, rows,
+        worker._parse_json(read(request["split_manifest_artifact"])))
     _reviewed_evaluation_measurement_cases(rows, evaluation, generation, request["checkpoint_declarations"])
     payload = evaluation["compiler_artifact"]["reviewed_source_span_producer_evaluation"]
     configuration = payload["configuration"]
@@ -1075,11 +1150,18 @@ def _execute_reviewed_evaluation_request(request_artifact, *, parent_client):
         load_options["runtime_profile"] = request["runtime_profile"]
     source_options = {}
     if source_bound:
+        from . import legal_structured_retrieval as structured
+
+        checkpoint_admission = current_checkpoint_admission()
         _source_bound_evaluation_commitment(request, {
             "query_admission": admission, "query_bound_component_inputs": binding_options["bound_component_inputs"],
-            "checkpoint_admission": current_checkpoint_admission(),
+            "checkpoint_admission": checkpoint_admission,
             "checkpoint_bound_component_inputs": current_checkpoint_source(),
         })
+        _check_source_bound_checkpoint_history(request, checkpoint_spec, rows, manifest)
+        structured._require_disjoint_reviewed_checkpoint_sources_v12(binding.receipt(), admission,
+            checkpoint_admission, expected_checkpoint_admission_inputs_sha256=checkpoint_spec.expected_admission_inputs_sha256)
+        execution_guard()
         runtime, load_receipt = worker.load_local_reviewed_source_bound_decoder_runtime_v5(
             spec=checkpoint_spec, registry=stage_registry, current_admission_provider=current_checkpoint_admission,
             current_bound_component_inputs_provider=current_checkpoint_source, execution_guard=execution_guard,

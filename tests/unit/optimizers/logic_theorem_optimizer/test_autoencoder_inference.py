@@ -3873,6 +3873,7 @@ def test_reviewed_inference_v11_evaluation_scores_the_verified_generation(tmp_pa
 
 def _source_bound_v12_request_data(tmp_path, live=None, *, backend=None):
     from ipfs_datasets_py.logic.autoformal import training_cycle_inputs as inputs
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_eval_splits as splits
 
     worker, consumer, request, write_request = _reviewed_mixed_request_data(tmp_path)
     pins = worker._reviewed_decoder_source_pins(
@@ -3930,7 +3931,21 @@ def _source_bound_v12_request_data(tmp_path, live=None, *, backend=None):
     assets.update(model_checkpoint=put("model_checkpoint", pair["model_state"]),
                   optimizer_checkpoint=put("optimizer_checkpoint", pair["optimizer_state"]))
     stage_child = put("stage-child.json", b"{}")
-    stage = put("stage.json", worker._json_bytes({"rows_artifact": stage_child}))
+    split_config = splits.LegalIREvalSplitConfig()
+    training = {"id": "fixture:train-only", "source_text": "Rail service stops on alternate Sundays."}
+    example = splits.LegalIRSplitExample.from_sample(training)
+    train_manifest = splits.LegalIRSplitManifest(examples=(example,),
+        assignments={training["id"]: splits.TRAIN_SPLIT}, config_digest=split_config.digest).to_dict()
+    stage_manifest = put("stage-split.json", inputs._reviewed_wire(train_manifest))
+    history = put("stage-history.json", inputs._reviewed_wire({
+        "schema": "reviewed-example-cycle-history/v1", "scope_id": "fictional:analytic-stage",
+        "scope_kind": "declared_genesis", "parent_history_artifact": None,
+        "split_manifests": [{"manifest": train_manifest, "sha256": stage_manifest["sha256"]}],
+        "records": [{**training, "source_sha256": worker._digest(training["source_text"].encode("utf-8")),
+                     "split_example": example.to_dict(), "assignment": splits.TRAIN_SPLIT}]}))
+    stage_document = {"schema": inputs.REVIEWED_SOURCE_BOUND_MIXED_CYCLE_SCHEMA, "transition_kind": "bootstrap",
+                      "split_manifest_artifact": stage_manifest, "history_artifact": history, "rows_artifact": stage_child}
+    stage = put("stage.json", inputs._reviewed_wire(stage_document))
     parent = put("checkpoint-lineage.json", b"{}")
     exposure = put("checkpoint-exposure.json", b"[]")
     contexts = put("checkpoint-context.json", b"{}")
@@ -3948,10 +3963,11 @@ def _source_bound_v12_request_data(tmp_path, live=None, *, backend=None):
         "parent_checkpoint_artifact": parent, "expected_admission_inputs_sha256": role_digests["checkpoint_admission"],
         "admission_profile": worker.REVIEWED_MIXED_ADMISSION_PROFILE,
         "expected_bound_component_inputs_sha256": role_digests["checkpoint_bound_component_inputs"],
-        "split_config": {}, "expected_split_config_sha256": hashlib.sha256(b"{}").hexdigest(),
+        "split_config": split_config.to_dict(), "expected_split_config_sha256": worker._digest(inputs._reviewed_wire(split_config.to_dict())),
         "backend_identity": identity, "expected_source_sha256": pins, "allow_fictional_fixture": True})
     request.update(schema=inference.REVIEWED_SOURCE_BOUND_EVALUATION_REQUEST_SCHEMA,
         runtime_profile="builtin-t5-gpt2-float32/v1", assets=assets, source_sha256=pins, backend_identity=identity,
+        lifecycle_source_sha256=inference._reviewed_evaluation_lifecycle_source_sha256(source_bound=True),
         max_source_tokens=8192, admission_inputs_sha256=role_digests["query_admission"],
         admission_transport_artifact=transport("query_admission"),
         checkpoint_declarations={"encoder": {"id": "fictional:encoder", "sha256": "1" * 64},
@@ -3964,10 +3980,11 @@ def _source_bound_v12_request_data(tmp_path, live=None, *, backend=None):
             "checkpoint_bound_component_inputs_sha256": role_digests["checkpoint_bound_component_inputs"],
             "checkpoint_bound_component_transport_artifact": transport("checkpoint_bound_component_inputs", source=True),
             "checkpoint_job_artifact": put("checkpoint-job.json", worker._json_bytes(spec.to_dict())),
-            "checkpoint_stage_artifacts": [stage_child],
+            "checkpoint_stage_artifacts": [stage_child, stage_manifest, history],
         })
     return SimpleNamespace(worker=worker, consumer=consumer, request=request, write_request=write_request,
-                           spec=spec, put=put, live=live, stage_child=stage_child)
+                           spec=spec, put=put, live=live, stage_child=stage_child, stage_document=stage_document,
+                           training=training)
 
 
 @pytest.mark.parametrize("damage", [None, "legacy", "missing", "rich", "query-checkpoint-alias",
@@ -4043,17 +4060,21 @@ def test_reviewed_inference_v12_fixed_child_uses_distinct_replay_and_saved_joins
     from tests.unit.optimizers.logic_theorem_optimizer.test_legal_span_consumer_binding import (
         reviewed_public_mixed_consumer_case,
     )
+    from tests.unit.optimizers.logic_theorem_optimizer import test_legal_ir_evaluation_artifacts as evaluation_fixtures
 
     signed = _lir02_complete_case(tmp_path, corpus_source_bindings, mixed=True)
     _, _, case, rows, admissions = reviewed_public_mixed_consumer_case(
         current=signed["case"], operation="heldout_evaluation")
     report = corpus_source_bindings.prepare_bound_norm_component_v2(**signed["arguments"])
+    _, _, _, replays, _ = evaluation_fixtures._rich_v3_heldout_case()
+    training_admission = replays["train"]
+    training_id = training_admission["preparation"]["subject"]["graph_id"]
     live = {
         "query_admission": admissions["admission_inputs"],
         "query_bound_component_inputs": {"report": report, "expected_report_sha256": norm.norm_review_sha256(report),
                                         "preparation_inputs": signed["arguments"]},
-        "checkpoint_admission": {"fictional:train-only": {"review": b"aggregate review"}},
-        "checkpoint_bound_component_inputs": {"fictional:train-only": {
+        "checkpoint_admission": {training_id: training_admission},
+        "checkpoint_bound_component_inputs": {training_id: {
             "report": {}, "expected_report_sha256": "b" * 64, "preparation_inputs": {"raw": b"aggregate source"}}},
     }
     calls = []
@@ -4114,8 +4135,7 @@ def test_reviewed_inference_v12_fixed_child_uses_distinct_replay_and_saved_joins
         assert spec == fixture.spec
         assert current_admission_provider() == live["checkpoint_admission"]
         assert current_bound_component_inputs_provider() == live["checkpoint_bound_component_inputs"]
-        assert worker._parse_json(inputs._reviewed_read(registry, asdict(spec.stage_artifact))) == {
-            "rows_artifact": fixture.stage_child}
+        assert worker._parse_json(inputs._reviewed_read(registry, asdict(spec.stage_artifact))) == fixture.stage_document
         assert inputs._reviewed_read(registry, fixture.stage_child) == b"{}"
         references = list(map(asdict, (recipe_artifact, model_config_artifact, spec.tokenizer_artifact,
             spec.license_artifact, spec.base_model_checkpoint, spec.base_optimizer_checkpoint)))
@@ -4133,6 +4153,10 @@ def test_reviewed_inference_v12_fixed_child_uses_distinct_replay_and_saved_joins
         runtime = worker.ReviewedDecoderRuntime(registry, backend, backend.tokenizer,
             current_admission_provider, execution_guard, asset_policy_guard,
             current_bound_component_inputs_provider=current_bound_component_inputs_provider)
+        model, optimizer = spec.base_model_checkpoint, spec.base_optimizer_checkpoint
+        object.__setattr__(runtime, "_loaded_checkpoint_source_anchor", (
+            (model.sha256, model.bytes), (optimizer.sha256, optimizer.bytes),
+            spec.expected_admission_inputs_sha256, spec.expected_bound_component_inputs_sha256))
         receipt = dict(schema="reviewed-local-source-bound-decoder-runtime-load/v1", artifacts=references,
             assets=references, producer_pins=dict(spec.expected_source_sha256),
             expected_backend_identity=backend.identity(), loaded_backend_identity=backend.identity(),
@@ -4217,3 +4241,70 @@ def test_reviewed_inference_v12_parent_refuses_missing_live_roles_before_child(t
             current_admission_provider=old_live_provider, deadline_monotonic=time.monotonic() + 5)
     assert observed == ["old admission callback"]
     assert not Path(fixture.request["output_directory"]).exists()
+
+
+@pytest.mark.parametrize("overlap", ["disjoint", "current_source", "historical_near_duplicate", "dependency_group"])
+def test_reviewed_checkpoint_heldout_isolation_compares_current_and_prior_splits(overlap):
+    from ipfs_datasets_py.logic.autoformal import training_cycle_inputs as inputs
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_eval_splits as splits
+
+    config = splits.LegalIREvalSplitConfig()
+    current = {"id": "current", "source_text": "The board must record each permit issued for mining in the central register."}
+    previous = {"id": "superseded", "source_text": "A county clerk must record each water license in the district registry."}
+    query = {"id": "query", "source_text": "Applicants may renew fishing endorsements every spring."}
+    if overlap == "current_source":
+        query["source_text"] = current["source_text"]
+    elif overlap == "historical_near_duplicate":
+        query["source_text"] = previous["source_text"] + " Promptly."
+    elif overlap == "dependency_group":
+        previous["lineage_group_id"] = query["lineage_group_id"] = "reviewed:shared-definition"
+
+    def manifest_for(row, partition):
+        return splits.LegalIRSplitManifest(
+            examples=(splits.LegalIRSplitExample.from_sample(row),),
+            assignments={row["id"]: partition}, config_digest=config.digest,
+        ).to_dict()
+
+    current_manifest = manifest_for(current, splits.TRAIN_SPLIT)
+    previous_manifest = manifest_for(previous, splits.TRAIN_SPLIT)
+    query_manifest = manifest_for(query, splits.HOLDOUT_SPLIT)
+    history = {"schema": "reviewed-example-cycle-history/v1", "scope_id": "fixture:checkpoint-history",
+        "scope_kind": "complete_declared_history", "parent_history_artifact": None,
+        "split_manifests": [{"manifest": manifest, "sha256": hashlib.sha256(inputs._reviewed_wire(manifest)).hexdigest()}
+            for manifest in (previous_manifest, current_manifest)],
+        "records": [{"id": row["id"], "source_text": row["source_text"], "assignment": splits.TRAIN_SPLIT,
+            "source_sha256": hashlib.sha256(row["source_text"].encode("utf-8")).hexdigest(),
+            "split_example": manifest["examples"][0]}
+            for row, manifest in ((previous, previous_manifest), (current, current_manifest))]}
+    # These are the two separate guards reached before the combined check. They
+    # both pass even when the query was in the checkpoint's training history.
+    inputs._reviewed_history(history, current_manifest, [current], config.to_dict(), None, splits)
+    splits.authorize_legal_ir_split_use(query_manifest, operation=splits.HELDOUT_EVALUATION_OPERATION, items=[query])
+    options = dict(history=history, query_rows=[query], query_split_manifest=query_manifest, split_config=config.to_dict())
+    if overlap == "disjoint":
+        inference._require_reviewed_checkpoint_heldout_isolation(**options)
+    else:
+        with pytest.raises(splits.LegalIRSplitLeakageError):
+            inference._require_reviewed_checkpoint_heldout_isolation(**options)
+
+
+def test_reviewed_inference_v12_reopens_only_the_checkpoint_stage_history(tmp_path):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_eval_splits as splits
+
+    fixture = _source_bound_v12_request_data(tmp_path)
+    query = {"id": "heldout-alias", "source_text": "Employers must provide hearing protection at a sawmill."}
+
+    def check():
+        manifest = splits.LegalIRSplitManifest(examples=(splits.LegalIRSplitExample.from_sample(query),),
+            assignments={query["id"]: splits.HOLDOUT_SPLIT},
+            config_digest=splits.LegalIREvalSplitConfig().digest).to_dict()
+        inference._check_source_bound_checkpoint_history(fixture.request, fixture.spec, [query], manifest)
+
+    check()
+    query["source_text"] = fixture.training["source_text"]
+    with pytest.raises(splits.LegalIRSplitLeakageError):
+        check()
+    replay = fixture.request["source_bound_replay"]
+    replay["checkpoint_stage_artifacts"].remove(fixture.stage_document["history_artifact"])
+    with pytest.raises(ValueError, match="history must belong to the selected TRAIN stage"):
+        check()
