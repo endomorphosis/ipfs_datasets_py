@@ -393,25 +393,43 @@ def consume_reviewed_contexts_v2(binding, training_rows, *, split_manifest,
 def consume_reviewed_contexts_v3(binding, training_rows, *, split_manifest,
         admission_inputs, exposure_records, query_rows, retrieval_rows,
         expected_query_rows_sha256, expected_retrieval_rows_sha256,
-        consumer, max_context_bytes=262144):
+        consumer, max_context_bytes=262144, bound_component_inputs=None,
+        expected_bound_component_inputs_sha256=None):
     """Expose complete mixed-sort reviewed TRAIN examples in an explicit domain.
 
     The existing V3 consumer replays review before and after dispatch. Query
     enrollment, source separation, definition closure and complete byte bounds
-    retain the existing rich-context rules. This is not heldout-context admission
-    or authorization for model execution.
+    retain the existing rich-context rules. Source-bound components require the
+    current replay inputs and an independently supplied commitment.
     """
     return _consume_reviewed_contexts(binding, training_rows, split_manifest=split_manifest,
         admission_inputs=admission_inputs, exposure_records=exposure_records, query_rows=query_rows,
         retrieval_rows=retrieval_rows, expected_query_rows_sha256=expected_query_rows_sha256,
         expected_retrieval_rows_sha256=expected_retrieval_rows_sha256, consumer=consumer,
-        max_context_bytes=max_context_bytes, _admission_version="v3")
+        max_context_bytes=max_context_bytes, _admission_version="v3",
+        bound_component_inputs=bound_component_inputs,
+        expected_bound_component_inputs_sha256=expected_bound_component_inputs_sha256)
+
+
+def _check_rich_source_replay(bound, inputs, expected_sha256, committed_sha256):
+    if committed_sha256 is None:
+        _require(inputs is None and expected_sha256 is None,
+                 "fresh TRAIN binding required to add a bound component replay")
+        return
+    _require(type(inputs) is dict and expected_sha256 is not None,
+             "current bound component replay and its independent SHA256 are required")
+    bound._sha256(expected_sha256, "expected bound component inputs SHA256")
+    _require(expected_sha256 == committed_sha256,
+             "independent bound component commitment differs from TRAIN binding")
+    _require(bound.reviewed_admission_inputs_sha256(inputs) == expected_sha256,
+             "current bound component inputs differ from independent commitment")
 
 
 def _consume_reviewed_contexts(binding, training_rows, *, split_manifest,
         admission_inputs, exposure_records, query_rows, retrieval_rows,
         expected_query_rows_sha256, expected_retrieval_rows_sha256,
         consumer, max_context_bytes=262144, heldout_evaluation=None, _admission_version="v2",
+        bound_component_inputs=None, expected_bound_component_inputs_sha256=None,
         _aggregate_training_ids=None, _allow_empty_selection=False):
     """Dispatch full source/typed-AST examples through present review replay.
 
@@ -440,8 +458,13 @@ def _consume_reviewed_contexts(binding, training_rows, *, split_manifest,
              (not _allow_empty_selection or _admission_version == "v3" and _aggregate_training_ids is not None),
              "empty component selections require explicit V3 aggregate TRAIN custody")
     validate_binding, consume_binding = bound._reviewed_binding_dispatch(binding)
-    _require(binding.receipt()["operation"] == "training",
+    prepared_receipt = binding.receipt()
+    _require(prepared_receipt["operation"] == "training",
              "rich example index requires a training binding")
+    committed_sha256 = prepared_receipt.get("bound_component_inputs_sha256")
+    _check_rich_source_replay(bound, bound_component_inputs, expected_bound_component_inputs_sha256,
+                              committed_sha256)
+    replay = {"bound_component_inputs": bound_component_inputs} if committed_sha256 is not None else {}
     _require(callable(consumer), "explicit rich-context consumer required")
     _require(type(max_context_bytes) is int and 1 <= max_context_bytes <= MAX_REVIEWED_CONTEXT_BYTES,
              "bounded complete context byte allowance required")
@@ -530,9 +553,11 @@ def _consume_reviewed_contexts(binding, training_rows, *, split_manifest,
             raw = bound._preflight(context)
             _require(len(raw) <= max_context_bytes, "complete rich context exceeds byte allowance; truncation refused")
             result.append(context)
-        receipt = validate_binding(binding, training_rows,
-            split_manifest=split_manifest, admission_inputs=admission_inputs, exposure_records=exposure_records)
+        receipt = validate_binding(binding, training_rows, split_manifest=split_manifest,
+            admission_inputs=admission_inputs, exposure_records=exposure_records, **replay)
         _require(receipt["status"] == "ready", "present reviewed training admission is blocked")
+        _require(receipt.get("bound_component_inputs_sha256") == committed_sha256,
+                 "replayed bound component commitment differs from TRAIN binding")
         for guard, value, label in zip(guards, originals, ("queries", "retrieval selections")):
             bound._check(guard, value, label)
         _require(pins == implementation_pin(), "rich-context implementation changed during construction")
@@ -552,13 +577,16 @@ def _consume_reviewed_contexts(binding, training_rows, *, split_manifest,
         try:
             return consumer(json.loads(bound._preflight(payload)))
         finally:
+            if replay:
+                _check_rich_source_replay(bound, bound_component_inputs, expected_bound_component_inputs_sha256,
+                                          committed_sha256)
             for guard, value, label in zip(guards, originals, ("queries", "retrieval selections")):
                 bound._check(guard, value, label)
             _require(pins == implementation_pin(), "rich-context implementation changed during dispatch")
 
     return consume_binding(binding, training_rows,
         split_manifest=split_manifest, admission_inputs=admission_inputs,
-        exposure_records=exposure_records, consumer=construct)
+        exposure_records=exposure_records, consumer=construct, **replay)
 
 
 RICH_SCHEMA = "legal-reviewed-full-example-context-candidate/v1"
@@ -1109,6 +1137,8 @@ def consume_reviewed_contexts_v4(*, schema, components, split_manifest, query_ro
     This is a context-argument contract, not a V4 statutory admission, model
     authorization or heldout-policy upgrade. Each complete endpoint component
     retains its V3 binding, exposure declarations and present review replay.
+    Source-bound components supply their own current bound_component_inputs and
+    expected_bound_component_inputs_sha256.
     Selected governing definitions expand inside their owning component. The
     full TRAIN union must equal the frozen heldout population when supplied.
     Replays and aggregate byte checks bracket the one external callback.
@@ -1123,12 +1153,17 @@ def consume_reviewed_contexts_v4(*, schema, components, split_manifest, query_ro
     _require(type(components) is list and 1 <= len(components) <= 32,
              "bounded complete ordered TRAIN component list required")
     fields = {"admission_id", "binding", "training_rows", "admission_inputs", "exposure_records"}
+    source_fields = {"bound_component_inputs", "expected_bound_component_inputs_sha256"}
     for item in components:
-        bound._closed(item, fields, "aggregate TRAIN component")
-        bound._text(item["admission_id"], "aggregate admission ID", 512)
-        _require(type(item["binding"]) is bound.ReviewedSourceSpanConsumerBinding
-                 and bound._reviewed_binding_version(item["binding"]) == "v3",
+        _require(type(item) is dict and fields <= item.keys(),
+                 "aggregate TRAIN component requires exact closed fields")
+        binding = item["binding"]
+        _require(type(binding) is bound.ReviewedSourceSpanConsumerBinding
+                 and bound._reviewed_binding_version(binding) == "v3",
                  "aggregate context requires existing V3 endpoint bindings")
+        bound_component = binding.receipt().get("bound_component_inputs_sha256") is not None
+        bound._closed(item, fields | source_fields if bound_component else fields, "aggregate TRAIN component")
+        bound._text(item["admission_id"], "aggregate admission ID", 512)
     identities = [item["admission_id"] for item in components]
     _require(identities == sorted(set(identities)), "sorted distinct admission IDs required")
     original = dict(split_manifest=split_manifest, query_rows=query_rows, retrieval_rows=retrieval_rows,
@@ -1200,7 +1235,7 @@ def consume_reviewed_contexts_v4(*, schema, components, split_manifest, query_ro
                 expected_retrieval_rows_sha256=bound._guard(local_selections).sha256,
                 consumer=lambda value: value, heldout_evaluation=heldout_evaluation,
                 _admission_version="v3", _aggregate_training_ids=all_ids, _allow_empty_selection=True,
-                max_context_bytes=max_context_bytes)
+                max_context_bytes=max_context_bytes, **{key: item[key] for key in source_fields if key in item})
             payloads.append((identity, payload))
         rows = []
         for position, (query, selection) in enumerate(zip(queries, selections, strict=True)):
