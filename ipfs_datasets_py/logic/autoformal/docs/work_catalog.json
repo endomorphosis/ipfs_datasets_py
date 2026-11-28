@@ -39933,6 +39933,32 @@
       "root": "artifact_workspace",
       "scope": "Score each required U.S. Code provision at its exact subdivision path.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/lir19_lir22_persisted_miniature_successor_v12_20261128",
+      "closed_runtime_facts": {
+        "exact_typed_payload_rows": 0,
+        "optimizer_step_after": 2,
+        "optimizer_step_before": 1,
+        "output_counts": {
+          "abstained": 0,
+          "complete": 0,
+          "error": 0,
+          "incomplete": 3,
+          "invalid": 0,
+          "unsupported": 0
+        },
+        "signed_fictional_heldout_rows": 3
+      },
+      "evidence_ordinal": 608,
+      "id": "lir19-lir22-persisted-miniature-successor-v12-evidence608-20261128",
+      "observed_bytes": 1342,
+      "observed_sha256": "ceec7ac20a392c75da96fe6e571ab41afd872481f9d7196dcbe5688665bb9e91",
+      "path": "/tmp/P7-P8-persisted-v5-v12-public-composition-INERT-z0p32dud/actual-composed-miniature-V5-and-V12-fixture-qualification.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Persist and reopen a miniature offline successor checkpoint through the existing V5 and V12 owners.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }

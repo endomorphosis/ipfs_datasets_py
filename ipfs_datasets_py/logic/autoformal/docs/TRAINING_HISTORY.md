@@ -3511,3 +3511,8 @@ The offline scorer retained all five previously lost candidate attempts with unk
 ## Evidence607 — External benchmark citation accuracy
 
 The external benchmark now checks each required U.S. Code provision at its full subdivision path. All 69 selected scoring and downstream gate tests passed. The fixture run did not train a model or establish independent legal source correspondence. [Citation scorer fixture evidence](/tmp/P8-external-citation-identity-private-y3MYOQWy/actual-exact-citation-benchmark-qualification.json)
+
+
+## Evidence608 — Miniature offline V5 continuation and V12 evaluation
+
+The V5 fixture made one local update from optimizer step 1 to 2. The V12 fixture restored the resulting pair and measured all three held-out fictional rows. The row and query-context bytes match the earlier pristine fixture. Admission and bound-component commitments differ between the two runs, so the results describe each fixture independently. Correctly accepted legal count and cost per correct formalization remain unmeasured. [Exact miniature fixture evidence](/tmp/P7-P8-persisted-v5-v12-public-composition-INERT-z0p32dud/actual-composed-miniature-V5-and-V12-fixture-qualification.json)
