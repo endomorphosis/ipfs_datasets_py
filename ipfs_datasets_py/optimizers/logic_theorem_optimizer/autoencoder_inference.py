@@ -565,6 +565,42 @@ def _check_source_bound_asset_policy(request, spec, policy):
         raise ValueError("source-bound evaluation asset policy differs from original request")
 
 
+def _source_bound_generation_tokenizer(assets, expected_tokens):
+    """Reopen the request's V5 token transport without restoring a model."""
+    from . import autoencoder_training_worker as worker
+
+    recipe = worker._parse_json(worker._reviewed_decoder_artifact(
+        worker.CheckpointArtifact.from_dict(assets["recipe_artifact"]), limit=1024**2))
+    options = recipe.get("tokenizer") if type(recipe) is dict else None
+    keys = ("bos_token", "eos_token", "unk_token", "pad_token", "model_max_length",
+            "clean_up_tokenization_spaces")
+    if (type(options) is not dict or set(options) != set(keys)
+            or recipe.get("schema") != "reviewed-local-decoder-recipe/v1"
+            or type(options["model_max_length"]) is not int
+            or not 3 <= options["model_max_length"] <= 65536
+            or options["model_max_length"] != recipe.get("max_sequence_tokens")
+            or options["clean_up_tokenization_spaces"] is not False
+            or any(type(options[key]) is not str or not 0 < len(options[key]) <= 512 for key in keys[:3])
+            or (options["pad_token"] is not None
+                and (type(options["pad_token"]) is not str or not 0 < len(options["pad_token"]) <= 512))):
+        raise ValueError("v12 requires the request-pinned lossless tokenizer recipe")
+    raw = worker._reviewed_decoder_artifact(worker.CheckpointArtifact.from_dict(assets["tokenizer_artifact"]),
+                                            limit=worker.MAX_REVIEWED_TOKENIZER_PIPELINE_BYTES)
+    from tokenizers import Tokenizer
+    from transformers import PreTrainedTokenizerFast
+
+    native = Tokenizer.from_str(raw.decode("utf-8"))
+    # Mirror the V5 loader's fixed constructor order. The worker owns the
+    # actual decoder and its strict fast-backend checks.
+    frontend = PreTrainedTokenizerFast(tokenizer_object=native, **{key: options[key] for key in keys})
+    tokenizer = worker.ReviewedPretrainedTokenizer(
+        frontend, bos_token_id=frontend.bos_token_id, eos_token_id=frontend.eos_token_id,
+        vocab_size=native.get_vocab_size(with_added_tokens=True))
+    if any(getattr(tokenizer, field) != value for field, value in expected_tokens.items()):
+        raise ValueError("v12 saved tokenizer IDs differ from the request-pinned tokenizer")
+    return frontend.backend_tokenizer
+
+
 def _check_source_bound_generation_rows(generation, request, rows, contexts_sha256):
     """Join recorded V12 token evidence to the complete saved output population."""
     from . import autoencoder_training_worker as worker
@@ -605,6 +641,7 @@ def _check_source_bound_generation_rows(generation, request, rows, contexts_sha2
                    for field, value in expected_tokens.items())):
         raise ValueError("v12 saved tokenizer differs from the request-pinned model configuration")
 
+    decoder = None
     fields = {"id", "unit_id", "outcome", "candidate", "generated_token_ids", "generated_text", "reason"}
     for row, item, output in zip(rows, raw, outputs, strict=True):
         if (set(item) != fields or type(row.get("unit_id")) is not str or not row["unit_id"]
@@ -616,6 +653,19 @@ def _check_source_bound_generation_rows(generation, request, rows, contexts_sha2
             max_output_tokens=request["max_output_tokens"], scope="v12", time_limit_supported=False)
 
         text = item["generated_text"]
+        tokens = item["generated_token_ids"]
+        if len(tokens) > 2 and tokens[-1] == eos:
+            if decoder is None:
+                decoder = _source_bound_generation_tokenizer(request["assets"], expected_tokens)
+            transport_error = item["reason"] == "invalid_output_transport"
+            try:
+                decoded = decoder.decode(tokens[1:-1], skip_special_tokens=False)
+            except (UnicodeError, KeyError):
+                if not transport_error:
+                    raise ValueError("v12 saved text has an invalid tokenizer transport") from None
+            else:
+                if transport_error or decoded != text:
+                    raise ValueError("v12 saved text differs from the request-pinned tokenizer output")
         canonical = None
         if text is not None:
             try:
@@ -1606,7 +1656,10 @@ def run_reviewed_source_inference_cycle(config, cli, *, owner, source_guard, ass
             if context is not None:
                 report.update(parent_current_training_admission_rechecked_after_wait=True,
                               parent_context_policy_rechecked_after_wait=True)
-            worker._write_exclusive(parent_path, worker._json_bytes(report))
+            parent_wire = worker._json_bytes(report)
+            if time.monotonic() >= deadline_monotonic:
+                raise TimeoutError("reviewed evaluation exceeded its deadline before publishing the parent receipt")
+            worker._write_exclusive(parent_path, parent_wire)
             directory_fd = os.open(parent_path.parent, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
             try:
                 os.fsync(directory_fd)
