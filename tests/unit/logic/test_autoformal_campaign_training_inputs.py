@@ -2812,7 +2812,7 @@ def test_reviewed_mixed_cycle_v4_preserves_complete_mixed_targets_bytes_and_expl
     assert all(receipt[key] is False for key in ("backend_execution_authorized", "training_executed", "weights_updated", "proof_authority", "Lean_admitted", "corpus_admitted"))
 
 
-def _reviewed_mixed_source_bound_cycle_fixture(tmp_path):
+def _reviewed_mixed_source_bound_cycle_fixture(tmp_path, *, stage=True):
     from ipfs_datasets_py.logic.autoformal import corpus_source_bindings, legal_norm_interpretation_review_v1
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_span_consumer_binding as consumer
     from tests.unit.logic.autoformal.test_corpus_source_bindings import _lir02_complete_case
@@ -2829,14 +2829,93 @@ def _reviewed_mixed_source_bound_cycle_fixture(tmp_path):
                                          bound_component_inputs=handoff, interpretation_id=interpretation_id)
     bound = {data.key: handoff}
     bound_sha = consumer.reviewed_admission_inputs_sha256(bound)
-    reference = inputs.stage_reviewed_mixed_source_bound_cycle_inputs_v5(
-        data.registry, **data.options, bound_component_inputs=bound,
-        expected_bound_component_inputs_sha256=bound_sha)
-    data.kwargs.update(stage_artifact=reference, expected_stage_sha256=reference["sha256"])
+    if stage:
+        reference = inputs.stage_reviewed_mixed_source_bound_cycle_inputs_v5(
+            data.registry, **data.options, bound_component_inputs=bound,
+            expected_bound_component_inputs_sha256=bound_sha)
+        data.kwargs.update(stage_artifact=reference, expected_stage_sha256=reference["sha256"])
     data.bound_component_inputs = bound
     data.bound_component_inputs_sha256 = bound_sha
     data.interpretation_id = interpretation_id
     return data
+
+
+@pytest.mark.parametrize("scenario", ("disjoint", "same_section", "current_policy", "historical_policy"))
+def test_reviewed_source_bound_v5_binds_citation_policy_to_split_history(tmp_path, scenario):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_eval_splits as splits
+
+    data = _reviewed_mixed_source_bound_cycle_fixture(tmp_path, stage=False)
+    policy = splits.US_CODE_SECTION_CITATION_GROUPING_POLICY
+    config = splits.LegalIREvalSplitConfig(citation_grouping_policy=policy)
+    digest = data.fixtures.digest
+
+    def manifest(rows, partition, cite, *, legacy):
+        grouping = None if legacy else policy
+        return splits.LegalIRSplitManifest(
+            examples=tuple(splits.LegalIRSplitExample.from_sample(
+                dict(row, citation=cite), citation_grouping_policy=grouping) for row in rows),
+            assignments={row["id"]: partition for row in rows}, config_digest=config.digest,
+            metadata={} if legacy else {"citation_grouping_policy": grouping},
+        ).to_dict()
+
+    current = manifest(data.rows, splits.TRAIN_SPLIT, "5 U.S.C. 552a(e)(4)", legacy=scenario == "current_policy")
+    archived_row = {"id": "fixture:archived-holdout",
+                    "source_text": "The orchard committee publishes its harvest calendar every spring."}
+    archived_citation = "5 U.S.C. 552" if scenario == "disjoint" else "5 U.S.C. 552a(d)"
+    archived = manifest([archived_row], splits.HOLDOUT_SPLIT, archived_citation,
+                        legacy=scenario == "historical_policy")
+    assert current["legal_ir_split_guard"]["passed"] and archived["legal_ir_split_guard"]["passed"]
+    for payload, legacy in ((current, scenario == "current_policy"), (archived, scenario == "historical_policy")):
+        if legacy:
+            assert payload["examples"][0]["citation_clusters"] == ["usc:5:"]
+
+    history = data.options["history"]
+    history.update(scope_kind="complete_declared_history",
+                   split_manifests=[{"manifest": archived, "sha256": digest(archived)}])
+    by_id = {row["sample_id"]: row for row in current["examples"]}
+    for record in history["records"]:
+        record["split_example"] = by_id[record["id"]]
+    history["records"].append(dict(archived_row, source_sha256=data.fixtures.source_digest(archived_row["source_text"]),
+                                   split_example=archived["examples"][0], assignment=splits.HOLDOUT_SPLIT))
+    consumer_options = dict(data.consumer_options, split_manifest=current, expected_split_manifest_sha256=digest(current))
+    binding = data.fixtures.owner.prepare_reviewed_source_span_consumer_binding_v3(
+        data.rows, **consumer_options, bound_component_inputs=data.bound_component_inputs[data.key])
+    config_wire = config.to_dict()
+    options = dict(data.options, split_manifest=current, successor_binding={data.key: binding},
+                   expected_history_sha256=digest(history), split_config=config_wire,
+                   expected_split_config_sha256=digest(config_wire))
+
+    def stage():
+        return inputs.stage_reviewed_mixed_source_bound_cycle_inputs_v5(
+            data.registry, **options, bound_component_inputs=data.bound_component_inputs,
+            expected_bound_component_inputs_sha256=data.bound_component_inputs_sha256)
+
+    if scenario in ("current_policy", "historical_policy"):
+        with pytest.raises(ValueError, match="frozen citation grouping policy differs from split configuration"):
+            stage()
+    elif scenario == "same_section":
+        with pytest.raises(splits.LegalIRSplitLeakageError) as refused:
+            stage()
+        assert any(violation.kind == "citation_cluster" and violation.key == "usc:5:552a"
+                   for violation in refused.value.result.violations)
+    else:
+        reference = stage()
+        staged = _reviewed_doc(data.registry, reference)
+        retained = _reviewed_doc(data.registry, staged["history_artifact"])
+        assert retained == dict(history, split_manifests=[*history["split_manifests"],
+            {"manifest": current, "sha256": digest(current)}])
+        assert staged["history_guard"]["status"] == "passed"
+        ready = inputs.prepare_reviewed_mixed_source_bound_decoder_training_inputs_v5(data.registry,
+            **dict(data.kwargs, stage_artifact=reference, expected_stage_sha256=reference["sha256"],
+                   split_config=config_wire, expected_split_config_sha256=digest(config_wire)),
+            current_bound_component_inputs=data.bound_component_inputs,
+            expected_bound_component_inputs_sha256=data.bound_component_inputs_sha256)
+        assert ready["receipt"]["history_sha256"] == staged["history_artifact"]["sha256"]
+        assert not ready["receipt"]["training_executed"]
+        return
+
+    assert data.registry.stage_calls == 0
+    assert not options["output_directory"].exists()
 
 
 def test_reviewed_mixed_source_bound_cycle_v5_replays_signed_source_through_decoder(tmp_path):
