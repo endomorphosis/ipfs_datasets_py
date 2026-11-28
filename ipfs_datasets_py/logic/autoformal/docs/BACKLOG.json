@@ -5513,6 +5513,46 @@
       },
       "record_id": "v12-saved-terminal-and-producer-source-evidence",
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
+    },
+    "evaluation_cache_finite_duration": {
+      "evidence_ordinal": 620,
+      "facts": {
+        "bytes": 1376,
+        "path": "/tmp/Guide616-current-verified-integration-ZQ1EnK4x/actual-composed-qualification-Evidence620.json",
+        "sha256": "2a0768d0bd295a96251e43e7f240c3c306f2ba08085007c1379c01d2b66a9c7e"
+      },
+      "record_id": "evaluation-cache-unrepresentable-duration-recovery",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
+    },
+    "physical_replay_captured_release_identity": {
+      "evidence_ordinal": 617,
+      "facts": {
+        "bytes": 1346,
+        "path": "/tmp/Guide616-current-verified-integration-ZQ1EnK4x/actual-composed-qualification-Evidence617.json",
+        "sha256": "d80450cd8e4ea1244ad4eccc6ba0082e969fb48f23f401a4ec05eabcbb525f72"
+      },
+      "record_id": "physical-replay-exact-captured-release-identity",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
+    },
+    "reviewed_cycle_late_historical_replay": {
+      "evidence_ordinal": 619,
+      "facts": {
+        "bytes": 1340,
+        "path": "/tmp/Guide616-current-verified-integration-ZQ1EnK4x/actual-composed-qualification-Evidence619.json",
+        "sha256": "16a38fd837b45947ab0ef1230cf5bede18c7b1184578e48f310f05d5bfd57d27"
+      },
+      "record_id": "reviewed-cycle-history-and-withdrawal-closeout",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
+    },
+    "v12_saved_text_request_tokenizer": {
+      "evidence_ordinal": 618,
+      "facts": {
+        "bytes": 1612,
+        "path": "/tmp/Guide616-current-verified-integration-ZQ1EnK4x/actual-composed-qualification-Evidence618.json",
+        "sha256": "4f44273c57516cbd377a47ecdd794f7ee5853880deb72df0a3b79077f6420870"
+      },
+      "record_id": "v12-emitted-text-pinned-tokenizer-validation",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
     }
   },
   "programme_goal_hierarchy": {

@@ -4414,3 +4414,23 @@ V12 saved result replay checks token bounds and terminal markers, ordered unit i
 ## Evidence616 — Canonical U.S. Code identity in physical replay
 
 Physical replay compares the full normalized U.S. Code identities of the captured and reviewed provisions, including qualifiers. It rejects mismatched section or note identities and unknown or duplicate qualifiers. Older non-U.S.-Code fixture labels retain their existing comparison. [Exact qualification evidence](/tmp/Guide612-current-verified-continuation-jzQ7hESc/actual-composed-qualification-Evidence616.json)
+
+
+## Evidence617 — Captured release identity in physical corpus replay
+
+The signed reviewed source version must name the release in the replayed physical capture. A same-byte source labelled as another release now refuses before the earlier canonical provision identity check. [Exact qualification evidence](/tmp/Guide616-current-verified-integration-ZQ1EnK4x/actual-composed-qualification-Evidence617.json)
+
+
+## Evidence618 — V12 text replay from pinned token IDs
+
+For a nonempty EOS-terminated body, the saved verifier reopens the pinned tokenizer and recipe to re-decode the token IDs. Reported text and reported transport failures must agree with the result. The verification does not load model weights or identify the logits that produced the IDs. [Exact qualification evidence](/tmp/Guide616-current-verified-integration-ZQ1EnK4x/actual-composed-qualification-Evidence618.json)
+
+
+## Evidence619 — Reviewed cycle history and withdrawal closeout
+
+The existing staging owner repeats its authenticated historical and retirement-reason reads after metadata staging. A late change prevents the caller from receiving a completed stage reference. [Exact qualification evidence](/tmp/Guide616-current-verified-integration-ZQ1EnK4x/actual-composed-qualification-Evidence619.json)
+
+
+## Evidence620 — Finite evaluation cache duration accounting
+
+The cache treats unrepresentable duration values and nonfinite totals as cache misses. Such entries do not contribute saved-time credit. [Exact qualification evidence](/tmp/Guide616-current-verified-integration-ZQ1EnK4x/actual-composed-qualification-Evidence620.json)

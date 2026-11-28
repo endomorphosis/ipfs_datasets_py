@@ -40060,6 +40060,54 @@
       "root": "artifact_workspace",
       "scope": "Reviewed and captured provision identity matching in the physical release route",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/physical_replay_captured_release_identity",
+      "evidence_ordinal": 617,
+      "id": "physical-replay-exact-captured-release-identity",
+      "observed_bytes": 1346,
+      "observed_sha256": "d80450cd8e4ea1244ad4eccc6ba0082e969fb48f23f401a4ec05eabcbb525f72",
+      "path": "/tmp/Guide616-current-verified-integration-ZQ1EnK4x/actual-composed-qualification-Evidence617.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Signed fictional physical V2/V3/V4 source replay",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/v12_saved_text_request_tokenizer",
+      "evidence_ordinal": 618,
+      "id": "v12-emitted-text-pinned-tokenizer-validation",
+      "observed_bytes": 1612,
+      "observed_sha256": "4f44273c57516cbd377a47ecdd794f7ee5853880deb72df0a3b79077f6420870",
+      "path": "/tmp/Guide616-current-verified-integration-ZQ1EnK4x/actual-composed-qualification-Evidence618.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "V12 saved output evidence under the request-pinned tokenizer",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/reviewed_cycle_late_historical_replay",
+      "evidence_ordinal": 619,
+      "id": "reviewed-cycle-history-and-withdrawal-closeout",
+      "observed_bytes": 1340,
+      "observed_sha256": "16a38fd837b45947ab0ef1230cf5bede18c7b1184578e48f310f05d5bfd57d27",
+      "path": "/tmp/Guide616-current-verified-integration-ZQ1EnK4x/actual-composed-qualification-Evidence619.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Verified history and withdrawal evidence at reviewed stage completion",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/evaluation_cache_finite_duration",
+      "evidence_ordinal": 620,
+      "id": "evaluation-cache-unrepresentable-duration-recovery",
+      "observed_bytes": 1376,
+      "observed_sha256": "2a0768d0bd295a96251e43e7f240c3c306f2ba08085007c1379c01d2b66a9c7e",
+      "path": "/tmp/Guide616-current-verified-integration-ZQ1EnK4x/actual-composed-qualification-Evidence620.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Existing LegalIR evaluation cache timing and saved-time credit",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }

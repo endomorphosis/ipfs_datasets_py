@@ -3554,3 +3554,23 @@ The retained signed report and four inconsistent copies exercised the before/aft
 ## Evidence616 — Canonical U.S. Code identity in physical replay
 
 The signed fictional control previously accepted different captured and reviewed sections. The corrected run passed 46 local software cases, including five canonical physical cases, three legacy cases and 38 identity parser cases. Source contents matched before and after and both leases closed. The audit wrapper separately reported three blocked subprocess attempts, with no subprocess execution credit. No real provision received a new independent review or admission. [Exact qualification evidence](/tmp/Guide612-current-verified-continuation-jzQ7hESc/actual-composed-qualification-Evidence616.json)
+
+
+## Evidence617 — Captured release identity in physical corpus replay
+
+All three mismatches reproduced with rebuilt signatures, graph and project pins. The three negative and three retained positive software cases pass. Four incidental process probes were blocked before execution by the local audit. No legal edition received a new independent review. [Exact qualification evidence](/tmp/Guide616-current-verified-integration-ZQ1EnK4x/actual-composed-qualification-Evidence617.json)
+
+
+## Evidence618 — V12 text replay from pinned token IDs
+
+The retained signed report still passes and originally emitted no text. Copies with matching and substituted text were tested against the actual pinned tokenizer. The matching copy passed and the substituted copy refused. The parent also refuses to publish after the original deadline expires during final validation. The exact qualification record distinguishes the tokenizer, parent deadline and retained software tests. [Exact qualification evidence](/tmp/Guide616-current-verified-integration-ZQ1EnK4x/actual-composed-qualification-Evidence618.json)
+
+
+## Evidence619 — Reviewed cycle history and withdrawal closeout
+
+The three matched controls now distinguish stable withdrawal, changed parent history, and changed retirement evidence. The retained signed V5 fixture exceeded the unchanged CPU cap after the shorter cases finished and carries no V5 qualification. Separate terminal receipts cover the matched controls and retained software cohort within that cap. Earlier numerical evidence remains tied to its original source. [Exact qualification evidence](/tmp/Guide616-current-verified-integration-ZQ1EnK4x/actual-composed-qualification-Evidence619.json)
+
+
+## Evidence620 — Finite evaluation cache duration accounting
+
+All fifteen owning tests passed, including four reproduced corrupt-duration cases. Historical V5 and V12 receipts supply worker and callback wall-clock observations for the fictional population only. Compute, monetary cost, independently accepted results and cost per accepted formalization remain unmeasured. [Exact qualification evidence](/tmp/Guide616-current-verified-integration-ZQ1EnK4x/actual-composed-qualification-Evidence620.json)
