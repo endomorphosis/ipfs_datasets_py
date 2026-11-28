@@ -1182,6 +1182,38 @@ def test_reviewed_inference_rechecks_exact_output_bytes_after_final_parent_callb
     assert facts.owner.to_dict()["status"] == "active"
 
 
+def test_reviewed_inference_refuses_parent_receipt_when_final_validation_uses_deadline(
+        reviewed_physical_owner, monkeypatch):
+    import time
+
+    facts = reviewed_physical_owner
+    cli = _reviewed_physical_cli(monkeypatch)
+    packet = _reviewed_physical_packet(facts)
+    verify_outputs = inference._check_reviewed_evaluation_outputs
+    monotonic = time.monotonic
+    parent_code = inference.run_reviewed_source_inference_cycle.__code__
+    verified = []
+
+    def check_outputs(cycle, request):
+        verify_outputs(cycle, request)
+        verified.append(True)
+
+    def clock():
+        if verified and sys._getframe(1).f_code is parent_code:
+            return facts.deadline + 1
+        return monotonic()
+
+    monkeypatch.setattr(inference, "_check_reviewed_evaluation_outputs", check_outputs)
+    monkeypatch.setattr(time, "monotonic", clock)
+    with pytest.raises(TimeoutError, match="deadline before publishing the parent receipt"):
+        _reviewed_physical_run(cli, facts, packet)
+    assert verified == [True]
+    output = facts.attempt / "outputs"
+    assert (output / "cycle.json").is_file()
+    assert not (output / "parent-cycle.json").exists()
+    _reviewed_physical_assert_stopped(facts)
+
+
 def test_reviewed_inference_original_private_native_cancellation_stops_before_asset_ack(reviewed_physical_owner, monkeypatch):
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_campaign_process as processes
     facts = reviewed_physical_owner
@@ -4109,6 +4141,80 @@ def test_reviewed_inference_v12_original_owner_ack_commits_four_current_roles(tm
             inference._source_bound_evaluation_commitment(request, live)
 
 
+def _v12_saved_text_assets(put):
+    """Build a lossless local tokenizer fixture without a model or checkpoint."""
+    from tokenizers import Tokenizer, decoders, models, pre_tokenizers
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_training_worker as worker
+
+    vocabulary = {"[UNK]": 0, "[BOS]": 1, "[EOS]": 2}
+    vocabulary.update({symbol: index for index, symbol in enumerate(sorted(pre_tokenizers.ByteLevel.alphabet()), 3)})
+    native = Tokenizer(models.BPE(vocab=vocabulary, merges=[], unk_token="[UNK]"))
+    native.pre_tokenizer = pre_tokenizers.ByteLevel(add_prefix_space=False, use_regex=False)
+    native.decoder = decoders.ByteLevel()
+    native.add_special_tokens(["[BOS]", "[EOS]", "[UNK]"])
+    options = {"bos_token": "[BOS]", "eos_token": "[EOS]", "unk_token": "[UNK]", "pad_token": None,
+               "model_max_length": 4096, "clean_up_tokenization_spaces": False}
+    tokens = {"vocab_size": len(vocabulary), "bos_token_id": 1, "eos_token_id": 2}
+    assets = {
+        "recipe_artifact": put("v12-token-recipe.json", worker._json_bytes({
+            "schema": "reviewed-local-decoder-recipe/v1", "max_sequence_tokens": 4096, "tokenizer": options})),
+        "tokenizer_artifact": put("v12-tokenizer.json", native.to_str().encode("utf-8")),
+        "model_config_artifact": put("v12-token-model-config.json", worker._json_bytes(tokens)),
+    }
+    return assets, native, tokens
+
+
+@pytest.mark.parametrize("case", ["complete", "different_body", "invalid_json", "different_invalid_text",
+                                  "false_transport_error", "changed_pinned_asset"])
+def test_reviewed_inference_v12_saved_emitted_text_matches_decoded_ids(tmp_path, case):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_training_worker as worker
+    from tests.unit.optimizers.logic_theorem_optimizer.test_legal_ir_evaluation_artifacts import _producer_complete_norm
+
+    def put(name, raw):
+        path = tmp_path / name
+        path.write_bytes(raw)
+        return {"path": str(path), "bytes": len(raw), "sha256": _sha(path)}
+
+    assets, native, special = _v12_saved_text_assets(put)
+    candidate = _producer_complete_norm()
+    emitted = worker._json_bytes(candidate).decode()
+    actual = emitted
+    outcome, reason = "complete", None
+    if case == "different_body":
+        # Both strings are canonical JSON and describe different meanings.
+        actual = worker._json_bytes(dict(candidate, interpretation_id="fixture:other")).decode()
+    elif case in ("invalid_json", "different_invalid_text", "false_transport_error"):
+        candidate, outcome, reason = None, "invalid", "invalid_complete_norm_json"
+        actual = "no JSON §"
+        emitted = actual if case == "invalid_json" else "different"
+        if case == "false_transport_error":
+            emitted, reason = None, "invalid_output_transport"
+
+    body = native.encode(actual, add_special_tokens=False).ids
+    assert native.decode(body, skip_special_tokens=False) == actual
+    if case == "changed_pinned_asset":
+        path = Path(assets["tokenizer_artifact"]["path"])
+        path.write_bytes(path.read_bytes().replace(b"ByteLevel", b"ByteLeveL", 1))
+    row = dict(id="sample", unit_id="provision", outcome=outcome, candidate=candidate,
+               generated_token_ids=[special["bos_token_id"], *body, special["eos_token_id"]],
+               generated_text=emitted, reason=reason)
+    scope = "a" * 64
+    input_receipt = dict(schema="reviewed-decoder-generation-input-receipt/v1",
+        profile="source-only-reviewed-decoder-generation-inputs/v1", record_count=1,
+        source_contexts_sha256=scope, max_source_tokens=4096, source_arguments_sha256="b" * 64,
+        prepared_records_sha256="c" * 64, target_access_performed=False, training_stage_access_performed=False,
+        tokenizer_contract={"schema": "reviewed-decoder-tokenizer-contract/v2", **special})
+    call = dict(raw_generation_outputs=[row], producer_outputs=[{key: row[key] for key in ("id", "outcome", "candidate")}],
+        source_arguments_sha256="b" * 64, source_records_sha256="c" * 64, exception_type=None,
+        input_receipt=input_receipt)
+    request = dict(assets=assets, max_source_tokens=4096, max_output_tokens=4096)
+    if case in ("complete", "invalid_json"):
+        inference._check_source_bound_generation_rows({"last_call": call}, request, [row], scope)
+    else:
+        with pytest.raises(ValueError, match="v12 .*token|reviewed decoder artifact changed"):
+            inference._check_source_bound_generation_rows({"last_call": call}, request, [row], scope)
+
+
 def test_reviewed_inference_v12_fixed_child_uses_distinct_replay_and_saved_joins(tmp_path, monkeypatch):
     from copy import deepcopy
     from dataclasses import replace
@@ -4302,11 +4408,18 @@ def test_reviewed_inference_v12_fixed_child_uses_distinct_replay_and_saved_joins
     call = generation["last_call"]
     raw = call["raw_generation_outputs"][0]
     text = worker._json_bytes(body).decode()
-    tokens = [backend.tokenizer.bos_token_id, *backend.tokenizer.encode(text), backend.tokenizer.eos_token_id]
+    # This emitted-body control must pin assets that can actually decode it.
+    # The original analytic child above still exercises fixture abstention.
+    replay_assets, native, special = _v12_saved_text_assets(fixture.put)
+    call["input_receipt"]["tokenizer_contract"].update(special)
+    for item in call["raw_generation_outputs"]:
+        assert item["outcome"] == "abstained"
+        item["generated_token_ids"] = [special["bos_token_id"], special["eos_token_id"]]
+    tokens = [special["bos_token_id"], *native.encode(text, add_special_tokens=False).ids, special["eos_token_id"]]
     raw.update(outcome="complete", candidate=body, generated_text=text, reason=None, generated_token_ids=tokens)
     call["producer_outputs"][0].update(outcome="complete", candidate=body)
     scope = generation["input_commitment"]["source_contexts_sha256"]
-    complete_request = dict(request, max_output_tokens=len(tokens))
+    complete_request = dict(request, assets={**request["assets"], **replay_assets}, max_output_tokens=len(tokens))
     inference._check_source_bound_generation_rows(generation, complete_request, rows, scope)
     raw["candidate"] = None
     call["producer_outputs"][0]["candidate"] = None
