@@ -565,6 +565,72 @@ def _check_source_bound_asset_policy(request, spec, policy):
         raise ValueError("source-bound evaluation asset policy differs from original request")
 
 
+def _check_source_bound_generation_rows(generation, request, rows, contexts_sha256):
+    """Join recorded V12 token evidence to the complete saved output population."""
+    from . import autoencoder_training_worker as worker
+    from . import legal_ir_semantic_metrics as metrics
+
+    call = generation["last_call"]
+    raw = call.get("raw_generation_outputs")
+    if raw is None:
+        # The measurement join has already validated the recorded batch failure.
+        return
+    outputs = call.get("producer_outputs")
+    receipt = call.get("input_receipt")
+    if (call.get("exception_type", False) is not None or "closeout_exception_type" in call
+            or type(outputs) is not list or len(outputs) != len(raw)
+            or type(receipt) is not dict
+            or receipt.get("schema") != "reviewed-decoder-generation-input-receipt/v1"
+            or receipt.get("profile") != "source-only-reviewed-decoder-generation-inputs/v1"
+            or type(receipt.get("record_count")) is not int or receipt["record_count"] != len(rows)
+            or receipt.get("source_contexts_sha256") != contexts_sha256
+            or receipt.get("max_source_tokens") != request["max_source_tokens"]
+            or receipt.get("source_arguments_sha256") != call.get("source_arguments_sha256")
+            or receipt.get("prepared_records_sha256") != call.get("source_records_sha256")
+            or receipt.get("target_access_performed") is not False
+            or receipt.get("training_stage_access_performed") is not False):
+        raise ValueError("v12 saved generation input or producer rows differ from the selected scope")
+
+    tokenizer = receipt.get("tokenizer_contract")
+    if type(tokenizer) is not dict or tokenizer.get("schema") != "reviewed-decoder-tokenizer-contract/v2":
+        raise ValueError("v12 saved generation tokenizer contract required")
+    vocab, bos, eos = (tokenizer.get(key) for key in ("vocab_size", "bos_token_id", "eos_token_id"))
+    model_config = worker._parse_json(worker._reviewed_decoder_artifact(
+        worker.CheckpointArtifact.from_dict(request["assets"]["model_config_artifact"]), limit=1024**2))
+    expected_tokens = {"vocab_size": vocab, "bos_token_id": bos, "eos_token_id": eos}
+    if (type(vocab) is not int or not 3 <= vocab <= 2**31
+            or type(bos) is not int or type(eos) is not int or not (0 <= bos < vocab and 0 <= eos < vocab)
+            or bos == eos or type(model_config) is not dict
+            or any(type(model_config.get(field)) is not int or model_config[field] != value
+                   for field, value in expected_tokens.items())):
+        raise ValueError("v12 saved tokenizer differs from the request-pinned model configuration")
+
+    fields = {"id", "unit_id", "outcome", "candidate", "generated_token_ids", "generated_text", "reason"}
+    for row, item, output in zip(rows, raw, outputs, strict=True):
+        if (set(item) != fields or type(row.get("unit_id")) is not str or not row["unit_id"]
+                or item["unit_id"] != row["unit_id"]
+                or worker._json_bytes(output) != worker._json_bytes(
+                    {key: item[key] for key in ("id", "outcome", "candidate")})):
+            raise ValueError("v12 exact raw unit and producer output evidence required")
+        _check_reviewed_generation_terminal(item, vocab=vocab, bos=bos, eos=eos,
+            max_output_tokens=request["max_output_tokens"], scope="v12", time_limit_supported=False)
+
+        text = item["generated_text"]
+        canonical = None
+        if text is not None:
+            try:
+                payload = worker._parse_json(text.encode("utf-8"))
+                if worker._json_bytes(payload).decode("utf-8") == text and metrics._complete_norm_payload_shape(payload):
+                    canonical = payload
+            except (ValueError, TypeError, UnicodeError, RecursionError):
+                pass
+        if item["outcome"] == "complete":
+            if canonical is None or worker._json_bytes(canonical) != worker._json_bytes(item["candidate"]):
+                raise ValueError("v12 saved complete output differs from its canonical generated body")
+        elif item["candidate"] is not None or canonical is not None:
+            raise ValueError("v12 saved noncomplete output contradicts generated body or candidate evidence")
+
+
 def _check_source_bound_evaluation_outputs(cycle, request, outputs):
     from dataclasses import asdict
     import re
@@ -666,6 +732,7 @@ def _check_source_bound_evaluation_outputs(cycle, request, outputs):
     _check_source_bound_checkpoint_history(request, spec, rows,
         worker._parse_json(read(request["split_manifest_artifact"])))
     _reviewed_evaluation_measurement_cases(rows, evaluation, generation, request["checkpoint_declarations"])
+    _check_source_bound_generation_rows(generation, request, rows, commitment["source_contexts_sha256"])
     payload = evaluation["compiler_artifact"]["reviewed_source_span_producer_evaluation"]
     configuration = payload["configuration"]
     last = generation["last_call"]
@@ -1622,6 +1689,44 @@ def _check_digest_omitted_loader_output(loader, request):
         raise ValueError("v11 saved loader identity, pair or scope differs")
 
 
+def _check_reviewed_generation_terminal(item, *, vocab, bos, eos, max_output_tokens,
+                                        scope, time_limit_supported):
+    """Check the recorded token boundary without decoding or changing the tokens."""
+    def need(ok, message):
+        if not ok:
+            raise ValueError(f"{scope} {message}")
+
+    tokens, text = item["generated_token_ids"], item["generated_text"]
+    need(type(tokens) is list and 1 <= len(tokens) <= max_output_tokens
+         and all(type(token) is int and 0 <= token < vocab for token in tokens)
+         and tokens[0] == bos and all(token not in (bos, eos) for token in tokens[1:-1])
+         and (text is None or type(text) is str),
+         "raw generation tokens or text differ from the saved tokenizer contract")
+    terminal = tokens[-1] if len(tokens) > 1 else None
+    outcome, reason = item["outcome"], item["reason"]
+    need(outcome in ("complete", "abstained", "incomplete", "invalid"),
+         "saved generation disposition differs")
+    if outcome == "complete":
+        need(terminal == eos and len(tokens) >= 3 and type(text) is str and reason is None,
+             "complete output requires observed EOS after a generated body")
+    elif outcome == "abstained":
+        need(terminal == eos and len(tokens) == 2 and text is None and reason == "empty_output",
+             "abstention requires empty EOS output")
+    elif outcome == "incomplete":
+        at_limit = len(tokens) == max_output_tokens
+        expected_reason = "output_limit_without_eos" if at_limit else "generation_time_limit_without_eos"
+        need((at_limit or time_limit_supported) and terminal not in (bos, eos)
+             and text is None and reason == expected_reason,
+             "incomplete output contradicts the token limit or terminal evidence")
+    elif reason == "unexpected_bos_in_output":
+        need(terminal == bos and text is None, "unexpected BOS must terminate the output")
+    else:
+        need(terminal == eos and len(tokens) >= 3
+             and (reason == "invalid_output_transport" and text is None
+                  or reason == "invalid_complete_norm_json" and type(text) is str),
+             "invalid output contradicts its terminal or transport evidence")
+
+
 def _check_digest_omitted_generation_outputs(generation, request):
     """Verify saved raw/derived pairs without changing either observed value.
 
@@ -1693,32 +1798,9 @@ def _check_digest_omitted_generation_outputs(generation, request):
         need(type(item["outcome"]) is str and item["outcome"] in {"complete", "abstained", "incomplete", "invalid"}
              and proof["id"] == output["id"] == item["id"] and proof["outcome"] == output["outcome"] == item["outcome"],
              "v11 saved disposition or identity differs")
-        tokens, text = item["generated_token_ids"], item["generated_text"]
-        need(type(tokens) is list and 1 <= len(tokens) <= max_output_tokens
-             and all(type(token) is int and 0 <= token < vocab for token in tokens)
-             and tokens[0] == bos and all(token not in (bos, eos) for token in tokens[1:-1])
-             and (text is None or type(text) is str),
-             "v11 raw generation tokens or text differ from the saved tokenizer contract")
-        terminal = tokens[-1] if len(tokens) > 1 else None
-        outcome, reason = item["outcome"], item["reason"]
-        if outcome == "complete":
-            need(terminal == eos and len(tokens) >= 3 and type(text) is str and reason is None,
-                 "v11 complete output requires observed EOS after a generated body")
-        elif outcome == "abstained":
-            need(terminal == eos and len(tokens) == 2 and text is None and reason == "empty_output",
-                 "v11 abstention requires empty EOS output")
-        elif outcome == "incomplete":
-            at_limit = len(tokens) == max_output_tokens
-            expected_reason = "output_limit_without_eos" if at_limit else "generation_time_limit_without_eos"
-            need(terminal not in (bos, eos) and text is None and reason == expected_reason,
-                 "v11 incomplete output contradicts the token limit or terminal evidence")
-        elif reason == "unexpected_bos_in_output":
-            need(terminal == bos and text is None, "v11 unexpected BOS must terminate the output")
-        else:
-            need(terminal == eos and len(tokens) >= 3
-                 and (reason == "invalid_output_transport" and text is None
-                      or reason == "invalid_complete_norm_json" and type(text) is str),
-                 "v11 invalid output contradicts its terminal or transport evidence")
+        _check_reviewed_generation_terminal(item, vocab=vocab, bos=bos, eos=eos,
+            max_output_tokens=max_output_tokens, scope="v11", time_limit_supported=True)
+        text = item["generated_text"]
         need(proof["computed_field"] == "typed_expression.content_digest" and proof["other_fields_repaired"] is False
              and proof["raw_model_text_sha256"] == (None if text is None else worker._digest(text.encode("utf-8"))),
              "v11 raw text or derivation commitment differs")
@@ -1734,7 +1816,7 @@ def _check_digest_omitted_generation_outputs(generation, request):
             expected = worker._digest(inputs._reviewed_wire(item["candidate"]))
         else:
             need(item["candidate"] is None, "v11 noncomplete output must retain its absent candidate")
-            if reason == "invalid_complete_norm_json":
+            if item["reason"] == "invalid_complete_norm_json":
                 try:
                     inputs.assemble_reviewed_decoder_digest_omitted_target(text,
                         target_codec=worker.REVIEWED_DIGEST_OMITTED_TARGET_CODEC)
