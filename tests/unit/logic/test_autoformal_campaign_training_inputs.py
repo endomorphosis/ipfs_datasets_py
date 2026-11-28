@@ -796,6 +796,50 @@ def test_explicit_withdrawal_removes_all_active_rows_without_positive_owner_call
     assert all(value is False for key, value in result["compatibility"].items() if key != "reason")
 
 
+@pytest.mark.parametrize("late_change", (None, "parent_history", "retirement_reason"))
+def test_reviewed_withdrawal_closes_historical_inputs_after_final_write(tmp_path, monkeypatch, late_change):
+    data = _reviewed_transition_fixture(tmp_path)
+    registry = _ReviewedArtifactRegistry(tmp_path / "registry")
+    options = _reviewed_stage_options(data, tmp_path / "bootstrap")
+    parent = inputs.stage_reviewed_cycle_inputs(registry, **options)
+    withdrawal = _reviewed_withdrawal_options(data, options, registry, parent, tmp_path / "withdrawal")
+    parent_document = _reviewed_doc(registry, parent)
+    historical_refs = {
+        "parent_history": parent_document["history_artifact"],
+        "retirement_reason": withdrawal["transition"]["revoked"][0]["reason_ref"],
+    }
+    victim = historical_refs.get(late_change)
+    stage_artifact = registry.stage_artifact
+    read_artifact = registry.read_artifact
+    written = []
+
+    def stage_then_change_history(path, digest):
+        reference = stage_artifact(path, digest)
+        document = json.loads(Path(path).read_bytes())
+        if isinstance(document, dict) and document.get("transition_kind") == "withdrawal":
+            written.append(reference)
+            if victim is not None:
+                Path(victim["path"]).write_bytes(b"changed during final withdrawal write")
+        return reference
+
+    def read_current_bytes(descriptor, *, max_bytes):
+        if victim is not None and written and descriptor["sha256"] == victim["sha256"]:
+            return registry.artifact_path(descriptor).read_bytes()
+        return read_artifact(descriptor, max_bytes=max_bytes)
+
+    monkeypatch.setattr(registry, "stage_artifact", stage_then_change_history)
+    monkeypatch.setattr(registry, "read_artifact", read_current_bytes)
+    if victim is None:
+        result = inputs.stage_reviewed_cycle_inputs(registry, **withdrawal)
+        assert result["sha256"] == written[0]["sha256"]
+        assert _reviewed_doc(registry, result)["parent_artifact"] == parent
+    else:
+        with pytest.raises(ValueError, match="registry artifact exact readback differs"):
+            inputs.stage_reviewed_cycle_inputs(registry, **withdrawal)
+        assert Path(victim["path"]).read_bytes() == b"changed during final withdrawal write"
+    assert len(written) == 1
+
+
 @pytest.mark.parametrize("damage", ("missing_provenance", "missing_retirement", "double_retirement", "foreign_retirement",
                                     "nonnull_admission", "bad_history", "bad_provenance"))
 def test_withdrawal_requires_complete_independent_retirement_and_guard_inputs(tmp_path, damage):

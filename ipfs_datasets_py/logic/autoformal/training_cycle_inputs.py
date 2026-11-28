@@ -916,6 +916,13 @@ def _stage_reviewed_cycle_inputs(registry, *, transition_kind, parent_artifact, 
                            and all(type(value) is dict for value in bound_snapshot.values()),
                            "current bound source replay must cover every active component")
     _reviewed_lineage(lineage)
+    historical_artifacts = {}
+
+    def read_historical_artifact(reference):
+        raw = _reviewed_read(registry, reference)
+        historical_artifacts[_reviewed_wire(reference)] = reference
+        return raw
+
     parent, parent_rows, previous_history, parent_records = None, [], None, {}
     parent_components = None
     parent_is_v3 = False
@@ -930,7 +937,7 @@ def _stage_reviewed_cycle_inputs(registry, *, transition_kind, parent_artifact, 
         _reviewed_sha(expected_parent_sha256)
         _reviewed_need(_reviewed_ref(parent_artifact)["sha256"] == expected_parent_sha256,
                        "independent parent artifact identity differs")
-        parent = _reviewed_json(_reviewed_read(registry, parent_artifact))
+        parent = _reviewed_json(read_historical_artifact(parent_reference))
         parent_bound = (_source_bound and type(parent) is dict
                         and parent.get("schema") == REVIEWED_SOURCE_BOUND_MIXED_CYCLE_SCHEMA)
         _reviewed_closed(parent, _reviewed_cycle_fields(_admission_version, source_bound=parent_bound),
@@ -940,7 +947,7 @@ def _stage_reviewed_cycle_inputs(registry, *, transition_kind, parent_artifact, 
         parent_is_v3 = parent_bound or parent["schema"] in {REVIEWED_COMPONENT_CYCLE_SCHEMA, REVIEWED_MIXED_CYCLE_SCHEMA}
         _reviewed_need(not parent_is_v3 or withdrawal or multiple,
                        "positive descendants of a component cycle require explicit component membership")
-        parent_rows = _reviewed_json(_reviewed_read(registry, parent["rows_artifact"]))
+        parent_rows = _reviewed_json(read_historical_artifact(parent["rows_artifact"]))
         _reviewed_need(type(parent_rows) is list and len(parent_rows) <= MAX_REVIEWED_CYCLE_ROWS,
                        "bounded complete historical active row population required")
         for row in parent_rows:
@@ -948,7 +955,7 @@ def _stage_reviewed_cycle_inputs(registry, *, transition_kind, parent_artifact, 
             _reviewed_need(type(row["id"]) is str, "historical row ID must be a string")
         _reviewed_need(len({row["id"] for row in parent_rows}) == len(parent_rows),
                        "unique historical active IDs required")
-        previous_history = _reviewed_json(_reviewed_read(registry, parent["history_artifact"]))
+        previous_history = _reviewed_json(read_historical_artifact(parent["history_artifact"]))
         _reviewed_closed(previous_history, {"schema", "scope_id", "scope_kind", "split_manifests",
                          "records", "parent_history_artifact"}, "historical parent guard")
         _reviewed_need(previous_history["schema"] == "reviewed-example-cycle-history/v1"
@@ -958,7 +965,7 @@ def _stage_reviewed_cycle_inputs(registry, *, transition_kind, parent_artifact, 
                        and len(previous_history["split_manifests"]) <= MAX_REVIEWED_HISTORY
                        and history_copy.get("parent_history_artifact") == parent["history_artifact"],
                        "exact parent guard history reference required")
-        parent_manifest = _reviewed_json(_reviewed_read(registry, parent["split_manifest_artifact"]))
+        parent_manifest = _reviewed_json(read_historical_artifact(parent["split_manifest_artifact"]))
         _reviewed_closed(parent["history_guard"], {"schema", "status", "result", "positive_use_authorized"},
                          "historical actual guard observation")
         _reviewed_need(parent["history_guard"]["schema"] == "reviewed-cycle-history-guard-observation/v1"
@@ -977,12 +984,12 @@ def _stage_reviewed_cycle_inputs(registry, *, transition_kind, parent_artifact, 
                 hashlib.sha256(_reviewed_wire(parent["withdrawal_provenance"])).hexdigest(),
                 parent["parent_artifact"], parent["transition"],
                 hashlib.sha256(_reviewed_wire(previous_history)).hexdigest(), parent["checkpoint_lineage"])
-            prior = _reviewed_json(_reviewed_read(registry, parent["parent_artifact"]))
+            prior = _reviewed_json(read_historical_artifact(parent["parent_artifact"]))
             prior_bound = (parent_bound and type(prior) is dict
                            and prior.get("schema") == REVIEWED_SOURCE_BOUND_MIXED_CYCLE_SCHEMA)
             _reviewed_closed(prior, _reviewed_cycle_fields(_admission_version, source_bound=prior_bound),
                              "withdrawal predecessor")
-            prior_rows = _reviewed_json(_reviewed_read(registry, prior["rows_artifact"]))
+            prior_rows = _reviewed_json(read_historical_artifact(prior["rows_artifact"]))
             _reviewed_need(_reviewed_cycle_format(prior, admission_version=_admission_version, source_bound=prior_bound)
                            and parent_is_v3 == (prior_bound or prior["schema"] in {
                                REVIEWED_COMPONENT_CYCLE_SCHEMA, REVIEWED_MIXED_CYCLE_SCHEMA})
@@ -992,16 +999,17 @@ def _stage_reviewed_cycle_inputs(registry, *, transition_kind, parent_artifact, 
                            and (not _source_bound or (
                                prior["withdrawal_provenance"] is None
                                and previous_history["parent_history_artifact"] == prior["history_artifact"]))
-                           and parent_manifest == _reviewed_json(_reviewed_read(registry, prior["split_manifest_artifact"])),
+                           and parent_manifest == _reviewed_json(read_historical_artifact(prior["split_manifest_artifact"])),
                            "withdrawal predecessor content or lineage differs")
             if prior_bound:
                 _reviewed_component_parent_memberships(prior["consumer_receipt"], prior_rows, consumer,
                                                        admission_version=_admission_version)
                 _reviewed_staged_bound_components(
-                    prior, lambda reference: _reviewed_read(registry, reference), consumer)
+                    prior, read_historical_artifact, consumer)
             _reviewed_need(not any(parent["transition"][key] for key in ("retained", "added", "corrected")),
                            "historical withdrawal cannot contain positive transitions")
-            _reviewed_transition(parent["transition"], prior_rows, [], {}, {}, registry)
+            _reviewed_transition(parent["transition"], prior_rows, [], {}, {}, registry,
+                                 read_reason=read_historical_artifact)
         else:
             _reviewed_need(parent["transition_kind"] in {"bootstrap", "successor"} and bool(parent_rows)
                            and parent["withdrawal_provenance"] is None
@@ -1014,7 +1022,7 @@ def _stage_reviewed_cycle_inputs(registry, *, transition_kind, parent_artifact, 
                     prior_receipt, parent_rows, consumer, admission_version=_admission_version)
                 if parent_bound:
                     _reviewed_staged_bound_components(
-                        parent, lambda reference: _reviewed_read(registry, reference), consumer)
+                        parent, read_historical_artifact, consumer)
             else:
                 _reviewed_need(prior_receipt.get("schema") == consumer.REVIEWED_SCHEMA
                                and prior_receipt.get("status") == "ready"
@@ -1023,7 +1031,7 @@ def _stage_reviewed_cycle_inputs(registry, *, transition_kind, parent_artifact, 
                                and prior_receipt.get("input_sha256s", {}).get("rows") == parent["rows_artifact"]["sha256"],
                                "historical positive parent must retain its actual ready profile")
                 if multiple and changes["retained"]:
-                    prior_transport = _reviewed_json(_reviewed_read(registry, parent["admission_transport_artifact"]))
+                    prior_transport = _reviewed_json(read_historical_artifact(parent["admission_transport_artifact"]))
                     _reviewed_need(prior_transport["admission_inputs_sha256"] == prior_receipt["admission_inputs_sha256"],
                                    "historical component admission transport differs")
                     prior_identity = _reviewed_component_id(prior_transport["skeleton"])
@@ -1047,7 +1055,8 @@ def _stage_reviewed_cycle_inputs(registry, *, transition_kind, parent_artifact, 
 
     guard_history, records, history_guard = _reviewed_history(
         history_copy, manifest, rows, config, previous_history, splits, withdrawal=withdrawal)
-    _reviewed_transition(changes, parent_rows, rows, records, parent_records, registry)
+    _reviewed_transition(changes, parent_rows, rows, records, parent_records, registry,
+                         read_reason=read_historical_artifact)
     if parent_components is not None and changes["retained"]:
         _reviewed_need(all(parent_components[key] == memberships[key] for key in changes["retained"]),
                        "retained rows must keep their independently reviewed component identity")
@@ -1115,7 +1124,7 @@ def _stage_reviewed_cycle_inputs(registry, *, transition_kind, parent_artifact, 
                        "fresh complete current reviewed admission required")
         return receipt, assessment
 
-    def current():
+    def check_current_inputs():
         _reviewed_need(tuple(_reviewed_wire(value) for value in original_json_inputs) == frozen_json_inputs
                        and (withdrawal or consumer.reviewed_admission_inputs_sha256(admission_inputs) == admission_sha)
                        and implementation() == producers, "reviewed staging inputs or named producers changed")
@@ -1123,6 +1132,9 @@ def _stage_reviewed_cycle_inputs(registry, *, transition_kind, parent_artifact, 
             _reviewed_need(consumer.reviewed_admission_inputs_sha256(bound_component_inputs)
                            == consumer.reviewed_admission_inputs_sha256(bound_snapshot) == bound_sha,
                            "current bound component replay changed during staging")
+
+    def current():
+        check_current_inputs()
         if withdrawal:
             return _reviewed_na_consumer(), None
         if not multiple:
@@ -1207,10 +1219,18 @@ def _stage_reviewed_cycle_inputs(registry, *, transition_kind, parent_artifact, 
         return result
 
     if withdrawal or multiple:
-        return stage(rows)
-    return admission_contract["consume"](successor_binding, successor_rows,
-        split_manifest=split_manifest, admission_inputs=admission_inputs,
-        exposure_records=exposure_records, consumer=stage)
+        result = stage(rows)
+    else:
+        result = admission_contract["consume"](successor_binding, successor_rows,
+            split_manifest=split_manifest, admission_inputs=admission_inputs,
+            exposure_records=exposure_records, consumer=stage)
+    if historical_artifacts:
+        # A registry write or consumer replay can change previously verified
+        # inputs. Re-authenticate those references before returning the seal.
+        for reference in historical_artifacts.values():
+            _reviewed_read(registry, reference)
+        check_current_inputs()
+    return result
 
 
 class ReviewedDecoderInputValidationError(ValueError):
