@@ -3933,6 +3933,12 @@ def _source_bound_v12_request_data(tmp_path, live=None, *, backend=None):
     pair = backend.snapshot_checkpoint() if backend is not None else {"model_state": b"model", "optimizer_state": b"Adam"}
     assets = {role: put(role, role.encode()) for role in (
         "recipe_artifact", "model_config_artifact", "tokenizer_artifact", "license_artifact")}
+    if backend is not None:
+        tokenizer = backend.tokenizer
+        assets["model_config_artifact"] = put("analytic-model-config.json", worker._json_bytes({
+            "vocab_size": tokenizer.vocab_size, "bos_token_id": tokenizer.bos_token_id,
+            "eos_token_id": tokenizer.eos_token_id,
+        }))
     assets.update(model_checkpoint=put("model_checkpoint", pair["model_state"]),
                   optimizer_checkpoint=put("optimizer_checkpoint", pair["optimizer_state"]))
     stage_child = put("stage-child.json", b"{}")
@@ -4147,7 +4153,7 @@ def test_reviewed_inference_v12_fixed_child_uses_distinct_replay_and_saved_joins
                 "profile", "source_text", "source_binding", "governing_context", "selection_context"} for row in records)
             return [{"id": row["id"], "unit_id": row["unit_id"], "outcome": "abstained", "candidate": None,
                 "generated_token_ids": [self.tokenizer.bos_token_id, self.tokenizer.eos_token_id],
-                "generated_text": "", "reason": "fictional analytic abstention"} for row in records]
+                "generated_text": None, "reason": "empty_output"} for row in records]
 
     backend = AnalyticBackend()
     backend.tokenizer = _CompleteReviewedByteTokenizer()
@@ -4262,6 +4268,54 @@ def test_reviewed_inference_v12_fixed_child_uses_distinct_replay_and_saved_joins
         raw = worker._json_bytes(value)
         path.write_bytes(raw)
         offered_cycle["output_artifacts"][role] = dict(path=str(path), sha256=worker._digest(raw), bytes=len(raw))
+
+    saved = {role: worker._parse_json(Path(reference["path"]).read_bytes())
+             for role, reference in cycle["output_artifacts"].items()}
+    for damage, message in (
+            ("unit", "v12 exact raw unit"),
+            ("missing_tokens", "v12 exact raw unit"),
+            ("producer", "v12 exact raw unit"),
+            ("no_eos", "v12 abstention requires empty EOS"),
+            ("receipt", "v12 saved generation input"),
+            ("tokenizer", "v12 saved tokenizer differs")):
+        changed = deepcopy(saved)
+        call = changed["generation"]["last_call"]
+        raw = call["raw_generation_outputs"][0]
+        if damage == "unit":
+            raw["unit_id"] = "fixture:other-unit"
+        elif damage == "missing_tokens":
+            del raw["generated_token_ids"]
+        elif damage == "producer":
+            call["producer_outputs"][0]["outcome"] = "complete"
+        elif damage == "no_eos":
+            raw["generated_token_ids"][-1] = 1
+        elif damage == "receipt":
+            call["input_receipt"]["training_stage_access_performed"] = True
+        else:
+            call["input_receipt"]["tokenizer_contract"]["eos_token_id"] = 1
+        context_sha = changed["generation"]["input_commitment"]["source_contexts_sha256"]
+        with pytest.raises(ValueError, match=message):
+            inference._check_source_bound_generation_rows(changed["generation"], request, rows, context_sha)
+
+    body = rows[0]["canonical_ir"]
+    generation = deepcopy(saved["generation"])
+    call = generation["last_call"]
+    raw = call["raw_generation_outputs"][0]
+    text = worker._json_bytes(body).decode()
+    tokens = [backend.tokenizer.bos_token_id, *backend.tokenizer.encode(text), backend.tokenizer.eos_token_id]
+    raw.update(outcome="complete", candidate=body, generated_text=text, reason=None, generated_token_ids=tokens)
+    call["producer_outputs"][0].update(outcome="complete", candidate=body)
+    scope = generation["input_commitment"]["source_contexts_sha256"]
+    complete_request = dict(request, max_output_tokens=len(tokens))
+    inference._check_source_bound_generation_rows(generation, complete_request, rows, scope)
+    raw["candidate"] = None
+    call["producer_outputs"][0]["candidate"] = None
+    with pytest.raises(ValueError, match="v12 saved complete output differs"):
+        inference._check_source_bound_generation_rows(generation, complete_request, rows, scope)
+    raw.update(outcome="invalid", reason="invalid_complete_norm_json")
+    call["producer_outputs"][0]["outcome"] = "invalid"
+    with pytest.raises(ValueError, match="v12 saved noncomplete output"):
+        inference._check_source_bound_generation_rows(generation, complete_request, rows, scope)
 
     mutated = deepcopy(cycle)
     change_saved_output("loader", lambda receipt: receipt.update(stage_artifact_sha256="0" * 64), mutated)
