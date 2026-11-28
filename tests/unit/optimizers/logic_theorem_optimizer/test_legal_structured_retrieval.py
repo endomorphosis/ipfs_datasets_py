@@ -1414,3 +1414,64 @@ def test_source_bound_rich_training_requires_exact_independent_replay(
     with pytest.raises(ValueError, match="bound component|aggregate TRAIN component|aggregate context inputs changed"):
         _consume_source_bound_rich_training(case, version, replay, consume)
     assert len(observed) == int(damage == "callback-change")
+
+
+
+def test_heldout_near_duplicates_use_configured_cutoff():
+    queries = [{"id": "test", "source_text": "Robin brings a blue mug today"}]
+    training = [{"id": "train", "source_text": "Robin brings a green mug today"}]
+
+    # Five shared features out of seven. The default permits this pair.
+    structured._require_disjoint_heldout_near_duplicates(queries, training, {})
+    structured._require_disjoint_heldout_near_duplicates(
+        queries, training, {"near_duplicate_jaccard_threshold": 0.75}
+    )
+    with pytest.raises(ValueError, match="share a near-duplicate source group"):
+        structured._require_disjoint_heldout_near_duplicates(
+            queries, training, {"near_duplicate_jaccard_threshold": 5 / 7}
+        )
+
+
+def test_heldout_near_duplicates_keep_default_protection():
+    queries = [{"id": "test", "source_text": "Robin brings a blue mug home today after lunch by bicycle"}]
+    training = [{"id": "train", "source_text": "Robin brings a blue cup home today after lunch by bicycle"}]
+
+    # Ten shared features out of twelve. Both cutoffs keep the default protection.
+    for metadata in ({}, {"near_duplicate_jaccard_threshold": 0.95}):
+        with pytest.raises(ValueError, match="share a near-duplicate source group"):
+            structured._require_disjoint_heldout_near_duplicates(queries, training, metadata)
+
+
+def test_heldout_unicode_near_duplicates_use_configured_cutoff():
+    import unicodedata
+
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_eval_splits import (
+        UNICODE_CAMPAIGN_SPLIT_PROFILE,
+    )
+
+    queries = [{"id": "test", "source_text": "猫喜欢窗边的蓝色杯子"}]
+    training = [{"id": "train", "source_text": "猫喜欢窗边的红色杯子"}]
+    metadata = {
+        "campaign_split_profile": UNICODE_CAMPAIGN_SPLIT_PROFILE,
+        "unicode_data_version": unicodedata.unidata_version,
+    }
+
+    # The Unicode view shares five out of eleven trigrams.
+    structured._require_disjoint_heldout_near_duplicates(queries, training, metadata)
+    structured._require_disjoint_heldout_near_duplicates(
+        queries, training, {"near_duplicate_jaccard_threshold": 5 / 11}
+    )
+    with pytest.raises(ValueError, match="share a near-duplicate source group"):
+        structured._require_disjoint_heldout_near_duplicates(
+            queries, training, {**metadata, "near_duplicate_jaccard_threshold": 5 / 11}
+        )
+
+
+@pytest.mark.parametrize("threshold", (True, None, "0.5", 0, -0.1, 1.1, math.nan, math.inf))
+def test_heldout_near_duplicates_reject_invalid_cutoffs(threshold):
+    queries = [{"id": "test", "source_text": "Robin brings a mug"}]
+    training = [{"id": "train", "source_text": "Dana packs a bag"}]
+    with pytest.raises(ValueError, match="near_duplicate_jaccard_threshold"):
+        structured._require_disjoint_heldout_near_duplicates(
+            queries, training, {"near_duplicate_jaccard_threshold": threshold}
+        )
