@@ -1484,3 +1484,62 @@ def test_current_signed_v3_source_handoff_is_required_and_replayed_on_exit(curre
             consumer=observe_then_withdraw_source,
         )
     assert observed == [rows]
+
+
+@pytest.fixture(scope="module")
+def current_checkpoint_isolation_query(current_mixed_source_handoff):
+    current, handoff = current_mixed_source_handoff
+    _, _, _, rows, options = reviewed_public_mixed_consumer_case(operation="heldout_evaluation", current=current)
+    rows = [dict(row, id="separate-heldout-label:" + str(index)) for index, row in enumerate(rows)]
+    manifest = manifest_for(rows, "holdout")
+    exposure = [dict(entry, id=row["id"]) for row, entry in zip(rows, options["exposure_records"], strict=True)]
+    options.update(expected_rows_sha256=digest(rows), split_manifest=manifest, expected_split_manifest_sha256=digest(manifest),
+                   exposure_records=exposure, expected_exposure_sha256=digest(exposure))
+    binding = owner.prepare_reviewed_source_span_consumer_binding_v3(rows, **options, bound_component_inputs=handoff)
+    receipt = binding.receipt()
+    assert receipt["status"] == "ready" and receipt["training_mask"] == receipt["evaluation_gold_mask"] == 0
+    assert receipt["bound_component_inputs_sha256"] == owner.reviewed_admission_inputs_sha256(handoff)
+    return receipt, options["admission_inputs"], current, handoff
+
+
+def test_current_checkpoint_source_isolation_refuses_signed_overlap_with_relabeled_rows(current_checkpoint_isolation_query):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_structured_retrieval as structured
+
+    query, query_inputs, current, handoff = current_checkpoint_isolation_query
+    _, _, _, rows, options = reviewed_public_mixed_consumer_case(current=current)
+    train = owner.prepare_reviewed_source_span_consumer_binding_v3(rows, **options, bound_component_inputs=handoff).receipt()
+    assert train["operation"] == "training" and train["status"] == "ready"
+    assert {row["id"] for row in train["rows"]}.isdisjoint(row["id"] for row in query["rows"])
+    assert {row["unit_id"] for row in train["rows"]} == {row["unit_id"] for row in query["rows"]}
+    admitted = options["admission_inputs"]
+    aggregate = {admitted["preparation"]["subject"]["graph_id"]: admitted}
+    pinned = owner.reviewed_admission_inputs_sha256(aggregate)
+    require_isolated = structured._require_disjoint_reviewed_checkpoint_sources_v12
+    with pytest.raises(owner.SourceSpanConsumerBindingError, match="share a reviewed dependency"):
+        require_isolated(query, query_inputs, aggregate, expected_checkpoint_admission_inputs_sha256=pinned)
+
+    # A correct digest for a relabeled aggregate cannot relabel the signed graph.
+    relabeled = {"fixture:another-TRAIN-component": admitted}
+    with pytest.raises(owner.SourceSpanConsumerBindingError, match="names another component"):
+        require_isolated(query, query_inputs, relabeled,
+                         expected_checkpoint_admission_inputs_sha256=owner.reviewed_admission_inputs_sha256(relabeled))
+    with pytest.raises(owner.SourceSpanConsumerBindingError, match="exact original checkpoint TRAIN"):
+        require_isolated(query, query_inputs, relabeled, expected_checkpoint_admission_inputs_sha256=pinned)
+
+
+def test_current_checkpoint_source_isolation_accepts_independent_signed_sources(current_checkpoint_isolation_query):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_structured_retrieval as structured
+    from tests.unit.optimizers.logic_theorem_optimizer import test_legal_ir_evaluation_artifacts as evaluation
+
+    query, query_inputs, _, _ = current_checkpoint_isolation_query
+    _, _, _, replays, _ = evaluation._rich_v3_heldout_case()
+    admitted = replays["train"]
+    aggregate = {admitted["preparation"]["subject"]["graph_id"]: admitted}
+    pinned = owner.reviewed_admission_inputs_sha256(aggregate)
+    require_isolated = structured._require_disjoint_reviewed_checkpoint_sources_v12
+    require_isolated(query, query_inputs, aggregate, expected_checkpoint_admission_inputs_sha256=pinned)
+    with pytest.raises(owner.SourceSpanConsumerBindingError, match="exact current reviewed heldout query admission"):
+        require_isolated(query, replays["holdout"], aggregate, expected_checkpoint_admission_inputs_sha256=pinned)
+    incomplete = {key: value for key, value in query.items() if key != "bound_component_identity"}
+    with pytest.raises(owner.SourceSpanConsumerBindingError, match="current bound single-component heldout query"):
+        require_isolated(incomplete, query_inputs, aggregate, expected_checkpoint_admission_inputs_sha256=pinned)

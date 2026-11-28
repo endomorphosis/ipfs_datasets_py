@@ -255,6 +255,126 @@ def reviewed_context_inputs_sha256(value):
     return binding_owner._guard(value).sha256
 
 
+def _reviewed_source_identity_fields(declaration, unit):
+    from . import legal_span_consumer_binding as bound
+
+    source = unit["source_version"]
+    return {
+        "source_raw_sha256": source["raw_artifact"]["sha256"],
+        "provision_identity": list(bound._reviewed_provision_identity(declaration, unit)),
+        "source_identity": {key: source[key] for key in ("source_id", "release_id", "edition", "provision_id")},
+        "source_extracted_sha256": source["extracted_view"]["sha256"],
+    }
+
+
+def _require_disjoint_reviewed_dependency_sources(group, subject, dependencies, training_declaration, *,
+        require=_require):
+    """Compare signed dependency and source identities independently of split row IDs."""
+    from . import legal_span_consumer_binding as bound
+
+    training_units = training_declaration["units"]
+    training_artifacts = dependencies["artifacts"]
+    training_pins = bound._reviewed_legal_dependency_pins(dependencies)
+    heldout_pins = group["legal_dependency_pins"]
+    training_ids = {row["artifact_id"] for row in training_artifacts} | {pin["key"] for pin in training_pins}
+    heldout_ids = {row["artifact_id"] for row in group["dependencies"]} | {pin["key"] for pin in heldout_pins}
+    training_digests = {row["artifact_sha256"] for row in training_artifacts} | {pin["sha256"] for pin in training_pins}
+    heldout_digests = {row["artifact_sha256"] for row in group["dependencies"]} | {pin["sha256"] for pin in heldout_pins}
+    require(subject["graph_id"] != group["component_id"] and not training_ids.intersection(heldout_ids)
+             and not (training_digests & heldout_digests) - {None},
+             "heldout and TRAIN share a reviewed dependency")
+    source_identities = {
+        "source_version_cid": {unit["source_version"]["record_cid"] for unit in training_units},
+        "occurrence_cid": {unit["occurrence"]["record_cid"] for unit in training_units},
+        "source_raw_sha256": {unit["source_version"]["raw_artifact"]["sha256"] for unit in training_units},
+    }
+    for field, values in source_identities.items():
+        require(not values.intersection(unit[field] for unit in group["source_units"]),
+                 "heldout and TRAIN share a reviewed source identity")
+    training_provisions = {bound._reviewed_provision_identity(training_declaration, unit) for unit in training_units}
+    require(not training_provisions.intersection(tuple(unit["provision_identity"]) for unit in group["source_units"]),
+             "heldout and TRAIN share a reviewed statutory provision identity")
+    # Reviewed governing contexts can differ while addressing the same declared
+    # legal source. Neither an interpretation/context nor an artifact-revision
+    # label creates another independent source for evaluation. These identities
+    # come from each current admission's source-version declaration, rather
+    # than caller-supplied split groups or inferred text aliases.
+    from ipfs_datasets_py.logic.autoformal import corpus_contracts
+    source_fields = ("source_id", "release_id", "edition", "provision_id")
+    training_sources = {tuple(unit["source_version"][key] for key in source_fields)
+                        for unit in training_units}
+    heldout_sources = set()
+    for unit in group["source_units"]:
+        identity = unit.get("source_identity")
+        corpus_contracts.require_keys(identity, source_fields, "reviewed heldout declared source identity")
+        for key in source_fields:
+            corpus_contracts.require_text(identity[key], "reviewed heldout source " + key)
+        corpus_contracts.require_sha256(unit.get("source_extracted_sha256"), "reviewed heldout extracted view")
+        heldout_sources.add(tuple(identity[key] for key in source_fields))
+    require(not training_sources.intersection(heldout_sources),
+             "heldout and TRAIN share a reviewed declared legal source identity")
+    # Different raw encodings and nonoverlapping spans can still belong to
+    # the same reviewed document. Keep the complete extracted view together.
+    training_views = {unit["source_version"]["extracted_view"]["sha256"] for unit in training_units}
+    require(training_views.isdisjoint(unit["source_extracted_sha256"] for unit in group["source_units"]),
+             "heldout and TRAIN share a reviewed extracted source view")
+
+
+def _require_disjoint_reviewed_checkpoint_sources_v12(query_receipt, query_admission_inputs,
+        checkpoint_admission_inputs, *, expected_checkpoint_admission_inputs_sha256):
+    """Compare a freshly replayed direct V3 query with an authenticated V5 TRAIN aggregate.
+
+    The caller supplies the receipt from current bound-component validation and
+    the original TRAIN admission pin from the locally authenticated checkpoint.
+    The V5 stage replay verifies the component reviews and their source custody.
+    """
+    from . import legal_span_consumer_binding as bound
+
+    query, query_sha = bound._reviewed_snapshot(query_admission_inputs)
+    bound._require(
+        type(query) is dict and type(query_receipt) is dict
+        and query_receipt.get("schema") == bound.REVIEWED_V3_SCHEMA
+        and query_receipt.get("profile") == bound.REVIEWED_V3_PROFILE
+        and query_receipt.get("operation") == "heldout_evaluation"
+        and query_receipt.get("status") == "ready"
+        and query_receipt.get("semantic_admission_replayed") is True
+        and query_receipt.get("semantic_use_eligible") is True
+        and not query_receipt.get("blockers")
+        and query_receipt.get("admission_inputs_sha256") == query_sha,
+        "exact current reviewed heldout query admission required")
+    heldout = query_receipt.get("heldout_evaluation")
+    bound_identity = query_receipt.get("bound_component_identity")
+    bound._require(
+        type(heldout) is dict and heldout.get("purpose") == bound.REVIEWED_HELDOUT_PURPOSE
+        and heldout.get("partition") == bound.splits.HOLDOUT_SPLIT
+        and type(bound_identity) is dict
+        and bound_identity.get("norm_preparation_sha256") == query.get("expected_preparation_sha256"),
+        "current bound single-component heldout query required")
+    bound._sha256(query_receipt.get("bound_component_inputs_sha256"), "current bound heldout query inputs SHA256")
+    bound._sha256(expected_checkpoint_admission_inputs_sha256, "original checkpoint TRAIN admission input SHA256")
+    train, train_sha = bound._reviewed_snapshot(checkpoint_admission_inputs)
+    bound._require(type(train) is dict and 0 < len(train) <= bound.MAX_ROWS
+                   and train_sha == expected_checkpoint_admission_inputs_sha256,
+                   "exact original checkpoint TRAIN component admissions required")
+    query_subject, query_dependencies = bound._reviewed_dependency_closure(query)
+    bound._require(query_receipt.get("declaration_sha256") == query_subject["declaration_sha256"],
+             "current heldout query declaration differs from its replay")
+    declaration = query["preparation"]["declaration"]
+    group = {
+        "component_id": query_subject["graph_id"], "dependencies": query_dependencies["artifacts"],
+        "legal_dependency_pins": bound._reviewed_legal_dependency_pins(query_dependencies),
+        "source_units": [{"source_version_cid": unit["source_version"]["record_cid"],
+                          "occurrence_cid": unit["occurrence"]["record_cid"],
+                          **_reviewed_source_identity_fields(declaration, unit)} for unit in declaration["units"]],
+    }
+    for component_id, admission in train.items():
+        bound._require(type(admission) is dict, "complete checkpoint TRAIN component admission required")
+        subject, dependencies = bound._reviewed_dependency_closure(admission)
+        bound._require(component_id == subject["graph_id"], "checkpoint TRAIN admission names another component")
+        _require_disjoint_reviewed_dependency_sources(group, subject, dependencies,
+                                                      admission["preparation"]["declaration"], require=bound._require)
+
+
 def _require_disjoint_heldout_review(heldout, training_admission, training_rows, queries, manifest, *, _admission_version="v2", _aggregate_training_ids=None):
     from . import legal_span_consumer_binding as bound
 
@@ -279,51 +399,7 @@ def _require_disjoint_heldout_review(heldout, training_admission, training_rows,
     training_units = training_declaration["units"]
     _require({row["unit_id"] for row in training_rows} == {unit["unit_id"] for unit in training_units},
              "rich heldout context requires the complete reviewed TRAIN component")
-    training_artifacts = dependencies["artifacts"]
-    training_pins = bound._reviewed_legal_dependency_pins(dependencies)
-    heldout_pins = group["legal_dependency_pins"]
-    training_ids = {row["artifact_id"] for row in training_artifacts} | {pin["key"] for pin in training_pins}
-    heldout_ids = {row["artifact_id"] for row in group["dependencies"]} | {pin["key"] for pin in heldout_pins}
-    training_digests = {row["artifact_sha256"] for row in training_artifacts} | {pin["sha256"] for pin in training_pins}
-    heldout_digests = {row["artifact_sha256"] for row in group["dependencies"]} | {pin["sha256"] for pin in heldout_pins}
-    _require(subject["graph_id"] != group["component_id"] and not training_ids.intersection(heldout_ids)
-             and not (training_digests & heldout_digests) - {None},
-             "heldout and TRAIN share a reviewed dependency")
-    source_identities = {
-        "source_version_cid": {unit["source_version"]["record_cid"] for unit in training_units},
-        "occurrence_cid": {unit["occurrence"]["record_cid"] for unit in training_units},
-        "source_raw_sha256": {unit["source_version"]["raw_artifact"]["sha256"] for unit in training_units},
-    }
-    for field, values in source_identities.items():
-        _require(not values.intersection(unit[field] for unit in group["source_units"]),
-                 "heldout and TRAIN share a reviewed source identity")
-    training_provisions = {bound._reviewed_provision_identity(training_declaration, unit) for unit in training_units}
-    _require(not training_provisions.intersection(tuple(unit["provision_identity"]) for unit in group["source_units"]),
-             "heldout and TRAIN share a reviewed statutory provision identity")
-    # Reviewed governing contexts can differ while addressing the same declared
-    # legal source. Neither an interpretation/context nor an artifact-revision
-    # label creates another independent source for evaluation. These identities
-    # come from each current admission's source-version declaration, rather
-    # than caller-supplied split groups or inferred text aliases.
-    from ipfs_datasets_py.logic.autoformal import corpus_contracts
-    source_fields = ("source_id", "release_id", "edition", "provision_id")
-    training_sources = {tuple(unit["source_version"][key] for key in source_fields)
-                        for unit in training_units}
-    heldout_sources = set()
-    for unit in group["source_units"]:
-        identity = unit.get("source_identity")
-        corpus_contracts.require_keys(identity, source_fields, "reviewed heldout declared source identity")
-        for key in source_fields:
-            corpus_contracts.require_text(identity[key], "reviewed heldout source " + key)
-        corpus_contracts.require_sha256(unit.get("source_extracted_sha256"), "reviewed heldout extracted view")
-        heldout_sources.add(tuple(identity[key] for key in source_fields))
-    _require(not training_sources.intersection(heldout_sources),
-             "heldout and TRAIN share a reviewed declared legal source identity")
-    # Different raw encodings and nonoverlapping spans can still belong to
-    # the same reviewed document. Keep the complete extracted view together.
-    training_views = {unit["source_version"]["extracted_view"]["sha256"] for unit in training_units}
-    _require(training_views.isdisjoint(unit["source_extracted_sha256"] for unit in group["source_units"]),
-             "heldout and TRAIN share a reviewed extracted source view")
+    _require_disjoint_reviewed_dependency_sources(group, subject, dependencies, training_declaration)
     source_rows = [*queries, *training_rows]
     split_owner = bound.splits
     source_examples = [split_owner.LegalIRSplitExample.from_sample(row) for row in source_rows]
