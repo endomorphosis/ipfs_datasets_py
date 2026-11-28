@@ -275,3 +275,34 @@ def test_hash_only_source_provenance_remains_bound_to_comparison():
         subject.compare_nonregression(changed,baseline)
     assert baseline["rows"][0]["source_provenance"]["source_text"] is None
     assert baseline["source_semantics_verified"] is False
+
+
+def test_paragraph_only_shuffle_preserves_the_selected_denominator_and_fit_control_identity():
+    rows, predictions, codec = inputs(gold=[[rule()], [rule("Officer")]])
+    ids = [row["id"] for row in rows]
+    baseline = score(rows, predictions, codec)
+    controlled = score(rows, predictions[:1], codec, control={
+        "kind": "paragraph_only_shuffle", "source_assignment": dict(zip(ids, reversed(ids), strict=True))
+    })
+    assert baseline["control"] == {"kind": "conditioned", "source_assignment": {identity: identity for identity in ids}}
+    assert controlled["control"] == {
+        "kind": "paragraph_only_shuffle", "source_assignment": {ids[0]: ids[1], ids[1]: ids[0]}
+    }
+    assert baseline["evaluation_sha256"] == controlled["evaluation_sha256"]
+    assert [row["id"] for row in controlled["rows"]] == ids
+    assert controlled["metrics"]["rows"] == controlled["metrics"]["expected_rules"] == 2
+    assert controlled["metrics"]["ordered_exact"] == controlled["metrics"]["prediction_missing_rows"] == 1
+    assert controlled["complete_evaluation"] is False
+    assert controlled["control_execution_verified"] is False
+    with pytest.raises(ValueError, match="comparison evaluation identity differs"):
+        subject.compare_nonregression(controlled, baseline)
+
+
+@pytest.mark.parametrize(("assignment", "reason"), [
+    ({"row-0": "row-1"}, "preserve all source identities"),
+    ({"row-0": "row-0", "row-1": "row-1"}, "complete derangement"),
+])
+def test_paragraph_only_shuffle_scoring_refuses_dropped_or_unchanged_donors(assignment, reason):
+    rows, predictions, codec = inputs(gold=[[rule()], [rule("Officer")]])
+    with pytest.raises(ValueError, match=reason):
+        score(rows, predictions, codec, control={"kind": "paragraph_only_shuffle", "source_assignment": assignment})

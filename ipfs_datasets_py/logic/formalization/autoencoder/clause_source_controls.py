@@ -2,7 +2,8 @@
 
 Targets are opaque payloads: this module neither reads them nor accepts reference
 formulas or counts. Clause-only and order controls intentionally pair a paragraph
-vector with different clause text; their execution receipts identify both sources.
+vector with different clause text. Paragraph-only shuffles preserve the original clause
+context and identify the substituted paragraph embedding donor.
 These controls do not establish source fidelity, semantic validity, or admission.
 """
 from copy import deepcopy
@@ -14,7 +15,7 @@ from . import clause_source_context as context_owner
 
 SCHEMA = "clause-source-control-execution/v1"
 KINDS = ("conditioned", "source_shuffle", "cross_length_shuffle",
-    "context_only_shuffle", "context_reverse", "context_rotate")
+    "context_only_shuffle", "context_reverse", "context_rotate", "paragraph_only_shuffle")
 
 
 def _require(condition, message):
@@ -40,21 +41,22 @@ def _assignments(rows, kind):
     for members in groups.values():
         members.sort()
     identity = dict(zip(ids, ids))
-    if kind in ("source_shuffle", "context_only_shuffle"):
+    if kind in ("source_shuffle", "context_only_shuffle", "paragraph_only_shuffle"):
         _require(all(len(members) >= 2 for members in groups.values()),
             "within-source-length shuffle requires at least two rows in every stratum")
-        context = {key: donor for members in groups.values()
+        shuffled = {key: donor for members in groups.values()
             for key, donor in zip(members, members[1:] + members[:1])}
     elif kind == "cross_length_shuffle":
         _require(len(ids) == 48 and set(groups) == {1, 2, 4, 8}
             and all(len(members) == 12 for members in groups.values()),
             "cross-length shuffle requires twelve source rows at each length 1/2/4/8")
         order = [identity for length in (1, 2, 4, 8) for identity in groups[length]]
-        context = {identity: order[(index + 12) % 48] for index, identity in enumerate(order)}
+        shuffled = {identity: order[(index + 12) % 48] for index, identity in enumerate(order)}
     else:
-        context = identity.copy()
-    paragraph = context.copy() if kind in ("source_shuffle", "cross_length_shuffle") else identity.copy()
-    return identity, paragraph, context
+        shuffled = identity
+    paragraph = shuffled if kind in ("source_shuffle", "cross_length_shuffle", "paragraph_only_shuffle") else identity
+    context = shuffled if kind in ("source_shuffle", "cross_length_shuffle", "context_only_shuffle") else identity
+    return identity, paragraph.copy(), context.copy()
 
 
 def prepare_control(rows, contexts, kind):
@@ -90,16 +92,20 @@ def prepare_control(rows, contexts, kind):
             permutation.reverse()
         elif kind == "context_rotate":
             permutation = permutation[1:] + permutation[:1]
-        source, rebound = context_owner.rebind_context(descriptor, row_id=identity, order=permutation)
-        if kind in ("source_shuffle", "cross_length_shuffle"):
+        if kind == "paragraph_only_shuffle":
+            source_text, rebound = row["source_text"], deepcopy(descriptor)
+        else:
+            source, rebound = context_owner.rebind_context(descriptor, row_id=identity, order=permutation)
+            source_text = source["source_text"]
+        if kind in ("source_shuffle", "cross_length_shuffle", "paragraph_only_shuffle"):
             _require(row["input"] != paragraph["input"], "ineffective equal-vector source shuffle")
         if kind in ("source_shuffle", "cross_length_shuffle", "context_only_shuffle"):
-            _require(row["source_text"] != source["source_text"], "ineffective equal-text context shuffle")
+            _require(row["source_text"] != source_text, "ineffective equal-text context shuffle")
         # target_ids is copied as opaque data, without inspecting or deriving any
         # assignment, permutation, length, or generation input from its contents.
         actual = deepcopy(row)
         actual["input"] = deepcopy(paragraph["input"])
-        actual["source_text"] = source["source_text"]
+        actual["source_text"] = source_text
         actual_rows.append(actual)
         actual_contexts[identity] = rebound
         permutations[identity] = permutation
@@ -109,8 +115,8 @@ def prepare_control(rows, contexts, kind):
             paragraph_source_text=paragraph["source_text"],
             paragraph_source_sha256=_text_digest(paragraph["source_text"]),
             context_donor_source_sha256=_text_digest(donor["source_text"]),
-            actual_context_source_text=source["source_text"],
-            actual_context_source_sha256=_text_digest(source["source_text"]),
+            actual_context_source_text=source_text,
+            actual_context_source_sha256=_text_digest(source_text),
             original_input_sha256=_digest(row["input"]),
             actual_input_sha256=_digest(actual["input"]),
             original_context_sha256=_digest(contexts[identity]),
@@ -118,13 +124,14 @@ def prepare_control(rows, contexts, kind):
             actual_context_sha256=_digest(rebound),
             original_source_clause_count=len(row["source_text"].split("\n\n")),
             actual_context_clause_count=width,
-            effective_context_change=source["source_text"] != row["source_text"],
+            effective_context_change=source_text != row["source_text"],
             effective_paragraph_change=actual["input"] != row["input"],
         )
     context_owner.validate_contexts(actual_rows, actual_contexts)
+    source_assignment = paragraph_assignment if kind == "paragraph_only_shuffle" else context_assignment
     execution = dict(schema=SCHEMA, kind=kind,
-        control=dict(kind=kind, source_assignment=context_assignment.copy()),
-        source_assignment=context_assignment.copy(),
+        control=dict(kind=kind, source_assignment=source_assignment.copy()),
+        source_assignment=source_assignment.copy(),
         original_source_assignment=original_assignment,
         paragraph_source_assignment=paragraph_assignment,
         context_source_assignment=context_assignment,
