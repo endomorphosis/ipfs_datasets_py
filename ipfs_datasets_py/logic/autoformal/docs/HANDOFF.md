@@ -4569,3 +4569,18 @@ The comparison first matches exact rule occurrences. It attributes a facet chang
 ## Evidence647 — Compare benchmark decompiler terms in Unicode NFC
 
 Term comparison normalizes both candidate text and expected terms to Unicode NFC before the existing case-insensitive comparison. The original text, packet digests and benchmark denominator stay exact. [Exact qualification evidence](/tmp/Guide644-reviewed-reconstruction-and-benchmark-integration-qINchfly/actual-composed-qualification-Evidence647.json)
+
+
+## Evidence648 — Check typed duration quantities against compiled phrases
+
+When the parser recognizes the quantity in the canonical temporal phrase, its typed duration sidecar must preserve that number. Opaque phrases and existing sidecar conflict checking retain their prior behavior. [Exact qualification evidence](/tmp/Guide647-fidelity-and-feedback-integration-Ydg3Ifm6/actual-composed-qualification-Evidence648.json)
+
+
+## Evidence649 — Hash the serialized preservation class for failed recompilation
+
+Failed recompilation uses the same unsupported preservation class in its comparison CID and public result payload. Abstention and successful recompilation retain their existing classifications and admission behavior. [Exact qualification evidence](/tmp/Guide647-fidelity-and-feedback-integration-Ydg3Ifm6/actual-composed-qualification-Evidence649.json)
+
+
+## Evidence650 — Require a Boolean at the trusted feedback production selector
+
+Trusted feedback treats real Booleans as explicit production choices and uses the configured Boolean when the override is None. Non-Boolean selectors are rejected before feedback processing. [Exact qualification evidence](/tmp/Guide647-fidelity-and-feedback-integration-Ydg3Ifm6/actual-composed-qualification-Evidence650.json)

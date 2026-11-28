@@ -5823,6 +5823,36 @@
       },
       "record_id": "require-modality-for-reviewed-normative-unit-20261128",
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
+    },
+    "recompilation_failed_comparison_payload_identity_20261128": {
+      "evidence_ordinal": 649,
+      "facts": {
+        "bytes": 1510,
+        "path": "/tmp/Guide647-fidelity-and-feedback-integration-Ydg3Ifm6/actual-composed-qualification-Evidence649.json",
+        "sha256": "df055ccc5bf64c913ad6aa7a93620a878e119bf6d3dc8cb59104db41777e6ba2"
+      },
+      "record_id": "recompilation-failed-comparison-payload-identity-20261128",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
+    },
+    "temporal_sidecar_quantity_guard_20261128": {
+      "evidence_ordinal": 648,
+      "facts": {
+        "bytes": 1494,
+        "path": "/tmp/Guide647-fidelity-and-feedback-integration-Ydg3Ifm6/actual-composed-qualification-Evidence648.json",
+        "sha256": "589972980f5f1d9b3d2eb08dc480472532b6edf80e21d02d69634d1dbe5e9389"
+      },
+      "record_id": "temporal-sidecar-quantity-guard-20261128",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
+    },
+    "trusted_feedback_require_explicit_production_boolean_20261128": {
+      "evidence_ordinal": 650,
+      "facts": {
+        "bytes": 1527,
+        "path": "/tmp/Guide647-fidelity-and-feedback-integration-Ydg3Ifm6/actual-composed-qualification-Evidence650.json",
+        "sha256": "087456c67ff289c0c0fb1b311ea14e49c833d202e4ae6caad9b7735b6d9730a1"
+      },
+      "record_id": "trusted-feedback-require-explicit-production-boolean-20261128",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
     }
   },
   "programme_goal_hierarchy": {

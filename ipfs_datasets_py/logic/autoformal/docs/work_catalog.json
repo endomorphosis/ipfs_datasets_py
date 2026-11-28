@@ -40432,6 +40432,42 @@
       "root": "artifact_workspace",
       "scope": "Existing required and forbidden decompiler term metrics on authored benchmark packets.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/temporal_sidecar_quantity_guard_20261128",
+      "evidence_ordinal": 648,
+      "id": "temporal-sidecar-quantity-guard-20261128",
+      "observed_bytes": 1494,
+      "observed_sha256": "589972980f5f1d9b3d2eb08dc480472532b6edf80e21d02d69634d1dbe5e9389",
+      "path": "/tmp/Guide647-fidelity-and-feedback-integration-Ydg3Ifm6/actual-composed-qualification-Evidence648.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Existing family export and syntactic qualification on authored inputs.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/recompilation_failed_comparison_payload_identity_20261128",
+      "evidence_ordinal": 649,
+      "id": "recompilation-failed-comparison-payload-identity-20261128",
+      "observed_bytes": 1510,
+      "observed_sha256": "df055ccc5bf64c913ad6aa7a93620a878e119bf6d3dc8cb59104db41777e6ba2",
+      "path": "/tmp/Guide647-fidelity-and-feedback-integration-Ydg3Ifm6/actual-composed-qualification-Evidence649.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Existing comparison CID and result on authored failed, abstained and successful round trips.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/trusted_feedback_require_explicit_production_boolean_20261128",
+      "evidence_ordinal": 650,
+      "id": "trusted-feedback-require-explicit-production-boolean-20261128",
+      "observed_bytes": 1527,
+      "observed_sha256": "087456c67ff289c0c0fb1b311ea14e49c833d202e4ae6caad9b7735b6d9730a1",
+      "path": "/tmp/Guide647-fidelity-and-feedback-integration-Ydg3Ifm6/actual-composed-qualification-Evidence650.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Trainer configuration and per-call override with metadata-only batches.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }

@@ -3709,3 +3709,18 @@ The measured compiler reproduced an exact two-rule round trip that the old gate 
 ## Evidence647 — Compare benchmark decompiler terms in Unicode NFC
 
 Four of seven cases scored decomposed and composed spellings inconsistently before the correction. All seven passed within the complete 74-case owning module. [Exact qualification evidence](/tmp/Guide644-reviewed-reconstruction-and-benchmark-integration-qINchfly/actual-composed-qualification-Evidence647.json)
+
+
+## Evidence648 — Check typed duration quantities against compiled phrases
+
+Two compiled-source cases previously qualified after a caller changed the typed minimum or within duration. Both now refuse the changed quantity, and all 105 owning cases passed. [Exact qualification evidence](/tmp/Guide647-fidelity-and-feedback-integration-Ydg3Ifm6/actual-composed-qualification-Evidence648.json)
+
+
+## Evidence649 — Hash the serialized preservation class for failed recompilation
+
+Independent hashing of the serialized comparison failed on the compiler-refusal case before correction. All three outcome controls and the complete 141-case ordinary cohort passed afterward. [Exact qualification evidence](/tmp/Guide647-fidelity-and-feedback-integration-Ydg3Ifm6/actual-composed-qualification-Evidence649.json)
+
+
+## Evidence650 — Require a Boolean at the trusted feedback production selector
+
+Private reproduction failed 13 of 17 cases on the preimage. All 17 passed with the correction in an independent ordinary pytest run. The selected cases exercised metadata-only batches without model construction or fitting. [Exact qualification evidence](/tmp/Guide647-fidelity-and-feedback-integration-Ydg3Ifm6/actual-composed-qualification-Evidence650.json)
