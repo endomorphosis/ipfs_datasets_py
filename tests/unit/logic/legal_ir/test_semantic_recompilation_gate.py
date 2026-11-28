@@ -307,3 +307,50 @@ def test_exact_rule_multiplicity_preserves_one_unmatched_occurrence() -> None:
     assert dropped[1]["rule_cid"] == rule.rule_cid
     assert [row["kind"] for row in added] == ["ir_cid_mismatch", "added_rule"]
     assert added[1]["rule_cid"] == rule.rule_cid
+
+
+def _assert_comparison_cid_matches_public_payload(gate) -> None:
+    from ipfs_datasets_py.utils.cid_utils import cid_for_dag_json
+
+    payload = gate.to_dict()
+    comparison_cid = payload.pop("comparison_cid")
+    for field in ("equality_criteria", "receipt", "recorded_directions", "roundtrip_result_cid", "status"):
+        payload.pop(field)
+    assert comparison_cid == cid_for_dag_json(payload)
+
+
+def test_failed_gate_cid_matches_serialized_unsupported_class() -> None:
+    request = CompilerRequest(
+        source_text="Agency must publish notice.",
+        request_id="gate-policy-refusal",
+        atom_vocabulary=_vocabulary(),
+        config={"document_type": "different-profile"},
+    )
+    gate = run_with_preservation(request)
+    assert gate.status is OperationStatus.FAILED
+    assert gate.roundtrip.terminal_stage == "l1_compile"
+    assert gate.preservation_class is TranslationPreservationClass.UNSUPPORTED
+    assert gate.admitted is False and gate.receipt is None
+    _assert_comparison_cid_matches_public_payload(gate)
+
+
+def test_abstained_gate_cid_matches_serialized_heuristic_class() -> None:
+    request = CompilerRequest(
+        source_text="Agency must file notice unless emergency.",
+        request_id="gate-unsupported-facets",
+        atom_vocabulary=CanonicalAtomVocabulary(actors=("agency",), actions=("file",), objects=("notice",)),
+    )
+    gate = run_with_preservation(request)
+    assert gate.status is OperationStatus.ABSTAINED
+    assert gate.preservation_class is TranslationPreservationClass.HEURISTIC
+    assert gate.admitted is False and gate.receipt is None
+    _assert_comparison_cid_matches_public_payload(gate)
+
+
+def test_successful_gate_comparison_cid_matches_receipt_and_payload() -> None:
+    gate = run_with_preservation(measured_parity_compiler_request(
+        "Agency shall publish notice.", request_id="gate-payload-identity", atom_vocabulary=_vocabulary(),
+    ))
+    assert gate.status is OperationStatus.SUCCESS and gate.admitted
+    assert gate.receipt is not None and gate.receipt.semantic_comparison_cid == gate.comparison_cid
+    _assert_comparison_cid_matches_public_payload(gate)
