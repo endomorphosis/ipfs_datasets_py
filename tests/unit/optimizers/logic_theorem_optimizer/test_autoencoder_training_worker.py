@@ -4763,6 +4763,130 @@ def test_reviewed_mixed_source_v3_legacy_factory_refuses_genuine_prepared_bindin
         fixture.local.checkpoint["model_state"], fixture.local.checkpoint["optimizer_state"]) is True
 
 
+def test_reviewed_source_producer_replays_signed_query_and_independent_checkpoint_sources(tmp_path):
+    from copy import deepcopy
+    from types import SimpleNamespace
+    from ipfs_datasets_py.logic.autoformal import corpus_source_bindings
+    from ipfs_datasets_py.logic.autoformal import legal_norm_interpretation_review_v1 as norm
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_span_consumer_binding as consumer
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_evaluation_artifacts as evaluation
+    from tests.unit.logic.autoformal.test_corpus_source_bindings import _lir02_complete_case
+    from tests.unit.optimizers.logic_theorem_optimizer import test_legal_span_consumer_binding as fixtures
+
+    signed = _lir02_complete_case(tmp_path, corpus_source_bindings, mixed=True)
+    _, _, case, rows, admissions = fixtures.reviewed_public_mixed_consumer_case(
+        current=signed["case"], operation="heldout_evaluation")
+    report = corpus_source_bindings.prepare_bound_norm_component_v2(**signed["arguments"])
+    query = {"report": report, "expected_report_sha256": norm.norm_review_sha256(report),
+             "preparation_inputs": signed["arguments"]}
+    query_pin = consumer.reviewed_admission_inputs_sha256(query)
+    binding = consumer.prepare_reviewed_source_span_consumer_binding_v3(rows, **admissions, bound_component_inputs=query)
+    # The analytic producer is a software fixture. Its separately pinned
+    # checkpoint provider stands in for the opaque V5 training-population input;
+    # the *query* passes the real, independently signed V3 source-history replay.
+    component = "fixture:separate-checkpoint-component"
+    checkpoint = {component: {"fixture_bytes": b"independent checkpoint provenance"}}
+    checkpoint_admission = {component: {"fixture_bytes": b"independent checkpoint review"}}
+    checkpoint_pin = consumer.reviewed_admission_inputs_sha256(checkpoint)
+    checkpoint_admission_pin = consumer.reviewed_admission_inputs_sha256(checkpoint_admission)
+    current = {"query": query, "checkpoint": checkpoint, "checkpoint_admission": checkpoint_admission}
+    late_change = None
+    calls = []
+
+    class AbstainingBackend(_CompleteReviewedSGDBackend):
+        def identity(self):
+            return dict(super().identity(), implementation_sha256=hashlib.sha256(Path(worker.__file__).read_bytes()).hexdigest())
+
+        def generate_batch(self, records, *, max_output_tokens, execution_guard):
+            execution_guard()
+            calls.append([row["id"] for row in records])
+            assert all(set(row) == {"id", "unit_id", "source_wire", "source_token_ids"} for row in records)
+            assert all(set(json.loads(row["source_wire"])) == {
+                "profile", "source_text", "source_binding", "governing_context", "selection_context"} for row in records)
+            if late_change is not None:
+                current[late_change] = {"different_live_source": b"replaced"}
+            return [{"id": row["id"], "unit_id": row["unit_id"], "outcome": "abstained", "candidate": None,
+                "generated_token_ids": [self.tokenizer.bos_token_id, self.tokenizer.eos_token_id],
+                "generated_text": "", "reason": "fixture abstention"} for row in records]
+
+    backend = AbstainingBackend()
+    backend.tokenizer = _CompleteReviewedByteTokenizer()
+    pair = backend.snapshot_checkpoint()
+    model, optimizer = (worker.CheckpointArtifact(**_complete_reviewed_artifact(tmp_path / name, pair[key]))
+        for name, key in (("bound-model.json", "model_state"), ("bound-optimizer.json", "optimizer_state")))
+    def no_registry(*_):
+        pytest.fail("producer must not load from the registry")
+    runtime = worker.ReviewedDecoderRuntime(SimpleNamespace(read_artifact=no_registry, artifact_path=no_registry),
+        backend, backend.tokenizer, lambda: deepcopy(current["checkpoint_admission"]), lambda: None, lambda _: None,
+        current_bound_component_inputs_provider=lambda: deepcopy(current["checkpoint"]))
+    contexts = {"profile": "reviewed-source-selection-context/v2",
+        "selection_context": {"schema": "caller-known-interpretation-selection/v1",
+            "interpretation_id": case["declaration"]["interpretation_id"], "selection_mode": "identifier_only"},
+        "rows": [{"id": row["id"], "unit_id": row["unit_id"],
+            "governing_context": deepcopy(row["canonical_ir"]["governing_context"]),
+            "source_binding": deepcopy(row["canonical_ir"]["source_binding"])} for row in rows]}
+    options = dict(binding=binding, rows=rows, split_manifest=admissions["split_manifest"],
+        exposure_records=admissions["exposure_records"], source_contexts=contexts,
+        expected_source_contexts_sha256=evaluation.stable_digest(contexts),
+        expected_admission_inputs_sha256=admissions["expected_admission_inputs_sha256"],
+        backend_identity=backend.identity(), assets=(model,), model_checkpoint=model, optimizer_checkpoint=optimizer,
+        max_source_tokens=8192, max_output_tokens=3, allow_heldout_evaluation=True,
+        current_query_admission_provider=lambda: deepcopy(admissions["admission_inputs"]),
+        current_query_bound_component_inputs_provider=lambda: deepcopy(current["query"]),
+        expected_query_bound_component_inputs_sha256=query_pin,
+        expected_checkpoint_admission_inputs_sha256=checkpoint_admission_pin,
+        expected_checkpoint_bound_component_inputs_sha256=checkpoint_pin)
+
+    with pytest.raises(ValueError, match="explicit current provider and independent pin"):
+        worker.make_reviewed_decoder_source_producer_v3(runtime,
+            **dict(options, current_query_bound_component_inputs_provider=None))
+    with pytest.raises(ValueError, match="separate pinned checkpoint and query replay"):
+        worker.make_reviewed_decoder_source_producer_v3(runtime,
+            **dict(options, expected_checkpoint_bound_component_inputs_sha256=None))
+    with pytest.raises(ValueError, match="current producer query source inputs changed"):
+        worker.make_reviewed_decoder_source_producer_v3(runtime,
+            **dict(options, current_query_bound_component_inputs_provider=lambda: checkpoint))
+    assert calls == []
+
+    producer = worker.make_reviewed_decoder_source_producer_v3(runtime, **options)
+    eval_options = dict(compiler_commit="fixture:pinned-source-review",
+        checkpoint_declarations={"encoder": {"id": "fixture:encoder", "sha256": "1" * 64},
+                                 "decoder": {"id": backend.identity()["backend_id"], "sha256": model.sha256}})
+    artifact = producer.evaluate(**eval_options)
+    payload = artifact.to_dict()["compiler_artifact"]["reviewed_source_span_producer_evaluation"]
+    commitment = producer.observation()["input_commitment"]
+    assert commitment["bound_component_inputs_sha256"] == query_pin != checkpoint_pin
+    assert commitment["checkpoint_admission_inputs_sha256"] == checkpoint_admission_pin
+    assert commitment["checkpoint_bound_component_inputs_sha256"] == checkpoint_pin
+    for gate in ("admission_before", "admission_after"):
+        assert payload[gate]["bound_component_inputs_sha256"] == query_pin
+        assert payload[gate]["bound_component_identity"] == commitment["bound_component_identity"]
+        assert payload[gate]["training_mask"] == payload[gate]["evaluation_gold_mask"] == 0
+    assert calls == [[row["id"] for row in rows]]
+    assert payload["comparison"]["denominator"] == payload["comparison"]["outcome_counts"]["abstained"] == len(rows)
+    assert payload["accepted_semantic_count"] is payload["compute_and_cost"]["cost_per_correctly_accepted_formalization"] is None
+    assert payload["native_proof_verified"] is payload["corpus_admitted"] is False
+    artifact_pin = evaluation.stable_digest(artifact.to_dict())
+    retention = evaluation.compare_reviewed_source_span_retention(artifact, artifact,
+        expected_before_sha256=artifact_pin, expected_after_sha256=artifact_pin)
+    assert retention["producer_route"] == "normal_source_producer"
+    assert retention["denominator"] == retention["counts"]["still_incorrect"] == len(rows)
+    assert retention["before_source_generation"]["checkpoint_source_commitments"] == {
+        "checkpoint_admission_inputs_sha256": checkpoint_admission_pin,
+        "checkpoint_bound_component_inputs_sha256": checkpoint_pin}
+
+    for name, original, diagnostic in (("query", query, "query source"),
+                                      ("checkpoint_admission", checkpoint_admission, "checkpoint admission")):
+        current[name] = {"new live population": b"replaced"}
+        with pytest.raises(ValueError, match=f"current producer {diagnostic} inputs changed"):
+            producer.evaluate(**eval_options)
+        current[name] = original
+    late_change = "checkpoint"
+    with pytest.raises(ValueError, match="current producer checkpoint source inputs changed"):
+        producer.evaluate(**eval_options)
+    assert len(calls) == 2 and backend.calls == backend.restores == 0
+
+
 @pytest.mark.parametrize("architecture", ["encoder_decoder", "causal_lm"])
 @pytest.mark.parametrize("operation", ["hparam_selection", "heldout_evaluation"])
 def test_reviewed_mixed_source_v3_real_local_forward_scores_full_targets_without_encoder_gold(tmp_path, monkeypatch, architecture, operation):
