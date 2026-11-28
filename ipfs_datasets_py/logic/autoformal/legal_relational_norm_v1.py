@@ -758,7 +758,7 @@ def _native_formula_ast_conflict(fragment):
     """True when formula and AST are each complete and disagree. Neither replaces the other."""
     ast_value = fragment.get("native_ast")
     formula, family = fragment.get("formula"), fragment.get("family")
-    if type(ast_value) is not dict or type(formula) is not str or family not in {"fol", "tdfol"}:
+    if type(ast_value) is not dict or type(formula) is not str or family not in ("fol", "tdfol"):
         return False
     from . import legal_native_ast_preservation as native
     try:

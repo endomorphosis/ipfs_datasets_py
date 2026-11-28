@@ -1550,3 +1550,28 @@ def test_candidate_inventory_retains_candidate_above_its_codec_limit(codec):
         report, raw, expected_request_sha256=hashlib.sha256(raw).hexdigest(),
         expected_report_sha256=bridge.candidate_ir_interface_sha256(report),
     ) == report
+
+
+@pytest.mark.parametrize("family", [
+    pytest.param(["fol"], id="array"),
+    pytest.param({"value": "fol"}, id="object"),
+])
+def test_candidate_inventory_retains_original_and_refuses_composite_native_family(family):
+    original = section101_fragment()
+    malformed = dict(original, family=family)
+    candidates = [
+        interface_row("native:original", "native_unary_preservation", original, NATIVE_TOOLCHAIN),
+        interface_row("native:malformed", "native_unary_preservation", malformed, NATIVE_TOOLCHAIN),
+    ]
+    _, report = interface_prepare(candidates)
+
+    records = report["candidate_records"]
+    assert [(row["candidate_id"], row["disposition"], row["reason"]) for row in records] == [
+        ("native:original", "representable", "qualified_codec_accepts_original"),
+        ("native:malformed", "unsupported", "qualified_codec_refuses"),
+    ]
+    assert [row["candidate_ast_sha256"] for row in records] == [SECTION_101_AST_SHA] * 2
+    for row, candidate in zip(records, candidates, strict=True):
+        assert row["payload_raw_utf8"] == candidate["payload_raw_utf8"]
+        assert row["payload_sha256"] == candidate["payload_sha256"]
+        assert row["replacement_ast"] is None
