@@ -594,7 +594,10 @@ def prepare_relational_prose_reconstruction_v1(expression, *, argument_roles, pr
     This engineering diagnostic cannot establish source correspondence, legal
     equivalence, proof validity, or performance on an evaluated population.
     """
-    from ..legal_ir.extended_decompiler import decompile_relational, PARAMETRIC_COUNTED_PROSE_PROFILE, _prose_capacity_options
+    from ..legal_ir.extended_decompiler import (
+        PARAMETRIC_COUNTED_PROSE_PROFILE, POSITIVE_QUANTITY_PROSE_PROFILE,
+        _prose_capacity_options, decompile_relational,
+    )
     from ..legal_ir.extended_compiler import compile_relational
 
     capacity_options = _prose_capacity_options(profile, capacity_profile)
@@ -605,6 +608,12 @@ def prepare_relational_prose_reconstruction_v1(expression, *, argument_roles, pr
     comparison = compare_relational_prose_structure_v1(expression, candidate,
         reference_argument_roles=argument_roles, candidate_argument_roles=candidate_roles, profile=profile, **capacity_options)
     _need(comparison["typed_structure_equal"], "complete emitted typed structure differs")
+    count_limitations = {
+        PARAMETRIC_COUNTED_PROSE_PROFILE:
+            "The parametric count macro recognizes only the complete authored at-most expansion within its existing producer capacities; other counting semantics are not inferred.",
+        POSITIVE_QUANTITY_PROSE_PROFILE:
+            "The positive quantity macro recognizes complete authored v4 lower bounds and exact enumerations within their existing capacities.",
+    }
     result = {
         "schema": PROSE_RECONSTRUCTION_SCHEMA, "profile": profile,
         "status": "supported_authored_typed_prose_reconstructed",
@@ -626,9 +635,8 @@ def prepare_relational_prose_reconstruction_v1(expression, *, argument_roles, pr
         "limitations": [
             "Canonical prose is controlled authored language, not arbitrary statutory prose.",
             "Exact typed serialization, normalized typed structure and original source bytes are separate measurements.",
-            ("The parametric count macro recognizes only the complete authored at-most expansion within its existing producer capacities; other counting semantics are not inferred."
-             if profile == PARAMETRIC_COUNTED_PROSE_PROFILE else
-             "The fixed-three count macro reuses its existing exact canonical expansion; other counting semantics are not inferred."),
+            count_limitations.get(profile,
+                "The fixed-three count macro reuses its existing exact canonical expansion; other counting semantics are not inferred."),
             "Unknown extensions, metadata, ranges, unused predicates and unsupported binder forms refuse the whole input.",
         ],
     }

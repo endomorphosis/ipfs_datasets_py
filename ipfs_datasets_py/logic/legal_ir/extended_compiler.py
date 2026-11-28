@@ -299,11 +299,12 @@ def compile_relational(text: str, *, profile: str, capacity_profile=None):
     unsupported clauses and every unconsumed character refuse the whole input.
     """
     from .extended_decompiler import (RELATIONAL_PROSE_PROFILE, COUNTED_PROSE_PROFILE,
-        PARAMETRIC_COUNTED_PROSE_PROFILE,
+        PARAMETRIC_COUNTED_PROSE_PROFILE, POSITIVE_QUANTITY_PROSE_PROFILE,
         _COUNTED_PROSE_SENTENCE, _prose_capacity_options, decompile_relational)
 
     if type(profile) is not str or profile not in (
-            RELATIONAL_PROSE_PROFILE, COUNTED_PROSE_PROFILE, PARAMETRIC_COUNTED_PROSE_PROFILE):
+            RELATIONAL_PROSE_PROFILE, COUNTED_PROSE_PROFILE, PARAMETRIC_COUNTED_PROSE_PROFILE,
+            POSITIVE_QUANTITY_PROSE_PROFILE):
         raise ValueError("explicit supported relational prose profile required")
     capacity_options = _prose_capacity_options(profile, capacity_profile)
     if type(text) is not str or not text.strip():
@@ -319,7 +320,19 @@ def compile_relational(text: str, *, profile: str, capacity_profile=None):
                                     COUNTED_PROSE_PROFILE, PARAMETRIC_COUNTED_PROSE_PROFILE)
                                  else ("tdfol", "tdfol_default"))
         signature = reader.declarations(family, logic_profile)
-        if profile == PARAMETRIC_COUNTED_PROSE_PROFILE:
+        if profile == POSITIVE_QUANTITY_PROSE_PROFILE:
+            from ..autoformal import legal_counted_frame_threshold_v2 as counted
+            prefix, suffix = _COUNTED_PROSE_SENTENCE.split("at most 3", 1)
+            reader.take(prefix)
+            match = re.match(r"(at least|exactly) (0|[1-9][0-9]*)", reader.text[reader.position:])
+            if match is None:
+                return None
+            reader.position += match.end()
+            reader.take(suffix)
+            quantity, threshold_text = match.groups()
+            fixed = counted._quantity_expression(ast, signatures, quantity.replace(" ", "_"), int(threshold_text))
+            root, signature = fixed.root, fixed.signature
+        elif profile == PARAMETRIC_COUNTED_PROSE_PROFILE:
             from ..autoformal import legal_counted_frame_threshold_v2 as threshold
             prefix, suffix = _COUNTED_PROSE_SENTENCE.split("3", 1)
             reader.take(prefix)
