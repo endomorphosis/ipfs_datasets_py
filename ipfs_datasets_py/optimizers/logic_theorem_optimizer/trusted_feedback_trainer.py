@@ -104,6 +104,8 @@ class TrustedFeedbackTrainerConfig:
     maximum_source_copy_penalty: float = 0.0
 
     def __post_init__(self) -> None:
+        if type(self.production_weight_writes_enabled) is not bool:
+            raise ValueError("production_weight_writes_enabled must be a bool")
         for name in ("learning_rate", "maximum_learning_rate", "maximum_source_copy_penalty"):
             value = float(getattr(self, name))
             if not math.isfinite(value) or value < 0.0:
@@ -233,13 +235,15 @@ class TrustedFeedbackTrainer:
     ) -> TrustedFeedbackUpdateReport:
         """Apply a batch using independently selected current targets for typed feedback."""
 
-        targets = dict(current_proof_targets or {})
-        items = _feedback_items(feedback)
         enabled = (
             self.config.production_weight_writes_enabled
             if production_weight_writes_enabled is None
-            else bool(production_weight_writes_enabled)
+            else production_weight_writes_enabled
         )
+        if type(enabled) is not bool:
+            raise ValueError("production_weight_writes_enabled must be a bool")
+        targets = dict(current_proof_targets or {})
+        items = _feedback_items(feedback)
         step = self.config.learning_rate if learning_rate is None else float(learning_rate)
         if not math.isfinite(step) or step < 0.0 or step > self.config.maximum_learning_rate:
             raise ValueError("learning_rate is outside the trusted-feedback bound")
