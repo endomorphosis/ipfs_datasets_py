@@ -713,7 +713,8 @@ def _reviewed_physical_fixture_assets(facts, directory, architecture="encoder_de
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_training_worker as worker
     assert facts.owner.to_dict()["status"] == "active"
     assert set(options) <= {"admission_provider", "max_sequence_tokens", "fixed_json_schema_subwords",
-                            "fixed_typed_schema_subwords", "ranked_context_snapshot", "ranked_context_snapshot_artifact", "local_model_profile", "profiled_generation", "digest_omitted"}
+                            "fixed_typed_schema_subwords", "ranked_context_snapshot", "ranked_context_snapshot_artifact",
+                            "local_model_profile", "profiled_generation", "digest_omitted", "pristine_pair"}
     configuration = {key: value for key, value in options.items() if key != "admission_provider"}
     root = Path(__file__).resolve().parents[4]
     def existing_package_binding():
@@ -794,6 +795,10 @@ else:
 keys=('recipe_artifact','model_config_artifact','tokenizer_artifact','license_artifact','model_checkpoint','optimizer_checkpoint')
 result={'assets':{k:asdict(fixture.options[k]) for k in keys},'backend_identity':fixture.options['expected_backend_identity'],'compiled_sources':compiled,'existing_package_binding':binding,'isolated_mode':sys.flags.isolated}
 if ranked_snapshot is not None:result["ranked_context_snapshot"]=ranked_snapshot
+if configuration.get("pristine_pair") is True:
+ from ipfs_datasets_py.logic.autoformal.training_cycle_inputs import _reviewed_decoder_tokenizer_contract
+ assert fixture.backend._optimizer_steps==0 and not fixture.backend.optimizer.state
+ result["pristine_tokenizer_contract"]=_reviewed_decoder_tokenizer_contract(fixture.backend.tokenizer)
 assert all(hashlib.sha256(Path(p).read_bytes()).hexdigest()==h for p,h in compiled.items())
 print(json.dumps(result,sort_keys=True))
 """
@@ -4315,3 +4320,217 @@ def test_reviewed_inference_v12_reopens_only_the_checkpoint_stage_history(tmp_pa
     replay["checkpoint_stage_artifacts"].remove(fixture.stage_document["history_artifact"])
     with pytest.raises(ValueError, match="history must belong to the selected TRAIN stage"):
         check()
+
+
+
+
+def _load_source_bound_v12_frozen_fixture(packet_reference):
+    """Reopen the existing typed fixture transports before requesting the original owner."""
+    from ipfs_datasets_py.logic.autoformal import training_cycle_inputs as inputs
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_training_worker as worker
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_span_consumer_binding as consumer
+
+    def read(reference, *, max_bytes=inputs.MAX_REVIEWED_ARTIFACT_BYTES, load=True):
+        return worker._reviewed_decoder_artifact(worker.CheckpointArtifact.from_dict(reference),
+                                                limit=max_bytes, load=load)
+
+    def read_json(reference):
+        return inputs._reviewed_json(read(reference))
+
+    class ReadRegistry:
+        def __init__(self, references):
+            self.refs = {(ref["sha256"], ref["bytes"]): ref for ref in references}
+            assert len(references) == len(self.refs)
+
+        def artifact_path(self, descriptor):
+            return Path(self.refs[(descriptor["sha256"], descriptor["bytes"])]["path"])
+
+        def read_artifact(self, descriptor, *, max_bytes):
+            ref = self.refs[(descriptor["sha256"], descriptor["bytes"])]
+            return read(ref, max_bytes=max_bytes)
+
+    packet_raw = read(packet_reference)
+    assert packet_raw.endswith(b"\n")
+    packet = inputs._reviewed_json(packet_raw[:-1])
+    assert packet["schema"] == "fictional-source-bound-v12-independent-test-data/v1"
+    assert packet["model_or_managed_or_source_runner_launched"] is False
+    assert packet["signer_secret_material_serialized"] is False
+    assert all(value is None for value in packet["runtime_fields"].values())
+    train, query = packet["train"], packet["query"]
+    for reference in [*train["source_files"], *query["source_files"]]:
+        read(reference, load=False)
+    stage = read_json(train["stage_artifact"])
+    assert stage["schema"] == inputs.REVIEWED_SOURCE_BOUND_MIXED_CYCLE_SCHEMA
+    assert stage["transition_kind"] == "bootstrap" and stage["parent_artifact"] is None
+    for name in ("rows_artifact", "split_manifest_artifact", "history_artifact",
+                 "admission_transport_artifact", "bound_component_transport_artifact"):
+        assert stage[name] == train[name]
+        assert train[name] in train["stage_census"]
+    stage_registry = ReadRegistry([train["stage_artifact"], *train["stage_census"]])
+    query_registry = ReadRegistry(query["admission_leaves"])
+    query_bound_registry = ReadRegistry(query["bound_component_leaves"])
+
+    def restore(role, admission_registry, bound_registry):
+        admission = inputs._reviewed_restore_admission(
+            admission_registry, read_json(role["admission_transport_artifact"]))
+        bound = inputs._reviewed_restore_bound_component_inputs(read_json(role["bound_component_transport_artifact"]),
+            lambda reference: inputs._reviewed_read(bound_registry, reference))
+        assert consumer.reviewed_admission_inputs_sha256(admission) == role["admission_inputs_sha256"]
+        assert consumer.reviewed_admission_inputs_sha256(bound) == role["bound_component_inputs_sha256"]
+        return admission, bound
+
+    checkpoint_admission, checkpoint_source = restore(train, stage_registry, stage_registry)
+    query_admission, query_source = restore(query, query_registry, query_bound_registry)
+    assert set(checkpoint_admission) == set(checkpoint_source) == {train["declared_component_id"]}
+    assert train["declared_component_id"] != query["declared_component_id"]
+    assert train["declared_graph_id"] != query["declared_graph_id"]
+    assert worker._digest(inputs._reviewed_wire(packet["split_config"])) == packet["split_config_sha256"]
+    rows, manifest, history = (read_json(role) for role in (
+        query["rows_artifact"], query["split_manifest_artifact"], train["history_artifact"]))
+    inference._require_reviewed_checkpoint_heldout_isolation(history=history, query_rows=rows,
+        query_split_manifest=manifest, split_config=packet["split_config"])
+    # The original V12 worker reopens and replays all four typed inputs again.
+    return SimpleNamespace(train=train, query=query, stage=stage, query_rows=rows,
+        split_config=packet["split_config"], split_config_sha256=packet["split_config_sha256"],
+        live=dict(query_admission=query_admission, query_bound_component_inputs=query_source,
+            checkpoint_admission=checkpoint_admission, checkpoint_bound_component_inputs=checkpoint_source))
+
+
+@pytest.mark.slow
+def test_reviewed_inference_v12_original_parent_restores_pristine_v5_and_scores_disjoint_fixture(
+        tmp_path, monkeypatch, capsys, request):
+    from copy import deepcopy
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_training_worker as worker
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_span_consumer_binding as consumer
+
+    import os
+
+    encoded_reference = os.environ.get("IPFS_DATASETS_TEST_REVIEWED_V12_FROZEN_INPUT")
+    if encoded_reference is None:
+        pytest.skip("requires exact signed fictional V12 fixture artifacts")
+    data = _load_source_bound_v12_frozen_fixture(json.loads(encoded_reference))
+    train, query = data.train, data.query
+    # The pinned synthetic TRAIN and heldout artifacts were prepared before this owner.
+    facts = request.getfixturevalue("reviewed_physical_owner")
+    assets_dir = facts.root / "pristine-v5-assets"
+    assets_dir.mkdir(mode=0o700)
+    limit = 4096
+    local = _reviewed_physical_fixture_assets(facts, assets_dir, max_sequence_tokens=limit,
+        fixed_json_schema_subwords=True, fixed_typed_schema_subwords=True, pristine_pair=True)
+    tokenizer_contract = local.preparation_receipt["pristine_tokenizer_contract"]
+    options = local.options
+    assets = {key: asdict(options[key]) for key in ("recipe_artifact", "model_config_artifact",
+        "tokenizer_artifact", "license_artifact", "model_checkpoint", "optimizer_checkpoint")}
+    identity = options["expected_backend_identity"]
+    model, optimizer = assets["model_checkpoint"], assets["optimizer_checkpoint"]
+    backend_assets = [assets["recipe_artifact"], assets["model_config_artifact"]]
+    profile = data.stage["admission_profile"]
+    pins = worker._reviewed_decoder_source_pins(admission_profile=profile, source_bound=True)
+    lifecycle = inference._reviewed_evaluation_lifecycle_source_sha256(source_bound=True)
+    inputs_dir = tmp_path / "fixture-v12-query-and-job"
+    inputs_dir.mkdir(mode=0o700)
+
+    def put(raw):
+        pin = worker._digest(raw)
+        path = inputs_dir / (pin + ".artifact")
+        if not path.exists():
+            with path.open("xb") as stream:
+                stream.write(raw)
+        assert path.stat().st_size == len(raw) and _sha(path) == pin
+        return {"path": str(path), "sha256": pin, "bytes": len(raw)}
+
+    def put_json(value):
+        return put(worker._json_bytes(value))
+
+    checkpoint_stage = train["stage_artifact"]
+    lineage, base, seed = "fixture:v12-pristine-v5-lineage", "fixture:v12-pristine-t5", 1729
+    parent_checkpoint = put_json({
+        "schema": worker.REVIEWED_SOURCE_BOUND_MIXED_DECODER_CHECKPOINT_SCHEMA,
+        "checkpoint_lineage_id": lineage, "base_version_id": base, "backend_identity": identity,
+        "assets": [model, assets["tokenizer_artifact"], assets["license_artifact"], *backend_assets],
+        "training_binding": None, "model_state": model, "optimizer_state": optimizer,
+        "progress": {"epochs_completed": 0, "row_cursor": 0, "optimizer_steps": 0},
+        "batch_size": 1, "seed": seed, "parent_checkpoint_sha256": None, "producer_pins": pins,
+        "qualified": False, "promotion_performed": False,
+        "token_budgets": {"max_source_tokens": limit, "max_target_tokens": limit,
+                          "tokenizer_contract": tokenizer_contract},
+    })
+    spec = worker.ReviewedSourceBoundMixedDecoderTrainingJobSpec.from_dict({
+        "schema_version": worker.REVIEWED_SOURCE_BOUND_MIXED_DECODER_JOB_SCHEMA,
+        "job_id": "fixture:v12-pristine-v5-job", "run_id": "fixture:v12-pristine-v5-run",
+        "base_version_id": base, "checkpoint_lineage_id": lineage,
+        "output_directory": str(tmp_path / "unused-v5-training-output"), "code_identity": "fixture:v12-v5-pins",
+        "stage_artifact": checkpoint_stage, "exposure_artifact": train["exposure_artifact"],
+        "source_contexts_artifact": train["source_contexts_artifact"], "model_artifact": model,
+        "tokenizer_artifact": assets["tokenizer_artifact"], "license_artifact": assets["license_artifact"],
+        "base_model_checkpoint": model, "base_optimizer_checkpoint": optimizer, "backend_artifacts": backend_assets,
+        "parent_checkpoint_artifact": parent_checkpoint, "admission_profile": profile,
+        "expected_admission_inputs_sha256": train["admission_inputs_sha256"],
+        "expected_bound_component_inputs_sha256": train["bound_component_inputs_sha256"],
+        "split_config": data.split_config,
+        "expected_split_config_sha256": data.split_config_sha256,
+        "backend_identity": identity, "expected_source_sha256": pins, "batch_size": 1, "seed": seed,
+        "max_source_tokens": limit, "max_target_tokens": limit, "allow_fictional_fixture": True,
+    })
+    output = facts.attempt / "outputs"
+    payload = dict(schema=inference.REVIEWED_SOURCE_BOUND_EVALUATION_REQUEST_SCHEMA,
+        request_id="fixture:v12-physical-pristine-heldout", operation="heldout_evaluation",
+        heldout_evaluation_purpose=consumer.REVIEWED_HELDOUT_PURPOSE, allow_fictional_fixture=True,
+        assets=assets, backend_identity=identity, source_sha256=pins, lifecycle_source_sha256=lifecycle,
+        admission_profile=profile, runtime_profile="builtin-t5-gpt2-float32/v1",
+        admission_inputs_sha256=query["admission_inputs_sha256"],
+        admission_transport_artifact=query["admission_transport_artifact"],
+        source_contexts_artifact=query["source_contexts_artifact"], rows_artifact=query["rows_artifact"],
+        split_manifest_artifact=query["split_manifest_artifact"],
+        exposure_artifact=query["exposure_artifact"], compiler_commit="fixture:v12-no-toolchain",
+        checkpoint_declarations={"encoder": {"id": "fixture:v12-no-encoder", "sha256": "1" * 64},
+                                 "decoder": {"id": identity["backend_id"], "sha256": model["sha256"]}},
+        max_source_tokens=limit, max_output_tokens=3, max_model_bytes=64 * 1024**2,
+        attempt_directory=str(facts.attempt), output_directory=str(output),
+        source_bound_replay={"query_bound_component_inputs_sha256": query["bound_component_inputs_sha256"],
+            "query_bound_component_transport_artifact": query["bound_component_transport_artifact"],
+            "checkpoint_admission_inputs_sha256": spec.expected_admission_inputs_sha256,
+            "checkpoint_admission_transport_artifact": data.stage["admission_transport_artifact"],
+            "checkpoint_bound_component_inputs_sha256": spec.expected_bound_component_inputs_sha256,
+            "checkpoint_bound_component_transport_artifact": data.stage["bound_component_transport_artifact"],
+            "checkpoint_job_artifact": put_json(spec.to_dict()), "checkpoint_stage_artifacts": train["stage_census"]})
+    selected = put_json(payload)
+    assert inference._read_reviewed_evaluation_request(selected)[2] == payload
+
+    def source_guard():
+        assert worker._reviewed_decoder_source_pins(admission_profile=profile, source_bound=True) == pins
+        assert all(_sha(path) == digest for path, digest in lifecycle.items())
+
+    def asset_policy(policy):
+        assert policy["training_requested"] is False
+        assert policy.get("downloads_requested", False) is False
+        assert policy.get("resource_grant_requested", False) is False
+
+    packet = SimpleNamespace(write_request=lambda: selected, source_guard=source_guard,
+        asset_policy=asset_policy, fresh_admission=lambda: deepcopy(data.live), context_callbacks={})
+    assert _reviewed_physical_run(_reviewed_physical_cli(monkeypatch), facts, packet) == 0
+    parent = json.loads(capsys.readouterr().out.splitlines()[-1])
+    cycle, loader, generation, evaluation = [json.loads((output / (name + ".json")).read_bytes())
+                                              for name in ("cycle", "loader", "generation", "evaluation")]
+    assert parent["original_child_waited"] is parent["parent_FINISH_acknowledged"] is True
+    assert parent["parent_current_admission_rechecked_after_wait"] is parent["parent_output_artifacts_rechecked_after_wait"] is True
+    assert parent["original_child_identity"] == facts.owner._child
+    assert parent["parent_callbacks"]["operations"]["FINISH"] == 1
+    assert parent["parent_callbacks"]["operations"]["ADMISSION"] > 0
+    assert parent["source_bound_evaluation_inputs"] == inference._source_bound_evaluation_commitment(payload, data.live)
+    _assert_reviewed_output_artifacts(output, cycle, parent)
+    inference._check_reviewed_evaluation_outputs(cycle, payload)
+    assert loader["optimizer_steps"] == 0 and loader["checkpoint_restored"] is loader["matched_pair"] is True
+    assert loader["job_spec_sha256"] == spec.canonical_sha256
+    assert loader["stage_artifact_sha256"] == checkpoint_stage["sha256"]
+    assert loader["parent_checkpoint_sha256"] == parent_checkpoint["sha256"]
+    assert loader["current_bound_component_inputs_sha256"] == spec.expected_bound_component_inputs_sha256
+    last = generation["last_call"]
+    assert last["entry_pair_match"] is last["exit_pair_match"] is last["completed"] is True
+    assert last["input_receipt"]["target_access_performed"] is False
+    assert [item["id"] for item in last["raw_generation_outputs"]] == [row["id"] for row in data.query_rows]
+    assert evaluation["metrics"]["complete_norm_payload"]["denominator"] == len(data.query_rows)
+    assert all(parent[name] is False for name in ("training_executed", "model_quality_qualified", "legal_meaning_verified",
+        "proof_authority", "corpus_admitted", "resource_release_performed"))
+    assert not Path(spec.output_directory).exists()
+    _reviewed_physical_assert_stopped(facts)
