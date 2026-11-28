@@ -940,3 +940,49 @@ def test_existing_citation_policies_retain_their_unicode_sample_manifests(policy
     }
     assert manifest.metadata.get("citation_grouping_policy") == policy
     assert LegalIRSplitManifest.from_mapping(manifest.to_dict()).to_dict() == manifest.to_dict()
+
+
+@pytest.mark.parametrize("layout", ["nested-primary", "nested-legacy", "direct", "direct-without-summary"])
+def test_saved_split_summary_cannot_override_current_manifest_leakage(layout: str) -> None:
+    examples = tuple(
+        LegalIRSplitExample.from_sample({"sample_id": identity, "text": "Agency must file notice."})
+        for identity in ("train-source", "heldout-source")
+    )
+    clean = LegalIRSplitManifest(
+        examples=examples,
+        assignments={row.sample_id: TRAIN_SPLIT for row in examples},
+        config_digest="saved-current-split-control",
+    ).to_dict()
+    saved = clean["legal_ir_split_guard"]
+    assert saved["passed"] is True
+    # Reuse an earlier successful summary with a different assignment.
+    leaked = {**clean, "assignments": {**clean["assignments"], "heldout-source": HOLDOUT_SPLIT}}
+    assert validate_legal_ir_eval_splits(leaked).passed is False
+
+    fields = {"applied_count": 2, "quality_gate": "pass"}
+    if layout.startswith("nested"):
+        guard_name = "legal_ir_split_guard" if layout == "nested-primary" else "split_guard"
+        payload = {**fields, "legal_ir_split_manifest": leaked, guard_name: saved}
+    elif layout == "direct":
+        payload = {**fields, **leaked}
+    else:
+        payload = {**fields, **{k: value for k, value in leaked.items() if k != "legal_ir_split_guard"}}
+
+    gate = compiler_guidance_promotion_gate(payload)
+    assert gate["promotion_allowed"] is False
+    assert gate["promotion_block_reason"] == "split_guard_blocked"
+    assert split_guard_blocks_operation(payload, REPRESENTATION_PROMOTION_OPERATION)
+
+
+@pytest.mark.parametrize("stored_refusal", [False, True])
+def test_current_clean_split_respects_existing_compact_guard(stored_refusal: bool) -> None:
+    clean = LegalIRSplitManifest(
+        examples=(LegalIRSplitExample.from_sample({"sample_id": "source", "text": "Agency may file."}),),
+        assignments={"source": TRAIN_SPLIT},
+        config_digest="clean-split-control",
+    ).to_dict()
+    legacy = _failed_guard() if stored_refusal else clean["legal_ir_split_guard"]
+    compact = {"applied_count": 2, "quality_gate": "pass", "split_guard": legacy}
+    for payload in (compact, {**compact, "legal_ir_split_manifest": clean}):
+        assert split_guard_blocks_operation(payload, REPRESENTATION_PROMOTION_OPERATION) is stored_refusal
+        assert compiler_guidance_promotion_gate(payload)["promotion_allowed"] is (not stored_refusal)
