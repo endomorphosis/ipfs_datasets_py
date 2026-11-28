@@ -39810,6 +39810,24 @@
       "root": "artifact_workspace",
       "scope": "Original Lean compiler command and instrumented input binding.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/lir20_source_bound_rich_TRAIN_replay_20261128",
+      "closed_runtime_facts": {
+        "existing_direct_context_passes": 19,
+        "existing_heldout_integration_passes": 5,
+        "reproduced_baseline_failures": 2,
+        "signed_source_replay_passes": 12
+      },
+      "evidence_ordinal": 601,
+      "id": "lir20-source-bound-rich-TRAIN-replay-evidence601-20261128",
+      "observed_bytes": 1620,
+      "observed_sha256": "e9a0f2ea499e062f2a1de158c6184323d2a3705d61e7cb3aa9620d8d4106b3ca",
+      "path": "/tmp/P4-rich-bound-train-onubtv2a/Guide601-isolated/actual-Guide601-P4-qualified-fixture-integration.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Existing V3 and V4 rich TRAIN context source-history replay with independent component commitments.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }

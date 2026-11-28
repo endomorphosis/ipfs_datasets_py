@@ -4324,3 +4324,10 @@ The declared reviewed graph can cite the current observation and the release rep
 The Lean backend compares the returned command with the exact original request before it accepts an axiom report. The report filename comes from the instrumented source in that request. A changed executable, flag, or consistent alternate filename now returns a rejected result. The pre-fix controls reproduced two incorrect acceptances and an exception. The full owning software module passed 427 cases, with four opt-in Native cases skipped in that invocation.
 
 The managed installed Lean 4.34.1 case passed the fictional positive proof, expected-type refusal, and unapproved-dependency refusal. Source custody and resource release closed. Independent statutory review and corpus and model qualification remain pending. [Lean command-binding qualification](/tmp/P1-Lean-returned-command-binding-7kdokpme/actual-Lean-selected-command-qualification.json)
+
+
+## Evidence601 — Replay source history in rich TRAIN contexts
+
+The existing V3 and aggregate V4 context consumers require the current source replay inputs and an independently supplied SHA-256 for every source-bound TRAIN component. They check the commitment against the prepared binding and revalidate it through the existing consumer. The aggregate route also replays unselected components. Callback arguments retain complete reviewed examples and governing definitions, and the existing heldout population and leakage checks still apply.
+
+The two signed-fixture failures reproduced on Guide599. The isolated fix passed 12 signed source replay cases, 19 existing direct-context cases, and five existing heldout integration cases. A history-preserving merge carries the exact tested changes forward to Guide600. These ordinary fictional fixtures qualify source replay in the existing context path. Production admission, inference permission, model execution, and training authority remain outside this evidence. [Exact Phase 4 fixture and merge evidence](/tmp/P4-rich-bound-train-onubtv2a/Guide601-isolated/actual-Guide601-P4-qualified-fixture-integration.json)
