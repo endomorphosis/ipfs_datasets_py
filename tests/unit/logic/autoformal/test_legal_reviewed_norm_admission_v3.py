@@ -509,13 +509,14 @@ def test_reviewed_v3_preserves_acyclic_overlapping_unit_dependencies(sibling, mi
     assert report["semantic_use_eligible"] is report["Lean_admitted"] is report["proof_authority"] is False
 
 
-@pytest.mark.parametrize("versions, shared_id", [
-    (("fictional-crosswalk/v1", "fictional-crosswalk/v2"), True),
-    (("fictional-crosswalk/v2", "fictional-crosswalk/v1"), True),
-    (("fictional-crosswalk/v1", "fictional-crosswalk/v1"), True),
-    (("fictional-crosswalk/v1", "fictional-crosswalk/v2"), False),
-], ids=["shared-forward-conflict", "shared-reverse-conflict", "shared-equal", "distinct-identities"])
-def test_reviewed_v3_cross_reference_version_consistency(sibling, mixed_case, versions, shared_id):
+@pytest.mark.parametrize("versions, shared_id, duplicate", [
+    (("fictional-crosswalk/v1", "fictional-crosswalk/v2"), True, False),
+    (("fictional-crosswalk/v2", "fictional-crosswalk/v1"), True, False),
+    (("fictional-crosswalk/v1", "fictional-crosswalk/v1"), True, False),
+    (("fictional-crosswalk/v1", "fictional-crosswalk/v2"), False, False),
+    (("fictional-crosswalk/v1", "fictional-crosswalk/v1"), True, True),
+], ids=["shared-forward-conflict", "shared-reverse-conflict", "shared-equal", "distinct-identities", "duplicate-unit-use"])
+def test_reviewed_v3_cross_reference_version_consistency(sibling, mixed_case, versions, shared_id, duplicate):
     case = mixed_case
     declaration = case["declaration"]
     artifact_ids = (
@@ -533,6 +534,8 @@ def test_reviewed_v3_cross_reference_version_consistency(sibling, mixed_case, ve
          "evidence_refs": [deepcopy(process)]}
         for unit, identity, version in zip(declaration["units"][1:], artifact_ids, versions, strict=True)
     ]
+    if duplicate:
+        references.insert(1, deepcopy(references[0]))
     declaration["cross_references"] = references
     for identity in set(artifact_ids):
         case["evidence"][identity] = dependency
@@ -541,14 +544,18 @@ def test_reviewed_v3_cross_reference_version_consistency(sibling, mixed_case, ve
     assert {row["artifact_id"]: row["artifact_sha256"] for row in artifacts
             if row["artifact_id"] in artifact_ids} == dict.fromkeys(artifact_ids, dependency_sha)
     assert case["manifest"]["cycles"] == []
-    conflict = shared_id and versions[0] != versions[1]
+    expected_error = None
+    if duplicate:
+        expected_error = "duplicate reviewed cross reference"
+    elif shared_id and versions[0] != versions[1]:
+        expected_error = "conflicting dependency versions"
     try:
         case["preparation"] = sibling.prepare_reviewed_norm_admission_v3(
             declaration, **prepare_args(case))
     except ValueError as error:
-        if not conflict:
+        if expected_error is None:
             raise
-        assert "conflicting dependency versions" in str(error)
+        assert expected_error in str(error)
         return
 
     refresh_signed_reviews(case, sibling)
@@ -556,8 +563,8 @@ def test_reviewed_v3_cross_reference_version_consistency(sibling, mixed_case, ve
     report = assess(sibling, case)
     assert report["semantic_use_eligible"] and report["blockers"] == []
     assert report["fixture_only"] and report["training_mask"] == report["evaluation_gold_mask"] == 0
-    assert [unit["canonical_ir"]["cross_references"][0] for unit in report["units"][1:]] == references
-    assert not conflict, "contradictory dependency version labels became eligible in a freshly signed V3 review"
+    assert [ref for unit in report["units"] for ref in unit["canonical_ir"]["cross_references"]] == references
+    assert expected_error is None, "invalid cross-reference population became eligible in a freshly signed review"
 
 
 @pytest.mark.parametrize("nested", [False, True], ids=["direct", "nested"])

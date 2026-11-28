@@ -2056,13 +2056,14 @@ def test_reviewed_v2_checks_unit_dependencies_before_signed_admission(owner, rev
     assert case["preparation"]["declaration"]["units"] == case["declaration"]["units"]
 
 
-@pytest.mark.parametrize("versions, shared_id", [
-    (("fictional-crosswalk/v1", "fictional-crosswalk/v2"), True),
-    (("fictional-crosswalk/v2", "fictional-crosswalk/v1"), True),
-    (("fictional-crosswalk/v1", "fictional-crosswalk/v1"), True),
-    (("fictional-crosswalk/v1", "fictional-crosswalk/v2"), False),
-], ids=["shared-forward-conflict", "shared-reverse-conflict", "shared-equal", "distinct-identities"])
-def test_reviewed_v2_cross_reference_version_consistency(owner, reviewed_case_v2, versions, shared_id):
+@pytest.mark.parametrize("versions, shared_id, duplicate", [
+    (("fictional-crosswalk/v1", "fictional-crosswalk/v2"), True, False),
+    (("fictional-crosswalk/v2", "fictional-crosswalk/v1"), True, False),
+    (("fictional-crosswalk/v1", "fictional-crosswalk/v1"), True, False),
+    (("fictional-crosswalk/v1", "fictional-crosswalk/v2"), False, False),
+    (("fictional-crosswalk/v1", "fictional-crosswalk/v1"), True, True),
+], ids=["shared-forward-conflict", "shared-reverse-conflict", "shared-equal", "distinct-identities", "duplicate-unit-use"])
+def test_reviewed_v2_cross_reference_version_consistency(owner, reviewed_case_v2, versions, shared_id, duplicate):
     from tests.unit.logic.autoformal.test_legal_reviewed_norm_admission_v3 import (
         assert_signatures_valid, refresh_signed_reviews,
     )
@@ -2084,6 +2085,8 @@ def test_reviewed_v2_cross_reference_version_consistency(owner, reviewed_case_v2
          "evidence_refs": [deepcopy(process)]}
         for unit, identity, version in zip(declaration["units"][1:], artifact_ids, versions, strict=True)
     ]
+    if duplicate:
+        references.insert(1, deepcopy(references[0]))
     declaration["cross_references"] = references
     for identity in set(artifact_ids):
         case["evidence"][identity] = dependency
@@ -2092,14 +2095,18 @@ def test_reviewed_v2_cross_reference_version_consistency(owner, reviewed_case_v2
     assert {row["artifact_id"]: row["artifact_sha256"] for row in artifacts
             if row["artifact_id"] in artifact_ids} == dict.fromkeys(artifact_ids, dependency_sha)
     assert case["manifest"]["cycles"] == []
-    conflict = shared_id and versions[0] != versions[1]
+    expected_error = None
+    if duplicate:
+        expected_error = "duplicate reviewed cross reference"
+    elif shared_id and versions[0] != versions[1]:
+        expected_error = "conflicting dependency versions"
     try:
         case["preparation"] = owner.prepare_reviewed_norm_admission_v2(
             declaration, **reviewed_prepare_arguments_v2(case))
     except ValueError as error:
-        if not conflict:
+        if expected_error is None:
             raise
-        assert "conflicting dependency versions" in str(error)
+        assert expected_error in str(error)
         return
 
     refresh_signed_reviews(case, owner)
@@ -2107,8 +2114,8 @@ def test_reviewed_v2_cross_reference_version_consistency(owner, reviewed_case_v2
     report = assess_reviewed_fixture_v2(owner, case)
     assert report["semantic_use_eligible"] and report["blockers"] == []
     assert report["fixture_only"] and report["training_mask"] == report["evaluation_gold_mask"] == 0
-    assert [unit["canonical_ir"]["cross_references"][0] for unit in report["units"][1:]] == references
-    assert not conflict, "contradictory dependency version labels became eligible in a freshly signed V2 review"
+    assert [ref for unit in report["units"] for ref in unit["canonical_ir"]["cross_references"]] == references
+    assert expected_error is None, "invalid cross-reference population became eligible in a freshly signed review"
 
 
 @pytest.mark.parametrize("shape", ["independent", "identity", "nested-self-use"])

@@ -265,7 +265,7 @@ def _reviewed_body(body, source_inputs, relational_inputs):
           "every normative use and governing definition must be reviewed")
     refs = body["cross_references"]
     _need(type(refs) is list and len(refs) <= 64, "bounded complete cross-reference inventory required")
-    versions = {}
+    versions, seen_refs = {}, set()
     for ref in refs:
         _keys(ref, {"from_unit_id", "dependency_artifact_id", "dependency_sha256", "version", "evidence_refs"},
               "versioned reviewed cross reference")
@@ -275,6 +275,9 @@ def _reviewed_body(body, source_inputs, relational_inputs):
         auth._text(ref["version"], "cross-reference version")
         _reviewed_refs(ref["evidence_refs"])
         key = ref["dependency_artifact_id"]
+        pair = (ref["from_unit_id"], key)
+        _need(pair not in seen_refs, "duplicate reviewed cross reference")
+        seen_refs.add(pair)
         _need(key not in artifacts or artifacts[key] == ref["dependency_sha256"], "conflicting dependency versions")
         version = ref["version"]
         _need(versions.setdefault(key, version) == version, "conflicting dependency versions")
