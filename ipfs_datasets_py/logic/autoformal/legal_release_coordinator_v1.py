@@ -2680,6 +2680,7 @@ def observe_reviewed_source_bound_native_component_v1(
     from . import corpus_contracts as contracts, corpus_qualification as qualification
     from . import legal_corpus_definition_use_native_v2 as native
 
+    _joined_release_guard()
     selection = _physical_v4_current_review_selection(current_review)
     _need(type(expected_compiled_artifact_sha256s) is dict
           and 0 < len(expected_compiled_artifact_sha256s) <= native.MAX_REVIEWED_PRESERVATION_MODULES,
@@ -2802,6 +2803,7 @@ def observe_reviewed_source_bound_native_component_v1(
     _release_callback_fence_v3(callbacks(), states)
     _need(original_inputs() == pinned_inputs and native._live_handle_entry(handle, reviewed_version=6, **profiles) is entry,
           "source-bound component or original handle changed during release observation")
+    _joined_release_guard()
     return {
         "current_review_observation": review,
         "checked_whole_project_observation": compiled,

@@ -7433,8 +7433,9 @@ def _source_bound_release_review_options(options):
     ("missing-current-review", "current review"),
     ("invalid-artifact-path", "compiled"),
     ("unissued-handle", "live success handle was not issued by this process and native thread"),
+    ("rebound-current-review", "loaded-owner implementation binding differs"),
 ])
-def test_source_bound_release_refuses_invalid_selections_before_project_replay(refusal, message):
+def test_source_bound_release_refuses_invalid_selections_before_project_replay(refusal, message, monkeypatch):
     from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
 
     independent_pin = sha(b"independently selected fictional subject")
@@ -7450,6 +7451,8 @@ def test_source_bound_release_refuses_invalid_selections_before_project_replay(r
         review = None
     elif refusal == "invalid-artifact-path":
         compiled = {"project/Fictional.olean": compiled["compiled/Fictional.olean"]}
+    elif refusal == "rebound-current-review":
+        monkeypatch.setattr(release, "_assess_release_current_review", lambda *args: pytest.fail("replacement review called"))
     handle = object.__new__(native.VerifiedReviewedPreservationNativeSuccess)
     # None of the project, packet or signed admission inputs can be opened.
     unavailable = object()
