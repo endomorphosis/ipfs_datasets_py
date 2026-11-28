@@ -3589,3 +3589,18 @@ Both resealed mismatches reproduced before the change. All 32 selected retention
 ## Evidence623 — Lean deadline through final proof evidence validation
 
 The same private seven cases changed from four passing and three false-acceptance failures to seven passing. The current ordinary backend suite passed 431 cases. A separate managed installed Lean 4.34.1 cache test ran one version probe and two compiles. Disk replay and mismatch controls ran with zero additional Lean calls. Cases, compiled profile, process reaping and Source/resource closeout are joined in the qualification record. This is software and fixture evidence with no statutory decision. [Exact qualification evidence](/tmp/Guide622-current-verified-integration-yw_uedkq/actual-composed-qualification-Evidence623.json)
+
+
+## Evidence624 — Explicit definition selection for reviewed normative uses
+
+The seven focused cases included explicit links, role and sort distinctions, and the two previously accepted omissions. Independent statutory review and applicable legal contexts are still required for the real pilot. [Exact qualification evidence](/tmp/Guide623-current-verified-integration-j_rjhkfn/actual-composed-qualification-Evidence624.json)
+
+
+## Evidence625 — Unmeasured deadlines withhold temporal agreement credit
+
+Four of six focused cases failed before the change. The fixed source passed all 158 semantic and promotion tests and a separate 19-test responsiveness cohort. [Exact qualification evidence](/tmp/Guide623-current-verified-integration-j_rjhkfn/actual-composed-qualification-Evidence625.json)
+
+
+## Evidence626 — Opt-in paragraph embedding shuffle with fixed clause context
+
+All 88 owning tests passed. Six legacy execution controls and seven scoring outputs were byte-identical on retained fixtures. A matched decoder experiment and an independently reviewed training population remain pending. [Exact qualification evidence](/tmp/Guide623-current-verified-integration-j_rjhkfn/actual-composed-qualification-Evidence626.json)

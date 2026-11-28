@@ -5583,6 +5583,36 @@
       },
       "record_id": "lean-final-proof-receipt-result-outcome-deadline",
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
+    },
+    "decoder-paragraph-embedding-only-source-control-v1": {
+      "evidence_ordinal": 626,
+      "facts": {
+        "bytes": 1914,
+        "path": "/tmp/Guide623-current-verified-integration-j_rjhkfn/actual-composed-qualification-Evidence626.json",
+        "sha256": "cd682940c1fbe2c155af3edd5744de3ea36e996a6d04b7ed575afe13e34c8890"
+      },
+      "record_id": "decoder-paragraph-embedding-only-source-control",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
+    },
+    "reviewed-norm-explicit-local-definition-selection-v1": {
+      "evidence_ordinal": 624,
+      "facts": {
+        "bytes": 1369,
+        "path": "/tmp/Guide623-current-verified-integration-j_rjhkfn/actual-composed-qualification-Evidence624.json",
+        "sha256": "df7e689c90cf08b796e99a8538e8acc3dc8056e1f61354d5eb8d80b823d12b03"
+      },
+      "record_id": "reviewed-norm-explicit-local-definition-selection",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
+    },
+    "semantic-equivalence-unmeasured-temporal-observation-v1": {
+      "evidence_ordinal": 625,
+      "facts": {
+        "bytes": 1377,
+        "path": "/tmp/Guide623-current-verified-integration-j_rjhkfn/actual-composed-qualification-Evidence625.json",
+        "sha256": "f14df3465685156a7a0348e634b72c4867fc5b5ccd4aff1b03d4b2317c30a9a3"
+      },
+      "record_id": "semantic-equivalence-unmeasured-temporal-observation",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
     }
   },
   "programme_goal_hierarchy": {

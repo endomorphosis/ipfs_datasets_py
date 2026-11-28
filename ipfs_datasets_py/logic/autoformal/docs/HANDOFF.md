@@ -4449,3 +4449,18 @@ The existing retention comparator now joins each canonical reference to its admi
 ## Evidence623 — Lean deadline through final proof evidence validation
 
 The backend checks the original request deadline after it finishes constructing and validating the accepted outcome. An expired request returns TIMEOUT and an unaccepted receipt while preserving the checked evidence. This does not issue a second compiler call. [Exact qualification evidence](/tmp/Guide622-current-verified-integration-yw_uedkq/actual-composed-qualification-Evidence623.json)
+
+
+## Evidence624 — Explicit definition selection for reviewed normative uses
+
+A reviewed norm must explicitly select a governing definition for each matching local predicate. Matching uses the predicate name, ordered domain sorts, and ordered roles. Both signed fictional omissions failed before the change, and all 329 owning tests passed afterward. [Exact qualification evidence](/tmp/Guide623-current-verified-integration-j_rjhkfn/actual-composed-qualification-Evidence624.json)
+
+
+## Evidence625 — Unmeasured deadlines withhold temporal agreement credit
+
+An explicitly present deadline or duration that the legacy parser cannot measure now withholds temporal agreement credit. Existing measures for absent constraints and recognized dates still apply. An advertised temporal score cannot fill that missing measurement. [Exact qualification evidence](/tmp/Guide623-current-verified-integration-j_rjhkfn/actual-composed-qualification-Evidence625.json)
+
+
+## Evidence626 — Opt-in paragraph embedding shuffle with fixed clause context
+
+The opt-in paragraph-only shuffle substitutes a same-length paragraph embedding while preserving the original clause context and the complete evaluation population. The existing source fidelity scorer records the actual paragraph donor and retains missing predictions in the denominator. [Exact qualification evidence](/tmp/Guide623-current-verified-integration-j_rjhkfn/actual-composed-qualification-Evidence626.json)

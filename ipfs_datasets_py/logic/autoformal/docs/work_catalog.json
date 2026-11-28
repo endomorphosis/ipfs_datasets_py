@@ -40144,6 +40144,42 @@
       "root": "artifact_workspace",
       "scope": "Native Lean kernel backend final receipt, result and outcome construction",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/reviewed-norm-explicit-local-definition-selection-v1",
+      "evidence_ordinal": 624,
+      "id": "reviewed-norm-explicit-local-definition-selection",
+      "observed_bytes": 1369,
+      "observed_sha256": "df7e689c90cf08b796e99a8538e8acc3dc8056e1f61354d5eb8d80b823d12b03",
+      "path": "/tmp/Guide623-current-verified-integration-j_rjhkfn/actual-composed-qualification-Evidence624.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Scoped V2/V3 signed fictional software fixtures and 329 owning Python tests.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/semantic-equivalence-unmeasured-temporal-observation-v1",
+      "evidence_ordinal": 625,
+      "id": "semantic-equivalence-unmeasured-temporal-observation",
+      "observed_bytes": 1377,
+      "observed_sha256": "f14df3465685156a7a0348e634b72c4867fc5b5ccd4aff1b03d4b2317c30a9a3",
+      "path": "/tmp/Guide623-current-verified-integration-j_rjhkfn/actual-composed-qualification-Evidence625.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Scoped semantic scorer and external promotion test suites. No measured model performance claim.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/decoder-paragraph-embedding-only-source-control-v1",
+      "evidence_ordinal": 626,
+      "id": "decoder-paragraph-embedding-only-source-control",
+      "observed_bytes": 1914,
+      "observed_sha256": "cd682940c1fbe2c155af3edd5744de3ea36e996a6d04b7ed575afe13e34c8890",
+      "path": "/tmp/Guide623-current-verified-integration-j_rjhkfn/actual-composed-qualification-Evidence626.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Existing source control and source fidelity owners. Scoped 88-test software qualification.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }
