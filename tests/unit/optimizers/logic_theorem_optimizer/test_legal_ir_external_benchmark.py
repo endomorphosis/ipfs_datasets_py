@@ -619,3 +619,49 @@ def test_external_benchmark_keeps_distinct_nonlatin_citations_in_the_denominator
     assert partial.block_reasons == ("missing_required_citation",)
     assert len(partial.detail["citations"]["required"]) == 2
     assert evaluate_external_legal_expert_benchmark((packet,), [_prediction(packet)]).accepted
+
+
+@pytest.mark.parametrize(
+    ("kind", "term", "output", "accepted"),
+    [
+        pytest.param("required", "préavis", "PRE\u0301AVIS", True, id="required-decomposed-output"),
+        pytest.param("required", "pre\u0301avis", "PRÉAVIS", True, id="required-decomposed-expectation"),
+        pytest.param("forbidden", "dérogation", "DE\u0301ROGATION", False, id="forbidden-decomposed-output"),
+        pytest.param("forbidden", "de\u0301rogation", "DÉROGATION", False, id="forbidden-decomposed-expectation"),
+        pytest.param("required", "préavis", "preavis", False, id="accent-remains-significant"),
+        pytest.param("required", "Ａvis", "AVIS", False, id="compatibility-forms-stay-distinct"),
+        pytest.param("required", "notice", "NOTICE", True, id="ascii-case-retained"),
+    ],
+)
+def test_external_benchmark_compares_canonical_unicode_decompiler_terms(
+    kind: str, term: str, output: str, accepted: bool,
+) -> None:
+    from dataclasses import replace
+
+    packet, control = _packets()
+    expected = replace(
+        packet.decompiler_expectations,
+        expected_reading="Avis expérimental.",
+        required_terms=(term,) if kind == "required" else (),
+        forbidden_terms=(term,) if kind == "forbidden" else (),
+    )
+    packet = replace(packet, decompiler_expectations=expected)
+    prediction = {**_prediction(packet), "packet_digest": packet.digest, "decompiled_text": output}
+
+    report = evaluate_external_legal_expert_benchmark(
+        (packet, control), [prediction, _prediction(control)]
+    )
+    result, retained = report.packet_results
+    detail = result.detail["decompiler_expectations"]
+    reason = "decompiler_missing_required_terms" if kind == "required" else "decompiler_forbidden_terms_present"
+
+    assert result.accepted is accepted
+    assert result.block_reasons == (() if accepted else (reason,))
+    assert result.scores["decompiler_expectations"] == (1.0 if accepted else pytest.approx(2 / 3))
+    assert detail["missing_required_terms"] == ([term] if not accepted and kind == "required" else [])
+    assert detail["forbidden_terms_present"] == ([term] if not accepted and kind == "forbidden" else [])
+    assert packet.decompiler_expectations.to_dict() == expected.to_dict()
+    assert prediction["decompiled_text"] == output
+    assert retained.accepted
+    assert report.to_dict()["external_validity"]["packet_count"] == 2
+    assert report.external_validity_score == (1.0 if accepted else 0.5)
