@@ -1978,6 +1978,8 @@ def test_unified_get_eligibility_snapshot_after_actual_lookup(change, monkeypatc
         pytest.param(True, "absent", False, id="request-only"),
         pytest.param(False, "matching", False, id="receipt-only"),
         pytest.param(True, "different", False, id="different-digest"),
+        pytest.param(True, "bool-alias", False, id="metadata-bool-alias"),
+        pytest.param(True, "float-alias", False, id="metadata-float-alias"),
     ),
 )
 def test_bound_cache_requires_checked_lean_translation_agreement(
@@ -1996,10 +1998,11 @@ def test_bound_cache_requires_checked_lean_translation_agreement(
         source_family="software_verification",
         target_family="lean4",
         fidelity="exact",
+        metadata={"provenance": {"revision": 1, "scope": "fictional"}},
     )
     if request_translation:
         translation_payload = translation.to_dict()
-        del translation_payload["metadata"]
+        translation_payload.update(translation_payload.pop("metadata"))
         request = replace(request, payload={**request.payload.to_dict(), "translation": translation_payload})
     _, _, normalized_translation = lean._payload_source(request)
     assert normalized_translation == (translation if request_translation else None)
@@ -2011,8 +2014,16 @@ def test_bound_cache_requires_checked_lean_translation_agreement(
         kernel = replace(kernel, translation=replace(
             translation, translation_digest=stable_digest({"fictional_translation": "different"})
         ))
+    elif receipt_translation in {"bool-alias", "float-alias"}:
+        revision = True if receipt_translation == "bool-alias" else 1.0
+        kernel = replace(kernel, translation=replace(
+            translation, metadata={"provenance": {"revision": revision, "scope": "fictional"}}
+        ))
     assert lean.LeanKernelReceipt.from_dict(kernel.to_dict()) == kernel
-    assert (kernel.translation == normalized_translation) is agrees
+    def translation_identity(value):
+        return stable_digest(value.to_dict()) if value is not None else None
+
+    assert (translation_identity(kernel.translation) == translation_identity(normalized_translation)) is agrees
 
     attempt = replace(BackendAttempt.from_dict(original["attempt"]),
         request_digest=request.digest,

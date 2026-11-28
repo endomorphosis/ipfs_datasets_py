@@ -345,7 +345,7 @@ def _validate_proof_binding(
             LEAN_KERNEL_ARCHIVED_VERIFICATION_PROFILE, LEAN_KERNEL_RECEIPT_VERSION,
             LEAN_KERNEL_VERIFICATION_PROFILE, LeanKernelReceipt,
             content_digest, instrument_lean_source_for_axioms,
-            _payload_source,
+            _payload_source, _same_translation_binding,
         )
         if (LEAN_KERNEL_RECEIPT_VERSION != "lean-kernel-receipt/v3"
                 or type(LEAN_KERNEL_VERIFICATION_PROFILE) is not str
@@ -387,7 +387,7 @@ def _validate_proof_binding(
     if (not isinstance(source, str) or kernel.submitted_source != source
             or kernel.theorem_digest != content_digest(source)):
         raise LegalProofIntegrityError("checked Lean source identity differs from request")
-    if kernel.translation != translation:
+    if not _same_translation_binding(kernel.translation, translation):
         raise LegalProofIntegrityError("checked Lean translation differs from request")
     if kernel.source_binding.source_digest != kernel.theorem_digest:
         raise LegalProofIntegrityError("kernel source binding differs from checked source")

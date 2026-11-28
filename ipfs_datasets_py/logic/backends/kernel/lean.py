@@ -655,7 +655,7 @@ class LeanKernelOutcome:
             payload = self.request.payload
             if (
                 self.receipt.submitted_source != source
-                or self.receipt.translation != translation
+                or not _same_translation_binding(self.receipt.translation, translation)
                 or self.receipt.theorem_name != payload.get("expected_declaration")
                 or self.receipt.expected_proposition != payload.get("expected_proposition")
             ):
@@ -1357,6 +1357,16 @@ def _usage_from_process(process: ToolRunResult) -> ResourceUsage:
 
 def _result_id(backend_id: str, request: BackendRequest) -> str:
     return f"result:{backend_id}:{request.digest[:24]}"
+
+
+def _same_translation_binding(
+    checked: KernelTranslationBinding | None,
+    requested: KernelTranslationBinding | None,
+) -> bool:
+    """Compare the complete translation wire with its exact JSON types."""
+    if checked is None or requested is None:
+        return checked is requested
+    return stable_digest(checked.to_dict()) == stable_digest(requested.to_dict())
 
 
 def _payload_source(request: BackendRequest) -> tuple[str, str, KernelTranslationBinding | None]:

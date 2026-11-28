@@ -1187,7 +1187,7 @@ def test_lean_v3_version_output_charge_preserves_complete_source_input_capacity(
 # Current reviewed constructors explicitly bind the current verifier profile;
 # negative cache controls changed the complete owner. This pin never follows edits itself.
 # The two fixture constructors used below retain their exact previous ASTs.
-_NATIVE_PROOF_CACHE_FIXTURE_SHA256 = "04e9db0915774450ab7d76a90ae05ea82f19309ddcb9891f4ae081073cf7b27f"
+_NATIVE_PROOF_CACHE_FIXTURE_SHA256 = "92ef456def53ab2cf7325f70ad63cc62ae00806d65051d71ebc1dc9c2d996e5c"
 
 
 def _load_native_proof_cache_fixture_owner():
@@ -2188,6 +2188,46 @@ def test_lean_outcome_binds_accepted_receipt_to_request_payload(changed):
         with pytest.raises(LeanKernelError, match="outcome accepted receipt .*request"):
             replace(outcome, **kwargs)
     assert len(calls) == 1
+
+
+@pytest.mark.parametrize(("revision", "matches"), [
+    pytest.param(1, True, id="exact"),
+    pytest.param(True, False, id="bool-alias"),
+    pytest.param(1.0, False, id="float-alias"),
+])
+def test_lean_outcome_binds_exact_translation_metadata_types(revision, matches):
+    from dataclasses import replace
+
+    from ipfs_datasets_py.logic.backends.kernel import lean
+
+    outcome, calls, original_request = _bound_lean_outcome()
+    assert outcome.receipt.accepted and len(calls) == 1
+    payload = original_request.payload.to_dict()
+    payload["translation"] = {
+        **_translation("lean4"), "provenance": {"revision": 1, "scope": "fictional"}
+    }
+    request = replace(original_request, payload=FrozenMap(payload))
+    source, _, translation = lean._payload_source(request)
+    assert translation is not None
+    receipt_translation = replace(
+        translation, metadata={"provenance": {"scope": "fictional", "revision": revision}}
+    )
+    assert (stable_digest(receipt_translation.to_dict()) == stable_digest(translation.to_dict())) is matches
+    binding = lean.LeanSourceBinding.bind(request, source)
+    receipt = replace(
+        outcome.receipt, request_digest=request.digest, source_binding=binding, translation=receipt_translation
+    )
+    metadata = outcome.result.metadata.to_dict()
+    metadata.update(kernel_receipt=receipt.to_dict(), source_binding=binding.to_dict())
+    result = replace(outcome.result, result_id=lean._result_id("lean", request),
+                     metadata=metadata, witness=receipt._theorem_witness())
+    kwargs = dict(request=request, request_digest=request.digest, source_binding=binding,
+                  receipt=receipt, result=result)
+    if matches:
+        assert replace(outcome, **kwargs).result.status is ResultStatus.PROVED
+    else:
+        with pytest.raises(LeanKernelError, match="outcome accepted receipt .*request"):
+            replace(outcome, **kwargs)
 
 
 @pytest.mark.parametrize("requested_backend_id", ["rocq", "cvc5", "lean4-wasm"])
