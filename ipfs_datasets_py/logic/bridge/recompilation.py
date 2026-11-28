@@ -8,6 +8,7 @@ this gate.  The gate never issues proof authority.
 
 from __future__ import annotations
 
+from collections import Counter, defaultdict
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Final
@@ -32,6 +33,7 @@ from ipfs_datasets_py.logic.bridge.translation import (
 from ipfs_datasets_py.logic.legal_ir.canonical_contracts import (
     CanonicalContractError,
     CanonicalRoundTripIR,
+    CanonicalRule,
     CompilerRequest,
     DecompilerRequest,
     DecompilerResult,
@@ -51,6 +53,24 @@ SEMANTIC_RECOMPILATION_GATE_SCHEMA: Final = (
 SEMANTIC_DIFFERENCE_INTERFACE: Final = "CanonicalSemanticDifference@1"
 
 
+def _unmatched_rules(
+    rules: tuple[CanonicalRule, ...], remaining: Counter[str],
+) -> list[CanonicalRule]:
+    """Retain unmatched occurrences in canonical order."""
+
+    unmatched = []
+    for rule in rules:
+        rule_cid = rule.rule_cid
+        if remaining[rule_cid]:
+            unmatched.append(rule)
+            remaining[rule_cid] -= 1
+    return unmatched
+
+
+def _predicate_key(rule: CanonicalRule) -> tuple[str, str, str]:
+    return rule.actor, rule.action, rule.object
+
+
 def compare_canonical_semantics(
     left: CanonicalRoundTripIR,
     right: CanonicalRoundTripIR,
@@ -59,19 +79,21 @@ def compare_canonical_semantics(
 
     if not isinstance(left, CanonicalRoundTripIR) or not isinstance(right, CanonicalRoundTripIR):
         raise CanonicalContractError("semantic comparison requires CanonicalRoundTripIR")
-    differences: list[dict[str, object]] = []
-    if left.ir_cid != right.ir_cid:
-        differences.append(
-            {
-                "criterion": EqualityCriterion.EXACT_IR_CID.value,
-                "equal": False,
-                "kind": "ir_cid_mismatch",
-                "left_cid": left.ir_cid,
-                "right_cid": right.ir_cid,
-            }
-        )
-    left_cids = {rule.rule_cid for rule in left.rules}
-    right_cids = {rule.rule_cid for rule in right.rules}
+    left_ir_cid, right_ir_cid = left.ir_cid, right.ir_cid
+    if left_ir_cid == right_ir_cid:
+        return ()
+    differences: list[dict[str, object]] = [
+        {
+            "criterion": EqualityCriterion.EXACT_IR_CID.value,
+            "equal": False,
+            "kind": "ir_cid_mismatch",
+            "left_cid": left_ir_cid,
+            "right_cid": right_ir_cid,
+        }
+    ]
+    left_counts = Counter(rule.rule_cid for rule in left.rules)
+    right_counts = Counter(rule.rule_cid for rule in right.rules)
+    left_cids, right_cids = set(left_counts), set(right_counts)
     if left_cids != right_cids:
         differences.append(
             {
@@ -82,12 +104,19 @@ def compare_canonical_semantics(
                 "kind": "rule_set_mismatch",
             }
         )
-    left_by_key = {(rule.actor, rule.action, rule.object): rule for rule in left.rules}
-    right_keys = {(item.actor, item.action, item.object) for item in right.rules}
-    for rule in right.rules:
-        key = (rule.actor, rule.action, rule.object)
-        counterpart = left_by_key.get(key)
-        if counterpart is None:
+    # Match exact occurrences first. Infer a facet change only when the
+    # remaining predicate has one counterpart on each side.
+    unmatched_left = _unmatched_rules(left.rules, left_counts - right_counts)
+    unmatched_right = _unmatched_rules(right.rules, right_counts - left_counts)
+    left_by_key: dict[tuple[str, str, str], list[CanonicalRule]] = defaultdict(list)
+    for rule in unmatched_left:
+        left_by_key[_predicate_key(rule)].append(rule)
+    right_counts_by_key = Counter(_predicate_key(rule) for rule in unmatched_right)
+    paired: set[tuple[str, str, str]] = set()
+    for rule in unmatched_right:
+        key = _predicate_key(rule)
+        counterparts = left_by_key.get(key, [])
+        if len(counterparts) != 1 or right_counts_by_key[key] != 1:
             differences.append(
                 {
                     "action": rule.action,
@@ -98,6 +127,8 @@ def compare_canonical_semantics(
                 }
             )
             continue
+        counterpart = counterparts[0]
+        paired.add(key)
         if counterpart.modality != rule.modality:
             differences.append(
                 {
@@ -123,9 +154,8 @@ def compare_canonical_semantics(
                     "rule_cid": rule.rule_cid,
                 }
             )
-    for rule in left.rules:
-        key = (rule.actor, rule.action, rule.object)
-        if key not in right_keys:
+    for rule in unmatched_left:
+        if _predicate_key(rule) not in paired:
             differences.append(
                 {
                     "action": rule.action,
