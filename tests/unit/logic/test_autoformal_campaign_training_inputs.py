@@ -3530,3 +3530,264 @@ def test_reviewed_mixed_unicode_stage_preserves_exact_targets_in_both_codecs(tmp
             assert inputs.assemble_reviewed_decoder_digest_omitted_target(
                 wire, target_codec=receipt["target_codec"]
             ) == row["canonical_ir"]
+
+
+def _reviewed_stage_ancestry_kwargs(data, parent, current):
+    return dict(admission_profile=data.options["admission_profile"],
+        stage_artifact=current[0], expected_stage_sha256=current[0]["sha256"],
+        parent_training_binding=parent[1], expected_parent_training_binding_sha256=data.fixtures.digest(parent[1]),
+        current_training_binding=current[1], expected_current_training_binding_sha256=data.fixtures.digest(current[1]),
+        split_config=data.options["split_config"], expected_split_config_sha256=data.options["expected_split_config_sha256"])
+
+
+def _source_bound_ancestry_prepare(data, reference, *, exposures=None):
+    options = dict(data.kwargs, stage_artifact=reference, expected_stage_sha256=reference["sha256"])
+    if exposures is not None:
+        exposure_records, contexts = exposures
+        options.update(exposure_records=exposure_records, expected_exposure_sha256=data.fixtures.digest(exposure_records),
+            source_contexts=contexts, expected_source_contexts_sha256=data.fixtures.digest(contexts))
+    return inputs.prepare_reviewed_mixed_source_bound_decoder_training_inputs_v5(
+        data.registry, **options, current_bound_component_inputs=data.bound_component_inputs,
+        expected_bound_component_inputs_sha256=data.bound_component_inputs_sha256)["receipt"]
+
+
+def _source_bound_ancestry_successor(data, parent, directory, *, readmission):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_eval_splits as splits
+
+    parent_document = _reviewed_doc(data.registry, parent)
+    changes = {"schema": "reviewed-example-cycle-transition/v1", "retained": [],
+               "added": [], "corrected": [], "superseded": [], "revoked": []}
+    suffix = ":readmitted" if readmission else ":revised"
+    rows = [dict(row, id=row["id"] + suffix) for row in data.rows]
+    if readmission:
+        changes["added"] = [row["id"] for row in rows]
+    else:
+        rows[0] = data.rows[0]
+        reason = _reviewed_reason(data.registry, directory.parent)
+        changes.update(retained=[rows[0]["id"]], added=[rows[2]["id"]],
+            corrected=[{"parent_id": data.rows[1]["id"], "successor_id": rows[1]["id"], "reason_ref": reason}],
+            revoked=[{"parent_id": data.rows[2]["id"], "reason_ref": reason}])
+
+    history = _reviewed_doc(data.registry, parent_document["history_artifact"])
+    history.update(scope_kind="complete_declared_history", parent_history_artifact=parent_document["history_artifact"])
+    known = {record["id"] for record in history["records"]}
+    for row in rows:
+        if row["id"] in known:
+            continue
+        example = splits.LegalIRSplitExample.from_sample(row)
+        history["records"].append({"id": row["id"], "source_text": row["source_text"],
+            "source_sha256": data.fixtures.source_digest(row["source_text"]),
+            "split_example": example.to_dict(), "assignment": "train"})
+    config = data.options["split_config"]
+    manifest = splits.LegalIRSplitManifest(
+        examples=tuple(splits.LegalIRSplitExample.from_mapping(record["split_example"]) for record in history["records"]),
+        assignments={record["id"]: record["assignment"] for record in history["records"]},
+        config_digest=splits.LegalIREvalSplitConfig(**config).digest).to_dict()
+    exposures = [dict(item, id=row["id"]) for row, item in zip(rows, data.options["exposure_records"], strict=True)]
+    contexts = dict(data.kwargs["source_contexts"],
+        rows=[dict(item, id=row["id"]) for row, item in zip(rows, data.kwargs["source_contexts"]["rows"], strict=True)])
+    digest = data.fixtures.digest
+    bound = data.bound_component_inputs
+    binding = data.fixtures.owner.prepare_reviewed_source_span_consumer_binding_v3(rows,
+        expected_rows_sha256=digest(rows), split_manifest=manifest, expected_split_manifest_sha256=digest(manifest),
+        admission_inputs=data.options["admission_inputs"][data.key],
+        expected_admission_inputs_sha256=data.options["successor_components"][0]["admission_inputs_sha256"],
+        exposure_records=exposures, expected_exposure_sha256=digest(exposures), operation="training",
+        allow_fictional_fixture=True, bound_component_inputs=bound[data.key])
+    membership = [dict(data.options["successor_components"][0], row_ids=[row["id"] for row in rows])]
+    options = dict(data.options, transition_kind="successor", parent_artifact=parent,
+        expected_parent_sha256=parent["sha256"], successor_rows=rows, expected_successor_rows_sha256=digest(rows),
+        successor_binding={data.key: binding}, split_manifest=manifest, exposure_records=exposures,
+        transition=changes, expected_transition_sha256=digest(changes), history=history,
+        expected_history_sha256=digest(history), output_directory=directory, successor_components=membership,
+        expected_successor_components_sha256=digest(membership), allow_bootstrap=False)
+    reference = inputs.stage_reviewed_mixed_source_bound_cycle_inputs_v5(
+        data.registry, **options, bound_component_inputs=bound, expected_bound_component_inputs_sha256=data.bound_component_inputs_sha256)
+    return reference, (exposures, contexts)
+
+
+@pytest.fixture(scope="module")
+def _reviewed_source_bound_ancestry_fixture(tmp_path_factory):
+    path = tmp_path_factory.mktemp("source-bound-ancestry")
+    data = _reviewed_mixed_source_bound_cycle_fixture(path)
+    first = data.kwargs["stage_artifact"]
+    original = first, _source_bound_ancestry_prepare(data, first)
+    amended, _ = _source_bound_ancestry_successor(data, first, path / "amended", readmission=False)
+
+    amended_stage = _reviewed_doc(data.registry, amended)
+    amended_rows = _reviewed_doc(data.registry, amended_stage["rows_artifact"])
+    from types import SimpleNamespace
+    withdrawal_data = SimpleNamespace(rows=amended_rows, fixtures=data.fixtures)
+    withdrawal = _reviewed_withdrawal_options(withdrawal_data,
+        dict(data.options, transition=data.deepcopy(data.options["transition"])), data.registry,
+        amended, path / "retired")
+    withdrawal.update(successor_components=None, expected_successor_components_sha256=None,
+        split_manifest=_reviewed_doc(data.registry, amended_stage["split_manifest_artifact"]))
+    retired = inputs.stage_reviewed_mixed_source_bound_cycle_inputs_v5(data.registry, **withdrawal,
+        bound_component_inputs=None, expected_bound_component_inputs_sha256=None)
+    readmitted, contexts = _source_bound_ancestry_successor(data, retired, path / "readmitted", readmission=True)
+    current = readmitted, _source_bound_ancestry_prepare(data, readmitted, exposures=contexts)
+    pins = worker._reviewed_decoder_source_pins(admission_profile=data.options["admission_profile"], source_bound=True)
+    return data, original, amended, retired, current, pins
+
+
+def test_reviewed_source_bound_v5_ancestry_replays_bound_history_without_training(
+        _reviewed_source_bound_ancestry_fixture, monkeypatch):
+    data, original, amended, retired, current, pins = _reviewed_source_bound_ancestry_fixture
+    original_bytes = Path(original[0]["path"]).read_bytes()
+    writes = data.registry.stage_calls
+    for name in ("prepare_reviewed_source_span_consumer_binding_v3",
+                 "validate_reviewed_source_span_consumer_binding_v3",
+                 "consume_reviewed_source_span_binding_v3"):
+        monkeypatch.setattr(data.fixtures.owner, name, _forbidden)
+    monkeypatch.setattr(data.admission, "assess_reviewed_norm_admission_v3", _forbidden)
+    verify = inputs.prepare_reviewed_mixed_source_bound_decoder_continuation_v5
+    proof = verify(data.registry, **_reviewed_stage_ancestry_kwargs(data, original, current),
+                   expected_source_sha256=pins)
+    assert proof["schema"] == inputs.REVIEWED_SOURCE_BOUND_MIXED_DECODER_CONTINUATION_SCHEMA
+    assert proof["profile"] == inputs.REVIEWED_SOURCE_BOUND_MIXED_DECODER_CONTINUATION_PROFILE
+    assert proof["ancestor_stage"] == original[0] and proof["successor_stage"] == current[0]
+    assert proof["parent_training_binding_sha256"] == data.fixtures.digest(original[1])
+    assert proof["current_training_binding_sha256"] == data.fixtures.digest(current[1])
+    assert proof["source_sha256"] == pins and set(pins) == worker.REVIEWED_SOURCE_BOUND_DECODER_SOURCE_NAMES
+    assert [(hop["stage"], hop["transition_kind"], hop["record_count"], hop["bound_component_inputs_sha256"])
+            for hop in proof["stage_chain"]] == [
+        (original[0], "bootstrap", 3, data.bound_component_inputs_sha256),
+        (amended, "successor", 3, data.bound_component_inputs_sha256),
+        (retired, "withdrawal", 0, None),
+        (current[0], "successor", 3, data.bound_component_inputs_sha256),
+    ]
+    amended_stage = _reviewed_doc(data.registry, amended)
+    amended_rows = _reviewed_doc(data.registry, amended_stage["rows_artifact"])
+    assert amended_rows[0]["id"] == original[1]["training_record_ids"][0]
+    assert not set(current[1]["training_record_ids"]) & {row["id"] for row in amended_rows}
+    assert all(proof[key] is False for key in ("current_positive_admission_replayed", "historical_positive_authority_replayed",
+        "weights_or_optimizer_loaded", "numerical_parent_checkpoint_validated", "source_epoch_migration_performed",
+        "retired_information_unlearned", "qualified", "corpus_admitted"))
+    assert data.registry.stage_calls == writes and Path(original[0]["path"]).read_bytes() == original_bytes
+
+
+@pytest.mark.parametrize(("mutation", "message"), [
+    ("missing-role", "exact current source-bound continuation Source7 pins required"),
+    ("wrong-worker", "exact current source-bound continuation Source7 pins required"),
+    ("missing-binding-pin", "exact lowercase reviewed SHA256 required"),
+    ("stale-receipt-producer", "training binding producer Source differs"),
+    ("stale-stage-producer", "staged producer Source differs"),
+    ("withdrawal-with-transport", "ancestry crosses the V5 admission domain"),
+    ("intermediate-bound-transport", "restored type-separated admission commitment differs"),
+    ("intermediate-split-pin", "staged component row order or split commitment differs"),
+    ("intermediate-repeated-row", "unique source-bound continuation stage row IDs required"),
+    ("missing-intermediate-admission", "closed artifact reference required"),
+    ("claimed-authority", "preparation metadata cannot confer authority"),
+    ("current-bound-aggregate", "endpoint bound transport commitment differs"),
+    ("historical-component-identity", "endpoint component differs from staged transport or split"),
+    ("v4-receipt-retag", "same-domain complete V5 training bindings required"),
+])
+def test_reviewed_source_bound_v5_ancestry_refuses_repinned_mismatch(
+        _reviewed_source_bound_ancestry_fixture, tmp_path, mutation, message):
+    data, original, amended, retired, current, pins = _reviewed_source_bound_ancestry_fixture
+    registry = data.registry
+    options = data.deepcopy(_reviewed_stage_ancestry_kwargs(data, original, current))
+    pins = dict(pins)
+    digest = data.fixtures.digest
+
+    def repin(document, name):
+        return _reviewed_decoder_put_json(registry, tmp_path / (name + ".json"), document)
+
+    def repin_stage(stage):
+        reference = repin(stage, "current")
+        options.update(stage_artifact=reference, expected_stage_sha256=reference["sha256"])
+        options["current_training_binding"]["stage_artifact_sha256"] = reference["sha256"]
+
+    if mutation == "missing-role":
+        del pins["source_bindings"]
+    elif mutation == "wrong-worker":
+        pins["worker"] = "0" * 64
+    elif mutation == "stale-receipt-producer":
+        # Move both endpoint receipts together, so equal maps alone would pass.
+        for name in ("current_training_binding", "parent_training_binding"):
+            options[name]["implementation"][str(Path(inputs.__file__).resolve())] = "0" * 64
+    elif mutation == "stale-stage-producer":
+        stage = _reviewed_doc(registry, current[0])
+        stage["implementation"][str(Path(inputs.__file__).resolve())] = "0" * 64
+        repin_stage(stage)
+    elif mutation == "withdrawal-with-transport":
+        stage = _reviewed_doc(registry, current[0])
+        withdrawal = _reviewed_doc(registry, retired)
+        withdrawal["bound_component_transport_artifact"] = stage["bound_component_transport_artifact"]
+        stage["parent_artifact"] = repin(withdrawal, "retired")
+        repin_stage(stage)
+    elif mutation in ("intermediate-bound-transport", "intermediate-split-pin", "intermediate-repeated-row",
+                      "missing-intermediate-admission"):
+        intermediate = _reviewed_doc(registry, amended)
+        if mutation == "intermediate-bound-transport":
+            transport = _reviewed_doc(registry, intermediate["bound_component_transport_artifact"])
+            transport["bound_component_inputs_sha256"] = "0" * 64
+            intermediate["bound_component_transport_artifact"] = repin(transport, "transport")
+        elif mutation == "intermediate-split-pin":
+            component, = intermediate["consumer_receipt"]["components"]
+            component["receipt"]["input_sha256s"]["split_manifest"] = "0" * 64
+        elif mutation == "intermediate-repeated-row":
+            rows = _reviewed_doc(registry, intermediate["rows_artifact"])
+            intermediate["rows_artifact"] = repin([*rows, rows[0]], "rows")
+            intermediate["consumer_receipt"]["row_count"] += 1
+        else:
+            intermediate["admission_transport_artifact"] = None
+        withdrawal = _reviewed_doc(registry, retired)
+        withdrawal["parent_artifact"] = repin(intermediate, "intermediate")
+        stage = _reviewed_doc(registry, current[0])
+        stage["parent_artifact"] = repin(withdrawal, "retired")
+        repin_stage(stage)
+    elif mutation == "claimed-authority":
+        for name in ("current_training_binding", "parent_training_binding"):
+            options[name]["backend_execution_authorized"] = True
+    elif mutation == "current-bound-aggregate":
+        for name in ("staged_bound_component_inputs_sha256", "current_bound_component_inputs_sha256"):
+            options["current_training_binding"][name] = "0" * 64
+    elif mutation == "historical-component-identity":
+        receipt = options["parent_training_binding"]["current_consumer_receipt"]["components"][0]["receipt"]
+        receipt["bound_component_identity"]["current_epoch_id"] = "fixture:other-epoch"
+    elif mutation == "v4-receipt-retag":
+        options["parent_training_binding"]["schema"] = "reviewed-decoder-training-input-receipt/v4"
+        options["parent_training_binding"]["profile"] = inputs.REVIEWED_MIXED_DECODER_INPUT_PROFILE
+    for role in ("parent", "current"):
+        options[f"expected_{role}_training_binding_sha256"] = digest(options[f"{role}_training_binding"])
+    if mutation == "missing-binding-pin":
+        options["expected_parent_training_binding_sha256"] = None
+
+    reads = registry if mutation not in ("missing-role", "wrong-worker", "missing-binding-pin", "stale-receipt-producer",
+                                          "v4-receipt-retag", "claimed-authority") else object()
+    before = registry.stage_calls
+    with pytest.raises(ValueError, match=message):
+        inputs.prepare_reviewed_mixed_source_bound_decoder_continuation_v5(
+            reads, **options, expected_source_sha256=pins)
+    assert registry.stage_calls == before
+
+
+def test_reviewed_v4_ancestry_retains_original_proof_shape(tmp_path):
+    data = _reviewed_mixed_cycle_fixture(tmp_path)
+    first = data.kwargs["stage_artifact"]
+    original = first, inputs.prepare_reviewed_mixed_decoder_training_inputs_v4(data.registry, **data.kwargs)["receipt"]
+    options = _reviewed_successor_options(data, dict(data.options, transition=data.deepcopy(data.options["transition"])),
+                                          data.registry, first, tmp_path / "retained-v4")
+    current = inputs.stage_reviewed_mixed_cycle_inputs_v4(data.registry, **options)
+    current_receipt = inputs.prepare_reviewed_mixed_decoder_training_inputs_v4(data.registry,
+        **dict(data.kwargs, stage_artifact=current, expected_stage_sha256=current["sha256"]))["receipt"]
+    args = _reviewed_stage_ancestry_kwargs(data, original, (current, current_receipt))
+    proof = inputs.prepare_reviewed_mixed_decoder_continuation_v4(data.registry, **args)
+    stage_refs = (first, current)
+    documents = [_reviewed_doc(data.registry, ref) for ref in stage_refs]
+    replay = [{"stage": ref, "transition_kind": doc["transition_kind"], "rows_sha256": doc["rows_artifact"]["sha256"],
+        "history_sha256": doc["history_artifact"]["sha256"], "split_manifest_sha256": doc["split_manifest_artifact"]["sha256"],
+        "record_count": 3} for ref, doc in zip(stage_refs, documents, strict=True)]
+    observed = {part["sha256"]: part["bytes"] for ref, doc in zip(stage_refs, documents, strict=True)
+        for part in (ref, doc["rows_artifact"], doc["history_artifact"], doc["split_manifest_artifact"])}
+    assert proof == {"schema": inputs.REVIEWED_MIXED_DECODER_CONTINUATION_SCHEMA,
+        "profile": inputs.REVIEWED_MIXED_DECODER_CONTINUATION_PROFILE,
+        "parent_training_binding_sha256": args["expected_parent_training_binding_sha256"],
+        "current_training_binding_sha256": args["expected_current_training_binding_sha256"],
+        "ancestor_stage": first, "successor_stage": current, "stage_chain": replay,
+        "staged_artifact_bytes_observed": sum(observed.values()),
+        "current_training_authority_supplied_by_complete_preparation": True,
+        "historical_positive_authority_replayed": False, "weights_or_optimizer_loaded": False,
+        "retired_information_unlearned": False, "qualified": False, "corpus_admitted": False}

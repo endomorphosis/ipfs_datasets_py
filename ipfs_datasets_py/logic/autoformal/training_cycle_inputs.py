@@ -415,7 +415,7 @@ def _reviewed_history(value, current_manifest, rows, config, parent_history, spl
     return dict(value, split_manifests=manifests), records, observation
 
 
-def _reviewed_transition(value, parent_rows, rows, records, parent_records, registry):
+def _reviewed_transition(value, parent_rows, rows, records, parent_records, registry, *, read_reason=None):
     _reviewed_closed(value, {"schema", "retained", "added", "corrected", "superseded", "revoked"},
                      "classified reviewed transition")
     _reviewed_need(value["schema"] == "reviewed-example-cycle-transition/v1", "reviewed transition schema required")
@@ -440,7 +440,10 @@ def _reviewed_transition(value, parent_rows, rows, records, parent_records, regi
             _reviewed_closed(entry, fields, "reviewed replacement/retirement")
             _reviewed_need(type(entry["parent_id"]) is str, "immutable parent row ID required")
             old_members.append(entry["parent_id"])
-            _reviewed_read(registry, entry["reason_ref"])  # Byte custody, not legal adjudication.
+            if read_reason is None:
+                _reviewed_read(registry, entry["reason_ref"])
+            else:
+                read_reason(entry["reason_ref"])  # Byte custody only.
             if kind != "revoked":
                 key = entry["successor_id"]
                 _reviewed_need(key is None and kind == "superseded" or type(key) is str,
@@ -2705,6 +2708,8 @@ def unpack_reviewed_context_json_v3(value):
 
 REVIEWED_MIXED_DECODER_CONTINUATION_PROFILE = "reviewed-mixed-cycle-stage-continuation/v1"
 REVIEWED_MIXED_DECODER_CONTINUATION_SCHEMA = "reviewed-mixed-decoder-stage-ancestry/v1"
+REVIEWED_SOURCE_BOUND_MIXED_DECODER_CONTINUATION_PROFILE = "reviewed-source-bound-mixed-cycle-stage-continuation/v1"
+REVIEWED_SOURCE_BOUND_MIXED_DECODER_CONTINUATION_SCHEMA = "reviewed-decoder-source-bound-stage-ancestry/v1"
 
 
 def prepare_reviewed_mixed_decoder_continuation_v4(registry, *, admission_profile,
@@ -2719,27 +2724,121 @@ def prepare_reviewed_mixed_decoder_continuation_v4(registry, *, admission_profil
     or removal of retired information from already-trained parameters. The
     current training population still requires the ordinary fresh V4 preparation.
     """
+    return _prepare_reviewed_mixed_decoder_continuation(registry, admission_profile=admission_profile,
+        stage_artifact=stage_artifact, expected_stage_sha256=expected_stage_sha256,
+        parent_training_binding=parent_training_binding,
+        expected_parent_training_binding_sha256=expected_parent_training_binding_sha256,
+        current_training_binding=current_training_binding,
+        expected_current_training_binding_sha256=expected_current_training_binding_sha256,
+        split_config=split_config, expected_split_config_sha256=expected_split_config_sha256,
+        source_bound=False)
+
+
+def prepare_reviewed_mixed_source_bound_decoder_continuation_v5(registry, *, admission_profile,
+        stage_artifact, expected_stage_sha256, parent_training_binding,
+        expected_parent_training_binding_sha256, current_training_binding,
+        expected_current_training_binding_sha256, split_config, expected_split_config_sha256,
+        expected_source_sha256):
+    """Verify same-source V5 ancestry against independently pinned preparation receipts.
+
+    Recheck archived stage history and bound transport without replaying past
+    review policy or opening a numerical checkpoint. The caller must obtain
+    fresh current preparation and independently verify the actual checkpoint
+    pair and its worker source pins before any numerical continuation.
+    """
+    return _prepare_reviewed_mixed_decoder_continuation(registry, admission_profile=admission_profile,
+        stage_artifact=stage_artifact, expected_stage_sha256=expected_stage_sha256,
+        parent_training_binding=parent_training_binding,
+        expected_parent_training_binding_sha256=expected_parent_training_binding_sha256,
+        current_training_binding=current_training_binding,
+        expected_current_training_binding_sha256=expected_current_training_binding_sha256,
+        split_config=split_config, expected_split_config_sha256=expected_split_config_sha256,
+        source_bound=True, expected_source_sha256=expected_source_sha256)
+
+
+def _reviewed_source_bound_ancestry_sources(consumer, splits):
+    import hashlib
+    from pathlib import Path
+    from ...optimizers.logic_theorem_optimizer import autoencoder_training_worker
+    from . import corpus_source_bindings, legal_graph_dependencies, legal_reviewed_norm_admission_v3
+
+    paths = {role: Path(module.__file__).resolve() for role, module in {
+        "worker": autoencoder_training_worker,
+        "consumer": consumer, "admission": legal_reviewed_norm_admission_v3,
+        "splits": splits, "source_bindings": corpus_source_bindings, "dependencies": legal_graph_dependencies,
+    }.items()}
+    paths["inputs"] = Path(__file__).resolve()
+    pins = {role: hashlib.sha256(path.read_bytes()).hexdigest() for role, path in paths.items()}
+    decoder = {str(paths[role]): pins[role] for role in paths.keys() - {"worker"}}
+    stage = {str(paths[role]): pins[role] for role in paths.keys() - {"worker", "source_bindings"}}
+    return pins, decoder, stage, corpus_source_bindings._pins()
+
+
+def _reviewed_source_bound_ancestry_transport(stage, rows, read_artifact, consumer, bound_implementation):
+    need = _reviewed_decoder_need
+    row_ids = [row["id"] for row in rows]
+    need(all(type(row_id) is str for row_id in row_ids) and len(set(row_ids)) == len(rows),
+         "unique source-bound continuation stage row IDs required")
+    _reviewed_ref(stage["admission_assessment_artifact"])
+    _reviewed_ref(stage["admission_transport_artifact"])
+    _reviewed_component_parent_memberships(stage["consumer_receipt"], rows, consumer, admission_version="v3")
+    positions = {row_id: index for index, row_id in enumerate(row_ids)}
+    for component in stage["consumer_receipt"]["components"]:
+        indices = [positions[row_id] for row_id in component["row_ids"]]
+        need(indices == sorted(indices) and component["receipt"]["input_sha256s"].get("split_manifest")
+             == stage["split_manifest_artifact"]["sha256"],
+             "source-bound continuation staged component row order or split commitment differs")
+    bound_sha, components = _reviewed_staged_bound_components(stage, read_artifact, consumer, require=need)
+    need(all(identity["producer_pins"] == bound_implementation for identity, _ in components.values()),
+         "source-bound continuation archived bound producer Source differs")
+    return bound_sha, components
+
+
+def _prepare_reviewed_mixed_decoder_continuation(registry, *, admission_profile,
+        stage_artifact, expected_stage_sha256, parent_training_binding,
+        expected_parent_training_binding_sha256, current_training_binding,
+        expected_current_training_binding_sha256, split_config, expected_split_config_sha256,
+        source_bound, expected_source_sha256=None):
     import hashlib
     from ...optimizers.logic_theorem_optimizer import legal_span_consumer_binding as consumer
     from ...optimizers.logic_theorem_optimizer import legal_ir_eval_splits as splits
 
     need = _reviewed_decoder_need
+    domain = "V5" if source_bound else "V4"
     need(type(admission_profile) is str and admission_profile == REVIEWED_MIXED_ADMISSION_PROFILE,
-         "explicit same-domain V4 continuation profile required")
+         f"explicit same-domain {domain} continuation profile required")
+    if source_bound:
+        for expected in (expected_stage_sha256, expected_parent_training_binding_sha256,
+                         expected_current_training_binding_sha256, expected_split_config_sha256):
+            _reviewed_sha(expected)
+        opening_sources = _reviewed_source_bound_ancestry_sources(consumer, splits)
+        pins, decoder_implementation, stage_implementation, bound_implementation = opening_sources
+        need(type(expected_source_sha256) is dict and pins == expected_source_sha256,
+             "exact current source-bound continuation Source7 pins required")
     previous = _reviewed_copy(parent_training_binding, expected_parent_training_binding_sha256)
     current = _reviewed_copy(current_training_binding, expected_current_training_binding_sha256)
     config = _reviewed_copy(split_config, expected_split_config_sha256)
+    receipt_schema, receipt_profile = (
+        (REVIEWED_SOURCE_BOUND_MIXED_DECODER_INPUT_RECEIPT_SCHEMA, REVIEWED_SOURCE_BOUND_MIXED_DECODER_INPUT_PROFILE)
+        if source_bound else ("reviewed-decoder-training-input-receipt/v4", REVIEWED_MIXED_DECODER_INPUT_PROFILE))
     for binding in (previous, current):
         need(type(binding) is dict
-             and binding.get("schema") == "reviewed-decoder-training-input-receipt/v4"
-             and binding.get("profile") == REVIEWED_MIXED_DECODER_INPUT_PROFILE
+             and binding.get("schema") == receipt_schema and binding.get("profile") == receipt_profile
              and binding.get("admission_profile") == admission_profile
              and binding.get("target_codec") == REVIEWED_DECODER_TARGET_CODEC
              and binding.get("source_profile") == REVIEWED_DECODER_SOURCE_PROFILE
              and binding.get("source_context_profile") == REVIEWED_COMPONENT_DECODER_CONTEXT_PROFILE
              and binding.get("current_reviewed_training_permitted") is True
              and type(binding.get("record_count")) is int and 0 < binding["record_count"] <= MAX_REVIEWED_CYCLE_ROWS,
-             "same-domain complete V4 training bindings required for continuation")
+             f"same-domain complete {domain} training bindings required for continuation")
+        if source_bound:
+            need(binding.get("implementation") == decoder_implementation,
+                 "source-bound continuation training binding producer Source differs")
+            need(all(binding.get(field) is False for field in ("backend_execution_authorized", "training_executed",
+                "weights_updated", "proof_authority", "Lean_admitted", "corpus_admitted")),
+                 "source-bound continuation preparation metadata cannot confer authority")
+            for field in ("staged_bound_component_inputs_sha256", "current_bound_component_inputs_sha256"):
+                _reviewed_sha(binding.get(field))
         for field in ("stage_artifact_sha256", "rows_sha256", "split_manifest_sha256", "history_sha256",
                       "split_config_sha256", "admission_inputs_sha256", "exposure_sha256", "source_contexts_sha256"):
             _reviewed_sha(binding.get(field))
@@ -2752,6 +2851,8 @@ def prepare_reviewed_mixed_decoder_continuation_v4(registry, *, admission_profil
         "history_sha256", "history_guard", "component_split_guard", "admission_inputs_sha256",
         "admission_assessment_sha256", "exposure_sha256", "source_contexts_sha256",
         "prepared_records_sha256", "current_consumer_receipt"}
+    if source_bound:
+        evolving.update(("staged_bound_component_inputs_sha256", "current_bound_component_inputs_sha256"))
     need(all(_reviewed_wire(previous[field]) == _reviewed_wire(current[field])
              for field in set(current) - evolving),
          "continuation complete receipt policy, provenance or producer identity changed")
@@ -2767,9 +2868,12 @@ def prepare_reviewed_mixed_decoder_continuation_v4(registry, *, admission_profil
     def read_raw(reference):
         nonlocal total_bytes
         reference = _reviewed_copy(reference)
-        _reviewed_ref(reference)
+        descriptor = _reviewed_ref(reference)
         key = _reviewed_wire(reference)
         if key not in cache:
+            if source_bound:
+                need(total_bytes + descriptor["bytes"] <= MAX_REVIEWED_STAGE_BYTES,
+                     "unsupported continuation artifact byte capacity")
             raw = _reviewed_read(registry, reference)
             total_bytes += len(raw)
             need(total_bytes <= MAX_REVIEWED_STAGE_BYTES,
@@ -2785,14 +2889,19 @@ def prepare_reviewed_mixed_decoder_continuation_v4(registry, *, admission_profil
     need(_reviewed_ref(selected)["sha256"] == expected_stage_sha256,
          "independent continuation stage commitment differs")
     chain, seen = [], set()
+    bound_stages = {}
     while True:
         need(len(chain) < MAX_REVIEWED_HISTORY and selected["sha256"] not in seen,
              "unsupported continuation ancestry depth or cycle")
         seen.add(selected["sha256"])
         stage = read(selected)
-        _reviewed_closed(stage, _reviewed_cycle_fields("v3"), "continuation V4 stage")
-        need(_reviewed_cycle_format(stage, admission_version="v3"),
-             "continuation ancestry crosses the V4 admission domain")
+        _reviewed_closed(stage, _reviewed_cycle_fields("v3", source_bound=source_bound),
+                         f"continuation {domain} stage")
+        need(_reviewed_cycle_format(stage, admission_version="v3", source_bound=source_bound),
+             f"continuation ancestry crosses the {domain} admission domain")
+        if source_bound:
+            need(stage["implementation"] == stage_implementation,
+                 "source-bound continuation staged producer Source differs")
         _reviewed_lineage(stage["checkpoint_lineage"])
         rows = read(stage["rows_artifact"])
         history = read(stage["history_artifact"])
@@ -2803,6 +2912,9 @@ def prepare_reviewed_mixed_decoder_continuation_v4(registry, *, admission_profil
             _reviewed_closed(row, {"id", "unit_id", "source_text", "canonical_ir"}, "continuation historical row")
         kind = stage["transition_kind"]
         need(kind in {"bootstrap", "successor", "withdrawal"}, "unsupported continuation stage kind")
+        if source_bound and kind == "bootstrap":
+            need(stage["parent_artifact"] is None and history.get("parent_history_artifact") is None,
+                 "source-bound continuation bootstrap cannot conceal a parent")
         if kind == "withdrawal":
             need(not rows and stage["consumer_receipt"] == _reviewed_na_consumer()
                  and stage["admission_assessment_artifact"] is None and stage["admission_transport_artifact"] is None,
@@ -2810,7 +2922,11 @@ def prepare_reviewed_mixed_decoder_continuation_v4(registry, *, admission_profil
         else:
             need(rows and stage["withdrawal_provenance"] is None,
                  "positive continuation ancestor must retain complete rows")
-            _reviewed_component_parent_memberships(stage["consumer_receipt"], rows, consumer, admission_version="v3")
+            if source_bound:
+                bound_stages[selected["sha256"]] = _reviewed_source_bound_ancestry_transport(
+                    stage, rows, read_raw, consumer, bound_implementation)
+            else:
+                _reviewed_component_parent_memberships(stage["consumer_receipt"], rows, consumer, admission_version="v3")
         chain.append((selected, stage, rows, history, manifest))
         if selected["sha256"] == previous["stage_artifact_sha256"]:
             break
@@ -2844,11 +2960,15 @@ def prepare_reviewed_mixed_decoder_continuation_v4(registry, *, admission_profil
                  "continuation parent stage/history reference differs")
             guarded, records, guard = _reviewed_history(history, manifest, rows, config,
                 parent_history, splits, withdrawal=withdrawal)
-            _reviewed_transition(stage["transition"], parent_rows, rows, records, parent_records, registry)
+            _reviewed_transition(stage["transition"], parent_rows, rows, records, parent_records, registry,
+                                 read_reason=read_raw if source_bound else None)
             for kind in ("corrected", "superseded", "revoked"):
                 for item in stage["transition"][kind]:
                     read_raw(item["reason_ref"])
             if withdrawal:
+                if source_bound:
+                    need(bool(parent_rows) and stage["split_manifest_artifact"] == parent_stage["split_manifest_artifact"],
+                         "source-bound continuation withdrawal must keep its positive predecessor's frozen split")
                 need(not any(stage["transition"][key] for key in ("retained", "added", "corrected")),
                      "continuation withdrawal contains a positive transition")
                 _reviewed_withdrawal(stage["withdrawal_provenance"],
@@ -2872,6 +2992,9 @@ def prepare_reviewed_mixed_decoder_continuation_v4(registry, *, admission_profil
         replayed.append({"stage": reference, "transition_kind": stage["transition_kind"],
             "rows_sha256": stage["rows_artifact"]["sha256"], "history_sha256": stage["history_artifact"]["sha256"],
             "split_manifest_sha256": stage["split_manifest_artifact"]["sha256"], "record_count": len(rows)})
+        if source_bound:
+            replayed[-1]["bound_component_inputs_sha256"] = (
+                None if withdrawal else bound_stages[reference["sha256"]][0])
 
     for binding, entry in ((previous, chain[-1]), (current, chain[0])):
         reference, stage, rows, _, _ = entry
@@ -2885,8 +3008,26 @@ def prepare_reviewed_mixed_decoder_continuation_v4(registry, *, admission_profil
              "continuation binding staged history/population commitments differ")
         need(binding["history_guard"] == stage["history_guard"],
              "continuation binding canonical history guard differs")
-        _reviewed_component_parent_memberships(binding["current_consumer_receipt"], rows,
-            consumer, admission_version="v3")
+        current_receipt = binding["current_consumer_receipt"]
+        _reviewed_component_parent_memberships(current_receipt, rows, consumer, admission_version="v3")
+        if source_bound:
+            bound_sha, components = bound_stages[reference["sha256"]]
+            need(binding["staged_bound_component_inputs_sha256"]
+                 == binding["current_bound_component_inputs_sha256"] == bound_sha,
+                 "source-bound continuation endpoint bound transport commitment differs")
+            staged_components = stage["consumer_receipt"]["components"]
+            need(len(staged_components) == len(current_receipt["components"]),
+                 "source-bound continuation endpoint component population differs")
+            for stored, offered in zip(staged_components, current_receipt["components"], strict=True):
+                selected = offered["receipt"]
+                need(offered["component_id"] == stored["component_id"]
+                     and offered["row_ids"] == stored["row_ids"]
+                     and offered["component_split_guard"] == stored["component_split_guard"]
+                     and selected.get("declaration_sha256") == stored["receipt"].get("declaration_sha256")
+                     and selected["input_sha256s"].get("split_manifest") == stage["split_manifest_artifact"]["sha256"]
+                     and (selected.get("bound_component_identity"), selected.get("bound_component_inputs_sha256"))
+                         == components[stored["component_id"]],
+                     "source-bound continuation endpoint component differs from staged transport or split")
         commitments = binding.get("row_commitments")
         need(type(commitments) is list and len(commitments) == len(rows),
              "continuation binding full row commitments are required")
@@ -2908,7 +3049,7 @@ def prepare_reviewed_mixed_decoder_continuation_v4(registry, *, admission_profil
     need(_reviewed_wire(parent_training_binding) == _reviewed_wire(previous)
          and _reviewed_wire(current_training_binding) == _reviewed_wire(current),
          "continuation training bindings changed during ancestry replay")
-    return {"schema": REVIEWED_MIXED_DECODER_CONTINUATION_SCHEMA,
+    proof = {"schema": REVIEWED_MIXED_DECODER_CONTINUATION_SCHEMA,
         "profile": REVIEWED_MIXED_DECODER_CONTINUATION_PROFILE,
         "parent_training_binding_sha256": expected_parent_training_binding_sha256,
         "current_training_binding_sha256": expected_current_training_binding_sha256,
@@ -2917,6 +3058,15 @@ def prepare_reviewed_mixed_decoder_continuation_v4(registry, *, admission_profil
         "current_training_authority_supplied_by_complete_preparation": True,
         "historical_positive_authority_replayed": False, "weights_or_optimizer_loaded": False,
         "retired_information_unlearned": False, "qualified": False, "corpus_admitted": False}
+    if source_bound:
+        need(_reviewed_source_bound_ancestry_sources(consumer, splits) == opening_sources
+             and expected_source_sha256 == pins,
+             "source-bound continuation Source7 pins changed during ancestry replay")
+        proof.update(schema=REVIEWED_SOURCE_BOUND_MIXED_DECODER_CONTINUATION_SCHEMA,
+            profile=REVIEWED_SOURCE_BOUND_MIXED_DECODER_CONTINUATION_PROFILE, source_sha256=pins,
+            numerical_parent_checkpoint_validated=False, source_epoch_migration_performed=False,
+            current_positive_admission_replayed=False)
+    return proof
 
 
 # Explicit primitive only: existing preparation, targets, prompts and defaults
