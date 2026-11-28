@@ -498,3 +498,64 @@ def test_external_benchmark_counts_only_complete_semantic_coverage(coverage):
     assert result.block_reasons == ("semantic_equivalence_failed",)
     assert external["accepted_packet_count"] == 1
     assert external["external_validity_score"] == pytest.approx(0.5)
+
+
+
+@pytest.mark.parametrize(
+    ("citation", "accepted"),
+    [
+        pytest.param("5 U.S.C. 552a(e)(4)", True, id="authored"),
+        pytest.param("5 USC § 552a ( e ) ( 4 )", True, id="equivalent-formatting"),
+        pytest.param("5 U.S.C. 552a", False, id="section-only"),
+        pytest.param("5 U.S.C. 552a(e)", False, id="parent"),
+        pytest.param("5 U.S.C. 552a(e)(3)", False, id="sibling"),
+        pytest.param("5 U.S.C. 552a(e)(4)(A)", False, id="descendant"),
+        pytest.param("5 U.S.C. 552(e)(4)", False, id="other-section"),
+        pytest.param("5 U.S.C. 552a(E)(4)", False, id="different-marker-case"),
+        pytest.param("5 U.S.C. 552a(e)(4)-(6)", False, id="range"),
+        pytest.param("5 U.S.C. 552a(e)(4)(A-b)", False, id="invalid-marker"),
+    ],
+)
+def test_external_benchmark_requires_the_cited_provision(citation: str, accepted: bool) -> None:
+    packet, control = _packets()
+    prediction = {**_prediction(packet), "citations": [{"citation": citation}]}
+
+    report = evaluate_external_legal_expert_benchmark(
+        (packet, control), [prediction, _prediction(control)]
+    )
+    result, retained = report.packet_results
+
+    assert result.accepted is accepted
+    assert result.scores["citations"] == float(accepted)
+    assert result.block_reasons == (() if accepted else ("missing_required_citation",))
+    assert retained.accepted
+    assert report.to_dict()["external_validity"]["packet_count"] == 2
+    assert report.external_validity_score == (1.0 if accepted else 0.5)
+
+
+def test_external_benchmark_requires_each_cited_provision_in_one_split_cluster() -> None:
+    from dataclasses import replace
+
+    packet = _packets()[0]
+    first = packet.citations[0]
+    sibling = replace(first, citation="5 U.S.C. 552a(e)(3)")
+    both = replace(packet, citations=(first, sibling))
+    prediction = _prediction(packet)
+
+    manifest = external_benchmark_split_manifest([both])
+    assert both.citation_clusters == packet.citation_clusters
+    assert manifest.examples[0].citation_clusters == (
+        external_benchmark_split_manifest([packet]).examples[0].citation_clusters
+    )
+
+    report = evaluate_external_legal_expert_benchmark([both], [prediction])
+    result = report.packet_results[0]
+    assert result.accepted is False
+    assert result.scores["citations"] == 0.5
+    assert result.block_reasons == ("missing_required_citation",)
+    assert result.detail["citations"] == {
+        "matched": ["usc:5:552a(e)(4)"],
+        "missing": ["usc:5:552a(e)(3)"],
+        "required": ["usc:5:552a(e)(4)", "usc:5:552a(e)(3)"],
+    }
+    assert evaluate_external_legal_expert_benchmark([both], [_prediction(both)]).accepted

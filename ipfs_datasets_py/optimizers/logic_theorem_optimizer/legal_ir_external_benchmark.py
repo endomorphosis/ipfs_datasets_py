@@ -132,13 +132,32 @@ def _canonical_families(value: Any) -> tuple[str, ...]:
     return families
 
 
+def _citation_text_key(value: str) -> str:
+    return re.sub(r"[^a-z0-9]+", ":", value.lower()).strip(":")
+
+
 def _citation_cluster(value: str) -> str:
     text = str(value or "").lower().replace("§", " ")
     text = re.sub(r"\bu\.?\s*s\.?\s*c\.?\b", "usc", text)
     match = re.search(r"\b(\d+)\s*usc\s*([0-9a-z.-]+)", text)
     if match:
         return f"usc:{match.group(1)}:{match.group(2).rstrip('.')}"
-    return re.sub(r"[^a-z0-9]+", ":", text).strip(":")
+    return _citation_text_key(text)
+
+
+def _citation_identity(value: str) -> str:
+    """Match U.S. Code provisions with their complete subdivision path."""
+    match = re.fullmatch(
+        r"(\d+)\s*u\.?\s*s\.?\s*c\.?\s*§?\s*(\d[0-9a-z.-]*)"
+        r"((?:\s*\(\s*[0-9a-z]+\s*\))*)\.?",
+        value.strip(),
+        re.IGNORECASE,
+    )
+    if match is None:
+        return _citation_text_key(value)
+    title, section, subdivisions = match.groups()
+    path = "".join(subdivisions.split())
+    return f"usc:{title}:{section.rstrip('.').lower()}{path}"
 
 
 def _mapping(value: Any) -> Mapping[str, Any]:
@@ -818,11 +837,13 @@ def _citation_score(
     packet: ExternalLegalExpertBenchmarkPacket,
     prediction: Mapping[str, Any],
 ) -> tuple[float, Mapping[str, Any], tuple[str, ...]]:
-    predicted = _citation_clusters(prediction)
-    required = packet.citation_clusters
-    matched = tuple(cluster for cluster in required if cluster in predicted)
+    predicted = _prediction_citation_identities(prediction)
+    required = tuple(
+        dict.fromkeys(_citation_identity(citation.citation) for citation in packet.citations)
+    )
+    matched = tuple(identity for identity in required if identity in predicted)
     score = len(matched) / len(required) if required else 1.0
-    missing = tuple(cluster for cluster in required if cluster not in predicted)
+    missing = tuple(identity for identity in required if identity not in predicted)
     return (
         score,
         {"matched": list(matched), "missing": list(missing), "required": list(required)},
@@ -830,7 +851,7 @@ def _citation_score(
     )
 
 
-def _citation_clusters(prediction: Mapping[str, Any]) -> tuple[str, ...]:
+def _prediction_citation_identities(prediction: Mapping[str, Any]) -> set[str]:
     raw = prediction.get("citations") or prediction.get("citation") or ()
     values: list[str] = []
     if isinstance(raw, Mapping):
@@ -843,9 +864,7 @@ def _citation_clusters(prediction: Mapping[str, Any]) -> tuple[str, ...]:
                 values.extend(_strings(item))
     else:
         values.extend(_strings(raw))
-    return tuple(
-        dict.fromkeys(_citation_cluster(item) for item in values if _citation_cluster(item))
-    )
+    return {_citation_identity(item) for item in values} - {""}
 
 
 def _proof_score(
