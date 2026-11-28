@@ -72,12 +72,12 @@ def _control(value, ids):
         value = dict(kind="conditioned", source_assignment={identity: identity for identity in ids})
     _require(type(value) is dict and set(value) == {"kind", "source_assignment"}, "closed control descriptor required")
     _require(value["kind"] in ("conditioned", "zero_condition", "source_shuffle", "cross_length_shuffle",
-        "context_only_shuffle", "context_reverse", "context_rotate"), "unknown control kind")
+        "context_only_shuffle", "context_reverse", "context_rotate", "paragraph_only_shuffle"), "unknown control kind")
     assignment = value["source_assignment"]
     _require(type(assignment) is dict and set(assignment) == set(ids)
         and all(type(item) is str for item in assignment.values())
         and set(assignment.values()) == set(ids), "control must preserve all source identities")
-    if value["kind"] in ("source_shuffle", "cross_length_shuffle", "context_only_shuffle"):
+    if value["kind"] in ("source_shuffle", "cross_length_shuffle", "context_only_shuffle", "paragraph_only_shuffle"):
         _require(len(ids) > 1 and all(key != item for key, item in assignment.items()),
             "source-shuffle control must be a complete derangement")
     else:
@@ -183,6 +183,7 @@ def score_predictions(rows, predictions, *, codec, validate_rule, output_limit=1
     isolated ``{'rules': [rule]}`` and returns ``{'valid': True}`` on acceptance.
     Its identity is caller-declared. Missing prediction rows remain failures;
     duplicate/unknown prediction identities are rejected rather than collapsed.
+    A paragraph-only shuffle declares the paragraph embedding donor per row.
     """
     _require(type(rows) is list and 1 <= len(rows) <= 4096, "bounded nonempty reference rows required")
     _require(type(predictions) is list and len(predictions) <= len(rows), "bounded prediction rows required")

@@ -239,3 +239,51 @@ def test_control_source_id_inventory_is_closed():
     rows[0]["reference_count"] = 1
     with pytest.raises(ValueError, match="closed"):
         subject.prepare_control(rows, contexts, "conditioned")
+
+
+def test_paragraph_only_shuffle_keeps_exact_context_and_records_its_paragraph_donors():
+    rows, contexts = fixture()
+    rows.reverse()
+    for identity, descriptor in contexts.items():
+        contexts[identity] = dict(reversed(tuple(descriptor.items())))
+    original = deepcopy((rows, contexts))
+    _, _, conditioned = subject.prepare_control(rows, contexts, "conditioned")
+    actual, controlled, execution = subject.prepare_control(rows, contexts, "paragraph_only_shuffle")
+    by_id = {row["id"]: row for row in rows}
+    identity_assignment = {identity: identity for identity in by_id}
+    donors = {f"source-{i:03}": f"source-{i ^ 1:03}" for i in range(8)}
+
+    assert conditioned["control"] == {"kind": "conditioned", "source_assignment": identity_assignment}
+    assert execution["control"] == {"kind": "paragraph_only_shuffle", "source_assignment": donors}
+    assert execution["source_assignment"] == execution["paragraph_source_assignment"] == donors
+    assert execution["original_source_assignment"] == execution["context_source_assignment"] == identity_assignment
+    assert execution["original_contexts_sha256"] == execution["actual_contexts_sha256"] == digest(contexts)
+    assert [row["id"] for row in actual] == list(by_id)
+    assert (rows, contexts) == original
+    for row in actual:
+        identity = row["id"]
+        original_row, donor = by_id[identity], by_id[donors[identity]]
+        binding = execution["source_bindings"][identity]
+        assert row["source_text"] == original_row["source_text"]
+        assert row["target_ids"] == original_row["target_ids"]
+        assert row["input"] == donor["input"] and row["input"] is not donor["input"]
+        assert binding["original_input_sha256"] == digest(original_row["input"])
+        assert binding["actual_input_sha256"] == digest(donor["input"])
+        assert binding["paragraph_source_sha256"] == text_digest(donor["source_text"])
+        assert (binding["original_source_sha256"] == binding["actual_context_source_sha256"]
+                == text_digest(original_row["source_text"]))
+        assert binding["effective_paragraph_change"] and not binding["effective_context_change"]
+        assert controlled[identity] is not contexts[identity]
+        assert json.dumps(controlled[identity], ensure_ascii=False) == json.dumps(contexts[identity], ensure_ascii=False)
+
+
+@pytest.mark.parametrize(("lengths", "equal_vector", "reason"), [
+    ((1, 2, 2), False, "at least two rows in every stratum"),
+    ((1, 1), True, "ineffective equal-vector source shuffle"),
+])
+def test_paragraph_only_shuffle_refuses_an_ineffective_assignment(lengths, equal_vector, reason):
+    rows, contexts = fixture(lengths)
+    if equal_vector:
+        rows[1]["input"] = deepcopy(rows[0]["input"])
+    with pytest.raises(ValueError, match=reason):
+        subject.prepare_control(rows, contexts, "paragraph_only_shuffle")
