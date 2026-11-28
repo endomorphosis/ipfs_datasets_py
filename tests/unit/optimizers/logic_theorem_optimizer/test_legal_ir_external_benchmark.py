@@ -500,24 +500,36 @@ def test_external_benchmark_counts_only_complete_semantic_coverage(coverage):
     assert external["external_validity_score"] == pytest.approx(0.5)
 
 
-
 @pytest.mark.parametrize(
-    ("citation", "accepted"),
+    ("citation", "accepted", "required_citation"),
     [
-        pytest.param("5 U.S.C. 552a(e)(4)", True, id="authored"),
-        pytest.param("5 USC § 552a ( e ) ( 4 )", True, id="equivalent-formatting"),
-        pytest.param("5 U.S.C. 552a", False, id="section-only"),
-        pytest.param("5 U.S.C. 552a(e)", False, id="parent"),
-        pytest.param("5 U.S.C. 552a(e)(3)", False, id="sibling"),
-        pytest.param("5 U.S.C. 552a(e)(4)(A)", False, id="descendant"),
-        pytest.param("5 U.S.C. 552(e)(4)", False, id="other-section"),
-        pytest.param("5 U.S.C. 552a(E)(4)", False, id="different-marker-case"),
-        pytest.param("5 U.S.C. 552a(e)(4)-(6)", False, id="range"),
-        pytest.param("5 U.S.C. 552a(e)(4)(A-b)", False, id="invalid-marker"),
+        pytest.param("5 U.S.C. 552a(e)(4)", True, None, id="authored"),
+        pytest.param("5 USC § 552a ( e ) ( 4 )", True, None, id="equivalent-formatting"),
+        pytest.param("5 U.S.C. 552a", False, None, id="section-only"),
+        pytest.param("5 U.S.C. 552a(e)", False, None, id="parent"),
+        pytest.param("5 U.S.C. 552a(e)(3)", False, None, id="sibling"),
+        pytest.param("5 U.S.C. 552a(e)(4)(A)", False, None, id="descendant"),
+        pytest.param("5 U.S.C. 552(e)(4)", False, None, id="other-section"),
+        pytest.param("5 U.S.C. 552a(E)(4)", False, None, id="different-marker-case"),
+        pytest.param("5 U.S.C. 552a(e)(4)-(6)", False, None, id="range"),
+        pytest.param("5 U.S.C. 552a(e)(4)(A-b)", False, None, id="invalid-marker"),
+        pytest.param("usc:5:552a", False, "5 U.S.C. 552a", id="opaque-key-collision"),
+        pytest.param("5 U.S.C. 552a", False, "usc:5:552a", id="reverse-key-collision"),
+        pytest.param("usc:5:552a", True, "usc:5:552a", id="opaque-exact"),
+        pytest.param("5 U.S.C. 552a...", False, "5 U.S.C. 552a", id="repeated-terminal-dots"),
+        pytest.param("5 U.S.C. 552a.", True, "5 U.S.C. 552a", id="single-terminal-dot"),
+        pytest.param("5 USC § 552a-1", True, "5 U.S.C. 552a-1", id="hyphenated-section"),
     ],
 )
-def test_external_benchmark_requires_the_cited_provision(citation: str, accepted: bool) -> None:
+def test_external_benchmark_requires_the_cited_provision(
+    citation: str, accepted: bool, required_citation: str | None,
+) -> None:
+    from dataclasses import replace
+
     packet, control = _packets()
+    if required_citation is not None:
+        required = replace(packet.citations[0], citation=required_citation)
+        packet = replace(packet, citations=(required,))
     prediction = {**_prediction(packet), "citations": [{"citation": citation}]}
 
     report = evaluate_external_legal_expert_benchmark(

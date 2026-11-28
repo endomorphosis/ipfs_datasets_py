@@ -146,18 +146,19 @@ def _citation_cluster(value: str) -> str:
 
 
 def _citation_identity(value: str) -> str:
-    """Match U.S. Code provisions with their complete subdivision path."""
+    """Keep exact U.S. Code provision keys distinct from opaque citation text."""
     match = re.fullmatch(
-        r"(\d+)\s*u\.?\s*s\.?\s*c\.?\s*§?\s*(\d[0-9a-z.-]*)"
+        r"(\d+)\s*u\.?\s*s\.?\s*c\.?\s*§?\s*(\d[0-9a-z]*(?:[.-][0-9a-z]+)*)"
         r"((?:\s*\(\s*[0-9a-z]+\s*\))*)\.?",
         value.strip(),
         re.IGNORECASE,
     )
     if match is None:
-        return _citation_text_key(value)
+        text_key = _citation_text_key(value)
+        return f"text:{text_key}" if text_key else ""
     title, section, subdivisions = match.groups()
     path = "".join(subdivisions.split())
-    return f"usc:{title}:{section.rstrip('.').lower()}{path}"
+    return f"usc:{title}:{section.lower()}{path}"
 
 
 def _mapping(value: Any) -> Mapping[str, Any]:
