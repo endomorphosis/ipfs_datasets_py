@@ -3486,3 +3486,8 @@ The existing structured retrieval consumer preserves complete examples while che
 ## Evidence602 — Fixed-vector V4 retrieval diagnostics
 
 The signed fictional V4 fixture reproduced one baseline refusal and passed all 10 comparison controls after the fix. All 128 retained scorer cases passed in a separate cohort. The lexical and raw controls exercised the existing fixed-vector ranking path. The joint control abstained before forward execution. This evidence covers literal payload and complete denominator checks. Learned fitting, model quality, and semantic judgments remain outside its scope. [Exact fixture, hashes and results](/tmp/P8-v4-frozen-ranking-comparator-lumab68q/actual-Guide602-frozen-V4-retrieval-evidence.json)
+
+
+## Evidence603 — Original-parent pristine V12 heldout run
+
+The managed test restored a pristine CPU T5 model and optimizer, kept optimizer steps at zero and ran genuine generation on three signed fictional heldout cases. All three outputs were incomplete at the selected token limit. The scorer retained all three with zero exact full payloads. The earlier analytic fixture exercised three abstentions in a separate run. Callback, comparison, and parent wall times are recorded separately. No fitting, broad model comparison, statutory admission, or accepted-unit cost was established. [Exact source, fixture and run evidence](/tmp/P8-V12-b1256-regenerated-fictional-data-XbptNbvP/actual-closed-V12-original-parent-v03-software-qualification.json)

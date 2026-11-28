@@ -5373,6 +5373,16 @@
       },
       "record_id": "lir20-frozen-v4-retrieval-comparator-evidence602-20261128",
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
+    },
+    "lir19_lir22_original_parent_v12_heldout_20261128": {
+      "evidence_ordinal": 603,
+      "facts": {
+        "bytes": 17958,
+        "path": "/tmp/P8-V12-b1256-regenerated-fictional-data-XbptNbvP/actual-closed-V12-original-parent-v03-software-qualification.json",
+        "sha256": "d9280921b8f7e6604425ae73d2d22e530691c131950b50b4ddfa5a0dea816218"
+      },
+      "record_id": "lir19-lir22-original-parent-v12-heldout-evidence603-20261128",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
     }
   },
   "programme_goal_hierarchy": {

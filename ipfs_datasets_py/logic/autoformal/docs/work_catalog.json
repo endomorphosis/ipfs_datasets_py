@@ -39845,6 +39845,25 @@
       "root": "artifact_workspace",
       "scope": "Frozen V4 retrieval payload diagnostics with shared context-set and exact candidate census.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/lir19_lir22_original_parent_v12_heldout_20261128",
+      "closed_runtime_facts": {
+        "full_nine_payload_exact": 0,
+        "heldout_cases": 3,
+        "incomplete": 3,
+        "original_parent_checks_passed": 1,
+        "owning_serialization_controls_passed": 90
+      },
+      "evidence_ordinal": 603,
+      "id": "lir19-lir22-original-parent-v12-heldout-evidence603-20261128",
+      "observed_bytes": 17958,
+      "observed_sha256": "d9280921b8f7e6604425ae73d2d22e530691c131950b50b4ddfa5a0dea816218",
+      "path": "/tmp/P8-V12-b1256-regenerated-fictional-data-XbptNbvP/actual-closed-V12-original-parent-v03-software-qualification.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Original-parent V12 pristine CPU T5 restore and source-bound generation on a signed fictional heldout population.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }
