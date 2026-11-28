@@ -420,6 +420,17 @@ def export_canonical_rule_families(
         accepted_records.append({**record, "canonical_temporal_atom": canonical_value,
                                  "canonical_temporal_index": temporal_indices[canonical_value]})
 
+    if duration_types:
+        parser = _module("ipfs_datasets_py.logic.deontic.utils.deontic_parser")
+        for index, (_, quantity) in duration_types.items():
+            literal = re.sub(
+                r"^(?:within|(?:for\s+)?at\s+least|(?:a\s+)?minimum\s+of)\s+",
+                "", canonical["temporal"][index], flags=re.IGNORECASE,
+            )
+            observed = parser.normalize_temporal_value(literal)["quantity"]
+            if observed is not None and observed != quantity:
+                raise ValueError("temporal_sidecar_quantity_differs_from_canonical_atom")
+
     def conjunction(parts: Sequence[str]) -> str:
         if not parts:
             raise ValueError("empty_formula_parts")

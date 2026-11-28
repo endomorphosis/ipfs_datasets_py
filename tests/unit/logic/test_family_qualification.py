@@ -529,3 +529,47 @@ def test_missing_new_export_still_fails_closed_with_a_specific_goal(monkeypatch)
     goal = next(item for item in report["goals"] if item["family"] == "cognitive_event_calculus")
     assert goal["diagnostics"] == [{"code": "cognitive_event_calculus_exporter_missing"}]
     assert goal["source_sha256"] == report["source_sha256"]
+
+
+@pytest.mark.parametrize(("text", "kind", "quantity"), [
+    pytest.param("The officer shall retain the file for at least 20 days.",
+                 "minimum_duration", 20, id="minimum-duration"),
+    pytest.param("Company A shall submit backup report within 10 days unless emergency.",
+                 "within_duration", 10, id="within-duration"),
+])
+def test_sole_temporal_sidecar_cannot_change_compiled_duration(text, kind, quantity):
+    from ipfs_datasets_py.logic.autoformal import AutoformalSession, compile_span
+
+    session = AutoformalSession()
+    compiled = compile_span(session, text, "quantity-binding")
+    assert compiled["compiler_status"] == "compiled"
+    rule = compiled["rule"]
+    record, = rule["temporal_records"]
+    assert (record["temporal_kind"], record["quantity"]) == (kind, quantity)
+
+    control = _historical_fragment_diagnostic(text, rule)
+    frame = control["families"]["frame_logic"]
+    slots = _parsed_frame_slots(frame["formula"])
+    assert control["passed"] is frame["passed"] is True
+    assert slots["temporal_quantity", ("0",)] == (str(quantity),)
+    assert control["admitted"] is control["formalized"] is False
+
+    altered_record = {**record, "quantity": quantity + 1}
+    altered = _historical_fragment_diagnostic(text, {**rule, "temporal_records": [altered_record]})
+    assert altered["passed"] is False
+    assert "temporal_sidecar_quantity_differs_from_canonical_atom" in altered["diagnostics"][0]["code"]
+    assert altered["temporal_records"] == [altered_record]
+    assert altered["canonical_rule"] == control["canonical_rule"]
+    assert altered["admitted"] is altered["formalized"] is False
+    assert all(not result["passed"] and not result["formula"] for result in altered["families"].values())
+
+
+@pytest.mark.parametrize("quantity", [0, 4, 17])
+def test_untyped_temporal_atom_keeps_literal_without_a_sidecar(quantity):
+    text = f"within {quantity} business days"
+    report = _historical_fragment_diagnostic(TEXT, {**RULE, "temporal": [text]})
+    frame = report["families"]["frame_logic"]
+    slots = _parsed_frame_slots(frame["formula"])
+    assert report["passed"] is True
+    assert slots["temporal", ("0",)] == (text,)
+    assert ("temporal_quantity", ("0",)) not in slots
