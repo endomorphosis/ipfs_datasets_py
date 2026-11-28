@@ -12,6 +12,7 @@ import hashlib
 import json
 import math
 import re
+import unicodedata
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -147,14 +148,19 @@ def _citation_cluster(value: str) -> str:
 
 def _citation_identity(value: str) -> str:
     """Keep exact U.S. Code provision keys distinct from opaque citation text."""
+    citation = unicodedata.normalize("NFC", value.strip())
     match = re.fullmatch(
         r"(\d+)\s*u\.?\s*s\.?\s*c\.?\s*§?\s*(\d[0-9a-z]*(?:[.-][0-9a-z]+)*)"
         r"((?:\s*\(\s*[0-9a-z]+\s*\))*)\.?",
-        value.strip(),
+        citation,
         re.IGNORECASE,
     )
     if match is None:
-        text_key = _citation_text_key(value)
+        if not citation.isascii():
+            # An unparsed label may carry the law name or article in another
+            # script. Preserve it instead of falling back to a bare number.
+            return f"text:{citation}" if any(char.isalnum() for char in citation) else ""
+        text_key = _citation_text_key(citation)
         return f"text:{text_key}" if text_key else ""
     title, section, subdivisions = match.groups()
     path = "".join(subdivisions.split())

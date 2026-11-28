@@ -571,3 +571,51 @@ def test_external_benchmark_requires_each_cited_provision_in_one_split_cluster()
         "required": ["usc:5:552a(e)(4)", "usc:5:552a(e)(3)"],
     }
     assert evaluate_external_legal_expert_benchmark([both], [_prediction(both)]).accepted
+
+
+
+@pytest.mark.parametrize(
+    ("required", "output", "accepted"),
+    [
+        pytest.param("星間手続法第十条", "星間手続法第十条", True, id="literal-nonlatin"),
+        pytest.param("星間手続法第17条", "港湾手続法第17条", False, id="different-law-same-article"),
+        pytest.param("星間手続法第17条", "17", False, id="bare-article-is-not-a-citation"),
+        pytest.param("नदी अनुच्छेद 7", "नद अनुच्छेद 7", False, id="meaningful-combining-mark"),
+        pytest.param("Règlement expérimental 7", "Règlement expérimental 7", True, id="canonical-unicode"),
+        pytest.param("Model Procedure Act art. 7", "model procedure act art 7", True, id="legacy-ascii"),
+    ],
+)
+def test_external_benchmark_scores_opaque_citations_without_erasing_original_language(
+    required, output, accepted,
+):
+    from dataclasses import replace
+
+    packet, control = _packets()
+    anchor = replace(packet.citations[0], citation=required, source_id="fictional-citation-fixture")
+    packet = replace(packet, citations=(anchor,))
+    prediction = {**_prediction(packet), "citations": [{"citation": output}]}
+    report = evaluate_external_legal_expert_benchmark((packet, control), [prediction, _prediction(control)])
+    row, retained = report.packet_results
+
+    assert row.accepted is accepted
+    assert row.scores["citations"] == float(accepted)
+    assert row.block_reasons == (() if accepted else ("missing_required_citation",))
+    assert retained.accepted
+    assert report.external_validity_score == (1.0 if accepted else 0.5)
+    assert report.to_dict()["external_validity"]["packet_count"] == 2
+
+
+def test_external_benchmark_keeps_distinct_nonlatin_citations_in_the_denominator():
+    from dataclasses import replace
+
+    packet = _packets()[0]
+    anchor = replace(packet.citations[0], citation="星間手続法第17条", source_id="fictional-star-procedure")
+    other = replace(anchor, citation="港湾手続法第17条", source_id="fictional-port-procedure")
+    packet = replace(packet, citations=(anchor, other))
+    prediction = {**_prediction(packet), "citations": [{"citation": anchor.citation}]}
+
+    partial = evaluate_external_legal_expert_benchmark((packet,), [prediction]).packet_results[0]
+    assert partial.scores["citations"] == 0.5
+    assert partial.block_reasons == ("missing_required_citation",)
+    assert len(partial.detail["citations"]["required"]) == 2
+    assert evaluate_external_legal_expert_benchmark((packet,), [_prediction(packet)]).accepted
