@@ -5693,6 +5693,26 @@
       },
       "record_id": "lir20-masked-contrastive-pair-mass-stability-evidence634-20261128",
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
+    },
+    "lir15_reviewed_incremental_retention_fixtures_20261128": {
+      "evidence_ordinal": 635,
+      "facts": {
+        "bytes": 2074,
+        "path": "/tmp/Guide634-current-release-and-retention-integration-FfzDv80V/actual-composed-qualification-Evidence635.json",
+        "sha256": "6cd30d06da9219d2141bfbf52515e1e21ee63f7f3f25e3b18ca8701a07df8d65"
+      },
+      "record_id": "lir15-reviewed-incremental-retention-fixtures-evidence635-20261128",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
+    },
+    "lir21_local_release_receipt_sequencing_20261128": {
+      "evidence_ordinal": 636,
+      "facts": {
+        "bytes": 2220,
+        "path": "/tmp/Guide634-current-release-and-retention-integration-FfzDv80V/actual-composed-qualification-Evidence636.json",
+        "sha256": "af7a8526be37fbb9b98243e5062632c47cd0d36b99ff8c385915e0e3a852a353"
+      },
+      "record_id": "lir21-local-release-receipt-sequencing-evidence636-20261128",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
     }
   },
   "programme_goal_hierarchy": {

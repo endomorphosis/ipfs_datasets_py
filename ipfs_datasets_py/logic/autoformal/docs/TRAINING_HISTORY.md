@@ -3644,3 +3644,13 @@ All 77 affected software cases passed. The full 166-case software run recorded 1
 ## Evidence634 — Stable masked contrastive loss and gradients under large common logits
 
 The full owning suite passed 69 real CPU PyTorch cases across 21 functions. It included 52 retained numerical cases, the original cold-import check, and 16 new cases for common-offset values, weighted and masked logits, and balanced pair gradients. The private 68-case comparison recorded 12 failures on the published preimage and 68 passes on the correction. [Exact qualification evidence](/tmp/Guide633-masked-contrastive-publication-iSjmL5WF/actual-composed-qualification-Evidence634.json)
+
+
+## Evidence635 — Restore three reviewed incremental retention controls
+
+All 15 selected cases passed, including the three that formerly stopped at fixture validation. The single-namespace case retained 8 units, 11 modules and 40 obligations. The historical 166-case run remains separately recorded. [Exact qualification evidence](/tmp/Guide634-current-release-and-retention-integration-FfzDv80V/actual-composed-qualification-Evidence635.json)
+
+
+## Evidence636 — Order local artifact publication against release receipt sealing
+
+The three concurrency controls recorded two failures and one pass on the published preimage. All three passed after the fix, along with 12 nearby controls covering immutable writes, rollback and local packet readback. [Exact qualification evidence](/tmp/Guide634-current-release-and-retention-integration-FfzDv80V/actual-composed-qualification-Evidence636.json)

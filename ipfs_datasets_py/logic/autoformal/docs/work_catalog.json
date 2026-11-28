@@ -40276,6 +40276,30 @@
       "root": "artifact_workspace",
       "scope": "Exact two-file masked contrastive arithmetic fix and ordinary CPU tensor qualification.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/lir15_reviewed_incremental_retention_fixtures_20261128",
+      "evidence_ordinal": 635,
+      "id": "lir15-reviewed-incremental-retention-fixtures-evidence635-20261128",
+      "observed_bytes": 2074,
+      "observed_sha256": "6cd30d06da9219d2141bfbf52515e1e21ee63f7f3f25e3b18ca8701a07df8d65",
+      "path": "/tmp/Guide634-current-release-and-retention-integration-FfzDv80V/actual-composed-qualification-Evidence635.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Local incremental software controls on authored source and an authored compiler.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/lir21_local_release_receipt_sequencing_20261128",
+      "evidence_ordinal": 636,
+      "id": "lir21-local-release-receipt-sequencing-evidence636-20261128",
+      "observed_bytes": 2220,
+      "observed_sha256": "af7a8526be37fbb9b98243e5062632c47cd0d36b99ff8c385915e0e3a852a353",
+      "path": "/tmp/Guide634-current-release-and-retention-integration-FfzDv80V/actual-composed-qualification-Evidence636.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Cooperating publication and sealing calls on one opened local release directory.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }

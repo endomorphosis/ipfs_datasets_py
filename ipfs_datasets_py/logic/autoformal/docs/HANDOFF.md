@@ -4504,3 +4504,13 @@ The incremental realization build now checks its monotonic operation deadline af
 ## Evidence634 — Stable masked contrastive loss and gradients under large common logits
 
 The contrastive loss now centers the positive and permitted log-mass terms separately and applies negative weights after removing the common logit. The compatibility check considers normalized pair probabilities as well as the forward loss, covering cases where the scalar agrees but the gradients differ. [Exact qualification evidence](/tmp/Guide633-masked-contrastive-publication-iSjmL5WF/actual-composed-qualification-Evidence634.json)
+
+
+## Evidence635 — Restore three reviewed incremental retention controls
+
+The exception control now moves the condition under the obligation while retaining its predicate and source occurrence. The cardinality control uses binary connectives and still checks all required pairwise equalities. The single-namespace case keeps a genuine mixed-sort use together with the original source occurrences and formula trees. [Exact qualification evidence](/tmp/Guide634-current-release-and-retention-integration-FfzDv80V/actual-composed-qualification-Evidence635.json)
+
+
+## Evidence636 — Order local artifact publication against release receipt sealing
+
+Artifact writers take a shared lock on the release directory before checking for a receipt. The sealer takes an exclusive lock on that same directory through verification and receipt publication. Separate release directories can proceed independently. [Exact qualification evidence](/tmp/Guide634-current-release-and-retention-integration-FfzDv80V/actual-composed-qualification-Evidence636.json)
