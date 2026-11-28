@@ -4772,6 +4772,7 @@ def test_reviewed_source_producer_replays_signed_query_and_independent_checkpoin
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_evaluation_artifacts as evaluation
     from tests.unit.logic.autoformal.test_corpus_source_bindings import _lir02_complete_case
     from tests.unit.optimizers.logic_theorem_optimizer import test_legal_span_consumer_binding as fixtures
+    from tests.unit.optimizers.logic_theorem_optimizer.test_legal_ir_evaluation_artifacts import _reseal_reviewed_retention
 
     signed = _lir02_complete_case(tmp_path, corpus_source_bindings, mixed=True)
     _, _, case, rows, admissions = fixtures.reviewed_public_mixed_consumer_case(
@@ -4874,6 +4875,28 @@ def test_reviewed_source_producer_replays_signed_query_and_independent_checkpoin
     assert retention["before_source_generation"]["checkpoint_source_commitments"] == {
         "checkpoint_admission_inputs_sha256": checkpoint_admission_pin,
         "checkpoint_bound_component_inputs_sha256": checkpoint_pin}
+
+    for rewrite_admission, diagnostic in (
+            (False, "normal retention bound source differs from observed admission"),
+            (True, "normal retention observations differ in frozen producer inputs")):
+        tampered = artifact.to_dict()
+        tampered_metadata = tampered["metadata"]
+        observed = tampered_metadata["source_generation_observation"]
+        tampered_commitment = observed["input_commitment"]
+        tampered_commitment["bound_component_inputs_sha256"] = checkpoint_pin
+        pin = evaluation.stable_digest(tampered_commitment)
+        prefix = observed["input_profile_id"].removesuffix(observed["input_commitment_sha256"])
+        observed["input_commitment_sha256"] = tampered_metadata["source_generation_input_commitment_sha256"] = pin
+        observed["input_profile_id"] = prefix + pin
+        tampered_payload = tampered["compiler_artifact"]["reviewed_source_span_producer_evaluation"]
+        tampered_payload["configuration"]["input_profile"]["profile_id"] = observed["input_profile_id"]
+        if rewrite_admission:
+            for gate in ("admission_before", "admission_after"):
+                tampered_payload[gate]["bound_component_inputs_sha256"] = checkpoint_pin
+        offered = _reseal_reviewed_retention(artifact, tampered)
+        with pytest.raises(ValueError, match=diagnostic):
+            evaluation.compare_reviewed_source_span_retention(artifact, offered,
+                expected_before_sha256=artifact_pin, expected_after_sha256=evaluation.stable_digest(offered.to_dict()))
 
     for name, original, diagnostic in (("query", query, "query source"),
                                       ("checkpoint_admission", checkpoint_admission, "checkpoint admission")):
