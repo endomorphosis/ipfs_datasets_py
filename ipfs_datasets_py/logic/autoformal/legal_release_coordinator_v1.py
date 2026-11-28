@@ -925,6 +925,7 @@ def _validate_uscode_release_physical_closure(request_raw: bytes, *, expected_re
     from . import uscode_ingest as coordinates
     from ...optimizers.logic_theorem_optimizer import uscode_dataset as law_owner
     from ...processors.legal_data import uscode_hf_release as hf
+    from ...processors.legal_data import uscode_identity as identity_owner
 
     _need(type(reviewed_version) is int and reviewed_version in (2, 3, 4),
           "explicit supported physical reviewed closure version required")
@@ -982,7 +983,7 @@ def _validate_uscode_release_physical_closure(request_raw: bytes, *, expected_re
     # attestation. Selected reviewed owners retain their own opening/closing pins.
     def physical_owner_snapshot():
         result = {}
-        for source_path in (Path(__file__), Path(law_owner.__file__),
+        for source_path in (Path(__file__), Path(law_owner.__file__), Path(identity_owner.__file__),
                             Path(coordinates.__file__), Path(entity_owner.__file__)):
             source_path = source_path.resolve(strict=True)
             info = source_path.lstat()
@@ -1000,15 +1001,15 @@ def _validate_uscode_release_physical_closure(request_raw: bytes, *, expected_re
         return result
     physical_generation = physical_owner_snapshot()
     physical_callbacks = (law_owner.capture_uscode_source_documents_from_parquet,
-        coordinates.validate_uscode_source_coordinates, entity_owner.iter_observed_rows,
-        core_validator, _validate_uscode_release_byte_closure)
+        identity_owner.parse_legal_id, coordinates.validate_uscode_source_coordinates,
+        entity_owner.iter_observed_rows, core_validator, _validate_uscode_release_byte_closure)
     physical_callback_states = (_release_callback_states_v3(physical_callbacks) if reviewed_version in (3, 4) else None)
     def physical_owner_fence():
         _need(physical_owner_snapshot() == physical_generation,
               "physical delegate source generation changed during complete replay")
         current = (law_owner.capture_uscode_source_documents_from_parquet,
-            coordinates.validate_uscode_source_coordinates, entity_owner.iter_observed_rows,
-            selected_core(), _validate_uscode_release_byte_closure)
+            identity_owner.parse_legal_id, coordinates.validate_uscode_source_coordinates,
+            entity_owner.iter_observed_rows, selected_core(), _validate_uscode_release_byte_closure)
         if reviewed_version in (3, 4):
             _release_v3_policy()
         _need(all(left is right for left, right in zip(current, physical_callbacks, strict=True)),
@@ -1307,8 +1308,18 @@ def _validate_uscode_release_physical_closure(request_raw: bytes, *, expected_re
                       and selected["source_occurrence_cid"] == unit["occurrence"]["record_cid"]
                       and selected["law_row_ordinal"] == document["source_witness"]["physical_row_ordinal"],
                       "reviewed unit source/version/occurrence/revision or physical row differs")
+                version = unit["source_version"]
+                provision_id = version["provision_id"]
+                if provision_id.lstrip().lower().startswith("usc:"):
+                    try:
+                        reviewed_identity = identity_owner.parse_legal_id(provision_id, strict_qualifiers=True)
+                        physical_identity = identity_owner.parse_legal_id(document["legal_id"], strict_qualifiers=True)
+                    except identity_owner.UscodeIdentityError as error:
+                        raise ReleaseCoordinatorError("invalid U.S. Code provision or physical law row identity") from error
+                    _need(reviewed_identity == physical_identity,
+                          "reviewed U.S. Code provision identity differs from the captured law row")
                 source_input = unit_inputs[unit["unit_id"]]
-                view = unit["source_version"]["extracted_view"]
+                view = version["extracted_view"]
                 _need(view["extraction_profile"] == view["normalization_profile"] == "identity/v1"
                       and source_input["raw_bytes"] == document["text"].encode("utf-8")
                       and source_input["extracted_text"] == document["text"],

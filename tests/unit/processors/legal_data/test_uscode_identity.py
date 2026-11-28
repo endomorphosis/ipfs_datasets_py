@@ -321,6 +321,25 @@ def test_parse_legal_id_round_trip():
     assert restored.note == "editorial"
 
 
+@pytest.mark.parametrize("suffix", [
+    ";unrecognized=editorial",
+    ";note=historical;note=editorial",
+    ";note=",
+    ";note=historical;",
+    ";kind=unrecognized",
+])
+def test_strict_legal_id_refuses_ambiguous_or_discarded_qualifiers(suffix):
+    with pytest.raises(IdentityParseError):
+        parse_legal_id("usc:us:10:7214" + suffix, strict_qualifiers=True)
+
+
+def test_strict_legal_id_normalizes_known_qualifiers_without_dropping_identity():
+    restored = parse_legal_id("usc:US:010:07214;note=Historical;edition=2024", strict_qualifiers=True)
+    assert restored.legal_id == "usc:us:10:7214;edition=2024;note=historical"
+    assert restored != parse_legal_id("usc:us:10:7214", strict_qualifiers=True)
+    assert parse_legal_id("usc:us:10:7214;unrecognized=legacy").legal_id == "usc:us:10:7214"
+
+
 def test_normalize_title():
     assert normalize_title("35") == "35"
     assert normalize_title("035") == "35"

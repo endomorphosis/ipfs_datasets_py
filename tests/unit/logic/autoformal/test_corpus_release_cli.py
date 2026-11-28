@@ -516,7 +516,7 @@ def _physical_wire(value):
 
 
 def _physical_source_material(directory, *, source_texts=None, shared_normative_row=False,
-        with_foreign_dependency=False):
+        with_foreign_dependency=False, provision_ids=None):
     import shutil
     from copy import deepcopy
     import pyarrow as pa
@@ -545,13 +545,16 @@ def _physical_source_material(directory, *, source_texts=None, shared_normative_
     # occurrence selectors, rather than document/IR labels, distinguish uses.
     law_texts = [texts[0], texts[1] + "\n\n" + texts[2]] if shared_normative_row else texts
     unit_document_ordinals = [0, 1, 1] if shared_normative_row else [0, 1, 2]
+    if provision_ids is not None:
+        assert len(provision_ids) == len(law_texts)
     units = []
     laws = []
     for index, text in enumerate(law_texts):
         identity = instrument + "/unit-" + str(index + 1)
         source_raw = text.encode("utf-8")
+        provision_id = identity if provision_ids is None else provision_ids[index]
         version = source.build_source_version(source_id=identity, release_id=instrument,
-            edition="fictional-edition-1", provision_id=identity, raw_bytes=source_raw,
+            edition="fictional-edition-1", provision_id=provision_id, raw_bytes=source_raw,
             expected_raw_sha256=hashlib.sha256(source_raw).hexdigest(), extracted_text=text,
             expected_extracted_sha256=hashlib.sha256(source_raw).hexdigest(),
             extraction_profile="identity/v1", normalization_profile="identity/v1",
@@ -582,7 +585,7 @@ def _physical_source_material(directory, *, source_texts=None, shared_normative_
         units.append(dict(unit_id=instrument + "/unit-3", source_version=deepcopy(version),
             occurrence=selected(first_end + 2, len(complete))))
     source_bindings = None
-    if shared_normative_row:
+    if shared_normative_row or provision_ids is not None:
         source_bindings = {unit["unit_id"]: dict(source_version=deepcopy(unit["source_version"]),
             occurrence=deepcopy(unit["occurrence"]),
             raw_bytes=law_texts[unit_document_ordinals[index]].encode("utf-8"),
@@ -1116,14 +1119,18 @@ def test_physical_closure_late_equal_byte_entity_replacement_cannot_change_held_
 
 # V3 successors use the same physical owners and independently signed fiction.
 # Authored compiler observations exercise contracts, never actual Lean/parent proof.
-@pytest.fixture(scope="module")
-def physical_closure_material_v3(tmp_path_factory):
+def _mixed_physical_material(directory, *, provision_ids=None):
     texts = [
         "For this fictional Act, a covered officer means an officer appointed by the Board. Café.",
         "Every covered officer must file a report unless the Board expressly excuses that officer.",
         "For every officer, supervisor, event, and time, if both people are covered officers, that officer may inspect the register under that supervisor at that event and time.",
     ]
-    return _physical_source_material(tmp_path_factory.mktemp("mixed-physical-crosswalk") / "material", source_texts=texts)
+    return _physical_source_material(directory, source_texts=texts, provision_ids=provision_ids)
+
+
+@pytest.fixture(scope="module")
+def physical_closure_material_v3(tmp_path_factory):
+    return _mixed_physical_material(tmp_path_factory.mktemp("mixed-physical-crosswalk") / "material")
 
 
 @pytest.fixture(scope="module")
@@ -3162,6 +3169,35 @@ def test_physical_v2_requires_every_independent_input_commitment(
     with pytest.raises(ValueError):
         shared.validate_reviewed_physical_definition_realization_corpus_v2(
             c["preparation"], c["preservation"], c["graph"], c["admission"], *c["args"], **options)
+
+
+@pytest.mark.parametrize(("reviewed_id", "expected_error"), [
+    pytest.param("usc:US:0999:002", None, id="normalized-match"),
+    pytest.param("usc:us:999:99", "identity differs", id="wrong-section"),
+    pytest.param("usc:us:999:2;note=historical", "identity differs", id="wrong-note"),
+    pytest.param("usc:us:999:2;unknown=qualifier", "invalid U.S. Code provision", id="unknown-qualifier"),
+    pytest.param("usc:us:999:2;kind=note;kind=section", "invalid U.S. Code provision", id="duplicate-qualifier"),
+])
+def test_physical_v4_binds_canonical_reviewed_provision_to_law_row(tmp_path, reviewed_id, expected_error):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+
+    material = _mixed_physical_material(tmp_path / "material",
+        provision_ids=["usc:us:999:1", reviewed_id, "usc:us:999:3"])
+    assert material["units"][1]["source_version"]["provision_id"] == reviewed_id
+    assert material["capture"]["documents"][1]["legal_id"] == "usc:us:999:2"
+    if expected_error is not None:
+        with pytest.raises(release.ReleaseCoordinatorError, match=expected_error):
+            reviewed_physical_whole_norm_control_v2(material)
+        return
+
+    control = reviewed_physical_whole_norm_control_v2(material)
+    report = release.validate_uscode_release_closure_v4(control["physical_request_raw"],
+        expected_request_sha256=control["physical_request_sha256"])
+    assert_release_v3_byte_authority_only(report)
+    assert report["independent_reviewed_crosswalk_verified"] is True
+    binding = report["physical_crosswalk"]["unit_bindings"][1]
+    assert binding["legal_id"] == "usc:us:999:2"
+    assert binding["source_version_cid"] == material["units"][1]["source_version"]["record_cid"]
 
 
 @pytest.mark.parametrize("direct", [False, True])
