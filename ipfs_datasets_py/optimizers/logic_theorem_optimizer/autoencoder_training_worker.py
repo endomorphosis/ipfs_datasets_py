@@ -4509,8 +4509,17 @@ def make_reviewed_decoder_source_producer_v3(runtime, *, binding, rows, split_ma
         optimizer_checkpoint, max_source_tokens, max_output_tokens,
         allow_heldout_evaluation=False, context_profile=None,
         current_context_inputs_provider=None, expected_context_inputs_sha256=None,
-        context_policy_guard=None, context_transport="plain_json_v1", generation_policy=None):
-    """Bind admission V3 source or explicitly reviewed heldout TRAIN context."""
+        context_policy_guard=None, context_transport="plain_json_v1", generation_policy=None,
+        current_query_admission_provider=None,
+        current_query_bound_component_inputs_provider=None,
+        expected_query_bound_component_inputs_sha256=None,
+        expected_checkpoint_admission_inputs_sha256=None,
+        expected_checkpoint_bound_component_inputs_sha256=None):
+    """Bind admission V3 source or explicitly reviewed heldout TRAIN context.
+
+    A source-bound query has its own pinned component replay. For a V5 runtime,
+    independently pin its staged training source population as well.
+    """
     return _make_reviewed_decoder_source_producer(runtime, binding=binding, rows=rows,
         split_manifest=split_manifest, exposure_records=exposure_records, source_contexts=source_contexts,
         expected_source_contexts_sha256=expected_source_contexts_sha256,
@@ -4520,7 +4529,13 @@ def make_reviewed_decoder_source_producer_v3(runtime, *, binding, rows, split_ma
         max_output_tokens=max_output_tokens, allow_heldout_evaluation=allow_heldout_evaluation,
         context_profile=context_profile, current_context_inputs_provider=current_context_inputs_provider,
         expected_context_inputs_sha256=expected_context_inputs_sha256,
-        context_policy_guard=context_policy_guard, context_transport=context_transport, generation_policy=generation_policy, _admission_version="v3")
+        context_policy_guard=context_policy_guard, context_transport=context_transport, generation_policy=generation_policy,
+        current_query_admission_provider=current_query_admission_provider,
+        current_query_bound_component_inputs_provider=current_query_bound_component_inputs_provider,
+        expected_query_bound_component_inputs_sha256=expected_query_bound_component_inputs_sha256,
+        expected_checkpoint_admission_inputs_sha256=expected_checkpoint_admission_inputs_sha256,
+        expected_checkpoint_bound_component_inputs_sha256=expected_checkpoint_bound_component_inputs_sha256,
+        _admission_version="v3")
 
 
 def _make_reviewed_decoder_source_producer(runtime, *, binding, rows, split_manifest,
@@ -4529,7 +4544,13 @@ def _make_reviewed_decoder_source_producer(runtime, *, binding, rows, split_mani
         optimizer_checkpoint, max_source_tokens, max_output_tokens,
         allow_heldout_evaluation=False, context_profile=None,
         current_context_inputs_provider=None, expected_context_inputs_sha256=None,
-        context_policy_guard=None, context_transport="plain_json_v1", generation_policy=None, _admission_version, _target_codec="complete-reviewed-norm-json/v2"):
+        context_policy_guard=None, context_transport="plain_json_v1", generation_policy=None,
+        current_query_admission_provider=None,
+        current_query_bound_component_inputs_provider=None,
+        expected_query_bound_component_inputs_sha256=None,
+        expected_checkpoint_admission_inputs_sha256=None,
+        expected_checkpoint_bound_component_inputs_sha256=None,
+        _admission_version, _target_codec="complete-reviewed-norm-json/v2"):
     """Bind a trusted admitted runtime to the reviewed source evaluator.
 
     The caller supplies an already-loaded checkpoint pair and real execution,
@@ -4596,6 +4617,28 @@ def _make_reviewed_decoder_source_producer(runtime, *, binding, rows, split_mani
         admission_profile = None
 
     need(type(runtime) is ReviewedDecoderRuntime, "explicit caller-owned reviewed runtime required")
+    checkpoint_bound_provider = runtime.current_bound_component_inputs_provider
+    checkpoint_admission_provider = runtime.current_admission_provider if checkpoint_bound_provider is not None else None
+    query_bound = binding.receipt().get("bound_component_inputs_sha256") is not None
+    if query_bound:
+        need(_admission_version == "v3" and callable(current_query_bound_component_inputs_provider)
+             and type(expected_query_bound_component_inputs_sha256) is str
+             and re.fullmatch(r"[0-9a-f]{64}", expected_query_bound_component_inputs_sha256) is not None,
+             "source-bound query requires an explicit current provider and independent pin")
+    else:
+        need(current_query_bound_component_inputs_provider is None
+             and expected_query_bound_component_inputs_sha256 is None,
+             "source replay requires the prepared source-bound query binding")
+    if checkpoint_bound_provider is not None:
+        need(query_bound and callable(current_query_admission_provider)
+             and all(type(pin) is str and re.fullmatch(r"[0-9a-f]{64}", pin) is not None
+                     for pin in (expected_checkpoint_admission_inputs_sha256,
+                                 expected_checkpoint_bound_component_inputs_sha256)),
+             "source-bound runtime requires separate pinned checkpoint and query replay")
+    else:
+        need(current_query_admission_provider is None and expected_checkpoint_admission_inputs_sha256 is None
+             and expected_checkpoint_bound_component_inputs_sha256 is None,
+             "separate checkpoint and query replay requires the runtime's current checkpoint source provider")
     backend, tokenizer = runtime.backend, runtime.tokenizer
     if generation_copy is not None:
         need(type(backend) is TorchReviewedDecoderBackend and backend.architecture == "causal_lm"
@@ -4668,7 +4711,11 @@ def _make_reviewed_decoder_source_producer(runtime, *, binding, rows, split_mani
     source_paths = {"worker": Path(__file__), "inputs": Path(inputs.__file__),
         "consumer": Path(consumer.__file__), "admission": Path(admission_owner.__file__),
         "splits": Path(split_owner.__file__)}
-    source_pins = _reviewed_decoder_source_pins(admission_profile=admission_profile)
+    if query_bound:
+        from ...logic.autoformal import corpus_source_bindings, legal_graph_dependencies
+        source_paths.update(source_bindings=Path(corpus_source_bindings.__file__),
+                            dependencies=Path(legal_graph_dependencies.__file__))
+    source_pins = _reviewed_decoder_source_pins(admission_profile=admission_profile, **({"source_bound": True} if query_bound else {}))
     context_source_paths = {}
     context_source_pins = None
     context_implementation = None
@@ -4704,6 +4751,11 @@ def _make_reviewed_decoder_source_producer(runtime, *, binding, rows, split_mani
     need(all(stat.S_ISDIR(value[2]) for value in ancestry.values()), "ordinary immutable input ancestry required")
     guards = {"execution": 0, "asset_policy": 0, "current_admission": 0,
               "full_review_replay": 0, "full_file_authentication": 0, "matched_checkpoint_checks": 0}
+    if query_bound:
+        guards["current_query_bound_component_inputs"] = 0
+    if checkpoint_bound_provider is not None:
+        guards["current_checkpoint_bound_component_inputs"] = 0
+        guards["current_checkpoint_admission"] = 0
     observation = {"schema": ("reviewed-decoder-source-producer-observation/v2" if admission_profile else
                               "reviewed-decoder-source-producer-observation/v1"), "calls": 0,
         "loaded_checkpoint_identity_scope": "exact supplied pair equals already-loaded backend at entry and exit only",
@@ -4736,6 +4788,11 @@ def _make_reviewed_decoder_source_producer(runtime, *, binding, rows, split_mani
 
     def check_input_identities():
         need(runtime.backend is backend and runtime.tokenizer is tokenizer, "caller-owned producer runtime changed")
+        need(runtime.current_bound_component_inputs_provider is checkpoint_bound_provider,
+             "runtime checkpoint source provider changed")
+        if checkpoint_admission_provider is not None:
+            need(runtime.current_admission_provider is checkpoint_admission_provider,
+                 "runtime checkpoint admission provider changed")
         need(wire(originals) == frozen_raw, "bound producer inputs changed")
         need(all(file_stamp(path) == expected for path, expected in stamps.items()),
              "producer source or asset file identity changed")
@@ -4907,6 +4964,35 @@ def _make_reviewed_decoder_source_producer(runtime, *, binding, rows, split_mani
         context_inputs()
         check_input_identities()
 
+    def replay_inputs(admission_error="current producer admission inputs changed"):
+        admission_provider = (runtime.current_admission_provider if checkpoint_admission_provider is None
+                              else current_query_admission_provider)
+        admission = admission_provider()
+        guards["current_admission"] += 1
+        bound = {}
+        checkpoint_admission = checkpoint_inputs = None
+        if checkpoint_admission_provider is not None:
+            checkpoint_admission = checkpoint_admission_provider()
+            guards["current_checkpoint_admission"] += 1
+            checkpoint_inputs = checkpoint_bound_provider()
+            guards["current_checkpoint_bound_component_inputs"] += 1
+        if query_bound:
+            query_inputs = current_query_bound_component_inputs_provider()
+            guards["current_query_bound_component_inputs"] += 1
+            need(type(query_inputs) is dict and consumer.reviewed_admission_inputs_sha256(query_inputs)
+                 == expected_query_bound_component_inputs_sha256, "current producer query source inputs changed")
+            bound["bound_component_inputs"] = query_inputs
+        if checkpoint_admission_provider is not None:
+            need(type(checkpoint_admission) is dict and checkpoint_admission
+                 and consumer.reviewed_admission_inputs_sha256(checkpoint_admission)
+                     == expected_checkpoint_admission_inputs_sha256, "current producer checkpoint admission inputs changed")
+            need(type(checkpoint_inputs) is dict and checkpoint_inputs.keys() == checkpoint_admission.keys()
+                 and consumer.reviewed_admission_inputs_sha256(checkpoint_inputs)
+                     == expected_checkpoint_bound_component_inputs_sha256, "current producer checkpoint source inputs changed")
+        need(consumer.reviewed_admission_inputs_sha256(admission) == expected_admission_inputs_sha256,
+             admission_error)
+        return admission, bound
+
     def current(*, replay=False, full_files=False):
         nonlocal pair_bytes, first_review
         runtime.execution_guard()
@@ -4915,12 +5001,10 @@ def _make_reviewed_decoder_source_producer(runtime, *, binding, rows, split_mani
         runtime.asset_policy_guard(copy_json(policy))
         guards["asset_policy"] += 1
         check_input_identities()
-        current_admission = runtime.current_admission_provider()
-        guards["current_admission"] += 1
-        need(consumer.reviewed_admission_inputs_sha256(current_admission) == expected_admission_inputs_sha256,
-             "current producer admission inputs changed")
+        current_admission, replay_bound = replay_inputs()
         if full_files:
-            need(_reviewed_decoder_source_pins(admission_profile=admission_profile) == source_pins, "producer source pins changed")
+            need(_reviewed_decoder_source_pins(admission_profile=admission_profile,
+                 **({"source_bound": True} if query_bound else {})) == source_pins, "producer source pins changed")
             need(copy_json(backend.identity()) == identity_copy, "producer backend identity changed")
             loaded = {}
             for path, item in references.items():
@@ -4937,10 +5021,14 @@ def _make_reviewed_decoder_source_producer(runtime, *, binding, rows, split_mani
         receipt = None
         if replay:
             receipt = validate_binding(binding, row_copy,
-                split_manifest=manifest_copy, admission_inputs=current_admission, exposure_records=exposure_copy)
+                split_manifest=manifest_copy, admission_inputs=current_admission, exposure_records=exposure_copy,
+                **replay_bound)
             guards["full_review_replay"] += 1
             need(receipt["status"] == "ready" and receipt["operation"] == operation,
                  "fresh ready reviewed binding for the exact producer operation required")
+            if query_bound:
+                need(receipt.get("bound_component_inputs_sha256") == expected_query_bound_component_inputs_sha256,
+                     "replayed producer query source commitment differs")
             if allow_heldout_evaluation:
                 expected_purpose = ((consumer.REVIEWED_V3_HELDOUT_CONTEXT_PURPOSE if _admission_version == "v3"
                                      else consumer.REVIEWED_HELDOUT_CONTEXT_PURPOSE) if rich_heldout
@@ -4956,10 +5044,7 @@ def _make_reviewed_decoder_source_producer(runtime, *, binding, rows, split_mani
                 need(receipt == first_review, "reviewed producer admission changed")
         if context_enabled:
             current_context(replay=replay, full_files=full_files)
-            current_admission = runtime.current_admission_provider()
-            guards["current_admission"] += 1
-            need(consumer.reviewed_admission_inputs_sha256(current_admission) == expected_admission_inputs_sha256,
-                 "current producer admission inputs changed after context policy")
+            replay_inputs("current producer admission inputs changed after context policy")
         check_input_identities()
         return receipt
 
@@ -4992,6 +5077,12 @@ def _make_reviewed_decoder_source_producer(runtime, *, binding, rows, split_mani
     match_pair()
     commitment = {**copy_json(policy), "source_sha256": source_pins,
         "exposure_sha256": _digest(wire(exposure_copy)), "supplied_context_supported": "empty_permitted_and_retrieved_only"}
+    if query_bound:
+        commitment.update(bound_component_inputs_sha256=expected_query_bound_component_inputs_sha256,
+            bound_component_identity=copy_json(first_review["bound_component_identity"]))
+    if checkpoint_bound_provider is not None:
+        commitment["checkpoint_admission_inputs_sha256"] = expected_checkpoint_admission_inputs_sha256
+        commitment["checkpoint_bound_component_inputs_sha256"] = expected_checkpoint_bound_component_inputs_sha256
     if context_enabled:
         commitment.update(context_profile=context_profile,
             context_inputs_sha256=expected_context_inputs_sha256,
@@ -5128,10 +5219,7 @@ def _make_reviewed_decoder_source_producer(runtime, *, binding, rows, split_mani
              and declarations["decoder"]["sha256"] == model_checkpoint.sha256,
              "decoder declaration must bind the actual matched model checkpoint/backend")
         current(replay=True, full_files=True)
-        fresh = runtime.current_admission_provider()
-        guards["current_admission"] += 1
-        need(consumer.reviewed_admission_inputs_sha256(fresh) == expected_admission_inputs_sha256,
-             "current evaluator admission inputs changed")
+        fresh, replay_bound = replay_inputs("current evaluator admission inputs changed")
 
         def check_evaluator_context(receipt):
             need(receipt["context_payload_sha256"] == context_state["payload_sha256"],
@@ -5152,7 +5240,7 @@ def _make_reviewed_decoder_source_producer(runtime, *, binding, rows, split_mani
                     "max_output_tokens": max_output_tokens}, checkpoint_declarations=declarations,
                 permitted_context=[], retrieved_examples=(copy_json(context_state["retrieval"]) if context_enabled
                     else {row["id"]: [] for row in row_copy}),
-                producer=producer, allow_heldout_evaluation=allow_heldout_evaluation, **heldout_context)
+                producer=producer, allow_heldout_evaluation=allow_heldout_evaluation, **heldout_context, **replay_bound)
         finally:
             # A provider may return a NEW revoked mapping instead of mutating
             # the older object used by the generic evaluator's finally block.
