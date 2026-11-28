@@ -4514,3 +4514,13 @@ The exception control now moves the condition under the obligation while retaini
 ## Evidence636 — Order local artifact publication against release receipt sealing
 
 Artifact writers take a shared lock on the release directory before checking for a receipt. The sealer takes an exclusive lock on that same directory through verification and receipt publication. Separate release directories can proceed independently. [Exact qualification evidence](/tmp/Guide634-current-release-and-retention-integration-FfzDv80V/actual-composed-qualification-Evidence636.json)
+
+
+## Evidence637 — Preserve durable proof selections during exact CID reads
+
+An exact CID read now verifies and caches the requested envelope without selecting it for a profile or source. When the disk selectors need refreshing, the existing verified reload runs before profile and source lookup, index export, or a new write. A failed record write restores the prior in-memory state. [Exact qualification evidence](/tmp/Guide636-current-cache-and-alias-integration-B5CRXHpw/actual-composed-qualification-Evidence637.json)
+
+
+## Evidence638 — Honor declared document and scope for aliases resolved by ID
+
+An alias that names its definition by ID now checks that definition against any explicitly declared target document and scope. Contradictions return the existing unresolved diagnostic through both symbol resolution and scoped lookup. [Exact qualification evidence](/tmp/Guide636-current-cache-and-alias-integration-B5CRXHpw/actual-composed-qualification-Evidence638.json)

@@ -3654,3 +3654,13 @@ All 15 selected cases passed, including the three that formerly stopped at fixtu
 ## Evidence636 — Order local artifact publication against release receipt sealing
 
 The three concurrency controls recorded two failures and one pass on the published preimage. All three passed after the fix, along with 12 nearby controls covering immutable writes, rollback and local packet readback. [Exact qualification evidence](/tmp/Guide634-current-release-and-retention-integration-FfzDv80V/actual-composed-qualification-Evidence636.json)
+
+
+## Evidence637 — Preserve durable proof selections during exact CID reads
+
+Seven of eight new cases failed on the published preimage. After the correction, all 29 selected cases passed across 24 functions. The four fixture-loader cases checked the refreshed source pin without a compiler run. [Exact qualification evidence](/tmp/Guide636-current-cache-and-alias-integration-B5CRXHpw/actual-composed-qualification-Evidence637.json)
+
+
+## Evidence638 — Honor declared document and scope for aliases resolved by ID
+
+Four of the 12 reproduction cases selected a contradictory target on the published preimage. All 93 cases in the owning symbol and scoped lookup suites passed after the fix, including those 12 controls. [Exact qualification evidence](/tmp/Guide636-current-cache-and-alias-integration-B5CRXHpw/actual-composed-qualification-Evidence638.json)

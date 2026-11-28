@@ -40300,6 +40300,30 @@
       "root": "artifact_workspace",
       "scope": "Cooperating publication and sealing calls on one opened local release directory.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/proof_cache_exact_disk_selection_20261128",
+      "evidence_ordinal": 637,
+      "id": "proof-cache-exact-disk-selection-evidence637-20261128",
+      "observed_bytes": 2889,
+      "observed_sha256": "57ec66be3995f008f1b2537ece50ef0e72cc66e2dadd8f4140442af274ca4fff",
+      "path": "/tmp/Guide636-current-cache-and-alias-integration-B5CRXHpw/actual-composed-qualification-Evidence637.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Exact disk envelope recovery, secondary cache selectors and the existing fixture-only loader.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/lir09_explicit_alias_target_context_20261128",
+      "evidence_ordinal": 638,
+      "id": "lir09-explicit-alias-target-context-evidence638-20261128",
+      "observed_bytes": 2472,
+      "observed_sha256": "783cd3bc39f34f2e3686c9c6356ceaae6409117ae6ea005f06ce3fa0740a22d8",
+      "path": "/tmp/Guide636-current-cache-and-alias-integration-B5CRXHpw/actual-composed-qualification-Evidence638.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Existing symbol resolver and scoped definition lookup over authored source-bound fixtures.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }

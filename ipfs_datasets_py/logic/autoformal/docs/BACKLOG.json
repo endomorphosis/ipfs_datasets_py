@@ -5713,6 +5713,26 @@
       },
       "record_id": "lir21-local-release-receipt-sequencing-evidence636-20261128",
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
+    },
+    "lir09_explicit_alias_target_context_20261128": {
+      "evidence_ordinal": 638,
+      "facts": {
+        "bytes": 2472,
+        "path": "/tmp/Guide636-current-cache-and-alias-integration-B5CRXHpw/actual-composed-qualification-Evidence638.json",
+        "sha256": "783cd3bc39f34f2e3686c9c6356ceaae6409117ae6ea005f06ce3fa0740a22d8"
+      },
+      "record_id": "lir09-explicit-alias-target-context-evidence638-20261128",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
+    },
+    "proof_cache_exact_disk_selection_20261128": {
+      "evidence_ordinal": 637,
+      "facts": {
+        "bytes": 2889,
+        "path": "/tmp/Guide636-current-cache-and-alias-integration-B5CRXHpw/actual-composed-qualification-Evidence637.json",
+        "sha256": "57ec66be3995f008f1b2537ece50ef0e72cc66e2dadd8f4140442af274ca4fff"
+      },
+      "record_id": "proof-cache-exact-disk-selection-evidence637-20261128",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
     }
   },
   "programme_goal_hierarchy": {
