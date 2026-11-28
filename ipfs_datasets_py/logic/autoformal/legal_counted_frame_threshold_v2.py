@@ -633,7 +633,7 @@ __all__ += ["authored_counted_threshold_request_v3", "prepare_counted_threshold_
 QUANTITY_REQUEST_SCHEMA = "legal-counted-frame-quantity-request/v4"
 QUANTITY_SCHEMA = "legal-counted-frame-quantity-report/v4"
 QUANTITY_PROFILE = "authored-positive-lower-or-exact-enumeration-per-event-and-time/v4"
-_QUANTITY_RELATIONAL_SHA = "e3fb0941e123672f4c280f282b0bce80937dab6cdc56ca607ffd5d3713ae9adf"
+_QUANTITY_RELATIONAL_SHA = "ff66f344c9cda788801a9fa2d3ef66afd7046d903a53d2bbf11f8dbfdf847ad2"
 _QUANTITY_FIELDS = frozenset(("schema", "profile", "quantity", "threshold",
     "interpretation_status", "frame", "membership", "distinctness", "source_binding"))
 
