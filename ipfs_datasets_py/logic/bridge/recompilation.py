@@ -333,11 +333,16 @@ def evaluate_semantic_recompilation_gate(
                 "terminal_stage": roundtrip.terminal_stage,
             },
         )
+        preservation = (
+            TranslationPreservationClass.UNSUPPORTED
+            if roundtrip.status is OperationStatus.FAILED
+            else TranslationPreservationClass.HEURISTIC
+        )
         comparison_cid = cid_for_dag_json(
             _gate_payload(
                 admitted=False,
                 reconstruction_mode=resolved,
-                preservation_class=TranslationPreservationClass.HEURISTIC,
+                preservation_class=preservation,
                 fidelity_claim=FidelityClaim.NONE,
                 differences=differences,
                 l1_ir_cid=l1.ir_cid if l1 is not None else roundtrip.request_cid,
@@ -350,9 +355,7 @@ def evaluate_semantic_recompilation_gate(
             status=roundtrip.status,
             admitted=False,
             reconstruction_mode=resolved,
-            preservation_class=TranslationPreservationClass.UNSUPPORTED
-            if roundtrip.status is OperationStatus.FAILED
-            else TranslationPreservationClass.HEURISTIC,
+            preservation_class=preservation,
             fidelity_claim=FidelityClaim.NONE,
             equality_criteria=(EqualityCriterion.SEMANTIC_RECOMPILE,),
             differences=differences,
