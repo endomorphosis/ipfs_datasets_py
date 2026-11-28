@@ -5663,6 +5663,16 @@
       },
       "record_id": "source-withheld-canonical-actor-modal-word-boundary",
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
+    },
+    "normative-retained-cache-matched-paragraph-shuffle-absolute-deadline-v1": {
+      "evidence_ordinal": 632,
+      "facts": {
+        "bytes": 2211,
+        "path": "/tmp/Guide631-current-matched-decoder-integration-504at1dt/actual-composed-qualification-Evidence632.json",
+        "sha256": "ad0910ec2dfba1ea90ca64cbe711b2e4ce306c4b798f5763025639b94d6a3d57"
+      },
+      "record_id": "normative-retained-cache-matched-paragraph-shuffle-absolute-deadline",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
     }
   },
   "programme_goal_hierarchy": {

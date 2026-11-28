@@ -4489,3 +4489,8 @@ The existing retained-cache runtime accepts up to one MiB for its exact named tr
 ## Evidence631 — Keep original-language citations together across protected splits
 
 The existing citation grouping setting now accepts `unicode-citation/v1`. It groups identical original-language labels across distinct source records, joins canonically equivalent Unicode forms, and retains existing U.S. Code section grouping. Existing split policies and their archived manifests retain their behavior. [Exact qualification evidence](/tmp/Guide626-current-verified-integration-2akfxaue/actual-composed-qualification-Evidence631.json)
+
+
+## Evidence632 — Opt-in matched retained-cache decoder comparison with one deadline
+
+The existing retained-cache runtime can explicitly compare conditioned input against a paragraph-only shuffle using one loaded checkpoint and the same ordered rows and clause contexts. The added control source counts toward the existing custody limit. Each arm carries the original monotonic deadline through numerical checks, batch preparation, projection, decoder start and token generation. A late aggregate preserves the raw reports and all row outcomes and remains incomplete. [Exact qualification evidence](/tmp/Guide631-current-matched-decoder-integration-504at1dt/actual-composed-qualification-Evidence632.json)

@@ -40240,6 +40240,18 @@
       "root": "artifact_workspace",
       "scope": "Opt-in generic and campaign split configuration and independent software guards. 150 tests and 58 subtests.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/normative-retained-cache-matched-paragraph-shuffle-absolute-deadline-v1",
+      "evidence_ordinal": 632,
+      "id": "normative-retained-cache-matched-paragraph-shuffle-absolute-deadline",
+      "observed_bytes": 2211,
+      "observed_sha256": "ad0910ec2dfba1ea90ca64cbe711b2e4ce306c4b798f5763025639b94d6a3d57",
+      "path": "/tmp/Guide631-current-matched-decoder-integration-504at1dt/actual-composed-qualification-Evidence632.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Same-checkpoint, target-free source packets and source custody. Scoped software qualification with an inert decoder, including the real numeric and greedy entry points.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }

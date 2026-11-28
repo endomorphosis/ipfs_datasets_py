@@ -3629,3 +3629,8 @@ Four existing metadata reassembly cases reproduced the refusal. All 108 owning t
 ## Evidence631 — Keep original-language citations together across protected splits
 
 The prior configured campaign split could put two sources with the same non-Latin citation into external and training populations with an empty citation cluster. The new policy passes the original-language grouping, forced-crossing refusal, lookup, sealing and compatibility controls. All 150 tests and 58 subtests passed. An initial missing checkout dependency was restored from the exact published Accelerate snapshot. [Exact qualification evidence](/tmp/Guide626-current-verified-integration-2akfxaue/actual-composed-qualification-Evidence631.json)
+
+
+## Evidence632 — Opt-in matched retained-cache decoder comparison with one deadline
+
+The real numeric and greedy paths reproduced three late-start conditions with a recording decoder. All 126 owning tests passed at the corrected source, including the ordinary relative timing control. All 359 tracked test roles match the current integration. The initial test-double iteration failure and process termination are retained separately. A matched measurement remains pending independent TRAIN and DEVELOPMENT admissions, current model custody and funded execution. [Exact qualification evidence](/tmp/Guide631-current-matched-decoder-integration-504at1dt/actual-composed-qualification-Evidence632.json)
