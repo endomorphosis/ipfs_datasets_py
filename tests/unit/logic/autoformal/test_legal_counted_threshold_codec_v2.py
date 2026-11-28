@@ -456,7 +456,7 @@ def test_codec_changed_ids_are_rechecked_after_capture_before_typed_work(languag
 
 def test_codec_legacy_and_factory_sources_and_profiles_remain_unmodified(language):
     assert sha(Path(legacy.__file__).read_bytes()) == "df91798d11e2b0da36afc75e0bc1a8b6d0a3d08bc255e7362d1c200e5e9baa13"
-    assert sha(Path(factory.__file__).read_bytes()) == "9e3c4e42d8cfb5ed851461f6cd2562a71c7d5a2c2b8ccd5ab4fdbcf06e168024"
+    assert sha(Path(factory.__file__).read_bytes()) == "3f455e26e166bb1d6bdaf78cf57a8b3f15103bffac6940c734ef927a3b107ce1"
     assert legacy.COMPACT_CONTENT_SCHEMA == "legal-counted-compact-content/v1"
     old = legacy.build_counted_frame_token_codec_v1()
     assert old != language["codec"]
@@ -564,3 +564,22 @@ def test_codec_panel_retains_three_roundtrips_and_exhaustive_prefix_edges(langua
     target = tmp_path/"authored-threshold-codec-prefix-panel-v2.json"
     target.write_bytes(payload)
     assert target.read_bytes() == payload
+
+
+
+def test_codec_refuses_historical_generation_despite_the_same_vocabulary(language):
+    historical = deepcopy(language["codec"])
+    historical["implementation"]["codec_owner_sha256"] = (
+        "94d6d7f722394c5344152303bc1504c545bcf9f2ef2a47b9b2d7f3360a1d0507"
+    )
+    historical["implementation"]["threshold_factory_sha256"] = (
+        "9e3c4e42d8cfb5ed851461f6cd2562a71c7d5a2c2b8ccd5ab4fdbcf06e168024"
+    )
+    # This is the exact declaration regenerated on original publication 38e4e50dcb.
+    historical_sha256 = "a965562944ae46baa89fc500a2dc078f237a90469b76981a78938e3d88f85419"
+    assert sha(wire(historical)) == historical_sha256
+    assert language["codec_sha256"] != historical_sha256
+    with pytest.raises(ValueError, match="exact threshold codec required"):
+        subject.counted_threshold_token_codec_sha256(historical)
+    with pytest.raises(ValueError, match="independent exact threshold codec differs"):
+        prefix(language, [1], codec=historical, expected_codec_sha256=historical_sha256)

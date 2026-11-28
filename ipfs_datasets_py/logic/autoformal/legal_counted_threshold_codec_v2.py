@@ -20,7 +20,7 @@ PREFIX_SCHEMA = "legal-counted-threshold-prefix-inspection/v2"
 _SELF_PATH = Path(__file__).absolute()
 _SELF_PIN = hashlib.sha256(_SELF_PATH.read_bytes()).hexdigest()
 _FACTORY_NAME = "ipfs_datasets_py.logic.autoformal.legal_counted_frame_threshold_v2"
-_FACTORY_SHA = "9e3c4e42d8cfb5ed851461f6cd2562a71c7d5a2c2b8ccd5ab4fdbcf06e168024"
+_FACTORY_SHA = "3f455e26e166bb1d6bdaf78cf57a8b3f15103bffac6940c734ef927a3b107ce1"
 _CONTEXT_SHA = "50424a78f7bd5b489de16fe1f4eb4ec38fb7d853b48d1b3b358429dc657ecb85"
 _LIMITATIONS = [
     "The closed language has three explicitly authored limits, not arbitrary formulas or reviewed statutory examples.",
