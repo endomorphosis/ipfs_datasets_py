@@ -3694,3 +3694,18 @@ Four of ten reproductions accepted a changed metadata type before the correction
 ## Evidence644 — Recheck the current evaluation split before allowing promotion
 
 On the previous source, the public gate allowed promotion in four split-overlap cases. All six changed-behavior and compatibility cases passed after the fix, within 156 selected tests and 58 subtests. [Exact qualification evidence](/tmp/Guide642-exact-evaluation-and-proof-integration-9p1lxsAV/actual-composed-qualification-Evidence644.json)
+
+
+## Evidence645 — Require a deontic operator in reviewed normative uses
+
+The V2 and V3 signed fictional reproductions both accepted a descriptive formula as a normative use. Both replays now refuse that case while the deontic controls still pass. [Exact qualification evidence](/tmp/Guide644-reviewed-reconstruction-and-benchmark-integration-qINchfly/actual-composed-qualification-Evidence645.json)
+
+
+## Evidence646 — Compare exact rule occurrences before diagnosing facet changes
+
+The measured compiler reproduced an exact two-rule round trip that the old gate refused. The corrected gate admits exact IR equality and retains occurrence-count differences. All 138 cases passed, including the six existing-source reproductions. [Exact qualification evidence](/tmp/Guide644-reviewed-reconstruction-and-benchmark-integration-qINchfly/actual-composed-qualification-Evidence646.json)
+
+
+## Evidence647 — Compare benchmark decompiler terms in Unicode NFC
+
+Four of seven cases scored decomposed and composed spellings inconsistently before the correction. All seven passed within the complete 74-case owning module. [Exact qualification evidence](/tmp/Guide644-reviewed-reconstruction-and-benchmark-integration-qINchfly/actual-composed-qualification-Evidence647.json)

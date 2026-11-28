@@ -40396,6 +40396,42 @@
       "root": "artifact_workspace",
       "scope": "Existing split validation and promotion-gate behavior on authored source overlap and clean controls.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/require_modality_for_reviewed_normative_unit_20261128",
+      "evidence_ordinal": 645,
+      "id": "require-modality-for-reviewed-normative-unit-20261128",
+      "observed_bytes": 1793,
+      "observed_sha256": "ede07c48bea044b721412d0f201b7d9bcf1a436bdfeb9c2551f560e5470430ac",
+      "path": "/tmp/Guide644-reviewed-reconstruction-and-benchmark-integration-qINchfly/actual-composed-qualification-Evidence645.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Existing V2 and V3 reviewed admission on signed fictional fixtures.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/canonical_recompile_match_rule_occurrences_20261128",
+      "evidence_ordinal": 646,
+      "id": "canonical-recompile-match-rule-occurrences-20261128",
+      "observed_bytes": 1529,
+      "observed_sha256": "9d0e85e6100a558bb56d48aeccefc09f09650775a26ca5d086bcefe955907f66",
+      "path": "/tmp/Guide644-reviewed-reconstruction-and-benchmark-integration-qINchfly/actual-composed-qualification-Evidence646.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Measured canonical round-trip gate and owning reconstruction controls on authored rules.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/external_canonical_decompiler_term_nfc_20261128",
+      "evidence_ordinal": 647,
+      "id": "external-canonical-decompiler-term-nfc-20261128",
+      "observed_bytes": 1569,
+      "observed_sha256": "b5fa737ff0295e02ea593c3dd167fcdb9e0749c2e04b494f33e1736fc5f00758",
+      "path": "/tmp/Guide644-reviewed-reconstruction-and-benchmark-integration-qINchfly/actual-composed-qualification-Evidence647.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Existing required and forbidden decompiler term metrics on authored benchmark packets.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }

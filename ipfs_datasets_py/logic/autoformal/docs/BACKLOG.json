@@ -5793,6 +5793,36 @@
       },
       "record_id": "proof-translation-typed-identity-evidence643-20261128",
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
+    },
+    "canonical_recompile_match_rule_occurrences_20261128": {
+      "evidence_ordinal": 646,
+      "facts": {
+        "bytes": 1529,
+        "path": "/tmp/Guide644-reviewed-reconstruction-and-benchmark-integration-qINchfly/actual-composed-qualification-Evidence646.json",
+        "sha256": "9d0e85e6100a558bb56d48aeccefc09f09650775a26ca5d086bcefe955907f66"
+      },
+      "record_id": "canonical-recompile-match-rule-occurrences-20261128",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
+    },
+    "external_canonical_decompiler_term_nfc_20261128": {
+      "evidence_ordinal": 647,
+      "facts": {
+        "bytes": 1569,
+        "path": "/tmp/Guide644-reviewed-reconstruction-and-benchmark-integration-qINchfly/actual-composed-qualification-Evidence647.json",
+        "sha256": "b5fa737ff0295e02ea593c3dd167fcdb9e0749c2e04b494f33e1736fc5f00758"
+      },
+      "record_id": "external-canonical-decompiler-term-nfc-20261128",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
+    },
+    "require_modality_for_reviewed_normative_unit_20261128": {
+      "evidence_ordinal": 645,
+      "facts": {
+        "bytes": 1793,
+        "path": "/tmp/Guide644-reviewed-reconstruction-and-benchmark-integration-qINchfly/actual-composed-qualification-Evidence645.json",
+        "sha256": "ede07c48bea044b721412d0f201b7d9bcf1a436bdfeb9c2551f560e5470430ac"
+      },
+      "record_id": "require-modality-for-reviewed-normative-unit-20261128",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
     }
   },
   "programme_goal_hierarchy": {

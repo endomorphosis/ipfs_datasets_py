@@ -4554,3 +4554,18 @@ Outcome reconstruction and cache reuse compare the canonical translation payload
 ## Evidence644 — Recheck the current evaluation split before allowing promotion
 
 The existing gate revalidates a supplied full split manifest before using compact guard evidence. Freshly detected overlap blocks promotion, and compact refusal evidence continues to block when supplied. [Exact qualification evidence](/tmp/Guide642-exact-evaluation-and-proof-integration-9p1lxsAV/actual-composed-qualification-Evidence644.json)
+
+
+## Evidence645 — Require a deontic operator in reviewed normative uses
+
+Reviewed admission now checks the modal nodes returned by its typed IR replay. A unit declared normative needs a deontic operator. Relational definitions still use the existing definition rules. [Exact qualification evidence](/tmp/Guide644-reviewed-reconstruction-and-benchmark-integration-qINchfly/actual-composed-qualification-Evidence645.json)
+
+
+## Evidence646 — Compare exact rule occurrences before diagnosing facet changes
+
+The comparison first matches exact rule occurrences. It attributes a facet change only when each side has exactly one unmatched rule for that predicate. Ambiguous leftovers are reported as added or dropped rules. [Exact qualification evidence](/tmp/Guide644-reviewed-reconstruction-and-benchmark-integration-qINchfly/actual-composed-qualification-Evidence646.json)
+
+
+## Evidence647 — Compare benchmark decompiler terms in Unicode NFC
+
+Term comparison normalizes both candidate text and expected terms to Unicode NFC before the existing case-insensitive comparison. The original text, packet digests and benchmark denominator stay exact. [Exact qualification evidence](/tmp/Guide644-reviewed-reconstruction-and-benchmark-integration-qINchfly/actual-composed-qualification-Evidence647.json)
