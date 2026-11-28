@@ -516,7 +516,7 @@ def _physical_wire(value):
 
 
 def _physical_source_material(directory, *, source_texts=None, shared_normative_row=False,
-        with_foreign_dependency=False, provision_ids=None):
+        with_foreign_dependency=False, provision_ids=None, source_release_ids=None):
     import shutil
     from copy import deepcopy
     import pyarrow as pa
@@ -547,13 +547,16 @@ def _physical_source_material(directory, *, source_texts=None, shared_normative_
     unit_document_ordinals = [0, 1, 1] if shared_normative_row else [0, 1, 2]
     if provision_ids is not None:
         assert len(provision_ids) == len(law_texts)
+    if source_release_ids is not None:
+        assert len(source_release_ids) == len(law_texts)
     units = []
     laws = []
     for index, text in enumerate(law_texts):
         identity = instrument + "/unit-" + str(index + 1)
         source_raw = text.encode("utf-8")
         provision_id = identity if provision_ids is None else provision_ids[index]
-        version = source.build_source_version(source_id=identity, release_id=instrument,
+        release_id = instrument if source_release_ids is None else source_release_ids[index]
+        version = source.build_source_version(source_id=identity, release_id=release_id,
             edition="fictional-edition-1", provision_id=provision_id, raw_bytes=source_raw,
             expected_raw_sha256=hashlib.sha256(source_raw).hexdigest(), extracted_text=text,
             expected_extracted_sha256=hashlib.sha256(source_raw).hexdigest(),
@@ -585,7 +588,7 @@ def _physical_source_material(directory, *, source_texts=None, shared_normative_
         units.append(dict(unit_id=instrument + "/unit-3", source_version=deepcopy(version),
             occurrence=selected(first_end + 2, len(complete))))
     source_bindings = None
-    if shared_normative_row or provision_ids is not None:
+    if shared_normative_row or provision_ids is not None or source_release_ids is not None:
         source_bindings = {unit["unit_id"]: dict(source_version=deepcopy(unit["source_version"]),
             occurrence=deepcopy(unit["occurrence"]),
             raw_bytes=law_texts[unit_document_ordinals[index]].encode("utf-8"),
@@ -1119,13 +1122,14 @@ def test_physical_closure_late_equal_byte_entity_replacement_cannot_change_held_
 
 # V3 successors use the same physical owners and independently signed fiction.
 # Authored compiler observations exercise contracts, never actual Lean/parent proof.
-def _mixed_physical_material(directory, *, provision_ids=None):
+def _mixed_physical_material(directory, *, provision_ids=None, source_release_ids=None):
     texts = [
         "For this fictional Act, a covered officer means an officer appointed by the Board. Café.",
         "Every covered officer must file a report unless the Board expressly excuses that officer.",
         "For every officer, supervisor, event, and time, if both people are covered officers, that officer may inspect the register under that supervisor at that event and time.",
     ]
-    return _physical_source_material(directory, source_texts=texts, provision_ids=provision_ids)
+    return _physical_source_material(directory, source_texts=texts, provision_ids=provision_ids,
+        source_release_ids=source_release_ids)
 
 
 @pytest.fixture(scope="module")
@@ -5239,3 +5243,31 @@ def test_physical_v4_law_viewer_needs_independent_original_owner(
                 verify_original_law_viewer_readback=None if damage == "missing_verifier" else verify_original)
     assert called == ([(selected["receipt_raw"], selected["expected_receipt_sha256"])]
                       if damage in ("relabelled", "truthy") else [])
+
+
+
+@pytest.mark.parametrize("reviewed_version", [2, 3, 4])
+def test_physical_release_refuses_reviewed_source_from_a_different_release(tmp_path, reviewed_version):
+    from ipfs_datasets_py.logic.autoformal import legal_release_coordinator_v1 as release
+
+    physical_release = "fixture:physical-crosswalk"
+    other_release = "fixture:other-reviewed-source-release"
+    source_release_ids = [physical_release, other_release, physical_release]
+    build = _physical_source_material if reviewed_version == 2 else _mixed_physical_material
+    material = build(tmp_path / "material", source_release_ids=source_release_ids)
+    version = material["units"][1]["source_version"]
+    captured = material["capture"]["documents"][1]
+    assert version["release_id"] == other_release
+    assert captured["release_id"] == physical_release
+    assert version["raw_artifact"]["sha256"] == captured["source_witness"]["raw_text_sha256"]
+    assert material["mapping"]["units"][1]["source_version_cid"] == version["record_cid"]
+
+    if reviewed_version == 4:
+        with pytest.raises(release.ReleaseCoordinatorError, match="release identity differs"):
+            reviewed_physical_whole_norm_control_v2(material)
+        return
+
+    request = _physical_closure_request(material, reviewed_version=reviewed_version)
+    replay = replay_physical_closure if reviewed_version == 2 else replay_physical_closure_v3
+    with pytest.raises(release.ReleaseCoordinatorError, match="release identity differs"):
+        replay(request)

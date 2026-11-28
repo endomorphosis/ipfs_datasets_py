@@ -1309,6 +1309,8 @@ def _validate_uscode_release_physical_closure(request_raw: bytes, *, expected_re
                       and selected["law_row_ordinal"] == document["source_witness"]["physical_row_ordinal"],
                       "reviewed unit source/version/occurrence/revision or physical row differs")
                 version = unit["source_version"]
+                _need(version["release_id"] == document["release_id"],
+                      "reviewed source release identity differs from the captured law release")
                 provision_id = version["provision_id"]
                 if provision_id.lstrip().lower().startswith("usc:"):
                     try:
