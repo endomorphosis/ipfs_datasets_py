@@ -4494,3 +4494,8 @@ The existing citation grouping setting now accepts `unicode-citation/v1`. It gro
 ## Evidence632 — Opt-in matched retained-cache decoder comparison with one deadline
 
 The existing retained-cache runtime can explicitly compare conditioned input against a paragraph-only shuffle using one loaded checkpoint and the same ordered rows and clause contexts. The added control source counts toward the existing custody limit. Each arm carries the original monotonic deadline through numerical checks, batch preparation, projection, decoder start and token generation. A late aggregate preserves the raw reports and all row outcomes and remains incomplete. [Exact qualification evidence](/tmp/Guide631-current-matched-decoder-integration-504at1dt/actual-composed-qualification-Evidence632.json)
+
+
+## Evidence633 — Incremental realization checks the deadline through receipt readback
+
+The incremental realization build now checks its monotonic operation deadline after the final source and policy fence and again after reading back the build receipt. Caller cancellation is checked before the final fence. The three regression cases cover timeout at either check and a successful on-time return. [Exact qualification evidence](/tmp/Guide632-incremental-deadline-publication-PA8fMeDX/actual-composed-qualification-Evidence633.json)

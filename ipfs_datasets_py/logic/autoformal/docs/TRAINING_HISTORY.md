@@ -3634,3 +3634,8 @@ The prior configured campaign split could put two sources with the same non-Lati
 ## Evidence632 — Opt-in matched retained-cache decoder comparison with one deadline
 
 The real numeric and greedy paths reproduced three late-start conditions with a recording decoder. All 126 owning tests passed at the corrected source, including the ordinary relative timing control. All 359 tracked test roles match the current integration. The initial test-double iteration failure and process termination are retained separately. A matched measurement remains pending independent TRAIN and DEVELOPMENT admissions, current model custody and funded execution. [Exact qualification evidence](/tmp/Guide631-current-matched-decoder-integration-504at1dt/actual-composed-qualification-Evidence632.json)
+
+
+## Evidence633 — Incremental realization checks the deadline through receipt readback
+
+All 77 affected software cases passed. The full 166-case software run recorded 163 passes and three older fixture-validation failures. The published Guide 632 commit reproduced all three with byte-identical tracebacks before entering the incremental build. Five installed-Lean cases were deselected. [Exact qualification evidence](/tmp/Guide632-incremental-deadline-publication-PA8fMeDX/actual-composed-qualification-Evidence633.json)

@@ -40252,6 +40252,18 @@
       "root": "artifact_workspace",
       "scope": "Same-checkpoint, target-free source packets and source custody. Scoped software qualification with an inert decoder, including the real numeric and greedy entry points.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/lir15_realization_final_receipt_deadline_20261128",
+      "evidence_ordinal": 633,
+      "id": "lir15-realization-final-receipt-deadline-evidence633-20261128",
+      "observed_bytes": 2081,
+      "observed_sha256": "c079c2f2428941ac2cb5150cb1b1368bbca09e42dbaaaded4c5e4cd27a40165c",
+      "path": "/tmp/Guide632-incremental-deadline-publication-PA8fMeDX/actual-composed-qualification-Evidence633.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Exact two-file deadline fix and local software checks for reviewed definition realization using authored compiler fixtures.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }
