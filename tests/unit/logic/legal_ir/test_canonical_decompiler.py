@@ -523,3 +523,32 @@ def test_actor_modal_words_cannot_collide_with_the_rule_modal_boundary(actor_wor
     assert actor_result.error.code is CanonicalErrorCode.UNSUPPORTED_SEMANTICS
     assert actor_result.error.details["facet"] == "actor"
     assert actor_result.error.details["delimiter"] == actor_word
+
+
+@pytest.mark.parametrize("facet", ("actor", "action", "object", "conditions", "exceptions", "temporal"))
+@pytest.mark.parametrize("atom", ("_", "__"))
+def test_nonblank_atoms_cannot_disappear_during_frozen_surface_normalization(facet, atom):
+    fields = dict(modality="O", actor="agency", action="file", object="report")
+    fields[facet] = (atom,) if facet in {"conditions", "exceptions", "temporal"} else atom
+    rule = CanonicalRule(**fields)
+    assert atom.strip() and module._readable_atom(atom) == ""
+    requested = _request(rule)
+    result = SourceWithheldCanonicalDecompiler().decompile(requested)
+    assert result.request_cid == requested.request_cid
+    assert (result.status, result.text) == (OperationStatus.ABSTAINED, None)
+    assert result.text_cid is None and result.component_trace == ()
+    assert result.error is not None
+    assert result.error.code is CanonicalErrorCode.UNSUPPORTED_SEMANTICS
+    assert result.error.details == {"facet": facet, "delimiter": "empty_atom"}
+
+    # Nonempty readable aliases keep the frozen underscore-to-space contract.
+    positive = _request(CanonicalRule(
+        "O", "__agency__", "__file__", "__report__",
+        conditions=("__approved__",), exceptions=("__emergency__",),
+        temporal=("__within_10_days__",),
+    ))
+    accepted = SourceWithheldCanonicalDecompiler().decompile(positive)
+    assert accepted.status is OperationStatus.SUCCESS
+    assert accepted.text == "Agency must file report within 10 days if approved unless emergency."
+    assert accepted.request_cid == positive.request_cid
+    assert accepted.text_cid == cid_for_bytes(accepted.text.encode("utf-8"))

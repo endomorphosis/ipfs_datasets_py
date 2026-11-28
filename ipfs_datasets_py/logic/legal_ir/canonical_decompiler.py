@@ -182,6 +182,16 @@ def decompile_rule(rule: CanonicalRule) -> str:
     if not isinstance(rule, CanonicalRule):
         raise CanonicalContractError("rule must be CanonicalRule")
 
+    # A nonblank IR atom must survive the frozen underscore-to-space surface.
+    # Optional raw-blank objects keep their existing v1 behavior.
+    for facet in ("actor", "action", "object", "conditions", "exceptions", "temporal"):
+        value = getattr(rule, facet)
+        atoms = (value,) if isinstance(value, str) else value
+        if any(atom.strip() and not _readable_atom(atom) for atom in atoms):
+            raise _UnsupportedQualifierSurface(
+                facet, "empty_atom", message="canonical atom has no readable semantic surface"
+            )
+
     actor = _readable_atom(rule.actor)
     modal_heads = {phrase.casefold().split()[0] for phrase in _MODAL_PHRASES.values()}
     for word in actor.casefold().split():
