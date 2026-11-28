@@ -5613,6 +5613,56 @@
       },
       "record_id": "semantic-equivalence-unmeasured-temporal-observation",
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
+    },
+    "external-benchmark-original-language-citation-score-v1": {
+      "evidence_ordinal": 629,
+      "facts": {
+        "bytes": 1383,
+        "path": "/tmp/Guide626-current-verified-integration-2akfxaue/actual-composed-qualification-Evidence629.json",
+        "sha256": "f7241052316bf3f7aee5a47a41b248b06321c9ae36a08ae3842c626fed7746cd"
+      },
+      "record_id": "external-benchmark-original-language-citation-score",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
+    },
+    "mixed-candidate-native-family-shape-refusal-v1": {
+      "evidence_ordinal": 627,
+      "facts": {
+        "bytes": 1349,
+        "path": "/tmp/Guide626-current-verified-integration-2akfxaue/actual-composed-qualification-Evidence627.json",
+        "sha256": "f81eb9e7292da3ce95cdeae4e051b6e735c77bc74fa05fca8171e1a089590e02"
+      },
+      "record_id": "mixed-candidate-native-family-shape-refusal",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
+    },
+    "normative-retained-cache-current-training-worker-source-bound-v1": {
+      "evidence_ordinal": 630,
+      "facts": {
+        "bytes": 1430,
+        "path": "/tmp/Guide626-current-verified-integration-2akfxaue/actual-composed-qualification-Evidence630.json",
+        "sha256": "fc2b411314af88e865516467157e31e1b279370ad13e03e9c4c79361e355e71e"
+      },
+      "record_id": "normative-retained-cache-current-training-worker-source-bound",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
+    },
+    "original-language-citation-grouping-opt-in-v1": {
+      "evidence_ordinal": 631,
+      "facts": {
+        "bytes": 1367,
+        "path": "/tmp/Guide626-current-verified-integration-2akfxaue/actual-composed-qualification-Evidence631.json",
+        "sha256": "9981c77693943e51fa1c4ee9227e3c9c8ebcf8530da675960e4e3ee6e5e55090"
+      },
+      "record_id": "original-language-citation-grouping-opt-in",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
+    },
+    "source-withheld-canonical-actor-modal-word-boundary-v1": {
+      "evidence_ordinal": 628,
+      "facts": {
+        "bytes": 1323,
+        "path": "/tmp/Guide626-current-verified-integration-2akfxaue/actual-composed-qualification-Evidence628.json",
+        "sha256": "c9d64a2a6d1d67200cf4344f2eb3686460e634f01b83440706e4e63f568f8025"
+      },
+      "record_id": "source-withheld-canonical-actor-modal-word-boundary",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
     }
   },
   "programme_goal_hierarchy": {

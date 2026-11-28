@@ -4464,3 +4464,28 @@ An explicitly present deadline or duration that the legacy parser cannot measure
 ## Evidence626 — Opt-in paragraph embedding shuffle with fixed clause context
 
 The opt-in paragraph-only shuffle substitutes a same-length paragraph embedding while preserving the original clause context and the complete evaluation population. The existing source fidelity scorer records the actual paragraph donor and retains missing predictions in the denominator. [Exact qualification evidence](/tmp/Guide623-current-verified-integration-j_rjhkfn/actual-composed-qualification-Evidence626.json)
+
+
+## Evidence627 — Retain the candidate census when one native family is malformed
+
+Array and object values in a native candidate family now produce that row’s unsupported disposition. The ordered census and each valid sibling are retained. [Exact qualification evidence](/tmp/Guide626-current-verified-integration-2akfxaue/actual-composed-qualification-Evidence627.json)
+
+
+## Evidence628 — Refuse ambiguous modal words in actor labels
+
+The canonical renderer abstains before emitting a sentence when an actor label contains a standalone modal word in the frozen grammar. Previously different typed actor and modality combinations could emit the same sentence. [Exact qualification evidence](/tmp/Guide626-current-verified-integration-2akfxaue/actual-composed-qualification-Evidence628.json)
+
+
+## Evidence629 — Keep original-language citation identity in external benchmark scoring
+
+When an unparsed citation contains non-ASCII characters, the external benchmark compares the complete NFC-normalized label. Exact non-Latin citations receive credit and distinct laws sharing an article number remain separate required citations. Parsed U.S. Code and legacy ASCII matching keep their existing behavior. [Exact qualification evidence](/tmp/Guide626-current-verified-integration-2akfxaue/actual-composed-qualification-Evidence629.json)
+
+
+## Evidence630 — Allow the current pinned worker in retained-cache preflight
+
+The existing retained-cache runtime accepts up to one MiB for its exact named training worker source file. Its tracked source exceeded the former per-file validation limit. Other file limits, the aggregate source limit, exact hash checks and runtime caps remain in place. [Exact qualification evidence](/tmp/Guide626-current-verified-integration-2akfxaue/actual-composed-qualification-Evidence630.json)
+
+
+## Evidence631 — Keep original-language citations together across protected splits
+
+The existing citation grouping setting now accepts `unicode-citation/v1`. It groups identical original-language labels across distinct source records, joins canonically equivalent Unicode forms, and retains existing U.S. Code section grouping. Existing split policies and their archived manifests retain their behavior. [Exact qualification evidence](/tmp/Guide626-current-verified-integration-2akfxaue/actual-composed-qualification-Evidence631.json)

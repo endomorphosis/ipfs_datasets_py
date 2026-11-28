@@ -3604,3 +3604,28 @@ Four of six focused cases failed before the change. The fixed source passed all 
 ## Evidence626 — Opt-in paragraph embedding shuffle with fixed clause context
 
 All 88 owning tests passed. Six legacy execution controls and seven scoring outputs were byte-identical on retained fixtures. A matched decoder experiment and an independently reviewed training population remain pending. [Exact qualification evidence](/tmp/Guide623-current-verified-integration-j_rjhkfn/actual-composed-qualification-Evidence626.json)
+
+
+## Evidence627 — Retain the candidate census when one native family is malformed
+
+The same 109 cases went from 107 passing and two failing to all 109 passing. One installed-Lean case was outside this software run. An initial cache-provider configuration and a missing tracked fixture were corrected before final qualification. [Exact qualification evidence](/tmp/Guide626-current-verified-integration-2akfxaue/actual-composed-qualification-Evidence627.json)
+
+
+## Evidence628 — Refuse ambiguous modal words in actor labels
+
+The original two collisions failed the new controls before the fix. All 119 source tests passed afterward. The checkout mode preflight was corrected to account for the existing group-write umask before the tests ran. [Exact qualification evidence](/tmp/Guide626-current-verified-integration-2akfxaue/actual-composed-qualification-Evidence628.json)
+
+
+## Evidence629 — Keep original-language citation identity in external benchmark scoring
+
+Six of seven focused controls reproduced the defect. All 127 benchmark and promotion tests passed with the exact tracked promotion script. An earlier run resolved that script from a different checkout and its 40 failures are retained outside the qualification. [Exact qualification evidence](/tmp/Guide626-current-verified-integration-2akfxaue/actual-composed-qualification-Evidence629.json)
+
+
+## Evidence630 — Allow the current pinned worker in retained-cache preflight
+
+Four existing metadata reassembly cases reproduced the refusal. All 108 owning tests passed after the correction, including worker oversize and digest mismatch controls. This restores source preflight for the existing route. A matched decoder comparison and genuine model measurements remain pending. [Exact qualification evidence](/tmp/Guide626-current-verified-integration-2akfxaue/actual-composed-qualification-Evidence630.json)
+
+
+## Evidence631 — Keep original-language citations together across protected splits
+
+The prior configured campaign split could put two sources with the same non-Latin citation into external and training populations with an empty citation cluster. The new policy passes the original-language grouping, forced-crossing refusal, lookup, sealing and compatibility controls. All 150 tests and 58 subtests passed. An initial missing checkout dependency was restored from the exact published Accelerate snapshot. [Exact qualification evidence](/tmp/Guide626-current-verified-integration-2akfxaue/actual-composed-qualification-Evidence631.json)

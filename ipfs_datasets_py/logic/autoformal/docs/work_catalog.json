@@ -40180,6 +40180,66 @@
       "root": "artifact_workspace",
       "scope": "Existing source control and source fidelity owners. Scoped 88-test software qualification.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/mixed-candidate-native-family-shape-refusal-v1",
+      "evidence_ordinal": 627,
+      "id": "mixed-candidate-native-family-shape-refusal",
+      "observed_bytes": 1349,
+      "observed_sha256": "f81eb9e7292da3ce95cdeae4e051b6e735c77bc74fa05fca8171e1a089590e02",
+      "path": "/tmp/Guide626-current-verified-integration-2akfxaue/actual-composed-qualification-Evidence627.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Scoped candidate inventory engineering evidence. 109 ordinary software cases.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/source-withheld-canonical-actor-modal-word-boundary-v1",
+      "evidence_ordinal": 628,
+      "id": "source-withheld-canonical-actor-modal-word-boundary",
+      "observed_bytes": 1323,
+      "observed_sha256": "c9d64a2a6d1d67200cf4344f2eb3686460e634f01b83440706e4e63f568f8025",
+      "path": "/tmp/Guide626-current-verified-integration-2akfxaue/actual-composed-qualification-Evidence628.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Scoped canonical prose, reconstruction and semantic recompilation software tests. 119 cases.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/external-benchmark-original-language-citation-score-v1",
+      "evidence_ordinal": 629,
+      "id": "external-benchmark-original-language-citation-score",
+      "observed_bytes": 1383,
+      "observed_sha256": "f7241052316bf3f7aee5a47a41b248b06321c9ae36a08ae3842c626fed7746cd",
+      "path": "/tmp/Guide626-current-verified-integration-2akfxaue/actual-composed-qualification-Evidence629.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Scoped benchmark, validity promotion and compiler-promotion fixture tests. 127 cases.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/normative-retained-cache-current-training-worker-source-bound-v1",
+      "evidence_ordinal": 630,
+      "id": "normative-retained-cache-current-training-worker-source-bound",
+      "observed_bytes": 1430,
+      "observed_sha256": "fc2b411314af88e865516467157e31e1b279370ad13e03e9c4c79361e355e71e",
+      "path": "/tmp/Guide626-current-verified-integration-2akfxaue/actual-composed-qualification-Evidence630.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Scoped retained-cache reassembly and metadata-only dispatch tests. 108 software cases.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/original-language-citation-grouping-opt-in-v1",
+      "evidence_ordinal": 631,
+      "id": "original-language-citation-grouping-opt-in",
+      "observed_bytes": 1367,
+      "observed_sha256": "9981c77693943e51fa1c4ee9227e3c9c8ebcf8530da675960e4e3ee6e5e55090",
+      "path": "/tmp/Guide626-current-verified-integration-2akfxaue/actual-composed-qualification-Evidence631.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Opt-in generic and campaign split configuration and independent software guards. 150 tests and 58 subtests.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }
