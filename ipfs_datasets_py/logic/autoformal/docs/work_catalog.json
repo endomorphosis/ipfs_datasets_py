@@ -39793,6 +39793,23 @@
       "root": "artifact_workspace",
       "scope": "Current-review and conditional Lean artifact observations for a signed fictional source-bound component.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/lir01_lean_selected_command_binding_20261128",
+      "closed_runtime_facts": {
+        "fictional_native_policy_cases": 3,
+        "managed_installed_passes": 1,
+        "ordinary_passes": 427
+      },
+      "evidence_ordinal": 600,
+      "id": "lir01-lean-selected-command-binding-evidence600-20261128",
+      "observed_bytes": 4593,
+      "observed_sha256": "320e3d8641acfc8b4bdb4e0e90a7032f82c85ae523bdf9575225c6683d26e48a",
+      "path": "/tmp/P1-Lean-returned-command-binding-7kdokpme/actual-Lean-selected-command-qualification.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Original Lean compiler command and instrumented input binding.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }

@@ -4317,3 +4317,10 @@ Five new preflight and refusal cases, 11 existing cases, and one authored-packet
 The existing coordinator joins current review and dependency observations to an original source-bound Lean handle. The signed fictional case verifies complete source history, all 10 compiled modules, and 30 conditional obligations with empty axiom reports. Each compiled artifact has its own SHA-256 pin. Six ordinary cases cover review revocation, stale dependencies, invalid selections, and replacement of the loaded review delegate. Ten existing physical-release cases also passed. The earlier managed attempt closed before running Lean after an independent review found the missing loaded-owner guard.
 
 The declared reviewed graph can cite the current observation and the release report records passed conditional compilation. The corpus proof requirement remains pending because the original source-definition premise remains explicit. Independent Title 10 review, training and gold admission, checked corpus promotion, and release remain pending. [Source-bound release qualification](/tmp/P2-source-bound-release-owner-n44uvv9h/actual-source-bound-release-coordinator-qualification.json)
+
+
+## Evidence600 — Tie Lean results to the selected compiler command
+
+The Lean backend compares the returned command with the exact original request before it accepts an axiom report. The report filename comes from the instrumented source in that request. A changed executable, flag, or consistent alternate filename now returns a rejected result. The pre-fix controls reproduced two incorrect acceptances and an exception. The full owning software module passed 427 cases, with four opt-in Native cases skipped in that invocation.
+
+The managed installed Lean 4.34.1 case passed the fictional positive proof, expected-type refusal, and unapproved-dependency refusal. Source custody and resource release closed. Independent statutory review and corpus and model qualification remain pending. [Lean command-binding qualification](/tmp/P1-Lean-returned-command-binding-7kdokpme/actual-Lean-selected-command-qualification.json)

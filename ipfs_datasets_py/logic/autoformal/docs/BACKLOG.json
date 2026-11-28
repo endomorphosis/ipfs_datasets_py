@@ -5343,6 +5343,16 @@
       },
       "record_id": "lir02-source-bound-component-release-observation-evidence599-20261128",
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
+    },
+    "lir01_lean_selected_command_binding_20261128": {
+      "evidence_ordinal": 600,
+      "facts": {
+        "bytes": 4593,
+        "path": "/tmp/P1-Lean-returned-command-binding-7kdokpme/actual-Lean-selected-command-qualification.json",
+        "sha256": "320e3d8641acfc8b4bdb4e0e90a7032f82c85ae523bdf9575225c6683d26e48a"
+      },
+      "record_id": "lir01-lean-selected-command-binding-evidence600-20261128",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
     }
   },
   "programme_goal_hierarchy": {

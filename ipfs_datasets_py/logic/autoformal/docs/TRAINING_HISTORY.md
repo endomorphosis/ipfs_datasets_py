@@ -3471,3 +3471,8 @@ This evidence records software-only source replay, authored packet validation an
 ## Evidence599 — Conditional compilation in the existing release coordinator
 
 The signed fictional component passed its original-handle and compiled-project checks. Training and evaluation gold masks stayed zero. This verification selected no model fit or checkpoint update. [Source-bound release qualification](/tmp/P2-source-bound-release-owner-n44uvv9h/actual-source-bound-release-coordinator-qualification.json)
+
+
+## Evidence600 — Native command-binding reference check
+
+The existing kernel owner passed its ordinary software checks and one managed installed-Lean case. The case covers proof acceptance and two policy refusals. This verification selected no model fit or checkpoint update. [Lean command-binding qualification](/tmp/P1-Lean-returned-command-binding-7kdokpme/actual-Lean-selected-command-qualification.json)
