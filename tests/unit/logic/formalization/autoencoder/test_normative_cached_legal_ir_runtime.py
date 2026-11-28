@@ -11,6 +11,7 @@ from pathlib import Path
 
 import pytest
 
+from ipfs_datasets_py.logic.formalization.autoencoder import contextual_legal_ir_numeric as numeric_owner
 from ipfs_datasets_py.logic.formalization.autoencoder import contextual_legal_ir_runtime as original
 from ipfs_datasets_py.logic.formalization.autoencoder import fresh_scalar_source_inputs as fresh
 from ipfs_datasets_py.logic.formalization.autoencoder import fresh_scalar_source_inputs_single as single
@@ -20,6 +21,8 @@ from ipfs_datasets_py.logic.formalization.autoencoder import dimension_source_in
 from ipfs_datasets_py.logic.formalization.autoencoder import source_embeddings_768_complete as complete
 from .test_contextual_legal_ir_runtime import loader, make_contextual, pin, repin, write
 from .test_fresh_scalar_source_inputs import config, plan as source_fixture_plan
+
+_REAL_CONTEXTUAL_INFERENCE = numeric_owner.infer_contextual_legal_model
 
 
 def seal(value, key, digest=fresh.digest):
@@ -552,3 +555,318 @@ def test_current_training_worker_pin_cannot_substitute_its_digest(tmp_path, monk
     with pytest.raises(runtime.NormativeCachedLegalRuntimeError, match="pinned bytes/SHA256 differ"):
         runtime.open_normative_cached_legal_ir_autoencoder(**kwargs)
     assert loader["loads"] == loader["calls"] == []
+
+
+@pytest.fixture
+def matched_cache(tmp_path, monkeypatch, loader):
+    from ipfs_datasets_py.logic.formalization.autoencoder import contextual_legal_ir_numeric as numeric
+
+    data = make_cached(tmp_path, monkeypatch)
+    cache_rows = data["source_cache"]["rows"]
+    source_length = len(cache_rows[0]["source_text"].split("\n\n"))
+    rows = [row for row in cache_rows if len(row["source_text"].split("\n\n")) == source_length][:2][::-1]
+    data["selected_row_ids"] = [row["id"] for row in rows]
+    kwargs = options(data)
+    handle = runtime.open_normative_cached_legal_ir_autoencoder(**kwargs, deadline_seconds=5)
+    request = {
+        "schema": "normative-retained-cache-matched-paragraph-shuffle-request/v1",
+        "arms": ["conditioned", "paragraph_only_shuffle"],
+        "row_ids": data["selected_row_ids"],
+        "checkpoint_sha256": kwargs["checkpoint_pin"]["sha256"],
+    }
+    clock = [100.]
+    monkeypatch.setattr(runtime, "monotonic", lambda: clock[0], raising=False)
+    recorded = numeric.infer_contextual_legal_model
+    models = []
+    behavior = {}
+
+    def infer(model, source_inputs, **limits):
+        models.append(model)
+        index = len(models) - 1
+        numeric_result = recorded(model, source_inputs, **limits)
+        clock[0] += behavior.get(("elapsed", index), 1.)
+        if behavior.get(("refuse", index)):
+            raise ValueError("fixture decoder refused")
+        predictions = numeric_result["predictions"]
+        for prediction in predictions:
+            prediction["token_ids"] = [3]
+        if behavior.get(("deadline", index)):
+            predictions[-1].update(token_ids=[], eos_reached=False, generation_status="deadline")
+        if behavior.get(("foreign_row", index)):
+            predictions[0]["id"] = "nonselected:foreign"
+        if behavior.get(("wrong_checkpoint", index)):
+            tensor = "0" * 64
+        else:
+            tensor = data["checkpoint"]["tensor_sha256"]
+        return dict(schema=numeric.SCHEMA, dimension=data["checkpoint"]["dimension"],
+            codec_sha256=original._digest(data["checkpoint"]["codec"]), output_cap=limits["output_cap"],
+            predictions=predictions, row_count=len(predictions), model_tensor_sha256=tensor,
+            model_tensor_sha256_before=tensor, model_tensor_sha256_after=tensor,
+            weights_unchanged=True, ambient_rng_preserved=True, source_inputs_unchanged=True,
+            source_inputs_sha256=original._digest(source_inputs),
+            source_contexts_sha256=original._digest(source_inputs["contexts"]),
+            completed=all(row["generation_status"] != "deadline" for row in predictions), **numeric._FALSE)
+
+    monkeypatch.setattr(numeric, "infer_contextual_legal_model", infer)
+    return {
+        "handle": handle, "request": request,
+        "control_owner_pin": pin(Path(runtime.__file__).with_name("clause_source_controls.py")),
+        "checkpoint_pin": kwargs["checkpoint_pin"], "behavior": behavior,
+        "models": models, "rows": rows, "source_cache": data["source_cache"],
+    }
+
+
+def test_matched_cached_shuffle_uses_one_loaded_checkpoint_and_only_selected_donors(matched_cache, loader):
+    case = matched_cache
+    result = case["handle"].infer_matched_paragraph_shuffle(case["request"],
+        control_owner_pin=case["control_owner_pin"])
+    ids = case["request"]["row_ids"]
+    assert result["row_ids"] == ids and result["execution_complete"] and result["all_rows_reached_eos"]
+    assert result["checkpoint_pin"] == case["checkpoint_pin"]
+    assert len(loader["loads"]) == 1 and len(loader["calls"]) == 2
+    assert case["models"][0] is case["models"][1]
+    baseline, shuffled = [call["source_inputs"] for call in loader["calls"]]
+    assert baseline["rows"] == case["rows"]
+    assert baseline["contexts"] == shuffled["contexts"] == {
+        identity: case["source_cache"]["source_contexts"][identity] for identity in ids}
+    assert [row["id"] for row in shuffled["rows"]] == ids
+    assert [row["source_text"] for row in shuffled["rows"]] == [row["source_text"] for row in baseline["rows"]]
+    assert [row["input"] for row in shuffled["rows"]] == [row["input"] for row in reversed(baseline["rows"])]
+    assert all(set(row) == {"id", "source_text", "input"} for row in shuffled["rows"])
+    assert [call["options"] for call in loader["calls"]] == [
+        {"output_cap": 512, "batch_size": 8, "deadline_seconds": 5., "deadline_monotonic": 105.},
+        {"output_cap": 512, "batch_size": 8, "deadline_seconds": 4., "deadline_monotonic": 105.},
+    ]
+    assert [arm["control"] for arm in result["arms"]] == [
+        {"kind": "conditioned", "source_assignment": dict(zip(ids, ids, strict=True))},
+        {"kind": "paragraph_only_shuffle", "source_assignment": dict(zip(ids, reversed(ids), strict=True))},
+    ]
+    assert all([row["id"] for row in arm["row_outcomes"]] == ids for arm in result["arms"])
+    assert not any(result["authority"].values()) and result["original_targets_accessed"] is False
+
+
+@pytest.mark.parametrize(("field", "mutation"), [
+    ("arms", ["conditioned", "source_shuffle"]),
+    ("row_ids", ["nonselected:foreign"]),
+    ("checkpoint_sha256", "0" * 64),
+    ("schema", "normative-retained-source-cache-runtime-plan/v1"),
+])
+def test_matched_cached_shuffle_refuses_unselected_request_before_any_inference(matched_cache, loader, field, mutation):
+    case = matched_cache
+    request = dict(case["request"], **{field: mutation})
+    with pytest.raises(runtime.NormativeCachedLegalRuntimeError, match="matched paragraph shuffle request"):
+        case["handle"].infer_matched_paragraph_shuffle(request, control_owner_pin=case["control_owner_pin"])
+    assert len(loader["loads"]) == 1 and loader["calls"] == []
+
+
+def test_matched_cached_shuffle_rejects_unpinned_control_owner(matched_cache, loader):
+    case = matched_cache
+    with pytest.raises(runtime.NormativeCachedLegalRuntimeError):
+        case["handle"].infer_matched_paragraph_shuffle(case["request"],
+            control_owner_pin=dict(case["control_owner_pin"], sha256="0" * 64))
+    assert loader["calls"] == []
+
+
+def test_matched_cached_shuffle_does_not_dispatch_after_shared_deadline(matched_cache, loader):
+    case = matched_cache
+    case["behavior"][("elapsed", 0)] = 5.
+    result = case["handle"].infer_matched_paragraph_shuffle(case["request"],
+        control_owner_pin=case["control_owner_pin"])
+    first, second = result["arms"]
+    assert len(loader["calls"]) == 1 and not result["execution_complete"]
+    assert first["status"] == "returned_after_deadline" and first["raw_candidate_report"]["completed"]
+    assert second["status"] == "not_dispatched" and second["raw_candidate_report"] is None
+    assert second["row_outcomes"] == [{"id": identity, "status": "not_dispatched"} for identity in result["row_ids"]]
+    assert not result["all_rows_reached_eos"]
+
+
+def test_matched_cached_shuffle_retains_runtime_deadline_rows(matched_cache, loader):
+    case = matched_cache
+    case["behavior"][("deadline", 1)] = True
+    result = case["handle"].infer_matched_paragraph_shuffle(case["request"],
+        control_owner_pin=case["control_owner_pin"])
+    assert len(loader["calls"]) == 2 and not result["execution_complete"]
+    assert result["arms"][1]["status"] == "incomplete"
+    assert result["arms"][1]["row_outcomes"][-1] == {"id": result["row_ids"][-1], "status": "deadline"}
+
+
+@pytest.mark.parametrize("fault", ["refuse", "foreign_row", "wrong_checkpoint"])
+def test_matched_cached_shuffle_keeps_first_arm_on_second_refusal(matched_cache, loader, fault):
+    case = matched_cache
+    case["behavior"][(fault, 1)] = True
+    with pytest.raises(runtime.NormativeCachedLegalRuntimeError) as error:
+        case["handle"].infer_matched_paragraph_shuffle(case["request"], control_owner_pin=case["control_owner_pin"])
+    assert len(loader["calls"]) == 2
+    assert error.value.model_inference_started and error.value.model_inference_executed
+    result = error.value.matched_comparison_report
+    assert not result["execution_complete"]
+    first, second = result["arms"]
+    assert first["status"] == "returned" and first["raw_candidate_report"]["completed"]
+    assert second["status"] == "refused" and second["raw_candidate_report"] is None
+    assert second["row_outcomes"] == [{"id": identity, "status": "refused"} for identity in result["row_ids"]]
+
+
+def test_matched_cached_shuffle_rechecks_checkpoint_before_second_dispatch(matched_cache, loader):
+    case = matched_cache
+    loader["after_infer"] = lambda: Path(case["checkpoint_pin"]["path"]).write_bytes(b"{}")
+    with pytest.raises(runtime.NormativeCachedLegalRuntimeError) as error:
+        case["handle"].infer_matched_paragraph_shuffle(case["request"], control_owner_pin=case["control_owner_pin"])
+    assert len(loader["calls"]) == 1
+    result = error.value.matched_comparison_report
+    assert not result["execution_complete"]
+    assert result["arms"][0]["status"] == "refused" and result["arms"][0]["raw_candidate_report"]["completed"]
+    assert result["arms"][1]["status"] == "not_dispatched"
+
+
+def test_matched_cached_shuffle_counts_new_source_in_existing_custody_budget(matched_cache, monkeypatch, loader):
+    import json
+
+    case = matched_cache
+    captured = json.loads(case["handle"]._options_bytes)
+    existing_bytes = sum(pin["bytes"] for inventory in ("pins", "historical_pins")
+                         for pin in captured[inventory].values())
+    monkeypatch.setattr(original, "MAX_TOTAL_BYTES", existing_bytes)
+    with pytest.raises(runtime.NormativeCachedLegalRuntimeError, match="matched retained-cache custody bytes exceed bound"):
+        case["handle"].infer_matched_paragraph_shuffle(case["request"], control_owner_pin=case["control_owner_pin"])
+    assert loader["calls"] == []
+
+
+def test_matched_cached_shuffle_preserves_raw_rows_when_the_final_report_misses_deadline(matched_cache, monkeypatch, loader):
+    case = matched_cache
+    existing_clock = runtime.monotonic
+    after_second = 0
+
+    def clock():
+        nonlocal after_second
+        if len(case["models"]) == 2:
+            after_second += 1
+        return existing_clock() + (5. if after_second >= 2 else 0.)
+
+    monkeypatch.setattr(runtime, "monotonic", clock)
+    result = case["handle"].infer_matched_paragraph_shuffle(case["request"],
+        control_owner_pin=case["control_owner_pin"])
+    assert len(loader["calls"]) == 2 and not result["execution_complete"]
+    assert result["comparison_deadline_reached"] and result["all_rows_reached_eos"]
+    ids = result["row_ids"]
+    for arm in result["arms"]:
+        assert arm["status"] == "returned" and arm["raw_candidate_report"]["completed"]
+        assert [row["id"] for row in arm["raw_candidate_report"]["predictions"]] == ids
+        assert arm["row_outcomes"] == [{"id": identity, "status": "eos"} for identity in ids]
+
+
+def _existing_numeric_with_inert_decoder(case, monkeypatch, loader, *, expire_during):
+    from contextlib import nullcontext
+    from types import SimpleNamespace
+
+    checkpoint = loader["loads"][0]["checkpoint"]
+    now = [100.]
+    calls = []
+    rng = SimpleNamespace()
+    rng.clone = lambda: rng
+
+    class Tensor:
+        def __init__(self, shape):
+            self.shape = shape
+
+        def __len__(self):
+            return self.shape[0]
+
+        def __iter__(self):
+            return iter(range(len(self)))
+
+        def __sub__(self, other):
+            return self
+
+        def __truediv__(self, other):
+            return self
+
+        def __getitem__(self, key):
+            return self
+
+        def argmax(self, axis):
+            return SimpleNamespace(tolist=lambda: [2] * len(self))
+
+    class InertTorch:
+        float32 = object()
+        long = object()
+        tensor = staticmethod(lambda values, **_: Tensor((len(values), checkpoint["dimension"])))
+        ones = staticmethod(lambda shape, **_: Tensor(shape))
+        inference_mode = staticmethod(nullcontext)
+        device = staticmethod(nullcontext)
+        get_rng_state = staticmethod(lambda: rng)
+        equal = staticmethod(lambda first, second: first is second)
+
+    def project(data):
+        calls.append(("project", now[0]))
+        if expire_during == "projection":
+            now[0] = 105.
+        return data
+
+    def start(data, *, source_context):
+        calls.append(("start", now[0]))
+        return object()
+
+    def next_logits(tokens, hidden):
+        calls.append(("next_logits", now[0]))
+        return Tensor((len(tokens), 1, len(checkpoint["codec"]["target_vocabulary"]))), hidden
+
+    frozen_model = SimpleNamespace(modules=lambda: [SimpleNamespace(training=False)], parameters=lambda: [],
+                                   project=project, start=start, next_logits=next_logits)
+    case["handle"]._model = numeric_owner._RestoredContextualModel(frozen_model, checkpoint["dimension"],
+        checkpoint["codec"], checkpoint["input_transform"], checkpoint["tensor_sha256"])
+
+    def model_check(model, _):
+        assert model is frozen_model
+        if expire_during == "model_check":
+            now[0] = 105.
+
+    def batch_context(*_):
+        if expire_during == "batch_context":
+            now[0] = 105.
+        return {}
+
+    core, *_, contexts = numeric_owner._owners()
+    monkeypatch.setattr(core, "_model", model_check)
+    monkeypatch.setattr(core, "_torch", lambda: InertTorch)
+    monkeypatch.setattr(core, "_finite", lambda *_: True)
+    monkeypatch.setattr(core, "tensor_digest", lambda model: checkpoint["tensor_sha256"])
+    monkeypatch.setattr(contexts, "batch_source_context", batch_context)
+    clock = lambda: now[0]
+    monkeypatch.setattr(runtime, "monotonic", clock)
+    monkeypatch.setattr(numeric_owner, "time", SimpleNamespace(monotonic=clock))
+    monkeypatch.setattr(core, "time", SimpleNamespace(monotonic=clock))
+    monkeypatch.setattr(numeric_owner, "infer_contextual_legal_model", _REAL_CONTEXTUAL_INFERENCE)
+    return calls
+
+
+@pytest.mark.parametrize(("expire_during", "allowed_calls"), [
+    ("model_check", []),
+    ("batch_context", []),
+    ("projection", [("project", 100.)]),
+])
+def test_matched_cached_real_numeric_cannot_start_layers_after_original_deadline(
+        matched_cache, monkeypatch, loader, expire_during, allowed_calls):
+    case = matched_cache
+    calls = _existing_numeric_with_inert_decoder(case, monkeypatch, loader, expire_during=expire_during)
+    result = case["handle"].infer_matched_paragraph_shuffle(case["request"],
+        control_owner_pin=case["control_owner_pin"])
+    assert calls == allowed_calls
+    assert result["numerical_dispatches_started"] == result["numerical_reports_returned"] == 1
+    assert result["comparison_deadline_reached"] and not result["execution_complete"]
+    first, second = result["arms"]
+    expected = [{"id": identity, "status": "deadline"} for identity in result["row_ids"]]
+    assert first["status"] == "returned_after_deadline" and first["row_outcomes"] == expected
+    assert first["raw_candidate_report"]["predictions"] == [
+        {"id": identity, "token_ids": [], "eos_reached": False, "generation_status": "deadline"}
+        for identity in result["row_ids"]]
+    assert second["status"] == "not_dispatched"
+    assert [row["id"] for row in second["row_outcomes"]] == result["row_ids"]
+
+
+def test_ordinary_cached_real_numeric_retains_its_relative_deadline(matched_cache, monkeypatch, loader):
+    case = matched_cache
+    calls = _existing_numeric_with_inert_decoder(case, monkeypatch, loader, expire_during="model_check")
+    result = case["handle"].infer_cached()
+    assert calls == [("project", 105.), ("start", 105.), ("next_logits", 105.)]
+    assert result["raw_candidate_report"]["completed"]
+    assert [row["id"] for row in result["raw_candidate_report"]["predictions"]] == case["request"]["row_ids"]
