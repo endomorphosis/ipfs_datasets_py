@@ -1421,3 +1421,52 @@ def test_checked_proof_nested_guidance_cannot_redirect_primary_update(samples, m
     assert direct[:2] == nested[:2] == (record.record_id, target.sample_sha256)
     assert direct[3].get("deontic.ir", 0.0) > 0.0 and "CEC.native" not in direct[3]
     assert nested == direct
+
+
+def _empty_feedback_boolean_selector_canary(config_value=False):
+    """Isolate the policy gate with metadata only; no model or update target."""
+    from threading import RLock
+    from types import SimpleNamespace
+
+    trainer = object.__new__(TrustedFeedbackTrainer)
+    trainer.config = TrustedFeedbackTrainerConfig(production_weight_writes_enabled=config_value)
+    trainer.autoencoder = SimpleNamespace(
+        state=SimpleNamespace(applied_leanstral_guidance_ids=[])
+    )
+    trainer._lock = RLock()
+    return trainer
+
+
+@pytest.mark.parametrize(
+    "value", ("false", "true", "0", "1", 0, 1, None),
+    ids=("false-string", "true-string", "zero-string", "one-string", "zero-int", "one-int", "none"),
+)
+def test_production_write_configuration_requires_an_actual_boolean(value):
+    with pytest.raises(ValueError, match="production_weight_writes_enabled"):
+        TrustedFeedbackTrainerConfig(production_weight_writes_enabled=value)
+
+
+@pytest.mark.parametrize(
+    "value", ("false", "true", "0", "1", 0, 1),
+    ids=("false-string", "true-string", "zero-string", "one-string", "zero-int", "one-int"),
+)
+def test_production_write_override_requires_an_actual_boolean(value):
+    trainer = _empty_feedback_boolean_selector_canary()
+    before = list(trainer.autoencoder.state.applied_leanstral_guidance_ids)
+    with pytest.raises(ValueError, match="production_weight_writes_enabled"):
+        trainer.train(None, {}, production_weight_writes_enabled=value)
+    assert trainer.autoencoder.state.applied_leanstral_guidance_ids == before
+
+
+@pytest.mark.parametrize(
+    ("configured", "override", "expected"),
+    ((False, None, False), (True, None, True), (False, True, True), (True, False, False)),
+    ids=("default-inherited", "enabled-inherited", "explicit-enable", "explicit-disable"),
+)
+def test_real_boolean_production_selectors_keep_empty_batch_behavior(configured, override, expected):
+    trainer = _empty_feedback_boolean_selector_canary(configured)
+    report = trainer.train(None, {}, production_weight_writes_enabled=override)
+    assert report.production_weight_writes_enabled is expected
+    assert report.write_to_autoencoder_weights is False
+    assert report.candidate_count == report.applied_count == report.accounted_count == 0
+    assert trainer.autoencoder.state.applied_leanstral_guidance_ids == []
