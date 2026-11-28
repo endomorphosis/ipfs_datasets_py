@@ -5573,6 +5573,16 @@
       },
       "record_id": "source-withheld-prose-modal-negation-refusal",
       "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
+    },
+    "lean_final_validated_evidence_deadline": {
+      "evidence_ordinal": 623,
+      "facts": {
+        "bytes": 1341,
+        "path": "/tmp/Guide622-current-verified-integration-yw_uedkq/actual-composed-qualification-Evidence623.json",
+        "sha256": "47ee9815a18536f7fa782a546488e80175204ff0af9155cc9cf9e5e33fae265c"
+      },
+      "record_id": "lean-final-proof-receipt-result-outcome-deadline",
+      "status": "closed_controlled_engineering_evidence_only_no_task_status_change"
     }
   },
   "programme_goal_hierarchy": {

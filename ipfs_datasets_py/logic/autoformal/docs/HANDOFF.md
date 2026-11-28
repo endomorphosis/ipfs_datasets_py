@@ -4444,3 +4444,8 @@ Leading action negation in an opaque atom now abstains with an explicit action d
 ## Evidence622 — Exact admitted source identity in saved retention
 
 The existing retention comparator now joins each canonical reference to its admitted dependency-group source version and occurrence. Matching before and after manifests cannot authorize mismatches to either field. [Exact qualification evidence](/tmp/Guide620-current-verified-integration-ut8jf6gp/actual-composed-qualification-Evidence622.json)
+
+
+## Evidence623 — Lean deadline through final proof evidence validation
+
+The backend checks the original request deadline after it finishes constructing and validating the accepted outcome. An expired request returns TIMEOUT and an unaccepted receipt while preserving the checked evidence. This does not issue a second compiler call. [Exact qualification evidence](/tmp/Guide622-current-verified-integration-yw_uedkq/actual-composed-qualification-Evidence623.json)

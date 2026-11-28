@@ -3584,3 +3584,8 @@ The explicit prohibition still round trips and the frozen proof-free texts retai
 ## Evidence622 — Exact admitted source identity in saved retention
 
 Both resealed mismatches reproduced before the change. All 32 selected retention cases passed, including both regressions. Seven selected cross-component checks passed on the composed source. This measurement does not add a legal review or a new model comparison. [Exact qualification evidence](/tmp/Guide620-current-verified-integration-ut8jf6gp/actual-composed-qualification-Evidence622.json)
+
+
+## Evidence623 — Lean deadline through final proof evidence validation
+
+The same private seven cases changed from four passing and three false-acceptance failures to seven passing. The current ordinary backend suite passed 431 cases. A separate managed installed Lean 4.34.1 cache test ran one version probe and two compiles. Disk replay and mismatch controls ran with zero additional Lean calls. Cases, compiled profile, process reaping and Source/resource closeout are joined in the qualification record. This is software and fixture evidence with no statutory decision. [Exact qualification evidence](/tmp/Guide622-current-verified-integration-yw_uedkq/actual-composed-qualification-Evidence623.json)

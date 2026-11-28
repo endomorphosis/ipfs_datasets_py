@@ -40132,6 +40132,18 @@
       "root": "artifact_workspace",
       "scope": "Version and occurrence consistency across saved held-out retention panels",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/lean_final_validated_evidence_deadline",
+      "evidence_ordinal": 623,
+      "id": "lean-final-proof-receipt-result-outcome-deadline",
+      "observed_bytes": 1341,
+      "observed_sha256": "47ee9815a18536f7fa782a546488e80175204ff0af9155cc9cf9e5e33fae265c",
+      "path": "/tmp/Guide622-current-verified-integration-yw_uedkq/actual-composed-qualification-Evidence623.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Native Lean kernel backend final receipt, result and outcome construction",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }
