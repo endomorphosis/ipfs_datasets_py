@@ -1322,7 +1322,16 @@ def require_codex_todo_projection_split(
 
 
 def split_guard_from_payload(payload: Mapping[str, Any]) -> LegalIRSplitGuardResult | None:
-    """Decode a compact split guard block from rollout/projection payloads."""
+    """Check any full split manifest before using a saved guard summary."""
+
+    manifest = payload.get("legal_ir_split_manifest")
+    if (not isinstance(manifest, Mapping)
+            and payload.get("schema_version") == LEGAL_IR_EVAL_SPLIT_SCHEMA_VERSION
+            and "examples" in payload):
+        manifest = payload
+    current = validate_legal_ir_eval_splits(manifest) if isinstance(manifest, Mapping) else None
+    if current is not None and not current.passed:
+        return current
 
     if "passed" in payload and ("violations" in payload or "blocked_operations" in payload):
         value: Any = payload
@@ -1331,10 +1340,7 @@ def split_guard_from_payload(payload: Mapping[str, Any]) -> LegalIRSplitGuardRes
     if not isinstance(value, Mapping):
         value = payload.get("split_guard")
     if not isinstance(value, Mapping):
-        manifest = payload.get("legal_ir_split_manifest")
-        if isinstance(manifest, Mapping):
-            return validate_legal_ir_eval_splits(manifest)
-        return None
+        return current
     violations = tuple(
         LegalIRLeakageViolation(
             kind=_string(item.get("kind")),
