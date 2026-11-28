@@ -415,6 +415,48 @@ def _reviewed_history(value, current_manifest, rows, config, parent_history, spl
     return dict(value, split_manifests=manifests), records, observation
 
 
+def _require_reviewed_checkpoint_heldout_isolation(*, history, query_rows, query_split_manifest, split_config):
+    """Screen complete heldout source against the checkpoint's retained split history."""
+    import hashlib
+    from ...optimizers.logic_theorem_optimizer import legal_ir_eval_splits as splits
+
+    history = _reviewed_copy(history)
+    _reviewed_closed(history, {"schema", "scope_id", "scope_kind", "split_manifests", "records",
+        "parent_history_artifact"}, "checkpoint split history")
+    _reviewed_need(type(history["split_manifests"]) is list and bool(history["split_manifests"])
+                   and type(history["records"]) is list and bool(history["records"]),
+                   "nonempty retained checkpoint split history required")
+    rows = _reviewed_copy(query_rows)
+    _reviewed_need(type(rows) is list and 0 < len(rows) <= MAX_REVIEWED_CYCLE_ROWS
+                   and all(type(row) is dict and type(row.get("id")) is str and row["id"]
+                           and type(row.get("source_text")) is str for row in rows),
+                   "bounded complete heldout source population required")
+    manifest = _reviewed_copy(query_split_manifest)
+    resolved = splits.LegalIRSplitManifest.from_mapping(manifest)
+    row_ids = {row["id"] for row in rows}
+    _reviewed_need(len(row_ids) == len(rows) and set(resolved.assignments) == row_ids
+                   and {example.sample_id for example in resolved.examples} == row_ids
+                   and all(value == splits.HOLDOUT_SPLIT for value in resolved.assignments.values()),
+                   "checkpoint evaluation requires the exact complete heldout partition")
+
+    records = {record["id"]: record for record in history["records"]}
+    _reviewed_need(len(records) == len(history["records"]), "duplicate checkpoint split history row")
+    examples = {example.sample_id: example.to_dict() for example in resolved.examples}
+    for row in rows:
+        sample_id, source = row["id"], row["source_text"]
+        record = {"id": sample_id, "source_text": source,
+                  "source_sha256": hashlib.sha256(source.encode("utf-8")).hexdigest(),
+                  "split_example": examples[sample_id], "assignment": splits.HOLDOUT_SPLIT}
+        _reviewed_need(records.get(sample_id, record) == record,
+                       "heldout sample conflicts with the retained checkpoint split history")
+        records[sample_id] = record
+
+    # Reuse the history owner's frozen-group checks and recompute near-duplicate
+    # groups on the union of both populations in each selected fingerprint space.
+    joined = dict(history, scope_kind="complete_declared_history", records=list(records.values()))
+    _reviewed_history(joined, manifest, (), _reviewed_copy(split_config), history, splits)
+
+
 def _reviewed_transition(value, parent_rows, rows, records, parent_records, registry):
     _reviewed_closed(value, {"schema", "retained", "added", "corrected", "superseded", "revoked"},
                      "classified reviewed transition")

@@ -3530,3 +3530,52 @@ def test_reviewed_mixed_unicode_stage_preserves_exact_targets_in_both_codecs(tmp
             assert inputs.assemble_reviewed_decoder_digest_omitted_target(
                 wire, target_codec=receipt["target_codec"]
             ) == row["canonical_ir"]
+
+
+@pytest.mark.parametrize("overlap", ["disjoint", "current_source", "historical_near_duplicate", "dependency_group"])
+def test_reviewed_checkpoint_heldout_isolation_compares_current_and_prior_splits(tmp_path, overlap):
+    import hashlib
+
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_ir_eval_splits as splits
+
+    config = splits.LegalIREvalSplitConfig()
+    current = {"id": "current", "source_text": "The board must record each permit issued for mining in the central register."}
+    previous = {"id": "superseded", "source_text": "A county clerk must record each water license in the district registry."}
+    query = {"id": "query", "source_text": "Applicants may renew fishing endorsements every spring."}
+    if overlap == "current_source":
+        query["source_text"] = current["source_text"]
+    elif overlap == "historical_near_duplicate":
+        query["source_text"] = previous["source_text"] + " Promptly."
+    elif overlap == "dependency_group":
+        previous["lineage_group_id"] = query["lineage_group_id"] = "reviewed:shared-definition"
+
+    def manifest_for(row, partition):
+        return splits.LegalIRSplitManifest(
+            examples=(splits.LegalIRSplitExample.from_sample(row),),
+            assignments={row["id"]: partition}, config_digest=config.digest,
+        ).to_dict()
+
+    current_manifest = manifest_for(current, splits.TRAIN_SPLIT)
+    previous_manifest = manifest_for(previous, splits.TRAIN_SPLIT)
+    query_manifest = manifest_for(query, splits.HOLDOUT_SPLIT)
+    registry = _ReviewedArtifactRegistry(tmp_path / "heldout-registry")
+    references = [_reviewed_decoder_put_json(registry, tmp_path / name, manifest)
+                  for name, manifest in (("prior.json", previous_manifest), ("current.json", current_manifest))]
+    history = {"schema": "reviewed-example-cycle-history/v1", "scope_id": "fixture:checkpoint-history",
+        "scope_kind": "complete_declared_history", "parent_history_artifact": None,
+        "split_manifests": [{"manifest": manifest, "sha256": reference["sha256"]}
+            for manifest, reference in zip((previous_manifest, current_manifest), references, strict=True)],
+        "records": [{"id": row["id"], "source_text": row["source_text"], "assignment": splits.TRAIN_SPLIT,
+            "source_sha256": hashlib.sha256(row["source_text"].encode("utf-8")).hexdigest(),
+            "split_example": manifest["examples"][0]}
+            for row, manifest in ((previous, previous_manifest), (current, current_manifest))]}
+    # These are the two separate guards reached before the combined check. They
+    # both pass even when the query was in the checkpoint's training history.
+    inputs._reviewed_history(history, current_manifest, [current], config.to_dict(), None, splits)
+    splits.authorize_legal_ir_split_use(query_manifest, operation=splits.HELDOUT_EVALUATION_OPERATION, items=[query])
+    options = dict(history=history, query_rows=[query], query_split_manifest=query_manifest, split_config=config.to_dict())
+    if overlap == "disjoint":
+        inputs._require_reviewed_checkpoint_heldout_isolation(**options)
+    else:
+        with pytest.raises(splits.LegalIRSplitLeakageError):
+            inputs._require_reviewed_checkpoint_heldout_isolation(**options)
