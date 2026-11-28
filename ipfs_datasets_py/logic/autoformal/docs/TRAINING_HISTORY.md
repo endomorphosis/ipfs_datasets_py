@@ -3684,3 +3684,13 @@ The first managed attempt stopped at a missing tracked package import before Lea
 ## Evidence642 — Select the namespaced declaration test in pinned Lean CI
 
 The static workflow check reproduced the missing selector and verified the correction. The JUnit guard accepted one exact passing result and refused seven invalid inputs. A separate managed local run on the exact Guide 641 source passed. Lean accepted the root declaration and returned a type mismatch for the same-short-name declaration inside the namespace. [Exact qualification evidence](/tmp/Guide641-namespace-ci-integration-RSSIq5IJ/actual-Guide642-namespaced-evidence.json)
+
+
+## Evidence643 — Match exact translation metadata before accepting or reusing a Lean proof
+
+Four of ten reproductions accepted a changed metadata type before the correction. All ten passed after it, along with the separate 58-case retention suite. The local Lean 4.34.1 cache case passed on the proof fix commit, with one version probe, two successful compilations and no additional Lean calls during replay. [Exact qualification evidence](/tmp/Guide642-exact-evaluation-and-proof-integration-9p1lxsAV/actual-composed-qualification-Evidence643.json)
+
+
+## Evidence644 — Recheck the current evaluation split before allowing promotion
+
+On the previous source, the public gate allowed promotion in four split-overlap cases. All six changed-behavior and compatibility cases passed after the fix, within 156 selected tests and 58 subtests. [Exact qualification evidence](/tmp/Guide642-exact-evaluation-and-proof-integration-9p1lxsAV/actual-composed-qualification-Evidence644.json)

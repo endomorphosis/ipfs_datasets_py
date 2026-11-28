@@ -40372,6 +40372,30 @@
       "root": "artifact_workspace",
       "scope": "Pinned native CI selector and isolated report wiring for the existing namespaced declaration test.",
       "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/proof_translation_typed_identity_20261128",
+      "evidence_ordinal": 643,
+      "id": "proof-translation-typed-identity-evidence643-20261128",
+      "observed_bytes": 2232,
+      "observed_sha256": "1a7de1f36dae44a5b2b473f7e18f5e2b8908b6b4ebac447f263d869d0f52686f",
+      "path": "/tmp/Guide642-exact-evaluation-and-proof-integration-9p1lxsAV/actual-composed-qualification-Evidence643.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Lean outcome reconstruction and proof-cache translation identity, with separate ordinary and local native fixture scopes.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
+    },
+    {
+      "backlog_crosslink": "BACKLOG.json#/migration/promotion_full_split_manifest_precedence_20261128",
+      "evidence_ordinal": 644,
+      "id": "promotion-full-split-manifest-evidence644-20261128",
+      "observed_bytes": 1534,
+      "observed_sha256": "5adcf695817146dea886f2a10c7818c25380180892a20b3727a056aa72f12c3d",
+      "path": "/tmp/Guide642-exact-evaluation-and-proof-integration-9p1lxsAV/actual-composed-qualification-Evidence644.json",
+      "required_for_catalog_check": false,
+      "root": "artifact_workspace",
+      "scope": "Existing split validation and promotion-gate behavior on authored source overlap and clean controls.",
+      "status": "CLOSED_CONTROLLED_ENGINEERING_EVIDENCE_ONLY"
     }
   ]
 }

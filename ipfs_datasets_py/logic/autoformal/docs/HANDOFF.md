@@ -4544,3 +4544,13 @@ The managed cache case on Guide 638 ran one Lean version probe and two successfu
 ## Evidence642 — Select the namespaced declaration test in pinned Lean CI
 
 The existing Lean 4.34.1 native matrix now runs the namespaced declaration regression and uploads its own JSON and JUnit files. The gate requires the exact selected case to pass without a skip. [Exact qualification evidence](/tmp/Guide641-namespace-ci-integration-RSSIq5IJ/actual-Guide642-namespaced-evidence.json)
+
+
+## Evidence643 — Match exact translation metadata before accepting or reusing a Lean proof
+
+Outcome reconstruction and cache reuse compare the canonical translation payload, preserving the distinction between integer, Boolean and floating-point values. [Exact qualification evidence](/tmp/Guide642-exact-evaluation-and-proof-integration-9p1lxsAV/actual-composed-qualification-Evidence643.json)
+
+
+## Evidence644 — Recheck the current evaluation split before allowing promotion
+
+The existing gate revalidates a supplied full split manifest before using compact guard evidence. Freshly detected overlap blocks promotion, and compact refusal evidence continues to block when supplied. [Exact qualification evidence](/tmp/Guide642-exact-evaluation-and-proof-integration-9p1lxsAV/actual-composed-qualification-Evidence644.json)
